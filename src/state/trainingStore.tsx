@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { workspaceBus } from "./eventBus";
-import { gitBasicsScenario } from "@/scenarios/git-basics";
+import { getScenario } from "@/scenarios";
 import type { Scenario, StepStatus, WorkspaceEvent } from "@/types/training";
 
-const STORAGE_KEY = "ai-training-lab:git-basics:v1";
+const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v1`;
 
 export interface TrainingProgress {
   statuses: Record<string, StepStatus>;
@@ -52,7 +52,7 @@ function initialProgress(scenario: Scenario): TrainingProgress {
 function load(scenario: Scenario): TrainingProgress {
   if (typeof window === "undefined") return initialProgress(scenario);
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey(scenario.id));
     if (!raw) return initialProgress(scenario);
     const parsed = JSON.parse(raw) as TrainingProgress;
     if (!parsed?.statuses) return initialProgress(scenario);
@@ -62,8 +62,10 @@ function load(scenario: Scenario): TrainingProgress {
   }
 }
 
-export function TrainingProvider({ children }: { children: ReactNode }) {
-  const scenario = gitBasicsScenario;
+export function TrainingProvider({ scenarioId, children }: { scenarioId: string; children: ReactNode }) {
+  const scenario = getScenario(scenarioId);
+  if (!scenario) throw new Error(`Unknown training scenario: ${scenarioId}`);
+
   const [progress, setProgress] = useState<TrainingProgress>(() => initialProgress(scenario));
   const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
@@ -72,14 +74,17 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   progressRef.current = progress;
 
   useEffect(() => {
+    setHydrated(false);
     setProgress(load(scenario));
+    setHelpLevel(0);
+    setFeedback(null);
     setHydrated(true);
   }, [scenario]);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  }, [progress, hydrated]);
+    window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(progress));
+  }, [progress, hydrated, scenario.id]);
 
   // Training engine: reacts to workspace events, never to "next" buttons.
   useEffect(() => {
@@ -175,20 +180,29 @@ export function useTraining() {
   return ctx;
 }
 
-/** Read-only progress for the dashboard (no provider needed). */
-export function useStoredProgressPercent() {
+/** Read-only progress for one dashboard training (no provider needed). */
+export function useStoredProgressPercent(scenarioId: string | null) {
   const [percent, setPercent] = useState<number | null>(null);
   useEffect(() => {
+    if (!scenarioId) {
+      setPercent(0);
+      return;
+    }
+    const scenario = getScenario(scenarioId);
+    if (!scenario) {
+      setPercent(0);
+      return;
+    }
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(storageKey(scenario.id));
       if (!raw) return setPercent(0);
       const parsed = JSON.parse(raw) as TrainingProgress;
-      const done = gitBasicsScenario.steps.filter((s) => parsed.statuses?.[s.id] === "COMPLETED").length;
-      setPercent(Math.round((done / gitBasicsScenario.steps.length) * 100));
+      const done = scenario.steps.filter((s) => parsed.statuses?.[s.id] === "COMPLETED").length;
+      setPercent(Math.round((done / scenario.steps.length) * 100));
     } catch {
       setPercent(0);
     }
-  }, []);
+  }, [scenarioId]);
   return percent;
 }
 
