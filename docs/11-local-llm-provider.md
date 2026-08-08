@@ -17,18 +17,18 @@ Standardwerte:
 ```text
 LLM_PROVIDER=ollama
 LLM_BASE_URL=http://localhost:11434/v1
-LLM_MODEL=qwen3
+LLM_MODEL=gemma4:31b
 LLM_API_KEY=ollama
 ```
 
-Ein Modellwechsel erfolgt ausschließlich über `LLM_MODEL`; ein Wechsel der lokalen Adresse ausschließlich über `LLM_BASE_URL`.
+`gemma4:31b` ist der lokale Standard. Wenn das Modell auf dem jeweiligen Entwicklungsrechner nicht sinnvoll betrieben werden kann, ist `gemma4:e4b` das vorgesehene kleinere Ausweichmodell. Der Wechsel erfolgt ausschließlich über `LLM_MODEL`; ein Wechsel der lokalen Adresse ausschließlich über `LLM_BASE_URL`. Es gibt bewusst keinen automatischen Modell-Fallback, damit Modellwechsel reproduzierbar und sichtbar bleiben.
 
 ## Ollama lokal starten
 
 Ollama muss außerhalb der Web-App auf dem Entwicklungsrechner laufen. Beispiel:
 
 ```bash
-ollama pull qwen3
+ollama pull gemma4:31b
 ollama serve
 ```
 
@@ -38,12 +38,16 @@ Danach lässt sich die OpenAI-kompatible API direkt prüfen:
 curl http://localhost:11434/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
-    "model":"qwen3",
+    "model":"gemma4:31b",
     "messages":[{"role":"user","content":"Antworte mit JSON: {\"uiTargetRef\":\"vscode.activityBar.explorer\"}"}],
     "response_format":{"type":"json_object"},
     "temperature":0
   }'
 ```
+
+## Lokaler Modellbestand
+
+Für die aktuelle Entwicklungsumgebung wurde am 9. August 2026 per `ollama list` bestätigt, dass sowohl `gemma4:31b` als auch `gemma4:e4b` lokal vorhanden sind. Dieser Nachweis bestätigt die Installation, nicht die tatsächliche GPU-Ausführung.
 
 ## GPU-Nutzung verifizieren
 
