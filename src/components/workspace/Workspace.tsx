@@ -14,11 +14,13 @@ import {
   FileCode2,
   FileText,
   Folder,
+  Settings,
 } from "lucide-react";
 import { workspaceBus } from "@/state/eventBus";
 import { useTraining } from "@/state/trainingStore";
 
 type View = "explorer" | "search" | "scm" | "extensions";
+type WorkspaceMode = "none" | "folder" | "workspace";
 
 interface FileNode {
   name: string;
@@ -35,10 +37,14 @@ const INITIAL_CONTENT: Record<string, string> = {
   "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
 };
 
+const MENU_ITEMS = ["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Help"] as const;
+
 export function Workspace() {
   const { registerMistake } = useTraining();
   const [view, setView] = useState<View | null>(null);
   const [repoOpen, setRepoOpen] = useState(false);
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("none");
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [treeExpanded, setTreeExpanded] = useState(true);
   const [files, setFiles] = useState<FileNode[]>(BASE_FILES);
   const [contents, setContents] = useState<Record<string, string>>(INITIAL_CONTENT);
@@ -73,7 +79,24 @@ export function Workspace() {
     if (next === "explorer") workspaceBus.emit("explorer.opened");
   };
 
+  const applyWorkingContext = (mode: Exclude<WorkspaceMode, "none">) => {
+    setWorkspaceMode(mode);
+    setRepoOpen(true);
+    setView("explorer");
+    setFileMenuOpen(false);
+    if (mode === "folder") {
+      workspaceBus.emit("folder.opened", { name: "ai-training-demo", folderCount: 1 });
+    } else {
+      workspaceBus.emit("workspace.opened", {
+        name: "ai-training-lab.code-workspace",
+        folders: ["ai-training-demo", "shared-tools"],
+        settings: { "editor.formatOnSave": true },
+      });
+    }
+  };
+
   const openRepo = () => {
+    setWorkspaceMode("folder");
     setRepoOpen(true);
     workspaceBus.emit("repository.opened", { name: "ai-training-demo" });
   };
@@ -173,6 +196,51 @@ export function Workspace() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor">
+      {/* VS Code menu bar */}
+      <div className="relative flex h-8 shrink-0 items-center border-b border-border bg-panel px-2 text-[12px] text-foreground/85">
+        {MENU_ITEMS.map((item) => (
+          <button
+            key={item}
+            data-highlight={item === "File" ? "vscode-menu-file" : undefined}
+            onClick={() => item === "File" && setFileMenuOpen((open) => !open)}
+            className="rounded px-2 py-1 hover:bg-white/10"
+          >
+            {item}
+          </button>
+        ))}
+        <span className="ml-auto pr-2 text-[11px] text-muted-foreground">
+          {workspaceMode === "workspace"
+            ? "ai-training-lab (Workspace)"
+            : workspaceMode === "folder"
+              ? "ai-training-demo"
+              : "Visual Studio Code"}
+        </span>
+
+        {fileMenuOpen ? (
+          <div className="absolute left-2 top-8 z-30 w-72 rounded-md border border-border bg-panel py-1 shadow-2xl">
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">New Text File</button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Open File...</button>
+            <div className="my-1 border-t border-border" />
+            <button
+              data-highlight="vscode-menu-open-folder"
+              onClick={() => applyWorkingContext("folder")}
+              className="block w-full px-3 py-1.5 text-left hover:bg-white/10"
+            >
+              Open Folder...
+            </button>
+            <button
+              data-highlight="vscode-menu-open-workspace"
+              onClick={() => applyWorkingContext("workspace")}
+              className="block w-full px-3 py-1.5 text-left hover:bg-white/10"
+            >
+              Open Workspace from File...
+            </button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Add Folder to Workspace...</button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Save Workspace As...</button>
+          </div>
+        ) : null}
+      </div>
+
       <div className="flex min-h-0 flex-1">
         {/* Activity Bar */}
         <div className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-activity py-2">
@@ -224,7 +292,7 @@ export function Workspace() {
               </p>
             ) : view === "search" ? (
               <p className="px-3 py-6 text-xs leading-relaxed text-muted-foreground">
-                Volltextsuche über das Projekt (im POC simuliert).
+                Volltextsuche über den aktuellen Arbeitskontext.
               </p>
             ) : view === "scm" ? (
               <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
@@ -242,6 +310,9 @@ export function Workspace() {
               </div>
             ) : !repoOpen ? (
               <div className="px-2 py-3">
+                <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                  Öffne über <span className="text-foreground">File</span> einen Ordner oder einen gespeicherten Workspace.
+                </p>
                 <p className="mb-2 px-1 text-xs text-muted-foreground">Vorbereitete Repositories</p>
                 <button
                   data-highlight="repo-item"
@@ -254,6 +325,16 @@ export function Workspace() {
               </div>
             ) : (
               <div className="py-1">
+                {workspaceMode === "workspace" ? (
+                  <div data-highlight="vscode-workspace-context" className="mx-2 mb-2 rounded-md border border-border bg-card p-2 text-[11px] leading-relaxed">
+                    <div className="font-medium text-foreground">ai-training-lab.code-workspace</div>
+                    <div className="text-muted-foreground">2 Ordner im Arbeitskontext</div>
+                    <div className="mt-1 flex items-center gap-1 text-muted-foreground">
+                      <Settings className="h-3 w-3" /> Workspace-Einstellung: formatOnSave = true
+                    </div>
+                  </div>
+                ) : null}
+
                 <button
                   onClick={() => setTreeExpanded((v) => !v)}
                   className="flex w-full items-center gap-1 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground"
@@ -298,6 +379,12 @@ export function Workspace() {
                       </li>
                     ) : null}
                   </ul>
+                ) : null}
+
+                {workspaceMode === "workspace" ? (
+                  <div className="mt-1 flex items-center gap-2 px-5 py-1 text-[13px] text-muted-foreground">
+                    <Folder className="h-4 w-4 text-accent" /> shared-tools
+                  </div>
                 ) : null}
               </div>
             )}
@@ -392,7 +479,11 @@ export function Workspace() {
           {terminalOpen ? (
             <div className="h-52 shrink-0 border-t border-border bg-terminal">
               <div className="flex h-8 items-center justify-between border-b border-border px-3 text-[11px] uppercase tracking-wider text-muted-foreground">
-                <span>Terminal — bash</span>
+                <div className="flex h-full items-center gap-4">
+                  <span className="border-b border-foreground py-2 text-foreground">Terminal</span>
+                  <span>Problems</span>
+                  <span>Output</span>
+                </div>
                 <button
                   onClick={() => setTerminalOpen(false)}
                   aria-label="Terminal schließen"
@@ -430,7 +521,13 @@ export function Workspace() {
         <span className="flex items-center gap-1">
           <GitBranch className="h-3.5 w-3.5" /> main
         </span>
-        <span>{repoOpen ? "ai-training-demo" : "kein Repository"}</span>
+        <span>
+          {workspaceMode === "workspace"
+            ? "Workspace · 2 Ordner"
+            : repoOpen
+              ? "Ordner · ai-training-demo"
+              : "kein Arbeitskontext"}
+        </span>
         <span className="text-muted-foreground">{activeFile ? `${activeFile} · Python` : "—"}</span>
         <button
           data-highlight="terminal-btn"
