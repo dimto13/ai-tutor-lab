@@ -9,6 +9,12 @@ import { defineConfig } from "vite";
  * src/server.ts remains the custom server entry used by TanStack Start.
  */
 export default defineConfig({
+  server: {
+    port: 3001,
+    host: "0.0.0.0",
+    allowedHosts: true,
+    cors: true,
+  },
   resolve: {
     tsconfigPaths: true,
   },
