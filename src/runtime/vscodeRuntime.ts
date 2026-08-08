@@ -14,6 +14,13 @@ export interface VscodeRuntimeState {
   openTabs: string[];
   activeFile: string | null;
   activePanel: PanelName;
+  terminalLines: string[];
+  terminalCommand: string;
+  staged: boolean;
+  copilotOpen: boolean;
+  copilotPrompt: string;
+  copilotAnswer: string | null;
+  wrongFile: string | null;
 }
 
 export type VscodeRuntimeStateChangeReason = "mount" | "reset" | "mutation" | "restore";
@@ -33,6 +40,13 @@ interface VscodeRuntimeAdapter extends RuntimeAdapter {
   setActiveFile(filename: string | null): void;
   closeFile(filename: string): void;
   setActivePanel(panel: PanelName): void;
+  setTerminalLines(lines: string[]): void;
+  setTerminalCommand(command: string): void;
+  setStaged(staged: boolean): void;
+  setCopilotOpen(open: boolean): void;
+  setCopilotPrompt(prompt: string): void;
+  setCopilotAnswer(answer: string | null): void;
+  setWrongFile(filename: string | null): void;
 }
 
 const initialState = (): VscodeRuntimeState => ({
@@ -45,11 +59,22 @@ const initialState = (): VscodeRuntimeState => ({
   openTabs: [],
   activeFile: null,
   activePanel: null,
+  terminalLines: [],
+  terminalCommand: "",
+  staged: false,
+  copilotOpen: false,
+  copilotPrompt: "",
+  copilotAnswer: null,
+  wrongFile: null,
 });
 
 function isStringRecord(value: unknown): value is Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return Object.values(value).every((item) => typeof item === "string");
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 function isRuntimeState(value: unknown): value is VscodeRuntimeState {
@@ -59,18 +84,22 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
     (candidate.workspaceMode === "none" ||
       candidate.workspaceMode === "folder" ||
       candidate.workspaceMode === "workspace") &&
-    Array.isArray(candidate.folders) &&
-    candidate.folders.every((item) => typeof item === "string") &&
-    Array.isArray(candidate.files) &&
-    candidate.files.every((item) => typeof item === "string") &&
+    isStringArray(candidate.folders) &&
+    isStringArray(candidate.files) &&
     isStringRecord(candidate.contents) &&
-    Array.isArray(candidate.openTabs) &&
-    candidate.openTabs.every((item) => typeof item === "string") &&
+    isStringArray(candidate.openTabs) &&
     (candidate.activeFile === null || typeof candidate.activeFile === "string") &&
     (candidate.activePanel === null ||
       candidate.activePanel === "terminal" ||
       candidate.activePanel === "problems" ||
-      candidate.activePanel === "output")
+      candidate.activePanel === "output") &&
+    isStringArray(candidate.terminalLines) &&
+    typeof candidate.terminalCommand === "string" &&
+    typeof candidate.staged === "boolean" &&
+    typeof candidate.copilotOpen === "boolean" &&
+    typeof candidate.copilotPrompt === "string" &&
+    (candidate.copilotAnswer === null || typeof candidate.copilotAnswer === "string") &&
+    (candidate.wrongFile === null || typeof candidate.wrongFile === "string")
   );
 }
 
@@ -81,6 +110,7 @@ function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
     files: [...value.files],
     contents: { ...value.contents },
     openTabs: [...value.openTabs],
+    terminalLines: [...value.terminalLines],
   };
 }
 
@@ -90,15 +120,54 @@ function hasOwn(value: RuntimeSeed, key: string): boolean {
 
 function stringArrayFromSeed(
   seed: RuntimeSeed,
-  key: "folders" | "files" | "openTabs",
+  key: "folders" | "files" | "openTabs" | "terminalLines",
   fallback: string[],
 ): string[] {
   if (!hasOwn(seed, key)) return [...fallback];
   const value = seed[key];
-  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+  if (!isStringArray(value)) {
     throw new TypeError(`Invalid VS Code runtime seed field: ${key}`);
   }
   return [...new Set(value)];
+}
+
+function nullableStringFromSeed(
+  seed: RuntimeSeed,
+  key: "activeFile" | "copilotAnswer" | "wrongFile",
+  fallback: string | null,
+): string | null {
+  if (!hasOwn(seed, key)) return fallback;
+  const value = seed[key];
+  if (value !== null && typeof value !== "string") {
+    throw new TypeError(`Invalid VS Code runtime seed field: ${key}`);
+  }
+  return value;
+}
+
+function stringFromSeed(
+  seed: RuntimeSeed,
+  key: "terminalCommand" | "copilotPrompt",
+  fallback: string,
+): string {
+  if (!hasOwn(seed, key)) return fallback;
+  const value = seed[key];
+  if (typeof value !== "string") {
+    throw new TypeError(`Invalid VS Code runtime seed field: ${key}`);
+  }
+  return value;
+}
+
+function booleanFromSeed(
+  seed: RuntimeSeed,
+  key: "staged" | "copilotOpen",
+  fallback: boolean,
+): boolean {
+  if (!hasOwn(seed, key)) return fallback;
+  const value = seed[key];
+  if (typeof value !== "boolean") {
+    throw new TypeError(`Invalid VS Code runtime seed field: ${key}`);
+  }
+  return value;
 }
 
 function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
@@ -117,6 +186,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
   const folders = stringArrayFromSeed(seed, "folders", base.folders);
   const files = stringArrayFromSeed(seed, "files", base.files);
   const openTabs = stringArrayFromSeed(seed, "openTabs", base.openTabs);
+  const terminalLines = stringArrayFromSeed(seed, "terminalLines", base.terminalLines);
 
   let contents = { ...base.contents };
   if (hasOwn(seed, "contents")) {
@@ -127,14 +197,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     contents = { ...value };
   }
 
-  let activeFile = base.activeFile;
-  if (hasOwn(seed, "activeFile")) {
-    const value = seed["activeFile"];
-    if (value !== null && typeof value !== "string") {
-      throw new TypeError("Invalid VS Code runtime seed field: activeFile");
-    }
-    activeFile = value;
-  }
+  const activeFile = nullableStringFromSeed(seed, "activeFile", base.activeFile);
 
   let activePanel = base.activePanel;
   if (hasOwn(seed, "activePanel")) {
@@ -153,11 +216,19 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     openTabs,
     activeFile,
     activePanel,
+    terminalLines,
+    terminalCommand: stringFromSeed(seed, "terminalCommand", base.terminalCommand),
+    staged: booleanFromSeed(seed, "staged", base.staged),
+    copilotOpen: booleanFromSeed(seed, "copilotOpen", base.copilotOpen),
+    copilotPrompt: stringFromSeed(seed, "copilotPrompt", base.copilotPrompt),
+    copilotAnswer: nullableStringFromSeed(seed, "copilotAnswer", base.copilotAnswer),
+    wrongFile: nullableStringFromSeed(seed, "wrongFile", base.wrongFile),
   };
 }
 
 let state = initialState();
 let mountedContainer: ParentNode | null = null;
+let mountedInitialState: VscodeRuntimeState | null = null;
 const stateListeners = new Set<RuntimeStateListener>();
 let identifierSequence = 0;
 let activeSessionId = createIdentifier("session");
@@ -184,11 +255,13 @@ export const vscodeRuntime = {
   async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
     mountedContainer = container;
     activeSessionId = createIdentifier("session");
-    replaceState(stateFromSeed(seed), "mount");
+    mountedInitialState = stateFromSeed(seed);
+    replaceState(mountedInitialState, "mount");
   },
 
   async unmount(): Promise<void> {
     mountedContainer = null;
+    mountedInitialState = null;
   },
 
   subscribe(handler) {
@@ -230,7 +303,7 @@ export const vscodeRuntime = {
   },
 
   reset(): void {
-    replaceState(initialState(), "reset");
+    replaceState(mountedInitialState ?? initialState(), "reset");
   },
 
   setWorkspace(mode: Exclude<WorkspaceMode, "none">, folders: string[]): void {
@@ -288,6 +361,34 @@ export const vscodeRuntime = {
     replaceState({ ...state, activePanel: panel }, "mutation");
   },
 
+  setTerminalLines(lines: string[]): void {
+    replaceState({ ...state, terminalLines: [...lines] }, "mutation");
+  },
+
+  setTerminalCommand(command: string): void {
+    replaceState({ ...state, terminalCommand: command }, "mutation");
+  },
+
+  setStaged(staged: boolean): void {
+    replaceState({ ...state, staged }, "mutation");
+  },
+
+  setCopilotOpen(open: boolean): void {
+    replaceState({ ...state, copilotOpen: open }, "mutation");
+  },
+
+  setCopilotPrompt(prompt: string): void {
+    replaceState({ ...state, copilotPrompt: prompt }, "mutation");
+  },
+
+  setCopilotAnswer(answer: string | null): void {
+    replaceState({ ...state, copilotAnswer: answer }, "mutation");
+  },
+
+  setWrongFile(filename: string | null): void {
+    replaceState({ ...state, wrongFile: filename }, "mutation");
+  },
+
   async query<T = unknown>(selector: string): Promise<T> {
     let value: unknown;
     switch (selector) {
@@ -311,6 +412,12 @@ export const vscodeRuntime = {
         break;
       case "panel.active":
         value = state.activePanel;
+        break;
+      case "terminal.lines":
+        value = [...state.terminalLines];
+        break;
+      case "scm.staged":
+        value = state.staged;
         break;
       default:
         value = undefined;
