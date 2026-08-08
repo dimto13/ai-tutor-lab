@@ -14,11 +14,13 @@ interface OpenAiChatCompletionResponse {
 
 export class OllamaProvider implements LlmProvider {
   readonly id = "ollama";
+  private readonly config: LlmProviderConfig;
+  private readonly fetchImpl: FetchLike;
 
-  constructor(
-    private readonly config: LlmProviderConfig,
-    private readonly fetchImpl: FetchLike = fetch,
-  ) {}
+  constructor(config: LlmProviderConfig, fetchImpl: FetchLike = fetch) {
+    this.config = config;
+    this.fetchImpl = fetchImpl;
+  }
 
   async complete(request: LlmRequest): Promise<LlmResponse> {
     const response = await this.fetchImpl(`${this.config.baseUrl}/chat/completions`, {
