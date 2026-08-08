@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Award, RotateCcw, ArrowRight, LayoutGrid, CheckCircle2 } from "lucide-react";
+import {
+  Award,
+  RotateCcw,
+  ArrowRight,
+  LayoutGrid,
+  CheckCircle2,
+  ExternalLink,
+} from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
 
 export function CompletionScreen() {
@@ -34,12 +41,12 @@ export function CompletionScreen() {
             { label: "Dauer", value: `${minutes} Min.` },
             { label: "Modus", value: `${mode} ×${scoreMultiplier}` },
             { label: "Punkte", value: String(earnedPoints) },
-          ].map((m) => (
-            <div key={m.label} className="rounded-lg border border-border bg-panel p-3">
+          ].map((metric) => (
+            <div key={metric.label} className="rounded-lg border border-border bg-panel p-3">
               <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                {m.label}
+                {metric.label}
               </dt>
-              <dd className="mt-1 text-sm font-medium text-foreground">{m.value}</dd>
+              <dd className="mt-1 text-sm font-medium text-foreground">{metric.value}</dd>
             </div>
           ))}
           <div className="col-span-2 rounded-lg border border-border bg-panel p-3">
@@ -70,6 +77,42 @@ export function CompletionScreen() {
                 </li>
               ))}
             </ol>
+          </div>
+        ) : null}
+
+        {scenario.resources?.length ? (
+          <div className="mt-6 rounded-xl border border-border bg-panel p-4 text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+              Weiterführende Quellen
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Diese Links werden als Content-Metadaten gepflegt und können unabhängig von der
+              Oberfläche aktualisiert werden.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {scenario.resources.map((resource) => (
+                <li key={resource.url}>
+                  <a
+                    href={resource.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-start gap-2 rounded-md border border-border bg-card p-3 text-left transition-colors hover:border-ring"
+                  >
+                    <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                    <span>
+                      <span className="block text-[13px] font-medium text-foreground">
+                        {resource.title}
+                      </span>
+                      {resource.description ? (
+                        <span className="mt-1 block text-[12px] leading-relaxed text-muted-foreground">
+                          {resource.description}
+                        </span>
+                      ) : null}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 
