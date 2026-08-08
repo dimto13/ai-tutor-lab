@@ -40,7 +40,8 @@ export function TutorChat() {
 
     if (/was soll ich|wie weiter|nächste|weiter\?|jetzt machen|hänge/i.test(question)) {
       if (isFinished) return "Du hast das Modul abgeschlossen.";
-      if (mode === "explore") return "Erkunde die Oberfläche frei. Klicke auf einen Bereich, den du noch nicht untersucht hast; die Erklärung erscheint im Guide.";
+      if (mode === "explore")
+        return "Erkunde die Oberfläche frei. Klicke auf einen Bereich, den du noch nicht untersucht hast; die Erklärung erscheint im Guide.";
       if (!step) return "Für dieses Modul ist aktuell keine weitere Aufgabe offen.";
       return mode === "challenge" ? step.instruction : `${step.instruction} ${step.helpLevels[0]}`;
     }
@@ -79,12 +80,15 @@ export function TutorChat() {
     <div className="flex max-h-[46%] min-h-[250px] flex-col border-t border-border">
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Bot className="h-4 w-4 text-accent" /> KI-Tutor
-        {mode === "challenge" ? <span className="ml-auto normal-case font-normal">nur auf Anfrage</span> : null}
+        {mode === "challenge" ? (
+          <span className="ml-auto normal-case font-normal">nur auf Anfrage</span>
+        ) : null}
       </div>
       <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3">
         {messages.length === 0 ? (
           <p className="py-3 text-[12px] leading-relaxed text-muted-foreground">
-            In der Challenge gibt der Tutor keine automatische Hilfestellung. Stelle eine Frage, wenn du Unterstützung möchtest.
+            In der Challenge gibt der Tutor keine automatische Hilfestellung. Stelle eine Frage,
+            wenn du Unterstützung möchtest.
           </p>
         ) : null}
         {messages.map((m, i) => (
@@ -94,7 +98,11 @@ export function TutorChat() {
                 m.role === "tutor" ? "bg-accent/15 text-accent" : "bg-white/10 text-foreground"
               }`}
             >
-              {m.role === "tutor" ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+              {m.role === "tutor" ? (
+                <Bot className="h-3.5 w-3.5" />
+              ) : (
+                <User className="h-3.5 w-3.5" />
+              )}
             </div>
             <p
               className={`rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
