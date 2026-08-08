@@ -29,13 +29,33 @@ Tickets. Details und Regeln: [`docs/README.md`](docs/README.md#aufgabenverwaltun
 
 ## Lokale Entwicklung
 
-Voraussetzung: Node.js und npm — [Installation über nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Voraussetzung: Node.js 22 und npm. Mit `nvm` wird die im Repository hinterlegte
+Node-Version über `.nvmrc` ausgewählt.
 
 ```sh
-git clone <this-repository-url>
+git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
-npm i
-npm run dev
+nvm use
+npm install
+npm run dev:local
+```
+
+`dev:local` startet den Vite-Entwicklungsserver auf allen lokalen Netzwerk-Interfaces
+(`0.0.0.0`). Dadurch funktioniert sowohl der Zugriff auf demselben Rechner als auch — sofern
+Firewall und Netzwerk dies erlauben — von einem anderen Rechner im selben Netzwerk.
+
+Nach dem Start zeigt Vite die tatsächlich verwendeten Adressen und den Port an. Verwende
+für Zugriffe von einem anderen Rechner die von Vite ausgegebene Netzwerkadresse bzw. die
+IP-Adresse des Entwicklungsrechners zusammen mit dem angezeigten Port.
+
+Die von Lovable bereitgestellte Vite-/TanStack-Konfiguration bleibt dabei Bestandteil des
+POC. Für den lokalen Start ist kein Lovable-Editor erforderlich.
+
+Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
+
+```sh
+git pull
+npm run dev:local
 ```
 
 Für Backlog-Tooling zusätzlich: `pip install pyyaml requests`.
