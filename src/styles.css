@@ -59,42 +59,61 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-editor: var(--editor);
+  --color-panel: var(--panel);
+  --color-activity: var(--activity);
+  --color-terminal: var(--terminal);
+  --color-statusbar: var(--statusbar);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 0.5rem;
+  /* Enterprise dark UI, orientiert an GitHub / VS Code Dark+ */
+  --background: oklch(0.19 0.014 258);
+  --foreground: oklch(0.94 0.006 250);
+  --card: oklch(0.235 0.015 258);
+  --card-foreground: oklch(0.94 0.006 250);
+  --popover: oklch(0.245 0.016 258);
+  --popover-foreground: oklch(0.94 0.006 250);
+  --primary: oklch(0.62 0.14 250);
+  --primary-foreground: oklch(0.98 0.005 250);
+  --secondary: oklch(0.27 0.016 258);
+  --secondary-foreground: oklch(0.94 0.006 250);
+  --muted: oklch(0.27 0.016 258);
+  --muted-foreground: oklch(0.68 0.014 253);
+  --accent: oklch(0.62 0.145 250);
+  --accent-foreground: oklch(0.99 0.004 250);
+  --destructive: oklch(0.62 0.19 22);
+  --destructive-foreground: oklch(0.98 0.004 250);
+  --success: oklch(0.7 0.14 152);
+  --success-foreground: oklch(0.18 0.02 152);
+  --warning: oklch(0.79 0.13 82);
+  --border: oklch(0.31 0.016 258);
+  --input: oklch(0.31 0.016 258);
+  --ring: oklch(0.66 0.15 250);
+  --editor: oklch(0.215 0.014 258);
+  --panel: oklch(0.235 0.015 258);
+  --activity: oklch(0.205 0.014 258);
+  --terminal: oklch(0.2 0.014 258);
+  --statusbar: oklch(0.26 0.02 255);
+  --chart-1: oklch(0.62 0.145 250);
+  --chart-2: oklch(0.7 0.14 152);
+  --chart-3: oklch(0.79 0.13 82);
+  --chart-4: oklch(0.68 0.16 300);
+  --chart-5: oklch(0.65 0.17 20);
+  --sidebar: oklch(0.235 0.015 258);
+  --sidebar-foreground: oklch(0.94 0.006 250);
+  --sidebar-primary: oklch(0.62 0.145 250);
+  --sidebar-primary-foreground: oklch(0.99 0.004 250);
+  --sidebar-accent: oklch(0.27 0.016 258);
+  --sidebar-accent-foreground: oklch(0.94 0.006 250);
+  --sidebar-border: oklch(0.31 0.016 258);
+  --sidebar-ring: oklch(0.66 0.15 250);
 }
 
 .dark {
@@ -140,5 +159,14 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code,
+  pre,
+  textarea,
+  input[aria-label="Terminal-Eingabe"] {
+    font-family: var(--font-mono);
   }
 }
