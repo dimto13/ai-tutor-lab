@@ -126,15 +126,20 @@ function validateEvent(
   return { ok: true };
 }
 
-function validateState(validation: Validation | undefined, scenario: Scenario): boolean {
+async function validateState(
+  validation: Validation | undefined,
+  scenario: Scenario,
+): Promise<boolean> {
   if (!validation) return false;
-  if (validation.kind === "all")
-    return validation.of.every((item) => validateState(item, scenario));
+  if (validation.kind === "all") {
+    const results = await Promise.all(validation.of.map((item) => validateState(item, scenario)));
+    return results.every(Boolean);
+  }
   if (validation.kind !== "state") return false;
 
   const adapter = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
   if (!adapter) return false;
-  const value = adapter.query(validation.selector);
+  const value = await adapter.query(validation.selector);
 
   if (Object.prototype.hasOwnProperty.call(validation, "equals") && value !== validation.equals)
     return false;
@@ -179,7 +184,9 @@ export function TrainingProvider({
   }, [progress, hydrated, scenario.id]);
 
   useEffect(() => {
-    const unsubscribe = workspaceBus.subscribe((event: WorkspaceEvent) => {
+    const runtime = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
+
+    const handleEvent = async (event: WorkspaceEvent) => {
       setProgress((p) => ({ ...p, lastAction: event.name }));
 
       if (mode === "explore") {
@@ -205,7 +212,7 @@ export function TrainingProvider({
       }
 
       if (mode === "challenge") {
-        if (!validateState(scenario.completionValidation, scenario)) return;
+        if (!(await validateState(scenario.completionValidation, scenario))) return;
         const challengeStep = scenario.steps[0];
         setProgress((p) => ({
           ...p,
@@ -263,8 +270,12 @@ export function TrainingProvider({
             : { kind: "error", message: result.message! },
         );
       }
-    });
-    return unsubscribe;
+    };
+
+    const subscriber = (event: WorkspaceEvent) => {
+      void handleEvent(event);
+    };
+    return runtime ? runtime.subscribe(subscriber) : workspaceBus.subscribe(subscriber);
   }, [scenario, mode]);
 
   useEffect(() => {
