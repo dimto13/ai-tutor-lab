@@ -1,0 +1,39 @@
+{
+  "id": "vscode-basics.challenge",
+  "moduleId": "vscode-basics",
+  "mode": "challenge",
+  "learningLayer": "tool",
+  "title": "Visual Studio Code – Challenge",
+  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Entscheidend ist der Endzustand, nicht dein Klickweg.",
+  "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator"
+  },
+  "estimatedMinutes": 6,
+  "points": 100,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      { "kind": "state", "selector": "workspace.contextOpen", "equals": true },
+      { "kind": "state", "selector": "filesystem.files", "includes": "challenge.py" }
+    ]
+  },
+  "solutionComparison": [
+    "Einen bestehenden Ordner oder Workspace als Arbeitskontext öffnen.",
+    "Im Explorer innerhalb des Projektordners eine neue Datei challenge.py anlegen.",
+    "Der konkrete Klickweg darf abweichen; bewertet wird nur, ob Arbeitskontext und Zieldatei vorhanden sind."
+  ],
+  "steps": [
+    {
+      "id": "challenge_goal",
+      "title": "Bestehendes Projekt öffnen und Datei anlegen",
+      "description": "Du bekommst nur Ziel und Erfolgskriterien. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
+      "instruction": "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.py an.",
+      "why": "Die Challenge prüft, ob du die Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
+      "helpLevels": ["Überlege zuerst, wie VS Code einen Projektkontext öffnet.", "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.", "Erfolgskriterien: Arbeitskontext geöffnet und challenge.py vorhanden."],
+      "successMessage": "Challenge erfüllt. Der Endzustand entspricht den Erfolgskriterien."
+    }
+  ]
+}

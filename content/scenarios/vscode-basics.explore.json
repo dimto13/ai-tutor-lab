@@ -1,0 +1,43 @@
+{
+  "id": "vscode-basics.explore",
+  "moduleId": "vscode-basics",
+  "mode": "explore",
+  "learningLayer": "tool",
+  "title": "Visual Studio Code – Explorer-Modus",
+  "description": "Erkunde die Oberfläche frei. Klicke auf Bereiche und Bedienelemente; das Training erklärt ihre Aufgabe ohne Fehlermeldungen oder vorgegebene Reihenfolge.",
+  "learningObjectives": ["understand_vscode_ui", "understand_workspace"],
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator"
+  },
+  "estimatedMinutes": 8,
+  "points": 100,
+  "exploreTargets": [
+    "vscode.menu.file",
+    "vscode.activityBar.explorer",
+    "vscode.activityBar.search",
+    "vscode.activityBar.scm",
+    "vscode.activityBar.extensions",
+    "vscode.sideBar",
+    "vscode.editor",
+    "vscode.panel.terminal",
+    "vscode.panel.problems",
+    "vscode.panel.output",
+    "vscode.statusBar",
+    "vscode.menu.file.openFolder",
+    "vscode.menu.file.openWorkspace",
+    "vscode.workspace.context"
+  ],
+  "steps": [
+    {
+      "id": "explore_surface",
+      "title": "Oberfläche frei erkunden",
+      "description": "Es gibt keine richtige Reihenfolge. Untersuche die sichtbaren Bereiche und öffne bei Bedarf File-Menü, Workspace und Panel.",
+      "instruction": "Klicke auf Elemente der VS-Code-Oberfläche, die du kennenlernen möchtest.",
+      "why": "Im Explorer-Modus baust du zunächst ein mentales Modell der Oberfläche auf, bevor du konkrete Abläufe übst.",
+      "helpLevels": ["Klicke auf einen Bereich, den du noch nicht kennst.", "Öffne auch File-Menü und Panel, damit weitere Bereiche sichtbar werden.", "Der Fortschritt zeigt dir, welche Oberflächen noch fehlen."],
+      "successMessage": "Oberfläche vollständig erkundet."
+    }
+  ]
+}

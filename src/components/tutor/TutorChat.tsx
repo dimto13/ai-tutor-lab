@@ -1,66 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, Send, User } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
+import { findGlossaryConcept } from "@/lib/glossary";
 
 interface Message {
   role: "tutor" | "user";
   text: string;
 }
 
-const KNOWLEDGE: { match: RegExp; answer: string }[] = [
-  {
-    match: /repository|repo\b/i,
-    answer:
-      "Ein Repository ist ein Projektordner, dessen Änderungen Git vollständig aufzeichnet. Du kannst jederzeit sehen, wer was wann geändert hat, und zu älteren Zuständen zurückkehren.",
-  },
-  {
-    match: /git add|vormerk|staging|stage/i,
-    answer:
-      "git add merkt Änderungen für den nächsten Commit vor (Staging). So entscheidest du bewusst, welche Dateien in einen Speicherpunkt gehören – und welche noch nicht.",
-  },
-  {
-    match: /unterschied.*(git|github)|git.*github/i,
-    answer:
-      "Git ist das Versionsverwaltungs-Werkzeug auf deinem Rechner. GitHub ist eine Plattform, die Git-Repositories online hostet und Zusammenarbeit ergänzt (Pull Requests, Reviews, Automatisierung).",
-  },
-  {
-    match: /copilot/i,
-    answer:
-      "GitHub Copilot schlägt Code aus deiner Beschreibung in natürlicher Sprache vor. Du bleibst verantwortlich: Vorschlag lesen, prüfen, anpassen. In diesem POC ist Copilot simuliert.",
-  },
-  {
-    match: /commit/i,
-    answer:
-      "Ein Commit ist ein benannter Speicherpunkt der vorgemerkten Änderungen. Die Nachricht nach -m beschreibt kurz, was geändert wurde.",
-  },
-  {
-    match: /terminal|shell|kommandozeile/i,
-    answer:
-      "Das Terminal führt Textbefehle aus. Sehr viele Entwickler-Werkzeuge – darunter Git – werden dort gesteuert, weil das schnell und automatisierbar ist.",
-  },
-  {
-    match: /python|print/i,
-    answer:
-      'print(...) gibt Text aus. print("Hello AI Training") schreibt also genau diesen Satz in die Ausgabe – ein einfacher Test, dass alles funktioniert.',
-  },
-];
-
 const SUGGESTIONS = [
   "Was soll ich jetzt machen?",
   "Warum mache ich das?",
-  "Was ist ein Repository?",
+  "Was ist ein Workspace?",
   "Unterschied Git und GitHub?",
 ];
 
 export function TutorChat() {
-  const { scenario, progress, isFinished } = useTraining();
-  const step = scenario.steps.find((s) => s.id === progress.activeStepId);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "tutor",
-      text: "Hallo! Ich bin dein KI-Tutor. Ich kenne dein aktuelles Modul und deinen Schritt – frag mich jederzeit.",
-    },
-  ]);
+  const { scenario, mode, progress, isFinished } = useTraining();
+  const step = scenario.steps.find((s) => s.id === progress.activeStepId) ?? scenario.steps[0];
+  const [messages, setMessages] = useState<Message[]>(() =>
+    mode === "challenge"
+      ? []
+      : [
+          {
+            role: "tutor",
+            text: "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.",
+          },
+        ],
+  );
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -70,23 +37,34 @@ export function TutorChat() {
 
   const answerFor = (question: string): string => {
     const completed = scenario.steps.filter((s) => progress.statuses[s.id] === "COMPLETED").length;
+
     if (/was soll ich|wie weiter|nächste|weiter\?|jetzt machen|hänge/i.test(question)) {
-      if (isFinished || !step) return "Du hast alle Schritte abgeschlossen – das Modul ist fertig. 🎉";
-      return `${step.instruction} ${step.helpLevels[0]}`;
+      if (isFinished) return "Du hast das Modul abgeschlossen.";
+      if (mode === "explore") return "Erkunde die Oberfläche frei. Klicke auf einen Bereich, den du noch nicht untersucht hast; die Erklärung erscheint im Guide.";
+      if (!step) return "Für dieses Modul ist aktuell keine weitere Aufgabe offen.";
+      return mode === "challenge" ? step.instruction : `${step.instruction} ${step.helpLevels[0]}`;
     }
+
     if (/warum/i.test(question)) {
-      return step ? step.why : "Du hast das Modul abgeschlossen – es gibt keinen offenen Schritt mehr.";
+      return step ? step.why : "Für dieses Modul ist aktuell keine weitere Aufgabe offen.";
     }
+
     if (/wo bin ich|fortschritt|status/i.test(question)) {
-      return `Du bist in "${scenario.title}", Schritt ${completed + (step ? 1 : 0)} von ${scenario.steps.length}${
-        step ? `: ${step.title}` : " – abgeschlossen"
-      }.`;
+      if (mode === "explore") {
+        return `Du bist in "${scenario.title}" und hast ${progress.exploredTargets.length} Oberflächenbereiche untersucht.`;
+      }
+      return `Du bist in "${scenario.title}"${step ? ` bei "${step.title}"` : " und hast das Modul abgeschlossen"}. ${completed} Schritte sind abgeschlossen.`;
     }
-    const hit = KNOWLEDGE.find((k) => k.match.test(question));
-    if (hit) return hit.answer;
+
+    const concept = findGlossaryConcept(question);
+    if (concept) {
+      const wantsDepth = /genau|detail|technisch|vertief|tiefer|ausführ/i.test(question);
+      return wantsDepth ? `${concept.simple} ${concept.advanced}` : concept.simple;
+    }
+
     return step
-      ? `Dazu habe ich im POC keine vorbereitete Antwort. Bezogen auf deinen aktuellen Schritt "${step.title}": ${step.instruction}`
-      : "Dazu habe ich im POC keine vorbereitete Antwort.";
+      ? `Dazu gibt es im zentralen Begriffskatalog keine vorbereitete Definition. Bezogen auf die aktuelle Aufgabe: ${step.instruction}`
+      : "Dazu gibt es im zentralen Begriffskatalog keine vorbereitete Definition.";
   };
 
   const send = (text: string) => {
@@ -94,15 +72,21 @@ export function TutorChat() {
     if (!question) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", text: question }]);
-    setTimeout(() => setMessages((m) => [...m, { role: "tutor", text: answerFor(question) }]), 350);
+    setTimeout(() => setMessages((m) => [...m, { role: "tutor", text: answerFor(question) }]), 250);
   };
 
   return (
-    <div className="flex max-h-[46%] min-h-[280px] flex-col border-t border-border">
+    <div className="flex max-h-[46%] min-h-[250px] flex-col border-t border-border">
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Bot className="h-4 w-4 text-accent" /> KI-Tutor
+        {mode === "challenge" ? <span className="ml-auto normal-case font-normal">nur auf Anfrage</span> : null}
       </div>
       <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3">
+        {messages.length === 0 ? (
+          <p className="py-3 text-[12px] leading-relaxed text-muted-foreground">
+            In der Challenge gibt der Tutor keine automatische Hilfestellung. Stelle eine Frage, wenn du Unterstützung möchtest.
+          </p>
+        ) : null}
         {messages.map((m, i) => (
           <div key={i} className="flex gap-2">
             <div
@@ -122,17 +106,19 @@ export function TutorChat() {
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-1.5 px-4 pb-2">
-        {SUGGESTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => send(s)}
-            className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+      {mode !== "challenge" ? (
+        <div className="flex flex-wrap gap-1.5 px-4 pb-2">
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              onClick={() => send(s)}
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="flex items-center gap-2 border-t border-border p-3">
         <input
           value={input}
