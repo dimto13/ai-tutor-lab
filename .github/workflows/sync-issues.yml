@@ -1,0 +1,32 @@
+name: Backlog nach Issues synchronisieren
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Änderungen wirklich ausführen (sonst Dry Run)"
+        type: boolean
+        default: false
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pyyaml requests
+      - name: Synchronisieren
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            python3 scripts/sync_github.py --apply
+          else
+            python3 scripts/sync_github.py
+          fi
