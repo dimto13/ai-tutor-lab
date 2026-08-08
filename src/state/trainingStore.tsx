@@ -173,7 +173,6 @@ export function TrainingProvider({
 
   useEffect(() => {
     setHydrated(false);
-    getRuntimeAdapter(scenario.environment?.runtimeAdapterId)?.reset?.();
     setProgress(load(scenario));
     setHelpLevel(0);
     setFeedback(null);
