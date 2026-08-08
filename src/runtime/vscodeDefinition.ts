@@ -102,8 +102,6 @@ export const VSCODE_RUNTIME_DEFINITION = {
   ],
 } as const satisfies RuntimeReferenceDefinition;
 
-export function getVscodeSurfaceTarget(
-  ref: UiTargetRef,
-): RuntimeSurfaceDescription | null {
+export function getVscodeSurfaceTarget(ref: UiTargetRef): RuntimeSurfaceDescription | null {
   return VSCODE_RUNTIME_DEFINITION.surface.find((entry) => entry.ref === ref) ?? null;
 }

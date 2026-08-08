@@ -219,9 +219,7 @@ const glossaryKeys = new Set(
   glossaryResult.success ? glossaryResult.data.concepts.map((concept) => concept.key) : [],
 );
 const objectiveIds = new Set(
-  objectivesResult.success
-    ? objectivesResult.data.objectives.map((objective) => objective.id)
-    : [],
+  objectivesResult.success ? objectivesResult.data.objectives.map((objective) => objective.id) : [],
 );
 
 if (glossaryResult.success) {
