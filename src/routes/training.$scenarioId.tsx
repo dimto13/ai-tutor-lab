@@ -10,13 +10,12 @@ import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
 export const Route = createFileRoute("/training/$scenarioId")({
   head: () => ({
     meta: [
-      { title: "Git & Copilot Grundlagen – AI Training Lab" },
+      { title: "Interaktives Training – AI Training Lab" },
       {
         name: "description",
-        content:
-          "Interaktives Training in simulierter VS-Code-Umgebung: Repository öffnen, Datei erstellen, Git nutzen und Copilot einsetzen.",
+        content: "Interaktives Training in einer simulierten Arbeitsumgebung mit KI-Tutor und automatischer Validierung.",
       },
-      { property: "og:title", content: "Git & Copilot Grundlagen – AI Training Lab" },
+      { property: "og:title", content: "Interaktives Training – AI Training Lab" },
       {
         property: "og:description",
         content: "Schritt-für-Schritt geführtes Training mit KI-Tutor und automatischer Validierung.",
@@ -27,8 +26,9 @@ export const Route = createFileRoute("/training/$scenarioId")({
 });
 
 function TrainingRoute() {
+  const { scenarioId } = Route.useParams();
   return (
-    <TrainingProvider>
+    <TrainingProvider scenarioId={scenarioId}>
       <TrainingLayout />
     </TrainingProvider>
   );
