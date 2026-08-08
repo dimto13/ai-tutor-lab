@@ -1,9 +1,7 @@
-name: AITP-80 regenerate npm lockfile
+name: Regenerate npm lockfile
 
 on:
-  push:
-    branches:
-      - feature/aitp-80-remove-lovable-tooling
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,17 +10,15 @@ jobs:
   refresh-lockfile:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout current branch
         uses: actions/checkout@v4
-        with:
-          ref: feature/aitp-80-remove-lovable-tooling
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Regenerate lockfile from clean state
+      - name: Regenerate and verify lockfile
         run: |
           rm -rf node_modules package-lock.json
           npm install --install-strategy=nested --ignore-scripts
@@ -38,5 +34,5 @@ jobs:
             echo "package-lock.json already up to date"
             exit 0
           fi
-          git commit -m "AITP-80 regenerate verified npm lockfile"
-          git push origin HEAD:feature/aitp-80-remove-lovable-tooling
+          git commit -m "chore: regenerate verified npm lockfile"
+          git push
