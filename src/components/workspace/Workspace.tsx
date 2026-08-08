@@ -429,7 +429,9 @@ export function Workspace() {
             ) : view === "extensions" ? (
               <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
                 <p className="text-foreground">GitHub Copilot</p>
-                <p>{copilotIntegrated ? "Installiert · aktiviert (simuliert)" : "Nicht aktiviert"}</p>
+                <p>
+                  {copilotIntegrated ? "Installiert · aktiviert (simuliert)" : "Nicht aktiviert"}
+                </p>
               </div>
             ) : !repoOpen ? (
               <div className="px-2 py-3">
@@ -559,10 +561,7 @@ export function Workspace() {
             )}
             {copilotIntegrated ? (
               <div className="ml-auto flex items-center pr-2">
-                <CopilotPanel
-                  activeFile={activeFile}
-                  onApplySuggestion={applyCopilotSuggestion}
-                />
+                <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
               </div>
             ) : null}
           </div>
