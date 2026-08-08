@@ -13,14 +13,12 @@ export const Route = createFileRoute("/training/$scenarioId")({
       { title: "Interaktives Training – AI Training Lab" },
       {
         name: "description",
-        content:
-          "Interaktives Training in einer simulierten Arbeitsumgebung mit KI-Tutor und automatischer Validierung.",
+        content: "Interaktives Training in einer simulierten Arbeitsumgebung mit KI-Tutor und automatischer Validierung.",
       },
       { property: "og:title", content: "Interaktives Training – AI Training Lab" },
       {
         property: "og:description",
-        content:
-          "Schritt-für-Schritt geführtes Training mit KI-Tutor und automatischer Validierung.",
+        content: "Interaktives Training mit Explore-, Guided- und Challenge-Modus.",
       },
     ],
   }),
@@ -37,12 +35,11 @@ function TrainingRoute() {
 }
 
 function TrainingLayout() {
-  const { scenario, progress, percent, completedCount, isFinished, helpLevel } = useTraining();
+  const { scenario, mode, progress, percent, completedCount, isFinished, helpLevel, scoreMultiplier } = useTraining();
   const [highlightsOn, setHighlightsOn] = useState(true);
   const step = scenario.steps.find((s) => s.id === progress.activeStepId);
-  const stepNumber = step
-    ? scenario.steps.findIndex((s) => s.id === step.id) + 1
-    : scenario.steps.length;
+  const stepNumber = step ? scenario.steps.findIndex((s) => s.id === step.id) + 1 : scenario.steps.length;
+  const exploreTotal = scenario.exploreTargets?.length ?? 0;
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
@@ -53,29 +50,37 @@ function TrainingLayout() {
         </Link>
         <span className="h-4 w-px bg-border" />
         <span className="truncate text-[13px] text-muted-foreground">{scenario.title}</span>
+        <span className="rounded border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
+          {mode} ×{scoreMultiplier}
+        </span>
         <span className="h-4 w-px bg-border" />
         <span className="whitespace-nowrap text-[13px] text-foreground">
-          Schritt {Math.min(stepNumber, scenario.steps.length)} von {scenario.steps.length}
+          {mode === "explore"
+            ? `${completedCount} von ${exploreTotal} erkundet`
+            : mode === "challenge"
+              ? isFinished
+                ? "Challenge erfüllt"
+                : "Endzustand offen"
+              : `Schritt ${Math.min(stepNumber, scenario.steps.length)} von ${scenario.steps.length}`}
         </span>
         <div className="flex w-40 items-center gap-2">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-accent transition-all"
-              style={{ width: `${percent}%` }}
-            />
+            <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${percent}%` }} />
           </div>
           <span className="text-[11px] text-muted-foreground">{percent} %</span>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <button
-            onClick={() => setHighlightsOn((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
-            title="Visuelle Führung ein-/ausschalten"
-          >
-            {highlightsOn ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-            Highlights
-          </button>
+          {mode === "guided" ? (
+            <button
+              onClick={() => setHighlightsOn((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+              title="Visuelle Führung ein-/ausschalten"
+            >
+              {highlightsOn ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              Highlights
+            </button>
+          ) : null}
           <span className="text-[13px] text-muted-foreground">Maria Schmidt</span>
           <Link
             to="/"
@@ -90,20 +95,21 @@ function TrainingLayout() {
         <CompletionScreen />
       ) : (
         <div className="flex min-h-0 flex-1">
-          <Workspace />
+          <Workspace key={scenario.id} />
           <GuidePanel />
         </div>
       )}
 
-      {!isFinished && highlightsOn && step?.highlightTarget ? (
+      {!isFinished && mode === "guided" && highlightsOn && step?.highlightTarget ? (
         <HighlightOverlay
           targetId={step.highlightTarget}
+          runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           tooltip={step.highlightTooltip}
           strong={helpLevel >= 3}
         />
       ) : null}
 
-      <p className="sr-only">{completedCount} Schritte abgeschlossen</p>
+      <p className="sr-only">{completedCount} Fortschrittseinheiten abgeschlossen</p>
     </div>
   );
 }

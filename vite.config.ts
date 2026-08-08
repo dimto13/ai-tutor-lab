@@ -5,11 +5,8 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
 /**
- * Native TanStack Start/Vite setup.
- *
- * src/server.ts is discovered by TanStack Start as the custom server entry.
- * Nitro keeps the production build runtime-agnostic so the AWS Amplify deployment
- * can be configured independently from the application build.
+ * Native TanStack Start/Vite setup without tooling from the original POC environment.
+ * src/server.ts remains the custom server entry used by TanStack Start.
  */
 export default defineConfig({
   resolve: {

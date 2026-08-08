@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "language": "de",
   "concepts": [
     {
@@ -9,6 +9,14 @@
       "simple": "Die schmale Leiste ganz links in VS Code. Mit ihren Symbolen wechselst du zwischen Explorer, Suche, Source Control und Extensions.",
       "advanced": "Die Activity Bar wählt einen primären Arbeitsbereich aus. Der Inhalt dieses Bereichs erscheint daneben in der Side Bar.",
       "uiTargets": ["vscode.activityBar.explorer", "vscode.activityBar.search", "vscode.activityBar.scm", "vscode.activityBar.extensions"]
+    },
+    {
+      "key": "vscode.file_menu",
+      "term": "File-Menü",
+      "aliases": ["File", "Datei-Menü"],
+      "simple": "Im File-Menü öffnest du Dateien, Ordner und gespeicherte Workspaces und legst damit deinen Arbeitskontext fest.",
+      "advanced": "Die Befehle Open Folder und Open Workspace führen zu unterschiedlichen Workspace-Typen. Das Menü ist deshalb ein zentraler Einstiegspunkt für den Arbeitskontext.",
+      "uiTargets": ["vscode.menu.file"]
     },
     {
       "key": "vscode.side_bar",
@@ -21,10 +29,34 @@
     {
       "key": "vscode.explorer",
       "term": "Explorer",
-      "aliases": ["Datei-Explorer"],
-      "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts.",
+      "aliases": ["Datei-Explorer", "Dateibaum"],
+      "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts und bietet Dateiaktionen wie Neue Datei.",
       "advanced": "Der Explorer ist eine View in der Side Bar. Bei einem Multi-Root-Workspace kann er mehrere Stammordner gleichzeitig darstellen.",
-      "uiTargets": ["vscode.activityBar.explorer", "vscode.explorer.tree"]
+      "uiTargets": ["vscode.activityBar.explorer", "vscode.explorer.tree", "vscode.explorer.newFile"]
+    },
+    {
+      "key": "vscode.search",
+      "term": "Suche",
+      "aliases": ["Search", "Volltextsuche"],
+      "simple": "Die Suche findet Text über Dateien im aktuell geöffneten Arbeitskontext hinweg.",
+      "advanced": "Die Search View arbeitet auf dem Workspace und kann Dateien einschließen oder ausschließen. Sie ist von der Suche innerhalb einer einzelnen Datei getrennt.",
+      "uiTargets": ["vscode.activityBar.search"]
+    },
+    {
+      "key": "vscode.source_control",
+      "term": "Source Control",
+      "aliases": ["Quellcodeverwaltung", "SCM"],
+      "simple": "Source Control zeigt erkannte Versionsverwaltungs-Änderungen im aktuellen Arbeitskontext.",
+      "advanced": "Die View stellt Funktionen eines Versionsverwaltungssystems wie Git dar. VS Code selbst ist dabei die Oberfläche; das Repository bleibt ein eigenes fachliches Konzept.",
+      "uiTargets": ["vscode.activityBar.scm"]
+    },
+    {
+      "key": "vscode.extensions",
+      "term": "Extensions",
+      "aliases": ["Erweiterungen", "Extension Marketplace"],
+      "simple": "Extensions erweitern VS Code um zusätzliche Sprachen, Werkzeuge und Funktionen.",
+      "advanced": "Extensions laufen als Erweiterungen der IDE und können Views, Befehle, Statusinformationen und Sprachunterstützung hinzufügen.",
+      "uiTargets": ["vscode.activityBar.extensions"]
     },
     {
       "key": "vscode.editor",
@@ -41,6 +73,30 @@
       "simple": "Das Panel ist der Bereich unter dem Editor. Dort findest du unter anderem Terminal, Problems und Output.",
       "advanced": "Terminal, Problems und Output sind unterschiedliche Views innerhalb des Panels; das Terminal ist nicht das Panel selbst.",
       "uiTargets": ["vscode.panel.terminal", "vscode.panel.problems", "vscode.panel.output"]
+    },
+    {
+      "key": "vscode.terminal",
+      "term": "Terminal",
+      "aliases": ["Integrated Terminal", "Shell"],
+      "simple": "Das integrierte Terminal führt Textbefehle direkt im Kontext deines geöffneten Projekts aus.",
+      "advanced": "Das Terminal ist eine View im Panel. Es startet eine Shell und übernimmt typischerweise den aktuellen Workspace-Ordner als Arbeitsverzeichnis.",
+      "uiTargets": ["vscode.panel.terminal"]
+    },
+    {
+      "key": "vscode.problems",
+      "term": "Problems",
+      "aliases": ["Probleme", "Fehlerliste"],
+      "simple": "Problems sammelt erkannte Fehler und Warnungen aus Dateien deines Arbeitskontexts.",
+      "advanced": "Diagnosen stammen beispielsweise von Sprachservern, Lintern oder Compilern und können direkt zu betroffenen Stellen im Editor führen.",
+      "uiTargets": ["vscode.panel.problems"]
+    },
+    {
+      "key": "vscode.output",
+      "term": "Output",
+      "aliases": ["Ausgabe"],
+      "simple": "Output zeigt Protokoll- und Statusausgaben von VS Code und installierten Erweiterungen.",
+      "advanced": "Verschiedene Komponenten stellen eigene Output Channels bereit. Das unterscheidet die View vom interaktiven Terminal.",
+      "uiTargets": ["vscode.panel.output"]
     },
     {
       "key": "vscode.status_bar",
@@ -61,10 +117,18 @@
     {
       "key": "vscode.workspace",
       "term": "Workspace",
-      "aliases": ["VS Code Workspace", ".code-workspace"],
+      "aliases": ["VS Code Workspace", ".code-workspace", "Multi-Root Workspace"],
       "simple": "Ein Workspace beschreibt deinen Arbeitskontext in VS Code. Ein gespeicherter Workspace kann mehrere Ordner gemeinsam öffnen.",
       "advanced": "Eine .code-workspace-Datei kann mehrere Root-Ordner sowie Workspace-spezifische Einstellungen und Extension-Empfehlungen speichern. Ein einzelner geöffneter Ordner ist bereits ein einfacher Single-Folder-Workspace, während ein gespeicherter Multi-Root-Workspace mehrere Ordner zusammenfasst.",
       "uiTargets": ["vscode.menu.file.openWorkspace", "vscode.workspace.context"]
+    },
+    {
+      "key": "vscode.extension",
+      "term": "Extension",
+      "aliases": ["Erweiterung", "VS Code Extension"],
+      "simple": "Eine Extension ist ein installierbares Zusatzmodul für VS Code.",
+      "advanced": "Extensions können neue Befehle, Editorfunktionen, Views, Sprachunterstützung und Integrationen bereitstellen. Sie laufen getrennt vom eigentlichen Projektinhalt.",
+      "uiTargets": ["vscode.activityBar.extensions"]
     },
     {
       "key": "git.repository",
@@ -73,6 +137,78 @@
       "simple": "Ein Git-Repository ist ein Projektbereich, dessen Änderungen Git versioniert.",
       "advanced": "Repository und VS-Code-Workspace sind verschiedene Konzepte: Ein Workspace beschreibt den Editor-Arbeitskontext; ein Git-Repository beschreibt den von Git versionierten Bereich. Ein Workspace kann mehrere Ordner und damit auch mehrere Repositories enthalten.",
       "uiTargets": ["vscode.activityBar.scm"]
+    },
+    {
+      "key": "git.working_tree",
+      "term": "Working Tree",
+      "aliases": ["Working Directory", "Arbeitsbaum"],
+      "simple": "Der Working Tree ist der aktuell ausgecheckte Dateistand, an dem du gerade arbeitest.",
+      "advanced": "Git unterscheidet Working Tree, Staging Area und Commit-Historie. Änderungen im Working Tree sind noch nicht automatisch Teil des nächsten Commits.",
+      "uiTargets": []
+    },
+    {
+      "key": "git.stage",
+      "term": "Stage",
+      "aliases": ["Staging", "Staging Area", "Index", "git add"],
+      "simple": "Die Stage ist die Auswahl der Änderungen, die in den nächsten Commit aufgenommen werden sollen.",
+      "advanced": "Mit git add wird der gewünschte Dateistand in den Git-Index übernommen. Dadurch können nur bestimmte Änderungen für einen Commit vorbereitet werden.",
+      "uiTargets": ["vscode.activityBar.scm"]
+    },
+    {
+      "key": "git.commit",
+      "term": "Commit",
+      "aliases": ["git commit", "Speicherpunkt"],
+      "simple": "Ein Commit ist ein nachvollziehbarer Speicherpunkt der zuvor vorgemerkten Änderungen.",
+      "advanced": "Ein Commit referenziert einen vollständigen Projektzustand, besitzt Metadaten und verweist auf seine Vorgänger. Die Commit-Nachricht beschreibt den Zweck der Änderung.",
+      "uiTargets": ["vscode.activityBar.scm"]
+    },
+    {
+      "key": "git.branch",
+      "term": "Branch",
+      "aliases": ["Git Branch", "Zweig"],
+      "simple": "Ein Branch ist eine bewegliche Referenz auf eine Entwicklungslinie in der Git-Historie.",
+      "advanced": "Branches ermöglichen parallele Entwicklungsstände. Ein neuer Commit verschiebt die aktuell ausgecheckte Branch-Referenz auf den neuen Commit.",
+      "uiTargets": ["vscode.statusBar"]
+    },
+    {
+      "key": "github.platform",
+      "term": "GitHub",
+      "aliases": ["GitHub Plattform"],
+      "simple": "GitHub ist eine Plattform zum Speichern von Git-Repositories und für Zusammenarbeit wie Pull Requests und Reviews.",
+      "advanced": "GitHub baut auf Git auf, ergänzt aber Hosting, Berechtigungen, Pull Requests, Issues, Actions und weitere Kollaborationsfunktionen.",
+      "uiTargets": []
+    },
+    {
+      "key": "git.github_difference",
+      "term": "Unterschied Git und GitHub",
+      "aliases": ["Git vs GitHub", "Git und GitHub"],
+      "simple": "Git ist das Versionsverwaltungswerkzeug. GitHub ist eine Plattform, die Git-Repositories hostet und Zusammenarbeit ergänzt.",
+      "advanced": "Git funktioniert lokal und unabhängig von GitHub. GitHub stellt Remotes, Rechte, Pull Requests, Reviews und Automatisierung rund um Git-Repositories bereit.",
+      "uiTargets": []
+    },
+    {
+      "key": "ai.prompt",
+      "term": "Prompt",
+      "aliases": ["KI-Anweisung", "Anfrage an die KI"],
+      "simple": "Ein Prompt ist die Anweisung oder Frage, die du an ein KI-System richtest.",
+      "advanced": "Ein guter Prompt beschreibt Ziel, relevanten Kontext, Randbedingungen und gewünschtes Ergebnis so präzise wie nötig.",
+      "uiTargets": []
+    },
+    {
+      "key": "ai.context",
+      "term": "Kontext",
+      "aliases": ["AI Context", "KI-Kontext"],
+      "simple": "Kontext sind die Informationen, die eine KI zusätzlich zu deiner eigentlichen Frage für ihre Antwort berücksichtigen kann.",
+      "advanced": "Kontext kann aus geöffneten Dateien, ausgewähltem Text, Gesprächshistorie oder explizit bereitgestellten Informationen bestehen. Relevanz und Datenschutz sind dabei entscheidend.",
+      "uiTargets": []
+    },
+    {
+      "key": "github.copilot",
+      "term": "GitHub Copilot",
+      "aliases": ["Copilot", "AI Coding Assistant"],
+      "simple": "GitHub Copilot ist ein KI-Assistent für Entwicklungsaufgaben, der unter anderem Chat und Codevorschläge bereitstellt.",
+      "advanced": "Copilot kann je nach Funktion Editor- und Projektkontext verwenden. Vorschläge müssen fachlich geprüft werden; die Verantwortung bleibt beim Nutzer.",
+      "uiTargets": ["vscode.activityBar.extensions"]
     }
   ]
 }

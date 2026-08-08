@@ -39,7 +39,7 @@ Node-Version über `.nvmrc` ausgewählt.
 git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
 nvm use
-npm ci
+npm ci --install-strategy=nested
 npm run dev:local
 ```
 
@@ -52,17 +52,17 @@ für Zugriffe von einem anderen Rechner die von Vite ausgegebene Netzwerkadresse
 IP-Adresse des Entwicklungsrechners zusammen mit dem angezeigten Port.
 
 Der Build verwendet die nativen Plugins von TanStack Start, Vite, React, Tailwind CSS und
-Nitro. Es besteht keine Abhängigkeit mehr zu der ursprünglichen Prototyping-Umgebung.
+Nitro. Es besteht keine Build-Abhängigkeit mehr zur ursprünglichen Prototyping-Umgebung.
 
 Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
 
 ```sh
 git pull
-npm ci
+npm ci --install-strategy=nested
 npm run dev:local
 ```
 
-Vor einem Push können TypeScript und Produktions-Build gemeinsam geprüft werden:
+Vor einem Push können Content, Linting, TypeScript und Produktions-Build gemeinsam geprüft werden:
 
 ```sh
 npm run check

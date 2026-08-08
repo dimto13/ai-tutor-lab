@@ -14,7 +14,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run build",
+    "validate:content": "node --experimental-strip-types scripts/validate-content.ts",
+    "check": "npm run validate:content && npm run lint && npm run typecheck && npm run build",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -80,7 +81,7 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-react-hooks": "^6.1.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",

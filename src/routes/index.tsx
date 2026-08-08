@@ -8,6 +8,9 @@ import {
   GitBranch,
   Github,
   Code2,
+  Search,
+  Route as RouteIcon,
+  Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useStoredProgressPercent } from "@/state/trainingStore";
@@ -24,17 +27,25 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Meine Trainings – AI Training Lab" },
       {
         property: "og:description",
-        content:
-          "Geführte, interaktive Trainings zu Entwicklerwerkzeugen und KI-Workflows für Unternehmen.",
+        content: "Interaktive Trainings zu Entwicklerwerkzeugen und KI-Workflows für Unternehmen.",
       },
     ],
   }),
   component: Dashboard,
 });
 
+type TrainingModeOption = {
+  scenarioId: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  multiplier: string;
+};
+
 type TrainingCardModel = {
   id: string;
   scenarioId: string | null;
+  modes?: TrainingModeOption[];
   title: string;
   description: string;
   steps?: number;
@@ -46,14 +57,36 @@ type TrainingCardModel = {
 const toolTrainings: TrainingCardModel[] = [
   {
     id: "vscode-basics",
-    scenarioId: "vscode-basics",
+    scenarioId: null,
     title: "Visual Studio Code – Grundlagen",
     description:
       "Oberfläche, Activity Bar, Explorer, Ordner, Workspaces, Editor und Panel verstehen und selbst bedienen.",
-    steps: 6,
     icon: Code2,
     available: true,
-    label: "IDE",
+    label: "IDE · 3 Modi",
+    modes: [
+      {
+        scenarioId: "vscode-basics.explore",
+        label: "Explore",
+        description: "Oberfläche frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "vscode-basics.guided",
+        label: "Guided",
+        description: "Schritt für Schritt lernen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "vscode-basics.challenge",
+        label: "Challenge",
+        description: "Ziel selbstständig erreichen",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
   },
   {
     id: "github-basics",
@@ -118,21 +151,16 @@ function Dashboard() {
       <header className="border-b border-border bg-panel">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-6">
           <GraduationCap className="h-5 w-5 text-accent" />
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            AI Training Lab
-          </span>
-          <span className="ml-auto text-xs text-muted-foreground">
-            Maria Schmidt · Contoso GmbH
-          </span>
+          <span className="text-sm font-semibold tracking-tight text-foreground">AI Training Lab</span>
+          <span className="ml-auto text-xs text-muted-foreground">Maria Schmidt · Contoso GmbH</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Meine Trainings</h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Lerne Werkzeuge zuerst einzeln kennen und wende sie danach in gemeinsamen Workflows an. So
-          bleiben Bedienwissen, Fachbegriffe und das Zusammenspiel der Tools klar voneinander
-          getrennt.
+          Lerne Werkzeuge zuerst einzeln kennen und wende sie danach in gemeinsamen Workflows an. So bleiben Bedienwissen,
+          Fachbegriffe und das Zusammenspiel der Tools klar voneinander getrennt.
         </p>
 
         <TrainingSection
@@ -182,8 +210,6 @@ function TrainingSection({
 }
 
 function TrainingCard({ training }: { training: TrainingCardModel }) {
-  const percent = useStoredProgressPercent(training.scenarioId);
-  const p = training.available ? (percent ?? 0) : 0;
   const Icon = training.icon;
 
   return (
@@ -195,20 +221,53 @@ function TrainingCard({ training }: { training: TrainingCardModel }) {
         <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
           {training.label ?? (training.steps ? `${training.steps} Schritte` : "Training")}
         </span>
-        {training.steps ? (
-          <span className="ml-auto text-[11px] text-muted-foreground">
-            {training.steps} Schritte
-          </span>
-        ) : null}
+        {training.steps ? <span className="ml-auto text-[11px] text-muted-foreground">{training.steps} Schritte</span> : null}
       </div>
 
-      <h3 className="mt-3 text-base font-semibold leading-snug text-foreground">
-        {training.title}
-      </h3>
-      <p className="mt-2 flex-1 text-[13px] leading-relaxed text-muted-foreground">
-        {training.description}
-      </p>
+      <h3 className="mt-3 text-base font-semibold leading-snug text-foreground">{training.title}</h3>
+      <p className="mt-2 flex-1 text-[13px] leading-relaxed text-muted-foreground">{training.description}</p>
 
+      {training.modes ? (
+        <div className="mt-4 space-y-2">
+          {training.modes.map((mode) => (
+            <ModeAction key={mode.scenarioId} mode={mode} />
+          ))}
+        </div>
+      ) : (
+        <SingleTrainingAction training={training} />
+      )}
+    </article>
+  );
+}
+
+function ModeAction({ mode }: { mode: TrainingModeOption }) {
+  const percent = useStoredProgressPercent(mode.scenarioId) ?? 0;
+  const Icon = mode.icon;
+  return (
+    <Link
+      to="/training/$scenarioId"
+      params={{ scenarioId: mode.scenarioId }}
+      className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-ring hover:bg-white/5"
+    >
+      <Icon className="h-4 w-4 shrink-0 text-accent" />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+          {mode.label} <span className="text-[10px] font-normal text-muted-foreground">{mode.multiplier}</span>
+        </span>
+        <span className="block truncate text-[11px] text-muted-foreground">{mode.description}</span>
+      </span>
+      <span className="text-[11px] text-muted-foreground">{percent > 0 ? `${percent}%` : "Start"}</span>
+      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+    </Link>
+  );
+}
+
+function SingleTrainingAction({ training }: { training: TrainingCardModel }) {
+  const percent = useStoredProgressPercent(training.scenarioId);
+  const p = training.available ? (percent ?? 0) : 0;
+
+  return (
+    <>
       <div className="mt-4">
         <div className="mb-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>
@@ -221,10 +280,7 @@ function TrainingCard({ training }: { training: TrainingCardModel }) {
           {training.available && p > 0 ? <span>{p} %</span> : null}
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-accent transition-all"
-            style={{ width: `${p}%` }}
-          />
+          <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${p}%` }} />
         </div>
       </div>
 
@@ -245,6 +301,6 @@ function TrainingCard({ training }: { training: TrainingCardModel }) {
           <PlayCircle className="h-4 w-4" /> In Vorbereitung
         </button>
       )}
-    </article>
+    </>
   );
 }

@@ -6,6 +6,8 @@ on:
       - main
       - "feature/**"
   pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -32,6 +34,9 @@ jobs:
             echo "Legacy Lovable build dependency detected."
             exit 1
           fi
+
+      - name: Validate scenario content
+        run: npm run validate:content
 
       - name: Lint
         run: npm run lint
