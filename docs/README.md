@@ -30,43 +30,43 @@ vom POC zur produktreifen Plattform.
 | `03-architektur.md` | Schichtenmodell, Runtime-Adapter, Event-Bus, Deployment-Stufen | Entwicklung |
 | `04-anforderungen.md` | Nummerierte funktionale/nicht-funktionale Anforderungen (FR/NFR) | Product, QA |
 | `05-gamification.md` | Punkte-, Kompetenz- und Nachweissystem | Product, Compliance |
-| `06-backlog.md` | Epics und Tickets mit Akzeptanzkriterien (generiert) | Umsetzung |
+| `06-backlog.md` | Ursprünglicher Planungsstand — **Archiv**, siehe [`../backlog/README.md`](../backlog/README.md) | Historie |
 | `07-roadmap.md` | Meilensteine M0–M6, Reihenfolge, Abbruchkriterien | Steuerung |
 | `08-offene-entscheidungen.md` | ADRs, Risiken, offene Fragen an dich | Entscheider |
 | `09-glossar.md` | Begriffe, damit Modelle konsistent bleiben | alle |
 | `10-dokumenten-check.md` | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary | Product, Security |
 | `../prompts/model-briefing.md` | Kompakter Kontext-Prompt für beliebige LLMs | dich |
 | `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug | dich |
-| `../backlog/backlog.yaml` | **Single Source of Truth** für alle Tickets | Tooling |
-| `../backlog/tickets.csv` | Import-Datei für Jira / Linear / Azure DevOps (CI-generiert) | Tooling |
+
+Die **aktuelle** Aufgabenlage steht nicht in einer Datei, sondern in den
+[GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues).
 
 ## Aufgabenverwaltung mit GitHub
 
-Das Backlog wird direkt in GitHub verwaltet — ohne separates Ticketsystem:
+Aufgaben werden **ausschließlich als GitHub Issues** geführt. Es gibt keine Backlog-Datei
+mehr, die parallel gepflegt werden müsste, und keinen Sync-Mechanismus — der Issue-Text ist
+die Quelle.
 
-| Backlog-Konzept | GitHub-Entsprechung |
+| Konzept | GitHub-Entsprechung |
 |---|---|
-| Ticket `AITP-x` | Issue mit Titelpräfix `AITP-x:` |
-| Epic `EP-xx` | Label `epic: EP-xx` |
-| Priorität M/S/C | Label `prio: must/should/could` |
-| Typ story/task/chore/spike | Label `type: …` |
+| Ticket | Issue, Titelpräfix `AITP-x:` bei fortgeführten Tickets aus der Erstplanung |
+| Epic | Eigenes Issue mit Label `type: epic`; zugehörige Tickets sind **Sub-Issues** davon |
+| Zuordnung zum Epic | zusätzlich Label `epic: EP-xx` (für Filter und Board-Gruppierung) |
+| Priorität | Label `prio: must/should/could` |
+| Typ | Label `type: story/task/chore/spike` |
 | Meilenstein M1–M6 | GitHub Milestone |
 | Akzeptanzkriterien | Checkboxen im Issue-Body |
 | Board/Tracking | [GitHub Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3) |
 
-**Erstbefüllung und spätere Synchronisation:**
+**Ein neues Issue anlegen:**
 
-```bash
-export GITHUB_TOKEN=<PAT mit Scope repo>
-python3 scripts/sync_github.py           # Dry Run — zeigt nur, was passieren würde
-python3 scripts/sync_github.py --apply   # legt Labels, Milestones und 71 Issues an
-```
-
-Alternativ ohne lokales Setup: GitHub → **Actions → "Backlog nach Issues synchronisieren"
-→ Run workflow** (Haken bei *apply* setzen). Der Sync ist idempotent — erneutes Ausführen
-aktualisiert bestehende Issues, statt Duplikate zu erzeugen, und lässt geschlossene Issues
-geschlossen. Bei offenen Issues bleiben abgehakte Akzeptanzkriterien und manuelle
-Zusatzlabels erhalten.
+1. Titel knapp und ergebnisorientiert formulieren.
+2. Body: kurze Beschreibung, darunter `### Akzeptanzkriterien` als Checkbox-Liste, darunter
+   Schätzung, betroffene Anforderungen (`FR-xx`/`NFR-xx`) und Abhängigkeiten als
+   Issue-Referenzen (`#97`).
+3. Labels setzen: `epic: EP-xx`, `prio: …`, `type: …`.
+4. Milestone zuweisen.
+5. Als Sub-Issue unter das passende Epic hängen.
 
 **Board:** Das [Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3)
 ist mit dem Repository verknüpft. Sein Auto-add-Workflow nimmt neue Issues auf; die
@@ -76,17 +76,19 @@ Ansichten `Meilensteine` und `Epics` müssen im Web-UI einmalig über **Group by
 View-Eigenschaft nicht schreiben kann.
 
 **Regeln:**
-1. Inhaltliche Änderungen an geplanten Tickets → `../backlog/backlog.yaml`, dann
-   `generate_backlog.py` + `sync_github.py --apply`. Nie den Issue-Text als Quelle behandeln.
-2. Statusarbeit (zuweisen, Board-Spalte, Checkboxen abhaken, schließen) → direkt im Issue.
-3. Spontane Aufgaben außerhalb des Plans → Issue-Template "Aufgabe", ohne `AITP-`-Präfix.
-4. Die CI (`backlog.yml`) regeneriert `06-backlog.md` und `tickets.csv` bei jeder Änderung am YAML automatisch.
+
+1. Inhaltliche Änderungen an einem Ticket → direkt im Issue-Text. Es gibt keine
+   vorgelagerte Datei mehr.
+2. Statusarbeit (zuweisen, Board-Spalte, Checkboxen abhaken, schließen) → ebenfalls im Issue.
+3. `backlog/` und `docs/06-backlog.md` sind eingefrorenes Archiv des Planungsstands vom
+   2026-08-08 und werden nicht mehr aktualisiert.
+4. Codeänderungen laufen über einen eigenen Branch und einen Pull Request; direkte Pushes
+   auf `main` sind gesperrt. Der PR referenziert das Issue (`Closes #123`).
 
 ## Arbeitsweise
 
-1. **Nur `../backlog/backlog.yaml` bearbeiten.** `06-backlog.md` und `backlog/tickets.csv`
-   werden von der CI automatisch generiert und committet (lokal: `python3 scripts/generate_backlog.py`).
-2. **Anforderungen bekommen IDs** (`FR-xx`, `NFR-xx`). Tickets referenzieren diese IDs.
+1. **Aufgaben leben in den Issues**, nicht in Dateien. Wer eine Aufgabe ändert, ändert das Issue.
+2. **Anforderungen bekommen IDs** (`FR-xx`, `NFR-xx`). Issues referenzieren diese IDs.
    Dadurch bleibt nachvollziehbar, welche Anforderung wo umgesetzt wird.
 3. **Beim Arbeiten mit einem neuen Modell** zuerst `../prompts/model-briefing.md` +
    `02-domaenenmodell.md` einspielen. Das reicht für die meisten Aufgaben und verhindert,
@@ -98,7 +100,6 @@ View-Eigenschaft nicht schreiben kann.
 ```
 ai-training-platform/
   docs/                  ← dieses Paket
-  backlog/
   apps/
     web/                 ← React/TS/Tailwind Frontend
   packages/

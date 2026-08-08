@@ -14,11 +14,11 @@ Hosting und Deployment ist AWS Amplify.
 
 | Bereich | Inhalt |
 |---|---|
+| [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues) | **Aufgabenverwaltung** — alle Tickets, Epics als Sub-Issue-Struktur |
 | [`docs/`](docs/README.md) | **Produkt- und Anforderungsdokumentation** — Vision, Domänenmodell, Architektur, Anforderungen, Gamification, Roadmap, offene Entscheidungen |
-| [`backlog/backlog.yaml`](backlog/backlog.yaml) | Single Source of Truth: 71 Tickets in 13 Epics |
 | [`prompts/model-briefing.md`](prompts/model-briefing.md) | Kontext-Briefing für jede LLM-Sitzung an diesem Projekt |
-| [`scripts/`](scripts/) | Backlog-Generator und GitHub-Issue-Sync |
 | `src/` | POC-Quellcode (React/TypeScript/Vite) — wird gemäß Meilenstein M1 refaktoriert |
+| [`backlog/`](backlog/README.md) | Archiv des ursprünglichen Planungsstands (nicht mehr gepflegt) |
 | [`docs/archiv/`](docs/archiv/poc-spezifikation.md) | Ursprüngliche POC-Spezifikation (abgelöst durch `docs/01`–`10`) |
 
 **Einstieg:** [`docs/README.md`](docs/README.md) — dort stehen Dokumentenlandkarte,
@@ -26,9 +26,16 @@ Arbeitsweise und die Anleitung zur Aufgabenverwaltung über GitHub Issues.
 
 ## Aufgabenverwaltung
 
-Das Backlog wird als GitHub Issues geführt: Actions → **„Backlog nach Issues
-synchronisieren“** → Run workflow (mit *apply*) erzeugt Labels, Milestones M1–M6 und alle
-Tickets. Details und Regeln: [`docs/README.md`](docs/README.md#aufgabenverwaltung-mit-github).
+Aufgaben werden ausschließlich als [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues)
+geführt und im [Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3)
+verfolgt. Ein neues Issue bekommt beim Anlegen Epic-Label, Prio-Label, Typ-Label und
+Milestone und wird als Sub-Issue unter das passende Epic gehängt. Details und Regeln:
+[`docs/README.md`](docs/README.md#aufgabenverwaltung-mit-github).
+
+## Beitragen
+
+Keine direkten Pushes auf `main` — Änderungen laufen über einen eigenen Branch und einen
+Pull Request.
 
 ## Lokale Entwicklung
 
@@ -67,5 +74,3 @@ Vor einem Push können Content, Linting, TypeScript und Produktions-Build gemein
 ```sh
 npm run check
 ```
-
-Für Backlog-Tooling zusätzlich: `pip install pyyaml requests`.
