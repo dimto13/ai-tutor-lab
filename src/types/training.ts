@@ -3,6 +3,7 @@ export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "VALIDATION_FA
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
 export type UiTargetRef = string;
+export type RuntimeSeed = Record<string, unknown>;
 
 export type WorkspaceEventName =
   | "explorer.opened"
@@ -17,9 +18,20 @@ export type WorkspaceEventName =
   | "copilot.prompt.submitted"
   | "ui.element.inspected";
 
+/** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
 export interface WorkspaceEvent {
   name: WorkspaceEventName;
   payload?: Record<string, unknown>;
+}
+
+/** Canonical event crossing the runtime/training boundary. */
+export interface TrainingEvent<P = unknown> {
+  id: string;
+  source: string;
+  type: string;
+  timestamp: string;
+  sessionId: string;
+  payload: P;
 }
 
 export interface ValidationResult {
@@ -69,6 +81,7 @@ export interface ScenarioEnvironment {
   productId: string;
   version: string;
   runtimeAdapterId: string;
+  seed?: RuntimeSeed;
 }
 
 export interface Scenario {
