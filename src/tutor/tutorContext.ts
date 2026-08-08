@@ -41,17 +41,14 @@ export function useTutorContext(): TutorContext {
     const completedStepIds = scenario.steps
       .filter((step) => progress.statuses[step.id] === "COMPLETED")
       .map((step) => step.id);
-    const currentStep =
-      scenario.steps.find((step) => step.id === progress.activeStepId) ?? null;
+    const currentStep = scenario.steps.find((step) => step.id === progress.activeStepId) ?? null;
 
     return {
       scenario: {
         id: scenario.id,
         title: scenario.title,
         description: scenario.description,
-        ...(scenario.learningObjectives
-          ? { learningObjectives: scenario.learningObjectives }
-          : {}),
+        ...(scenario.learningObjectives ? { learningObjectives: scenario.learningObjectives } : {}),
       },
       mode,
       currentStep,
