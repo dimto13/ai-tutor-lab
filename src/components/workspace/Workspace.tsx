@@ -43,6 +43,16 @@ const INITIAL_CONTENT: Record<string, string> = {
 
 const MENU_ITEMS = ["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Help"] as const;
 
+function toFileNodes(runtimeFiles: string[]): FileNode[] {
+  const baseNames = new Set(BASE_FILES.map((node) => node.name));
+  return [
+    ...BASE_FILES.filter((node) => node.kind === "folder" || runtimeFiles.includes(node.name)),
+    ...runtimeFiles
+      .filter((name) => !baseNames.has(name))
+      .map((name): FileNode => ({ name, kind: "file" })),
+  ];
+}
+
 export function Workspace() {
   const { mode } = useTraining();
   const [view, setView] = useState<View | null>(null);
@@ -65,9 +75,37 @@ export function Workspace() {
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
 
+  const runtimeRootRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const newFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const container = runtimeRootRef.current;
+    if (!container) return;
+
+    const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
+      if (reason !== "restore" && reason !== "reset") return;
+
+      setWorkspaceMode(runtimeState.workspaceMode);
+      setRepoOpen(runtimeState.workspaceMode !== "none");
+      setView(runtimeState.workspaceMode === "none" ? null : "explorer");
+      setFiles(toFileNodes(runtimeState.files));
+      setContents({ ...runtimeState.contents });
+      setTabs([...runtimeState.openTabs]);
+      setActiveFile(runtimeState.activeFile);
+      setPanelOpen(runtimeState.activePanel !== null);
+      if (runtimeState.activePanel) setActivePanel(runtimeState.activePanel);
+      setFileMenuOpen(false);
+      setNewFileName(null);
+    });
+
+    void vscodeRuntime.mount(container);
+    return () => {
+      unsubscribe();
+      void vscodeRuntime.unmount();
+    };
+  }, []);
 
   useEffect(() => {
     if (newFileName !== null) newFileRef.current?.focus();
@@ -138,6 +176,7 @@ export function Workspace() {
   const updateContent = (value: string) => {
     if (!activeFile) return;
     setContents((c) => ({ ...c, [activeFile]: value }));
+    vscodeRuntime.setFileContent(activeFile, value);
     workspaceBus.emit("file.updated", { filename: activeFile, content: value });
   };
 
@@ -213,7 +252,9 @@ export function Workspace() {
     const answer = "def add(a, b):\n    return a + b";
     setCopilotAnswer(answer);
     if (activeFile) {
-      setContents((c) => ({ ...c, [activeFile]: `${c[activeFile] ?? ""}\n\n${answer}\n` }));
+      const nextContent = `${contents[activeFile] ?? ""}\n\n${answer}\n`;
+      setContents((c) => ({ ...c, [activeFile]: nextContent }));
+      vscodeRuntime.setFileContent(activeFile, nextContent);
     }
     workspaceBus.emit("copilot.prompt.submitted", { prompt });
     setCopilotPrompt("");
@@ -237,7 +278,10 @@ export function Workspace() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor">
+    <div
+      ref={runtimeRootRef}
+      className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor"
+    >
       <div className="relative flex h-8 shrink-0 items-center border-b border-border bg-panel px-2 text-[12px] text-foreground/85">
         {MENU_ITEMS.map((item) => (
           <button
@@ -488,10 +532,8 @@ export function Workspace() {
                     aria-label={`${t} schließen`}
                     onClick={() => {
                       setTabs((tt) => tt.filter((x) => x !== t));
-                      if (activeFile === t) {
-                        setActiveFile(null);
-                        vscodeRuntime.setActiveFile(null);
-                      }
+                      if (activeFile === t) setActiveFile(null);
+                      vscodeRuntime.closeFile(t);
                     }}
                     className="text-muted-foreground hover:text-foreground"
                   >
@@ -588,7 +630,10 @@ export function Workspace() {
                   ))}
                 </div>
                 <button
-                  onClick={() => setPanelOpen(false)}
+                  onClick={() => {
+                    setPanelOpen(false);
+                    vscodeRuntime.setActivePanel(null);
+                  }}
                   aria-label="Panel schließen"
                   className="hover:text-foreground"
                 >
