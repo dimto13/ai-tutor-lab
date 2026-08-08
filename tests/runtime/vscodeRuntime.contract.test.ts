@@ -17,6 +17,16 @@ const targetRect = {
   toJSON: () => ({}),
 } as DOMRect;
 
+const seededRuntimeState = {
+  workspaceMode: "folder",
+  folders: ["seeded-project"],
+  files: ["seeded.py"],
+  contents: { "seeded.py": "print('seeded')\n" },
+  openTabs: ["seeded.py"],
+  activeFile: "seeded.py",
+  activePanel: "terminal",
+} as const;
+
 function createContainer(): HTMLElement {
   const target = {
     getBoundingClientRect: () => targetRect,
@@ -53,6 +63,11 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
       selector: "workspace.mode",
       expected: "none",
     },
+    seed: {
+      seed: seededRuntimeState,
+      selector: "editor.activeFile",
+      expected: "seeded.py",
+    },
     snapshot: {
       selector: "workspace.mode",
       expectedRestoredValue: "folder",
@@ -87,6 +102,29 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
       },
     },
   };
+});
+
+test("vscodeRuntime: publishes the supplied seed to presentation subscribers on mount", async () => {
+  let mountedPresentation: VscodeRuntimeState | null = null;
+  const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
+    if (reason === "mount") mountedPresentation = runtimeState;
+  });
+
+  try {
+    vscodeRuntime.reset();
+    await vscodeRuntime.mount(createContainer(), seededRuntimeState);
+    assert.ok(mountedPresentation);
+    assert.equal(mountedPresentation.workspaceMode, "folder");
+    assert.deepEqual(mountedPresentation.folders, ["seeded-project"]);
+    assert.deepEqual(mountedPresentation.files, ["seeded.py"]);
+    assert.equal(mountedPresentation.contents["seeded.py"], "print('seeded')\n");
+    assert.deepEqual(mountedPresentation.openTabs, ["seeded.py"]);
+    assert.equal(mountedPresentation.activeFile, "seeded.py");
+    assert.equal(mountedPresentation.activePanel, "terminal");
+  } finally {
+    unsubscribe();
+    await vscodeRuntime.unmount();
+  }
 });
 
 test("vscodeRuntime: never resolves targets from the global document after unmount", async () => {
