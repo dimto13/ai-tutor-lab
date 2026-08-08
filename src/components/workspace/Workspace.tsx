@@ -278,10 +278,7 @@ export function Workspace() {
   };
 
   return (
-    <div
-      ref={runtimeRootRef}
-      className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor"
-    >
+    <div ref={runtimeRootRef} className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor">
       <div className="relative flex h-8 shrink-0 items-center border-b border-border bg-panel px-2 text-[12px] text-foreground/85">
         {MENU_ITEMS.map((item) => (
           <button
