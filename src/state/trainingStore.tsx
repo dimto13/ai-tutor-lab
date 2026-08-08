@@ -101,14 +101,12 @@ function load(scenario: Scenario): TrainingProgress {
 }
 
 function eventPayload(event: TrainingEvent): Record<string, unknown> {
-  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) return {};
+  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload))
+    return {};
   return event.payload as Record<string, unknown>;
 }
 
-function validateEvent(
-  validation: Validation | undefined,
-  event: TrainingEvent,
-): ValidationResult {
+function validateEvent(validation: Validation | undefined, event: TrainingEvent): ValidationResult {
   if (!validation) return { ok: true };
   if (validation.kind !== "event") return { ok: false };
   if (validation.type !== event.type) return { ok: false };
