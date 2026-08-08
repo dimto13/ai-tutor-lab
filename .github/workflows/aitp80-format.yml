@@ -1,9 +1,7 @@
-name: AITP-80 format source files
+name: Format source files
 
 on:
-  push:
-    branches:
-      - feature/aitp-80-remove-lovable-tooling
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,8 +12,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: feature/aitp-80-remove-lovable-tooling
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,19 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --install-strategy=nested
 
-      - name: Format lint-blocking source files
-        run: |
-          npx prettier --write \
-            src/components/overlay/HighlightOverlay.tsx \
-            src/components/training/CompletionScreen.tsx \
-            src/components/training/GuidePanel.tsx \
-            src/components/tutor/TutorChat.tsx \
-            src/components/workspace/Workspace.tsx \
-            src/routes/index.tsx \
-            'src/routes/training.$scenarioId.tsx' \
-            src/scenarios/git-basics.ts \
-            src/scenarios/vscode-basics.ts \
-            src/state/trainingStore.tsx
+      - name: Format source files
+        run: npx prettier --write "src/**/*.{ts,tsx}"
 
       - name: Commit formatting
         run: |
@@ -48,5 +33,5 @@ jobs:
             echo "No formatting changes required"
             exit 0
           fi
-          git commit -m "AITP-80 format source for CI"
-          git push origin HEAD:feature/aitp-80-remove-lovable-tooling
+          git commit -m "chore: format source"
+          git push
