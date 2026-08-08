@@ -35,18 +35,9 @@ export interface CopilotRuntimeState {
   inlineSuggestion: CopilotInlineSuggestion | null;
 }
 
-export type CopilotRuntimeStateChangeReason =
-  | "mount"
-  | "reset"
-  | "mutation"
-  | "restore"
-  | "profile";
+export type CopilotRuntimeStateChangeReason = "mount" | "reset" | "mutation" | "restore" | "profile";
 
-type StateListener = (
-  state: CopilotRuntimeState,
-  reason: CopilotRuntimeStateChangeReason,
-) => void;
-
+type StateListener = (state: CopilotRuntimeState, reason: CopilotRuntimeStateChangeReason) => void;
 type EventListener = (event: TrainingEvent) => void;
 
 export interface CopilotRuntimeAdapter extends RuntimeAdapter {
@@ -74,18 +65,20 @@ function createIdentifier(prefix: string): string {
   return `${prefix}-${Date.now()}-${identifierSequence}`;
 }
 
-function cloneMessage(message: CopilotChatMessage): CopilotChatMessage {
-  return { ...message };
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function cloneSuggestion(suggestion: CopilotInlineSuggestion | null): CopilotInlineSuggestion | null {
+function cloneSuggestion(
+  suggestion: CopilotInlineSuggestion | null,
+): CopilotInlineSuggestion | null {
   return suggestion ? { ...suggestion } : null;
 }
 
 function cloneState(state: CopilotRuntimeState): CopilotRuntimeState {
   return {
     ...state,
-    messages: state.messages.map(cloneMessage),
+    messages: state.messages.map((message) => ({ ...message })),
     inlineSuggestion: cloneSuggestion(state.inlineSuggestion),
   };
 }
@@ -111,33 +104,39 @@ function hasOwn(seed: RuntimeSeed, key: string): boolean {
 function messagesFromSeed(seed: RuntimeSeed): CopilotChatMessage[] {
   if (!hasOwn(seed, "messages")) return [];
   const value = seed["messages"];
-  if (!Array.isArray(value)) throw new TypeError("Invalid Copilot runtime seed field: messages");
+  if (!Array.isArray(value)) {
+    throw new TypeError("Invalid Copilot runtime seed field: messages");
+  }
+
   return value.map((item) => {
-    if (
-      !item ||
-      typeof item !== "object" ||
-      Array.isArray(item) ||
-      (((item as Record<string, unknown>)["role"] !== "user" &&
-        (item as Record<string, unknown>)["role"] !== "assistant") ||
-        typeof (item as Record<string, unknown>)["content"] !== "string")
-    ) {
+    if (!isRecord(item)) throw new TypeError("Invalid Copilot runtime seed message");
+    const role = item["role"];
+    const content = item["content"];
+    if ((role !== "user" && role !== "assistant") || typeof content !== "string") {
       throw new TypeError("Invalid Copilot runtime seed message");
     }
-    const record = item as Record<string, unknown>;
     return {
-      id: typeof record["id"] === "string" ? record["id"] : createIdentifier("copilot-message"),
-      role: record["role"] as "user" | "assistant",
-      content: record["content"] as string,
+      id:
+        typeof item["id"] === "string"
+          ? item["id"]
+          : createIdentifier("copilot-message"),
+      role,
+      content,
     };
   });
 }
 
-function stateFromSeed(profile: CopilotProductProfile, seed?: RuntimeSeed): CopilotRuntimeState {
+function stateFromSeed(
+  profile: CopilotProductProfile,
+  seed?: RuntimeSeed,
+): CopilotRuntimeState {
   const base = initialState(profile);
   if (!seed) return base;
 
   const enabled = hasOwn(seed, "enabled") ? seed["enabled"] : base.enabled;
-  if (typeof enabled !== "boolean") throw new TypeError("Invalid Copilot runtime seed field: enabled");
+  if (typeof enabled !== "boolean") {
+    throw new TypeError("Invalid Copilot runtime seed field: enabled");
+  }
 
   const mode = hasOwn(seed, "mode") ? seed["mode"] : base.mode;
   if (typeof mode !== "string" || !profile.chatModes.some((entry) => entry.id === mode)) {
@@ -146,7 +145,9 @@ function stateFromSeed(profile: CopilotProductProfile, seed?: RuntimeSeed): Copi
 
   const modelId = hasOwn(seed, "modelId") ? seed["modelId"] : base.modelId;
   if (typeof modelId !== "string" || !profile.models.some((entry) => entry.id === modelId)) {
-    throw new TypeError(`Unsupported Copilot model for profile ${profile.id}: ${String(modelId)}`);
+    throw new TypeError(
+      `Unsupported Copilot model for profile ${profile.id}: ${String(modelId)}`,
+    );
   }
 
   const contextActiveFile = hasOwn(seed, "contextActiveFile")
@@ -167,37 +168,39 @@ function stateFromSeed(profile: CopilotProductProfile, seed?: RuntimeSeed): Copi
 }
 
 function isRuntimeState(value: unknown): value is CopilotRuntimeState {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const state = value as Partial<CopilotRuntimeState>;
+  if (!isRecord(value)) return false;
+
+  const messages = value["messages"];
   const messagesValid =
-    Array.isArray(state.messages) &&
-    state.messages.every(
+    Array.isArray(messages) &&
+    messages.every(
       (message) =>
-        Boolean(message) &&
-        typeof message.id === "string" &&
-        (message.role === "user" || message.role === "assistant") &&
-        typeof message.content === "string",
+        isRecord(message) &&
+        typeof message["id"] === "string" &&
+        (message["role"] === "user" || message["role"] === "assistant") &&
+        typeof message["content"] === "string",
     );
-  const suggestion = state.inlineSuggestion;
+
+  const suggestion = value["inlineSuggestion"];
   const suggestionValid =
     suggestion === null ||
-    (Boolean(suggestion) &&
-      typeof suggestion?.id === "string" &&
-      typeof suggestion.file === "string" &&
-      typeof suggestion.text === "string" &&
-      (suggestion.status === "pending" ||
-        suggestion.status === "accepted" ||
-        suggestion.status === "rejected"));
+    (isRecord(suggestion) &&
+      typeof suggestion["id"] === "string" &&
+      typeof suggestion["file"] === "string" &&
+      typeof suggestion["text"] === "string" &&
+      (suggestion["status"] === "pending" ||
+        suggestion["status"] === "accepted" ||
+        suggestion["status"] === "rejected"));
 
   return (
-    typeof state.enabled === "boolean" &&
-    typeof state.profileId === "string" &&
-    typeof state.productVersion === "string" &&
-    (state.mode === "ask" || state.mode === "plan" || state.mode === "agent") &&
-    typeof state.modelId === "string" &&
-    typeof state.conversationId === "string" &&
+    typeof value["enabled"] === "boolean" &&
+    typeof value["profileId"] === "string" &&
+    typeof value["productVersion"] === "string" &&
+    (value["mode"] === "ask" || value["mode"] === "plan" || value["mode"] === "agent") &&
+    typeof value["modelId"] === "string" &&
+    typeof value["conversationId"] === "string" &&
     messagesValid &&
-    (state.contextActiveFile === null || typeof state.contextActiveFile === "string") &&
+    (value["contextActiveFile"] === null || typeof value["contextActiveFile"] === "string") &&
     suggestionValid
   );
 }
@@ -218,7 +221,10 @@ export function createCopilotRuntime(
     for (const listener of stateListeners) listener(snapshot, reason);
   };
 
-  const replaceState = (next: CopilotRuntimeState, reason: CopilotRuntimeStateChangeReason): void => {
+  const replaceState = (
+    next: CopilotRuntimeState,
+    reason: CopilotRuntimeStateChangeReason,
+  ): void => {
     state = cloneState(next);
     notifyState(reason);
   };
@@ -264,7 +270,9 @@ export function createCopilotRuntime(
     },
 
     configureProductProfile(value: unknown): void {
-      if (mountedContainer) throw new Error("Copilot product profile cannot change while mounted");
+      if (mountedContainer) {
+        throw new Error("Copilot product profile cannot change while mounted");
+      }
       profile = parseCopilotProductProfile(value);
       replaceState(initialState(profile), "profile");
     },
@@ -315,10 +323,7 @@ export function createCopilotRuntime(
 
     startConversation(): string {
       const conversationId = createIdentifier("copilot-conversation");
-      replaceState(
-        { ...state, conversationId, messages: [], inlineSuggestion: null },
-        "mutation",
-      );
+      replaceState({ ...state, conversationId, messages: [], inlineSuggestion: null }, "mutation");
       emit("copilot.conversation.started", {
         conversationId,
         activeFile: state.contextActiveFile,
@@ -361,7 +366,9 @@ export function createCopilotRuntime(
 
     offerInlineSuggestion(file: string, text: string): CopilotInlineSuggestion {
       if (!state.enabled) throw new Error("Copilot runtime is disabled");
-      if (!file.trim() || !text) throw new TypeError("Inline suggestion requires file and text");
+      if (!file.trim() || !text) {
+        throw new TypeError("Inline suggestion requires file and text");
+      }
       const suggestion: CopilotInlineSuggestion = {
         id: createIdentifier("copilot-suggestion"),
         file,
@@ -438,9 +445,13 @@ export function createCopilotRuntime(
     },
 
     async restore(snapshot: unknown): Promise<void> {
-      if (!isRuntimeState(snapshot)) throw new TypeError("Invalid Copilot runtime snapshot");
+      if (!isRuntimeState(snapshot)) {
+        throw new TypeError("Invalid Copilot runtime snapshot");
+      }
       if (snapshot.profileId !== profile.id || snapshot.productVersion !== profile.productVersion) {
-        throw new TypeError("Copilot runtime snapshot does not match the configured product profile");
+        throw new TypeError(
+          "Copilot runtime snapshot does not match the configured product profile",
+        );
       }
       if (!profile.chatModes.some((entry) => entry.id === snapshot.mode)) {
         throw new TypeError("Copilot runtime snapshot contains an unavailable mode");
