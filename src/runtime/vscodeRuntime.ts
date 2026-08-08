@@ -16,7 +16,7 @@ export interface VscodeRuntimeState {
   activePanel: PanelName;
 }
 
-export type VscodeRuntimeStateChangeReason = "reset" | "mutation" | "restore";
+export type VscodeRuntimeStateChangeReason = "mount" | "reset" | "mutation" | "restore";
 
 type RuntimeStateListener = (
   state: VscodeRuntimeState,
@@ -84,9 +84,96 @@ function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
   };
 }
 
+function hasOwn(value: RuntimeSeed, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function stringArrayFromSeed(
+  seed: RuntimeSeed,
+  key: "folders" | "files" | "openTabs",
+  fallback: string[],
+): string[] {
+  if (!hasOwn(seed, key)) return [...fallback];
+  const value = seed[key];
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+    throw new TypeError(`Invalid VS Code runtime seed field: ${key}`);
+  }
+  return [...new Set(value)];
+}
+
+function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
+  const base = initialState();
+  if (!seed) return base;
+
+  let workspaceMode = base.workspaceMode;
+  if (hasOwn(seed, "workspaceMode")) {
+    const value = seed["workspaceMode"];
+    if (value !== "none" && value !== "folder" && value !== "workspace") {
+      throw new TypeError("Invalid VS Code runtime seed field: workspaceMode");
+    }
+    workspaceMode = value;
+  }
+
+  const folders = stringArrayFromSeed(seed, "folders", base.folders);
+  const files = stringArrayFromSeed(seed, "files", base.files);
+  const openTabs = stringArrayFromSeed(seed, "openTabs", base.openTabs);
+
+  let contents = { ...base.contents };
+  if (hasOwn(seed, "contents")) {
+    const value = seed["contents"];
+    if (!isStringRecord(value)) {
+      throw new TypeError("Invalid VS Code runtime seed field: contents");
+    }
+    contents = { ...value };
+  }
+
+  let activeFile = base.activeFile;
+  if (hasOwn(seed, "activeFile")) {
+    const value = seed["activeFile"];
+    if (value !== null && typeof value !== "string") {
+      throw new TypeError("Invalid VS Code runtime seed field: activeFile");
+    }
+    activeFile = value;
+  }
+
+  let activePanel = base.activePanel;
+  if (hasOwn(seed, "activePanel")) {
+    const value = seed["activePanel"];
+    if (
+      value !== null &&
+      value !== "terminal" &&
+      value !== "problems" &&
+      value !== "output"
+    ) {
+      throw new TypeError("Invalid VS Code runtime seed field: activePanel");
+    }
+    activePanel = value;
+  }
+
+  return {
+    workspaceMode,
+    folders,
+    files,
+    contents,
+    openTabs,
+    activeFile,
+    activePanel,
+  };
+}
+
 let state = initialState();
 let mountedContainer: ParentNode | null = null;
 const stateListeners = new Set<RuntimeStateListener>();
+let identifierSequence = 0;
+let activeSessionId = createIdentifier("session");
+
+function createIdentifier(prefix: string): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  identifierSequence += 1;
+  return `${prefix}-${Date.now()}-${identifierSequence}`;
+}
 
 function replaceState(nextState: VscodeRuntimeState, reason: VscodeRuntimeStateChangeReason): void {
   state = cloneState(nextState);
@@ -99,8 +186,10 @@ export const vscodeRuntime = {
   productId: VSCODE_RUNTIME_DEFINITION.productId,
   capabilities: ["filesystem", "editor", "terminal", "extensions", "source_control"] as const,
 
-  async mount(container: HTMLElement, _seed?: RuntimeSeed): Promise<void> {
+  async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
     mountedContainer = container;
+    activeSessionId = createIdentifier("session");
+    replaceState(stateFromSeed(seed), "mount");
   },
 
   async unmount(): Promise<void> {
@@ -108,7 +197,16 @@ export const vscodeRuntime = {
   },
 
   subscribe(handler) {
-    return workspaceBus.subscribe(handler);
+    return workspaceBus.subscribe((event) => {
+      handler({
+        id: createIdentifier("event"),
+        source: VSCODE_RUNTIME_DEFINITION.id,
+        type: event.name,
+        timestamp: new Date().toISOString(),
+        sessionId: activeSessionId,
+        payload: event.payload ?? {},
+      });
+    });
   },
 
   subscribeState(handler: RuntimeStateListener): () => void {
