@@ -77,6 +77,13 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         vscodeRuntime.setFileContent("snapshot.py", "print('snapshot')\n");
         vscodeRuntime.setActiveFile("snapshot.py");
         vscodeRuntime.setActivePanel("terminal");
+        vscodeRuntime.setTerminalLines(["before restore"]);
+        vscodeRuntime.setTerminalCommand("git status");
+        vscodeRuntime.setStaged(true);
+        vscodeRuntime.setCopilotOpen(true);
+        vscodeRuntime.setCopilotPrompt("explain this code");
+        vscodeRuntime.setCopilotAnswer("snapshot answer");
+        vscodeRuntime.setWrongFile("wrong.py");
         unsubscribeState = vscodeRuntime.subscribeState((runtimeState, reason) => {
           if (reason === "restore") restoredPresentation = runtimeState;
         });
@@ -87,6 +94,13 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         vscodeRuntime.setFileContent("snapshot.py", "print('mutated')\n");
         vscodeRuntime.closeFile("snapshot.py");
         vscodeRuntime.setActivePanel(null);
+        vscodeRuntime.setTerminalLines(["after restore"]);
+        vscodeRuntime.setTerminalCommand("clear");
+        vscodeRuntime.setStaged(false);
+        vscodeRuntime.setCopilotOpen(false);
+        vscodeRuntime.setCopilotPrompt("");
+        vscodeRuntime.setCopilotAnswer(null);
+        vscodeRuntime.setWrongFile(null);
       },
       assertRestoredPresentation: () => {
         assert.ok(restoredPresentation);
@@ -97,6 +111,13 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         assert.deepEqual(restoredPresentation.openTabs, ["snapshot.py"]);
         assert.equal(restoredPresentation.activeFile, "snapshot.py");
         assert.equal(restoredPresentation.activePanel, "terminal");
+        assert.deepEqual(restoredPresentation.terminalLines, ["before restore"]);
+        assert.equal(restoredPresentation.terminalCommand, "git status");
+        assert.equal(restoredPresentation.staged, true);
+        assert.equal(restoredPresentation.copilotOpen, true);
+        assert.equal(restoredPresentation.copilotPrompt, "explain this code");
+        assert.equal(restoredPresentation.copilotAnswer, "snapshot answer");
+        assert.equal(restoredPresentation.wrongFile, "wrong.py");
         unsubscribeState?.();
         unsubscribeState = null;
       },
@@ -121,8 +142,31 @@ test("vscodeRuntime: publishes the supplied seed to presentation subscribers on 
     assert.deepEqual(captured.current.openTabs, ["seeded.py"]);
     assert.equal(captured.current.activeFile, "seeded.py");
     assert.equal(captured.current.activePanel, "terminal");
+    assert.deepEqual(captured.current.terminalLines, []);
+    assert.equal(captured.current.staged, false);
+    assert.equal(captured.current.copilotOpen, false);
   } finally {
     unsubscribe();
+    await vscodeRuntime.unmount();
+  }
+});
+
+test("vscodeRuntime: reset preserves the active mount seed", async () => {
+  await vscodeRuntime.mount(createContainer(), seededRuntimeState);
+
+  try {
+    vscodeRuntime.setWorkspace("workspace", ["mutated-project"]);
+    vscodeRuntime.setActiveFile(null);
+    vscodeRuntime.setTerminalLines(["mutated"]);
+    vscodeRuntime.setStaged(true);
+
+    vscodeRuntime.reset();
+
+    assert.equal(await vscodeRuntime.query("workspace.mode"), "folder");
+    assert.equal(await vscodeRuntime.query("editor.activeFile"), "seeded.py");
+    assert.deepEqual(await vscodeRuntime.query("terminal.lines"), []);
+    assert.equal(await vscodeRuntime.query("scm.staged"), false);
+  } finally {
     await vscodeRuntime.unmount();
   }
 });
