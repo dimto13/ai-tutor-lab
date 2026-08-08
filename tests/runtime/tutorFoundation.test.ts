@@ -17,7 +17,11 @@ const context: TutorContext = {
     description: "Test",
     instruction: "Öffne den gespeicherten Workspace.",
     why: "Damit mehrere Projektordner gemeinsam als Arbeitskontext geladen werden.",
-    helpLevels: ["Nutze das File-Menü.", "Wähle Open Workspace.", "Öffne das File-Menü oben links."],
+    helpLevels: [
+      "Nutze das File-Menü.",
+      "Wähle Open Workspace.",
+      "Öffne das File-Menü oben links.",
+    ],
     successMessage: "Workspace geöffnet.",
   },
   completedStepIds: ["open-folder"],
