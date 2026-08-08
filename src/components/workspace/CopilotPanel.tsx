@@ -72,7 +72,8 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     if (text) onApplySuggestion(text);
   };
 
-  const suggestionStatus: CopilotSuggestionStatus | null = runtimeState.inlineSuggestion?.status ?? null;
+  const suggestionStatus: CopilotSuggestionStatus | null =
+    runtimeState.inlineSuggestion?.status ?? null;
   const lastAssistantMessage = [...runtimeState.messages]
     .reverse()
     .find((message) => message.role === "assistant");
