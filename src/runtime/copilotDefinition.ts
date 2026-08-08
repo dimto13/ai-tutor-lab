@@ -11,38 +11,38 @@ export const COPILOT_RUNTIME_DEFINITION = {
   productId: "github-copilot",
   hostProductId: "vscode",
   surface: [
-    { ref: "copilot.chat", label: "Copilot Chat", conceptKey: "github.copilot" },
-    { ref: "copilot.chat.toggle", label: "Copilot Chat öffnen", conceptKey: "github.copilot" },
+    { ref: "copilot.chat", label: "Copilot Chat", conceptKey: "copilot.chat" },
+    { ref: "copilot.chat.toggle", label: "Copilot Chat öffnen", conceptKey: "copilot.chat" },
     {
       ref: "copilot.chat.newConversation",
       label: "Neue Copilot-Unterhaltung",
-      conceptKey: "github.copilot",
+      conceptKey: "copilot.session",
     },
-    { ref: "copilot.chat.prompt", label: "Copilot Prompt", conceptKey: "github.copilot" },
+    { ref: "copilot.chat.prompt", label: "Copilot Prompt", conceptKey: "ai.context" },
     {
       ref: "copilot.chat.modeSelector",
       label: "Copilot-Modus",
-      conceptKey: "github.copilot",
+      conceptKey: "copilot.chat_mode",
     },
     {
       ref: "copilot.chat.modelSelector",
       label: "Copilot-Modellauswahl",
-      conceptKey: "github.copilot",
+      conceptKey: "copilot.model_selection",
     },
     {
       ref: "copilot.inline.suggestion",
       label: "Inline-Vorschlag",
-      conceptKey: "github.copilot",
+      conceptKey: "copilot.inline_suggestion",
     },
     {
       ref: "copilot.inline.accept",
       label: "Inline-Vorschlag annehmen",
-      conceptKey: "github.copilot",
+      conceptKey: "copilot.inline_suggestion",
     },
     {
       ref: "copilot.inline.reject",
       label: "Inline-Vorschlag ablehnen",
-      conceptKey: "github.copilot",
+      conceptKey: "copilot.inline_suggestion",
     },
   ],
   querySelectors: [

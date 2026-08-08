@@ -1,0 +1,231 @@
+{
+  "id": "copilot-basics.guided",
+  "moduleId": "copilot-basics",
+  "mode": "guided",
+  "learningLayer": "tool",
+  "title": "GitHub Copilot – Grundlagen",
+  "description": "Verstehe Copilot Chat, Unterhaltung und Kontext, Ask/Plan/Agent, Modellwahl und Auto-Auswahl sowie den Unterschied zu Inline-Vorschlägen. MCP und Agent Skills werden als Erweiterungskonzepte eingeordnet.",
+  "learningObjectives": ["combine_editor_git_ai_workflow"],
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrationRuntimeAdapterIds": ["github-copilot-vscode-simulator"],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["README.md", "calculator.py"],
+      "contents": {
+        "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
+        "calculator.py": "def add(a, b):\n    pass\n"
+      },
+      "openTabs": ["calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": null
+    }
+  },
+  "estimatedMinutes": 12,
+  "points": 120,
+  "resources": [
+    {
+      "title": "GitHub Docs: Copilot Chat in der IDE",
+      "description": "Offizielle Anleitung zu Copilot Chat in VS Code und anderen unterstützten IDEs.",
+      "url": "https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide?tool=vscode",
+      "kind": "official",
+      "verifiedAt": "2026-08-09"
+    },
+    {
+      "title": "GitHub Docs: Modell in Copilot Chat wechseln",
+      "description": "Offizielle Beschreibung der Modellauswahl und ihrer Verfügbarkeit.",
+      "url": "https://docs.github.com/en/copilot/how-tos/use-ai-models/change-the-chat-model?tool=vscode",
+      "kind": "official",
+      "verifiedAt": "2026-08-09"
+    },
+    {
+      "title": "GitHub Docs: Unterstützte KI-Modelle",
+      "description": "Aktuelle, produktversionsabhängige Übersicht der in GitHub Copilot unterstützten Modelle.",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/supported-models",
+      "kind": "official",
+      "verifiedAt": "2026-08-09"
+    },
+    {
+      "title": "GitHub Docs: Copilot mit MCP erweitern",
+      "description": "Offizielle Einführung in MCP-Server als Erweiterung für agentische Copilot-Workflows.",
+      "url": "https://docs.github.com/en/copilot/customizing-copilot/extending-copilot-chat-with-mcp",
+      "kind": "official",
+      "verifiedAt": "2026-08-09"
+    },
+    {
+      "title": "VS Code Docs: Agent Skills",
+      "description": "Offizielle Dokumentation zu wiederverwendbaren Skills für agentische Workflows.",
+      "url": "https://code.visualstudio.com/docs/copilot/customization/agent-skills",
+      "kind": "official",
+      "verifiedAt": "2026-08-09"
+    }
+  ],
+  "steps": [
+    {
+      "id": "open-copilot-chat",
+      "title": "Copilot Chat öffnen",
+      "description": "GitHub Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Chat und Inline-Vorschläge sind unterschiedliche Arbeitsformen.",
+      "instruction": "Öffne Copilot Chat über den Copilot-Button im Editorbereich.",
+      "why": "Im Chat formulierst du Fragen und Aufgaben als Unterhaltung. Inline-Vorschläge dagegen erscheinen direkt im Editor und werden einzeln angenommen oder verworfen.",
+      "helpLevels": [
+        "Der Copilot-Button befindet sich rechts oberhalb des Editors.",
+        "Klicke auf den Button mit der Beschriftung Copilot.",
+        "Der Copilot-Button wird hervorgehoben – öffne dort den Chat."
+      ],
+      "expectedEvent": "copilot.chat.opened",
+      "validation": { "kind": "event", "type": "copilot.chat.opened" },
+      "highlightTarget": "copilot.chat.toggle",
+      "highlightTooltip": "Öffne Copilot Chat.",
+      "successMessage": "Copilot Chat ist geöffnet."
+    },
+    {
+      "id": "session-vs-conversation",
+      "stepType": "explanation",
+      "title": "Training-Session und Copilot-Unterhaltung unterscheiden",
+      "description": "Die Lernplattform und GitHub Copilot verwalten zwei verschiedene Arten von Sitzungen.",
+      "instruction": "Merke dir: Deine Training-Session speichert Lernfortschritt und Trainingszustand. Eine Copilot-Unterhaltung speichert dagegen den Gesprächsverlauf innerhalb von Copilot Chat.",
+      "why": "Wenn du eine neue Copilot-Unterhaltung startest, beginnt der Chat-Verlauf neu. Dein Training und der geöffnete VS-Code-Arbeitskontext werden dadurch nicht neu gestartet.",
+      "helpLevels": ["", "", ""],
+      "highlightTarget": "copilot.chat.newConversation",
+      "highlightTooltip": "Eine neue Unterhaltung betrifft Copilot Chat – nicht deine Training-Session.",
+      "successMessage": "Training-Session und Copilot-Unterhaltung sind klar getrennt."
+    },
+    {
+      "id": "new-conversation",
+      "title": "Neue Copilot-Unterhaltung beginnen",
+      "description": "Ein neuer Chat-Verlauf verwirft die bisherige Gesprächshistorie, während der aktuelle Arbeitskontext erhalten bleiben kann.",
+      "instruction": "Starte über das Plus-Symbol eine neue Copilot-Unterhaltung.",
+      "why": "Eine neue Unterhaltung ist sinnvoll, wenn du einen Themenwechsel sauber vom bisherigen Dialog trennen möchtest. Die aktuell geöffnete Datei kann trotzdem weiterhin als Arbeitskontext verfügbar sein.",
+      "helpLevels": [
+        "Im Kopf des Copilot-Chats gibt es ein Plus-Symbol.",
+        "Klicke auf Neue Copilot-Unterhaltung.",
+        "Das Plus-Symbol für eine neue Unterhaltung wird hervorgehoben."
+      ],
+      "expectedEvent": "copilot.conversation.started",
+      "validation": { "kind": "event", "type": "copilot.conversation.started", "match": { "activeFile": "calculator.py" } },
+      "highlightTarget": "copilot.chat.newConversation",
+      "highlightTooltip": "Beginne einen neuen Chat-Verlauf.",
+      "successMessage": "Neue Unterhaltung gestartet; calculator.py bleibt als Arbeitskontext erhalten."
+    },
+    {
+      "id": "use-file-context",
+      "title": "Dateikontext bewusst nutzen",
+      "description": "Die Datei calculator.py ist im Editor geöffnet und wird dem simulierten Copilot als aktueller Arbeitskontext übergeben.",
+      "instruction": "Frage Copilot: Was macht die aktuell geöffnete Datei?",
+      "why": "Kontext hilft der KI, eine allgemeine Frage auf deinen konkreten Arbeitsstand zu beziehen. Prüfe trotzdem immer, welche Informationen tatsächlich in den Kontext gelangen dürfen.",
+      "helpLevels": [
+        "Nutze das Eingabefeld Ask Copilot... im geöffneten Chat.",
+        "Tippe die Frage in das Prompt-Feld und drücke Enter.",
+        "Das Prompt-Feld wird hervorgehoben."
+      ],
+      "expectedEvent": "copilot.prompt.submitted",
+      "validation": { "kind": "event", "type": "copilot.prompt.submitted", "match": { "activeFile": "calculator.py" } },
+      "highlightTarget": "copilot.chat.prompt",
+      "highlightTooltip": "Stelle eine Frage im aktuellen Dateikontext.",
+      "successMessage": "Die Anfrage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
+    },
+    {
+      "id": "select-plan-mode",
+      "title": "Plan-Modus auswählen",
+      "description": "Copilot bietet unterschiedliche Arbeitsmodi. Die genaue Verfügbarkeit hängt von Produktversion und Unternehmensrichtlinien ab.",
+      "instruction": "Wähle im Modus-Menü Plan aus.",
+      "why": "Plan eignet sich, wenn vor Änderungen zuerst ein strukturierter Implementierungsplan entstehen soll. Ask ist stärker auf Fragen und Erklärungen ausgerichtet; Agent auf mehrstufige Aufgaben mit Werkzeugnutzung.",
+      "helpLevels": [
+        "Die Modusauswahl steht links neben der Modellauswahl.",
+        "Öffne das Dropdown Modus und wähle Plan.",
+        "Die Modusauswahl wird hervorgehoben."
+      ],
+      "expectedEvent": "copilot.mode.changed",
+      "validation": { "kind": "event", "type": "copilot.mode.changed", "match": { "mode": "plan" } },
+      "highlightTarget": "copilot.chat.modeSelector",
+      "highlightTooltip": "Wähle Plan als Arbeitsmodus.",
+      "successMessage": "Plan-Modus ausgewählt."
+    },
+    {
+      "id": "understand-chat-modes",
+      "stepType": "explanation",
+      "title": "Ask, Plan und Agent einordnen",
+      "description": "Die Modi verändern nicht nur die Formulierung der Antwort, sondern die erwartete Art der Zusammenarbeit.",
+      "instruction": "Ordne die Modi so ein: Ask für Fragen und Erklärungen; Plan für einen strukturierten Lösungsweg vor Änderungen; Agent für mehrstufige Aufgaben, bei denen Copilot selbstständiger Werkzeuge nutzt und Änderungen ausführt.",
+      "why": "Der passende Modus reduziert unnötige Autonomie: Für eine Verständnisfrage brauchst du keinen Agenten, für eine komplexe Umsetzung kann ein Agent dagegen sinnvoll sein.",
+      "helpLevels": ["", "", ""],
+      "highlightTarget": "copilot.chat.modeSelector",
+      "highlightTooltip": "Der Modus beschreibt die Arbeitsweise, nicht die Modellfamilie.",
+      "successMessage": "Ask, Plan und Agent sind als unterschiedliche Arbeitsweisen eingeordnet."
+    },
+    {
+      "id": "select-explicit-model",
+      "title": "Ein Modell bewusst auswählen",
+      "description": "Neben Auto kann eine konkrete Modelloption gewählt werden. Welche Modelle verfügbar sind, hängt von Produktversion, Plan und Unternehmensrichtlinien ab.",
+      "instruction": "Wähle GPT-5.3-Codex als explizites Modell aus.",
+      "why": "Eine explizite Auswahl ist sinnvoll, wenn du für eine Aufgabe bestimmte Eigenschaften priorisieren möchtest, etwa Code-/Agentenkompetenz oder tiefes Reasoning.",
+      "helpLevels": [
+        "Die Modellauswahl befindet sich rechts neben der Modusauswahl.",
+        "Öffne das Dropdown Modell und wähle GPT-5.3-Codex.",
+        "Die Modellauswahl wird hervorgehoben."
+      ],
+      "expectedEvent": "copilot.model.changed",
+      "validation": { "kind": "event", "type": "copilot.model.changed", "match": { "modelId": "gpt-5.3-codex" } },
+      "highlightTarget": "copilot.chat.modelSelector",
+      "highlightTooltip": "Wähle bewusst ein konkretes Modell.",
+      "successMessage": "Explizites Modell ausgewählt."
+    },
+    {
+      "id": "select-auto-model",
+      "title": "Auto-Auswahl verwenden",
+      "description": "Es gibt kein universell bestes Modell. Für einfache Fragen kann eine schnelle automatische Auswahl sinnvoll sein; für komplexes Reasoning oder große Codeänderungen kann eine bewusste Wahl geeigneter sein.",
+      "instruction": "Stelle die Modellauswahl jetzt wieder auf Auto.",
+      "why": "Drei typische Situationen: kurze Erklärung oder Routinefrage – Auto ist bequem; komplexe Architektur-/Reasoning-Aufgabe – gezielte Modellwahl kann sinnvoll sein; mehrstufige Codeänderung – achte zusätzlich auf Agenten- und Codekompetenz. Verfügbarkeit und Richtlinien bleiben entscheidend.",
+      "helpLevels": [
+        "Öffne erneut die Modellauswahl.",
+        "Wähle den Eintrag Auto.",
+        "Die Modellauswahl wird hervorgehoben."
+      ],
+      "expectedEvent": "copilot.model.changed",
+      "validation": { "kind": "event", "type": "copilot.model.changed", "match": { "modelId": "auto" } },
+      "highlightTarget": "copilot.chat.modelSelector",
+      "highlightTooltip": "Wechsle zurück auf Auto.",
+      "successMessage": "Auto-Auswahl aktiviert."
+    },
+    {
+      "id": "accept-inline-suggestion",
+      "title": "Inline-Vorschlag prüfen und annehmen",
+      "description": "Inline-Vorschläge sind eine eigene Copilot-Arbeitsform und erscheinen direkt im Editor-Kontext.",
+      "instruction": "Erzeuge im Copilot-Panel einen Inline-Vorschlag für calculator.py und nimm ihn anschließend an.",
+      "why": "Chat-Modellwahl und Inline-Vervollständigung sind nicht dasselbe. Ein Inline-Vorschlag sollte vor dem Übernehmen fachlich geprüft werden.",
+      "helpLevels": [
+        "Im unteren Teil des Copilot-Panels findest du Inline-Vorschlag.",
+        "Klicke zuerst Vorschlag erzeugen und danach Annehmen.",
+        "Der Inline-Vorschlag und die Annehmen-Aktion werden im Copilot-Bereich angezeigt."
+      ],
+      "expectedEvent": "ai.suggestion.accepted",
+      "validation": { "kind": "event", "type": "ai.suggestion.accepted", "match": { "file": "calculator.py" } },
+      "highlightTarget": "copilot.inline.suggestion",
+      "highlightTooltip": "Prüfe den vorgeschlagenen Code und übernimm ihn bewusst.",
+      "successMessage": "Inline-Vorschlag angenommen und in calculator.py übernommen."
+    },
+    {
+      "id": "understand-mcp",
+      "stepType": "explanation",
+      "title": "MCP als Erweiterungskonzept verstehen",
+      "description": "Das Model Context Protocol (MCP) ist kein Chat-Modus und kein KI-Modell.",
+      "instruction": "Merke dir: MCP ist ein offener Standard, über den agentische KI-Systeme zusätzliche Werkzeuge und Datenquellen über definierte MCP-Server nutzen können.",
+      "why": "MCP erweitert die Reichweite eines Agenten. In Unternehmen muss deshalb klar geregelt sein, welche Server, Werkzeuge und Datenquellen zugelassen sind. Die praktische Konfiguration folgt später in einem Advanced-Modul.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "MCP ist als Erweiterungsschnittstelle und nicht als Chat-Modus eingeordnet."
+    },
+    {
+      "id": "understand-agent-skills",
+      "stepType": "explanation",
+      "title": "Agent Skills einordnen",
+      "description": "Skills bündeln wiederverwendbare Anweisungen und optional Skripte oder Ressourcen für spezialisierte Aufgaben.",
+      "instruction": "Merke dir: Ein Agent Skill beschreibt wiederverwendbares Fachwissen oder einen Ablauf, den ein Agent bei passenden Aufgaben laden kann. Das ist etwas anderes als ein Modell, ein Chat-Modus oder ein MCP-Server.",
+      "why": "Skills helfen, wiederkehrende Arbeitsweisen konsistent zu machen. Erstellung, Versionierung und Governance gehören in ein späteres Advanced-Modul.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Agent Skills sind als wiederverwendbare Agentenkompetenz eingeordnet."
+    }
+  ]
+}

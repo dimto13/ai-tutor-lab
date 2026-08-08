@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "language": "de",
   "concepts": [
     {
@@ -200,7 +200,7 @@
       "aliases": ["AI Context", "KI-Kontext"],
       "simple": "Kontext sind die Informationen, die eine KI zusätzlich zu deiner eigentlichen Frage für ihre Antwort berücksichtigen kann.",
       "advanced": "Kontext kann aus geöffneten Dateien, ausgewähltem Text, Gesprächshistorie oder explizit bereitgestellten Informationen bestehen. Relevanz und Datenschutz sind dabei entscheidend.",
-      "uiTargets": []
+      "uiTargets": ["copilot.chat.prompt"]
     },
     {
       "key": "github.copilot",
@@ -209,6 +209,62 @@
       "simple": "GitHub Copilot ist ein KI-Assistent für Entwicklungsaufgaben, der unter anderem Chat und Codevorschläge bereitstellt.",
       "advanced": "Copilot kann je nach Funktion Editor- und Projektkontext verwenden. Vorschläge müssen fachlich geprüft werden; die Verantwortung bleibt beim Nutzer.",
       "uiTargets": ["vscode.activityBar.extensions"]
+    },
+    {
+      "key": "copilot.chat",
+      "term": "Copilot Chat",
+      "aliases": ["Chat", "GitHub Copilot Chat"],
+      "simple": "Copilot Chat ist die dialogorientierte Arbeitsform: Du stellst Fragen oder Aufgaben und erhältst Antworten im Verlauf einer Unterhaltung.",
+      "advanced": "Eine Chat-Anfrage wird mit dem jeweils verfügbaren Kontext verarbeitet. Chat ist von Inline-Vorschlägen im Editor getrennt und kann je nach Modus von reiner Erklärung bis zu agentischer Arbeit reichen.",
+      "uiTargets": ["copilot.chat", "copilot.chat.toggle"]
+    },
+    {
+      "key": "copilot.session",
+      "term": "Copilot-Unterhaltung",
+      "aliases": ["Chat-Session", "Conversation", "Unterhaltung"],
+      "simple": "Eine Copilot-Unterhaltung ist der Gesprächsverlauf im Copilot Chat. Sie ist nicht dasselbe wie deine Training-Session in der Lernplattform.",
+      "advanced": "Eine neue Unterhaltung startet einen neuen Chat-Verlauf. Der Arbeitskontext des geöffneten VS-Code-Workspaces kann weiterhin verfügbar sein, während die bisherige Gesprächshistorie nicht Teil der neuen Unterhaltung ist.",
+      "uiTargets": ["copilot.chat.newConversation"]
+    },
+    {
+      "key": "copilot.chat_mode",
+      "term": "Copilot Chat-Modus",
+      "aliases": ["Ask", "Plan", "Agent", "Agent-Modus"],
+      "simple": "Der Modus bestimmt, welche Art von Arbeit Copilot im Chat übernehmen soll: erklären, planen oder selbstständiger handeln.",
+      "advanced": "Ask eignet sich für Fragen und Erklärungen, Plan für einen strukturierten Umsetzungsplan vor Änderungen und Agent für mehrstufige Aufgaben mit Werkzeugnutzung und Änderungen. Verfügbare Modi hängen von Produktversion und Richtlinien ab.",
+      "uiTargets": ["copilot.chat.modeSelector"]
+    },
+    {
+      "key": "copilot.model_selection",
+      "term": "Modellauswahl",
+      "aliases": ["Model Picker", "Auto", "KI-Modell"],
+      "simple": "Über die Modellauswahl bestimmst du, welches verfügbare KI-Modell eine Chat-Aufgabe bearbeiten soll – oder lässt die Auswahl automatisch treffen.",
+      "advanced": "Auto kann ein geeignetes verfügbares Modell auswählen. Eine explizite Auswahl ist sinnvoll, wenn du für eine Aufgabe bewusst Eigenschaften wie Geschwindigkeit, tiefes Reasoning oder Code-/Agentenkompetenz priorisieren willst. Es gibt kein universell bestes Modell; Verfügbarkeit kann sich je Plan, Richtlinie und Produktversion ändern.",
+      "uiTargets": ["copilot.chat.modelSelector"]
+    },
+    {
+      "key": "copilot.inline_suggestion",
+      "term": "Inline-Vorschlag",
+      "aliases": ["Inline Suggestion", "Code Completion", "Ghost Text"],
+      "simple": "Ein Inline-Vorschlag erscheint direkt im Editor als vorgeschlagener Code, den du annehmen oder verwerfen kannst.",
+      "advanced": "Inline-Vervollständigung ist eine andere Arbeitsform als Chat. Sie reagiert unmittelbar auf den Editor-Kontext; ein Chat-Modellwechsel muss deshalb nicht automatisch dieselbe Modellwahl für Inline-Vorschläge bedeuten.",
+      "uiTargets": ["copilot.inline.suggestion", "copilot.inline.accept", "copilot.inline.reject"]
+    },
+    {
+      "key": "copilot.mcp",
+      "term": "Model Context Protocol (MCP)",
+      "aliases": ["MCP", "MCP Server", "MCP-Server"],
+      "simple": "MCP ist ein offener Standard, über den ein KI-Agent auf zusätzliche Werkzeuge und Datenquellen zugreifen kann.",
+      "advanced": "Ein MCP-Server stellt definierte Werkzeuge oder Ressourcen bereit, etwa für APIs, Datenbanken oder externe Dienste. MCP erweitert damit die Reichweite des Agenten; welche Server erlaubt sind, sollte in Unternehmensumgebungen zentral gesteuert werden.",
+      "uiTargets": []
+    },
+    {
+      "key": "copilot.agent_skill",
+      "term": "Agent Skill",
+      "aliases": ["Skill", "Agent Skills", "Copilot Skill"],
+      "simple": "Ein Agent Skill bündelt wiederverwendbare Anweisungen und optional Skripte oder Ressourcen für eine spezialisierte Aufgabe.",
+      "advanced": "Skills werden bedarfsabhängig in agentischen Workflows genutzt und können als portable Ordnerstruktur gepflegt werden. Sie beschreiben wiederkehrendes Fachwissen oder Abläufe; die praktische Erstellung und Governance gehört in ein Advanced-Modul.",
+      "uiTargets": []
     }
   ]
 }
