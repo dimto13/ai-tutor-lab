@@ -4,6 +4,7 @@ export interface RuntimeQueryAdapter {
   id: string;
   productId: string;
   query(selector: string): unknown;
+  reset?: () => void;
 }
 
 const runtimes: Record<string, RuntimeQueryAdapter> = {
