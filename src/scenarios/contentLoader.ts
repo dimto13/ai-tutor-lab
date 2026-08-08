@@ -48,6 +48,7 @@ export const validationSchema: z.ZodType<Validation> = z.lazy(
 
 const stepSchema = z.object({
   id: z.string().min(1),
+  stepType: z.enum(["action", "explanation"]).optional(),
   title: z.string().min(1),
   description: z.string(),
   instruction: z.string().min(1),
@@ -58,6 +59,14 @@ const stepSchema = z.object({
   highlightTarget: z.string().min(1).optional(),
   highlightTooltip: z.string().optional(),
   successMessage: z.string(),
+});
+
+const resourceSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  url: z.string().url(),
+  kind: z.enum(["official", "video", "reference"]),
+  verifiedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export const scenarioSchema = z
@@ -80,6 +89,7 @@ export const scenarioSchema = z
       .optional(),
     estimatedMinutes: z.number().nonnegative().optional(),
     points: z.number().nonnegative().optional(),
+    resources: z.array(resourceSchema).optional(),
     exploreTargets: z.array(z.string().min(1)).optional(),
     completionValidation: validationSchema.optional(),
     solutionComparison: z.array(z.string().min(1)).optional(),
@@ -87,16 +97,24 @@ export const scenarioSchema = z
   })
   .superRefine((scenario, ctx) => {
     const ids = new Set<string>();
-    for (const step of scenario.steps) {
+    scenario.steps.forEach((step, index) => {
       if (ids.has(step.id)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `duplicate step id: ${step.id}`,
-          path: ["steps"],
+          path: ["steps", index, "id"],
         });
       }
       ids.add(step.id);
-    }
+
+      if (step.stepType === "explanation" && (step.validation || step.expectedEvent)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "explanation steps must not define RuntimeEvent validation",
+          path: ["steps", index],
+        });
+      }
+    });
 
     const runtimeIds = [
       scenario.environment?.runtimeAdapterId,
