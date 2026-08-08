@@ -4,7 +4,7 @@ import { workspaceBus } from "./eventBus";
 import { gitBasicsScenario } from "@/scenarios/git-basics";
 import type { Scenario, StepStatus, WorkspaceEvent } from "@/types/training";
 
-const STORAGE_KEY = "ai-training-lab:git-basics:v1";
+const STORAGE_KEY = "ai-training-lab:git-basics:v2";
 
 export interface TrainingProgress {
   statuses: Record<string, StepStatus>;
