@@ -53,6 +53,11 @@ export const vscodeRuntime = {
     return SURFACE;
   },
 
+  resolveTarget(ref: UiTargetRef): HTMLElement | null {
+    if (typeof document === "undefined") return null;
+    return document.querySelector<HTMLElement>(`[data-highlight="${ref}"]`);
+  },
+
   inspect(ref: UiTargetRef): void {
     const item = SURFACE.find((entry) => entry.ref === ref);
     if (!item) return;
