@@ -27,8 +27,8 @@ export function getRuntimeAdapters(
   runtimeAdapterId: string | undefined,
   integrationRuntimeAdapterIds: readonly string[] = [],
 ): RuntimeAdapter[] {
-  const ids = [runtimeAdapterId, ...integrationRuntimeAdapterIds].filter(
-    (id): id is string => Boolean(id),
+  const ids = [runtimeAdapterId, ...integrationRuntimeAdapterIds].filter((id): id is string =>
+    Boolean(id),
   );
   return [...new Set(ids)]
     .map((id) => getRuntimeAdapter(id))
