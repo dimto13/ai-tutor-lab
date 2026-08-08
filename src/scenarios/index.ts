@@ -1,19 +1,20 @@
 import type { Scenario } from "@/types/training";
-import { gitBasicsScenario } from "./git-basics";
 import { parseScenario } from "./contentLoader";
 import vscodeExploreRaw from "../../content/scenarios/vscode-basics.explore.json";
 import vscodeGuidedRaw from "../../content/scenarios/vscode-basics.guided.json";
 import vscodeChallengeRaw from "../../content/scenarios/vscode-basics.challenge.json";
+import developerWorkflowRaw from "../../content/scenarios/developer-workflow-basics.guided.json";
 
 const vscodeExploreScenario = parseScenario(vscodeExploreRaw);
 const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
 const vscodeChallengeScenario = parseScenario(vscodeChallengeRaw);
+const developerWorkflowScenario = parseScenario(developerWorkflowRaw);
 
 const scenarios: Record<string, Scenario> = {
   [vscodeExploreScenario.id]: vscodeExploreScenario,
   [vscodeGuidedScenario.id]: vscodeGuidedScenario,
   [vscodeChallengeScenario.id]: vscodeChallengeScenario,
-  [gitBasicsScenario.id]: gitBasicsScenario,
+  [developerWorkflowScenario.id]: developerWorkflowScenario,
 };
 
 export function getScenario(scenarioId: string): Scenario | null {
