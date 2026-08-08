@@ -2,19 +2,23 @@ import type { Scenario } from "@/types/training";
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
+/**
+ * Transitional POC workflow scenario. It assumes basic IDE concepts and focuses
+ * on using VS Code, Git and GitHub Copilot together. Tool-specific explanations
+ * live in their own modules.
+ */
 export const gitBasicsScenario: Scenario = {
   id: "git-basics",
-  title: "VS Code, Git & GitHub Copilot – Grundlagen",
+  title: "VS Code, Git & GitHub Copilot – Zusammenspiel",
   description:
-    "Lerne zuerst die Arbeitsumgebung und ihre Konzepte kennen. Danach verwaltest du Dateien, nutzt das Terminal, versionierst Änderungen und setzt Copilot ein.",
+    "Wende die Werkzeuge gemeinsam in einem typischen Entwicklungsablauf an: Projekt öffnen, Datei bearbeiten, Änderungen mit Git versionieren und Copilot einsetzen.",
   steps: [
     {
       id: "step_1",
-      title: "Explorer kennenlernen",
-      description:
-        "Der Explorer ist die Dateiübersicht von VS Code. Er ist Teil der Side Bar; das Explorer-Symbol selbst sitzt in der schmalen Activity Bar ganz links.",
-      instruction: "Öffne den Explorer in der Activity Bar.",
-      why: "VS Code trennt Navigation und Inhalt: Die Activity Bar wählt einen Arbeitsbereich wie Explorer oder Suche aus, die Side Bar zeigt anschließend dessen Inhalt.",
+      title: "Explorer öffnen",
+      description: "Für den Workflow brauchst du Zugriff auf die Projektdateien im Explorer.",
+      instruction: "Öffne den Explorer in der Leiste links.",
+      why: "Der kombinierte Workflow startet im vorhandenen Projektkontext. Die Oberfläche selbst wird im separaten VS-Code-Grundkurs erklärt.",
       helpLevels: [
         "Der Explorer befindet sich links in der Activity Bar.",
         "Klicke auf das oberste Datei-Symbol in der schmalen Leiste am linken Rand.",
@@ -22,61 +26,38 @@ export const gitBasicsScenario: Scenario = {
       ],
       expectedEvent: "explorer.opened",
       highlightTarget: "activity-explorer",
-      highlightTooltip: "Explorer: zeigt Dateien und Ordner des aktuellen Arbeitskontexts.",
-      successMessage: "Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben.",
+      highlightTooltip: "Öffne den Explorer für den Projektworkflow.",
+      successMessage: "Explorer geöffnet. Jetzt kannst du mit dem vorbereiteten Projekt arbeiten.",
     },
     {
       id: "step_2",
-      title: "Einen Ordner als Arbeitskontext öffnen",
+      title: "Repository öffnen",
       description:
-        "Mit Open Folder öffnest du einen einzelnen Ordner. VS Code behandelt ihn als deinen aktuellen Single-Folder-Arbeitskontext. Explorer, Suche, Terminal und Git beziehen sich dann auf diesen Ordner.",
-      instruction: 'Öffne über File → Open Folder... den vorbereiteten Ordner "ai-training-demo".',
-      why: "Ein Ordner ist der einfachste Arbeitskontext in VS Code. Das ist etwas anderes als nur eine einzelne Datei zu öffnen: VS Code kennt dadurch die gesamte Projektstruktur.",
+        "Für den gemeinsamen Workflow ist ein versioniertes Beispielprojekt vorbereitet.",
+      instruction: 'Öffne das vorbereitete Repository "ai-training-demo".',
+      why: "Git arbeitet mit einem Repository. In diesem Kurs steht nicht die VS-Code-Oberfläche im Mittelpunkt, sondern der Ablauf über mehrere Werkzeuge hinweg.",
       helpLevels: [
-        "Nutze die Menüleiste oben im simulierten VS Code.",
-        'Klicke auf File und anschließend auf "Open Folder...".',
-        "Das File-Menü wird hervorgehoben. Öffne es und wähle Open Folder... .",
+        "Im Explorer wird ein vorbereitetes Repository angeboten.",
+        'Klicke im Explorer auf den Eintrag "ai-training-demo".',
+        "Das Repository im Explorer wird hervorgehoben – klicke darauf.",
       ],
-      expectedEvent: "folder.opened",
-      highlightTarget: "vscode-menu-file",
-      highlightTooltip: "File enthält Befehle zum Öffnen von Dateien, Ordnern und Workspaces.",
-      successMessage: "Ordner geöffnet. VS Code arbeitet jetzt mit genau einem Projektordner.",
+      expectedEvent: "repository.opened",
+      highlightTarget: "repo-item",
+      highlightTooltip: 'Öffne das vorbereitete Repository "ai-training-demo".',
+      successMessage: "Repository geöffnet. Der gemeinsame Arbeitskontext ist bereit.",
       validate: (p) => {
         const name = str(p["name"]);
         return name === "ai-training-demo"
           ? { ok: true }
-          : { ok: false, message: 'Öffne für diese Übung den Ordner "ai-training-demo".' };
+          : { ok: false, message: 'Für diese Übung benötigen wir das Repository "ai-training-demo".' };
       },
     },
     {
       id: "step_3",
-      title: "Ordner und Workspace unterscheiden",
-      description:
-        "Ein gespeicherter VS-Code-Workspace kann mehrere Ordner zu einem Arbeitskontext zusammenfassen und eigene Einstellungen speichern. Das ist nützlich, wenn eine Aufgabe aus mehreren zusammengehörigen Projekten besteht.",
-      instruction: "Öffne jetzt über File → Open Workspace... den vorbereiteten Workspace.",
-      why: "Der Unterschied ist konzeptionell wichtig: Open Folder arbeitet mit einem Ordner. Eine .code-workspace-Datei beschreibt dagegen einen Arbeitskontext, der mehrere Ordner und Workspace-spezifische Einstellungen enthalten kann.",
-      helpLevels: [
-        "Öffne erneut das File-Menü.",
-        'Wähle "Open Workspace...". Danach siehst du zwei Ordner und eine Workspace-Einstellung.',
-        "Das File-Menü wird hervorgehoben. Öffne dort den gespeicherten Workspace.",
-      ],
-      expectedEvent: "workspace.opened",
-      highlightTarget: "vscode-menu-file",
-      highlightTooltip: "Ein Workspace kann mehrere Ordner und eigene Einstellungen zusammenfassen.",
-      successMessage: "Workspace geöffnet. Im Explorer siehst du jetzt einen Mehrordner-Kontext und eine Workspace-Einstellung.",
-      validate: (p) => {
-        const folders = Array.isArray(p["folders"]) ? p["folders"] : [];
-        return folders.length >= 2
-          ? { ok: true }
-          : { ok: false, message: "Ein Workspace soll hier mindestens zwei Ordner enthalten." };
-      },
-    },
-    {
-      id: "step_4",
       title: "Datei erstellen",
-      description: "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an.",
-      instruction: "Erstelle im Projektordner ai-training-demo eine neue Datei hello.py.",
-      why: "Der Explorer zeigt nicht nur Struktur, sondern ist auch ein zentraler Einstiegspunkt für Dateioperationen. Die Endung .py kennzeichnet Python-Code.",
+      description: "Erstelle eine neue Datei im vorbereiteten Projekt.",
+      instruction: "Erstelle im Projektverzeichnis eine neue Datei hello.py.",
+      why: "Die Datei liefert eine konkrete Änderung, die anschließend im Editor bearbeitet und mit Git versioniert wird.",
       helpLevels: [
         "Im Explorer-Kopf gibt es eine Aktion zum Anlegen neuer Dateien.",
         'Klicke auf das "Neue Datei"-Symbol, tippe hello.py und drücke Enter.',
@@ -84,7 +65,7 @@ export const gitBasicsScenario: Scenario = {
       ],
       expectedEvent: "file.created",
       highlightTarget: "new-file-btn",
-      highlightTooltip: "Neue Datei im aktuellen Projektordner anlegen.",
+      highlightTooltip: "Neue Datei im Projekt anlegen.",
       successMessage: "hello.py wurde erstellt und im Editor geöffnet.",
       validate: (p) => {
         const filename = str(p["filename"]);
@@ -97,12 +78,11 @@ export const gitBasicsScenario: Scenario = {
       },
     },
     {
-      id: "step_5",
-      title: "Editor verwenden",
-      description:
-        "Der Editor ist der große Arbeitsbereich in der Mitte. Geöffnete Dateien erscheinen oben als Tabs und werden darunter bearbeitet.",
+      id: "step_4",
+      title: "Code schreiben",
+      description: "Bearbeite die neue Datei im Editor.",
       instruction: 'Schreibe print("Hello AI Training") in die Datei hello.py.',
-      why: "Explorer und Editor haben getrennte Rollen: Im Explorer navigierst du, im Editor bearbeitest du den Inhalt der ausgewählten Datei.",
+      why: "Die Änderung wird im nächsten Schritt von Git erkannt. Damit siehst du den Übergang vom Editor zur Versionsverwaltung.",
       helpLevels: [
         "Klicke in den Editor und tippe die Zeile ab.",
         'Schreibe genau: print("Hello AI Training")',
@@ -110,8 +90,8 @@ export const gitBasicsScenario: Scenario = {
       ],
       expectedEvent: "file.updated",
       highlightTarget: "editor-area",
-      highlightTooltip: "Editor: Inhalt der aktuell geöffneten Datei bearbeiten.",
-      successMessage: "Code erkannt. Explorer und Editor erfüllen unterschiedliche Aufgaben.",
+      highlightTooltip: "Bearbeite die Datei, bevor du die Änderung mit Git prüfst.",
+      successMessage: "Datei geändert. Jetzt kann Git den neuen Stand erkennen.",
       validate: (p) => {
         const filename = str(p["filename"]);
         const content = str(p["content"]).toLowerCase().replace(/[“”]/g, '"');
@@ -127,29 +107,27 @@ export const gitBasicsScenario: Scenario = {
       },
     },
     {
-      id: "step_6",
-      title: "Panel und Terminal öffnen",
-      description:
-        "Unterhalb des Editors besitzt VS Code ein Panel. Dort liegen unter anderem Terminal, Problems und Output. Das Terminal ist also nicht die gesamte untere Fläche, sondern ein Tab dieses Panels.",
+      id: "step_5",
+      title: "Terminal öffnen",
+      description: "Wechsle für die Git-Befehle in das integrierte Terminal.",
       instruction: "Öffne das integrierte Terminal.",
-      why: "Viele Entwickler-Werkzeuge werden über Textbefehle gesteuert. Das integrierte Terminal arbeitet im Kontext deines geöffneten Projekts, ohne dass du VS Code verlassen musst.",
+      why: "Der Workflow verbindet Editor und Kommandozeile innerhalb desselben Projektkontexts.",
       helpLevels: [
-        "Das Terminal öffnest du über den Terminal-Button unten rechts.",
-        'Klicke auf den Button "Terminal" in der Statusleiste.',
+        "Das Terminal öffnest du über den Terminal-Button.",
+        'Klicke auf den Button "Terminal" unten rechts.',
         "Der Terminal-Button wird hervorgehoben – klicke darauf.",
       ],
       expectedEvent: "terminal.opened",
       highlightTarget: "terminal-btn",
-      highlightTooltip: "Öffnet den Terminal-Tab im unteren Panel.",
-      successMessage: "Panel geöffnet. Terminal, Problems und Output sind dort als getrennte Bereiche angeordnet.",
+      highlightTooltip: "Öffne das Terminal für die Git-Befehle.",
+      successMessage: "Terminal geöffnet. Jetzt kannst du den Repository-Status prüfen.",
     },
     {
-      id: "step_7",
+      id: "step_6",
       title: "Git Status prüfen",
-      description:
-        "git status zeigt, welche Änderungen Git in deinem Projekt erkannt hat. Git arbeitet mit dem Repository, das innerhalb deines geöffneten Arbeitskontexts liegt.",
+      description: "Prüfe, welche Änderung Git im Repository erkannt hat.",
       instruction: "Führe im Terminal git status aus.",
-      why: "Vor einem Commit prüfst du den Status: Welche Dateien sind neu, geändert oder bereits vorgemerkt?",
+      why: "Vor einem Commit kontrollierst du, welche Dateien neu, geändert oder vorgemerkt sind.",
       helpLevels: [
         "Tippe den Befehl in das Terminal und drücke Enter.",
         "Schreibe genau: git status",
@@ -167,12 +145,12 @@ export const gitBasicsScenario: Scenario = {
       },
     },
     {
-      id: "step_8",
+      id: "step_7",
       title: "Git Commit erstellen",
       description:
-        "Mit git add merkst du Änderungen vor, mit git commit speicherst du sie als nachvollziehbaren Stand in der Repository-Historie.",
+        "Nimm die Änderung in die Versionshistorie auf: erst vormerken, dann committen.",
       instruction: 'Führe git add hello.py und danach git commit -m "add hello example" aus.',
-      why: "Ein Commit ist ein nachvollziehbarer Speicherpunkt mit Beschreibung – die Grundlage für Zusammenarbeit und Versionshistorie.",
+      why: "Der Commit macht aus der Editoränderung einen nachvollziehbaren Stand im Repository.",
       helpLevels: [
         "Zwei Befehle, in dieser Reihenfolge: erst vormerken, dann committen.",
         'Tippe: git add hello.py — dann: git commit -m "add hello example"',
@@ -203,13 +181,13 @@ export const gitBasicsScenario: Scenario = {
       },
     },
     {
-      id: "step_9",
-      title: "GitHub Copilot verwenden",
+      id: "step_8",
+      title: "GitHub Copilot einsetzen",
       description:
-        "Copilot ist eine zusätzliche Fähigkeit innerhalb der Entwicklungsumgebung. Er ersetzt die IDE nicht, sondern ergänzt deinen bestehenden Arbeitskontext um KI-Unterstützung.",
+        "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor.",
       instruction:
         'Bitte Copilot, eine Python-Funktion zum Addieren zweier Zahlen zu erstellen, z. B.: "Create a Python function that adds two numbers."',
-      why: "KI-Assistenz beschleunigt Routinecode. Entscheidend ist, dass du weißt, in welcher Datei und welchem Projektkontext der Vorschlag landet und das Ergebnis anschließend prüfst.",
+      why: "Copilot ergänzt den bestehenden Entwicklungsworkflow. Du beschreibst das Ziel, prüfst den Vorschlag und arbeitest weiterhin im selben Projektkontext.",
       helpLevels: [
         "Im Editor gibt es eine Copilot-Eingabe.",
         'Klicke auf "Copilot fragen", tippe deine Anfrage und drücke Enter.',
@@ -217,8 +195,8 @@ export const gitBasicsScenario: Scenario = {
       ],
       expectedEvent: "copilot.prompt.submitted",
       highlightTarget: "copilot-btn",
-      highlightTooltip: "Copilot in natürlicher Sprache um Code bitten.",
-      successMessage: "Copilot hat eine Funktion vorgeschlagen und in deine aktuell geöffnete Datei eingefügt.",
+      highlightTooltip: "Copilot als zusätzliche KI-Unterstützung im bestehenden Workflow verwenden.",
+      successMessage: "Copilot hat einen Vorschlag erzeugt. Du hast VS Code, Git und Copilot in einem Ablauf verwendet.",
       validate: (p) => {
         const prompt = str(p["prompt"]).toLowerCase();
         const ok = /add|addier|sum|plus/.test(prompt) && prompt.length > 8;
