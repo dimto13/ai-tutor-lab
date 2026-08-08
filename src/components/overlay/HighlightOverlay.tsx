@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from "react";
-import { getRuntimeAdapter } from "@/runtime";
+import { getRuntimeAdapterForTarget } from "@/runtime";
 
 interface Rect {
   top: number;
@@ -11,16 +11,18 @@ interface Rect {
 /**
  * Spotlight overlay: dims everything except the target element (four dim panes),
  * so the highlighted element stays fully clickable. The semantic target is
- * resolved by the active RuntimeAdapter; scenarios never know DOM selectors.
+ * resolved by the runtime environment; scenarios never know DOM selectors.
  */
 export function HighlightOverlay({
   targetId,
   runtimeAdapterId,
+  integrationRuntimeAdapterIds,
   tooltip,
   strong,
 }: {
   targetId?: string | undefined;
   runtimeAdapterId?: string | undefined;
+  integrationRuntimeAdapterIds?: readonly string[] | undefined;
   tooltip?: string | undefined;
   strong?: boolean | undefined;
 }) {
@@ -31,7 +33,11 @@ export function HighlightOverlay({
       setRect(null);
       return;
     }
-    const runtime = getRuntimeAdapter(runtimeAdapterId);
+    const runtime = getRuntimeAdapterForTarget(
+      targetId,
+      runtimeAdapterId,
+      integrationRuntimeAdapterIds,
+    );
     if (!runtime) {
       setRect(null);
       return;
@@ -58,7 +64,7 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetId, runtimeAdapterId]);
+  }, [targetId, runtimeAdapterId, integrationRuntimeAdapterIds]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
