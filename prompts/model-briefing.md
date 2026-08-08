@@ -14,6 +14,20 @@ Schritt für Schritt. Aktueller Stand: Prototyp vorhanden, Umbau zur generischen
 
 Stack: React, TypeScript, Tailwind, Monorepo, AWS Amplify Hosting. Sprache DE.
 
+## Projektbetrieb und Entwicklungsumgebung (verbindlich)
+
+- **Single Source of Truth ist ausschließlich das Git-Repository `dimto13/ai-tutor-lab`.**
+- Entwicklung, Builds und Tests erfolgen auf dem lokalen Entwicklungsrechner und auf Basis eines
+  explizit ausgecheckten Git-Branches.
+- Zusammenarbeit und Integration erfolgen über Git/GitHub mit Branches, Commits und Pull Requests.
+- Ziel für Hosting und Deployment ist **AWS Amplify**; weitere AWS-Dienste können später ergänzt werden.
+- **Lovable war ausschließlich für den ersten POC/Bootstrap im Einsatz und ist ab jetzt kein Bestandteil
+  des Entwicklungs-, Test-, Preview-, Publishing-, Deployment- oder Synchronisationsprozesses mehr.**
+- Lovable-URLs, Lovable-Previews, Lovable-Publishing und eine etwaige GitHub↔Lovable-Synchronisierung
+  dürfen nicht zur Beurteilung des aktuellen Projektstands verwendet werden.
+- Verbliebene Lovable-Artefakte oder historische Hinweise im Repository sind Legacy und nicht autoritativ;
+  sie dürfen entfernt werden, sobald sie nicht mehr für die Nachvollziehbarkeit des POC benötigt werden.
+
 ## Die sieben Regeln, gegen die nicht verstoßen werden darf
 
 1. **Trainingslogik kennt keine React-Komponente.** `packages/training-engine` hat keine
@@ -75,3 +89,4 @@ Was kommt als Nächstes?
 - Keine Szenariodaten in Komponenten schreiben
 - Keine `localStorage`-Zugriffe außerhalb der dafür vorgesehenen Persistenzschicht
 - Keine neuen Begriffe erfinden, wenn es oben schon einen gibt
+- Lovable nicht für Entwicklung, Preview, Publishing, Deployment oder Synchronisation verwenden
