@@ -10,7 +10,7 @@ test("uses local Ollama defaults without cloud configuration", () => {
   const config = loadLlmProviderConfig({});
   assert.equal(config.provider, "ollama");
   assert.equal(config.baseUrl, "http://localhost:11434/v1");
-  assert.equal(config.model, "qwen3");
+  assert.equal(config.model, "gemma4:31b");
   assert.equal(config.apiKey, "ollama");
 });
 
@@ -18,12 +18,12 @@ test("model and endpoint can be changed without code changes", () => {
   const config = loadLlmProviderConfig({
     LLM_PROVIDER: "ollama",
     LLM_BASE_URL: "http://127.0.0.1:11434/v1/",
-    LLM_MODEL: "gpt-oss:20b",
+    LLM_MODEL: "gemma4:e4b",
     LLM_API_KEY: "local-test",
   });
 
   assert.equal(config.baseUrl, "http://127.0.0.1:11434/v1");
-  assert.equal(config.model, "gpt-oss:20b");
+  assert.equal(config.model, "gemma4:e4b");
   assert.equal(config.apiKey, "local-test");
 });
 
@@ -35,7 +35,7 @@ test("Ollama provider uses the OpenAI-compatible chat completions API", async ()
     requestedBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
     return new Response(
       JSON.stringify({
-        model: "qwen3",
+        model: "gemma4:31b",
         choices: [{ message: { content: '{"uiTargetRef":"vscode.activityBar.explorer"}' } }],
       }),
       { status: 200, headers: { "content-type": "application/json" } },
@@ -64,7 +64,11 @@ test("provider-specific configuration does not leak outside the provider layer",
     if (file.startsWith(allowedRoot)) continue;
     const content = await readFile(file, "utf8");
     for (const token of forbidden) {
-      assert.equal(content.includes(token), false, `${token} leaked into ${path.relative(srcRoot, file)}`);
+      assert.equal(
+        content.includes(token),
+        false,
+        `${token} leaked into ${path.relative(srcRoot, file)}`,
+      );
     }
   }
 });
