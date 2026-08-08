@@ -97,6 +97,13 @@ export function Workspace() {
       setActiveFile(runtimeState.activeFile);
       setPanelOpen(runtimeState.activePanel !== null);
       if (runtimeState.activePanel) setActivePanel(runtimeState.activePanel);
+      setLines([...runtimeState.terminalLines]);
+      setCommand(runtimeState.terminalCommand);
+      setStaged(runtimeState.staged);
+      setCopilotOpen(runtimeState.copilotOpen);
+      setCopilotPrompt(runtimeState.copilotPrompt);
+      setCopilotAnswer(runtimeState.copilotAnswer);
+      setWrongFile(runtimeState.wrongFile);
       setFileMenuOpen(false);
       setNewFileName(null);
     });
@@ -170,7 +177,9 @@ export function Workspace() {
     setContents((c) => ({ ...c, [name]: "" }));
     vscodeRuntime.addFile(name);
     openFile(name);
-    setWrongFile(name === "hello.py" || name === "challenge.py" ? null : name);
+    const nextWrongFile = name === "hello.py" || name === "challenge.py" ? null : name;
+    setWrongFile(nextWrongFile);
+    vscodeRuntime.setWrongFile(nextWrongFile);
     workspaceBus.emit("file.created", { filename: name });
   };
 
@@ -188,10 +197,18 @@ export function Workspace() {
     workspaceBus.emit("panel.opened", { panel });
   };
 
+  const replaceTerminalLines = (nextLines: string[]) => {
+    setLines(nextLines);
+    vscodeRuntime.setTerminalLines(nextLines);
+  };
+
   const openTerminal = () => {
     openPanel("terminal");
     if (lines.length === 0) {
-      setLines(["AI Training Lab – simulierte Shell (bash)", "user@lab:~/ai-training-demo$"]);
+      replaceTerminalLines([
+        "AI Training Lab – simulierte Shell (bash)",
+        "user@lab:~/ai-training-demo$",
+      ]);
     }
     workspaceBus.emit("terminal.opened");
   };
@@ -200,6 +217,7 @@ export function Workspace() {
     const cmd = command.trim();
     if (!cmd) return;
     setCommand("");
+    vscodeRuntime.setTerminalCommand("");
     const out: string[] = [`user@lab:~/ai-training-demo$ ${cmd}`];
     const hasHello = files.some((f) => f.name === "hello.py");
 
@@ -223,6 +241,7 @@ export function Workspace() {
         if (!hasHello) out.push("fatal: pathspec 'hello.py' did not match any files");
         else {
           setStaged(true);
+          vscodeRuntime.setStaged(true);
           out.push("");
         }
       } else out.push("fatal: pathspec did not match any files");
@@ -235,7 +254,7 @@ export function Workspace() {
           " create mode 100644 hello.py",
         );
     } else if (cmd === "clear") {
-      setLines([]);
+      replaceTerminalLines([]);
       workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
       return;
     } else if (cmd === "ls") {
@@ -243,7 +262,7 @@ export function Workspace() {
     } else {
       out.push(`bash: ${cmd.split(" ")[0]}: command not found`);
     }
-    setLines((l) => [...l, ...out]);
+    replaceTerminalLines([...lines, ...out]);
     workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
   };
 
@@ -252,6 +271,7 @@ export function Workspace() {
     if (!prompt) return;
     const answer = "def add(a, b):\n    return a + b";
     setCopilotAnswer(answer);
+    vscodeRuntime.setCopilotAnswer(answer);
     if (activeFile) {
       const nextContent = `${contents[activeFile] ?? ""}\n\n${answer}\n`;
       setContents((c) => ({ ...c, [activeFile]: nextContent }));
@@ -259,6 +279,7 @@ export function Workspace() {
     }
     workspaceBus.emit("copilot.prompt.submitted", { prompt });
     setCopilotPrompt("");
+    vscodeRuntime.setCopilotPrompt("");
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -543,7 +564,11 @@ export function Workspace() {
             <div className="ml-auto flex items-center pr-2">
               <button
                 data-highlight="vscode.editor.copilot"
-                onClick={() => setCopilotOpen((v) => !v)}
+                onClick={() => {
+                  const nextOpen = !copilotOpen;
+                  setCopilotOpen(nextOpen);
+                  vscodeRuntime.setCopilotOpen(nextOpen);
+                }}
                 className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5"
               >
                 <Sparkles className="h-3.5 w-3.5 text-accent" />
@@ -558,7 +583,10 @@ export function Workspace() {
                 <Sparkles className="h-4 w-4 shrink-0 text-accent" />
                 <input
                   value={copilotPrompt}
-                  onChange={(e) => setCopilotPrompt(e.target.value)}
+                  onChange={(e) => {
+                    setCopilotPrompt(e.target.value);
+                    vscodeRuntime.setCopilotPrompt(e.target.value);
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && submitCopilot()}
                   placeholder="Create a Python function that adds two numbers."
                   className="flex-1 rounded border border-border bg-editor px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-ring"
@@ -657,7 +685,10 @@ export function Workspace() {
                     <input
                       ref={terminalInputRef}
                       value={command}
-                      onChange={(e) => setCommand(e.target.value)}
+                      onChange={(e) => {
+                        setCommand(e.target.value);
+                        vscodeRuntime.setTerminalCommand(e.target.value);
+                      }}
                       onKeyDown={(e) => e.key === "Enter" && runCommand()}
                       spellCheck={false}
                       aria-label="Terminal-Eingabe"
