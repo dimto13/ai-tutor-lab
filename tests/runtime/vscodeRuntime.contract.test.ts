@@ -80,9 +80,6 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         vscodeRuntime.setTerminalLines(["before restore"]);
         vscodeRuntime.setTerminalCommand("git status");
         vscodeRuntime.setStaged(true);
-        vscodeRuntime.setCopilotOpen(true);
-        vscodeRuntime.setCopilotPrompt("explain this code");
-        vscodeRuntime.setCopilotAnswer("snapshot answer");
         vscodeRuntime.setWrongFile("wrong.py");
         unsubscribeState = vscodeRuntime.subscribeState((runtimeState, reason) => {
           if (reason === "restore") restoredPresentation = runtimeState;
@@ -97,9 +94,6 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         vscodeRuntime.setTerminalLines(["after restore"]);
         vscodeRuntime.setTerminalCommand("clear");
         vscodeRuntime.setStaged(false);
-        vscodeRuntime.setCopilotOpen(false);
-        vscodeRuntime.setCopilotPrompt("");
-        vscodeRuntime.setCopilotAnswer(null);
         vscodeRuntime.setWrongFile(null);
       },
       assertRestoredPresentation: () => {
@@ -114,9 +108,6 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         assert.deepEqual(restoredPresentation.terminalLines, ["before restore"]);
         assert.equal(restoredPresentation.terminalCommand, "git status");
         assert.equal(restoredPresentation.staged, true);
-        assert.equal(restoredPresentation.copilotOpen, true);
-        assert.equal(restoredPresentation.copilotPrompt, "explain this code");
-        assert.equal(restoredPresentation.copilotAnswer, "snapshot answer");
         assert.equal(restoredPresentation.wrongFile, "wrong.py");
         unsubscribeState?.();
         unsubscribeState = null;
@@ -144,7 +135,6 @@ test("vscodeRuntime: publishes the supplied seed to presentation subscribers on 
     assert.equal(captured.current.activePanel, "terminal");
     assert.deepEqual(captured.current.terminalLines, []);
     assert.equal(captured.current.staged, false);
-    assert.equal(captured.current.copilotOpen, false);
   } finally {
     unsubscribe();
     await vscodeRuntime.unmount();
@@ -169,6 +159,11 @@ test("vscodeRuntime: reset preserves the active mount seed", async () => {
   } finally {
     await vscodeRuntime.unmount();
   }
+});
+
+test("vscodeRuntime: has no Copilot capabilities or state selectors", async () => {
+  assert.equal(vscodeRuntime.capabilities.includes("chat" as never), false);
+  assert.equal(await vscodeRuntime.query("copilot.model"), undefined);
 });
 
 test("vscodeRuntime: never resolves targets from the global document after unmount", async () => {
