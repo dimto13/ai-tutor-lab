@@ -309,11 +309,14 @@ tickets:
     description: >
       GitHub Copilot wird nicht Teil des VS-Code-Simulators, sondern als eigenes Produkt mit
       Integration hostProductId=vscode modelliert. Abgedeckt: Chat, Inline-Vorschläge,
-      Kontextverständnis, Ansatz Agent-Modus.
+      Kontextverständnis, Ansatz Agent-Modus sowie die für Lerninhalte benötigten
+      produktversionsabhängigen Chat-Sitzungen und Modellauswahl.
     acceptance:
       - Copilot ist im VS-Code-Simulator ein- und ausschaltbar
       - Inline-Vorschlag kann angenommen oder abgelehnt werden (ai.suggestion.accepted/rejected)
       - Chat kennt den geöffneten Dateikontext
+      - Eine neue Copilot-Unterhaltung kann begonnen werden; der simulierte Gesprächskontext wird dabei deterministisch neu aufgebaut
+      - Modellwahl einschließlich Auto-/Standardauswahl ist über semantische UiTargetRefs erreichbar; angebotene Optionen stammen aus versionierten Produktdaten
       - Derselbe VS-Code-Simulator funktioniert auch ohne Copilot
     depends_on: [AITP-21]
 
@@ -503,6 +506,27 @@ tickets:
       - Optionales Markieren des falschen Elements funktioniert
       - Nach drei Fehlversuchen wird die nächste Hilfestufe aktiv angeboten
     depends_on: [AITP-12]
+
+  - id: AITP-44
+    epic: EP-05
+    title: Sprachausgabe für Guide- und Erklärungstexte
+    type: story
+    priority: S
+    estimate: 5
+    milestone: M4
+    requirements: [NFR-08]
+    description: >
+      Guide- und Erklärungstexte können zusätzlich zum sichtbaren Text auf ausdrückliche
+      Nutzeraktion vorgelesen werden. Die Sprachausgabe ist eine optionale Darstellungsform
+      derselben Content-Quelle; es gibt keine separat gepflegte Audio-Textkopie und kein Autoplay.
+    acceptance:
+      - Jede dafür freigegebene Guide-/Erklärbox bietet eine per Tastatur bedienbare Play-/Pause-Steuerung
+      - Die Sprachausgabe verwendet exakt den aktuell angezeigten Erklärungstext
+      - Wiedergabe startet ausschließlich nach Nutzeraktion; es gibt kein Autoplay
+      - Beim Wechsel des Trainingsschritts wird eine laufende Wiedergabe sauber beendet oder auf den neuen Inhalt umgestellt
+      - Die Sprachausgabe verwendet die aktuell gewählte Content-Sprache und folgt dem Fallback-Verhalten aus AITP-95
+      - Die sichtbare Texterklärung bleibt vollständig nutzbar, wenn Sprachausgabe nicht verfügbar oder deaktiviert ist
+    depends_on: [AITP-42, AITP-95]
 
   # ---------------- EP-06 ----------------
   - id: AITP-50
@@ -938,11 +962,43 @@ tickets:
     estimate: 5
     milestone: M4
     requirements: [FR-07, NFR-12]
-    description: Texte aus Komponenten und Content trennen, Sprachdateien einführen, Fallback DE.
+    description: >
+      Texte aus Komponenten und Content trennen, Sprachdateien einführen und eine während des
+      Trainings erreichbare Sprachauswahl bereitstellen. Initial werden Deutsch und Englisch
+      unterstützt; Deutsch bleibt Fallback für fehlende Übersetzungen. Ein Sprachwechsel darf
+      den Trainingsfortschritt nicht verändern oder zurücksetzen.
     acceptance:
       - Keine fest verdrahteten Anzeigetexte in Komponenten
       - Szenariotexte sind je Sprache ablegbar
+      - Nutzer können Deutsch oder Englisch über einen klar erreichbaren Schalter bzw. ein Dropdown auswählen
+      - Ein Sprachwechsel aktualisiert Plattform- und Szenariotexte, ohne den aktuellen Trainingszustand zu verlieren
       - Fehlende Übersetzung fällt sichtbar auf DE zurück
+
+  - id: AITP-96
+    epic: EP-10
+    title: Modul "GitHub Copilot Grundlagen" - Sessions, Kontext und Modellwahl
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M2
+    requirements: [FR-20, FR-21, FR-34, FR-45]
+    description: >
+      Eigenständiges Lernmodul zur tatsächlichen Nutzung von GitHub Copilot in VS Code.
+      Vermittelt Chat, Inline-Vorschläge und agentische Interaktion, grenzt Training-Session
+      und Copilot-Unterhaltung klar voneinander ab und erklärt Kontext, neue Unterhaltungen,
+      Modellwahl, Auto-/Standardauswahl sowie aufgabenbezogene Auswahlkriterien. Weiterführende
+      Quellen werden als pflegbare Content-Metadaten hinterlegt; lokale Ollama-Setups sind
+      nicht Bestandteil des Standard-Lernpfads.
+    acceptance:
+      - Der Lerninhalt erklärt den Unterschied zwischen Training-Session und Copilot-Unterhaltung eindeutig
+      - Nutzer können im Simulator eine neue Copilot-Unterhaltung beginnen und nachvollziehen, welcher Kontext dadurch erhalten bleibt bzw. neu aufgebaut wird
+      - Modellwahl und Auto-/Standardauswahl sind über semantische UiTargetRefs im Copilot-Adapter erreichbar
+      - Der Kurs erklärt mindestens drei typische Aufgabensituationen und geeignete Kriterien für die Modellwahl, ohne ein universell bestes Modell zu behaupten
+      - Verfügbare Modelloptionen werden versioniert aus Content-/Produktdaten bezogen und nicht in UI-Komponenten fest verdrahtet
+      - Weiterführende Links sind als pflegbare Content-Metadaten hinterlegt und bevorzugen offizielle Dokumentation bzw. Release-Informationen
+      - Das lokale Ollama-Sonder-Setup ist nicht Bestandteil des Standard-Lernpfads
+      - Das Szenario besteht die Schema- und Referenzvalidierung aus AITP-90
+    depends_on: [AITP-24, AITP-90, AITP-93]
 
   # ---------------- EP-11 ----------------
   - id: AITP-100
