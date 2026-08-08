@@ -54,7 +54,8 @@ function toFileNodes(runtimeFiles: string[]): FileNode[] {
 }
 
 export function Workspace() {
-  const { mode } = useTraining();
+  const { mode, scenario } = useTraining();
+  const runtimeSeed = scenario.environment?.seed;
   const [view, setView] = useState<View | null>(null);
   const [repoOpen, setRepoOpen] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("none");
@@ -85,7 +86,7 @@ export function Workspace() {
     if (!container) return;
 
     const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
-      if (reason !== "restore" && reason !== "reset") return;
+      if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
 
       setWorkspaceMode(runtimeState.workspaceMode);
       setRepoOpen(runtimeState.workspaceMode !== "none");
@@ -100,12 +101,12 @@ export function Workspace() {
       setNewFileName(null);
     });
 
-    void vscodeRuntime.mount(container);
+    void vscodeRuntime.mount(container, runtimeSeed);
     return () => {
       unsubscribe();
       void vscodeRuntime.unmount();
     };
-  }, []);
+  }, [runtimeSeed]);
 
   useEffect(() => {
     if (newFileName !== null) newFileRef.current?.focus();
