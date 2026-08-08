@@ -1,4 +1,4 @@
-import type { UiTargetRef, WorkspaceEvent } from "../types/training.ts";
+import type { RuntimeSeed, TrainingEvent, UiTargetRef } from "../types/training.ts";
 
 export type RuntimeCapability =
   | "filesystem"
@@ -10,7 +10,7 @@ export type RuntimeCapability =
   | "inline_completion"
   | "agent_mode";
 
-export type RuntimeSeed = Record<string, unknown>;
+export type { RuntimeSeed } from "../types/training.ts";
 
 export interface RuntimeSurfaceDescription {
   ref: UiTargetRef;
@@ -33,7 +33,7 @@ export interface RuntimeAdapter {
   mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void>;
   unmount(): Promise<void>;
 
-  subscribe(handler: (event: WorkspaceEvent) => void): () => void;
+  subscribe(handler: (event: TrainingEvent) => void): () => void;
   query<T = unknown>(selector: string): Promise<T>;
   resolveTarget(ref: UiTargetRef): DOMRect | null;
   describeSurface(): RuntimeSurfaceDescription[];
