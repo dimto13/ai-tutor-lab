@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { RuntimeAdapter } from "../../src/runtime/runtimeAdapter.ts";
-import type { UiTargetRef, WorkspaceEvent, WorkspaceEventName } from "../../src/types/training.ts";
+import type { RuntimeAdapter, RuntimeSeed } from "../../src/runtime/runtimeAdapter.ts";
+import type { TrainingEvent, UiTargetRef, WorkspaceEventName } from "../../src/types/training.ts";
 
 interface TargetFixture {
   ref: UiTargetRef;
@@ -19,6 +19,13 @@ interface QueryFixture {
   expected: unknown;
 }
 
+interface SeedFixture {
+  seed: RuntimeSeed;
+  selector: string;
+  expected: unknown;
+  assertMountedPresentation?(): void | Promise<void>;
+}
+
 interface SnapshotFixture {
   selector: string;
   expectedRestoredValue: unknown;
@@ -33,6 +40,7 @@ export interface RuntimeAdapterContractFixture {
   target: TargetFixture;
   event: EventFixture;
   query: QueryFixture;
+  seed: SeedFixture;
   snapshot: SnapshotFixture;
 }
 
@@ -63,19 +71,45 @@ export function defineRuntimeAdapterContractTests(
     assert.equal(fixture.adapter.resolveTarget(fixture.target.ref), null);
   });
 
-  test(`${name}: exposes events through subscribe and supports unsubscribe`, () => {
+  test(`${name}: applies a supplied seed to the mounted runtime`, async () => {
     const fixture = createFixture();
     fixture.reset();
-    const received: WorkspaceEvent[] = [];
+    await fixture.adapter.mount(fixture.target.container, fixture.seed.seed);
+
+    try {
+      assert.deepEqual(await fixture.adapter.query(fixture.seed.selector), fixture.seed.expected);
+      await fixture.seed.assertMountedPresentation?.();
+    } finally {
+      await fixture.adapter.unmount();
+    }
+  });
+
+  test(`${name}: exposes canonical training events and supports unsubscribe`, async () => {
+    const fixture = createFixture();
+    fixture.reset();
+    await fixture.adapter.mount(fixture.target.container);
+    const received: TrainingEvent[] = [];
     const unsubscribe = fixture.adapter.subscribe((event) => received.push(event));
 
-    fixture.event.emit();
-    assert.equal(received.length, 1);
-    assert.equal(received[0]?.name, fixture.event.name);
+    try {
+      fixture.event.emit();
+      fixture.event.emit();
+      assert.equal(received.length, 2);
+      assert.equal(received[0]?.type, fixture.event.name);
+      assert.equal(received[0]?.source, fixture.adapter.id);
+      assert.ok(received[0]?.id);
+      assert.ok(received[0]?.sessionId);
+      assert.equal(received[0]?.sessionId, received[1]?.sessionId);
+      assert.notEqual(received[0]?.id, received[1]?.id);
+      assert.ok(Number.isFinite(Date.parse(received[0]?.timestamp ?? "")));
 
-    unsubscribe();
-    fixture.event.emit();
-    assert.equal(received.length, 1);
+      unsubscribe();
+      fixture.event.emit();
+      assert.equal(received.length, 2);
+    } finally {
+      unsubscribe();
+      await fixture.adapter.unmount();
+    }
   });
 
   test(`${name}: answers state queries asynchronously`, async () => {
