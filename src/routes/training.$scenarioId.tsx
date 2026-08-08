@@ -43,6 +43,7 @@ function TrainingLayout() {
     percent,
     completedCount,
     isFinished,
+    isReady,
     helpLevel,
     scoreMultiplier,
   } = useTraining();
@@ -54,7 +55,14 @@ function TrainingLayout() {
   const exploreTotal = scenario.exploreTargets?.length ?? 0;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div
+      className={`flex h-screen flex-col overflow-hidden bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
+      aria-busy={!isReady}
+    >
+      <p role="status" aria-live="polite" className="sr-only">
+        {isReady ? "Training bereit" : "Training wird geladen"}
+      </p>
+
       <header className="flex h-12 shrink-0 items-center gap-4 border-b border-border bg-panel px-4">
         <Link to="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
           <GraduationCap className="h-4.5 w-4.5 text-accent" />

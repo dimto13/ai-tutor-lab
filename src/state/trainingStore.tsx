@@ -46,6 +46,7 @@ interface TrainingContextValue {
   completedCount: number;
   percent: number;
   isFinished: boolean;
+  isReady: boolean;
   feedback: { kind: "success" | "error"; message: string } | null;
   helpLevel: number;
   scoreMultiplier: number;
@@ -316,6 +317,7 @@ export function TrainingProvider({
       completedCount,
       percent: Math.round((completedCount / totalCount) * 100),
       isFinished,
+      isReady: hydrated,
       feedback,
       helpLevel,
       scoreMultiplier,
@@ -341,7 +343,7 @@ export function TrainingProvider({
         setFeedback({ kind: "error", message });
       },
     };
-  }, [scenario, mode, progress, feedback, helpLevel]);
+  }, [scenario, mode, progress, hydrated, feedback, helpLevel]);
 
   return <TrainingContext.Provider value={value}>{children}</TrainingContext.Provider>;
 }

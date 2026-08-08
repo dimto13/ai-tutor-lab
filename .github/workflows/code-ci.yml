@@ -46,3 +46,40 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  e2e-training-modes:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci --install-strategy=nested
+
+      - name: Install pinned Playwright test runner
+        run: npm install --prefix e2e --package-lock=false --ignore-scripts --no-audit --no-fund
+
+      - name: Install Chromium
+        run: ./e2e/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run training-mode smoke tests
+        run: npm test --prefix e2e
+
+      - name: Upload Playwright diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 7
