@@ -9,7 +9,7 @@
   "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "vite dev",
-    "dev:local": "vite dev --host 127.0.0.1",
+    "dev:local": "vite dev --host 0.0.0.0",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
