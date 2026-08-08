@@ -11,7 +11,7 @@ test("VS Code Grundlagen bleibt ohne Copilot-Integration lauffähig", async ({ p
   await expect(page.getByRole("button", { name: "Copilot", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await expect(
-    page.getByText("Explorer geöffnet. Du siehst jetzt den Datei- und Ordnerbereich."),
+    page.getByText("Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben."),
   ).toBeVisible();
 });
 
@@ -39,8 +39,9 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   await page.getByLabel("Modell").selectOption("auto");
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
 
-  await page.getByPlaceholder("Ask Copilot...").fill("Erkläre den aktiven Dateikontext");
-  await page.getByRole("button", { name: "Senden" }).click();
+  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  await copilotPrompt.fill("Erkläre den aktiven Dateikontext");
+  await copilotPrompt.press("Enter");
   await expect(page.getByText(/Simulierte Copilot-Antwort mit Kontext hello\.py/)).toBeVisible();
 
   await page.getByRole("button", { name: "Vorschlag erzeugen" }).click();
