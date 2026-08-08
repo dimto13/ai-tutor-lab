@@ -32,20 +32,24 @@ export function HighlightOverlay({
       return;
     }
     const runtime = getRuntimeAdapter(runtimeAdapterId);
-    if (!runtime?.resolveTarget) {
+    if (!runtime) {
       setRect(null);
       return;
     }
 
     let frame = 0;
     const measure = () => {
-      const el = runtime.resolveTarget?.(targetId);
-      if (!el) {
+      const resolved = runtime.resolveTarget(targetId);
+      if (!resolved) {
         setRect(null);
         return;
       }
-      const r = el.getBoundingClientRect();
-      setRect({ top: r.top - 6, left: r.left - 6, width: r.width + 12, height: r.height + 12 });
+      setRect({
+        top: resolved.top - 6,
+        left: resolved.left - 6,
+        width: resolved.width + 12,
+        height: resolved.height + 12,
+      });
     };
     measure();
     const loop = () => {
