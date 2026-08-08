@@ -6,6 +6,11 @@
   "title": "VS Code, Git & GitHub Copilot – Zusammenspiel",
   "description": "Wende die Werkzeuge gemeinsam in einem typischen Entwicklungsablauf an: Projekt öffnen, Datei bearbeiten, Änderungen mit Git versionieren und Copilot einsetzen.",
   "learningObjectives": ["combine_editor_git_ai_workflow"],
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator"
+  },
   "points": 100,
   "steps": [
     {
