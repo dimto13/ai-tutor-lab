@@ -52,6 +52,7 @@ interface TrainingContextValue {
   earnedPoints: number;
   revealHelp: () => void;
   resetHelp: () => void;
+  completeExplanationStep: () => void;
   restart: () => void;
   registerMistake: (message: string) => void;
 }
@@ -61,8 +62,9 @@ const TrainingContext = createContext<TrainingContextValue | null>(null);
 function initialProgress(scenario: Scenario): TrainingProgress {
   const mode = modeOf(scenario);
   const statuses: Record<string, StepStatus> = {};
-  scenario.steps.forEach((s, i) => {
-    statuses[s.id] = mode === "explore" ? "NOT_STARTED" : i === 0 ? "ACTIVE" : "NOT_STARTED";
+  scenario.steps.forEach((step, index) => {
+    statuses[step.id] =
+      mode === "explore" ? "NOT_STARTED" : index === 0 ? "ACTIVE" : "NOT_STARTED";
   });
   return {
     statuses,
@@ -101,8 +103,7 @@ function load(scenario: Scenario): TrainingProgress {
 }
 
 function eventPayload(event: TrainingEvent): Record<string, unknown> {
-  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload))
-    return {};
+  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) return {};
   return event.payload as Record<string, unknown>;
 }
 
@@ -113,11 +114,12 @@ function validateEvent(validation: Validation | undefined, event: TrainingEvent)
 
   const payload = eventPayload(event);
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
-    if (payload[key] !== expected)
+    if (payload[key] !== expected) {
       return {
         ok: false,
         message: "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.",
       };
+    }
   }
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
@@ -188,6 +190,27 @@ export function TrainingProvider({
     window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(progress));
   }, [progress, hydrated, scenario.id]);
 
+  const completeStep = useCallback(
+    (stepId: string, successMessage: string) => {
+      const index = scenario.steps.findIndex((step) => step.id === stepId);
+      if (index < 0) return;
+      const next = scenario.steps[index + 1];
+      setProgress((current) => ({
+        ...current,
+        statuses: {
+          ...current.statuses,
+          [stepId]: "COMPLETED",
+          ...(next ? { [next.id]: "ACTIVE" as StepStatus } : {}),
+        },
+        activeStepId: next ? next.id : null,
+        finishedAt: next ? null : Date.now(),
+      }));
+      setHelpLevel(0);
+      setFeedback({ kind: "success", message: successMessage });
+    },
+    [scenario],
+  );
+
   useEffect(() => {
     const runtimes = getRuntimeAdapters(
       scenario.environment?.runtimeAdapterId,
@@ -197,25 +220,25 @@ export function TrainingProvider({
 
     const handleEvent = async (event: TrainingEvent) => {
       const payload = eventPayload(event);
-      setProgress((p) => ({ ...p, lastAction: event.type }));
+      setProgress((current) => ({ ...current, lastAction: event.type }));
 
       if (mode === "explore") {
         if (event.type !== "ui.element.inspected") return;
         const ref = payload["ref"];
         if (typeof ref !== "string" || !(scenario.exploreTargets ?? []).includes(ref)) return;
-        setProgress((p) => {
-          const exploredTargets = p.exploredTargets.includes(ref)
-            ? p.exploredTargets
-            : [...p.exploredTargets, ref];
+        setProgress((current) => {
+          const exploredTargets = current.exploredTargets.includes(ref)
+            ? current.exploredTargets
+            : [...current.exploredTargets, ref];
           const targetCount = scenario.exploreTargets?.length ?? 0;
           return {
-            ...p,
+            ...current,
             exploredTargets,
             lastInspectedRef: ref,
             finishedAt:
               targetCount > 0 && exploredTargets.length >= targetCount
-                ? (p.finishedAt ?? Date.now())
-                : p.finishedAt,
+                ? (current.finishedAt ?? Date.now())
+                : current.finishedAt,
           };
         });
         return;
@@ -224,21 +247,25 @@ export function TrainingProvider({
       if (mode === "challenge") {
         if (!(await validateState(scenario.completionValidation, scenario))) return;
         const challengeStep = scenario.steps[0];
-        setProgress((p) => ({
-          ...p,
-          statuses: challengeStep ? { ...p.statuses, [challengeStep.id]: "COMPLETED" } : p.statuses,
+        setProgress((current) => ({
+          ...current,
+          statuses: challengeStep
+            ? { ...current.statuses, [challengeStep.id]: "COMPLETED" }
+            : current.statuses,
           activeStepId: null,
-          finishedAt: p.finishedAt ?? Date.now(),
+          finishedAt: current.finishedAt ?? Date.now(),
         }));
-        if (challengeStep) setFeedback({ kind: "success", message: challengeStep.successMessage });
+        if (challengeStep) {
+          setFeedback({ kind: "success", message: challengeStep.successMessage });
+        }
         return;
       }
 
       const current = progressRef.current;
       const stepId = current.activeStepId;
       if (!stepId) return;
-      const step = scenario.steps.find((s) => s.id === stepId);
-      if (!step) return;
+      const step = scenario.steps.find((candidate) => candidate.id === stepId);
+      if (!step || step.stepType === "explanation") return;
 
       const expectedEvent =
         step.validation?.kind === "event" ? step.validation.type : step.expectedEvent;
@@ -251,32 +278,19 @@ export function TrainingProvider({
           : { ok: true };
 
       if (result.ok) {
-        const index = scenario.steps.findIndex((s) => s.id === stepId);
-        const next = scenario.steps[index + 1];
-        setProgress((p) => ({
-          ...p,
-          statuses: {
-            ...p.statuses,
-            [stepId]: "COMPLETED",
-            ...(next ? { [next.id]: "ACTIVE" as StepStatus } : {}),
-          },
-          activeStepId: next ? next.id : null,
-          finishedAt: next ? null : Date.now(),
-        }));
-        setHelpLevel(0);
-        setFeedback({ kind: "success", message: step.successMessage });
+        completeStep(stepId, step.successMessage);
       } else if (result.message) {
         const counts = event.type !== "file.updated";
         if (counts) {
-          setProgress((p) => ({
-            ...p,
-            mistakes: p.mistakes + 1,
-            statuses: { ...p.statuses, [stepId]: "VALIDATION_FAILED" },
+          setProgress((currentProgress) => ({
+            ...currentProgress,
+            mistakes: currentProgress.mistakes + 1,
+            statuses: { ...currentProgress.statuses, [stepId]: "VALIDATION_FAILED" },
           }));
         }
-        setFeedback((f) =>
-          f && f.kind === "error" && f.message === result.message
-            ? f
+        setFeedback((currentFeedback) =>
+          currentFeedback?.kind === "error" && currentFeedback.message === result.message
+            ? currentFeedback
             : { kind: "error", message: result.message! },
         );
       }
@@ -289,17 +303,17 @@ export function TrainingProvider({
     return () => {
       for (const unsubscribe of unsubscribes) unsubscribe();
     };
-  }, [scenario, mode]);
+  }, [scenario, mode, completeStep]);
 
   useEffect(() => {
     if (feedback?.kind !== "success") return;
-    const t = setTimeout(() => setFeedback(null), 3500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setFeedback(null), 3500);
+    return () => clearTimeout(timer);
   }, [feedback]);
 
   const value = useMemo<TrainingContextValue>(() => {
     const guidedCompleted = scenario.steps.filter(
-      (s) => progress.statuses[s.id] === "COMPLETED",
+      (step) => progress.statuses[step.id] === "COMPLETED",
     ).length;
     const exploreTotal = scenario.exploreTargets?.length ?? 0;
     const exploreCompleted = progress.exploredTargets.filter((ref) =>
@@ -328,7 +342,7 @@ export function TrainingProvider({
           ? challengeComplete
           : guidedCompleted === scenario.steps.length;
     const activeStepIndex = progress.activeStepId
-      ? scenario.steps.findIndex((s) => s.id === progress.activeStepId)
+      ? scenario.steps.findIndex((step) => step.id === progress.activeStepId)
       : scenario.steps.length;
     const scoreMultiplier = modeMultiplier(mode);
     const basePoints = scenario.points ?? Math.max(scenario.steps.length * 10, 10);
@@ -348,13 +362,21 @@ export function TrainingProvider({
       earnedPoints: Math.round(basePoints * scoreMultiplier),
       revealHelp: () => {
         if (mode !== "guided") return;
-        setHelpLevel((l) => {
-          if (l >= 3) return l;
-          setProgress((p) => ({ ...p, hintsUsed: p.hintsUsed + 1 }));
-          return l + 1;
+        setHelpLevel((level) => {
+          if (level >= 3) return level;
+          setProgress((current) => ({ ...current, hintsUsed: current.hintsUsed + 1 }));
+          return level + 1;
         });
       },
       resetHelp: () => setHelpLevel(0),
+      completeExplanationStep: () => {
+        if (mode !== "guided") return;
+        const stepId = progressRef.current.activeStepId;
+        if (!stepId) return;
+        const step = scenario.steps.find((candidate) => candidate.id === stepId);
+        if (!step || step.stepType !== "explanation") return;
+        completeStep(step.id, step.successMessage);
+      },
       restart: () => {
         for (const runtime of getRuntimeAdapters(
           scenario.environment?.runtimeAdapterId,
@@ -368,11 +390,11 @@ export function TrainingProvider({
       },
       registerMistake: (message: string) => {
         if (mode === "explore") return;
-        setProgress((p) => ({ ...p, mistakes: p.mistakes + 1 }));
+        setProgress((current) => ({ ...current, mistakes: current.mistakes + 1 }));
         setFeedback({ kind: "error", message });
       },
     };
-  }, [scenario, mode, progress, hydrated, feedback, helpLevel]);
+  }, [scenario, mode, progress, hydrated, feedback, helpLevel, completeStep]);
 
   return <TrainingContext.Provider value={value}>{children}</TrainingContext.Provider>;
 }
@@ -400,18 +422,20 @@ export function useStoredProgressPercent(scenarioId: string | null) {
       const raw = window.localStorage.getItem(storageKey(scenario.id));
       if (!raw) return setPercent(0);
       const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
-      const mode = modeOf(scenario);
-      if (mode === "explore") {
+      const storedMode = modeOf(scenario);
+      if (storedMode === "explore") {
         const targets = scenario.exploreTargets ?? [];
         const done = (parsed.exploredTargets ?? []).filter((ref) => targets.includes(ref)).length;
         setPercent(targets.length === 0 ? 0 : Math.round((done / targets.length) * 100));
         return;
       }
-      if (mode === "challenge") {
+      if (storedMode === "challenge") {
         setPercent(parsed.finishedAt ? 100 : 0);
         return;
       }
-      const done = scenario.steps.filter((s) => parsed.statuses?.[s.id] === "COMPLETED").length;
+      const done = scenario.steps.filter(
+        (step) => parsed.statuses?.[step.id] === "COMPLETED",
+      ).length;
       setPercent(Math.round((done / Math.max(scenario.steps.length, 1)) * 100));
     } catch {
       setPercent(0);
@@ -422,6 +446,6 @@ export function useStoredProgressPercent(scenarioId: string | null) {
 
 export const useHighlightTarget = () => {
   const { progress, scenario, helpLevel } = useTraining();
-  const step = scenario.steps.find((s) => s.id === progress.activeStepId);
+  const step = scenario.steps.find((candidate) => candidate.id === progress.activeStepId);
   return useCallback(() => ({ step, helpLevel }), [step, helpLevel])();
 };
