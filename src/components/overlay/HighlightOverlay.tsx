@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from "react";
+import { getRuntimeAdapter } from "@/runtime";
 
 interface Rect {
   top: number;
@@ -9,27 +10,36 @@ interface Rect {
 
 /**
  * Spotlight overlay: dims everything except the target element (four dim panes),
- * so the highlighted element stays fully clickable.
+ * so the highlighted element stays fully clickable. The semantic target is
+ * resolved by the active RuntimeAdapter; scenarios never know DOM selectors.
  */
 export function HighlightOverlay({
   targetId,
+  runtimeAdapterId,
   tooltip,
   strong,
 }: {
   targetId?: string | undefined;
+  runtimeAdapterId?: string | undefined;
   tooltip?: string | undefined;
   strong?: boolean | undefined;
 }) {
   const [rect, setRect] = useState<Rect | null>(null);
 
   useLayoutEffect(() => {
-    if (!targetId) {
+    if (!targetId || !runtimeAdapterId) {
       setRect(null);
       return;
     }
+    const runtime = getRuntimeAdapter(runtimeAdapterId);
+    if (!runtime?.resolveTarget) {
+      setRect(null);
+      return;
+    }
+
     let frame = 0;
     const measure = () => {
-      const el = document.querySelector<HTMLElement>(`[data-highlight="${targetId}"]`);
+      const el = runtime.resolveTarget?.(targetId);
       if (!el) {
         setRect(null);
         return;
@@ -44,7 +54,7 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetId]);
+  }, [targetId, runtimeAdapterId]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -57,7 +67,7 @@ export function HighlightOverlay({
   return (
     <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
       <div className={`absolute left-0 right-0 top-0 ${dim} transition-opacity`} style={{ height: rect.top }} />
-      <div className={`absolute left-0 right-0 bottom-0 ${dim}`} style={{ top: rect.top + rect.height }} />
+      <div className={`absolute bottom-0 left-0 right-0 ${dim}`} style={{ top: rect.top + rect.height }} />
       <div className={`absolute left-0 ${dim}`} style={{ top: rect.top, height: rect.height, width: rect.left }} />
       <div
         className={`absolute right-0 ${dim}`}
