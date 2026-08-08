@@ -28,11 +28,13 @@ test("model and endpoint can be changed without code changes", () => {
 });
 
 test("Ollama provider uses the OpenAI-compatible chat completions API", async () => {
-  let requestedUrl = "";
-  let requestedBody: Record<string, unknown> | null = null;
+  const captured: { url: string; body: Record<string, unknown> | null } = {
+    url: "",
+    body: null,
+  };
   const mockFetch: typeof fetch = async (input, init) => {
-    requestedUrl = String(input);
-    requestedBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    captured.url = String(input);
+    captured.body = JSON.parse(String(init?.body)) as Record<string, unknown>;
     return new Response(
       JSON.stringify({
         model: "gemma4:31b",
@@ -48,8 +50,8 @@ test("Ollama provider uses the OpenAI-compatible chat completions API", async ()
     structuredOutput: true,
   });
 
-  assert.equal(requestedUrl, "http://localhost:11434/v1/chat/completions");
-  assert.deepEqual(requestedBody?.response_format, { type: "json_object" });
+  assert.equal(captured.url, "http://localhost:11434/v1/chat/completions");
+  assert.deepEqual(captured.body?.["response_format"], { type: "json_object" });
 
   const parsed = JSON.parse(response.text) as { uiTargetRef: string };
   assert.ok(getVscodeSurfaceTarget(parsed.uiTargetRef));
