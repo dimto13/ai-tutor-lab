@@ -12,6 +12,7 @@ const workspaceEventNameSchema = z.enum([
   "terminal.command.executed",
   "panel.opened",
   "copilot.enabled.changed",
+  "copilot.chat.opened",
   "copilot.conversation.started",
   "copilot.prompt.submitted",
   "copilot.mode.changed",
