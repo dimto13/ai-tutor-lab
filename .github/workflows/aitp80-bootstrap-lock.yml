@@ -1,0 +1,40 @@
+name: AITP-80 bootstrap npm lockfile
+
+on:
+  push:
+    branches:
+      - feature/aitp-80-remove-lovable-tooling
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feature/aitp-80-remove-lovable-tooling
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "package-lock.json already up to date"
+            exit 0
+          fi
+          git commit -m "AITP-80 generate npm lockfile"
+          git push origin HEAD:feature/aitp-80-remove-lovable-tooling
