@@ -14,6 +14,15 @@ interface RuntimeState {
   activePanel: PanelName;
 }
 
+interface VscodeRuntimeAdapter extends RuntimeAdapter {
+  inspect(ref: UiTargetRef): void;
+  reset(): void;
+  setWorkspace(mode: Exclude<WorkspaceMode, "none">, folders: string[]): void;
+  addFile(filename: string): void;
+  setActiveFile(filename: string | null): void;
+  setActivePanel(panel: Exclude<PanelName, null>): void;
+}
+
 const initialState = (): RuntimeState => ({
   workspaceMode: "none",
   folders: [],
@@ -151,4 +160,4 @@ export const vscodeRuntime = {
     }
     state = cloneState(snapshot);
   },
-} satisfies RuntimeAdapter;
+} satisfies VscodeRuntimeAdapter;
