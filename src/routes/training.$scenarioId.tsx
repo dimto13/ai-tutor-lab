@@ -103,6 +103,7 @@ function TrainingLayout() {
       {!isFinished && mode === "guided" && highlightsOn && step?.highlightTarget ? (
         <HighlightOverlay
           targetId={step.highlightTarget}
+          runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           tooltip={step.highlightTooltip}
           strong={helpLevel >= 3}
         />
