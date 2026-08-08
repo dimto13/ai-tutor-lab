@@ -1,4 +1,4 @@
-import type { WorkspaceEvent, WorkspaceEventName } from "@/types/training";
+import type { WorkspaceEvent, WorkspaceEventName } from "../types/training.ts";
 
 type Handler = (event: WorkspaceEvent) => void;
 
