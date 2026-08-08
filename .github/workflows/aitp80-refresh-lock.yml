@@ -25,9 +25,9 @@ jobs:
       - name: Regenerate lockfile from clean state
         run: |
           rm -rf node_modules package-lock.json
-          npm install --ignore-scripts
+          npm install --install-strategy=nested --ignore-scripts
           rm -rf node_modules
-          npm ci --ignore-scripts
+          npm ci --install-strategy=nested --ignore-scripts
 
       - name: Commit verified lockfile
         run: |
