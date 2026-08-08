@@ -2,6 +2,7 @@ export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "VALIDATION_FA
 
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
+export type TrainingStepType = "action" | "explanation";
 export type UiTargetRef = string;
 export type RuntimeSeed = Record<string, unknown>;
 
@@ -68,6 +69,8 @@ export type Validation =
 
 export interface TrainingStep {
   id: string;
+  /** Only explicitly marked explanation steps may advance without a RuntimeEvent. */
+  stepType?: TrainingStepType;
   title: string;
   description: string;
   instruction: string;
@@ -94,6 +97,14 @@ export interface ScenarioEnvironment {
   seed?: RuntimeSeed;
 }
 
+export interface LearningResource {
+  title: string;
+  description?: string;
+  url: string;
+  kind: "official" | "video" | "reference";
+  verifiedAt?: string;
+}
+
 export interface Scenario {
   id: string;
   moduleId?: string;
@@ -106,6 +117,8 @@ export interface Scenario {
   estimatedMinutes?: number;
   /** Base points before the mode multiplier is applied. */
   points?: number;
+  /** Maintained learning links, kept outside React components. */
+  resources?: LearningResource[];
   /** Explore mode: semantic targets that must be inspected. */
   exploreTargets?: UiTargetRef[];
   /** Challenge mode: final-state validation, independent of click order. */
