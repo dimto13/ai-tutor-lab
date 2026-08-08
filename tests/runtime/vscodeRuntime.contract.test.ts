@@ -105,22 +105,22 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
 });
 
 test("vscodeRuntime: publishes the supplied seed to presentation subscribers on mount", async () => {
-  let mountedPresentation: VscodeRuntimeState | null = null;
+  const captured: { current: VscodeRuntimeState | null } = { current: null };
   const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
-    if (reason === "mount") mountedPresentation = runtimeState;
+    if (reason === "mount") captured.current = runtimeState;
   });
 
   try {
     vscodeRuntime.reset();
     await vscodeRuntime.mount(createContainer(), seededRuntimeState);
-    assert.ok(mountedPresentation);
-    assert.equal(mountedPresentation.workspaceMode, "folder");
-    assert.deepEqual(mountedPresentation.folders, ["seeded-project"]);
-    assert.deepEqual(mountedPresentation.files, ["seeded.py"]);
-    assert.equal(mountedPresentation.contents["seeded.py"], "print('seeded')\n");
-    assert.deepEqual(mountedPresentation.openTabs, ["seeded.py"]);
-    assert.equal(mountedPresentation.activeFile, "seeded.py");
-    assert.equal(mountedPresentation.activePanel, "terminal");
+    assert.ok(captured.current);
+    assert.equal(captured.current.workspaceMode, "folder");
+    assert.deepEqual(captured.current.folders, ["seeded-project"]);
+    assert.deepEqual(captured.current.files, ["seeded.py"]);
+    assert.equal(captured.current.contents["seeded.py"], "print('seeded')\n");
+    assert.deepEqual(captured.current.openTabs, ["seeded.py"]);
+    assert.equal(captured.current.activeFile, "seeded.py");
+    assert.equal(captured.current.activePanel, "terminal");
   } finally {
     unsubscribe();
     await vscodeRuntime.unmount();
