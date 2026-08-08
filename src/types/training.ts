@@ -1,5 +1,9 @@
 export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "VALIDATION_FAILED";
 
+export type TrainingMode = "explore" | "guided" | "challenge";
+export type LearningLayer = "tool" | "concept" | "ai_workflow";
+export type UiTargetRef = string;
+
 export type WorkspaceEventName =
   | "explorer.opened"
   | "folder.opened"
@@ -9,7 +13,9 @@ export type WorkspaceEventName =
   | "file.updated"
   | "terminal.opened"
   | "terminal.command.executed"
-  | "copilot.prompt.submitted";
+  | "panel.opened"
+  | "copilot.prompt.submitted"
+  | "ui.element.inspected";
 
 export interface WorkspaceEvent {
   name: WorkspaceEventName;
@@ -22,6 +28,24 @@ export interface ValidationResult {
   message?: string;
 }
 
+export type Validation =
+  | {
+      kind: "event";
+      type: WorkspaceEventName;
+      match?: Record<string, unknown>;
+      contains?: Record<string, string>;
+    }
+  | {
+      kind: "state";
+      selector: string;
+      equals?: unknown;
+      includes?: unknown;
+    }
+  | {
+      kind: "all";
+      of: Validation[];
+    };
+
 export interface TrainingStep {
   id: string;
   title: string;
@@ -30,17 +54,40 @@ export interface TrainingStep {
   why: string;
   /** 3 escalating help levels: hint, concrete instruction, visual help. */
   helpLevels: [string, string, string];
-  expectedEvent: WorkspaceEventName;
-  /** Element marked with data-highlight="<id>" that gets spotlighted. */
-  highlightTarget?: string;
+  /** Transitional POC event contract; new content should prefer `validation`. */
+  expectedEvent?: WorkspaceEventName;
+  validation?: Validation;
+  /** Semantic UI reference, never a CSS selector. */
+  highlightTarget?: UiTargetRef;
   highlightTooltip?: string;
   successMessage: string;
+  /** Transitional compatibility for the older Git/Copilot POC scenario. */
   validate?: (payload: Record<string, unknown>) => ValidationResult;
+}
+
+export interface ScenarioEnvironment {
+  productId: string;
+  version: string;
+  runtimeAdapterId: string;
 }
 
 export interface Scenario {
   id: string;
+  moduleId?: string;
+  mode?: TrainingMode;
+  learningLayer?: LearningLayer;
   title: string;
   description: string;
+  learningObjectives?: string[];
+  environment?: ScenarioEnvironment;
+  estimatedMinutes?: number;
+  /** Base points before the mode multiplier is applied. */
+  points?: number;
+  /** Explore mode: semantic targets that must be inspected. */
+  exploreTargets?: UiTargetRef[];
+  /** Challenge mode: final-state validation, independent of click order. */
+  completionValidation?: Validation;
+  /** Shown after a successful challenge as a reference solution. */
+  solutionComparison?: string[];
   steps: TrainingStep[];
 }
