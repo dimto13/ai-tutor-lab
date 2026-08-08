@@ -1,0 +1,76 @@
+{
+  "id": "github-copilot-vscode-2026-08",
+  "productId": "github-copilot",
+  "hostProductId": "vscode",
+  "client": "vscode",
+  "productVersion": "2026.08",
+  "defaultMode": "ask",
+  "defaultModelId": "auto",
+  "chatModes": [
+    {
+      "id": "ask",
+      "label": "Ask",
+      "description": "Fragen zum Code und zu technischen Konzepten beantworten, ohne autonom Änderungen auszuführen."
+    },
+    {
+      "id": "plan",
+      "label": "Plan",
+      "description": "Einen detaillierten Implementierungsplan erstellen, bevor Code geändert wird.",
+      "status": "preview"
+    },
+    {
+      "id": "agent",
+      "label": "Agent",
+      "description": "Mehrstufige Aufgaben autonom bearbeiten, Dateien ändern und Werkzeuge verwenden."
+    }
+  ],
+  "models": [
+    {
+      "id": "auto",
+      "label": "Auto",
+      "provider": "GitHub",
+      "selection": "automatic"
+    },
+    {
+      "id": "gpt-5.3-codex",
+      "label": "GPT-5.3-Codex",
+      "provider": "OpenAI",
+      "selection": "explicit"
+    },
+    {
+      "id": "gpt-5.5",
+      "label": "GPT-5.5",
+      "provider": "OpenAI",
+      "selection": "explicit"
+    },
+    {
+      "id": "claude-sonnet-4.6",
+      "label": "Claude Sonnet 4.6",
+      "provider": "Anthropic",
+      "selection": "explicit"
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "label": "Gemini 3.5 Flash",
+      "provider": "Google",
+      "selection": "explicit"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "official",
+      "url": "https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide?tool=vscode",
+      "verifiedAt": "2026-08-09"
+    },
+    {
+      "kind": "official",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/supported-models",
+      "verifiedAt": "2026-08-09"
+    },
+    {
+      "kind": "official",
+      "url": "https://docs.github.com/en/copilot/concepts/models/auto-model-selection",
+      "verifiedAt": "2026-08-09"
+    }
+  ]
+}
