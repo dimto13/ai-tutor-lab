@@ -17,9 +17,6 @@ export interface VscodeRuntimeState {
   terminalLines: string[];
   terminalCommand: string;
   staged: boolean;
-  copilotOpen: boolean;
-  copilotPrompt: string;
-  copilotAnswer: string | null;
   wrongFile: string | null;
 }
 
@@ -43,9 +40,6 @@ interface VscodeRuntimeAdapter extends RuntimeAdapter {
   setTerminalLines(lines: string[]): void;
   setTerminalCommand(command: string): void;
   setStaged(staged: boolean): void;
-  setCopilotOpen(open: boolean): void;
-  setCopilotPrompt(prompt: string): void;
-  setCopilotAnswer(answer: string | null): void;
   setWrongFile(filename: string | null): void;
 }
 
@@ -62,9 +56,6 @@ const initialState = (): VscodeRuntimeState => ({
   terminalLines: [],
   terminalCommand: "",
   staged: false,
-  copilotOpen: false,
-  copilotPrompt: "",
-  copilotAnswer: null,
   wrongFile: null,
 });
 
@@ -96,9 +87,6 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
     isStringArray(candidate.terminalLines) &&
     typeof candidate.terminalCommand === "string" &&
     typeof candidate.staged === "boolean" &&
-    typeof candidate.copilotOpen === "boolean" &&
-    typeof candidate.copilotPrompt === "string" &&
-    (candidate.copilotAnswer === null || typeof candidate.copilotAnswer === "string") &&
     (candidate.wrongFile === null || typeof candidate.wrongFile === "string")
   );
 }
@@ -133,7 +121,7 @@ function stringArrayFromSeed(
 
 function nullableStringFromSeed(
   seed: RuntimeSeed,
-  key: "activeFile" | "copilotAnswer" | "wrongFile",
+  key: "activeFile" | "wrongFile",
   fallback: string | null,
 ): string | null {
   if (!hasOwn(seed, key)) return fallback;
@@ -144,11 +132,7 @@ function nullableStringFromSeed(
   return value;
 }
 
-function stringFromSeed(
-  seed: RuntimeSeed,
-  key: "terminalCommand" | "copilotPrompt",
-  fallback: string,
-): string {
+function stringFromSeed(seed: RuntimeSeed, key: "terminalCommand", fallback: string): string {
   if (!hasOwn(seed, key)) return fallback;
   const value = seed[key];
   if (typeof value !== "string") {
@@ -157,11 +141,7 @@ function stringFromSeed(
   return value;
 }
 
-function booleanFromSeed(
-  seed: RuntimeSeed,
-  key: "staged" | "copilotOpen",
-  fallback: boolean,
-): boolean {
+function booleanFromSeed(seed: RuntimeSeed, key: "staged", fallback: boolean): boolean {
   if (!hasOwn(seed, key)) return fallback;
   const value = seed[key];
   if (typeof value !== "boolean") {
@@ -219,9 +199,6 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     terminalLines,
     terminalCommand: stringFromSeed(seed, "terminalCommand", base.terminalCommand),
     staged: booleanFromSeed(seed, "staged", base.staged),
-    copilotOpen: booleanFromSeed(seed, "copilotOpen", base.copilotOpen),
-    copilotPrompt: stringFromSeed(seed, "copilotPrompt", base.copilotPrompt),
-    copilotAnswer: nullableStringFromSeed(seed, "copilotAnswer", base.copilotAnswer),
     wrongFile: nullableStringFromSeed(seed, "wrongFile", base.wrongFile),
   };
 }
@@ -371,18 +348,6 @@ export const vscodeRuntime = {
 
   setStaged(staged: boolean): void {
     replaceState({ ...state, staged }, "mutation");
-  },
-
-  setCopilotOpen(open: boolean): void {
-    replaceState({ ...state, copilotOpen: open }, "mutation");
-  },
-
-  setCopilotPrompt(prompt: string): void {
-    replaceState({ ...state, copilotPrompt: prompt }, "mutation");
-  },
-
-  setCopilotAnswer(answer: string | null): void {
-    replaceState({ ...state, copilotAnswer: answer }, "mutation");
   },
 
   setWrongFile(filename: string | null): void {
