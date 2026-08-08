@@ -53,11 +53,11 @@ export const gitBasicsScenario: Scenario = {
       title: "Ordner und Workspace unterscheiden",
       description:
         "Ein gespeicherter VS-Code-Workspace kann mehrere Ordner zu einem Arbeitskontext zusammenfassen und eigene Einstellungen speichern. Das ist nützlich, wenn eine Aufgabe aus mehreren zusammengehörigen Projekten besteht.",
-      instruction: "Öffne jetzt über File → Open Workspace from File... den vorbereiteten Workspace.",
+      instruction: "Öffne jetzt über File → Open Workspace... den vorbereiteten Workspace.",
       why: "Der Unterschied ist konzeptionell wichtig: Open Folder arbeitet mit einem Ordner. Eine .code-workspace-Datei beschreibt dagegen einen Arbeitskontext, der mehrere Ordner und Workspace-spezifische Einstellungen enthalten kann.",
       helpLevels: [
         "Öffne erneut das File-Menü.",
-        'Wähle "Open Workspace from File...". Danach siehst du zwei Ordner und eine Workspace-Einstellung.',
+        'Wähle "Open Workspace...". Danach siehst du zwei Ordner und eine Workspace-Einstellung.',
         "Das File-Menü wird hervorgehoben. Öffne dort den gespeicherten Workspace.",
       ],
       expectedEvent: "workspace.opened",
