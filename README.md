@@ -29,13 +29,40 @@ Tickets. Details und Regeln: [`docs/README.md`](docs/README.md#aufgabenverwaltun
 
 ## Lokale Entwicklung
 
-Voraussetzung: Node.js und npm — [Installation über nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Voraussetzung: Node.js 22 und npm. Mit `nvm` wird die im Repository hinterlegte
+Node-Version automatisch über `.nvmrc` ausgewählt.
 
 ```sh
-git clone <this-repository-url>
+git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
-npm i
-npm run dev
+nvm use
+npm install
+npm run dev:local
+```
+
+Der lokale Entwicklungsserver bindet mit `dev:local` explizit an `127.0.0.1`. Die von
+Lovable bereitgestellte Vite-/TanStack-Konfiguration bleibt dabei unverändert Bestandteil des
+POC; für den lokalen Start ist kein Lovable-Editor erforderlich.
+
+### Feature-Branch für den lokalen POC
+
+Für die schrittweise lokale Übernahme des Lovable-POC wird aktuell der Branch
+`feature/aitp-80-local-poc` verwendet:
+
+```sh
+git fetch origin
+git switch feature/aitp-80-local-poc
+git pull
+nvm use
+npm install
+npm run dev:local
+```
+
+Wenn du bereits auf diesem Branch arbeitest, reicht für nachfolgende Änderungen normalerweise:
+
+```sh
+git pull
+npm run dev:local
 ```
 
 Für Backlog-Tooling zusätzlich: `pip install pyyaml requests`.
