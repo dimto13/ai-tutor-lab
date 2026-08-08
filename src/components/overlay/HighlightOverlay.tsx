@@ -78,7 +78,10 @@ export function HighlightOverlay({
           className="absolute max-w-64 rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
           style={{
             top: Math.min(rect.top + rect.height + 10, window.innerHeight - 90),
-            left: Math.min(rect.left, window.innerWidth - 280),
+            left:
+              rect.left > window.innerWidth * 0.62
+                ? Math.max(12, rect.left - 268)
+                : Math.min(rect.left, window.innerWidth - 280),
           }}
         >
           {tooltip}
