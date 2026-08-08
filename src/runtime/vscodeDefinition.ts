@@ -4,6 +4,7 @@ import type { RuntimeSurfaceDescription } from "./runtimeAdapter.ts";
 export interface RuntimeReferenceDefinition {
   id: string;
   productId: string;
+  hostProductId?: string;
   surface: readonly RuntimeSurfaceDescription[];
   querySelectors: readonly string[];
 }
@@ -52,11 +53,6 @@ export const VSCODE_RUNTIME_DEFINITION = {
       conceptKey: "vscode.explorer",
     },
     { ref: "vscode.editor", label: "Editor", conceptKey: "vscode.editor" },
-    {
-      ref: "vscode.editor.copilot",
-      label: "Copilot fragen",
-      conceptKey: "github.copilot",
-    },
     { ref: "vscode.panel.terminal", label: "Terminal", conceptKey: "vscode.terminal" },
     {
       ref: "vscode.panel.terminal.input",
