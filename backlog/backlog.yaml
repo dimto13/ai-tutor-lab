@@ -1,0 +1,1294 @@
+meta:
+  project: AI Training Lab
+  version: "1.1"
+  updated: "2026-08-08"
+  estimate_unit: story_points
+  priority_scale: "M=Must, S=Should, C=Could"
+  note: >
+    Single Source of Truth für alle Tickets. Markdown und CSV werden aus dieser Datei
+    generiert (scripts/generate_backlog.py). Ticket-IDs sind stabil und dürfen nicht
+    neu vergeben werden.
+
+epics:
+  - id: EP-01
+    title: Domänenmodell & Technology-Katalog
+    goal: Lerninhalt und Technologie sauber trennen, Generizität strukturell verankern
+  - id: EP-02
+    title: Training Engine
+    goal: Frameworkfreie State Machine, Events, Validierung, ohne UI-Abhängigkeit
+  - id: EP-03
+    title: Runtime-Adapter & Simulatoren
+    goal: Einheitliches Adapter-Interface, realistischer VS-Code- und Terminal-Simulator
+  - id: EP-04
+    title: Trainingsmodi Explore / Guided / Challenge
+    goal: Didaktische Tiefe statt reiner Klickstrecke
+  - id: EP-05
+    title: Guide-Panel, Overlay & Hilfesystem
+    goal: Visuelle Führung, die nie falsch markiert und nie überfordert
+  - id: EP-06
+    title: KI-Tutor
+    goal: Kontextbewusster Tutor, Stufe 1 deterministisch, Stufe 2 LLM mit Guardrails
+  - id: EP-07
+    title: Punktesystem, Kompetenzprofil & Nachweise
+    goal: Motivation als Kompetenzwährung, prüffähige Nachweise
+  - id: EP-08
+    title: Dashboard, Reporting & Rollen
+    goal: Überblick für Lernende und aggregierte Auswertung für L&D
+  - id: EP-09
+    title: Plattform, Auth, Persistenz & Deployment
+    goal: Vom Prototyp zum betreibbaren AWS-Amplify-MVP
+  - id: EP-10
+    title: Content-Authoring & Szenariokatalog
+    goal: Szenarien erstellbar, validierbar und versionierbar ohne Frontend-Code
+  - id: EP-11
+    title: Compliance, Datenschutz & Barrierefreiheit
+    goal: Einführbarkeit im deutschen Unternehmenskontext sicherstellen
+  - id: EP-12
+    title: Qualitätssicherung & Lernanalytik
+    goal: Technische Qualität und didaktische Wirksamkeit messbar machen
+  - id: EP-13
+    title: Datenklassifizierung & Dokumenten-Check
+    goal: Mitarbeitende lernen, was in KI-Werkzeuge darf - und können es am echten Dokument in der eigenen Firmen-Boundary prüfen
+
+tickets:
+
+  # ---------------- EP-01 ----------------
+  - id: AITP-1
+    epic: EP-01
+    title: Technology-Katalog als Datenmodell einführen
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-01, FR-02]
+    description: >
+      Technology, Provider, Product, ProductVersion, Capability und Integration als
+      typisierte Datenstrukturen in packages/catalog anlegen. Initial befüllt mit
+      Microsoft/VS Code, GitHub/Copilot und einem zweiten Provider.
+    acceptance:
+      - Katalog liegt als JSON/YAML mit TypeScript-Typen und Schema vor
+      - GitHub Copilot ist als Integration mit hostProductId vscode modelliert
+      - Kein Hersteller taucht als Dateiname in der Codestruktur auf
+      - Katalog ist ohne Frontend-Build ladbar und testbar
+    depends_on: []
+
+  - id: AITP-2
+    epic: EP-01
+    title: Lerninhaltshierarchie Curriculum/Course/Module/Scenario/Step modellieren
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-03, FR-05]
+    description: >
+      Fünfstufige Inhaltshierarchie einführen. Jedes Modul erhält genau eine learningLayer
+      (tool, concept, ai_workflow). Szenarien referenzieren die Umgebung nur über
+      environment.productId/version/runtimeAdapterId.
+    acceptance:
+      - Typen entsprechen docs/02-domaenenmodell.md §2.3
+      - Ein Szenario enthält keinerlei React- oder DOM-Bezug
+      - Bestehender Git/Copilot-Kurs ist in dieser Struktur abbildbar
+
+  - id: AITP-3
+    epic: EP-01
+    title: Lernziele (LearningObjective) als eigenständige, referenzierbare Entität
+    type: story
+    priority: S
+    estimate: 3
+    milestone: M2
+    requirements: [FR-06]
+    description: >
+      Lernziele modulübergreifend definieren, damit Nachweise und Curricula auf Zielen
+      statt auf Szenario-IDs beruhen.
+    acceptance:
+      - Lernziele haben stabile IDs und Beschreibungen
+      - Szenarien referenzieren nur existierende Lernziele (CI-Prüfung)
+      - Ein Lernziel kann von mehreren Modulen adressiert werden
+    depends_on: [AITP-2]
+
+  # ---------------- EP-02 ----------------
+  - id: AITP-10
+    epic: EP-02
+    title: Training Engine als eigenes Package ohne UI-Abhängigkeit
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-10, FR-18, NFR-07]
+    description: >
+      packages/training-engine mit State Machine, Event Bus, Validator Registry und
+      Session-Handling. Keine Abhängigkeit zu React, DOM oder Tailwind.
+    acceptance:
+      - Engine läuft in Node ohne Browser
+      - Zustände NOT_STARTED, ACTIVE, VALIDATION_FAILED, COMPLETED, SKIPPED implementiert
+      - Genau ein Schritt kann ACTIVE sein (per Test abgesichert)
+      - package.json enthält keine UI-Abhängigkeit
+
+  - id: AITP-11
+    epic: EP-02
+    title: Deklarative Validatoren implementieren
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-12]
+    description: >
+      Validator-Typen event, state, sequence, all, any gemäß Domänenmodell. Registry-basiert,
+      damit neue Validatortypen ohne Engine-Änderung ergänzt werden können.
+    acceptance:
+      - Alle fünf Typen mit Unit-Tests abgedeckt
+      - Ein neuer Validatortyp ist ohne Änderung der State Machine registrierbar
+    depends_on: [AITP-10]
+
+  - id: AITP-12
+    epic: EP-02
+    title: Beinahe-Treffer-Erkennung (pass / near-miss / ignore)
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-13]
+    description: >
+      Validatoren liefern dreiwertiges Ergebnis. Nur near-miss erzeugt eine Fehlermeldung im
+      Guide-Panel, damit Nutzer nicht bei jeder beliebigen Aktion getadelt werden.
+      Beispiel: file.created mit falschem Namen = near-miss, editor.selection.changed = ignore.
+    acceptance:
+      - Falscher Dateiname erzeugt die konfigurierte onFailure-Meldung
+      - Irrelevante Events erzeugen keinerlei Nutzerfeedback
+      - Fehlversuche werden gezählt, kosten aber keine Punkte
+    depends_on: [AITP-11]
+
+  - id: AITP-13
+    epic: EP-02
+    title: Endzustands-Validierung für den Challenge-Modus
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-14]
+    description: >
+      Im Challenge-Modus prüft die Engine per adapter.query() den Zielzustand statt der
+      Event-Reihenfolge. Der Lösungsweg bleibt dem Nutzer überlassen.
+    acceptance:
+      - Ein Challenge-Szenario ist auf mindestens zwei unterschiedlichen Wegen lösbar
+      - Kein Schritt erzwingt eine bestimmte Klickreihenfolge
+    depends_on: [AITP-11, AITP-22]
+
+  - id: AITP-14
+    epic: EP-02
+    title: Session-Persistenz und exakte Wiederaufnahme
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M2
+    requirements: [FR-15, NFR-04]
+    description: >
+      Fortschritt, Runtime-Snapshot, genutzte Hinweise und Fehlversuche persistieren.
+      Zunächst LocalStorage, ab M2 serverseitig mit LocalStorage als Offline-Puffer.
+    acceptance:
+      - Nach Browser-Neustart wird derselbe Schritt mit demselben Workspace-Zustand angezeigt
+      - Wechsel des Geräts stellt den Serverstand her
+      - Konflikt lokal/server wird deterministisch aufgelöst (jüngster Serverstand gewinnt)
+    depends_on: [AITP-10, AITP-84]
+
+  - id: AITP-15
+    epic: EP-02
+    title: Einheitliches TrainingEvent-Format und Event Bus
+    type: story
+    priority: M
+    estimate: 3
+    milestone: M1
+    requirements: [FR-11]
+    description: >
+      TrainingEvent mit id, source, type, timestamp, sessionId, payload. Bus als
+      In-Process-Implementierung hinter einem Interface, damit später WebSocket-Transport
+      ohne Änderung der Konsumenten möglich ist.
+    acceptance:
+      - Kanonische Event-Typen aus dem Domänenmodell sind als Union-Typ definiert
+      - Der Bus ist hinter einem Interface gekapselt (Transport austauschbar)
+      - Jedes Event geht zusätzlich an eine Telemetrie-Senke
+
+  - id: AITP-16
+    epic: EP-02
+    title: Fortschritt nicht mehr über Weiter-Button auslösen
+    type: chore
+    priority: M
+    estimate: 3
+    milestone: M1
+    requirements: [FR-11]
+    description: >
+      Bestehende POC-Logik prüfen und alle Stellen entfernen, an denen ein Schritt allein
+      durch einen Weiter-Button abgeschlossen wird. Ausnahme: reine Lese-/Erklärschritte.
+    acceptance:
+      - Jeder Handlungsschritt wird ausschließlich durch ein Runtime-Event abgeschlossen
+      - Erklärschritte sind explizit als solche markiert
+    depends_on: [AITP-10]
+
+  # ---------------- EP-03 ----------------
+  - id: AITP-20
+    epic: EP-03
+    title: RuntimeAdapter-Interface definieren
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-30, FR-35]
+    description: >
+      packages/runtime-core mit dem Interface aus docs/02 §2.3: mount, unmount, subscribe,
+      query, resolveTarget, describeSurface, snapshot, restore.
+    acceptance:
+      - Interface ist dokumentiert und typisiert
+      - Eine gemeinsame Contract-Testsuite existiert, gegen die jeder Adapter läuft
+      - Kein Adapter importiert die Training Engine
+
+  - id: AITP-21
+    epic: EP-03
+    title: VS-Code-Simulator auf korrekte Informationsarchitektur ausbauen
+    type: story
+    priority: M
+    estimate: 13
+    milestone: M1
+    requirements: [FR-31]
+    description: >
+      Der Simulator muss nicht nur ähnlich aussehen, sondern die Struktur korrekt vermitteln:
+      Menüleiste (File/Edit/Selection/View/Go/Run/Terminal/Help), Activity Bar, Side Bar mit
+      Explorer/Search/Source Control/Extensions, Editor mit Tabs, Panel mit Terminal/Problems/
+      Output, Statusleiste mit Branch und Interpreter.
+    acceptance:
+      - Alle genannten Bereiche sind vorhanden und benennbar
+      - Menüleiste ist aufklappbar und enthält die für die Szenarien nötigen Einträge
+      - Panel-Tabs Terminal, Problems, Output sind umschaltbar
+      - Statusleiste zeigt Branch und Sprachumgebung
+    depends_on: [AITP-20]
+
+  - id: AITP-22
+    epic: EP-03
+    title: Workspace- vs. Ordner-Konzept im Simulator abbilden
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-32]
+    description: >
+      Ordner öffnen und Workspace öffnen sind unterschiedliche Vorgänge mit unterschiedlichen
+      Folgen (Mehrordner, Workspace-Einstellungen, Extension-Empfehlungen). Genau dieses
+      Konzept fehlt unerfahrenen Nutzern am häufigsten.
+    acceptance:
+      - Beide Vorgänge sind im Simulator durchführbar und unterscheidbar
+      - Ein Workspace kann mehrere Ordner enthalten
+      - Workspace-Einstellungen sind sichtbar (auch wenn nur exemplarisch)
+      - Zugehörige Events (workspace.opened, folder.opened) werden emittiert
+    depends_on: [AITP-21]
+
+  - id: AITP-23
+    epic: EP-03
+    title: Terminal-Simulator mit deterministischer Kommandoerkennung
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-33]
+    description: >
+      Kommandotabelle mit Ausgaben, inklusive Fehlerfällen (unbekannter Befehl, git commit
+      ohne Staging, Tippfehler). Fehlerfälle sind didaktisch wertvoll und dürfen nicht fehlen.
+    acceptance:
+      - git status, git add, git commit, ls, cd, python liefern realistische Ausgaben
+      - Mindestens drei Fehlerfälle mit hilfreicher Originalfehlermeldung
+      - Kommandos werden als terminal.command.executed emittiert
+      - Ausgabe hängt vom Zustand des Dateisystems im Simulator ab, nicht von einer Skriptfolge
+    depends_on: [AITP-20]
+
+  - id: AITP-24
+    epic: EP-03
+    title: Copilot-Simulation als eigenständiger Adapter innerhalb von VS Code
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M2
+    requirements: [FR-02, FR-34]
+    description: >
+      GitHub Copilot wird nicht Teil des VS-Code-Simulators, sondern als eigenes Produkt mit
+      Integration hostProductId=vscode modelliert. Abgedeckt: Chat, Inline-Vorschläge,
+      Kontextverständnis, Ansatz Agent-Modus.
+    acceptance:
+      - Copilot ist im VS-Code-Simulator ein- und ausschaltbar
+      - Inline-Vorschlag kann angenommen oder abgelehnt werden (ai.suggestion.accepted/rejected)
+      - Chat kennt den geöffneten Dateikontext
+      - Derselbe VS-Code-Simulator funktioniert auch ohne Copilot
+    depends_on: [AITP-21]
+
+  - id: AITP-25
+    epic: EP-03
+    title: Zweiten Technologie-Prototyp als Generizitätsbeweis
+    type: story
+    priority: M
+    estimate: 13
+    milestone: M2
+    requirements: [FR-34, NFR-07]
+    description: >
+      Ein zweites Produkt als eigener Adapter, empfohlen Claude Code (CLI-Agent) oder
+      M365 Copilot (Office Assistant). Zweck ist nicht ein vollständiger Kurs, sondern der
+      Nachweis, dass Engine, Overlay, Tutor und Punkte unverändert funktionieren.
+    acceptance:
+      - Adapter implementiert dasselbe Interface und besteht die Contract-Tests
+      - Ein Mini-Szenario mit mindestens vier Schritten läuft vollständig durch
+      - Für die Umsetzung war keine Änderung an packages/training-engine nötig (per Diff belegt)
+    depends_on: [AITP-20, AITP-10]
+
+  - id: AITP-26
+    epic: EP-03
+    title: Snapshot/Restore je Adapter
+    type: story
+    priority: S
+    estimate: 5
+    milestone: M2
+    requirements: [FR-36]
+    description: Serialisierbarer Laufzeitzustand als Grundlage für exakte Wiederaufnahme.
+    acceptance:
+      - Dateibaum, offene Tabs, Editorinhalte, Terminalhistorie und Git-Zustand werden erfasst
+      - Restore stellt den Zustand vollständig wieder her
+    depends_on: [AITP-20]
+
+  - id: AITP-27
+    epic: EP-03
+    title: Spike - Machbarkeit und Kosten echter Runtime (code-server)
+    type: spike
+    priority: C
+    estimate: 5
+    milestone: M4
+    requirements: [FR-37]
+    description: >
+      Untersuchen, ob code-server hinter demselben RuntimeAdapter-Interface betreibbar ist
+      (Event-Erfassung, Zustandsabfrage, Zielauflösung im iFrame) und was eine aktive Sitzung
+      real kostet. Ergebnis entscheidet ADR-01.
+    acceptance:
+      - Prototyp mit einem eingebetteten code-server, mindestens ein Event erfasst
+      - Belastbare Kostenschätzung pro aktiver Nutzerstunde
+      - Klare Aussage, ob resolveTarget im iFrame umsetzbar ist
+      - Schriftliche Empfehlung zur Hybrid-Strategie
+
+  # ---------------- EP-04 ----------------
+  - id: AITP-30
+    epic: EP-04
+    title: Trainingsmodi als generisches Konzept einführen
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-20, FR-21, FR-22, FR-23]
+    description: >
+      mode als Eigenschaft des Szenarios; Engine, Guide-Panel, Overlay, Tutor und Scoring
+      verhalten sich modusabhängig.
+    acceptance:
+      - Alle drei Modi sind auswählbar und wirken sich sichtbar auf die Führung aus
+      - Der Modus bestimmt den Punkte-Multiplikator
+      - Ein Modul kann mehrere Modi anbieten
+    depends_on: [AITP-10]
+
+  - id: AITP-31
+    epic: EP-04
+    title: Explore-Modus - freie Inspektion der Oberfläche
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-20]
+    description: >
+      Der Nutzer klickt frei auf Oberflächenbereiche; das System erklärt jedes Element über
+      describeSurface() und den Begriffskatalog. Fortschritt = Anteil erkundeter Elemente.
+    acceptance:
+      - Jedes von describeSurface gemeldete Element liefert eine Erklärung
+      - Erkundungsfortschritt ist sichtbar
+      - Kein Zeitdruck, keine Fehlermeldungen in diesem Modus
+    depends_on: [AITP-21, AITP-30]
+
+  - id: AITP-32
+    epic: EP-04
+    title: Challenge-Modus - Aufgabe ohne Schritt-für-Schritt-Führung
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-22]
+    description: >
+      Nur Zielbeschreibung und Erfolgskriterien, kein Overlay, Tutor nur auf ausdrückliche
+      Anfrage, Hinweise reduzieren den Bonus.
+    acceptance:
+      - Keine automatischen Hinweise oder Highlights
+      - Erfolg wird über Endzustand geprüft
+      - Nach Abschluss wird ein Lösungsvergleich angeboten
+    depends_on: [AITP-13, AITP-30]
+
+  - id: AITP-33
+    epic: EP-04
+    title: Einstiegsempfehlung und Überspringen für erfahrene Nutzer
+    type: story
+    priority: S
+    estimate: 3
+    milestone: M3
+    requirements: [FR-24]
+    description: >
+      Vorkenntnisabfrage oder Direkteinstieg in Challenge; bei Scheitern sanfte Rückführung
+      in den Guided-Modus.
+    acceptance:
+      - Nutzer kann Guided überspringen
+      - Nach zwei gescheiterten Challenge-Versuchen wird Guided vorgeschlagen, nicht erzwungen
+    depends_on: [AITP-32]
+
+  # ---------------- EP-05 ----------------
+  - id: AITP-40
+    epic: EP-05
+    title: Overlay-Engine auf semantische Zielreferenzen umstellen
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-40, FR-41]
+    description: >
+      Szenarien geben nur UiTargetRef an; die Auflösung nach DOMRect erfolgt ausschließlich
+      im Adapter. Keine CSS-Selektoren in Szenariodaten.
+    acceptance:
+      - Kein Szenario enthält einen CSS-Selektor oder DOM-Bezug
+      - Abdunkelung mit Aussparung, Zielelement bleibt klickbar
+      - Position folgt Resize und Scroll
+      - Nicht auflösbares Ziel führt zu Textanweisung statt falscher Markierung
+    depends_on: [AITP-20]
+
+  - id: AITP-41
+    epic: EP-05
+    title: Dreistufiges Hilfesystem mit Protokollierung
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-42]
+    description: >
+      Stufe 1 Hinweis, Stufe 2 konkrete Anweisung, Stufe 3 visuelle Hervorhebung. Jede
+      Nutzung wird erfasst, um später den tatsächlichen Unterstützungsbedarf auszuwerten.
+    acceptance:
+      - Stufen werden einzeln und in Reihenfolge abgerufen
+      - Nutzung wird je Schritt gespeichert
+      - Auswirkung auf den Bonus ist vor dem Abruf transparent angezeigt
+    depends_on: [AITP-40]
+
+  - id: AITP-42
+    epic: EP-05
+    title: Guide-Panel auf die fünf Orientierungsfragen ausrichten
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-43]
+    description: >
+      Das Panel beantwortet jederzeit sichtbar - Wo bin ich, was soll ich tun, warum,
+      war meine Aktion erfolgreich, was kommt als Nächstes.
+    acceptance:
+      - Alle fünf Informationen sind ohne Scrollen erkennbar
+      - Erfolgsrückmeldung erscheint innerhalb von 300 ms nach Validierung
+      - Der Warum-Text stammt aus step.rationale und ist optional aufklappbar
+
+  - id: AITP-43
+    epic: EP-05
+    title: Fehlerverhalten und Beinahe-Treffer-Feedback im Panel
+    type: story
+    priority: M
+    estimate: 3
+    milestone: M1
+    requirements: [FR-13]
+    description: >
+      Bei near-miss erscheint die konfigurierte Meldung, optional wird das falsche Element
+      markiert. Ton ist unterstützend, nicht tadelnd.
+    acceptance:
+      - Falscher Dateiname erzeugt die Meldung aus onFailure
+      - Optionales Markieren des falschen Elements funktioniert
+      - Nach drei Fehlversuchen wird die nächste Hilfestufe aktiv angeboten
+    depends_on: [AITP-12]
+
+  # ---------------- EP-06 ----------------
+  - id: AITP-50
+    epic: EP-06
+    title: Tutor-Kontextobjekt aufbauen
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-44]
+    description: >
+      TutorContext mit Szenario, Modus, aktuellem Schritt, abgeschlossenen Schritten, letzten
+      zehn Events, Hinweisnutzung, Fehlversuchen und Zustandszusammenfassung.
+    acceptance:
+      - Kontext ist typisiert und wird bei jedem Zustandswechsel aktualisiert
+      - Kontext enthält keine personenbezogenen Daten über die Session hinaus
+    depends_on: [AITP-10]
+
+  - id: AITP-51
+    epic: EP-06
+    title: Tutor Stufe 1 - deterministische Antworten aus dem Content
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-45]
+    description: >
+      Antworten auf Standardfragen (Was soll ich jetzt tun, warum, was bedeutet Begriff X)
+      werden aus rationale, helpLevels und dem Begriffskatalog erzeugt. Kein externes Modell.
+    acceptance:
+      - Die Frage "Was soll ich jetzt machen?" liefert immer die korrekte Schrittanweisung
+      - Begriffsfragen werden aus dem Glossar beantwortet
+      - Funktioniert ohne Netzwerkzugriff auf externe Dienste
+    depends_on: [AITP-50]
+
+  - id: AITP-52
+    epic: EP-06
+    title: Tutor Stufe 2 - LLM-Anbindung mit Guardrails
+    type: story
+    priority: S
+    estimate: 8
+    milestone: M3
+    requirements: [FR-46]
+    description: >
+      Freie Fragen über einen serverseitigen Proxy. Systemprompt enthält den aktuellen Schritt
+      und die Regel, keine nicht hinterlegten UI-Anweisungen zu erfinden. Handlungsvorschläge
+      müssen auf existierende UiTargetRefs verweisen.
+    acceptance:
+      - API-Schlüssel liegen ausschließlich serverseitig
+      - Antworten mit erfundenen UI-Elementen werden abgefangen und auf Rückfrage reduziert
+      - Nutzercode wird nur bei aktivem Mandanten-Opt-in übertragen
+      - Kosten pro Sitzung sind begrenzt und protokolliert
+    depends_on: [AITP-51, AITP-83]
+
+  - id: AITP-53
+    epic: EP-06
+    title: Sichtbarkeitsverhalten des Tutor-Panels evaluieren
+    type: spike
+    priority: S
+    estimate: 3
+    milestone: M3
+    requirements: [FR-47]
+    description: >
+      Offene Produktfrage aus dem POC - soll der Tutor dauerhaft sichtbar sein? Zwei Varianten
+      im Pilot gegeneinander messen (dauerhaft sichtbar vs. eingeklappt mit Hinweisindikator).
+    acceptance:
+      - Beide Varianten sind schaltbar
+      - Nutzung, Abschlussquote und Hinweisbedarf werden je Variante ausgewertet
+      - Schriftliche Empfehlung liegt vor
+    depends_on: [AITP-51, AITP-110]
+
+  # ---------------- EP-07 ----------------
+  - id: AITP-60
+    epic: EP-07
+    title: Scoring Engine mit Modus-Multiplikator
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-50, FR-51]
+    description: >
+      Basispunkte 70 Prozent, Bonus 30 Prozent. Multiplikator Explore 0,5 / Guided 1,0 /
+      Challenge 2,0. Hinweise reduzieren nur den Bonus, Fehlversuche kosten nichts.
+    acceptance:
+      - Berechnung erfolgt serverseitig, nie im Client
+      - Hinweisabzüge entsprechen docs/05 §5.2
+      - Fehlversuche verändern die Punktzahl nicht
+      - Punkteberechnung ist per Unit-Test abgedeckt
+    depends_on: [AITP-14]
+
+  - id: AITP-61
+    epic: EP-07
+    title: Anti-Gaming-Regeln
+    type: story
+    priority: M
+    estimate: 3
+    milestone: M2
+    requirements: [FR-53]
+    description: >
+      Punkte je Szenario-Version nur einmal, Wiederholung als punktfreie Übung, Markierung
+      auffällig schneller Durchläufe als suspect_fast ohne Anrechnung auf Nachweise.
+    acceptance:
+      - Zweiter Durchlauf desselben Szenarios vergibt keine Punkte, wird aber gespeichert
+      - Durchläufe unter 25 Prozent der Schätzzeit sind markiert
+      - Neue Szenario-Version ist erneut punktefähig
+    depends_on: [AITP-60]
+
+  - id: AITP-62
+    epic: EP-07
+    title: Kompetenzprofil je Technology mit Stufen
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-52]
+    description: >
+      Punkteaggregation je Technology, Stufen Novice / Advanced Beginner / Practitioner /
+      Proficient. Darstellung als ruhige Kompetenzmatrix, keine Spielelemente.
+    acceptance:
+      - Profil zeigt alle Technologien mit Punktestand und Stufe
+      - Practitioner erfordert mindestens eine bestandene Challenge
+      - Schwellen sind konfigurierbar, nicht hart codiert
+    depends_on: [AITP-60, AITP-1]
+
+  - id: AITP-63
+    epic: EP-07
+    title: Kompetenznachweise erzeugen und exportieren
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M3
+    requirements: [FR-54, FR-64]
+    description: >
+      Attestation bei Erfüllung aller Modul-Lernziele im Challenge-Modus, mit Produktversion,
+      Nachweisdaten, 12 Monaten Gültigkeit und signiertem PDF/CSV-Export.
+    acceptance:
+      - Nachweis enthält Lernziele, Produktversion, Datum, Gültigkeit und Belegdaten
+      - Export als PDF und CSV
+      - Abgelaufene Nachweise sind als solche gekennzeichnet und lösen eine Re-Zertifizierungsempfehlung aus
+    depends_on: [AITP-62, AITP-3]
+
+  - id: AITP-64
+    epic: EP-07
+    title: Wöchentliche Lernkontinuität statt Tages-Streaks
+    type: story
+    priority: S
+    estimate: 3
+    milestone: M3
+    requirements: [FR-57]
+    description: >
+      Konfigurierbares Wochenziel, Verlauf der letzten acht Wochen, kein Verlustmechanismus,
+      Erinnerungen nur mit Opt-in.
+    acceptance:
+      - Wochenziel ist durch die lernende Person einstellbar
+      - Keine Abwertung bei Unterbrechung
+      - Keine Benachrichtigung ohne ausdrückliche Zustimmung
+    depends_on: [AITP-60]
+
+  - id: AITP-65
+    epic: EP-07
+    title: Abschlussbildschirm mit Auswertung und Anschlussaktion
+    type: story
+    priority: M
+    estimate: 3
+    milestone: M2
+    requirements: [FR-56]
+    description: >
+      Schritte, Dauer, Hinweise, Fehlversuche, erzielte Punkte, Kompetenzveränderung und
+      konkreter Vorschlag für das nächste Modul.
+    acceptance:
+      - Alle genannten Kennzahlen werden angezeigt
+      - Genau eine empfohlene Folgeaktion ist hervorgehoben
+      - Wiederholen ist möglich, ohne die bestehende Punktzahl zu gefährden
+    depends_on: [AITP-60]
+
+  # ---------------- EP-08 ----------------
+  - id: AITP-70
+    epic: EP-08
+    title: Dashboard "Meine Trainings" auf Kompetenz- statt Kursorientierung umstellen
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-60]
+    description: >
+      Neben Kurskarten das Kompetenzprofil und eine klare Empfehlung des nächsten sinnvollen
+      Schritts. Angefangene Trainings sind sofort fortsetzbar.
+    acceptance:
+      - Fortsetzen führt exakt an den letzten Stand
+      - Kompetenzprofil ist auf der Startseite sichtbar
+      - Genau eine empfohlene nächste Aktion pro Nutzer
+    depends_on: [AITP-62]
+
+  - id: AITP-71
+    epic: EP-08
+    title: Rollen- und Berechtigungsmodell
+    type: story
+    priority: S
+    estimate: 5
+    milestone: M3
+    requirements: [FR-62, FR-65]
+    description: >
+      Rollen Lernende, Autor, Trainer/L&D, Mandanten-Admin mit klar getrennten Sichten und
+      Datenzugriffen.
+    acceptance:
+      - Rollen sind serverseitig durchgesetzt, nicht nur in der UI ausgeblendet
+      - Trainer sehen keine personenbezogenen Fehlversuchsdaten
+      - Mandantenübergreifender Zugriff ist ausgeschlossen und getestet
+    depends_on: [AITP-83]
+
+  - id: AITP-72
+    epic: EP-08
+    title: Aggregiertes Reporting für L&D
+    type: story
+    priority: S
+    estimate: 8
+    milestone: M4
+    requirements: [FR-63]
+    description: >
+      Abschlussquoten, Abbruchpunkte je Schritt, durchschnittliche Hinweisnutzung, Zeitbedarf -
+      aggregiert ab Mindestgruppengröße.
+    acceptance:
+      - Auswertungen erst ab n gleich 5 Personen sichtbar
+      - Abbruchpunkte je Schritt identifizierbar (Grundlage für Content-Verbesserung)
+      - Export als CSV
+    depends_on: [AITP-71, AITP-110]
+
+  - id: AITP-73
+    epic: EP-08
+    title: Zuweisung von Curricula an Gruppen
+    type: story
+    priority: C
+    estimate: 5
+    milestone: M5
+    requirements: [FR-67]
+    description: Pflichtcurricula je Rolle oder Abteilung zuweisen und deren Erfüllung verfolgen.
+    acceptance:
+      - Zuweisung an Gruppe möglich
+      - Erfüllungsstand je Gruppe sichtbar
+    depends_on: [AITP-71]
+
+  # ---------------- EP-09 ----------------
+  - id: AITP-80
+    epic: EP-09
+    title: Prototyp-Quellcode in ein eigenes Git-Repository überführen
+    type: chore
+    priority: M
+    estimate: 3
+    milestone: M1
+    requirements: []
+    description: >
+      Quellcode aus dem Prototyping-Werkzeug exportieren, Monorepo-Struktur gemäß README anlegen, Linting,
+      Formatierung, TypeScript-Strict-Mode und CI-Pipeline einrichten.
+    acceptance:
+      - Repository baut lokal und in CI reproduzierbar
+      - TypeScript strict aktiv, keine impliziten any
+      - Branch-Schutz und Pull-Request-Pflicht eingerichtet
+
+  - id: AITP-81
+    epic: EP-09
+    title: Monorepo-Aufteilung in apps und packages
+    type: chore
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [NFR-07]
+    description: >
+      apps/web, packages/training-engine, runtime-core, runtime-vscode-sim,
+      runtime-terminal-sim, catalog, content/scenarios.
+    acceptance:
+      - Abhängigkeitsrichtung wird per Lint-Regel erzwungen (UI darf Engine importieren, nicht umgekehrt)
+      - Jedes Package ist einzeln baubar und testbar
+    depends_on: [AITP-80]
+
+  - id: AITP-82
+    epic: EP-09
+    title: AWS-Amplify-Hosting einrichten
+    type: task
+    priority: M
+    estimate: 3
+    milestone: M2
+    requirements: []
+    description: >
+      Amplify Hosting mit Monorepo-Konfiguration, Branch-Deployments für main und Vorschau,
+      eigener Domain und Basisschutz für die Vorschauumgebung.
+    acceptance:
+      - Push auf main deployt automatisch
+      - Vorschau-Deployments je Pull Request
+      - Vorschauumgebung ist nicht öffentlich zugänglich
+    depends_on: [AITP-81]
+
+  - id: AITP-83
+    epic: EP-09
+    title: Authentifizierung mit OIDC-Föderation und lokalem Fallback
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M2
+    requirements: [FR-61]
+    description: >
+      Amplify Auth bzw. Cognito mit Vorbereitung auf Föderation zum Firmen-IdP; lokaler
+      Login als Rückfallebene für Pilotnutzer ohne SSO-Anbindung.
+    acceptance:
+      - Anmeldung, Abmeldung und Sitzungsverlängerung funktionieren
+      - OIDC-Föderation ist konfigurierbar, ohne Codeänderung austauschbar
+      - Nutzeridentität ist im Fortschrittsdatenmodell verankert
+    depends_on: [AITP-82]
+
+  - id: AITP-84
+    epic: EP-09
+    title: Serverseitige Fortschritts- und Punktepersistenz
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M2
+    requirements: [FR-15, FR-65]
+    description: >
+      Datenmodell für Sessions, StepStates, HintUsage, Attempts, SkillProfile und
+      Attestations mit Mandantenschlüssel.
+    acceptance:
+      - Jeder Datensatz trägt tenantId und userId
+      - Zugriff ist serverseitig auf den eigenen Mandanten begrenzt
+      - Migrationen sind versioniert
+    depends_on: [AITP-83]
+
+  - id: AITP-85
+    epic: EP-09
+    title: Transportschicht für Events abstrahieren (WebSocket-Vorbereitung)
+    type: story
+    priority: S
+    estimate: 5
+    milestone: M4
+    requirements: []
+    description: >
+      Event-Transport hinter ein Interface legen, damit später ein WebSocket-Backend
+      eingesetzt werden kann, ohne Engine oder UI zu ändern.
+    acceptance:
+      - In-Process- und Mock-Remote-Transport sind austauschbar
+      - Kein Konsument kennt die Transportimplementierung
+    depends_on: [AITP-15]
+
+  # ---------------- EP-10 ----------------
+  - id: AITP-90
+    epic: EP-10
+    title: JSON-Schema für Szenarien und CI-Validierung
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M1
+    requirements: [FR-04, NFR-06]
+    description: >
+      Schema für Scenario/Step inklusive Referenzprüfung - existiert der UiTargetRef im
+      Adapter, existiert das Lernziel im Katalog, ist der Validator wohlgeformt.
+    acceptance:
+      - Ungültiges Szenario bricht den CI-Build
+      - Nicht existierender UiTargetRef wird als Fehler gemeldet
+      - Fehlermeldungen benennen Datei und Pfad
+    depends_on: [AITP-2, AITP-20]
+
+  - id: AITP-91
+    epic: EP-10
+    title: Bestehenden Git/VS-Code/Copilot-Kurs auf die neue Architektur migrieren
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M1
+    requirements: [FR-03]
+    description: >
+      Die acht POC-Schritte als deklarative Szenariodaten neu abbilden und aus den
+      React-Komponenten entfernen, ohne die bestehende UX zu verschlechtern.
+    acceptance:
+      - Keine Szenariodaten mehr in Komponenten
+      - Der Ablauf ist für Nutzer identisch oder besser
+      - Szenario besteht die Schema-Validierung
+    depends_on: [AITP-90, AITP-10]
+
+  - id: AITP-92
+    epic: EP-10
+    title: Modul "VS Code Grundlagen" mit allen drei Modi
+    type: story
+    priority: M
+    estimate: 13
+    milestone: M2
+    requirements: [FR-20, FR-21, FR-22, FR-32]
+    description: >
+      Erstes vollständiges Modul der neuen Struktur - Explore (Oberfläche kennenlernen),
+      Guided (Workspace anlegen, Datei erstellen), Challenge (bestehendes Projekt öffnen und
+      Datei anlegen).
+    acceptance:
+      - Alle drei Szenarien laufen fehlerfrei durch
+      - Ordner-vs-Workspace ist Bestandteil des Lerninhalts
+      - Lernziele sind vergeben und nachweisfähig
+    depends_on: [AITP-22, AITP-31, AITP-32]
+
+  - id: AITP-93
+    epic: EP-10
+    title: Begriffskatalog (Glossar) als Content-Quelle
+    type: story
+    priority: S
+    estimate: 3
+    milestone: M2
+    requirements: [FR-45]
+    description: >
+      Zentrale Begriffsdefinitionen (Workspace, Repository, Working Tree, Stage, Commit,
+      Branch, Extension, Prompt, Kontext), referenzierbar aus Schritten und Tutor.
+    acceptance:
+      - Jeder Begriff hat eine einfache Erklärung und eine Vertiefung
+      - Tutor beantwortet Begriffsfragen ausschließlich aus dieser Quelle
+      - Begriffe sind im Explore-Modus mit UI-Elementen verknüpfbar
+
+  - id: AITP-94
+    epic: EP-10
+    title: Autorenvorschau für Szenarien
+    type: story
+    priority: C
+    estimate: 8
+    milestone: M4
+    requirements: [FR-08]
+    description: >
+      Szenario laden, Schritt für Schritt simulieren, Zielauflösung und Validatoren prüfen -
+      ohne Deployment.
+    acceptance:
+      - Autor sieht sofort, ob ein Highlight-Ziel auflösbar ist
+      - Validatoren sind gegen simulierte Events testbar
+      - Kein Frontend-Codewissen erforderlich
+    depends_on: [AITP-90]
+
+  - id: AITP-95
+    epic: EP-10
+    title: Mehrsprachigkeit vorbereiten (DE/EN)
+    type: story
+    priority: S
+    estimate: 5
+    milestone: M4
+    requirements: [FR-07, NFR-12]
+    description: Texte aus Komponenten und Content trennen, Sprachdateien einführen, Fallback DE.
+    acceptance:
+      - Keine fest verdrahteten Anzeigetexte in Komponenten
+      - Szenariotexte sind je Sprache ablegbar
+      - Fehlende Übersetzung fällt sichtbar auf DE zurück
+
+  # ---------------- EP-11 ----------------
+  - id: AITP-100
+    epic: EP-11
+    title: Sichtbarkeitsstufen für Punkte und Ranglisten
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M3
+    requirements: [FR-55]
+    description: >
+      Drei Stufen pro Mandant - private (Standard), aggregate (ab n gleich 5), named (nur mit
+      dokumentierter Betriebsvereinbarung). Ranglisten standardmäßig deaktiviert.
+    acceptance:
+      - Standardkonfiguration eines neuen Mandanten ist private
+      - Aggregierte Sichten unterschreiten n gleich 5 nie
+      - Umstellung auf named erfordert eine bestätigte Freigabe im Admin-Bereich
+    depends_on: [AITP-71]
+
+  - id: AITP-101
+    epic: EP-11
+    title: Transparenzansicht "Diese Daten werden über mich gespeichert"
+    type: story
+    priority: M
+    estimate: 3
+    milestone: M3
+    requirements: [NFR-09, NFR-10]
+    description: >
+      Feste Produktseite, die verständlich zeigt, welche Daten erfasst werden, wer sie sieht
+      und wie lange sie gespeichert bleiben.
+    acceptance:
+      - Seite ist aus dem Profil direkt erreichbar
+      - Enthält Datenkategorien, Empfänger, Aufbewahrungsfristen
+      - Export der eigenen Daten ist möglich
+    depends_on: [AITP-100]
+
+  - id: AITP-102
+    epic: EP-11
+    title: Aufbewahrungs- und Löschkonzept für Telemetrie
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M3
+    requirements: [NFR-09, NFR-10]
+    description: >
+      Roh-Events standardmäßig 90 Tage, danach nur Aggregate. Löschung eines Nutzerkontos
+      entfernt personenbezogene Daten vollständig.
+    acceptance:
+      - Automatische Löschung ist implementiert und nachweisbar
+      - Kontolöschung entfernt personenbezogene Daten, Aggregate bleiben anonym erhalten
+      - Fristen sind pro Mandant konfigurierbar
+    depends_on: [AITP-84]
+
+  - id: AITP-103
+    epic: EP-11
+    title: Barrierefreiheit - Tastaturbedienung, Kontraste, Screenreader
+    type: story
+    priority: S
+    estimate: 8
+    milestone: M4
+    requirements: [NFR-08]
+    description: >
+      Vollständige Tastaturbedienbarkeit inklusive Overlay und Simulator, ausreichende
+      Kontraste, aussagekräftige Labels, keine ausschließlich farbliche Kodierung.
+    acceptance:
+      - Alle Trainingsschritte sind ohne Maus abschließbar
+      - Overlay-Hinweise werden von Screenreadern angesagt
+      - Automatisierte Prüfung (axe) ohne kritische Befunde
+      - Highlight ist nie die einzige Informationsquelle
+
+  - id: AITP-104
+    epic: EP-11
+    title: Rechtliche Prüfung Nachweise und Mitbestimmung
+    type: task
+    priority: S
+    estimate: 3
+    milestone: M3
+    requirements: [FR-54, FR-55]
+    description: >
+      Externe Prüfung, wie Kompetenznachweise gegenüber der KI-Kompetenz-Anforderung des
+      EU AI Act positioniert werden dürfen und welche Betriebsvereinbarung Kunden benötigen.
+      Ergebnis - Musterformulierung und Muster-Betriebsvereinbarung als Vertriebsunterlage.
+    acceptance:
+      - Schriftliche Einschätzung liegt vor
+      - Produktkommunikation ist entsprechend angepasst
+      - Muster-Betriebsvereinbarung liegt als Anlage bei
+
+  # ---------------- EP-12 ----------------
+  - id: AITP-110
+    epic: EP-12
+    title: Telemetrie- und Lernanalytik-Pipeline
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M3
+    requirements: [NFR-10, FR-63]
+    description: >
+      Events gepuffert erfassen und auswertbar ablegen - Abbruchpunkte, Hinweisnutzung,
+      Zeitbedarf je Schritt, Fehlversuchsmuster. Zweck ist Content-Verbesserung, nicht
+      Personenbewertung.
+    acceptance:
+      - Kennzahlen je Schritt abrufbar
+      - Pseudonymisierung ist pro Mandant aktivierbar
+      - Pipeline funktioniert bei kurzzeitigem Verbindungsverlust ohne Datenverlust
+    depends_on: [AITP-15, AITP-84]
+
+  - id: AITP-111
+    epic: EP-12
+    title: Contract-Testsuite für Runtime-Adapter
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-30, NFR-05]
+    description: >
+      Gemeinsame Testsuite, die jeder Adapter bestehen muss - Mount, Events, Query,
+      resolveTarget, describeSurface, Snapshot/Restore.
+    acceptance:
+      - Suite läuft gegen alle vorhandenen Adapter
+      - Ein neuer Adapter ist mit der Suite in unter einem Tag verifizierbar
+    depends_on: [AITP-20]
+
+  - id: AITP-112
+    epic: EP-12
+    title: E2E-Tests je Trainingsmodus
+    type: story
+    priority: S
+    estimate: 5
+    milestone: M3
+    requirements: [NFR-05]
+    description: Playwright-Durchläufe für je ein Explore-, Guided- und Challenge-Szenario.
+    acceptance:
+      - Drei Durchläufe laufen in CI
+      - Overlay-Positionierung wird visuell geprüft
+      - Testdauer bleibt unter zehn Minuten
+    depends_on: [AITP-92]
+
+  - id: AITP-113
+    epic: EP-12
+    title: Pilot mit echten Erstnutzern
+    type: task
+    priority: M
+    estimate: 8
+    milestone: M3
+    requirements: []
+    description: >
+      Mindestens 15 Personen ohne Vorkenntnisse durchlaufen das VS-Code-Modul. Erhoben werden
+      Abschlussquote, Hinweisbedarf, Abbruchpunkte, Verständnisfragen im Nachgespräch und die
+      offenen POC-Fragen (Tutor-Sichtbarkeit, Highlight-Empfinden, Führungsgrad).
+    acceptance:
+      - Mindestens 15 Durchläufe ausgewertet
+      - Alle acht offenen Fragen aus der POC-Spezifikation sind beantwortet
+      - Konkrete Content- und UX-Änderungen sind daraus abgeleitet und als Tickets angelegt
+    depends_on: [AITP-92, AITP-110]
+
+  - id: AITP-114
+    epic: EP-12
+    title: Simulator-Aktualitätsprüfung als wiederkehrender Prozess
+    type: chore
+    priority: S
+    estimate: 3
+    milestone: M4
+    requirements: [NFR-14]
+    description: >
+      Halbjährlicher Abgleich der Simulatoren mit der realen Produktoberfläche. Größtes
+      Langzeitrisiko des Simulationsansatzes - ohne festen Prozess veraltet der Inhalt still.
+    acceptance:
+      - Checkliste je Produkt vorhanden
+      - Verantwortlichkeit und Turnus dokumentiert
+      - Abweichungen erzeugen automatisch Tickets und markieren betroffene Szenarien
+
+  # ---------------- EP-13 ----------------
+  - id: AITP-120
+    epic: EP-13
+    title: Klassifizierungsschema als mandantenkonfigurierbares Datenmodell
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-70]
+    description: >
+      ClassificationScheme mit Stufen in Rangfolge, Indikatoren mit Mindeststufe,
+      KI-Freigabematrix und Unsicherheitsregel gemäß docs/10 §10.3. Standardschema
+      öffentlich/intern/vertraulich/streng vertraulich als Ausgangspunkt; ein vorhandenes
+      Firmenschema (z. B. aus ISO-27001-Richtlinie) muss übernehmbar sein.
+    acceptance:
+      - Schema ist als YAML mit JSON-Schema-Validierung ablegbar
+      - Mehrere ausgelöste Indikatoren ergeben die höchste Mindeststufe
+      - Freigabematrix ordnet jedem KI-Werkzeug eine maximale Stufe zu
+      - Lernmodul und Dokumenten-Check lesen dasselbe Schema
+    depends_on: [AITP-1]
+
+  - id: AITP-121
+    epic: EP-13
+    title: Classification-Simulator als Runtime-Adapter
+    type: story
+    priority: M
+    estimate: 8
+    milestone: M2
+    requirements: [FR-71, NFR-07]
+    description: >
+      Einfacher Adapter mit Dokumentvorschau und Zuordnungsinteraktion (Dokument ansehen,
+      Merkmale markieren, Stufe wählen, KI-Entscheidung treffen). Implementiert das
+      RuntimeAdapter-Interface und besteht die Contract-Tests - dritter Generizitätsbeweis.
+    acceptance:
+      - Adapter besteht die Contract-Testsuite ohne Sonderbehandlung
+      - Synthetische Dokumente werden aus Content-Dateien geladen, nicht hart codiert
+      - Emittiert Events wie document.viewed, indicator.marked, level.selected
+      - Keine Änderung an packages/training-engine nötig (per Diff belegt)
+    depends_on: [AITP-20, AITP-111]
+
+  - id: AITP-122
+    epic: EP-13
+    title: Lernmodul "Datenklassifizierung & KI-Nutzung" in allen drei Modi
+    type: story
+    priority: M
+    estimate: 13
+    milestone: M3
+    requirements: [FR-71, FR-72]
+    description: >
+      Explore (Stufen und Merkmale erkunden), Guided (fünf synthetische Beispieldokumente
+      mit Begründung einordnen), Challenge (zehn Dokumente selbstständig klassifizieren und
+      je Dokument die KI-Entscheidung treffen). Neuer Validatortyp classification mit
+      near-miss-Begründung des übersehenen Merkmals. Ausschließlich synthetische Dokumente.
+    acceptance:
+      - Alle drei Szenarien laufen fehlerfrei durch
+      - near-miss nennt konkret das übersehene oder falsch bewertete Merkmal
+      - Die Regel "im Zweifel höher einstufen" ist Lerninhalt und wird in der Challenge belohnt
+      - Challenge-Bestehen erzeugt einen Kompetenznachweis mit Lernzielen
+      - Kein einziges echtes Dokument ist Bestandteil des Moduls
+    depends_on: [AITP-120, AITP-121, AITP-11]
+
+  - id: AITP-123
+    epic: EP-13
+    title: Synthetischer Dokumentenkorpus mit Grenzfällen
+    type: story
+    priority: M
+    estimate: 5
+    milestone: M2
+    requirements: [FR-71]
+    description: >
+      Mindestens 20 synthetische Dokumente (Angebot, Gehaltsliste, Pressemitteilung,
+      Kundenvertrag, Meeting-Notiz, Organigramm, Quellcode-Auszug, Support-Ticket u. a.)
+      mit dokumentierter Soll-Klassifizierung und den auslösenden Merkmalen. Bewusst
+      inklusive Grenzfällen (z. B. interne Notiz mit einem einzelnen Personennamen).
+      Dient zugleich als Testkorpus für die Klassifizierungs-Engine.
+    acceptance:
+      - Jedes Dokument hat Soll-Stufe, Soll-KI-Entscheidung und Merkmalsliste
+      - Mindestens fünf dokumentierte Grenzfälle
+      - Alle Namen, Firmen und Zahlen sind erfunden und als solche gekennzeichnet
+    depends_on: [AITP-120]
+
+  - id: AITP-124
+    epic: EP-13
+    title: Klassifizierungs-Engine Stufe 1+2 - Kennzeichnungs- und Mustererkennung
+    type: story
+    priority: S
+    estimate: 8
+    milestone: M4
+    requirements: [FR-76, FR-77]
+    description: >
+      Deterministische Analyse ohne LLM - vorhandene Vertraulichkeitsvermerke und
+      Dokumenteigenschaften erkennen (Stufe 1), Muster für Personenbezug, Kunden- und
+      Vertragsdaten, Gehalts-/HR-Daten, Finanzkennzahlen sowie mandantenspezifische
+      Schlüsselwortlisten (Stufe 2). Asymmetrisch konservativ - bei Unsicherheit höhere
+      Stufe plus Hinweis auf menschliche Prüfung.
+    acceptance:
+      - Engine läuft vollständig ohne Netzwerkzugriff auf externe Modelle
+      - Gegen den Testkorpus aus AITP-123 keine False Negatives bei streng vertraulich
+      - Unsicherheitsfälle werden als solche gekennzeichnet, nicht still entschieden
+      - Unterstützte Formate mindestens PDF, DOCX, XLSX, TXT
+    depends_on: [AITP-120, AITP-123]
+
+  - id: AITP-125
+    epic: EP-13
+    title: Dokumenten-Check-Dienst in dedizierter Mandanten-Boundary
+    type: story
+    priority: S
+    estimate: 13
+    milestone: M4
+    requirements: [FR-73, FR-74, FR-75]
+    description: >
+      Upload, Analyse im Speicher, Ergebnisansicht mit Stufe, erkannten Merkmalen,
+      Freigabematrix und Empfehlungs-Disclaimer. Deployment je Firma in eigener Umgebung
+      (eigenes Konto/eigene DB), niemals in der geteilten Plattform-Datenbank.
+      Dokumentinhalte werden nicht persistiert und erscheinen in keinem Log.
+    acceptance:
+      - Ergebnis zeigt immer Stufe, Begründung, Freigabematrix und Disclaimer
+      - Nach der Analyse ist der Inhalt nachweislich nicht mehr gespeichert
+      - Persistiert werden nur Zeitstempel, Dateityp, Stufe, Merkmals-IDs, Nutzer-ID
+      - Jedes Ergebnis verlinkt auf die passende Lerneinheit des Klassifizierungsmoduls
+      - Deployment-Anleitung für eine dedizierte Mandanteninstanz liegt vor
+    depends_on: [AITP-124, AITP-84]
+
+  - id: AITP-126
+    epic: EP-13
+    title: LLM-Bewertungsstufe innerhalb der Mandanten-Boundary (optional)
+    type: story
+    priority: C
+    estimate: 8
+    milestone: M5
+    requirements: [FR-76]
+    description: >
+      Kontextverständnis für Grenzfälle über ein Modell, das in der Boundary des Mandanten
+      läuft (z. B. Bedrock im Firmenkonto). Externes API nur mit ausdrücklichem,
+      dokumentiertem Opt-in des Mandanten. Die LLM-Stufe darf eine regelbasierte Einstufung
+      nur erhöhen oder bestätigen, nie senken.
+    acceptance:
+      - Ohne konfiguriertes Boundary-Modell bleibt der Check voll funktionsfähig
+      - LLM-Ergebnis kann eine Stufe nie herabsetzen
+      - Datenfluss ist dokumentiert und je Mandant abschaltbar
+    depends_on: [AITP-125]
+
+  - id: AITP-127
+    epic: EP-13
+    title: Rechtliche Positionierung und Datenflussprüfung des Dokumenten-Checks
+    type: task
+    priority: S
+    estimate: 3
+    milestone: M4
+    requirements: [FR-78, FR-79]
+    description: >
+      Externe Prüfung - Haftungspositionierung als Empfehlung, DSGVO-Bewertung der
+      Verarbeitung (Auftragsverarbeitung, Rechtsgrundlage, Löschkonzept), technische
+      Datenflussprüfung (kein Inhalt in Logs, Telemetrie, Backups). Ergebnis fließt in
+      Disclaimer-Texte und Vertragsanlagen ein.
+    acceptance:
+      - Schriftliche rechtliche Einschätzung liegt vor
+      - Datenflussprüfung mit Ergebnisprotokoll durchgeführt
+      - Disclaimer- und AVV-Texte sind abgestimmt
+    depends_on: [AITP-125]
+
+  - id: AITP-128
+    epic: EP-13
+    title: Aggregiertes Reporting des Dokumenten-Checks für Informationssicherheit
+    type: story
+    priority: C
+    estimate: 5
+    milestone: M5
+    requirements: [FR-79]
+    description: >
+      Aggregierte Auswertung (Verteilung der Stufen, häufigste Merkmale, Trend) für die
+      Informationssicherheit - ohne personenbezogene Einzelauswertung, gemäß den
+      Sichtbarkeitsstufen aus docs/05 §5.6.
+    acceptance:
+      - Auswertungen erst ab n gleich 5 Prüfvorgängen sichtbar
+      - Keine Ansicht verknüpft Person und geprüftes Einzeldokument
+      - Export als CSV
+    depends_on: [AITP-125, AITP-100]
