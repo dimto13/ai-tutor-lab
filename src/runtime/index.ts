@@ -1,21 +1,18 @@
 import { vscodeRuntime } from "./vscodeRuntime";
-import type { UiTargetRef } from "@/types/training";
+import type { RuntimeAdapter } from "./runtimeAdapter";
 
-export interface RuntimeQueryAdapter {
-  id: string;
-  productId: string;
-  query(selector: string): unknown;
-  reset?: () => void;
-  resolveTarget?: (ref: UiTargetRef) => HTMLElement | null;
-}
+export type {
+  RuntimeAdapter,
+  RuntimeCapability,
+  RuntimeSeed,
+  RuntimeSurfaceDescription,
+} from "./runtimeAdapter";
 
-const runtimes: Record<string, RuntimeQueryAdapter> = {
+const runtimes: Record<string, RuntimeAdapter> = {
   [vscodeRuntime.id]: vscodeRuntime,
 };
 
-export function getRuntimeAdapter(
-  runtimeAdapterId: string | undefined,
-): RuntimeQueryAdapter | null {
+export function getRuntimeAdapter(runtimeAdapterId: string | undefined): RuntimeAdapter | null {
   if (!runtimeAdapterId) return null;
   return runtimes[runtimeAdapterId] ?? null;
 }
