@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function waitUntilReady(page: Parameters<typeof test>[0]["page"]) {
+async function waitUntilReady(page: Page) {
   await expect(page.getByRole("status")).toContainText("Training bereit");
 }
 
@@ -10,7 +10,9 @@ test("VS Code Grundlagen bleibt ohne Copilot-Integration lauffähig", async ({ p
 
   await expect(page.getByRole("button", { name: "Copilot", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
-  await expect(page.getByText("Explorer geöffnet. Du siehst jetzt den Datei- und Ordnerbereich.")).toBeVisible();
+  await expect(
+    page.getByText("Explorer geöffnet. Du siehst jetzt den Datei- und Ordnerbereich."),
+  ).toBeVisible();
 });
 
 test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Dateikontext", async ({
@@ -46,10 +48,12 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
     "def add(a, b):",
   );
   await page.getByRole("button", { name: "Annehmen" }).click();
-  await expect(page.locator("textarea")).toContainText("def add(a, b):");
+  await expect(page.locator("textarea")).toHaveValue(/def add\(a, b\):/);
 });
 
-test("Copilot kann deaktiviert werden, ohne den VS-Code-Simulator zu deaktivieren", async ({ page }) => {
+test("Copilot kann deaktiviert werden, ohne den VS-Code-Simulator zu deaktivieren", async ({
+  page,
+}) => {
   await page.goto("/training/git-basics");
   await waitUntilReady(page);
 
@@ -57,5 +61,7 @@ test("Copilot kann deaktiviert werden, ohne den VS-Code-Simulator zu deaktiviere
   await expect(page.getByRole("button", { name: "Copilot", exact: true })).toBeDisabled();
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
-  await expect(page.getByText("Explorer geöffnet. Jetzt kannst du mit dem vorbereiteten Projekt arbeiten.")).toBeVisible();
+  await expect(
+    page.getByText("Explorer geöffnet. Jetzt kannst du mit dem vorbereiteten Projekt arbeiten."),
+  ).toBeVisible();
 });
