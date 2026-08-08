@@ -11,7 +11,15 @@ const workspaceEventNameSchema = z.enum([
   "terminal.opened",
   "terminal.command.executed",
   "panel.opened",
+  "copilot.enabled.changed",
+  "copilot.conversation.started",
   "copilot.prompt.submitted",
+  "copilot.mode.changed",
+  "copilot.model.changed",
+  "copilot.context.changed",
+  "ai.suggestion.shown",
+  "ai.suggestion.accepted",
+  "ai.suggestion.rejected",
   "ui.element.inspected",
 ]);
 
@@ -66,6 +74,7 @@ export const scenarioSchema = z
         productId: z.string().min(1),
         version: z.string().min(1),
         runtimeAdapterId: z.string().min(1),
+        integrationRuntimeAdapterIds: z.array(z.string().min(1)).optional(),
         seed: z.record(z.unknown()).optional(),
       })
       .optional(),
@@ -87,6 +96,18 @@ export const scenarioSchema = z
         });
       }
       ids.add(step.id);
+    }
+
+    const runtimeIds = [
+      scenario.environment?.runtimeAdapterId,
+      ...(scenario.environment?.integrationRuntimeAdapterIds ?? []),
+    ].filter((id): id is string => Boolean(id));
+    if (new Set(runtimeIds).size !== runtimeIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "runtime adapter ids must be unique within an environment",
+        path: ["environment", "integrationRuntimeAdapterIds"],
+      });
     }
 
     if (

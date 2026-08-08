@@ -9,7 +9,8 @@
   "environment": {
     "productId": "vscode",
     "version": "1.x",
-    "runtimeAdapterId": "vscode-simulator"
+    "runtimeAdapterId": "vscode-simulator",
+    "integrationRuntimeAdapterIds": ["github-copilot-vscode-simulator"]
   },
   "points": 100,
   "steps": [
@@ -108,14 +109,14 @@
       "id": "step_8",
       "title": "GitHub Copilot einsetzen",
       "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor.",
-      "instruction": "Bitte Copilot, eine Python-Funktion zum Addieren zweier Zahlen zu erstellen.",
-      "why": "Copilot ergänzt den bestehenden Entwicklungsworkflow. Du beschreibst das Ziel, prüfst den Vorschlag und arbeitest weiterhin im selben Projektkontext.",
-      "helpLevels": ["Im Editor gibt es eine Copilot-Eingabe.", "Klicke auf Copilot fragen, tippe deine Anfrage und drücke Enter.", "Der Copilot-Button wird hervorgehoben – klicke darauf."],
+      "instruction": "Öffne Copilot Chat und bitte Copilot, eine Python-Funktion zum Addieren zweier Zahlen zu erstellen.",
+      "why": "Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Der Chat übernimmt den geöffneten Dateikontext, während VS Code selbst unabhängig davon weiter funktioniert.",
+      "helpLevels": ["Der Copilot-Chat ist im Editorbereich erreichbar.", "Klicke auf Copilot, tippe deine Anfrage in Ask Copilot... und drücke Enter.", "Der Copilot-Button wird hervorgehoben – öffne dort den Chat."],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": { "kind": "event", "type": "copilot.prompt.submitted" },
-      "highlightTarget": "vscode.editor.copilot",
-      "highlightTooltip": "Copilot als zusätzliche KI-Unterstützung im bestehenden Workflow verwenden.",
-      "successMessage": "Copilot hat einen Vorschlag erzeugt. Du hast VS Code, Git und Copilot in einem Ablauf verwendet."
+      "highlightTarget": "copilot.chat.toggle",
+      "highlightTooltip": "GitHub Copilot als integriertes, aber eigenständiges Produkt öffnen.",
+      "successMessage": "Copilot hat die Anfrage im aktuellen Dateikontext verarbeitet. Du hast VS Code, Git und Copilot in einem Ablauf verwendet."
     }
   ]
 }

@@ -6,6 +6,7 @@ import {
   getRuntimeReferenceDefinition,
 } from "../src/runtime/referenceCatalog.ts";
 import { parseScenario } from "../src/scenarios/contentLoader.ts";
+import type { RuntimeReferenceDefinition } from "../src/runtime/vscodeDefinition.ts";
 import type { Scenario, Validation } from "../src/types/training.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
@@ -85,6 +86,66 @@ function collectStateSelectors(
   return [];
 }
 
+function participatingRuntimeDefinitions(
+  scenario: Scenario,
+  file: string,
+  issues: ValidationIssue[],
+): RuntimeReferenceDefinition[] {
+  const primaryId = scenario.environment?.runtimeAdapterId;
+  if (!primaryId) return [];
+
+  const primary = getRuntimeReferenceDefinition(primaryId);
+  if (!primary) {
+    issues.push({
+      file,
+      path: "environment.runtimeAdapterId",
+      message: `unknown runtime adapter: ${primaryId}`,
+    });
+    return [];
+  }
+
+  if (scenario.environment?.productId !== primary.productId) {
+    issues.push({
+      file,
+      path: "environment.productId",
+      message: `product ${scenario.environment?.productId ?? "<missing>"} does not match runtime ${primaryId} (${primary.productId})`,
+    });
+  }
+
+  const runtimes: RuntimeReferenceDefinition[] = [primary];
+  for (const [index, integrationId] of (
+    scenario.environment?.integrationRuntimeAdapterIds ?? []
+  ).entries()) {
+    const integration = getRuntimeReferenceDefinition(integrationId);
+    if (!integration) {
+      issues.push({
+        file,
+        path: `environment.integrationRuntimeAdapterIds[${index}]`,
+        message: `unknown integration runtime adapter: ${integrationId}`,
+      });
+      continue;
+    }
+    if (!integration.hostProductId) {
+      issues.push({
+        file,
+        path: `environment.integrationRuntimeAdapterIds[${index}]`,
+        message: `runtime ${integrationId} is not declared as a hosted product integration`,
+      });
+      continue;
+    }
+    if (integration.hostProductId !== primary.productId) {
+      issues.push({
+        file,
+        path: `environment.integrationRuntimeAdapterIds[${index}]`,
+        message: `runtime ${integrationId} requires host ${integration.hostProductId}, not ${primary.productId}`,
+      });
+      continue;
+    }
+    runtimes.push(integration);
+  }
+  return runtimes;
+}
+
 function validateScenarioReferences(
   scenario: Scenario,
   file: string,
@@ -119,25 +180,12 @@ function validateScenarioReferences(
     return issues;
   }
 
-  const runtime = getRuntimeReferenceDefinition(adapterId);
-  if (!runtime) {
-    issues.push({
-      file,
-      path: "environment.runtimeAdapterId",
-      message: `unknown runtime adapter: ${adapterId}`,
-    });
-    return issues;
-  }
+  const runtimes = participatingRuntimeDefinitions(scenario, file, issues);
+  if (runtimes.length === 0) return issues;
 
-  if (scenario.environment?.productId !== runtime.productId) {
-    issues.push({
-      file,
-      path: "environment.productId",
-      message: `product ${scenario.environment?.productId ?? "<missing>"} does not match runtime ${adapterId} (${runtime.productId})`,
-    });
-  }
-
-  const surfaceByRef = new Map(runtime.surface.map((entry) => [entry.ref, entry]));
+  const surfaceByRef = new Map(
+    runtimes.flatMap((runtime) => runtime.surface.map((entry) => [entry.ref, entry] as const)),
+  );
   const targetRefs: Array<{ ref: string; path: string }> = [];
 
   scenario.exploreTargets?.forEach((ref, index) => {
@@ -155,7 +203,7 @@ function validateScenarioReferences(
       issues.push({
         file,
         path: target.path,
-        message: `target ${target.ref} is not exposed by runtime ${adapterId}`,
+        message: `target ${target.ref} is not exposed by the scenario runtime environment`,
       });
       continue;
     }
@@ -175,11 +223,14 @@ function validateScenarioReferences(
     ),
   ];
   for (const selector of selectors) {
-    if (!runtime.querySelectors.includes(selector.selector)) {
+    const exposingRuntime = runtimes.find((runtime) =>
+      runtime.querySelectors.includes(selector.selector),
+    );
+    if (!exposingRuntime) {
       issues.push({
         file,
         path: selector.path,
-        message: `state selector ${selector.selector} is not exposed by runtime ${adapterId}`,
+        message: `state selector ${selector.selector} is not exposed by the scenario runtime environment`,
       });
     }
   }

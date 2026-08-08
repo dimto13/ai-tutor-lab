@@ -1,7 +1,9 @@
+import { COPILOT_RUNTIME_DEFINITION } from "./copilotDefinition.ts";
 import { VSCODE_RUNTIME_DEFINITION, type RuntimeReferenceDefinition } from "./vscodeDefinition.ts";
 
 export const RUNTIME_REFERENCE_CATALOG: readonly RuntimeReferenceDefinition[] = [
   VSCODE_RUNTIME_DEFINITION,
+  COPILOT_RUNTIME_DEFINITION,
 ];
 
 export function getRuntimeReferenceDefinition(

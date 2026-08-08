@@ -127,6 +127,7 @@ function TrainingLayout() {
         <HighlightOverlay
           targetId={step.highlightTarget}
           runtimeAdapterId={scenario.environment?.runtimeAdapterId}
+          integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
           tooltip={step.highlightTooltip}
           strong={helpLevel >= 3}
         />

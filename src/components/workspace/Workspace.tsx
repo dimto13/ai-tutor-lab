@@ -1,26 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Files,
-  Search,
-  GitBranch,
+  AlertCircle,
   Blocks,
-  FilePlus2,
-  FolderGit2,
-  ChevronRight,
   ChevronDown,
+  ChevronRight,
+  FileCode2,
+  FilePlus2,
+  FileText,
+  Files,
+  Folder,
+  FolderGit2,
+  GitBranch,
+  ScrollText,
+  Search,
+  Settings,
   Terminal as TerminalIcon,
   X,
-  Sparkles,
-  FileCode2,
-  FileText,
-  Folder,
-  Settings,
-  AlertCircle,
-  ScrollText,
 } from "lucide-react";
+import { CopilotPanel } from "./CopilotPanel";
+import { copilotRuntime } from "@/runtime/copilotRuntime";
+import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { workspaceBus } from "@/state/eventBus";
 import { useTraining } from "@/state/trainingStore";
-import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 
 type View = "explorer" | "search" | "scm" | "extensions";
 type WorkspaceMode = "none" | "folder" | "workspace";
@@ -56,6 +57,9 @@ function toFileNodes(runtimeFiles: string[]): FileNode[] {
 export function Workspace() {
   const { mode, scenario } = useTraining();
   const runtimeSeed = scenario.environment?.seed;
+  const copilotIntegrated =
+    scenario.environment?.integrationRuntimeAdapterIds?.includes(copilotRuntime.id) ?? false;
+
   const [view, setView] = useState<View | null>(null);
   const [repoOpen, setRepoOpen] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("none");
@@ -71,9 +75,6 @@ export function Workspace() {
   const [lines, setLines] = useState<string[]>([]);
   const [command, setCommand] = useState("");
   const [staged, setStaged] = useState(false);
-  const [copilotOpen, setCopilotOpen] = useState(false);
-  const [copilotPrompt, setCopilotPrompt] = useState("");
-  const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
 
   const runtimeRootRef = useRef<HTMLDivElement>(null);
@@ -100,9 +101,6 @@ export function Workspace() {
       setLines([...runtimeState.terminalLines]);
       setCommand(runtimeState.terminalCommand);
       setStaged(runtimeState.staged);
-      setCopilotOpen(runtimeState.copilotOpen);
-      setCopilotPrompt(runtimeState.copilotPrompt);
-      setCopilotAnswer(runtimeState.copilotAnswer);
       setWrongFile(runtimeState.wrongFile);
       setFileMenuOpen(false);
       setNewFileName(null);
@@ -118,9 +116,11 @@ export function Workspace() {
   useEffect(() => {
     if (newFileName !== null) newFileRef.current?.focus();
   }, [newFileName]);
+
   useEffect(() => {
     if (panelOpen && activePanel === "terminal") terminalInputRef.current?.focus();
   }, [panelOpen, activePanel]);
+
   useEffect(() => {
     terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight });
   }, [lines]);
@@ -163,7 +163,7 @@ export function Workspace() {
   };
 
   const openFile = (name: string) => {
-    setTabs((t) => (t.includes(name) ? t : [...t, name]));
+    setTabs((current) => (current.includes(name) ? current : [...current, name]));
     setActiveFile(name);
     vscodeRuntime.setActiveFile(name);
   };
@@ -171,10 +171,10 @@ export function Workspace() {
   const createFile = (raw: string) => {
     const name = raw.trim();
     setNewFileName(null);
-    if (!name) return;
-    if (files.some((f) => f.name === name)) return;
-    setFiles((f) => [...f, { name, kind: "file" }]);
-    setContents((c) => ({ ...c, [name]: "" }));
+    if (!name || files.some((file) => file.name === name)) return;
+
+    setFiles((current) => [...current, { name, kind: "file" }]);
+    setContents((current) => ({ ...current, [name]: "" }));
     vscodeRuntime.addFile(name);
     openFile(name);
     const nextWrongFile = name === "hello.py" || name === "challenge.py" ? null : name;
@@ -185,9 +185,17 @@ export function Workspace() {
 
   const updateContent = (value: string) => {
     if (!activeFile) return;
-    setContents((c) => ({ ...c, [activeFile]: value }));
+    setContents((current) => ({ ...current, [activeFile]: value }));
     vscodeRuntime.setFileContent(activeFile, value);
     workspaceBus.emit("file.updated", { filename: activeFile, content: value });
+  };
+
+  const applyCopilotSuggestion = (text: string) => {
+    if (!activeFile) return;
+    const nextContent = `${contents[activeFile] ?? ""}${text}`;
+    setContents((current) => ({ ...current, [activeFile]: nextContent }));
+    vscodeRuntime.setFileContent(activeFile, nextContent);
+    workspaceBus.emit("file.updated", { filename: activeFile, content: nextContent });
   };
 
   const openPanel = (panel: PanelView) => {
@@ -219,7 +227,7 @@ export function Workspace() {
     setCommand("");
     vscodeRuntime.setTerminalCommand("");
     const out: string[] = [`user@lab:~/ai-training-demo$ ${cmd}`];
-    const hasHello = files.some((f) => f.name === "hello.py");
+    const hasHello = files.some((file) => file.name === "hello.py");
 
     if (cmd === "git status") {
       out.push(
@@ -244,42 +252,30 @@ export function Workspace() {
           vscodeRuntime.setStaged(true);
           out.push("");
         }
-      } else out.push("fatal: pathspec did not match any files");
+      } else {
+        out.push("fatal: pathspec did not match any files");
+      }
     } else if (cmd.startsWith("git commit")) {
       if (!staged) out.push('nothing added to commit (use "git add" to track files)');
-      else
+      else {
         out.push(
           "[main abc123] add hello example",
           " 1 file changed, 1 insertion(+)",
           " create mode 100644 hello.py",
         );
+      }
     } else if (cmd === "clear") {
       replaceTerminalLines([]);
       workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
       return;
     } else if (cmd === "ls") {
-      out.push(files.map((f) => f.name).join("  "));
+      out.push(files.map((file) => file.name).join("  "));
     } else {
       out.push(`bash: ${cmd.split(" ")[0]}: command not found`);
     }
+
     replaceTerminalLines([...lines, ...out]);
     workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
-  };
-
-  const submitCopilot = () => {
-    const prompt = copilotPrompt.trim();
-    if (!prompt) return;
-    const answer = "def add(a, b):\n    return a + b";
-    setCopilotAnswer(answer);
-    vscodeRuntime.setCopilotAnswer(answer);
-    if (activeFile) {
-      const nextContent = `${contents[activeFile] ?? ""}\n\n${answer}\n`;
-      setContents((c) => ({ ...c, [activeFile]: nextContent }));
-      vscodeRuntime.setFileContent(activeFile, nextContent);
-    }
-    workspaceBus.emit("copilot.prompt.submitted", { prompt });
-    setCopilotPrompt("");
-    vscodeRuntime.setCopilotPrompt("");
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -424,7 +420,7 @@ export function Workspace() {
             ) : view === "scm" ? (
               <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
                 <p className="mb-2 text-foreground">Änderungen</p>
-                {files.some((f) => f.name === "hello.py") ? (
+                {files.some((file) => file.name === "hello.py") ? (
                   <p className="font-mono text-warning">{staged ? "A" : "U"} hello.py</p>
                 ) : (
                   <p>Keine Änderungen erkannt.</p>
@@ -433,7 +429,9 @@ export function Workspace() {
             ) : view === "extensions" ? (
               <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
                 <p className="text-foreground">GitHub Copilot</p>
-                <p>Installiert · aktiviert (simuliert)</p>
+                <p>
+                  {copilotIntegrated ? "Installiert · aktiviert (simuliert)" : "Nicht aktiviert"}
+                </p>
               </div>
             ) : !repoOpen ? (
               <div className="px-2 py-3">
@@ -471,7 +469,7 @@ export function Workspace() {
                 ) : null}
 
                 <button
-                  onClick={() => setTreeExpanded((v) => !v)}
+                  onClick={() => setTreeExpanded((expanded) => !expanded)}
                   className="flex w-full items-center gap-1 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground"
                 >
                   {treeExpanded ? (
@@ -483,24 +481,24 @@ export function Workspace() {
                 </button>
                 {treeExpanded ? (
                   <ul>
-                    {files.map((f) => (
-                      <li key={f.name}>
+                    {files.map((file) => (
+                      <li key={file.name}>
                         <button
-                          onClick={() => f.kind === "file" && openFile(f.name)}
+                          onClick={() => file.kind === "file" && openFile(file.name)}
                           className={`flex w-full items-center gap-2 py-1 pl-6 pr-2 text-left text-[13px] transition-colors hover:bg-white/5 ${
-                            activeFile === f.name
+                            activeFile === file.name
                               ? "bg-white/10 text-foreground"
                               : "text-muted-foreground"
-                          } ${wrongFile === f.name ? "text-destructive ring-1 ring-destructive/60" : ""}`}
+                          } ${wrongFile === file.name ? "text-destructive ring-1 ring-destructive/60" : ""}`}
                         >
-                          {f.kind === "folder" ? (
+                          {file.kind === "folder" ? (
                             <Folder className="h-4 w-4 text-accent" />
-                          ) : f.name.endsWith(".py") ? (
+                          ) : file.name.endsWith(".py") ? (
                             <FileCode2 className="h-4 w-4 text-accent" />
                           ) : (
                             <FileText className="h-4 w-4 text-muted-foreground" />
                           )}
-                          {f.name}
+                          {file.name}
                         </button>
                       </li>
                     ))}
@@ -509,10 +507,10 @@ export function Workspace() {
                         <input
                           ref={newFileRef}
                           value={newFileName}
-                          onChange={(e) => setNewFileName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") createFile(newFileName);
-                            if (e.key === "Escape") setNewFileName(null);
+                          onChange={(event) => setNewFileName(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") createFile(newFileName);
+                            if (event.key === "Escape") setNewFileName(null);
                           }}
                           placeholder="dateiname.py"
                           className="w-full rounded border border-ring bg-editor px-1.5 py-1 font-mono text-[13px] text-foreground outline-none"
@@ -539,20 +537,20 @@ export function Workspace() {
                 Keine Datei geöffnet
               </span>
             ) : (
-              tabs.map((t) => (
+              tabs.map((tab) => (
                 <div
-                  key={t}
+                  key={tab}
                   className={`flex items-center gap-2 border-r border-border px-3 text-[13px] ${
-                    activeFile === t ? "bg-editor text-foreground" : "text-muted-foreground"
+                    activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
                   }`}
                 >
-                  <button onClick={() => openFile(t)}>{t}</button>
+                  <button onClick={() => openFile(tab)}>{tab}</button>
                   <button
-                    aria-label={`${t} schließen`}
+                    aria-label={`${tab} schließen`}
                     onClick={() => {
-                      setTabs((tt) => tt.filter((x) => x !== t));
-                      if (activeFile === t) setActiveFile(null);
-                      vscodeRuntime.closeFile(t);
+                      setTabs((current) => current.filter((item) => item !== tab));
+                      if (activeFile === tab) setActiveFile(null);
+                      vscodeRuntime.closeFile(tab);
                     }}
                     className="text-muted-foreground hover:text-foreground"
                   >
@@ -561,49 +559,12 @@ export function Workspace() {
                 </div>
               ))
             )}
-            <div className="ml-auto flex items-center pr-2">
-              <button
-                data-highlight="vscode.editor.copilot"
-                onClick={() => {
-                  const nextOpen = !copilotOpen;
-                  setCopilotOpen(nextOpen);
-                  vscodeRuntime.setCopilotOpen(nextOpen);
-                }}
-                className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-accent" />
-                Copilot fragen
-              </button>
-            </div>
-          </div>
-
-          {copilotOpen ? (
-            <div className="border-b border-border bg-panel px-3 py-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 shrink-0 text-accent" />
-                <input
-                  value={copilotPrompt}
-                  onChange={(e) => {
-                    setCopilotPrompt(e.target.value);
-                    vscodeRuntime.setCopilotPrompt(e.target.value);
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && submitCopilot()}
-                  placeholder="Create a Python function that adds two numbers."
-                  className="flex-1 rounded border border-border bg-editor px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-ring"
-                />
+            {copilotIntegrated ? (
+              <div className="ml-auto flex items-center pr-2">
+                <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
               </div>
-              {copilotAnswer ? (
-                <div className="mt-2 rounded-md border border-border bg-editor p-2">
-                  <p className="mb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
-                    Copilot Vorschlag · übernommen
-                  </p>
-                  <pre className="font-mono text-[12px] leading-relaxed text-success">
-                    {copilotAnswer}
-                  </pre>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+            ) : null}
+          </div>
 
           <div
             data-highlight="vscode.editor"
@@ -613,13 +574,13 @@ export function Workspace() {
             {activeFile ? (
               <div className="flex h-full">
                 <div className="select-none border-r border-border bg-editor px-3 py-3 text-right font-mono text-[12px] leading-6 text-muted-foreground">
-                  {(contents[activeFile] ?? "").split("\n").map((_, i) => (
-                    <div key={i}>{i + 1}</div>
+                  {(contents[activeFile] ?? "").split("\n").map((_, index) => (
+                    <div key={index}>{index + 1}</div>
                   ))}
                 </div>
                 <textarea
                   value={contents[activeFile] ?? ""}
-                  onChange={(e) => updateContent(e.target.value)}
+                  onChange={(event) => updateContent(event.target.value)}
                   spellCheck={false}
                   className="h-full flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
                   placeholder='print("Hello AI Training")'
@@ -672,9 +633,9 @@ export function Workspace() {
                   ref={terminalRef}
                   className="h-[calc(13rem-2rem)] overflow-y-auto px-3 py-2 font-mono text-[12.5px] leading-6"
                 >
-                  {lines.map((l, i) => (
-                    <div key={i} className="whitespace-pre-wrap text-foreground/85">
-                      {l}
+                  {lines.map((line, index) => (
+                    <div key={index} className="whitespace-pre-wrap text-foreground/85">
+                      {line}
                     </div>
                   ))}
                   <div
@@ -685,11 +646,11 @@ export function Workspace() {
                     <input
                       ref={terminalInputRef}
                       value={command}
-                      onChange={(e) => {
-                        setCommand(e.target.value);
-                        vscodeRuntime.setTerminalCommand(e.target.value);
+                      onChange={(event) => {
+                        setCommand(event.target.value);
+                        vscodeRuntime.setTerminalCommand(event.target.value);
                       }}
-                      onKeyDown={(e) => e.key === "Enter" && runCommand()}
+                      onKeyDown={(event) => event.key === "Enter" && runCommand()}
                       spellCheck={false}
                       aria-label="Terminal-Eingabe"
                       className="flex-1 bg-transparent font-mono text-[12.5px] text-foreground outline-none"

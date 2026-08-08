@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { getScenario } from "@/scenarios";
-import { getRuntimeAdapter } from "@/runtime";
+import { getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
 import type {
   Scenario,
   StepStatus,
@@ -139,7 +139,11 @@ async function validateState(
   }
   if (validation.kind !== "state") return false;
 
-  const adapter = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
+  const adapter = getRuntimeAdapterForSelector(
+    validation.selector,
+    scenario.environment?.runtimeAdapterId,
+    scenario.environment?.integrationRuntimeAdapterIds,
+  );
   if (!adapter) return false;
   const value = await adapter.query(validation.selector);
 
@@ -185,8 +189,11 @@ export function TrainingProvider({
   }, [progress, hydrated, scenario.id]);
 
   useEffect(() => {
-    const runtime = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
-    if (!runtime) return;
+    const runtimes = getRuntimeAdapters(
+      scenario.environment?.runtimeAdapterId,
+      scenario.environment?.integrationRuntimeAdapterIds,
+    );
+    if (runtimes.length === 0) return;
 
     const handleEvent = async (event: TrainingEvent) => {
       const payload = eventPayload(event);
@@ -278,7 +285,10 @@ export function TrainingProvider({
     const subscriber = (event: TrainingEvent) => {
       void handleEvent(event);
     };
-    return runtime.subscribe(subscriber);
+    const unsubscribes = runtimes.map((runtime) => runtime.subscribe(subscriber));
+    return () => {
+      for (const unsubscribe of unsubscribes) unsubscribe();
+    };
   }, [scenario, mode]);
 
   useEffect(() => {
@@ -346,7 +356,12 @@ export function TrainingProvider({
       },
       resetHelp: () => setHelpLevel(0),
       restart: () => {
-        getRuntimeAdapter(scenario.environment?.runtimeAdapterId)?.reset?.();
+        for (const runtime of getRuntimeAdapters(
+          scenario.environment?.runtimeAdapterId,
+          scenario.environment?.integrationRuntimeAdapterIds,
+        )) {
+          runtime.reset?.();
+        }
         setProgress(initialProgress(scenario));
         setHelpLevel(0);
         setFeedback(null);

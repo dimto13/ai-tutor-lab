@@ -15,7 +15,15 @@ export type WorkspaceEventName =
   | "terminal.opened"
   | "terminal.command.executed"
   | "panel.opened"
+  | "copilot.enabled.changed"
+  | "copilot.conversation.started"
   | "copilot.prompt.submitted"
+  | "copilot.mode.changed"
+  | "copilot.model.changed"
+  | "copilot.context.changed"
+  | "ai.suggestion.shown"
+  | "ai.suggestion.accepted"
+  | "ai.suggestion.rejected"
   | "ui.element.inspected";
 
 /** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
@@ -81,6 +89,8 @@ export interface ScenarioEnvironment {
   productId: string;
   version: string;
   runtimeAdapterId: string;
+  /** Optional product integrations hosted inside the primary runtime surface. */
+  integrationRuntimeAdapterIds?: string[];
   seed?: RuntimeSeed;
 }
 
