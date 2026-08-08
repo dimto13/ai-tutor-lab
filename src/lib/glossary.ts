@@ -28,7 +28,9 @@ export function getGlossaryConceptByKey(key: string | undefined): GlossaryConcep
   return concepts.find((concept) => concept.key === key) ?? null;
 }
 
-export function getGlossaryConceptForTarget(target: string | null | undefined): GlossaryConcept | null {
+export function getGlossaryConceptForTarget(
+  target: string | null | undefined,
+): GlossaryConcept | null {
   if (!target) return null;
   return concepts.find((concept) => concept.uiTargets.includes(target)) ?? null;
 }
@@ -45,7 +47,8 @@ export function findGlossaryConcept(question: string): GlossaryConcept | null {
   for (const concept of concepts) {
     const candidates = [concept.term, ...concept.aliases].map(normalize).filter(Boolean);
     for (const candidate of candidates) {
-      const score = q === candidate ? 1000 + candidate.length : q.includes(candidate) ? candidate.length : 0;
+      const score =
+        q === candidate ? 1000 + candidate.length : q.includes(candidate) ? candidate.length : 0;
       if (score > 0 && (!best || score > best.score)) best = { concept, score };
     }
   }

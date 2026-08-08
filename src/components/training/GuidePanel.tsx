@@ -18,7 +18,9 @@ export function GuidePanel() {
   const { scenario, mode, progress, feedback, helpLevel, revealHelp } = useTraining();
   const step = scenario.steps.find((s) => s.id === progress.activeStepId);
   const [showWhy, setShowWhy] = useState(false);
-  const stepNumber = step ? scenario.steps.findIndex((s) => s.id === step.id) + 1 : scenario.steps.length;
+  const stepNumber = step
+    ? scenario.steps.findIndex((s) => s.id === step.id) + 1
+    : scenario.steps.length;
 
   return (
     <aside className="flex w-[380px] shrink-0 flex-col border-l border-border bg-panel">
@@ -29,18 +31,26 @@ export function GuidePanel() {
           <ChallengeGuide />
         ) : (
           <>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Training Guide · Guided</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Training Guide · Guided
+            </p>
 
             {step ? (
               <>
                 <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">
                   Schritt {stepNumber} – {step.title}
                 </h2>
-                <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{step.description}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                  {step.description}
+                </p>
 
                 <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">Deine Aufgabe</p>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-foreground">{step.instruction}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+                    Deine Aufgabe
+                  </p>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-foreground">
+                    {step.instruction}
+                  </p>
                 </div>
 
                 {feedback ? <Feedback feedback={feedback} /> : null}
@@ -52,7 +62,11 @@ export function GuidePanel() {
                     className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5 disabled:opacity-40"
                   >
                     <Lightbulb className="h-3.5 w-3.5 text-warning" />
-                    {helpLevel === 0 ? "Hinweis anzeigen" : helpLevel >= 3 ? "Alle Hinweise gezeigt" : "Mehr Hilfe"}
+                    {helpLevel === 0
+                      ? "Hinweis anzeigen"
+                      : helpLevel >= 3
+                        ? "Alle Hinweise gezeigt"
+                        : "Mehr Hilfe"}
                   </button>
                   <button
                     onClick={() => setShowWhy((v) => !v)}
@@ -72,7 +86,10 @@ export function GuidePanel() {
                 {helpLevel > 0 ? (
                   <ol className="mt-3 space-y-2">
                     {step.helpLevels.slice(0, helpLevel).map((h, i) => (
-                      <li key={i} className="rounded-lg border border-border bg-card p-3 text-[13px] leading-relaxed">
+                      <li
+                        key={i}
+                        className="rounded-lg border border-border bg-card p-3 text-[13px] leading-relaxed"
+                      >
                         <span className="mr-1.5 text-[11px] font-semibold uppercase tracking-wider text-warning">
                           Hilfe {i + 1}
                         </span>
@@ -129,10 +146,13 @@ export function GuidePanel() {
 
 function ExploreGuide() {
   const { scenario, progress, percent } = useTraining();
-  const surface = vscodeRuntime.describeSurface().filter((item) => (scenario.exploreTargets ?? []).includes(item.ref));
+  const surface = vscodeRuntime
+    .describeSurface()
+    .filter((item) => (scenario.exploreTargets ?? []).includes(item.ref));
   const activeSurface = surface.find((item) => item.ref === progress.lastInspectedRef) ?? null;
   const concept = activeSurface
-    ? getGlossaryConceptByKey(activeSurface.conceptKey) ?? getGlossaryConceptForTarget(activeSurface.ref)
+    ? (getGlossaryConceptByKey(activeSurface.conceptKey) ??
+      getGlossaryConceptForTarget(activeSurface.ref))
     : null;
 
   return (
@@ -140,9 +160,12 @@ function ExploreGuide() {
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <Search className="h-3.5 w-3.5 text-accent" /> Explorer-Modus
       </div>
-      <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">Oberfläche frei untersuchen</h2>
+      <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">
+        Oberfläche frei untersuchen
+      </h2>
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-        Klicke frei auf Bereiche von VS Code. Es gibt keine falsche Reihenfolge und keine Fehlermeldungen.
+        Klicke frei auf Bereiche von VS Code. Es gibt keine falsche Reihenfolge und keine
+        Fehlermeldungen.
       </p>
 
       <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
@@ -157,10 +180,14 @@ function ExploreGuide() {
 
       {concept && activeSurface ? (
         <div className="mt-4 rounded-lg border border-border bg-card p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">{activeSurface.label}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+            {activeSurface.label}
+          </p>
           <h3 className="mt-1 text-sm font-semibold text-foreground">{concept.term}</h3>
           <p className="mt-2 text-[13px] leading-relaxed text-foreground">{concept.simple}</p>
-          <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{concept.advanced}</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+            {concept.advanced}
+          </p>
         </div>
       ) : (
         <div className="mt-4 rounded-lg border border-border bg-card p-3 text-[13px] leading-relaxed text-muted-foreground">
@@ -169,7 +196,9 @@ function ExploreGuide() {
       )}
 
       <div className="mt-5">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Oberflächen</p>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Oberflächen
+        </p>
         <ul className="space-y-1.5">
           {surface.map((item) => {
             const done = progress.exploredTargets.includes(item.ref);
@@ -180,7 +209,9 @@ function ExploreGuide() {
                 ) : (
                   <Circle className="h-4 w-4 shrink-0 text-muted-foreground/50" />
                 )}
-                <span className={done ? "text-muted-foreground" : "text-foreground"}>{item.label}</span>
+                <span className={done ? "text-muted-foreground" : "text-foreground"}>
+                  {item.label}
+                </span>
               </li>
             );
           })}
@@ -199,8 +230,12 @@ function ChallengeGuide() {
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <Target className="h-3.5 w-3.5 text-accent" /> Challenge
       </div>
-      <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">{goal?.title ?? scenario.title}</h2>
-      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{scenario.description}</p>
+      <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">
+        {goal?.title ?? scenario.title}
+      </h2>
+      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+        {scenario.description}
+      </p>
 
       {goal ? (
         <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
@@ -210,9 +245,12 @@ function ChallengeGuide() {
       ) : null}
 
       <div className="mt-4 rounded-lg border border-border bg-card p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Bewertung</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Bewertung
+        </p>
         <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-          Es gibt keine automatische Klickführung. Das System prüft ausschließlich den erreichten Endzustand.
+          Es gibt keine automatische Klickführung. Das System prüft ausschließlich den erreichten
+          Endzustand.
         </p>
       </div>
 

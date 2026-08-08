@@ -90,7 +90,8 @@ export function Workspace() {
   };
 
   const applyWorkingContext = (nextMode: Exclude<WorkspaceMode, "none">) => {
-    const folders = nextMode === "folder" ? ["ai-training-demo"] : ["ai-training-demo", "shared-tools"];
+    const folders =
+      nextMode === "folder" ? ["ai-training-demo"] : ["ai-training-demo", "shared-tools"];
     vscodeRuntime.setWorkspace(nextMode, folders);
     setWorkspaceMode(nextMode);
     setRepoOpen(true);
@@ -173,7 +174,9 @@ export function Workspace() {
           : '  (use "git add <file>..." to include in what will be committed)',
         staged ? "\tnew file:   hello.py" : "\thello.py",
         "",
-        staged ? "" : 'nothing added to commit but untracked files present (use "git add" to track)',
+        staged
+          ? ""
+          : 'nothing added to commit but untracked files present (use "git add" to track)',
       );
     } else if (/^git add\s+/.test(cmd)) {
       if (cmd.includes("hello.py") || cmd.includes(".")) {
@@ -184,8 +187,13 @@ export function Workspace() {
         }
       } else out.push("fatal: pathspec did not match any files");
     } else if (cmd.startsWith("git commit")) {
-      if (!staged) out.push("nothing added to commit (use \"git add\" to track files)");
-      else out.push("[main abc123] add hello example", " 1 file changed, 1 insertion(+)", " create mode 100644 hello.py");
+      if (!staged) out.push('nothing added to commit (use "git add" to track files)');
+      else
+        out.push(
+          "[main abc123] add hello example",
+          " 1 file changed, 1 insertion(+)",
+          " create mode 100644 hello.py",
+        );
     } else if (cmd === "clear") {
       setLines([]);
       workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
@@ -215,7 +223,12 @@ export function Workspace() {
     { id: "explorer", icon: Files, label: "Explorer", target: "vscode.activityBar.explorer" },
     { id: "search", icon: Search, label: "Suche", target: "vscode.activityBar.search" },
     { id: "scm", icon: GitBranch, label: "Source Control", target: "vscode.activityBar.scm" },
-    { id: "extensions", icon: Blocks, label: "Extensions", target: "vscode.activityBar.extensions" },
+    {
+      id: "extensions",
+      icon: Blocks,
+      label: "Extensions",
+      target: "vscode.activityBar.extensions",
+    },
   ];
 
   const switchPanel = (panel: PanelView) => {
@@ -250,8 +263,12 @@ export function Workspace() {
 
         {fileMenuOpen ? (
           <div className="absolute left-2 top-8 z-30 w-72 rounded-md border border-border bg-panel py-1 shadow-2xl">
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">New Text File</button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Open File...</button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              New Text File
+            </button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              Open File...
+            </button>
             <div className="my-1 border-t border-border" />
             <button
               data-highlight="vscode.menu.file.openFolder"
@@ -273,8 +290,12 @@ export function Workspace() {
             >
               Open Workspace...
             </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Add Folder to Workspace...</button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Save Workspace As...</button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              Add Folder to Workspace...
+            </button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              Save Workspace As...
+            </button>
           </div>
         ) : null}
       </div>
@@ -354,7 +375,8 @@ export function Workspace() {
             ) : !repoOpen ? (
               <div className="px-2 py-3">
                 <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                  Öffne über <span className="text-foreground">File</span> einen Ordner oder einen gespeicherten Workspace.
+                  Öffne über <span className="text-foreground">File</span> einen Ordner oder einen
+                  gespeicherten Workspace.
                 </p>
                 <p className="mb-2 px-1 text-xs text-muted-foreground">Vorbereitete Repositories</p>
                 <button
@@ -375,7 +397,9 @@ export function Workspace() {
                     onClick={() => inspect("vscode.workspace.context")}
                     className="mx-2 mb-2 block w-[calc(100%-1rem)] rounded-md border border-border bg-card p-2 text-left text-[11px] leading-relaxed"
                   >
-                    <span className="block font-medium text-foreground">ai-training-lab.code-workspace</span>
+                    <span className="block font-medium text-foreground">
+                      ai-training-lab.code-workspace
+                    </span>
                     <span className="block text-muted-foreground">2 Ordner im Arbeitskontext</span>
                     <span className="mt-1 flex items-center gap-1 text-muted-foreground">
                       <Settings className="h-3 w-3" /> Workspace-Einstellung: formatOnSave = true
@@ -387,7 +411,11 @@ export function Workspace() {
                   onClick={() => setTreeExpanded((v) => !v)}
                   className="flex w-full items-center gap-1 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground"
                 >
-                  {treeExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  {treeExpanded ? (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  )}
                   ai-training-demo
                 </button>
                 {treeExpanded ? (
@@ -397,7 +425,9 @@ export function Workspace() {
                         <button
                           onClick={() => f.kind === "file" && openFile(f.name)}
                           className={`flex w-full items-center gap-2 py-1 pl-6 pr-2 text-left text-[13px] transition-colors hover:bg-white/5 ${
-                            activeFile === f.name ? "bg-white/10 text-foreground" : "text-muted-foreground"
+                            activeFile === f.name
+                              ? "bg-white/10 text-foreground"
+                              : "text-muted-foreground"
                           } ${wrongFile === f.name ? "text-destructive ring-1 ring-destructive/60" : ""}`}
                         >
                           {f.kind === "folder" ? (
@@ -442,7 +472,9 @@ export function Workspace() {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-9 items-stretch border-b border-border bg-panel">
             {tabs.length === 0 ? (
-              <span className="flex items-center px-3 text-xs text-muted-foreground">Keine Datei geöffnet</span>
+              <span className="flex items-center px-3 text-xs text-muted-foreground">
+                Keine Datei geöffnet
+              </span>
             ) : (
               tabs.map((t) => (
                 <div
@@ -497,7 +529,9 @@ export function Workspace() {
                   <p className="mb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
                     Copilot Vorschlag · übernommen
                   </p>
-                  <pre className="font-mono text-[12px] leading-relaxed text-success">{copilotAnswer}</pre>
+                  <pre className="font-mono text-[12px] leading-relaxed text-success">
+                    {copilotAnswer}
+                  </pre>
                 </div>
               ) : null}
             </div>
@@ -540,10 +574,16 @@ export function Workspace() {
                       data-highlight={`vscode.panel.${panel}`}
                       onClick={() => switchPanel(panel)}
                       className={`h-full border-b py-2 ${
-                        activePanel === panel ? "border-foreground text-foreground" : "border-transparent hover:text-foreground"
+                        activePanel === panel
+                          ? "border-foreground text-foreground"
+                          : "border-transparent hover:text-foreground"
                       }`}
                     >
-                      {panel === "terminal" ? "Terminal" : panel === "problems" ? "Problems" : "Output"}
+                      {panel === "terminal"
+                        ? "Terminal"
+                        : panel === "problems"
+                          ? "Problems"
+                          : "Output"}
                     </button>
                   ))}
                 </div>
@@ -557,13 +597,19 @@ export function Workspace() {
               </div>
 
               {activePanel === "terminal" ? (
-                <div ref={terminalRef} className="h-[calc(13rem-2rem)] overflow-y-auto px-3 py-2 font-mono text-[12.5px] leading-6">
+                <div
+                  ref={terminalRef}
+                  className="h-[calc(13rem-2rem)] overflow-y-auto px-3 py-2 font-mono text-[12.5px] leading-6"
+                >
                   {lines.map((l, i) => (
                     <div key={i} className="whitespace-pre-wrap text-foreground/85">
                       {l}
                     </div>
                   ))}
-                  <div className="flex items-center gap-2" data-highlight="vscode.panel.terminal.input">
+                  <div
+                    className="flex items-center gap-2"
+                    data-highlight="vscode.panel.terminal.input"
+                  >
                     <span className="text-success">user@lab:~/ai-training-demo$</span>
                     <input
                       ref={terminalInputRef}
@@ -580,8 +626,12 @@ export function Workspace() {
                 <div className="flex h-[calc(13rem-2rem)] items-start gap-2 px-4 py-4 text-[13px] text-muted-foreground">
                   <AlertCircle className="mt-0.5 h-4 w-4 text-success" />
                   <div>
-                    <p className="text-foreground">No problems have been detected in the workspace.</p>
-                    <p className="mt-1">Diagnosen von Sprachservern, Lintern und Compilern erscheinen hier.</p>
+                    <p className="text-foreground">
+                      No problems have been detected in the workspace.
+                    </p>
+                    <p className="mt-1">
+                      Diagnosen von Sprachservern, Lintern und Compilern erscheinen hier.
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -589,7 +639,9 @@ export function Workspace() {
                   <div className="flex items-center gap-2 text-foreground">
                     <ScrollText className="h-4 w-4" /> Output · VS Code
                   </div>
-                  <p className="mt-2 font-mono text-[12px]">[info] Workspace services initialized.</p>
+                  <p className="mt-2 font-mono text-[12px]">
+                    [info] Workspace services initialized.
+                  </p>
                   <p className="font-mono text-[12px]">[info] Extension host ready.</p>
                 </div>
               )}
@@ -613,7 +665,9 @@ export function Workspace() {
               ? "Ordner · ai-training-demo"
               : "kein Arbeitskontext"}
         </span>
-        <span className="text-muted-foreground">{activeFile ? `${activeFile} · Python` : "Python 3.12"}</span>
+        <span className="text-muted-foreground">
+          {activeFile ? `${activeFile} · Python` : "Python 3.12"}
+        </span>
         <button
           data-highlight="vscode.statusBar.terminal"
           onClick={openTerminal}

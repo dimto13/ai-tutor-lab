@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import { workspaceBus } from "./eventBus";
 import { getScenario } from "@/scenarios";
@@ -15,7 +23,8 @@ import type {
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
 
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
-const modeMultiplier = (mode: TrainingMode) => (mode === "explore" ? 0.5 : mode === "challenge" ? 2 : 1);
+const modeMultiplier = (mode: TrainingMode) =>
+  mode === "explore" ? 0.5 : mode === "challenge" ? 2 : 1;
 
 export interface TrainingProgress {
   statuses: Record<string, StepStatus>;
@@ -91,14 +100,21 @@ function load(scenario: Scenario): TrainingProgress {
   }
 }
 
-function validateEvent(validation: Validation | undefined, event: WorkspaceEvent): ValidationResult {
+function validateEvent(
+  validation: Validation | undefined,
+  event: WorkspaceEvent,
+): ValidationResult {
   if (!validation) return { ok: true };
   if (validation.kind !== "event") return { ok: false };
   if (validation.type !== event.name) return { ok: false };
 
   const payload = event.payload ?? {};
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
-    if (payload[key] !== expected) return { ok: false, message: "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis." };
+    if (payload[key] !== expected)
+      return {
+        ok: false,
+        message: "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.",
+      };
   }
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
@@ -111,14 +127,16 @@ function validateEvent(validation: Validation | undefined, event: WorkspaceEvent
 
 function validateState(validation: Validation | undefined, scenario: Scenario): boolean {
   if (!validation) return false;
-  if (validation.kind === "all") return validation.of.every((item) => validateState(item, scenario));
+  if (validation.kind === "all")
+    return validation.of.every((item) => validateState(item, scenario));
   if (validation.kind !== "state") return false;
 
   const adapter = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
   if (!adapter) return false;
   const value = adapter.query(validation.selector);
 
-  if (Object.prototype.hasOwnProperty.call(validation, "equals") && value !== validation.equals) return false;
+  if (Object.prototype.hasOwnProperty.call(validation, "equals") && value !== validation.equals)
+    return false;
   if (Object.prototype.hasOwnProperty.call(validation, "includes")) {
     if (Array.isArray(value)) return value.includes(validation.includes);
     if (typeof value === "string") return value.includes(String(validation.includes));
@@ -127,7 +145,13 @@ function validateState(validation: Validation | undefined, scenario: Scenario): 
   return true;
 }
 
-export function TrainingProvider({ scenarioId, children }: { scenarioId: string; children: ReactNode }) {
+export function TrainingProvider({
+  scenarioId,
+  children,
+}: {
+  scenarioId: string;
+  children: ReactNode;
+}) {
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error(`Unknown training scenario: ${scenarioId}`);
 
@@ -162,13 +186,18 @@ export function TrainingProvider({ scenarioId, children }: { scenarioId: string;
         const ref = event.payload?.["ref"];
         if (typeof ref !== "string" || !(scenario.exploreTargets ?? []).includes(ref)) return;
         setProgress((p) => {
-          const exploredTargets = p.exploredTargets.includes(ref) ? p.exploredTargets : [...p.exploredTargets, ref];
+          const exploredTargets = p.exploredTargets.includes(ref)
+            ? p.exploredTargets
+            : [...p.exploredTargets, ref];
           const targetCount = scenario.exploreTargets?.length ?? 0;
           return {
             ...p,
             exploredTargets,
             lastInspectedRef: ref,
-            finishedAt: targetCount > 0 && exploredTargets.length >= targetCount ? (p.finishedAt ?? Date.now()) : p.finishedAt,
+            finishedAt:
+              targetCount > 0 && exploredTargets.length >= targetCount
+                ? (p.finishedAt ?? Date.now())
+                : p.finishedAt,
           };
         });
         return;
@@ -193,7 +222,8 @@ export function TrainingProvider({ scenarioId, children }: { scenarioId: string;
       const step = scenario.steps.find((s) => s.id === stepId);
       if (!step) return;
 
-      const expectedEvent = step.validation?.kind === "event" ? step.validation.type : step.expectedEvent;
+      const expectedEvent =
+        step.validation?.kind === "event" ? step.validation.type : step.expectedEvent;
       if (expectedEvent && expectedEvent !== event.name) return;
 
       const result = step.validate
@@ -227,7 +257,9 @@ export function TrainingProvider({ scenarioId, children }: { scenarioId: string;
           }));
         }
         setFeedback((f) =>
-          f && f.kind === "error" && f.message === result.message ? f : { kind: "error", message: result.message! },
+          f && f.kind === "error" && f.message === result.message
+            ? f
+            : { kind: "error", message: result.message! },
         );
       }
     });
@@ -241,14 +273,35 @@ export function TrainingProvider({ scenarioId, children }: { scenarioId: string;
   }, [feedback]);
 
   const value = useMemo<TrainingContextValue>(() => {
-    const guidedCompleted = scenario.steps.filter((s) => progress.statuses[s.id] === "COMPLETED").length;
+    const guidedCompleted = scenario.steps.filter(
+      (s) => progress.statuses[s.id] === "COMPLETED",
+    ).length;
     const exploreTotal = scenario.exploreTargets?.length ?? 0;
-    const exploreCompleted = progress.exploredTargets.filter((ref) => (scenario.exploreTargets ?? []).includes(ref)).length;
+    const exploreCompleted = progress.exploredTargets.filter((ref) =>
+      (scenario.exploreTargets ?? []).includes(ref),
+    ).length;
     const challengeComplete = progress.finishedAt !== null;
 
-    const completedCount = mode === "explore" ? exploreCompleted : mode === "challenge" ? (challengeComplete ? 1 : 0) : guidedCompleted;
-    const totalCount = mode === "explore" ? Math.max(exploreTotal, 1) : mode === "challenge" ? 1 : Math.max(scenario.steps.length, 1);
-    const isFinished = mode === "explore" ? exploreTotal > 0 && exploreCompleted >= exploreTotal : mode === "challenge" ? challengeComplete : guidedCompleted === scenario.steps.length;
+    const completedCount =
+      mode === "explore"
+        ? exploreCompleted
+        : mode === "challenge"
+          ? challengeComplete
+            ? 1
+            : 0
+          : guidedCompleted;
+    const totalCount =
+      mode === "explore"
+        ? Math.max(exploreTotal, 1)
+        : mode === "challenge"
+          ? 1
+          : Math.max(scenario.steps.length, 1);
+    const isFinished =
+      mode === "explore"
+        ? exploreTotal > 0 && exploreCompleted >= exploreTotal
+        : mode === "challenge"
+          ? challengeComplete
+          : guidedCompleted === scenario.steps.length;
     const activeStepIndex = progress.activeStepId
       ? scenario.steps.findIndex((s) => s.id === progress.activeStepId)
       : scenario.steps.length;

@@ -31,7 +31,11 @@ const SURFACE: SurfaceDescription[] = [
   { ref: "vscode.panel.output", label: "Output", conceptKey: "vscode.output" },
   { ref: "vscode.statusBar", label: "Status Bar", conceptKey: "vscode.status_bar" },
   { ref: "vscode.menu.file.openFolder", label: "Open Folder", conceptKey: "vscode.folder" },
-  { ref: "vscode.menu.file.openWorkspace", label: "Open Workspace", conceptKey: "vscode.workspace" },
+  {
+    ref: "vscode.menu.file.openWorkspace",
+    label: "Open Workspace",
+    conceptKey: "vscode.workspace",
+  },
   { ref: "vscode.workspace.context", label: "Workspace-Kontext", conceptKey: "vscode.workspace" },
 ];
 
@@ -61,7 +65,11 @@ export const vscodeRuntime = {
   inspect(ref: UiTargetRef): void {
     const item = SURFACE.find((entry) => entry.ref === ref);
     if (!item) return;
-    workspaceBus.emit("ui.element.inspected", { ref, label: item.label, conceptKey: item.conceptKey });
+    workspaceBus.emit("ui.element.inspected", {
+      ref,
+      label: item.label,
+      conceptKey: item.conceptKey,
+    });
   },
 
   reset(): void {
@@ -73,7 +81,9 @@ export const vscodeRuntime = {
   },
 
   addFile(filename: string): void {
-    state = state.files.includes(filename) ? state : { ...state, files: [...state.files, filename] };
+    state = state.files.includes(filename)
+      ? state
+      : { ...state, files: [...state.files, filename] };
   },
 
   setActiveFile(filename: string | null): void {

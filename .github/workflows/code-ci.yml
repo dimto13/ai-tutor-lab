@@ -3,6 +3,7 @@ name: Code CI
 on:
   push:
     branches:
+      - main
       - "feature/**"
   pull_request:
     branches:
@@ -22,18 +23,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies reproducibly
+        run: npm ci --install-strategy=nested
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Verify Lovable tooling is absent
+        run: |
+          if grep -E "@lovable\.dev/" package.json package-lock.json vite.config.ts; then
+            echo "Legacy Lovable build dependency detected."
+            exit 1
+          fi
 
       - name: Validate scenario content
-        run: bun run validate:content
+        run: npm run validate:content
+
+      - name: Lint
+        run: npm run lint
 
       - name: Typecheck
-        run: bun run typecheck
+        run: npm run typecheck
 
       - name: Build
-        run: bun run build
+        run: npm run build

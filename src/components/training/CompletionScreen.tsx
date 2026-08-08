@@ -8,7 +8,8 @@ export function CompletionScreen() {
     1,
     Math.round((((progress.finishedAt ?? Date.now()) - progress.startedAt) / 60000) * 10) / 10,
   );
-  const unitLabel = mode === "explore" ? "Erkundung" : mode === "challenge" ? "Challenge" : "Schritte";
+  const unitLabel =
+    mode === "explore" ? "Erkundung" : mode === "challenge" ? "Challenge" : "Schritte";
   const unitValue =
     mode === "explore"
       ? `${progress.exploredTargets.length} Bereiche`
@@ -22,7 +23,9 @@ export function CompletionScreen() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/15">
           <Award className="h-7 w-7 text-success" />
         </div>
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">Training abgeschlossen</h1>
+        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
+          Training abgeschlossen
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
 
         <dl className="mt-6 grid grid-cols-4 gap-3 text-left">
@@ -33,7 +36,9 @@ export function CompletionScreen() {
             { label: "Punkte", value: String(earnedPoints) },
           ].map((m) => (
             <div key={m.label} className="rounded-lg border border-border bg-panel p-3">
-              <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{m.label}</dt>
+              <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                {m.label}
+              </dt>
               <dd className="mt-1 text-sm font-medium text-foreground">{m.value}</dd>
             </div>
           ))}
@@ -42,14 +47,18 @@ export function CompletionScreen() {
             <dd className="mt-1 text-sm font-medium text-foreground">{progress.hintsUsed}</dd>
           </div>
           <div className="col-span-2 rounded-lg border border-border bg-panel p-3">
-            <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Fehlversuche</dt>
+            <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Fehlversuche
+            </dt>
             <dd className="mt-1 text-sm font-medium text-foreground">{progress.mistakes}</dd>
           </div>
         </dl>
 
         {mode === "challenge" && scenario.solutionComparison?.length ? (
           <div className="mt-6 rounded-xl border border-border bg-panel p-4 text-left">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">Lösungsvergleich</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+              Lösungsvergleich
+            </p>
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
               Dein Klickweg durfte frei sein. Ein möglicher sauberer Lösungsweg sieht so aus:
             </p>

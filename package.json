@@ -15,6 +15,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts",
+    "check": "npm run validate:content && npm run lint && npm run typecheck && npm run build",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -73,7 +74,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "^2.10.0",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

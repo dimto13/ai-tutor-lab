@@ -29,12 +29,13 @@ const stateValidationSchema = z.object({
   includes: z.unknown().optional(),
 });
 
-export const validationSchema: z.ZodType<Validation> = z.lazy(() =>
-  z.union([
-    eventValidationSchema,
-    stateValidationSchema,
-    z.object({ kind: z.literal("all"), of: z.array(validationSchema).min(1) }),
-  ]) as z.ZodType<Validation>,
+export const validationSchema: z.ZodType<Validation> = z.lazy(
+  () =>
+    z.union([
+      eventValidationSchema,
+      stateValidationSchema,
+      z.object({ kind: z.literal("all"), of: z.array(validationSchema).min(1) }),
+    ]) as z.ZodType<Validation>,
 );
 
 const stepSchema = z.object({
@@ -87,7 +88,10 @@ export const scenarioSchema = z
       ids.add(step.id);
     }
 
-    if (scenario.mode === "explore" && (!scenario.exploreTargets || scenario.exploreTargets.length === 0)) {
+    if (
+      scenario.mode === "explore" &&
+      (!scenario.exploreTargets || scenario.exploreTargets.length === 0)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "explore scenarios require exploreTargets",

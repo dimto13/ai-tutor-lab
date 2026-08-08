@@ -5,7 +5,10 @@ Vorkenntnisse lernen in einer geführten Browser-Umgebung, Werkzeuge zu bedienen
 KI produktiv darin einzusetzen — simulierte Arbeitsumgebung, automatische
 Schrittvalidierung, kontextbewusster Tutor.
 
-**Live-POC:** https://ai-guide-trainer.lovable.app
+Der erste UI-Entwurf entstand in einer externen Prototyping-Umgebung. Dieser POC ist nur noch
+historischer Ursprung. **Verbindlicher Projektstand und einzige Source of Truth ist dieses
+Git-Repository.** Entwicklung, Tests und Builds erfolgen unabhängig davon; Zielplattform für
+Hosting und Deployment ist AWS Amplify.
 
 ## Orientierung im Repository
 
@@ -36,7 +39,7 @@ Node-Version über `.nvmrc` ausgewählt.
 git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
 nvm use
-npm install
+npm ci --install-strategy=nested
 npm run dev:local
 ```
 
@@ -48,14 +51,21 @@ Nach dem Start zeigt Vite die tatsächlich verwendeten Adressen und den Port an.
 für Zugriffe von einem anderen Rechner die von Vite ausgegebene Netzwerkadresse bzw. die
 IP-Adresse des Entwicklungsrechners zusammen mit dem angezeigten Port.
 
-Die von Lovable bereitgestellte Vite-/TanStack-Konfiguration bleibt dabei Bestandteil des
-POC. Für den lokalen Start ist kein Lovable-Editor erforderlich.
+Der Build verwendet die nativen Plugins von TanStack Start, Vite, React, Tailwind CSS und
+Nitro. Es besteht keine Build-Abhängigkeit mehr zur ursprünglichen Prototyping-Umgebung.
 
 Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
 
 ```sh
 git pull
+npm ci --install-strategy=nested
 npm run dev:local
+```
+
+Vor einem Push können Content, Linting, TypeScript und Produktions-Build gemeinsam geprüft werden:
+
+```sh
+npm run check
 ```
 
 Für Backlog-Tooling zusätzlich: `pip install pyyaml requests`.
