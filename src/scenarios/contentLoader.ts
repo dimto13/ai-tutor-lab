@@ -66,6 +66,7 @@ export const scenarioSchema = z
         productId: z.string().min(1),
         version: z.string().min(1),
         runtimeAdapterId: z.string().min(1),
+        seed: z.record(z.unknown()).optional(),
       })
       .optional(),
     estimatedMinutes: z.number().nonnegative().optional(),

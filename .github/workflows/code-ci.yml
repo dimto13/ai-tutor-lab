@@ -44,6 +44,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Runtime adapter contract tests
+        run: npm run test:runtime-contracts
+
       - name: Build
         run: npm run build
 

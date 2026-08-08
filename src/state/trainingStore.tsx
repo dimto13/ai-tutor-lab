@@ -8,16 +8,15 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import { workspaceBus } from "./eventBus";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter } from "@/runtime";
 import type {
   Scenario,
   StepStatus,
+  TrainingEvent,
   TrainingMode,
   Validation,
   ValidationResult,
-  WorkspaceEvent,
 } from "@/types/training";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
@@ -101,15 +100,18 @@ function load(scenario: Scenario): TrainingProgress {
   }
 }
 
-function validateEvent(
-  validation: Validation | undefined,
-  event: WorkspaceEvent,
-): ValidationResult {
+function eventPayload(event: TrainingEvent): Record<string, unknown> {
+  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload))
+    return {};
+  return event.payload as Record<string, unknown>;
+}
+
+function validateEvent(validation: Validation | undefined, event: TrainingEvent): ValidationResult {
   if (!validation) return { ok: true };
   if (validation.kind !== "event") return { ok: false };
-  if (validation.type !== event.name) return { ok: false };
+  if (validation.type !== event.type) return { ok: false };
 
-  const payload = event.payload ?? {};
+  const payload = eventPayload(event);
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
     if (payload[key] !== expected)
       return {
@@ -126,15 +128,20 @@ function validateEvent(
   return { ok: true };
 }
 
-function validateState(validation: Validation | undefined, scenario: Scenario): boolean {
+async function validateState(
+  validation: Validation | undefined,
+  scenario: Scenario,
+): Promise<boolean> {
   if (!validation) return false;
-  if (validation.kind === "all")
-    return validation.of.every((item) => validateState(item, scenario));
+  if (validation.kind === "all") {
+    const results = await Promise.all(validation.of.map((item) => validateState(item, scenario)));
+    return results.every(Boolean);
+  }
   if (validation.kind !== "state") return false;
 
   const adapter = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
   if (!adapter) return false;
-  const value = adapter.query(validation.selector);
+  const value = await adapter.query(validation.selector);
 
   if (Object.prototype.hasOwnProperty.call(validation, "equals") && value !== validation.equals)
     return false;
@@ -166,7 +173,6 @@ export function TrainingProvider({
 
   useEffect(() => {
     setHydrated(false);
-    getRuntimeAdapter(scenario.environment?.runtimeAdapterId)?.reset?.();
     setProgress(load(scenario));
     setHelpLevel(0);
     setFeedback(null);
@@ -179,12 +185,16 @@ export function TrainingProvider({
   }, [progress, hydrated, scenario.id]);
 
   useEffect(() => {
-    const unsubscribe = workspaceBus.subscribe((event: WorkspaceEvent) => {
-      setProgress((p) => ({ ...p, lastAction: event.name }));
+    const runtime = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
+    if (!runtime) return;
+
+    const handleEvent = async (event: TrainingEvent) => {
+      const payload = eventPayload(event);
+      setProgress((p) => ({ ...p, lastAction: event.type }));
 
       if (mode === "explore") {
-        if (event.name !== "ui.element.inspected") return;
-        const ref = event.payload?.["ref"];
+        if (event.type !== "ui.element.inspected") return;
+        const ref = payload["ref"];
         if (typeof ref !== "string" || !(scenario.exploreTargets ?? []).includes(ref)) return;
         setProgress((p) => {
           const exploredTargets = p.exploredTargets.includes(ref)
@@ -205,7 +215,7 @@ export function TrainingProvider({
       }
 
       if (mode === "challenge") {
-        if (!validateState(scenario.completionValidation, scenario)) return;
+        if (!(await validateState(scenario.completionValidation, scenario))) return;
         const challengeStep = scenario.steps[0];
         setProgress((p) => ({
           ...p,
@@ -225,10 +235,10 @@ export function TrainingProvider({
 
       const expectedEvent =
         step.validation?.kind === "event" ? step.validation.type : step.expectedEvent;
-      if (expectedEvent && expectedEvent !== event.name) return;
+      if (expectedEvent && expectedEvent !== event.type) return;
 
       const result = step.validate
-        ? step.validate(event.payload ?? {})
+        ? step.validate(payload)
         : step.validation
           ? validateEvent(step.validation, event)
           : { ok: true };
@@ -249,7 +259,7 @@ export function TrainingProvider({
         setHelpLevel(0);
         setFeedback({ kind: "success", message: step.successMessage });
       } else if (result.message) {
-        const counts = event.name !== "file.updated";
+        const counts = event.type !== "file.updated";
         if (counts) {
           setProgress((p) => ({
             ...p,
@@ -263,8 +273,12 @@ export function TrainingProvider({
             : { kind: "error", message: result.message! },
         );
       }
-    });
-    return unsubscribe;
+    };
+
+    const subscriber = (event: TrainingEvent) => {
+      void handleEvent(event);
+    };
+    return runtime.subscribe(subscriber);
   }, [scenario, mode]);
 
   useEffect(() => {

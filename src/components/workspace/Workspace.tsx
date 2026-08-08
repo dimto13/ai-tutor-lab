@@ -43,8 +43,19 @@ const INITIAL_CONTENT: Record<string, string> = {
 
 const MENU_ITEMS = ["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Help"] as const;
 
+function toFileNodes(runtimeFiles: string[]): FileNode[] {
+  const baseNames = new Set(BASE_FILES.map((node) => node.name));
+  return [
+    ...BASE_FILES.filter((node) => node.kind === "folder" || runtimeFiles.includes(node.name)),
+    ...runtimeFiles
+      .filter((name) => !baseNames.has(name))
+      .map((name): FileNode => ({ name, kind: "file" })),
+  ];
+}
+
 export function Workspace() {
-  const { mode } = useTraining();
+  const { mode, scenario } = useTraining();
+  const runtimeSeed = scenario.environment?.seed;
   const [view, setView] = useState<View | null>(null);
   const [repoOpen, setRepoOpen] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("none");
@@ -65,9 +76,44 @@ export function Workspace() {
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
 
+  const runtimeRootRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInputRef = useRef<HTMLInputElement>(null);
   const newFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const container = runtimeRootRef.current;
+    if (!container) return;
+
+    const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
+      if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
+
+      setWorkspaceMode(runtimeState.workspaceMode);
+      setRepoOpen(runtimeState.workspaceMode !== "none");
+      setView(runtimeState.workspaceMode === "none" ? null : "explorer");
+      setFiles(toFileNodes(runtimeState.files));
+      setContents({ ...runtimeState.contents });
+      setTabs([...runtimeState.openTabs]);
+      setActiveFile(runtimeState.activeFile);
+      setPanelOpen(runtimeState.activePanel !== null);
+      if (runtimeState.activePanel) setActivePanel(runtimeState.activePanel);
+      setLines([...runtimeState.terminalLines]);
+      setCommand(runtimeState.terminalCommand);
+      setStaged(runtimeState.staged);
+      setCopilotOpen(runtimeState.copilotOpen);
+      setCopilotPrompt(runtimeState.copilotPrompt);
+      setCopilotAnswer(runtimeState.copilotAnswer);
+      setWrongFile(runtimeState.wrongFile);
+      setFileMenuOpen(false);
+      setNewFileName(null);
+    });
+
+    void vscodeRuntime.mount(container, runtimeSeed);
+    return () => {
+      unsubscribe();
+      void vscodeRuntime.unmount();
+    };
+  }, [runtimeSeed]);
 
   useEffect(() => {
     if (newFileName !== null) newFileRef.current?.focus();
@@ -131,13 +177,16 @@ export function Workspace() {
     setContents((c) => ({ ...c, [name]: "" }));
     vscodeRuntime.addFile(name);
     openFile(name);
-    setWrongFile(name === "hello.py" || name === "challenge.py" ? null : name);
+    const nextWrongFile = name === "hello.py" || name === "challenge.py" ? null : name;
+    setWrongFile(nextWrongFile);
+    vscodeRuntime.setWrongFile(nextWrongFile);
     workspaceBus.emit("file.created", { filename: name });
   };
 
   const updateContent = (value: string) => {
     if (!activeFile) return;
     setContents((c) => ({ ...c, [activeFile]: value }));
+    vscodeRuntime.setFileContent(activeFile, value);
     workspaceBus.emit("file.updated", { filename: activeFile, content: value });
   };
 
@@ -148,10 +197,18 @@ export function Workspace() {
     workspaceBus.emit("panel.opened", { panel });
   };
 
+  const replaceTerminalLines = (nextLines: string[]) => {
+    setLines(nextLines);
+    vscodeRuntime.setTerminalLines(nextLines);
+  };
+
   const openTerminal = () => {
     openPanel("terminal");
     if (lines.length === 0) {
-      setLines(["AI Training Lab – simulierte Shell (bash)", "user@lab:~/ai-training-demo$"]);
+      replaceTerminalLines([
+        "AI Training Lab – simulierte Shell (bash)",
+        "user@lab:~/ai-training-demo$",
+      ]);
     }
     workspaceBus.emit("terminal.opened");
   };
@@ -160,6 +217,7 @@ export function Workspace() {
     const cmd = command.trim();
     if (!cmd) return;
     setCommand("");
+    vscodeRuntime.setTerminalCommand("");
     const out: string[] = [`user@lab:~/ai-training-demo$ ${cmd}`];
     const hasHello = files.some((f) => f.name === "hello.py");
 
@@ -183,6 +241,7 @@ export function Workspace() {
         if (!hasHello) out.push("fatal: pathspec 'hello.py' did not match any files");
         else {
           setStaged(true);
+          vscodeRuntime.setStaged(true);
           out.push("");
         }
       } else out.push("fatal: pathspec did not match any files");
@@ -195,7 +254,7 @@ export function Workspace() {
           " create mode 100644 hello.py",
         );
     } else if (cmd === "clear") {
-      setLines([]);
+      replaceTerminalLines([]);
       workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
       return;
     } else if (cmd === "ls") {
@@ -203,7 +262,7 @@ export function Workspace() {
     } else {
       out.push(`bash: ${cmd.split(" ")[0]}: command not found`);
     }
-    setLines((l) => [...l, ...out]);
+    replaceTerminalLines([...lines, ...out]);
     workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
   };
 
@@ -212,11 +271,15 @@ export function Workspace() {
     if (!prompt) return;
     const answer = "def add(a, b):\n    return a + b";
     setCopilotAnswer(answer);
+    vscodeRuntime.setCopilotAnswer(answer);
     if (activeFile) {
-      setContents((c) => ({ ...c, [activeFile]: `${c[activeFile] ?? ""}\n\n${answer}\n` }));
+      const nextContent = `${contents[activeFile] ?? ""}\n\n${answer}\n`;
+      setContents((c) => ({ ...c, [activeFile]: nextContent }));
+      vscodeRuntime.setFileContent(activeFile, nextContent);
     }
     workspaceBus.emit("copilot.prompt.submitted", { prompt });
     setCopilotPrompt("");
+    vscodeRuntime.setCopilotPrompt("");
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -237,7 +300,7 @@ export function Workspace() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor">
+    <div ref={runtimeRootRef} className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor">
       <div className="relative flex h-8 shrink-0 items-center border-b border-border bg-panel px-2 text-[12px] text-foreground/85">
         {MENU_ITEMS.map((item) => (
           <button
@@ -488,10 +551,8 @@ export function Workspace() {
                     aria-label={`${t} schließen`}
                     onClick={() => {
                       setTabs((tt) => tt.filter((x) => x !== t));
-                      if (activeFile === t) {
-                        setActiveFile(null);
-                        vscodeRuntime.setActiveFile(null);
-                      }
+                      if (activeFile === t) setActiveFile(null);
+                      vscodeRuntime.closeFile(t);
                     }}
                     className="text-muted-foreground hover:text-foreground"
                   >
@@ -503,7 +564,11 @@ export function Workspace() {
             <div className="ml-auto flex items-center pr-2">
               <button
                 data-highlight="vscode.editor.copilot"
-                onClick={() => setCopilotOpen((v) => !v)}
+                onClick={() => {
+                  const nextOpen = !copilotOpen;
+                  setCopilotOpen(nextOpen);
+                  vscodeRuntime.setCopilotOpen(nextOpen);
+                }}
                 className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5"
               >
                 <Sparkles className="h-3.5 w-3.5 text-accent" />
@@ -518,7 +583,10 @@ export function Workspace() {
                 <Sparkles className="h-4 w-4 shrink-0 text-accent" />
                 <input
                   value={copilotPrompt}
-                  onChange={(e) => setCopilotPrompt(e.target.value)}
+                  onChange={(e) => {
+                    setCopilotPrompt(e.target.value);
+                    vscodeRuntime.setCopilotPrompt(e.target.value);
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && submitCopilot()}
                   placeholder="Create a Python function that adds two numbers."
                   className="flex-1 rounded border border-border bg-editor px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-ring"
@@ -588,7 +656,10 @@ export function Workspace() {
                   ))}
                 </div>
                 <button
-                  onClick={() => setPanelOpen(false)}
+                  onClick={() => {
+                    setPanelOpen(false);
+                    vscodeRuntime.setActivePanel(null);
+                  }}
                   aria-label="Panel schließen"
                   className="hover:text-foreground"
                 >
@@ -614,7 +685,10 @@ export function Workspace() {
                     <input
                       ref={terminalInputRef}
                       value={command}
-                      onChange={(e) => setCommand(e.target.value)}
+                      onChange={(e) => {
+                        setCommand(e.target.value);
+                        vscodeRuntime.setTerminalCommand(e.target.value);
+                      }}
                       onKeyDown={(e) => e.key === "Enter" && runCommand()}
                       spellCheck={false}
                       aria-label="Terminal-Eingabe"

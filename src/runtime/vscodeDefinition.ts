@@ -1,10 +1,5 @@
 import type { UiTargetRef } from "../types/training.ts";
-
-export interface RuntimeSurfaceDescription {
-  ref: UiTargetRef;
-  label: string;
-  conceptKey: string;
-}
+import type { RuntimeSurfaceDescription } from "./runtimeAdapter.ts";
 
 export interface RuntimeReferenceDefinition {
   id: string;
