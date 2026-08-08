@@ -1,39 +1,68 @@
 import { Link } from "@tanstack/react-router";
-import { Award, RotateCcw, ArrowRight, LayoutGrid } from "lucide-react";
+import { Award, RotateCcw, ArrowRight, LayoutGrid, CheckCircle2 } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
 
 export function CompletionScreen() {
-  const { scenario, progress, restart } = useTraining();
+  const { scenario, mode, progress, restart, earnedPoints, scoreMultiplier } = useTraining();
   const minutes = Math.max(
     1,
     Math.round((((progress.finishedAt ?? Date.now()) - progress.startedAt) / 60000) * 10) / 10,
   );
+  const unitLabel = mode === "explore" ? "Erkundung" : mode === "challenge" ? "Challenge" : "Schritte";
+  const unitValue =
+    mode === "explore"
+      ? `${progress.exploredTargets.length} Bereiche`
+      : mode === "challenge"
+        ? "erfüllt"
+        : `${scenario.steps.length} von ${scenario.steps.length}`;
 
   return (
-    <div className="flex min-h-0 flex-1 items-center justify-center bg-background p-8">
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-8 text-center shadow-2xl">
+    <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background p-8">
+      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-8 text-center shadow-2xl">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/15">
           <Award className="h-7 w-7 text-success" />
         </div>
         <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">Training abgeschlossen</h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
 
-        <dl className="mt-6 grid grid-cols-3 gap-3 text-left">
+        <dl className="mt-6 grid grid-cols-4 gap-3 text-left">
           {[
-            { label: "Schritte", value: `${scenario.steps.length} von ${scenario.steps.length}` },
+            { label: unitLabel, value: unitValue },
             { label: "Dauer", value: `${minutes} Min.` },
-            { label: "Hinweise", value: String(progress.hintsUsed) },
+            { label: "Modus", value: `${mode} ×${scoreMultiplier}` },
+            { label: "Punkte", value: String(earnedPoints) },
           ].map((m) => (
             <div key={m.label} className="rounded-lg border border-border bg-panel p-3">
               <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{m.label}</dt>
               <dd className="mt-1 text-sm font-medium text-foreground">{m.value}</dd>
             </div>
           ))}
-          <div className="col-span-3 rounded-lg border border-border bg-panel p-3">
+          <div className="col-span-2 rounded-lg border border-border bg-panel p-3">
+            <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Hinweise</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">{progress.hintsUsed}</dd>
+          </div>
+          <div className="col-span-2 rounded-lg border border-border bg-panel p-3">
             <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Fehlversuche</dt>
             <dd className="mt-1 text-sm font-medium text-foreground">{progress.mistakes}</dd>
           </div>
         </dl>
+
+        {mode === "challenge" && scenario.solutionComparison?.length ? (
+          <div className="mt-6 rounded-xl border border-border bg-panel p-4 text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">Lösungsvergleich</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              Dein Klickweg durfte frei sein. Ein möglicher sauberer Lösungsweg sieht so aus:
+            </p>
+            <ol className="mt-3 space-y-2">
+              {scenario.solutionComparison.map((item) => (
+                <li key={item} className="flex gap-2 text-[13px] leading-relaxed text-foreground">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
 
         <div className="mt-7 flex flex-wrap justify-center gap-2">
           <button
