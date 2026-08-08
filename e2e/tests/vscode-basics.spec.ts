@@ -80,9 +80,12 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
-    page.getByText("Dein Klickweg durfte frei sein. Ein möglicher sauberer Lösungsweg sieht so aus:", {
-      exact: true,
-    }),
+    page.getByText(
+      "Dein Klickweg durfte frei sein. Ein möglicher sauberer Lösungsweg sieht so aus:",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
 });
 
@@ -117,7 +120,9 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
   await expectGuidedStep(page, 5, "Editor verwenden");
 });
 
-test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf", async ({ page }) => {
+test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf", async ({
+  page,
+}) => {
   await page.goto(guidedUrl);
 
   await expect(
