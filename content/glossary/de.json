@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "language": "de",
+  "concepts": [
+    {
+      "key": "vscode.activity_bar",
+      "term": "Activity Bar",
+      "aliases": ["Aktivitätsleiste"],
+      "simple": "Die schmale Leiste ganz links in VS Code. Mit ihren Symbolen wechselst du zwischen Explorer, Suche, Source Control und Extensions.",
+      "advanced": "Die Activity Bar wählt einen primären Arbeitsbereich aus. Der Inhalt dieses Bereichs erscheint daneben in der Side Bar.",
+      "uiTargets": ["vscode.activityBar.explorer", "vscode.activityBar.search", "vscode.activityBar.scm", "vscode.activityBar.extensions"]
+    },
+    {
+      "key": "vscode.side_bar",
+      "term": "Side Bar",
+      "aliases": ["Seitenleiste"],
+      "simple": "Der Bereich neben der Activity Bar. Hier zeigt VS Code den Inhalt des ausgewählten Werkzeugs, zum Beispiel den Dateibaum des Explorers.",
+      "advanced": "Die Side Bar ist ein Container für Views. Ihr Inhalt hängt von der Auswahl in der Activity Bar ab.",
+      "uiTargets": ["vscode.sideBar"]
+    },
+    {
+      "key": "vscode.explorer",
+      "term": "Explorer",
+      "aliases": ["Datei-Explorer"],
+      "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts.",
+      "advanced": "Der Explorer ist eine View in der Side Bar. Bei einem Multi-Root-Workspace kann er mehrere Stammordner gleichzeitig darstellen.",
+      "uiTargets": ["vscode.activityBar.explorer", "vscode.explorer.tree"]
+    },
+    {
+      "key": "vscode.editor",
+      "term": "Editor",
+      "aliases": ["Editorbereich"],
+      "simple": "Im Editor öffnest und bearbeitest du den Inhalt von Dateien.",
+      "advanced": "Editoren erscheinen in Editor Groups und besitzen Tabs. Der Editor ist vom Explorer und vom unteren Panel getrennt.",
+      "uiTargets": ["vscode.editor"]
+    },
+    {
+      "key": "vscode.panel",
+      "term": "Panel",
+      "aliases": ["Unteres Panel"],
+      "simple": "Das Panel ist der Bereich unter dem Editor. Dort findest du unter anderem Terminal, Problems und Output.",
+      "advanced": "Terminal, Problems und Output sind unterschiedliche Views innerhalb des Panels; das Terminal ist nicht das Panel selbst.",
+      "uiTargets": ["vscode.panel.terminal", "vscode.panel.problems", "vscode.panel.output"]
+    },
+    {
+      "key": "vscode.status_bar",
+      "term": "Status Bar",
+      "aliases": ["Statusleiste"],
+      "simple": "Die Statusleiste ganz unten zeigt Informationen über deinen aktuellen Arbeitskontext, zum Beispiel Git-Branch oder Sprachumgebung.",
+      "advanced": "Extensions können eigene Statusinformationen und Aktionen in der Status Bar bereitstellen.",
+      "uiTargets": ["vscode.statusBar"]
+    },
+    {
+      "key": "vscode.folder",
+      "term": "Ordner öffnen",
+      "aliases": ["Open Folder", "Single-Folder Workspace"],
+      "simple": "Mit Open Folder öffnest du einen einzelnen Ordner als Arbeitskontext in VS Code.",
+      "advanced": "Ein geöffneter Ordner verhält sich als Single-Folder-Workspace. Explorer, Suche, Terminal, Git-Erkennung und Workspace-Einstellungen beziehen sich auf diesen Ordner.",
+      "uiTargets": ["vscode.menu.file.openFolder"]
+    },
+    {
+      "key": "vscode.workspace",
+      "term": "Workspace",
+      "aliases": ["VS Code Workspace", ".code-workspace"],
+      "simple": "Ein Workspace beschreibt deinen Arbeitskontext in VS Code. Ein gespeicherter Workspace kann mehrere Ordner gemeinsam öffnen.",
+      "advanced": "Eine .code-workspace-Datei kann mehrere Root-Ordner sowie Workspace-spezifische Einstellungen und Extension-Empfehlungen speichern. Ein einzelner geöffneter Ordner ist bereits ein einfacher Single-Folder-Workspace, während ein gespeicherter Multi-Root-Workspace mehrere Ordner zusammenfasst.",
+      "uiTargets": ["vscode.menu.file.openWorkspace", "vscode.workspace.context"]
+    },
+    {
+      "key": "git.repository",
+      "term": "Repository",
+      "aliases": ["Git Repository", "Repo"],
+      "simple": "Ein Git-Repository ist ein Projektbereich, dessen Änderungen Git versioniert.",
+      "advanced": "Repository und VS-Code-Workspace sind verschiedene Konzepte: Ein Workspace beschreibt den Editor-Arbeitskontext; ein Git-Repository beschreibt den von Git versionierten Bereich. Ein Workspace kann mehrere Ordner und damit auch mehrere Repositories enthalten.",
+      "uiTargets": ["vscode.activityBar.scm"]
+    }
+  ]
+}
