@@ -35,7 +35,12 @@ export interface CopilotRuntimeState {
   inlineSuggestion: CopilotInlineSuggestion | null;
 }
 
-export type CopilotRuntimeStateChangeReason = "mount" | "reset" | "mutation" | "restore" | "profile";
+export type CopilotRuntimeStateChangeReason =
+  | "mount"
+  | "reset"
+  | "mutation"
+  | "restore"
+  | "profile";
 
 type StateListener = (state: CopilotRuntimeState, reason: CopilotRuntimeStateChangeReason) => void;
 type EventListener = (event: TrainingEvent) => void;
@@ -116,20 +121,14 @@ function messagesFromSeed(seed: RuntimeSeed): CopilotChatMessage[] {
       throw new TypeError("Invalid Copilot runtime seed message");
     }
     return {
-      id:
-        typeof item["id"] === "string"
-          ? item["id"]
-          : createIdentifier("copilot-message"),
+      id: typeof item["id"] === "string" ? item["id"] : createIdentifier("copilot-message"),
       role,
       content,
     };
   });
 }
 
-function stateFromSeed(
-  profile: CopilotProductProfile,
-  seed?: RuntimeSeed,
-): CopilotRuntimeState {
+function stateFromSeed(profile: CopilotProductProfile, seed?: RuntimeSeed): CopilotRuntimeState {
   const base = initialState(profile);
   if (!seed) return base;
 
@@ -145,9 +144,7 @@ function stateFromSeed(
 
   const modelId = hasOwn(seed, "modelId") ? seed["modelId"] : base.modelId;
   if (typeof modelId !== "string" || !profile.models.some((entry) => entry.id === modelId)) {
-    throw new TypeError(
-      `Unsupported Copilot model for profile ${profile.id}: ${String(modelId)}`,
-    );
+    throw new TypeError(`Unsupported Copilot model for profile ${profile.id}: ${String(modelId)}`);
   }
 
   const contextActiveFile = hasOwn(seed, "contextActiveFile")
