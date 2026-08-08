@@ -56,9 +56,18 @@ export function HighlightOverlay({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
-      <div className={`absolute left-0 right-0 top-0 ${dim} transition-opacity`} style={{ height: rect.top }} />
-      <div className={`absolute left-0 right-0 bottom-0 ${dim}`} style={{ top: rect.top + rect.height }} />
-      <div className={`absolute left-0 ${dim}`} style={{ top: rect.top, height: rect.height, width: rect.left }} />
+      <div
+        className={`absolute left-0 right-0 top-0 ${dim} transition-opacity`}
+        style={{ height: rect.top }}
+      />
+      <div
+        className={`absolute left-0 right-0 bottom-0 ${dim}`}
+        style={{ top: rect.top + rect.height }}
+      />
+      <div
+        className={`absolute left-0 ${dim}`}
+        style={{ top: rect.top, height: rect.height, width: rect.left }}
+      />
       <div
         className={`absolute right-0 ${dim}`}
         style={{ top: rect.top, height: rect.height, left: rect.left + rect.width }}
@@ -70,7 +79,8 @@ export function HighlightOverlay({
           left: rect.left,
           width: rect.width,
           height: rect.height,
-          boxShadow: "0 0 0 1px var(--ring), 0 0 24px 4px color-mix(in oklab, var(--ring) 45%, transparent)",
+          boxShadow:
+            "0 0 0 1px var(--ring), 0 0 24px 4px color-mix(in oklab, var(--ring) 45%, transparent)",
         }}
       />
       {tooltip && visible ? (

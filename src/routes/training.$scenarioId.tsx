@@ -13,12 +13,14 @@ export const Route = createFileRoute("/training/$scenarioId")({
       { title: "Interaktives Training – AI Training Lab" },
       {
         name: "description",
-        content: "Interaktives Training in einer simulierten Arbeitsumgebung mit KI-Tutor und automatischer Validierung.",
+        content:
+          "Interaktives Training in einer simulierten Arbeitsumgebung mit KI-Tutor und automatischer Validierung.",
       },
       { property: "og:title", content: "Interaktives Training – AI Training Lab" },
       {
         property: "og:description",
-        content: "Schritt-für-Schritt geführtes Training mit KI-Tutor und automatischer Validierung.",
+        content:
+          "Schritt-für-Schritt geführtes Training mit KI-Tutor und automatischer Validierung.",
       },
     ],
   }),
@@ -38,7 +40,9 @@ function TrainingLayout() {
   const { scenario, progress, percent, completedCount, isFinished, helpLevel } = useTraining();
   const [highlightsOn, setHighlightsOn] = useState(true);
   const step = scenario.steps.find((s) => s.id === progress.activeStepId);
-  const stepNumber = step ? scenario.steps.findIndex((s) => s.id === step.id) + 1 : scenario.steps.length;
+  const stepNumber = step
+    ? scenario.steps.findIndex((s) => s.id === step.id) + 1
+    : scenario.steps.length;
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
@@ -55,7 +59,10 @@ function TrainingLayout() {
         </span>
         <div className="flex w-40 items-center gap-2">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${percent}%` }} />
+            <div
+              className="h-full rounded-full bg-accent transition-all"
+              style={{ width: `${percent}%` }}
+            />
           </div>
           <span className="text-[11px] text-muted-foreground">{percent} %</span>
         </div>

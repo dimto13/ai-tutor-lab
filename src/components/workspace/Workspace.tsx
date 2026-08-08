@@ -149,7 +149,9 @@ export function Workspace() {
           : '  (use "git add <file>..." to include in what will be committed)',
         staged ? "\tnew file:   hello.py" : "\thello.py",
         "",
-        staged ? "" : 'nothing added to commit but untracked files present (use "git add" to track)',
+        staged
+          ? ""
+          : 'nothing added to commit but untracked files present (use "git add" to track)',
       );
     } else if (/^git add\s+/.test(cmd)) {
       if (cmd.includes("hello.py") || cmd.includes(".")) {
@@ -160,8 +162,13 @@ export function Workspace() {
         }
       } else out.push("fatal: pathspec did not match any files");
     } else if (cmd.startsWith("git commit")) {
-      if (!staged) out.push("nothing added to commit (use \"git add\" to track files)");
-      else out.push("[main abc123] add hello example", " 1 file changed, 1 insertion(+)", " create mode 100644 hello.py");
+      if (!staged) out.push('nothing added to commit (use "git add" to track files)');
+      else
+        out.push(
+          "[main abc123] add hello example",
+          " 1 file changed, 1 insertion(+)",
+          " create mode 100644 hello.py",
+        );
     } else if (cmd === "clear") {
       setLines([]);
       workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
@@ -218,8 +225,12 @@ export function Workspace() {
 
         {fileMenuOpen ? (
           <div className="absolute left-2 top-8 z-30 w-72 rounded-md border border-border bg-panel py-1 shadow-2xl">
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">New Text File</button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Open File...</button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              New Text File
+            </button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              Open File...
+            </button>
             <div className="my-1 border-t border-border" />
             <button
               data-highlight="vscode-menu-open-folder"
@@ -235,8 +246,12 @@ export function Workspace() {
             >
               Open Workspace from File...
             </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Add Folder to Workspace...</button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">Save Workspace As...</button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              Add Folder to Workspace...
+            </button>
+            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
+              Save Workspace As...
+            </button>
           </div>
         ) : null}
       </div>
@@ -311,7 +326,8 @@ export function Workspace() {
             ) : !repoOpen ? (
               <div className="px-2 py-3">
                 <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                  Öffne über <span className="text-foreground">File</span> einen Ordner oder einen gespeicherten Workspace.
+                  Öffne über <span className="text-foreground">File</span> einen Ordner oder einen
+                  gespeicherten Workspace.
                 </p>
                 <p className="mb-2 px-1 text-xs text-muted-foreground">Vorbereitete Repositories</p>
                 <button
@@ -326,8 +342,13 @@ export function Workspace() {
             ) : (
               <div className="py-1">
                 {workspaceMode === "workspace" ? (
-                  <div data-highlight="vscode-workspace-context" className="mx-2 mb-2 rounded-md border border-border bg-card p-2 text-[11px] leading-relaxed">
-                    <div className="font-medium text-foreground">ai-training-lab.code-workspace</div>
+                  <div
+                    data-highlight="vscode-workspace-context"
+                    className="mx-2 mb-2 rounded-md border border-border bg-card p-2 text-[11px] leading-relaxed"
+                  >
+                    <div className="font-medium text-foreground">
+                      ai-training-lab.code-workspace
+                    </div>
                     <div className="text-muted-foreground">2 Ordner im Arbeitskontext</div>
                     <div className="mt-1 flex items-center gap-1 text-muted-foreground">
                       <Settings className="h-3 w-3" /> Workspace-Einstellung: formatOnSave = true
@@ -339,7 +360,11 @@ export function Workspace() {
                   onClick={() => setTreeExpanded((v) => !v)}
                   className="flex w-full items-center gap-1 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground"
                 >
-                  {treeExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  {treeExpanded ? (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  )}
                   ai-training-demo
                 </button>
                 {treeExpanded ? (
@@ -349,7 +374,9 @@ export function Workspace() {
                         <button
                           onClick={() => f.kind === "file" && openFile(f.name)}
                           className={`flex w-full items-center gap-2 py-1 pl-6 pr-2 text-left text-[13px] transition-colors hover:bg-white/5 ${
-                            activeFile === f.name ? "bg-white/10 text-foreground" : "text-muted-foreground"
+                            activeFile === f.name
+                              ? "bg-white/10 text-foreground"
+                              : "text-muted-foreground"
                           } ${wrongFile === f.name ? "text-destructive ring-1 ring-destructive/60" : ""}`}
                         >
                           {f.kind === "folder" ? (
@@ -395,7 +422,9 @@ export function Workspace() {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-9 items-stretch border-b border-border bg-panel">
             {tabs.length === 0 ? (
-              <span className="flex items-center px-3 text-xs text-muted-foreground">Keine Datei geöffnet</span>
+              <span className="flex items-center px-3 text-xs text-muted-foreground">
+                Keine Datei geöffnet
+              </span>
             ) : (
               tabs.map((t) => (
                 <div
@@ -447,7 +476,9 @@ export function Workspace() {
                   <p className="mb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
                     Copilot Vorschlag · übernommen
                   </p>
-                  <pre className="font-mono text-[12px] leading-relaxed text-success">{copilotAnswer}</pre>
+                  <pre className="font-mono text-[12px] leading-relaxed text-success">
+                    {copilotAnswer}
+                  </pre>
                 </div>
               ) : null}
             </div>
@@ -492,7 +523,10 @@ export function Workspace() {
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <div ref={terminalRef} className="h-[calc(13rem-2rem)] overflow-y-auto px-3 py-2 font-mono text-[12.5px] leading-6">
+              <div
+                ref={terminalRef}
+                className="h-[calc(13rem-2rem)] overflow-y-auto px-3 py-2 font-mono text-[12.5px] leading-6"
+              >
                 {lines.map((l, i) => (
                   <div key={i} className="whitespace-pre-wrap text-foreground/85">
                     {l}
@@ -537,7 +571,11 @@ export function Workspace() {
           <TerminalIcon className="h-3.5 w-3.5" /> Terminal
         </button>
         <button
-          onClick={() => registerMistake("Das ist im Training nicht die erwartete Aktion – halte dich an den aktuellen Schritt.")}
+          onClick={() =>
+            registerMistake(
+              "Das ist im Training nicht die erwartete Aktion – halte dich an den aktuellen Schritt.",
+            )
+          }
           className="hidden"
           aria-hidden
         />

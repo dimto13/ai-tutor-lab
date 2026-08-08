@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import { workspaceBus } from "./eventBus";
 import { getScenario } from "@/scenarios";
@@ -62,7 +70,13 @@ function load(scenario: Scenario): TrainingProgress {
   }
 }
 
-export function TrainingProvider({ scenarioId, children }: { scenarioId: string; children: ReactNode }) {
+export function TrainingProvider({
+  scenarioId,
+  children,
+}: {
+  scenarioId: string;
+  children: ReactNode;
+}) {
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error(`Unknown training scenario: ${scenarioId}`);
 
@@ -124,7 +138,9 @@ export function TrainingProvider({ scenarioId, children }: { scenarioId: string;
           }));
         }
         setFeedback((f) =>
-          f && f.kind === "error" && f.message === result.message ? f : { kind: "error", message: result.message! },
+          f && f.kind === "error" && f.message === result.message
+            ? f
+            : { kind: "error", message: result.message! },
         );
       }
     });
@@ -138,7 +154,9 @@ export function TrainingProvider({ scenarioId, children }: { scenarioId: string;
   }, [feedback]);
 
   const value = useMemo<TrainingContextValue>(() => {
-    const completedCount = scenario.steps.filter((s) => progress.statuses[s.id] === "COMPLETED").length;
+    const completedCount = scenario.steps.filter(
+      (s) => progress.statuses[s.id] === "COMPLETED",
+    ).length;
     const activeStepIndex = progress.activeStepId
       ? scenario.steps.findIndex((s) => s.id === progress.activeStepId)
       : scenario.steps.length;

@@ -49,7 +49,10 @@ export const gitBasicsScenario: Scenario = {
         const name = str(p["name"]);
         return name === "ai-training-demo"
           ? { ok: true }
-          : { ok: false, message: 'Für diese Übung benötigen wir das Repository "ai-training-demo".' };
+          : {
+              ok: false,
+              message: 'Für diese Übung benötigen wir das Repository "ai-training-demo".',
+            };
       },
     },
     {
@@ -147,8 +150,7 @@ export const gitBasicsScenario: Scenario = {
     {
       id: "step_7",
       title: "Git Commit erstellen",
-      description:
-        "Nimm die Änderung in die Versionshistorie auf: erst vormerken, dann committen.",
+      description: "Nimm die Änderung in die Versionshistorie auf: erst vormerken, dann committen.",
       instruction: 'Führe git add hello.py und danach git commit -m "add hello example" aus.',
       why: "Der Commit macht aus der Editoränderung einen nachvollziehbaren Stand im Repository.",
       helpLevels: [
@@ -167,11 +169,15 @@ export const gitBasicsScenario: Scenario = {
           if (!staged)
             return {
               ok: false,
-              message: "Der Commit braucht vorgemerkte Änderungen. Führe zuerst git add hello.py aus.",
+              message:
+                "Der Commit braucht vorgemerkte Änderungen. Führe zuerst git add hello.py aus.",
             };
           return /-m\s+["“'].+["”']/.test(cmd)
             ? { ok: true }
-            : { ok: false, message: 'Bitte mit Commit-Nachricht: git commit -m "add hello example"' };
+            : {
+                ok: false,
+                message: 'Bitte mit Commit-Nachricht: git commit -m "add hello example"',
+              };
         }
         if (cmd.startsWith("git add")) return { ok: false };
         return {
@@ -183,8 +189,7 @@ export const gitBasicsScenario: Scenario = {
     {
       id: "step_8",
       title: "GitHub Copilot einsetzen",
-      description:
-        "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor.",
+      description: "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor.",
       instruction:
         'Bitte Copilot, eine Python-Funktion zum Addieren zweier Zahlen zu erstellen, z. B.: "Create a Python function that adds two numbers."',
       why: "Copilot ergänzt den bestehenden Entwicklungsworkflow. Du beschreibst das Ziel, prüfst den Vorschlag und arbeitest weiterhin im selben Projektkontext.",
@@ -195,8 +200,10 @@ export const gitBasicsScenario: Scenario = {
       ],
       expectedEvent: "copilot.prompt.submitted",
       highlightTarget: "copilot-btn",
-      highlightTooltip: "Copilot als zusätzliche KI-Unterstützung im bestehenden Workflow verwenden.",
-      successMessage: "Copilot hat einen Vorschlag erzeugt. Du hast VS Code, Git und Copilot in einem Ablauf verwendet.",
+      highlightTooltip:
+        "Copilot als zusätzliche KI-Unterstützung im bestehenden Workflow verwenden.",
+      successMessage:
+        "Copilot hat einen Vorschlag erzeugt. Du hast VS Code, Git und Copilot in einem Ablauf verwendet.",
       validate: (p) => {
         const prompt = str(p["prompt"]).toLowerCase();
         const ok = /add|addier|sum|plus/.test(prompt) && prompt.length > 8;

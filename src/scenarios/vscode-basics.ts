@@ -28,7 +28,8 @@ export const vscodeBasicsScenario: Scenario = {
       expectedEvent: "explorer.opened",
       highlightTarget: "activity-explorer",
       highlightTooltip: "Explorer: zeigt Dateien und Ordner des aktuellen Arbeitskontexts.",
-      successMessage: "Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben.",
+      successMessage:
+        "Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben.",
     },
     {
       id: "step_2",
@@ -67,8 +68,10 @@ export const vscodeBasicsScenario: Scenario = {
       ],
       expectedEvent: "workspace.opened",
       highlightTarget: "vscode-menu-file",
-      highlightTooltip: "Ein Workspace kann mehrere Ordner und eigene Einstellungen zusammenfassen.",
-      successMessage: "Workspace geöffnet. Im Explorer siehst du jetzt einen Mehrordner-Kontext und eine Workspace-Einstellung.",
+      highlightTooltip:
+        "Ein Workspace kann mehrere Ordner und eigene Einstellungen zusammenfassen.",
+      successMessage:
+        "Workspace geöffnet. Im Explorer siehst du jetzt einen Mehrordner-Kontext und eine Workspace-Einstellung.",
       validate: (p) => {
         const folders = Array.isArray(p["folders"]) ? p["folders"] : [];
         return folders.length >= 2
@@ -79,7 +82,8 @@ export const vscodeBasicsScenario: Scenario = {
     {
       id: "step_4",
       title: "Datei erstellen",
-      description: "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an.",
+      description:
+        "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an.",
       instruction: "Erstelle im Projektordner ai-training-demo eine neue Datei hello.py.",
       why: "Der Explorer zeigt nicht nur Struktur, sondern ist auch ein zentraler Einstiegspunkt für Dateioperationen. Die Endung .py kennzeichnet Python-Code.",
       helpLevels: [
@@ -146,7 +150,8 @@ export const vscodeBasicsScenario: Scenario = {
       expectedEvent: "terminal.opened",
       highlightTarget: "terminal-btn",
       highlightTooltip: "Öffnet den Terminal-Tab im unteren Panel.",
-      successMessage: "Panel geöffnet. Terminal, Problems und Output sind dort als getrennte Bereiche angeordnet.",
+      successMessage:
+        "Panel geöffnet. Terminal, Problems und Output sind dort als getrennte Bereiche angeordnet.",
     },
   ],
 };

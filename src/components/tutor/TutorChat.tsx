@@ -71,11 +71,14 @@ export function TutorChat() {
   const answerFor = (question: string): string => {
     const completed = scenario.steps.filter((s) => progress.statuses[s.id] === "COMPLETED").length;
     if (/was soll ich|wie weiter|nächste|weiter\?|jetzt machen|hänge/i.test(question)) {
-      if (isFinished || !step) return "Du hast alle Schritte abgeschlossen – das Modul ist fertig. 🎉";
+      if (isFinished || !step)
+        return "Du hast alle Schritte abgeschlossen – das Modul ist fertig. 🎉";
       return `${step.instruction} ${step.helpLevels[0]}`;
     }
     if (/warum/i.test(question)) {
-      return step ? step.why : "Du hast das Modul abgeschlossen – es gibt keinen offenen Schritt mehr.";
+      return step
+        ? step.why
+        : "Du hast das Modul abgeschlossen – es gibt keinen offenen Schritt mehr.";
     }
     if (/wo bin ich|fortschritt|status/i.test(question)) {
       return `Du bist in "${scenario.title}", Schritt ${completed + (step ? 1 : 0)} von ${scenario.steps.length}${
@@ -110,7 +113,11 @@ export function TutorChat() {
                 m.role === "tutor" ? "bg-accent/15 text-accent" : "bg-white/10 text-foreground"
               }`}
             >
-              {m.role === "tutor" ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+              {m.role === "tutor" ? (
+                <Bot className="h-3.5 w-3.5" />
+              ) : (
+                <User className="h-3.5 w-3.5" />
+              )}
             </div>
             <p
               className={`rounded-lg px-3 py-2 text-[13px] leading-relaxed ${

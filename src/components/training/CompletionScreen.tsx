@@ -15,7 +15,9 @@ export function CompletionScreen() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/15">
           <Award className="h-7 w-7 text-success" />
         </div>
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">Training abgeschlossen</h1>
+        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
+          Training abgeschlossen
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
 
         <dl className="mt-6 grid grid-cols-3 gap-3 text-left">
@@ -25,12 +27,16 @@ export function CompletionScreen() {
             { label: "Hinweise", value: String(progress.hintsUsed) },
           ].map((m) => (
             <div key={m.label} className="rounded-lg border border-border bg-panel p-3">
-              <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{m.label}</dt>
+              <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                {m.label}
+              </dt>
               <dd className="mt-1 text-sm font-medium text-foreground">{m.value}</dd>
             </div>
           ))}
           <div className="col-span-3 rounded-lg border border-border bg-panel p-3">
-            <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Fehlversuche</dt>
+            <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Fehlversuche
+            </dt>
             <dd className="mt-1 text-sm font-medium text-foreground">{progress.mistakes}</dd>
           </div>
         </dl>
