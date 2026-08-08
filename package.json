@@ -15,7 +15,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts",
-    "check": "npm run validate:content && npm run lint && npm run typecheck && npm run build",
+    "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
+    "check": "npm run validate:content && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
