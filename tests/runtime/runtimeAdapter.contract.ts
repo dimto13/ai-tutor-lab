@@ -24,6 +24,7 @@ interface SnapshotFixture {
   expectedRestoredValue: unknown;
   prepare(): void;
   mutate(): void;
+  assertRestoredPresentation?(): void | Promise<void>;
 }
 
 export interface RuntimeAdapterContractFixture {
@@ -98,22 +99,29 @@ export function defineRuntimeAdapterContractTests(
     }
   });
 
-  test(`${name}: restores a previously captured snapshot`, async () => {
+  test(`${name}: restores a previously captured snapshot into the mounted runtime`, async () => {
     const fixture = createFixture();
     fixture.reset();
-    fixture.snapshot.prepare();
-    const snapshot = await fixture.adapter.snapshot();
+    await fixture.adapter.mount(fixture.target.container);
 
-    fixture.snapshot.mutate();
-    assert.notDeepEqual(
-      await fixture.adapter.query(fixture.snapshot.selector),
-      fixture.snapshot.expectedRestoredValue,
-    );
+    try {
+      fixture.snapshot.prepare();
+      const snapshot = await fixture.adapter.snapshot();
 
-    await fixture.adapter.restore(snapshot);
-    assert.deepEqual(
-      await fixture.adapter.query(fixture.snapshot.selector),
-      fixture.snapshot.expectedRestoredValue,
-    );
+      fixture.snapshot.mutate();
+      assert.notDeepEqual(
+        await fixture.adapter.query(fixture.snapshot.selector),
+        fixture.snapshot.expectedRestoredValue,
+      );
+
+      await fixture.adapter.restore(snapshot);
+      assert.deepEqual(
+        await fixture.adapter.query(fixture.snapshot.selector),
+        fixture.snapshot.expectedRestoredValue,
+      );
+      await fixture.snapshot.assertRestoredPresentation?.();
+    } finally {
+      await fixture.adapter.unmount();
+    }
   });
 }
