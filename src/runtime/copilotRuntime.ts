@@ -36,11 +36,7 @@ export interface CopilotRuntimeState {
 }
 
 export type CopilotRuntimeStateChangeReason =
-  | "mount"
-  | "reset"
-  | "mutation"
-  | "restore"
-  | "profile";
+  "mount" | "reset" | "mutation" | "restore" | "profile";
 
 type StateListener = (state: CopilotRuntimeState, reason: CopilotRuntimeStateChangeReason) => void;
 type EventListener = (event: TrainingEvent) => void;
