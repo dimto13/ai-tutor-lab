@@ -30,7 +30,7 @@ Tickets. Details und Regeln: [`docs/README.md`](docs/README.md#aufgabenverwaltun
 ## Lokale Entwicklung
 
 Voraussetzung: Node.js 22 und npm. Mit `nvm` wird die im Repository hinterlegte
-Node-Version automatisch über `.nvmrc` ausgewählt.
+Node-Version über `.nvmrc` ausgewählt.
 
 ```sh
 git clone https://github.com/dimto13/ai-tutor-lab.git
@@ -40,25 +40,18 @@ npm install
 npm run dev:local
 ```
 
-Der lokale Entwicklungsserver bindet mit `dev:local` explizit an `127.0.0.1`. Die von
-Lovable bereitgestellte Vite-/TanStack-Konfiguration bleibt dabei unverändert Bestandteil des
-POC; für den lokalen Start ist kein Lovable-Editor erforderlich.
+`dev:local` startet den Vite-Entwicklungsserver auf allen lokalen Netzwerk-Interfaces
+(`0.0.0.0`). Dadurch funktioniert sowohl der Zugriff auf demselben Rechner als auch — sofern
+Firewall und Netzwerk dies erlauben — von einem anderen Rechner im selben Netzwerk.
 
-### Feature-Branch für den lokalen POC
+Nach dem Start zeigt Vite die tatsächlich verwendeten Adressen und den Port an. Verwende
+für Zugriffe von einem anderen Rechner die von Vite ausgegebene Netzwerkadresse bzw. die
+IP-Adresse des Entwicklungsrechners zusammen mit dem angezeigten Port.
 
-Für die schrittweise lokale Übernahme des Lovable-POC wird aktuell der Branch
-`feature/aitp-80-local-poc` verwendet:
+Die von Lovable bereitgestellte Vite-/TanStack-Konfiguration bleibt dabei Bestandteil des
+POC. Für den lokalen Start ist kein Lovable-Editor erforderlich.
 
-```sh
-git fetch origin
-git switch feature/aitp-80-local-poc
-git pull
-nvm use
-npm install
-npm run dev:local
-```
-
-Wenn du bereits auf diesem Branch arbeitest, reicht für nachfolgende Änderungen normalerweise:
+Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
 
 ```sh
 git pull
