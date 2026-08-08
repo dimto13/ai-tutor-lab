@@ -2,6 +2,10 @@ import { expect, test, type Page } from "@playwright/test";
 
 const guidedUrl = "/training/vscode-basics.guided";
 
+async function waitForTrainingReady(page: Page): Promise<void> {
+  await expect(page.getByRole("status")).toHaveText("Training bereit");
+}
+
 async function expectGuidedStep(page: Page, step: number, title: string): Promise<void> {
   await expect(page.getByRole("heading", { name: `Schritt ${step} – ${title}` })).toBeVisible();
 }
@@ -12,6 +16,7 @@ async function openFileMenu(page: Page): Promise<void> {
 
 async function reachCreateFileStep(page: Page): Promise<void> {
   await page.goto(guidedUrl);
+  await waitForTrainingReady(page);
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");
 
@@ -28,6 +33,7 @@ test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das 
   page,
 }) => {
   await page.goto("/training/vscode-basics.explore");
+  await waitForTrainingReady(page);
 
   await expect(page.getByRole("heading", { name: "Oberfläche frei untersuchen" })).toBeVisible();
   await expect(page.getByText("0 von 14 Oberflächen untersucht", { exact: true })).toBeVisible();
@@ -70,6 +76,7 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   page,
 }) => {
   await page.goto("/training/vscode-basics.challenge");
+  await waitForTrainingReady(page);
   await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
@@ -91,10 +98,12 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
 
 test("Reload: geführter Fortschritt bleibt erhalten", async ({ page }) => {
   await page.goto(guidedUrl);
+  await waitForTrainingReady(page);
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");
 
   await page.reload();
+  await waitForTrainingReady(page);
 
   await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");
   await expect(page.getByText("Schritt 2 von 8", { exact: true })).toBeVisible();
@@ -124,6 +133,7 @@ test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf
   page,
 }) => {
   await page.goto(guidedUrl);
+  await waitForTrainingReady(page);
 
   await expect(
     page.getByText("Explorer: Dateien und Ordner des aktuellen Arbeitskontexts.", { exact: true }),
