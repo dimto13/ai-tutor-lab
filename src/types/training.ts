@@ -2,6 +2,8 @@ export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "VALIDATION_FA
 
 export type WorkspaceEventName =
   | "explorer.opened"
+  | "folder.opened"
+  | "workspace.opened"
   | "repository.opened"
   | "file.created"
   | "file.updated"
