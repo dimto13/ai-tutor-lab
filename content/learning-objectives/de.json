@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "language": "de",
+  "objectives": [
+    {
+      "id": "understand_vscode_ui",
+      "title": "VS-Code-Oberfläche verstehen",
+      "description": "Activity Bar, Side Bar, Editor, Panel und Status Bar unterscheiden und ihrer Aufgabe zuordnen."
+    },
+    {
+      "id": "understand_workspace",
+      "title": "Ordner und Workspace unterscheiden",
+      "description": "Single-Folder-Arbeitskontext und gespeicherten Multi-Root-Workspace fachlich unterscheiden."
+    },
+    {
+      "id": "create_file",
+      "title": "Datei im Projekt anlegen",
+      "description": "Innerhalb eines geöffneten VS-Code-Arbeitskontexts eine neue Datei über den Explorer anlegen."
+    },
+    {
+      "id": "understand_panel_views",
+      "title": "Panel-Views unterscheiden",
+      "description": "Terminal, Problems und Output als unterschiedliche Views innerhalb des Panels einordnen."
+    },
+    {
+      "id": "operate_vscode_without_guidance",
+      "title": "VS Code selbstständig bedienen",
+      "description": "Einen vorgegebenen Zielzustand ohne vorgeschriebenen Klickpfad in VS Code herstellen."
+    },
+    {
+      "id": "create_file_in_existing_project",
+      "title": "Datei in bestehendem Projekt erstellen",
+      "description": "Einen bestehenden Projektkontext öffnen und darin selbstständig eine neue Datei anlegen."
+    },
+    {
+      "id": "combine_editor_git_ai_workflow",
+      "title": "Editor, Git und KI-Assistent kombinieren",
+      "description": "VS Code, Git und GitHub Copilot in einem zusammenhängenden Entwicklungsablauf einsetzen."
+    }
+  ]
+}

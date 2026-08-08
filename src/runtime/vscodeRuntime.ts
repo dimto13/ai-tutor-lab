@@ -1,11 +1,10 @@
 import { workspaceBus } from "@/state/eventBus";
 import type { UiTargetRef } from "@/types/training";
-
-export interface SurfaceDescription {
-  ref: UiTargetRef;
-  label: string;
-  conceptKey: string;
-}
+import {
+  getVscodeSurfaceTarget,
+  VSCODE_RUNTIME_DEFINITION,
+  type RuntimeSurfaceDescription,
+} from "./vscodeDefinition";
 
 type WorkspaceMode = "none" | "folder" | "workspace";
 type PanelName = "terminal" | "problems" | "output" | null;
@@ -18,27 +17,6 @@ interface RuntimeState {
   activePanel: PanelName;
 }
 
-const SURFACE: SurfaceDescription[] = [
-  { ref: "vscode.menu.file", label: "File-Menü", conceptKey: "vscode.file_menu" },
-  { ref: "vscode.activityBar.explorer", label: "Explorer", conceptKey: "vscode.explorer" },
-  { ref: "vscode.activityBar.search", label: "Suche", conceptKey: "vscode.search" },
-  { ref: "vscode.activityBar.scm", label: "Source Control", conceptKey: "vscode.source_control" },
-  { ref: "vscode.activityBar.extensions", label: "Extensions", conceptKey: "vscode.extensions" },
-  { ref: "vscode.sideBar", label: "Side Bar", conceptKey: "vscode.side_bar" },
-  { ref: "vscode.editor", label: "Editor", conceptKey: "vscode.editor" },
-  { ref: "vscode.panel.terminal", label: "Terminal", conceptKey: "vscode.terminal" },
-  { ref: "vscode.panel.problems", label: "Problems", conceptKey: "vscode.problems" },
-  { ref: "vscode.panel.output", label: "Output", conceptKey: "vscode.output" },
-  { ref: "vscode.statusBar", label: "Status Bar", conceptKey: "vscode.status_bar" },
-  { ref: "vscode.menu.file.openFolder", label: "Open Folder", conceptKey: "vscode.folder" },
-  {
-    ref: "vscode.menu.file.openWorkspace",
-    label: "Open Workspace",
-    conceptKey: "vscode.workspace",
-  },
-  { ref: "vscode.workspace.context", label: "Workspace-Kontext", conceptKey: "vscode.workspace" },
-];
-
 const initialState = (): RuntimeState => ({
   workspaceMode: "none",
   folders: [],
@@ -50,20 +28,20 @@ const initialState = (): RuntimeState => ({
 let state = initialState();
 
 export const vscodeRuntime = {
-  id: "vscode-simulator",
-  productId: "vscode",
+  id: VSCODE_RUNTIME_DEFINITION.id,
+  productId: VSCODE_RUNTIME_DEFINITION.productId,
 
-  describeSurface(): SurfaceDescription[] {
-    return SURFACE;
+  describeSurface(): RuntimeSurfaceDescription[] {
+    return [...VSCODE_RUNTIME_DEFINITION.surface];
   },
 
   resolveTarget(ref: UiTargetRef): HTMLElement | null {
-    if (typeof document === "undefined") return null;
+    if (!getVscodeSurfaceTarget(ref) || typeof document === "undefined") return null;
     return document.querySelector<HTMLElement>(`[data-highlight="${ref}"]`);
   },
 
   inspect(ref: UiTargetRef): void {
-    const item = SURFACE.find((entry) => entry.ref === ref);
+    const item = getVscodeSurfaceTarget(ref);
     if (!item) return;
     workspaceBus.emit("ui.element.inspected", {
       ref,
