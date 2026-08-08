@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { parseScenario } from "../src/scenarios/contentLoader";
+import { parseScenario } from "../src/scenarios/contentLoader.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
 const files = (await readdir(scenariosDir)).filter((name) => name.endsWith(".json")).sort();
