@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_github-dimto__issue_read",
+      "mcp__claude_ai_github-dimto__list_issues",
+      "mcp__claude_ai_github-dimto__search_issues"
+    ]
+  }
+}

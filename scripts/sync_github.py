@@ -16,6 +16,7 @@ Aufruf:
 from __future__ import annotations
 
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -81,11 +82,27 @@ def act(s: requests.Session, method: str, url: str, what: str, **kw):
     return r.json()
 
 
-def issue_body(t: dict, epic_titles: dict[str, str]) -> str:
+def checked_acceptance(body: str | None) -> set[str]:
+    """Liest manuell abgehakte Akzeptanzkriterien aus einem bestehenden Issue."""
+    checked: set[str] = set()
+    for line in (body or "").splitlines():
+        match = re.match(r"^\s*-\s+\[[xX]\]\s+(.+?)\s*$", line)
+        if match:
+            checked.add(match.group(1))
+    return checked
+
+
+def issue_body(
+    t: dict,
+    epic_titles: dict[str, str],
+    checked: set[str] | None = None,
+) -> str:
+    checked = checked or set()
     lines = [t["description"].strip(), ""]
     lines.append("### Akzeptanzkriterien")
     for c in t.get("acceptance", []):
-        lines.append(f"- [ ] {c}")
+        marker = "x" if c in checked else " "
+        lines.append(f"- [{marker}] {c}")
     lines.append("")
     meta = [f"**Epic:** {t['epic']} — {epic_titles.get(t['epic'], '')}",
             f"**Schätzung:** {t.get('estimate', '?')} SP"]
@@ -130,7 +147,10 @@ def main() -> None:
 
     # ---- Milestones ----
     existing_ms = {m["title"]: m["number"] for m in paged(s, f"{API}/milestones", state="all")}
-    ms_needed = sorted({t.get("milestone") for t in tickets if t.get("milestone")})
+    ms_needed = sorted(
+        set(MILESTONE_DESCRIPTIONS)
+        | {t["milestone"] for t in tickets if t.get("milestone")}
+    )
     print("\nMilestones:")
     for title in ms_needed:
         if title not in existing_ms:
@@ -152,37 +172,65 @@ def main() -> None:
             existing_issues[prefix] = i
 
     print(f"\nIssues ({len(tickets)} Tickets, {len(existing_issues)} bereits vorhanden):")
-    created = updated = skipped = 0
+    created = updated = unchanged = skipped = 0
     for t in tickets:
         title = f"{t['id']}: {t['title']}"
-        labels = [f"epic: {t['epic']}",
-                  PRIO_LABEL.get(t.get("priority", "C"), "prio: could"),
-                  f"type: {t.get('type', 'story')}"]
-        payload = {"title": title,
-                   "body": issue_body(t, epic_titles),
-                   "labels": labels}
-        ms = t.get("milestone")
-        if ms and ms in existing_ms:
-            payload["milestone"] = existing_ms[ms]
-
         prev = existing_issues.get(t["id"])
+        if prev is not None and prev["state"] == "closed":
+            print(f"  geschlossen, unangetastet: {t['id']}")
+            skipped += 1
+            continue
+
+        managed_labels = [
+            f"epic: {t['epic']}",
+            PRIO_LABEL.get(t.get("priority", "C"), "prio: could"),
+            f"type: {t.get('type', 'story')}",
+        ]
+        existing_label_names = [label["name"] for label in (prev or {}).get("labels", [])]
+        manual_labels = [
+            name for name in existing_label_names
+            if not name.startswith(("epic: ", "prio: ", "type: "))
+        ]
+        labels = manual_labels + managed_labels
+        milestone = existing_ms.get(t.get("milestone"))
+        payload = {
+            "title": title,
+            "body": issue_body(
+                t,
+                epic_titles,
+                checked_acceptance((prev or {}).get("body")),
+            ),
+            "labels": labels,
+            "milestone": milestone,
+        }
+
         if prev is None:
             act(s, "post", f"{API}/issues", f"Issue {title}", json=payload)
             created += 1
-        elif prev["state"] == "closed":
-            print(f"  geschlossen, unangetastet: {t['id']}")
-            skipped += 1
         else:
-            act(s, "patch", f"{API}/issues/{prev['number']}",
-                f"Issue {t['id']} aktualisieren", json=payload)
-            updated += 1
+            previous_milestone = (prev.get("milestone") or {}).get("number")
+            is_changed = (
+                prev["title"] != payload["title"]
+                or (prev.get("body") or "") != payload["body"]
+                or set(existing_label_names) != set(payload["labels"])
+                or previous_milestone != payload["milestone"]
+            )
+            if is_changed:
+                act(s, "patch", f"{API}/issues/{prev['number']}",
+                    f"Issue {t['id']} aktualisieren", json=payload)
+                updated += 1
+            else:
+                print(f"  vorhanden, unverändert: {t['id']}")
+                unchanged += 1
 
-    print(f"\nErgebnis: {created} neu, {updated} aktualisiert, {skipped} übersprungen.")
+    print(
+        f"\nErgebnis: {created} neu, {updated} aktualisiert, "
+        f"{unchanged} unverändert, {skipped} übersprungen."
+    )
     if not APPLY:
         print("Das war ein Dry Run. Mit  python3 scripts/sync_github.py --apply  ausführen.")
     else:
-        print("Tipp: Jetzt unter GitHub → Projects ein Board anlegen und alle Issues "
-              "des Repos hinzufügen (Filter: is:issue is:open).")
+        print("Project-Board prüfen: https://github.com/users/dimto13/projects/3")
 
 
 if __name__ == "__main__":

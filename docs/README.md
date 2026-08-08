@@ -52,7 +52,7 @@ Das Backlog wird direkt in GitHub verwaltet — ohne separates Ticketsystem:
 | Typ story/task/chore/spike | Label `type: …` |
 | Meilenstein M1–M6 | GitHub Milestone |
 | Akzeptanzkriterien | Checkboxen im Issue-Body |
-| Board/Tracking | GitHub Projects (manuell anlegen, s. u.) |
+| Board/Tracking | [GitHub Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3) |
 
 **Erstbefüllung und spätere Synchronisation:**
 
@@ -65,13 +65,15 @@ python3 scripts/sync_github.py --apply   # legt Labels, Milestones und 71 Issues
 Alternativ ohne lokales Setup: GitHub → **Actions → "Backlog nach Issues synchronisieren"
 → Run workflow** (Haken bei *apply* setzen). Der Sync ist idempotent — erneutes Ausführen
 aktualisiert bestehende Issues, statt Duplikate zu erzeugen, und lässt geschlossene Issues
-geschlossen.
+geschlossen. Bei offenen Issues bleiben abgehakte Akzeptanzkriterien und manuelle
+Zusatzlabels erhalten.
 
-**Board einrichten (einmalig, im Web-UI):** GitHub → Projects → *New project* → Vorlage
-*Board*. Alle offenen Issues des Repos hinzufügen, Spalten `Backlog / Bereit / In Arbeit /
-Review / Fertig`, dazu die Ansichten *Gruppieren nach Milestone* und *Gruppieren nach
-Label epic*. GitHub Projects lässt sich per API nur umständlich vorkonfigurieren — diese
-fünf Minuten Handarbeit sind der pragmatische Weg.
+**Board:** Das [Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3)
+ist mit dem Repository verknüpft. Sein Auto-add-Workflow nimmt neue Issues auf; die
+Statusspalten sind `Backlog / Bereit / In Arbeit / Review / Fertig`. Die vorbereiteten
+Ansichten `Meilensteine` und `Epics` müssen im Web-UI einmalig über **Group by** auf
+`Milestone` beziehungsweise `Labels` gestellt werden, da die öffentliche Project-API diese
+View-Eigenschaft nicht schreiben kann.
 
 **Regeln:**
 1. Inhaltliche Änderungen an geplanten Tickets → `../backlog/backlog.yaml`, dann
