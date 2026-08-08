@@ -139,12 +139,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
   let activePanel = base.activePanel;
   if (hasOwn(seed, "activePanel")) {
     const value = seed["activePanel"];
-    if (
-      value !== null &&
-      value !== "terminal" &&
-      value !== "problems" &&
-      value !== "output"
-    ) {
+    if (value !== null && value !== "terminal" && value !== "problems" && value !== "output") {
       throw new TypeError("Invalid VS Code runtime seed field: activePanel");
     }
     activePanel = value;
