@@ -1,3 +1,4 @@
+import { copilotRuntime } from "./copilotRuntime";
 import { vscodeRuntime } from "./vscodeRuntime";
 import type { RuntimeAdapter } from "./runtimeAdapter";
 
@@ -7,9 +8,12 @@ export type {
   RuntimeSeed,
   RuntimeSurfaceDescription,
 } from "./runtimeAdapter";
+export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime";
+export type { CopilotProductProfile } from "./copilotProductProfile";
 
 const runtimes: Record<string, RuntimeAdapter> = {
   [vscodeRuntime.id]: vscodeRuntime,
+  [copilotRuntime.id]: copilotRuntime,
 };
 
 export function getRuntimeAdapter(runtimeAdapterId: string | undefined): RuntimeAdapter | null {
