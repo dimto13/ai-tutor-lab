@@ -1,3 +1,8 @@
+# POC
+
+https://ai-guide-trainer.lovable.app
+
+
 # AI Tutor Lab
 
 Git repo
