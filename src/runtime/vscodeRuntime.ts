@@ -1,10 +1,6 @@
 import { workspaceBus } from "../state/eventBus.ts";
 import type { UiTargetRef } from "../types/training.ts";
-import type {
-  RuntimeAdapter,
-  RuntimeSeed,
-  RuntimeSurfaceDescription,
-} from "./runtimeAdapter.ts";
+import type { RuntimeAdapter, RuntimeSeed, RuntimeSurfaceDescription } from "./runtimeAdapter.ts";
 import { getVscodeSurfaceTarget, VSCODE_RUNTIME_DEFINITION } from "./vscodeDefinition.ts";
 
 type WorkspaceMode = "none" | "folder" | "workspace";
