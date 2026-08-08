@@ -1,4 +1,4 @@
-import defaultProfileJson from "../../content/product-profiles/github-copilot-vscode.2026-08.json";
+import defaultProfileJson from "../../content/product-profiles/github-copilot-vscode.2026-08.json" with { type: "json" };
 
 export type CopilotChatModeId = "ask" | "plan" | "agent";
 export type CopilotModelSelection = "automatic" | "explicit";
