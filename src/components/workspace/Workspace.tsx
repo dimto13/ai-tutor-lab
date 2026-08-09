@@ -536,36 +536,38 @@ export function Workspace() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-9 min-w-0 items-stretch overflow-x-auto border-b border-border bg-panel">
-            {tabs.length === 0 ? (
-              <span className="flex items-center px-3 text-xs text-muted-foreground">
-                Keine Datei geöffnet
-              </span>
-            ) : (
-              tabs.map((tab) => (
-                <div
-                  key={tab}
-                  className={`flex shrink-0 items-center gap-2 border-r border-border px-3 text-[13px] ${
-                    activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  <button onClick={() => openFile(tab)}>{tab}</button>
-                  <button
-                    aria-label={`${tab} schließen`}
-                    onClick={() => {
-                      setTabs((current) => current.filter((item) => item !== tab));
-                      if (activeFile === tab) setActiveFile(null);
-                      vscodeRuntime.closeFile(tab);
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
+          <div className="relative flex h-9 min-w-0 items-stretch border-b border-border bg-panel">
+            <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto overflow-y-hidden">
+              {tabs.length === 0 ? (
+                <span className="flex items-center px-3 text-xs text-muted-foreground">
+                  Keine Datei geöffnet
+                </span>
+              ) : (
+                tabs.map((tab) => (
+                  <div
+                    key={tab}
+                    className={`flex shrink-0 items-center gap-2 border-r border-border px-3 text-[13px] ${
+                      activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
+                    }`}
                   >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
+                    <button onClick={() => openFile(tab)}>{tab}</button>
+                    <button
+                      aria-label={`${tab} schließen`}
+                      onClick={() => {
+                        setTabs((current) => current.filter((item) => item !== tab));
+                        if (activeFile === tab) setActiveFile(null);
+                        vscodeRuntime.closeFile(tab);
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
             {copilotIntegrated ? (
-              <div className="ml-auto flex items-center pr-2">
+              <div className="flex shrink-0 items-center pr-2">
                 <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
               </div>
             ) : null}

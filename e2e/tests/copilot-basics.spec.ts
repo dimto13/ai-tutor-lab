@@ -15,6 +15,15 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
   await expect(page.getByRole("button", { name: "Konzept verstanden" })).toHaveCount(0);
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
+  const chat = page.locator('[data-highlight="copilot.chat"]');
+  await expect(chat).toBeVisible();
+  expect(
+    await chat.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + 50);
+      return hit !== null && element.contains(hit);
+    }),
+  ).toBe(true);
   await expect(
     page.getByText("Schritt 5 – Training-Session und Copilot-Unterhaltung unterscheiden"),
   ).toBeVisible();
