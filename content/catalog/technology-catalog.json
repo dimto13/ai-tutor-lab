@@ -11,6 +11,10 @@
     {
       "id": "cli_agent",
       "name": "CLI Agent"
+    },
+    {
+      "id": "source_control",
+      "name": "Source Control"
     }
   ],
   "providers": [
@@ -45,6 +49,12 @@
       "providerId": "anthropic",
       "technologyId": "cli_agent",
       "name": "Claude Code"
+    },
+    {
+      "id": "github",
+      "providerId": "github",
+      "technologyId": "source_control",
+      "name": "GitHub"
     }
   ],
   "productVersions": [
@@ -67,6 +77,13 @@
       "productId": "claude-code",
       "version": "1.x",
       "capabilities": ["terminal", "chat", "agent_mode"]
+    },
+    {
+      "id": "github@simulated-2026-08",
+      "productId": "github",
+      "version": "simulated-2026-08",
+      "capabilities": ["source_control"],
+      "runtimeAdapterIds": ["source-control-platform-simulator"]
     }
   ],
   "integrations": [
@@ -90,6 +107,12 @@
       "integrationId": "github-copilot-in-vscode",
       "kind": "simulator",
       "capabilities": ["chat", "inline_completion", "agent_mode"]
+    },
+    {
+      "id": "source-control-platform-simulator",
+      "productId": "github",
+      "kind": "simulator",
+      "capabilities": ["source_control"]
     }
   ]
 }

@@ -103,8 +103,31 @@ const toolTrainings: TrainingCardModel[] = [
     description:
       "Repositories, Branches, Remotes, Pull Requests und die Zusammenarbeit auf GitHub als eigenes Werkzeug kennenlernen.",
     icon: Github,
-    available: false,
-    label: "Source Control Platform",
+    available: true,
+    label: "Source Control Platform · 3 Modi",
+    modes: [
+      {
+        scenarioId: "source-control-platform-basics.explore",
+        label: "Explore",
+        description: "Repository-Oberfläche frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "source-control-platform-basics.guided",
+        label: "Guided",
+        description: "Pull Request Schritt für Schritt verstehen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "source-control-platform-basics.challenge",
+        label: "Challenge",
+        description: "Reviewbaren Pull Request selbst herstellen",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
   },
   {
     id: "github-copilot-basics",

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
 import { TutorChat } from "@/components/tutor/TutorChat";
-import { vscodeRuntime } from "@/runtime/vscodeRuntime";
+import { getRuntimeAdapter } from "@/runtime";
 import { getGlossaryConceptByKey, getGlossaryConceptForTarget } from "@/lib/glossary";
 import { GlossaryText } from "@/components/training/GlossaryText";
 
@@ -196,9 +196,10 @@ export function GuidePanel() {
 
 function ExploreGuide() {
   const { scenario, progress, percent } = useTraining();
-  const surface = vscodeRuntime
-    .describeSurface()
-    .filter((item) => (scenario.exploreTargets ?? []).includes(item.ref));
+  const runtime = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
+  const surface = (runtime?.describeSurface() ?? []).filter((item) =>
+    (scenario.exploreTargets ?? []).includes(item.ref),
+  );
   const activeSurface = surface.find((item) => item.ref === progress.lastInspectedRef) ?? null;
   const concept = activeSurface
     ? (getGlossaryConceptByKey(activeSurface.conceptKey) ??
@@ -214,8 +215,8 @@ function ExploreGuide() {
         Oberfläche frei untersuchen
       </h2>
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-        Klicke frei auf Bereiche von VS Code. Es gibt keine falsche Reihenfolge und keine
-        Fehlermeldungen.
+        Klicke frei auf Bereiche der simulierten Oberfläche. Es gibt keine falsche Reihenfolge und
+        keine Fehlermeldungen.
       </p>
 
       <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
