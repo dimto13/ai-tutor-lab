@@ -50,11 +50,17 @@ export function HighlightOverlay({
         setRect(null);
         return;
       }
+      const padding = 6;
+      const viewportInset = 2;
+      const left = Math.max(viewportInset, resolved.left - padding);
+      const top = Math.max(viewportInset, resolved.top - padding);
+      const right = Math.min(window.innerWidth - viewportInset, resolved.right + padding);
+      const bottom = Math.min(window.innerHeight - viewportInset, resolved.bottom + padding);
       setRect({
-        top: resolved.top - 6,
-        left: resolved.left - 6,
-        width: resolved.width + 12,
-        height: resolved.height + 12,
+        top,
+        left,
+        width: Math.max(0, right - left),
+        height: Math.max(0, bottom - top),
       });
     };
     measure();
@@ -93,6 +99,7 @@ export function HighlightOverlay({
         style={{ top: rect.top, height: rect.height, left: rect.left + rect.width }}
       />
       <div
+        data-testid="highlight-frame"
         className={`absolute rounded-md ring-2 ring-ring ${strong ? "animate-pulse" : ""}`}
         style={{
           top: rect.top,
@@ -111,7 +118,8 @@ export function HighlightOverlay({
             left:
               rect.left > window.innerWidth * 0.62
                 ? Math.max(12, rect.left - 268)
-                : Math.min(rect.left, window.innerWidth - 280),
+                : Math.max(12, Math.min(rect.left, window.innerWidth - 280)),
+            maxWidth: "calc(100vw - 24px)",
           }}
         >
           {tooltip}
