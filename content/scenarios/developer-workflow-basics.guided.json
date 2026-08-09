@@ -10,7 +10,13 @@
     "productId": "vscode",
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator",
-    "integrationRuntimeAdapterIds": ["github-copilot-vscode-simulator"],
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
     "seed": {
       "chatResponses": [
         {

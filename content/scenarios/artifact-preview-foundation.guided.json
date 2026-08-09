@@ -9,7 +9,6 @@
     "productId": "vscode",
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator",
-    "integrationRuntimeAdapterIds": ["artifact-preview-simulator"],
     "seed": {
       "workspaceMode": "folder",
       "folders": ["workflow-demo"],
@@ -33,15 +32,34 @@
             "title": "Status-Tabelle",
             "description": "Tabellenzustand mit sichtbarer Formelmetadaten-Referenz.",
             "columns": [
-              { "key": "team", "label": "Team" },
-              { "key": "open", "label": "Offene Punkte" },
-              { "key": "status", "label": "Status" }
+              {
+                "key": "team",
+                "label": "Team"
+              },
+              {
+                "key": "open",
+                "label": "Offene Punkte"
+              },
+              {
+                "key": "status",
+                "label": "Status"
+              }
             ],
             "rows": [
-              { "team": "Nord", "open": 2, "status": "In Arbeit" },
-              { "team": "Süd", "open": 0, "status": "Bereit" }
+              {
+                "team": "Nord",
+                "open": 2,
+                "status": "In Arbeit"
+              },
+              {
+                "team": "Süd",
+                "open": 0,
+                "status": "Bereit"
+              }
             ],
-            "formulas": { "open": "COUNTIF(Status;Offen)" }
+            "formulas": {
+              "open": "COUNTIF(Status;Offen)"
+            }
           },
           {
             "id": "structured-result",
@@ -70,7 +88,14 @@
           }
         ]
       }
-    }
+    },
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ]
   },
   "estimatedMinutes": 5,
   "points": 40,
@@ -89,7 +114,10 @@
       "validation": {
         "kind": "event",
         "type": "artifact.selected",
-        "match": { "artifactId": "summary-page", "artifactType": "html" }
+        "match": {
+          "artifactId": "summary-page",
+          "artifactType": "html"
+        }
       },
       "highlightTarget": "artifact.preview.selector",
       "highlightTooltip": "Wähle das HTML-Artefakt über seine semantische ID aus.",
@@ -109,7 +137,10 @@
       "validation": {
         "kind": "event",
         "type": "artifact.viewSwitched",
-        "match": { "viewMode": "source", "artifactId": "summary-page" }
+        "match": {
+          "viewMode": "source",
+          "artifactId": "summary-page"
+        }
       },
       "highlightTarget": "artifact.preview.viewToggle",
       "highlightTooltip": "Wechsle in die sichere Quelltextdarstellung.",
@@ -129,7 +160,10 @@
       "validation": {
         "kind": "event",
         "type": "artifact.updated",
-        "match": { "artifactId": "summary-page", "revisionId": "summary-page-v2" }
+        "match": {
+          "artifactId": "summary-page",
+          "revisionId": "summary-page-v2"
+        }
       },
       "highlightTarget": "artifact.preview.applyRevision",
       "highlightTooltip": "Diese Aktion wechselt in den nächsten hinterlegten Artefaktzustand.",
@@ -149,7 +183,11 @@
       "validation": {
         "kind": "event",
         "type": "artifact.verified",
-        "match": { "artifactId": "summary-page", "artifactType": "html" }
+        "match": {
+          "artifactId": "summary-page",
+          "artifactType": "html",
+          "revisionId": "summary-page-v2"
+        }
       },
       "highlightTarget": "artifact.preview.verify",
       "highlightTooltip": "Bestätige die fachliche Prüfung als separate Handlung.",

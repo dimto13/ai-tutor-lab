@@ -190,3 +190,34 @@ test("artifactPreviewRuntime: restores an empty snapshot for scenarios without s
     await runtime.unmount();
   }
 });
+
+test("artifactPreviewRuntime: verification reports the applied revision", async () => {
+  const runtime = createArtifactPreviewRuntime();
+  let verifiedPayload: Record<string, unknown> | null = null;
+  const unsubscribe = runtime.subscribe((event) => {
+    if (event.type === "artifact.verified") {
+      verifiedPayload = event.payload as Record<string, unknown>;
+    }
+  });
+  await runtime.mount(createContainer(), {
+    artifactPreview: {
+      artifacts: [htmlArtifact],
+      revisions: [
+        {
+          id: "page-v2",
+          artifactId: "page",
+          label: "Update",
+          next: { ...htmlArtifact, html: "<section><h1>Safe preview</h1><p>Updated</p></section>" },
+        },
+      ],
+    },
+  });
+  try {
+    runtime.applyRevision("page-v2");
+    runtime.verifyActiveArtifact();
+    assert.equal(verifiedPayload?.["revisionId"], "page-v2");
+  } finally {
+    unsubscribe();
+    await runtime.unmount();
+  }
+});

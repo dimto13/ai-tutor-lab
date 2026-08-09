@@ -51,6 +51,51 @@
       "id": "operate_copilot_basics",
       "title": "Copilot-Grundfunktionen kontrolliert einsetzen",
       "description": "Chat, Kontext, Arbeitsmodus, Modellauswahl und Inline-Vorschläge unterscheiden, einsetzen und vor der Übernahme prüfen."
+    },
+    {
+      "id": "distinguish_git_and_platform",
+      "title": "Git und Hosting-Plattform unterscheiden",
+      "description": "Lokale Git-Versionsverwaltung von Hosting-, Review- und Kollaborationsfunktionen einer Source-Control-Plattform abgrenzen."
+    },
+    {
+      "id": "understand_repository_and_remote",
+      "title": "Repository, Working Tree und Remote einordnen",
+      "description": "Lokalen Arbeitsstand, Commit-Historie und entfernte Repository-Adresse als getrennte Konzepte erklären."
+    },
+    {
+      "id": "manage_platform_branches",
+      "title": "Branches auf der Plattform verwenden",
+      "description": "Einen separaten Arbeitsbranch erstellen und als Ausgangspunkt eines Pull Requests auswählen."
+    },
+    {
+      "id": "read_commit_history",
+      "title": "Commit-Historie lesen",
+      "description": "Commit-Nachricht, Autor, Kennung und Entwicklungslinie in einer gehosteten Repository-Historie nachvollziehen."
+    },
+    {
+      "id": "create_reviewable_pull_request",
+      "title": "Prüfbaren Pull Request erstellen",
+      "description": "Branch, Titel, Beschreibung und Diff zu einem für andere nachvollziehbaren Änderungsvorschlag verbinden."
+    },
+    {
+      "id": "handle_review_feedback",
+      "title": "Review-Feedback bearbeiten",
+      "description": "Änderungswünsche fachlich beantworten und ihren Status für alle Beteiligten nachvollziehbar machen."
+    },
+    {
+      "id": "interpret_merge_requirements",
+      "title": "Status Checks und Merge-Anforderungen verstehen",
+      "description": "Automatisierte Prüfergebnisse gemeinsam mit Review- und Branch-Anforderungen als Merge-Voraussetzungen interpretieren."
+    },
+    {
+      "id": "distinguish_issues_and_pull_requests",
+      "title": "Issues und Pull Requests unterscheiden",
+      "description": "Planungs- und Diskussionsbedarf in Issues von konkreten, prüfbaren Branch-Änderungen in Pull Requests abgrenzen."
+    },
+    {
+      "id": "explain_clone_fork_remote",
+      "title": "Clone, Fork und Remote erklären",
+      "description": "Lokale Kopie, serverseitige Repository-Kopie und gespeicherte Remote-Adresse voneinander unterscheiden."
     }
   ]
 }

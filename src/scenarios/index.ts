@@ -7,6 +7,9 @@ import vscodeShortcutsChallengeRaw from "../../content/scenarios/vscode-shortcut
 import developerWorkflowRaw from "../../content/scenarios/developer-workflow-basics.guided.json";
 import copilotBasicsRaw from "../../content/scenarios/copilot-basics.guided.json";
 import artifactPreviewFoundationRaw from "../../content/scenarios/artifact-preview-foundation.guided.json";
+import sourceControlPlatformExploreRaw from "../../content/scenarios/source-control-platform-basics.explore.json";
+import sourceControlPlatformGuidedRaw from "../../content/scenarios/source-control-platform-basics.guided.json";
+import sourceControlPlatformChallengeRaw from "../../content/scenarios/source-control-platform-basics.challenge.json";
 
 const vscodeExploreScenario = parseScenario(vscodeExploreRaw);
 const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
@@ -15,6 +18,9 @@ const vscodeShortcutsChallengeScenario = parseScenario(vscodeShortcutsChallengeR
 const developerWorkflowScenario = parseScenario(developerWorkflowRaw);
 const copilotBasicsScenario = parseScenario(copilotBasicsRaw);
 const artifactPreviewFoundationScenario = parseScenario(artifactPreviewFoundationRaw);
+const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
+const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
+const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
 
 const scenarios: Record<string, Scenario> = {
   [vscodeExploreScenario.id]: vscodeExploreScenario,
@@ -24,6 +30,9 @@ const scenarios: Record<string, Scenario> = {
   [developerWorkflowScenario.id]: developerWorkflowScenario,
   [copilotBasicsScenario.id]: copilotBasicsScenario,
   [artifactPreviewFoundationScenario.id]: artifactPreviewFoundationScenario,
+  [sourceControlPlatformExploreScenario.id]: sourceControlPlatformExploreScenario,
+  [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
+  [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,
 };
 
 export function getScenario(scenarioId: string): Scenario | null {

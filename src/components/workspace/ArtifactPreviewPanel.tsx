@@ -38,7 +38,7 @@ const TYPE_LABELS: Record<PreviewArtifact["type"], string> = {
 };
 
 export function ArtifactPreviewPanel() {
-  const { mode, scenario } = useTraining();
+  const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
   const [state, setState] = useState<ArtifactPreviewState>(EMPTY_STATE);
   const rootRef = useRef<HTMLDivElement>(null);
   const activeArtifact =
@@ -51,13 +51,23 @@ export function ArtifactPreviewPanel() {
   useEffect(() => {
     const container = rootRef.current;
     if (!container) return;
-    const unsubscribe = artifactPreviewRuntime.subscribeState((nextState) => setState(nextState));
-    void artifactPreviewRuntime.mount(container, scenario.environment?.seed);
+    let disposed = false;
+    const unsubscribe = artifactPreviewRuntime.subscribeState((nextState, reason) => {
+      setState(nextState);
+      if (reason === "mutation") {
+        persistRuntimeSnapshot(artifactPreviewRuntime.id, nextState);
+      }
+    });
+    void (async () => {
+      await artifactPreviewRuntime.mount(container, scenario.environment?.seed);
+      if (!disposed) await restoreRuntimeSnapshot(artifactPreviewRuntime.id);
+    })();
     return () => {
+      disposed = true;
       unsubscribe();
       void artifactPreviewRuntime.unmount();
     };
-  }, [scenario.environment?.seed]);
+  }, [scenario.environment?.seed, persistRuntimeSnapshot, restoreRuntimeSnapshot]);
 
   const inspect = (ref: string) => {
     if (mode === "explore") artifactPreviewRuntime.inspect(ref);

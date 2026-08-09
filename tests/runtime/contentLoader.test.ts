@@ -104,6 +104,44 @@ test("content loader rejects whitespace-only Copilot seed matchers", () => {
   );
 });
 
+test("content loader derives runtime adapter ids from version-pinned integrations", () => {
+  const baseScenario = scenarioWithSeed({});
+  const integrations = [
+    {
+      productId: "github-copilot",
+      version: "2026.08",
+      runtimeAdapterId: "github-copilot-vscode-simulator",
+    },
+  ];
+
+  const parsed = parseScenario({
+    ...baseScenario,
+    environment: {
+      ...baseScenario.environment,
+      integrations,
+    },
+  });
+
+  assert.deepEqual(parsed.environment?.integrations, integrations);
+  assert.deepEqual(parsed.environment?.integrationRuntimeAdapterIds, [
+    "github-copilot-vscode-simulator",
+  ]);
+});
+
+test("content loader rejects legacy authored integrationRuntimeAdapterIds", () => {
+  const scenario = scenarioWithSeed({});
+
+  assert.throws(() =>
+    parseScenario({
+      ...scenario,
+      environment: {
+        ...scenario.environment,
+        integrationRuntimeAdapterIds: ["github-copilot-vscode-simulator"],
+      },
+    }),
+  );
+});
+
 test("content loader accepts safe artifact preview data and rejects executable HTML", () => {
   assert.doesNotThrow(() =>
     parseScenario(

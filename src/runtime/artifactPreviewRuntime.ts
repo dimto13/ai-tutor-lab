@@ -297,11 +297,19 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
     verifyActiveArtifact() {
       const artifact = activeArtifact();
       if (!artifact) return;
+      const revisionId = [...state.appliedRevisionIds]
+        .reverse()
+        .map((id) => state.revisions.find((revision) => revision.id === id))
+        .find((revision) => revision?.artifactId === artifact.id)?.id;
       const verifiedIds = state.verifiedIds.includes(artifact.id)
         ? state.verifiedIds
         : [...state.verifiedIds, artifact.id];
       replaceState({ ...state, verifiedIds }, "mutation");
-      emit("artifact.verified", { artifactId: artifact.id, artifactType: artifact.type });
+      emit("artifact.verified", {
+        artifactId: artifact.id,
+        artifactType: artifact.type,
+        revisionId: revisionId ?? null,
+      });
     },
 
     reset() {

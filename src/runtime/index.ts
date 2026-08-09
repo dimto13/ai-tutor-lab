@@ -1,6 +1,7 @@
 import { artifactPreviewRuntime } from "./artifactPreviewRuntime";
 import { copilotRuntime } from "./copilotRuntime";
 import { getRuntimeReferenceDefinition } from "./referenceCatalog";
+import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime";
 import { vscodeRuntime } from "./vscodeRuntime";
 import type { RuntimeAdapter } from "./runtimeAdapter";
 import type { UiTargetRef } from "../types/training";
@@ -21,11 +22,16 @@ export type {
   PreviewArtifact,
   TableArtifact,
 } from "./artifactPreviewContent";
+export type {
+  SourceControlPlatformAdapter,
+  SourceControlPlatformState,
+} from "./sourceControlPlatformRuntime";
 
 const runtimes: Record<string, RuntimeAdapter> = {
   [vscodeRuntime.id]: vscodeRuntime,
   [copilotRuntime.id]: copilotRuntime,
   [artifactPreviewRuntime.id]: artifactPreviewRuntime,
+  [sourceControlPlatformRuntime.id]: sourceControlPlatformRuntime,
 };
 
 export function getRuntimeAdapter(runtimeAdapterId: string | undefined): RuntimeAdapter | null {
