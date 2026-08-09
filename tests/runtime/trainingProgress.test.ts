@@ -4,7 +4,7 @@ import {
   findNextIncompleteStepId,
   normalizeGuidedStepProgress,
 } from "../../src/state/trainingProgress.ts";
-import type { Scenario } from "../../src/types/training.ts";
+import type { Scenario, StepStatus } from "../../src/types/training.ts";
 
 const scenario = {
   id: "migration.guided",
@@ -116,7 +116,10 @@ test("advancement resumes a newly inserted required step before the persisted ac
   assert.equal(normalized.statuses["new-required"], "NOT_STARTED");
   assert.equal(normalized.activeStepId, "current");
 
-  const statuses = { ...normalized.statuses, current: "COMPLETED" };
+  const statuses: Record<string, StepStatus> = {
+    ...normalized.statuses,
+    current: "COMPLETED",
+  };
   const next = findNextIncompleteStepId(insertionScenario, statuses, "current");
 
   assert.equal(next, "new-required");
