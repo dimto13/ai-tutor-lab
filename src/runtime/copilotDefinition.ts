@@ -30,6 +30,11 @@ export const COPILOT_RUNTIME_DEFINITION = {
       conceptKey: "copilot.model_selection",
     },
     {
+      ref: "copilot.inline.generate",
+      label: "Inline-Vorschlag erzeugen",
+      conceptKey: "copilot.inline_suggestion",
+    },
+    {
       ref: "copilot.inline.suggestion",
       label: "Inline-Vorschlag",
       conceptKey: "copilot.inline_suggestion",

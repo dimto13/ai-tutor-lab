@@ -76,6 +76,31 @@ const resourceSchema = z.object({
     .optional(),
 });
 
+const nonBlankSeedStringSchema = z.string().trim().min(1);
+
+const copilotInlineSuggestionSeedSchema = z
+  .object({
+    file: nonBlankSeedStringSchema,
+    text: z.string().min(1),
+    whenContentEquals: z.string().optional(),
+  })
+  .strict();
+
+const copilotChatResponseSeedSchema = z
+  .object({
+    response: z.string().min(1),
+    file: nonBlankSeedStringSchema.optional(),
+    promptContains: nonBlankSeedStringSchema.optional(),
+  })
+  .strict();
+
+export const runtimeSeedSchema = z
+  .object({
+    inlineSuggestions: z.array(copilotInlineSuggestionSeedSchema).optional(),
+    chatResponses: z.array(copilotChatResponseSeedSchema).optional(),
+  })
+  .catchall(z.unknown());
+
 export const scenarioSchema = z
   .object({
     id: z.string().min(1),
@@ -91,7 +116,7 @@ export const scenarioSchema = z
         version: z.string().min(1),
         runtimeAdapterId: z.string().min(1),
         integrationRuntimeAdapterIds: z.array(z.string().min(1)).optional(),
-        seed: z.record(z.unknown()).optional(),
+        seed: runtimeSeedSchema.optional(),
       })
       .optional(),
     estimatedMinutes: z.number().nonnegative().optional(),
