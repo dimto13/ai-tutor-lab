@@ -154,7 +154,9 @@ test("copilotRuntime: configured chat responses come from runtime seed", async (
 
   try {
     runtime.setContextActiveFile("example.py");
-    const response = runtime.submitPrompt("Erstelle eine Funktion zum Multiplizieren zweier Zahlen.");
+    const response = runtime.submitPrompt(
+      "Erstelle eine Funktion zum Multiplizieren zweier Zahlen.",
+    );
     assert.equal(response, "def multiply(a, b):\n    return a * b");
 
     const fallback = runtime.submitPrompt("Was macht die aktuell geöffnete Datei?", "x = 1\n");
