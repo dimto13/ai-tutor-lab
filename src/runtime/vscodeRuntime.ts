@@ -62,6 +62,9 @@ const initialState = (): VscodeRuntimeState => ({
   dirtyFiles: [],
 });
 
+const FOCUSABLE_RUNTIME_TARGET =
+  "button,input,textarea,select,a[href],[contenteditable='true'],[tabindex]:not([tabindex='-1'])";
+
 function isStringRecord(value: unknown): value is Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return Object.values(value).every((item) => typeof item === "string");
@@ -250,6 +253,13 @@ function clickRuntimeTarget(ref: UiTargetRef): boolean {
   return true;
 }
 
+function handlePointerFocus(event: PointerEvent): void {
+  if (!mountedContainer) return;
+  const target = event.target;
+  if (!(target instanceof Element) || target.closest(FOCUSABLE_RUNTIME_TARGET)) return;
+  mountedContainer.focus({ preventScroll: true });
+}
+
 function handleKeyboardShortcut(event: KeyboardEvent): void {
   if (!mountedContainer || (!event.ctrlKey && !event.metaKey) || event.altKey) return;
   const key = event.key.toLowerCase();
@@ -273,16 +283,20 @@ export const vscodeRuntime = {
 
   async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
     keyboardContainer?.removeEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardContainer?.removeEventListener("pointerdown", handlePointerFocus, true);
     mountedContainer = container;
     keyboardContainer = container;
+    container.tabIndex = -1;
     activeSessionId = createIdentifier("session");
     mountedInitialState = stateFromSeed(seed);
     replaceState(mountedInitialState, "mount");
     keyboardContainer.addEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardContainer.addEventListener("pointerdown", handlePointerFocus, true);
   },
 
   async unmount(): Promise<void> {
     keyboardContainer?.removeEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardContainer?.removeEventListener("pointerdown", handlePointerFocus, true);
     keyboardContainer = null;
     mountedContainer = null;
     mountedInitialState = null;
