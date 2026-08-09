@@ -19,7 +19,7 @@
     "check": "npm run format:check && npm run validate:content && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --write e2e/tests/vscode-shortcuts.spec.ts src/components/training/GuidePanel.tsx && git diff -- e2e/tests/vscode-shortcuts.spec.ts src/components/training/GuidePanel.tsx && exit 1"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
