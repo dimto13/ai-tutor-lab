@@ -21,6 +21,8 @@ import type {
 } from "@/types/training";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
+const CHALLENGE_TIMEOUT_MESSAGE =
+  "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
 
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
 const modeMultiplier = (mode: TrainingMode) =>
@@ -241,7 +243,6 @@ export function TrainingProvider({
   const markChallengeTimedOut = useCallback(() => {
     if (progressRef.current.challengeOutcome !== "active") return;
     const challengeStep = scenario.steps[0];
-    setChallengeRemainingSeconds(0);
     setProgress((current) => {
       if (current.challengeOutcome !== "active") return current;
       return {
@@ -252,10 +253,6 @@ export function TrainingProvider({
         activeStepId: null,
         challengeOutcome: "timed_out",
       };
-    });
-    setFeedback({
-      kind: "error",
-      message: "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.",
     });
   }, [scenario.steps]);
 
@@ -396,9 +393,6 @@ export function TrainingProvider({
             challengeOutcome: "passed",
           };
         });
-        if (challengeStep) {
-          setFeedback({ kind: "success", message: challengeStep.successMessage });
-        }
         return;
       }
 
@@ -462,6 +456,9 @@ export function TrainingProvider({
     ).length;
     const challengeComplete = progress.challengeOutcome === "passed";
     const isChallengeFailed = progress.challengeOutcome === "timed_out";
+    const effectiveFeedback = isChallengeFailed
+      ? ({ kind: "error", message: CHALLENGE_TIMEOUT_MESSAGE } as const)
+      : feedback;
 
     const completedCount =
       mode === "explore"
@@ -499,12 +496,12 @@ export function TrainingProvider({
       isFinished,
       isChallengeFailed,
       isReady: hydrated,
-      feedback,
+      feedback: effectiveFeedback,
       helpLevel,
       scoreMultiplier,
       earnedPoints: Math.round(basePoints * scoreMultiplier),
       challengeOutcome: progress.challengeOutcome,
-      challengeRemainingSeconds,
+      challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
         if (mode !== "guided") return;
         setHelpLevel((level) => {
