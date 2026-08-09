@@ -55,6 +55,14 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     if (!enabled) setOpen(false);
   };
 
+  const toggleChat = () => {
+    setOpen((value) => {
+      const nextOpen = !value;
+      if (nextOpen) copilotRuntime.openChat();
+      return nextOpen;
+    });
+  };
+
   const submitPrompt = () => {
     const value = prompt.trim();
     if (!value || !runtimeState.enabled) return;
@@ -94,7 +102,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
         type="button"
         data-highlight="copilot.chat.toggle"
         disabled={!runtimeState.enabled}
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleChat}
         className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Sparkles className="h-3.5 w-3.5 text-accent" />
