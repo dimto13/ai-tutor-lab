@@ -42,9 +42,7 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
   await copilotPrompt.fill("Erkläre den aktiven Dateikontext");
   await copilotPrompt.press("Enter");
-  await expect(
-    page.getByText(/Ich berücksichtige hello\.py als aktiven Dateikontext/),
-  ).toBeVisible();
+  await expect(page.getByText(/hello\.py ist derzeit leer/)).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Vorschlag erzeugen" }).click();

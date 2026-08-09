@@ -5,6 +5,7 @@ import {
   type CopilotRuntimeState,
   type CopilotSuggestionStatus,
 } from "@/runtime/copilotRuntime";
+import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 
 interface CopilotPanelProps {
   activeFile: string | null;
@@ -27,8 +28,25 @@ function emptyState(): CopilotRuntimeState {
   };
 }
 
-function suggestionFor(file: string): string {
-  return file === "calculator.py" ? "    return a + b\n" : 'print("Hello from Copilot")\n';
+function suggestionFor(file: string, content: string): string {
+  const normalizedContent = content.trimEnd();
+  const simplePythonFunction = normalizedContent.match(
+    /^def\s+([A-Za-z_]\w*)\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\):$/,
+  );
+
+  if (file.endsWith(".py") && simplePythonFunction) {
+    const [, functionName, leftOperand, rightOperand] = simplePythonFunction;
+    if (/^(add|sum|plus)$/i.test(functionName)) {
+      return `    return ${leftOperand} + ${rightOperand}\n`;
+    }
+    return "    pass\n";
+  }
+
+  if (file.endsWith(".py") && normalizedContent.length === 0) {
+    return 'print("Hello from Copilot")\n';
+  }
+
+  return file.endsWith(".py") ? "\n# Copilot-Vorschlag\n" : "\nCopilot-Vorschlag\n";
 }
 
 export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProps) {
@@ -53,6 +71,12 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     copilotRuntime.setContextActiveFile(activeFile);
   }, [activeFile]);
 
+  const activeContent = async (): Promise<string | null> => {
+    if (!activeFile) return null;
+    const contents = await vscodeRuntime.query<Record<string, string>>("filesystem.contents");
+    return contents[activeFile] ?? "";
+  };
+
   const toggleEnabled = () => {
     copilotRuntime.setEnabled(!runtimeState.enabled);
   };
@@ -61,16 +85,17 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     copilotRuntime.setChatOpen(!runtimeState.chatOpen);
   };
 
-  const submitPrompt = () => {
+  const submitPrompt = async () => {
     const value = prompt.trim();
     if (!value || !runtimeState.enabled) return;
-    copilotRuntime.submitPrompt(value);
+    copilotRuntime.submitPrompt(value, await activeContent());
     setPrompt("");
   };
 
-  const offerSuggestion = () => {
+  const offerSuggestion = async () => {
     if (!activeFile || !runtimeState.enabled) return;
-    copilotRuntime.offerInlineSuggestion(activeFile, suggestionFor(activeFile));
+    const content = (await activeContent()) ?? "";
+    copilotRuntime.offerInlineSuggestion(activeFile, suggestionFor(activeFile, content));
   };
 
   const acceptSuggestion = () => {
@@ -193,13 +218,15 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
               data-highlight="copilot.chat.prompt"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && submitPrompt()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void submitPrompt();
+              }}
               placeholder="Ask Copilot..."
               className="min-w-0 flex-1 rounded border border-border bg-editor px-2 py-1.5 text-xs text-foreground outline-none focus:border-ring"
             />
             <button
               type="button"
-              onClick={submitPrompt}
+              onClick={() => void submitPrompt()}
               className="rounded border border-border px-3 text-xs text-foreground hover:border-ring hover:bg-white/5"
             >
               Senden
@@ -218,7 +245,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
                 type="button"
                 data-highlight="copilot.inline.generate"
                 disabled={!activeFile}
-                onClick={offerSuggestion}
+                onClick={() => void offerSuggestion()}
                 className="rounded border border-border px-2 py-1 text-[10px] text-foreground hover:border-ring disabled:opacity-40"
               >
                 Vorschlag erzeugen

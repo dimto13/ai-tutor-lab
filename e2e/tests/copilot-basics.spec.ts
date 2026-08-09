@@ -33,9 +33,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");
   await expect(
-    page.getByText(
-      /calculator\.py definiert die Funktion add\(a, b\).*Funktionskörper ist noch leer/,
-    ),
+    page.getByText(/calculator\.py.*def add\(a, b\):.*noch keinen Funktionskörper/),
   ).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
   await expect(page.getByText("Schritt 5 – Plan-Modus auswählen")).toBeVisible();
@@ -60,7 +58,6 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
   );
   await page.getByRole("button", { name: "Annehmen" }).click();
   await expect(page.locator("textarea")).toHaveValue("def add(a, b):\n    return a + b\n");
-  await expect(page.locator("textarea")).not.toContainText("pass");
 
   await expect(page.getByText("Schritt 10 – MCP als Erweiterungskonzept verstehen")).toBeVisible();
   await page.getByRole("button", { name: "Verstanden – weiter" }).click();

@@ -53,7 +53,7 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
   setMode(mode: CopilotChatModeId): void;
   setModel(modelId: string): void;
   startConversation(): string;
-  submitPrompt(prompt: string): string;
+  submitPrompt(prompt: string, activeFileContent?: string | null): string;
   offerInlineSuggestion(file: string, text: string): CopilotInlineSuggestion;
   acceptInlineSuggestion(): string | null;
   rejectInlineSuggestion(): void;
@@ -105,7 +105,39 @@ function hasOwn(seed: RuntimeSeed, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(seed, key);
 }
 
-function createAssistantResponse(prompt: string, activeFile: string | null): string {
+function describeActiveFile(activeFile: string, activeFileContent?: string | null): string {
+  if (activeFileContent === undefined || activeFileContent === null) {
+    return `Die aktuell geöffnete ${activeFile} ist als Dateikontext ausgewählt. Ihr Inhalt wurde dieser Anfrage jedoch nicht übergeben.`;
+  }
+
+  const nonEmptyLines = activeFileContent
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0);
+
+  if (nonEmptyLines.length === 0) {
+    return `Die aktuell geöffnete ${activeFile} ist derzeit leer.`;
+  }
+
+  const firstLine = nonEmptyLines[0].trim();
+  const isBarePythonFunction = /^def\s+[A-Za-z_]\w*\([^)]*\):$/.test(firstLine);
+  if (isBarePythonFunction && nonEmptyLines.length === 1) {
+    return `Die aktuell geöffnete ${activeFile} enthält die Funktionsdefinition \`${firstLine}\`, aber noch keinen Funktionskörper.`;
+  }
+
+  const preview = nonEmptyLines
+    .slice(0, 2)
+    .map((line) => `\`${line.trim()}\``)
+    .join(" und ");
+  const lineLabel = nonEmptyLines.length === 1 ? "nicht-leere Zeile" : "nicht-leere Zeilen";
+  return `Die aktuell geöffnete ${activeFile} enthält ${nonEmptyLines.length} ${lineLabel}. Im aktuellen Inhalt sehe ich ${preview}.`;
+}
+
+function createAssistantResponse(
+  prompt: string,
+  activeFile: string | null,
+  activeFileContent?: string | null,
+): string {
   const normalizedPrompt = prompt.toLowerCase();
   const asksAboutFile =
     normalizedPrompt.includes("datei") ||
@@ -114,8 +146,8 @@ function createAssistantResponse(prompt: string, activeFile: string | null): str
     normalizedPrompt.includes("erklär") ||
     normalizedPrompt.includes("erklaer");
 
-  if (activeFile === "calculator.py" && asksAboutFile) {
-    return "Die aktuell geöffnete calculator.py definiert die Funktion add(a, b). Ihr Funktionskörper ist noch leer. Eine sinnvolle Vervollständigung ist return a + b, damit die Funktion die Summe zurückgibt.";
+  if (activeFile && asksAboutFile) {
+    return describeActiveFile(activeFile, activeFileContent);
   }
   if (activeFile) {
     return `Ich berücksichtige ${activeFile} als aktiven Dateikontext. Formuliere konkret, was du zu dieser Datei verstehen oder ändern möchtest.`;
@@ -374,7 +406,7 @@ export function createCopilotRuntime(
       return conversationId;
     },
 
-    submitPrompt(rawPrompt: string): string {
+    submitPrompt(rawPrompt: string, activeFileContent?: string | null): string {
       const prompt = rawPrompt.trim();
       if (!prompt) throw new TypeError("Copilot prompt must not be empty");
       if (!state.enabled) throw new Error("Copilot runtime is disabled");
@@ -384,7 +416,11 @@ export function createCopilotRuntime(
         role: "user",
         content: prompt,
       };
-      const responseText = createAssistantResponse(prompt, state.contextActiveFile);
+      const responseText = createAssistantResponse(
+        prompt,
+        state.contextActiveFile,
+        activeFileContent,
+      );
       const assistantMessage: CopilotChatMessage = {
         id: createIdentifier("copilot-message"),
         role: "assistant",

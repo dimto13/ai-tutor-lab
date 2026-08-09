@@ -48,3 +48,28 @@ test("disabling Copilot closes chat without disabling the host runtime contract"
     await runtime.unmount();
   }
 });
+
+test("Copilot file explanations are derived from the content supplied for the active file", async () => {
+  const runtime = createCopilotRuntime();
+  await runtime.mount(createContainer());
+
+  try {
+    runtime.setContextActiveFile("calculator.py");
+
+    const incompleteResponse = runtime.submitPrompt(
+      "Was macht die aktuell geöffnete Datei?",
+      "def add(a, b):\n",
+    );
+    assert.match(incompleteResponse, /def add\(a, b\):/);
+    assert.match(incompleteResponse, /noch keinen Funktionskörper/);
+
+    const changedResponse = runtime.submitPrompt(
+      "Was macht die aktuell geöffnete Datei?",
+      "def add(a, b):\n    return a - b\n",
+    );
+    assert.match(changedResponse, /return a - b/);
+    assert.doesNotMatch(changedResponse, /noch keinen Funktionskörper/);
+  } finally {
+    await runtime.unmount();
+  }
+});
