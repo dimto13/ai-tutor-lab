@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const guidedUrl = "/training/vscode-basics.guided";
 
@@ -12,6 +12,26 @@ async function expectGuidedStep(page: Page, step: number, title: string): Promis
 
 async function openFileMenu(page: Page): Promise<void> {
   await page.getByRole("button", { name: "File", exact: true }).click();
+}
+
+async function expectSpotlightAround(spotlight: Locator, target: Locator): Promise<void> {
+  await expect(spotlight).toBeVisible();
+  await expect
+    .poll(async () => {
+      const [spotlightBox, targetBox] = await Promise.all([
+        spotlight.boundingBox(),
+        target.boundingBox(),
+      ]);
+      if (!spotlightBox || !targetBox) return null;
+
+      return {
+        top: Math.round(spotlightBox.y - targetBox.y),
+        right: Math.round(spotlightBox.x + spotlightBox.width - (targetBox.x + targetBox.width)),
+        bottom: Math.round(spotlightBox.y + spotlightBox.height - (targetBox.y + targetBox.height)),
+        left: Math.round(spotlightBox.x - targetBox.x),
+      };
+    })
+    .toEqual({ top: -6, right: 6, bottom: 6, left: -6 });
 }
 
 async function reachCreateFileStep(page: Page): Promise<void> {
@@ -144,4 +164,17 @@ test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf
   await expect(
     page.getByText("File enthält Befehle für Dateien, Ordner und Workspaces.", { exact: true }),
   ).toBeVisible();
+});
+
+test("Guided: Highlight-Rahmen umschließt das semantische Ziel geometrisch", async ({ page }) => {
+  await page.goto(guidedUrl);
+  await waitForTrainingReady(page);
+
+  const spotlight = page.getByTestId("highlight-spotlight");
+  const explorer = page.getByRole("button", { name: "Explorer", exact: true });
+  await expectSpotlightAround(spotlight, explorer);
+
+  await explorer.click();
+  await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");
+  await expectSpotlightAround(spotlight, page.getByRole("button", { name: "File", exact: true }));
 });

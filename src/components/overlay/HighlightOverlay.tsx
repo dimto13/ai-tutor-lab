@@ -93,6 +93,7 @@ export function HighlightOverlay({
         style={{ top: rect.top, height: rect.height, left: rect.left + rect.width }}
       />
       <div
+        data-testid="highlight-spotlight"
         className={`absolute rounded-md ring-2 ring-ring ${strong ? "animate-pulse" : ""}`}
         style={{
           top: rect.top,
