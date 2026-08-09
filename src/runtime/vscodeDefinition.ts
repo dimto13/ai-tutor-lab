@@ -88,8 +88,13 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "workspace.mode",
     "workspace.folders",
     "filesystem.files",
+    "filesystem.contents",
     "editor.activeFile",
+    "editor.openTabs",
+    "editor.dirtyFiles",
     "panel.active",
+    "terminal.lines",
+    "scm.staged",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 
