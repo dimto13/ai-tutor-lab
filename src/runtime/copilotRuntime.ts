@@ -25,6 +25,7 @@ export interface CopilotInlineSuggestion {
 
 export interface CopilotRuntimeState {
   enabled: boolean;
+  chatOpen: boolean;
   profileId: string;
   productVersion: string;
   mode: CopilotChatModeId;
@@ -51,7 +52,7 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
   getProductProfile(): CopilotProductProfile;
   subscribeState(handler: StateListener): () => void;
   setEnabled(enabled: boolean): void;
-  openChat(): void;
+  setChatOpen(open: boolean): void;
   setContextActiveFile(filename: string | null): void;
   setMode(mode: CopilotChatModeId): void;
   setModel(modelId: string): void;
@@ -92,6 +93,7 @@ function cloneState(state: CopilotRuntimeState): CopilotRuntimeState {
 function initialState(profile: CopilotProductProfile): CopilotRuntimeState {
   return {
     enabled: true,
+    chatOpen: false,
     profileId: profile.id,
     productVersion: profile.productVersion,
     mode: profile.defaultMode,
@@ -138,6 +140,14 @@ function stateFromSeed(profile: CopilotProductProfile, seed?: RuntimeSeed): Copi
     throw new TypeError("Invalid Copilot runtime seed field: enabled");
   }
 
+  const chatOpen = hasOwn(seed, "chatOpen") ? seed["chatOpen"] : base.chatOpen;
+  if (typeof chatOpen !== "boolean") {
+    throw new TypeError("Invalid Copilot runtime seed field: chatOpen");
+  }
+  if (chatOpen && !enabled) {
+    throw new TypeError("Copilot chat cannot be open while the runtime is disabled");
+  }
+
   const mode = hasOwn(seed, "mode") ? seed["mode"] : base.mode;
   if (typeof mode !== "string" || !profile.chatModes.some((entry) => entry.id === mode)) {
     throw new TypeError(`Unsupported Copilot mode for profile ${profile.id}: ${String(mode)}`);
@@ -158,6 +168,7 @@ function stateFromSeed(profile: CopilotProductProfile, seed?: RuntimeSeed): Copi
   return {
     ...base,
     enabled,
+    chatOpen,
     mode: mode as CopilotChatModeId,
     modelId,
     messages: messagesFromSeed(seed),
@@ -192,6 +203,8 @@ function isRuntimeState(value: unknown): value is CopilotRuntimeState {
 
   return (
     typeof value["enabled"] === "boolean" &&
+    typeof value["chatOpen"] === "boolean" &&
+    (!value["chatOpen"] || value["enabled"]) &&
     typeof value["profileId"] === "string" &&
     typeof value["productVersion"] === "string" &&
     (value["mode"] === "ask" || value["mode"] === "plan" || value["mode"] === "agent") &&
@@ -291,18 +304,24 @@ export function createCopilotRuntime(
 
     setEnabled(enabled: boolean): void {
       if (state.enabled === enabled) return;
-      replaceState({ ...state, enabled }, "mutation");
+      replaceState({ ...state, enabled, chatOpen: enabled ? state.chatOpen : false }, "mutation");
       emit("copilot.enabled.changed", { enabled });
     },
 
-    openChat(): void {
-      if (!state.enabled) return;
-      emit("copilot.chat.opened", {
-        conversationId: state.conversationId,
-        activeFile: state.contextActiveFile,
-        mode: state.mode,
-        modelId: state.modelId,
-      });
+    setChatOpen(open: boolean): void {
+      if (open && !state.enabled) {
+        throw new Error("Copilot runtime is disabled");
+      }
+      if (state.chatOpen === open) return;
+      replaceState({ ...state, chatOpen: open }, "mutation");
+      if (open) {
+        emit("copilot.chat.opened", {
+          conversationId: state.conversationId,
+          activeFile: state.contextActiveFile,
+          mode: state.mode,
+          modelId: state.modelId,
+        });
+      }
     },
 
     setContextActiveFile(filename: string | null): void {
@@ -417,6 +436,9 @@ export function createCopilotRuntime(
       switch (selector) {
         case "copilot.enabled":
           value = state.enabled;
+          break;
+        case "copilot.chat.open":
+          value = state.chatOpen;
           break;
         case "copilot.profile.id":
           value = state.profileId;
