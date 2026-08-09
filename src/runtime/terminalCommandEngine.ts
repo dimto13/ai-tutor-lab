@@ -13,6 +13,7 @@ export interface TerminalCommandContext {
   trackedFiles: string[];
   changedFiles: string[];
   stagedFiles: string[];
+  stagedContents: Record<string, string>;
   commits: TerminalCommit[];
 }
 
@@ -25,6 +26,7 @@ export interface TerminalCommandResult {
   trackedFiles: string[];
   changedFiles: string[];
   stagedFiles: string[];
+  stagedContents: Record<string, string>;
   commits: TerminalCommit[];
   committed: boolean;
 }
@@ -80,8 +82,16 @@ function resolvePath(context: TerminalCommandContext, rawPath: string): string {
   if (!value || value === "~" || value === "/" || value === context.workspaceRoot) return "";
 
   let relative = value;
-  if (relative.startsWith(`~/${context.workspaceRoot}`)) {
-    relative = relative.slice(context.workspaceRoot.length + 2);
+  const absoluteWorkspaceRoot = `/home/user/${context.workspaceRoot}`;
+  const homeWorkspaceRoot = `~/${context.workspaceRoot}`;
+  if (relative === absoluteWorkspaceRoot) {
+    relative = "";
+  } else if (relative.startsWith(`${absoluteWorkspaceRoot}/`)) {
+    relative = relative.slice(absoluteWorkspaceRoot.length + 1);
+  } else if (relative === homeWorkspaceRoot) {
+    relative = "";
+  } else if (relative.startsWith(`${homeWorkspaceRoot}/`)) {
+    relative = relative.slice(homeWorkspaceRoot.length + 1);
   } else if (relative.startsWith("~/")) {
     relative = relative.slice(2);
   } else if (relative.startsWith("/")) {
@@ -164,6 +174,7 @@ function unchangedResult(
     trackedFiles: [...context.trackedFiles],
     changedFiles: [...context.changedFiles],
     stagedFiles: [...context.stagedFiles],
+    stagedContents: { ...context.stagedContents },
     commits: context.commits.map((commit) => ({ ...commit, files: [...commit.files] })),
     committed: false,
   };
@@ -279,11 +290,16 @@ function runPython(
 function gitStatus(command: string, context: TerminalCommandContext): TerminalCommandResult {
   const tracked = new Set(context.trackedFiles);
   const staged = unique(context.stagedFiles).filter((file) => context.changedFiles.includes(file));
-  const unstaged = context.changedFiles.filter((file) => !staged.includes(file));
+  const unstaged = context.changedFiles.filter(
+    (file) =>
+      !staged.includes(file) ||
+      (Object.hasOwn(context.stagedContents, file) &&
+        context.contents[file] !== context.stagedContents[file]),
+  );
   const stagedNew = staged.filter((file) => !tracked.has(file));
   const stagedModified = staged.filter((file) => tracked.has(file));
-  const untracked = unstaged.filter((file) => !tracked.has(file));
-  const modified = unstaged.filter((file) => tracked.has(file));
+  const untracked = unstaged.filter((file) => !tracked.has(file) && !staged.includes(file));
+  const modified = unstaged.filter((file) => tracked.has(file) || staged.includes(file));
   const output = ["On branch main", "Your branch is up to date with 'origin/main'."];
 
   if (staged.length) {
@@ -355,6 +371,10 @@ function gitAdd(
   return {
     ...unchangedResult(command, context, []),
     stagedFiles: unique([...context.stagedFiles, ...selected]),
+    stagedContents: selected.reduce(
+      (contents, file) => ({ ...contents, [file]: context.contents[file] ?? "" }),
+      { ...context.stagedContents },
+    ),
   };
 }
 
@@ -386,7 +406,7 @@ function gitCommit(
   const hash = (context.commits.length + 1).toString(16).padStart(7, "0");
   const commit: TerminalCommit = { hash, message, files: committedFiles };
   const insertions = committedFiles.reduce((total, file) => {
-    const contents = context.contents[file] ?? "";
+    const contents = context.stagedContents[file] ?? context.contents[file] ?? "";
     return total + contents.split("\n").filter((line) => line.length > 0).length;
   }, 0);
   const output = [
@@ -401,8 +421,14 @@ function gitCommit(
   return {
     ...unchangedResult(command, context, output),
     trackedFiles: unique([...context.trackedFiles, ...committedFiles]),
-    changedFiles: context.changedFiles.filter((file) => !committedFiles.includes(file)),
+    changedFiles: context.changedFiles.filter(
+      (file) =>
+        !committedFiles.includes(file) ||
+        (Object.hasOwn(context.stagedContents, file) &&
+          context.contents[file] !== context.stagedContents[file]),
+    ),
     stagedFiles: [],
+    stagedContents: {},
     commits: [...context.commits, commit],
     committed: true,
   };

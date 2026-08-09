@@ -111,6 +111,9 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         assert.deepEqual(restoredPresentation.terminalLines, ["before restore"]);
         assert.equal(restoredPresentation.terminalCommand, "git status");
         assert.equal(restoredPresentation.staged, true);
+        assert.deepEqual(restoredPresentation.stagedContents, {
+          "snapshot.py": "print('snapshot')\n",
+        });
         assert.equal(restoredPresentation.wrongFile, "wrong.py");
         assert.deepEqual(restoredPresentation.dirtyFiles, ["snapshot.py"]);
         unsubscribeState?.();
@@ -254,6 +257,33 @@ test("vscodeRuntime: terminal commands use runtime filesystem and Git state", as
   }
 });
 
+test("vscodeRuntime: commits the staged snapshot and retains later editor changes", async () => {
+  await vscodeRuntime.mount(createContainer(), {
+    workspaceMode: "folder",
+    folders: ["ai-training-demo"],
+    files: ["README.md"],
+    contents: { "README.md": "first version\n" },
+    trackedFiles: ["README.md"],
+    scmChangedFiles: ["README.md"],
+  });
+
+  try {
+    vscodeRuntime.executeTerminalCommand("git add README.md");
+    vscodeRuntime.setFileContent("README.md", "first version\nsecond version\n");
+
+    const commit = vscodeRuntime.executeTerminalCommand('git commit -m "save first version"');
+    assert.equal(commit.exitCode, 0);
+    assert.deepEqual(await vscodeRuntime.query("scm.stagedFiles"), []);
+    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), ["README.md"]);
+
+    const status = vscodeRuntime.executeTerminalCommand("git status");
+    assert.match(status.lines.join("\n"), /Changes not staged[\s\S]*README\.md/);
+    assert.doesNotMatch(status.lines.join("\n"), /working tree clean/);
+  } finally {
+    await vscodeRuntime.unmount();
+  }
+});
+
 test("vscodeRuntime: failed terminal commands are emitted without mutating simulator state", async () => {
   const terminalEvents: Array<Record<string, unknown>> = [];
   const unsubscribe = vscodeRuntime.subscribe((event) => {
@@ -277,6 +307,7 @@ test("vscodeRuntime: failed terminal commands are emitted without mutating simul
     assert.deepEqual(after.files, beforeState.files);
     assert.deepEqual(after.contents, beforeState.contents);
     assert.deepEqual(after.stagedFiles, beforeState.stagedFiles);
+    assert.deepEqual(after.stagedContents, beforeState.stagedContents);
     assert.deepEqual(after.commits, beforeState.commits);
   } finally {
     unsubscribe();

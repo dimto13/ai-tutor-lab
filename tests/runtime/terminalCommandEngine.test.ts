@@ -21,6 +21,7 @@ function baseContext(): TerminalCommandContext {
     trackedFiles: ["README.md", "src/app.py"],
     changedFiles: ["hello.py"],
     stagedFiles: [],
+    stagedContents: {},
     commits: [],
   };
 }
@@ -35,6 +36,7 @@ function nextContext(
     trackedFiles: result.trackedFiles,
     changedFiles: result.changedFiles,
     stagedFiles: result.stagedFiles,
+    stagedContents: result.stagedContents,
     commits: result.commits,
   };
 }
@@ -65,6 +67,27 @@ test("terminal engine lists the simulated filesystem and runs Python in the curr
   assert.match(missingPython.output.join("\n"), /No such file or directory/);
 });
 
+test("terminal engine accepts the absolute workspace paths printed by pwd", () => {
+  let context = baseContext();
+
+  const root = executeTerminalCommand("cd /home/user/ai-training-demo", context);
+  assert.equal(root.exitCode, 0);
+  assert.equal(root.cwd, "");
+  context = nextContext(context, root);
+
+  const nested = executeTerminalCommand("cd /home/user/ai-training-demo/src", context);
+  assert.equal(nested.exitCode, 0);
+  assert.equal(nested.cwd, "src");
+  context = nextContext(context, nested);
+
+  assert.deepEqual(executeTerminalCommand("pwd", context).output, [
+    "/home/user/ai-training-demo/src",
+  ]);
+  assert.deepEqual(executeTerminalCommand("ls /home/user/ai-training-demo", context).output, [
+    "README.md  docs/  hello.py  src/",
+  ]);
+});
+
 test("terminal engine stages and commits the actual changed files", () => {
   let context = baseContext();
 
@@ -88,6 +111,41 @@ test("terminal engine stages and commits the actual changed files", () => {
 
   const statusAfter = executeTerminalCommand("git status", context);
   assert.match(statusAfter.output.join("\n"), /nothing to commit, working tree clean/);
+});
+
+test("terminal engine preserves edits made after git add as unstaged changes", () => {
+  let context = baseContext();
+  const add = executeTerminalCommand("git add hello.py", context);
+  assert.deepEqual(add.stagedContents, {
+    "hello.py": 'print("Hello AI Training")\n',
+  });
+  context = nextContext(context, add);
+  context = {
+    ...context,
+    contents: {
+      ...context.contents,
+      "hello.py": 'print("Hello AI Training")\nprint("edited later")\n',
+    },
+  };
+
+  const statusBeforeCommit = executeTerminalCommand("git status", context);
+  assert.match(statusBeforeCommit.output.join("\n"), /Changes to be committed:[\s\S]*hello\.py/);
+  assert.match(
+    statusBeforeCommit.output.join("\n"),
+    /Changes not staged for commit:[\s\S]*hello\.py/,
+  );
+
+  const commit = executeTerminalCommand('git commit -m "add initial hello"', context);
+  assert.equal(commit.exitCode, 0);
+  assert.match(commit.output.join("\n"), /1 insertion\(\+\)/);
+  assert.deepEqual(commit.changedFiles, ["hello.py"]);
+  assert.deepEqual(commit.stagedFiles, []);
+  assert.deepEqual(commit.stagedContents, {});
+  context = nextContext(context, commit);
+
+  const statusAfterCommit = executeTerminalCommand("git status", context);
+  assert.match(statusAfterCommit.output.join("\n"), /Changes not staged[\s\S]*hello\.py/);
+  assert.doesNotMatch(statusAfterCommit.output.join("\n"), /working tree clean/);
 });
 
 test("terminal engine returns realistic, helpful errors for invalid commands", () => {

@@ -26,6 +26,7 @@ export interface VscodeRuntimeState {
   trackedFiles: string[];
   scmChangedFiles: string[];
   stagedFiles: string[];
+  stagedContents: Record<string, string>;
   commits: TerminalCommit[];
   staged: boolean;
   wrongFile: string | null;
@@ -83,6 +84,7 @@ const initialState = (): VscodeRuntimeState => ({
   trackedFiles: ["README.md"],
   scmChangedFiles: [],
   stagedFiles: [],
+  stagedContents: {},
   commits: [],
   staged: false,
   wrongFile: null,
@@ -138,6 +140,7 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
     isStringArray(candidate.trackedFiles) &&
     isStringArray(candidate.scmChangedFiles) &&
     isStringArray(candidate.stagedFiles) &&
+    (candidate.stagedContents === undefined || isStringRecord(candidate.stagedContents)) &&
     isTerminalCommitArray(candidate.commits) &&
     typeof candidate.staged === "boolean" &&
     (candidate.wrongFile === null || typeof candidate.wrongFile === "string") &&
@@ -157,6 +160,7 @@ function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
     trackedFiles: [...value.trackedFiles],
     scmChangedFiles: [...value.scmChangedFiles],
     stagedFiles: [...value.stagedFiles],
+    stagedContents: { ...(value.stagedContents ?? {}) },
     commits: value.commits.map((commit) => ({ ...commit, files: [...commit.files] })),
     dirtyFiles: [...value.dirtyFiles],
   };
@@ -270,6 +274,14 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     }
     contents = { ...value };
   }
+  let stagedContents = Object.fromEntries(stagedFiles.map((file) => [file, contents[file] ?? ""]));
+  if (hasOwn(seed, "stagedContents")) {
+    const value = seed["stagedContents"];
+    if (!isStringRecord(value)) {
+      throw new TypeError("Invalid VS Code runtime seed field: stagedContents");
+    }
+    stagedContents = { ...value };
+  }
 
   const activeFile = nullableStringFromSeed(seed, "activeFile", base.activeFile);
 
@@ -297,6 +309,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     trackedFiles,
     scmChangedFiles,
     stagedFiles,
+    stagedContents,
     commits: commitsFromSeed(seed, base.commits),
     staged: stagedFiles.length > 0 || seededStaged,
     wrongFile: nullableStringFromSeed(seed, "wrongFile", base.wrongFile),
@@ -541,6 +554,7 @@ export const vscodeRuntime = {
       trackedFiles: state.trackedFiles,
       changedFiles: state.scmChangedFiles,
       stagedFiles: state.stagedFiles,
+      stagedContents: state.stagedContents,
       commits: state.commits,
     });
     const terminalLines = result.clear
@@ -556,6 +570,7 @@ export const vscodeRuntime = {
         trackedFiles: result.trackedFiles,
         scmChangedFiles: result.changedFiles,
         stagedFiles: result.stagedFiles,
+        stagedContents: result.stagedContents,
         commits: result.commits,
         staged,
       },
@@ -589,7 +604,10 @@ export const vscodeRuntime = {
     const stagedFiles = staged
       ? [...(state.scmChangedFiles.length ? state.scmChangedFiles : state.files)]
       : [];
-    replaceState({ ...state, staged, stagedFiles }, "mutation");
+    const stagedContents = staged
+      ? Object.fromEntries(stagedFiles.map((file) => [file, state.contents[file] ?? ""]))
+      : {};
+    replaceState({ ...state, staged, stagedFiles, stagedContents }, "mutation");
   },
 
   setWrongFile(filename: string | null): void {
@@ -658,6 +676,16 @@ export const vscodeRuntime = {
     if (!isRuntimeState(snapshot)) {
       throw new TypeError("Invalid VS Code runtime snapshot");
     }
-    replaceState(snapshot, "restore");
+    replaceState(
+      {
+        ...snapshot,
+        stagedContents:
+          snapshot.stagedContents ??
+          Object.fromEntries(
+            snapshot.stagedFiles.map((file) => [file, snapshot.contents[file] ?? ""]),
+          ),
+      },
+      "restore",
+    );
   },
 } satisfies VscodeRuntimeAdapter;
