@@ -300,22 +300,24 @@ export function Workspace() {
       ref={runtimeRootRef}
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-editor"
     >
-      <div className="relative flex h-8 min-w-0 shrink-0 items-center overflow-x-auto border-b border-border bg-panel px-1 text-[12px] text-foreground/85 sm:px-2">
-        {MENU_ITEMS.map((item) => (
-          <button
-            key={item}
-            data-highlight={item === "File" ? "vscode.menu.file" : undefined}
-            onClick={() => {
-              if (item !== "File") return;
-              inspect("vscode.menu.file");
-              setFileMenuOpen((open) => !open);
-            }}
-            className="shrink-0 rounded px-2 py-1 hover:bg-white/10"
-          >
-            {item}
-          </button>
-        ))}
-        <span className="ml-auto hidden shrink-0 pr-2 text-[11px] text-muted-foreground lg:inline">
+      <div className="relative flex h-8 min-w-0 shrink-0 items-center border-b border-border bg-panel px-1 text-[12px] text-foreground/85 sm:px-2">
+        <div className="flex min-w-0 flex-1 items-center overflow-x-auto overflow-y-hidden">
+          {MENU_ITEMS.map((item) => (
+            <button
+              key={item}
+              data-highlight={item === "File" ? "vscode.menu.file" : undefined}
+              onClick={() => {
+                if (item !== "File") return;
+                inspect("vscode.menu.file");
+                setFileMenuOpen((open) => !open);
+              }}
+              className="shrink-0 rounded px-2 py-1 hover:bg-white/10"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <span className="hidden shrink-0 pr-2 text-[11px] text-muted-foreground lg:inline">
           {workspaceMode === "workspace"
             ? "ai-training-lab (Workspace)"
             : workspaceMode === "folder"

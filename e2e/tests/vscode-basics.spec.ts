@@ -97,6 +97,14 @@ test("Guided: schmaler Viewport hält Kopfzeile, Explorer, Editor und Highlight 
     true,
   );
 
+  await openFileMenu(page);
+  const openFolderItem = page.getByRole("button", { name: "Open Folder...", exact: true });
+  await expect(openFolderItem).toBeVisible();
+  const openFolderBox = await openFolderItem.boundingBox();
+  expect(openFolderBox).not.toBeNull();
+  expect(openFolderBox!.y).toBeGreaterThanOrEqual(0);
+  await openFileMenu(page);
+
   await page.getByRole("button", { name: "Guide anzeigen" }).click();
   await expectGuidedStep(page, 1, "Explorer kennenlernen");
   await expect(page.getByRole("button", { name: "Arbeitsbereich anzeigen" })).toBeVisible();
