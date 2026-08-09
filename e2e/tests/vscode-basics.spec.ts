@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const guidedUrl = "/training/vscode-basics.guided";
 
@@ -12,6 +12,40 @@ async function expectGuidedStep(page: Page, step: number, title: string): Promis
 
 async function openFileMenu(page: Page): Promise<void> {
   await page.getByRole("button", { name: "File", exact: true }).click();
+}
+
+async function expectSpotlightAround(spotlight: Locator, target: Locator): Promise<void> {
+  await expect(spotlight).toBeVisible();
+  await expect
+    .poll(async () => {
+      const [spotlightBox, targetBox, viewport] = await Promise.all([
+        spotlight.boundingBox(),
+        target.boundingBox(),
+        target.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })),
+      ]);
+      if (!spotlightBox || !targetBox) return null;
+
+      const padding = 6;
+      const viewportInset = 2;
+      const expectedLeft = Math.max(viewportInset, targetBox.x - padding);
+      const expectedTop = Math.max(viewportInset, targetBox.y - padding);
+      const expectedRight = Math.min(
+        viewport.width - viewportInset,
+        targetBox.x + targetBox.width + padding,
+      );
+      const expectedBottom = Math.min(
+        viewport.height - viewportInset,
+        targetBox.y + targetBox.height + padding,
+      );
+
+      return {
+        top: Math.round(spotlightBox.y - expectedTop),
+        right: Math.round(spotlightBox.x + spotlightBox.width - expectedRight),
+        bottom: Math.round(spotlightBox.y + spotlightBox.height - expectedBottom),
+        left: Math.round(spotlightBox.x - expectedLeft),
+      };
+    })
+    .toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
 }
 
 async function reachCreateFileStep(page: Page): Promise<void> {
@@ -209,4 +243,17 @@ test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf
   await expect(
     page.getByText("File enthält Befehle für Dateien, Ordner und Workspaces.", { exact: true }),
   ).toBeVisible();
+});
+
+test("Guided: Highlight-Rahmen folgt dem geklemmten Geometrievertrag", async ({ page }) => {
+  await page.setViewportSize({ width: 323, height: 646 });
+  await page.goto(guidedUrl);
+  await waitForTrainingReady(page);
+
+  const spotlight = page.getByTestId("highlight-frame");
+  const explorer = page.getByRole("button", { name: "Explorer", exact: true });
+  await expectSpotlightAround(spotlight, explorer);
+
+  await explorer.click();
+  await expectSpotlightAround(spotlight, page.getByRole("button", { name: "File", exact: true }));
 });
