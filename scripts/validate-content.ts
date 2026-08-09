@@ -12,10 +12,22 @@ import type { Scenario, Validation } from "../src/types/training.ts";
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
 const glossaryPath = resolve(process.cwd(), "content/glossary/de.json");
 const objectivesPath = resolve(process.cwd(), "content/learning-objectives/de.json");
+const personasPath = resolve(process.cwd(), "content/personas/de.json");
+
+const technologyIds = new Set([
+  "ide",
+  "source_control",
+  "terminal",
+  "ai_coding_assistant",
+  "cli_agent",
+  "office_assistant",
+  "ai_chat",
+]);
 
 const glossarySchema = z.object({
   version: z.number().int().positive(),
   language: z.string().min(1),
+  technologyConcepts: z.record(z.array(z.string().min(1)).min(1)),
   concepts: z
     .array(
       z.object({
@@ -25,6 +37,22 @@ const glossarySchema = z.object({
         simple: z.string().min(1),
         advanced: z.string().min(1),
         uiTargets: z.array(z.string().min(1)),
+      }),
+    )
+    .min(1),
+});
+
+const personasSchema = z.object({
+  version: z.number().int().positive(),
+  language: z.string().min(1),
+  personas: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().min(1),
+        assumedKnowledge: z.array(z.string().min(1)),
+        guidancePrinciples: z.array(z.string().min(1)).min(1),
       }),
     )
     .min(1),
@@ -151,6 +179,7 @@ function validateScenarioReferences(
   file: string,
   objectiveIds: Set<string>,
   glossaryKeys: Set<string>,
+  personaIds: Set<string>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const adapterId = scenario.environment?.runtimeAdapterId;
@@ -164,6 +193,67 @@ function validateScenarioReferences(
       });
     }
   });
+
+  if (scenario.audience) {
+    if (!personaIds.has(scenario.audience.personaId)) {
+      issues.push({
+        file,
+        path: "audience.personaId",
+        message: `unknown learner persona: ${scenario.audience.personaId}`,
+      });
+    }
+    pushDuplicateIssues(
+      issues,
+      file,
+      "audience.glossaryConcepts",
+      scenario.audience.glossaryConcepts,
+      "scenario glossary concept",
+    );
+    scenario.audience.glossaryConcepts.forEach((conceptKey, index) => {
+      if (!glossaryKeys.has(conceptKey)) {
+        issues.push({
+          file,
+          path: `audience.glossaryConcepts[${index}]`,
+          message: `unknown glossary concept: ${conceptKey}`,
+        });
+      }
+    });
+
+    const introductionStepIds = scenario.audience.introductionStepIds ?? [];
+    pushDuplicateIssues(
+      issues,
+      file,
+      "audience.introductionStepIds",
+      introductionStepIds,
+      "introduction step id",
+    );
+    introductionStepIds.forEach((stepId, index) => {
+      const scenarioStepIndex = scenario.steps.findIndex((step) => step.id === stepId);
+      const step = scenario.steps[scenarioStepIndex];
+      if (!step) {
+        issues.push({
+          file,
+          path: `audience.introductionStepIds[${index}]`,
+          message: `unknown introduction step: ${stepId}`,
+        });
+        return;
+      }
+      if (scenarioStepIndex !== index) {
+        issues.push({
+          file,
+          path: `audience.introductionStepIds[${index}]`,
+          message: "introduction steps must form a contiguous block at the scenario start",
+        });
+      }
+      if (step.stepType !== "explanation" || !step.optional) {
+        issues.push({
+          file,
+          path: `steps[${scenarioStepIndex}]`,
+          message: "introduction steps must be optional explanation steps",
+        });
+      }
+    });
+  }
 
   if (!adapterId) {
     const hasRuntimeReferences =
@@ -266,11 +356,20 @@ if (!objectivesResult.success) {
   issues.push(...formatZodIssues("content/learning-objectives/de.json", objectivesResult.error));
 }
 
+const personasRaw = JSON.parse(await readFile(personasPath, "utf8"));
+const personasResult = personasSchema.safeParse(personasRaw);
+if (!personasResult.success) {
+  issues.push(...formatZodIssues("content/personas/de.json", personasResult.error));
+}
+
 const glossaryKeys = new Set(
   glossaryResult.success ? glossaryResult.data.concepts.map((concept) => concept.key) : [],
 );
 const objectiveIds = new Set(
   objectivesResult.success ? objectivesResult.data.objectives.map((objective) => objective.id) : [],
+);
+const personaIds = new Set(
+  personasResult.success ? personasResult.data.personas.map((persona) => persona.id) : [],
 );
 
 if (glossaryResult.success) {
@@ -291,6 +390,57 @@ if (objectivesResult.success) {
     objectivesResult.data.objectives.map((objective) => objective.id),
     "learning objective id",
   );
+}
+
+if (personasResult.success) {
+  pushDuplicateIssues(
+    issues,
+    "content/personas/de.json",
+    "personas",
+    personasResult.data.personas.map((persona) => persona.id),
+    "learner persona id",
+  );
+}
+
+if (glossaryResult.success) {
+  const mappedConceptKeys = new Set<string>();
+  for (const [technologyId, conceptKeys] of Object.entries(
+    glossaryResult.data.technologyConcepts,
+  )) {
+    if (!technologyIds.has(technologyId)) {
+      issues.push({
+        file: "content/glossary/de.json",
+        path: `technologyConcepts.${technologyId}`,
+        message: `unknown technology id: ${technologyId}`,
+      });
+    }
+    pushDuplicateIssues(
+      issues,
+      "content/glossary/de.json",
+      `technologyConcepts.${technologyId}`,
+      conceptKeys,
+      "technology glossary concept",
+    );
+    conceptKeys.forEach((conceptKey, index) => {
+      mappedConceptKeys.add(conceptKey);
+      if (!glossaryKeys.has(conceptKey)) {
+        issues.push({
+          file: "content/glossary/de.json",
+          path: `technologyConcepts.${technologyId}[${index}]`,
+          message: `unknown glossary concept: ${conceptKey}`,
+        });
+      }
+    });
+  }
+  glossaryResult.data.concepts.forEach((concept, index) => {
+    if (!mappedConceptKeys.has(concept.key)) {
+      issues.push({
+        file: "content/glossary/de.json",
+        path: `concepts[${index}].key`,
+        message: `glossary concept is not assigned to a technology: ${concept.key}`,
+      });
+    }
+  });
 }
 
 const allRuntimeTargets = new Set<string>();
@@ -333,7 +483,9 @@ for (const file of files) {
   try {
     const raw = JSON.parse(await readFile(resolve(scenariosDir, file), "utf8"));
     const scenario = parseScenario(raw);
-    issues.push(...validateScenarioReferences(scenario, relativeFile, objectiveIds, glossaryKeys));
+    issues.push(
+      ...validateScenarioReferences(scenario, relativeFile, objectiveIds, glossaryKeys, personaIds),
+    );
     console.log(`✓ ${file} -> ${scenario.id}`);
   } catch (error) {
     if (error instanceof ZodError) {
@@ -357,5 +509,5 @@ if (issues.length > 0) {
 }
 
 console.log(
-  `Validated ${files.length} scenario file(s), ${objectiveIds.size} learning objective(s), ${glossaryKeys.size} glossary concept(s) and ${RUNTIME_REFERENCE_CATALOG.length} runtime adapter definition(s).`,
+  `Validated ${files.length} scenario file(s), ${objectiveIds.size} learning objective(s), ${glossaryKeys.size} glossary concept(s), ${personaIds.size} learner persona(s) and ${RUNTIME_REFERENCE_CATALOG.length} runtime adapter definition(s).`,
 );

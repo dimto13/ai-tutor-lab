@@ -4,30 +4,32 @@ async function waitUntilReady(page: Page) {
   await expect(page.getByRole("status")).toContainText("Training bereit");
 }
 
-test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel durchlaufbar", async ({
+test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel durchlaufbar", async ({
   page,
 }) => {
   await page.goto("/training/copilot-basics.guided");
   await waitUntilReady(page);
 
-  await expect(page.getByText("Schritt 1 – Copilot Chat öffnen")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Verstanden – weiter" })).toHaveCount(0);
+  await expect(page.getByText("Schritt 1 – Code und Programmierung einordnen")).toBeVisible();
+  await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
+  await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Konzept verstanden" })).toHaveCount(0);
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   await expect(
-    page.getByText("Schritt 2 – Training-Session und Copilot-Unterhaltung unterscheiden"),
+    page.getByText("Schritt 5 – Training-Session und Copilot-Unterhaltung unterscheiden"),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Verstanden – weiter" }).click();
-  await expect(page.getByText("Schritt 3 – Neue Copilot-Unterhaltung beginnen")).toBeVisible();
+  await page.getByRole("button", { name: "Konzept verstanden" }).click();
+  await expect(page.getByText("Schritt 6 – Neue Copilot-Unterhaltung beginnen")).toBeVisible();
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
   await expect(page.getByText(/calculator\.py bleibt als Arbeitskontext erhalten/)).toBeVisible();
-  await expect(page.getByText("Schritt 4 – Dateikontext bewusst nutzen")).toBeVisible();
+  await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
 
   const prompt = page.getByPlaceholder("Ask Copilot...");
   await expect(page.getByText("Kontext: calculator.py")).toBeVisible();
   await prompt.fill("test");
   await prompt.press("Enter");
-  await expect(page.getByText("Schritt 4 – Dateikontext bewusst nutzen")).toBeVisible();
+  await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
   await expect(page.getByText(/erwartete Inhalt fehlt noch/)).toBeVisible();
 
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
@@ -36,19 +38,19 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
     page.getByText(/calculator\.py.*def add\(a, b\):.*noch keinen Funktionskörper/),
   ).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
-  await expect(page.getByText("Schritt 5 – Plan-Modus auswählen")).toBeVisible();
+  await expect(page.getByText("Schritt 8 – Plan-Modus auswählen")).toBeVisible();
 
   await page.getByLabel("Modus").selectOption("plan");
   await expect(page.getByLabel("Modus")).toHaveValue("plan");
-  await expect(page.getByText("Schritt 6 – Ask, Plan und Agent einordnen")).toBeVisible();
-  await page.getByRole("button", { name: "Verstanden – weiter" }).click();
+  await expect(page.getByText("Schritt 9 – Ask, Plan und Agent einordnen")).toBeVisible();
+  await page.getByRole("button", { name: "Konzept verstanden" }).click();
 
   await page.getByLabel("Modell").selectOption("gpt-5.3-codex");
   await expect(page.getByLabel("Modell")).toHaveValue("gpt-5.3-codex");
-  await expect(page.getByText("Schritt 8 – Auto-Auswahl verwenden")).toBeVisible();
+  await expect(page.getByText("Schritt 11 – Auto-Auswahl verwenden")).toBeVisible();
   await page.getByLabel("Modell").selectOption("auto");
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
-  await expect(page.getByText("Schritt 9 – Inline-Vorschlag prüfen und annehmen")).toBeVisible();
+  await expect(page.getByText("Schritt 12 – Inline-Vorschlag prüfen und annehmen")).toBeVisible();
 
   const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
   await expect(generateSuggestion).toBeVisible();
@@ -59,16 +61,42 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
   await page.getByRole("button", { name: "Annehmen" }).click();
   await expect(page.locator("textarea")).toHaveValue("def add(a, b):\n    return a + b\n");
 
-  await expect(page.getByText("Schritt 10 – MCP als Erweiterungskonzept verstehen")).toBeVisible();
-  await page.getByRole("button", { name: "Verstanden – weiter" }).click();
-  await expect(page.getByText("Schritt 11 – Agent Skills einordnen")).toBeVisible();
-  await page.getByRole("button", { name: "Verstanden – weiter" }).click();
+  await expect(page.getByText("Schritt 13 – MCP als Erweiterungskonzept verstehen")).toBeVisible();
+  await page.getByRole("button", { name: "Konzept verstanden" }).click();
+  await expect(page.getByText("Schritt 14 – Agent Skills einordnen")).toBeVisible();
+  await page.getByRole("button", { name: "Konzept verstanden" }).click();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(page.getByText("Weiterführende Quellen")).toBeVisible();
   await expect(page.getByRole("link", { name: /Copilot Chat in der IDE/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Agent Skills/ })).toBeVisible();
   await expect(page.getByText(/Ollama/i)).toHaveCount(0);
+});
+
+test("Einsteiger können Grundbegriffe lesen und direkt im Guide nachschlagen", async ({ page }) => {
+  await page.goto("/training/copilot-basics.guided");
+  await waitUntilReady(page);
+
+  await page.getByRole("button", { name: "Code: Begriffserklärung öffnen" }).first().click();
+  await expect(page.getByRole("heading", { name: "Code", exact: true })).toBeVisible();
+  await expect(page.getByText(/Excel-Formel ist ein vertrautes Beispiel/)).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
+  await expect(page.getByText("Schritt 2 – Python als Beispielsprache verstehen")).toBeVisible();
+  await page.getByRole("button", { name: "Python: Begriffserklärung öffnen" }).first().click();
+  await expect(
+    page.getByText(
+      "Python ist eine Programmiersprache mit vergleichsweise gut lesbaren Regeln. Dateien mit der Endung .py enthalten Python-Code.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
+  await expect(page.getByText("Schritt 3 – Workspace und Repository unterscheiden")).toBeVisible();
+  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
+  await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
 });
 
 test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({
