@@ -85,3 +85,21 @@ test("content loader rejects incomplete or empty Copilot seed templates", () => 
     ),
   );
 });
+
+test("content loader rejects whitespace-only Copilot seed matchers", () => {
+  assert.throws(() =>
+    parseScenario(
+      scenarioWithSeed({
+        inlineSuggestions: [{ file: "   ", text: "return 1\n" }],
+      }),
+    ),
+  );
+
+  assert.throws(() =>
+    parseScenario(
+      scenarioWithSeed({
+        chatResponses: [{ file: "example.py", promptContains: "   ", response: "answer" }],
+      }),
+    ),
+  );
+});
