@@ -51,7 +51,6 @@ epics:
     goal: Mitarbeitende lernen, was in KI-Werkzeuge darf - und können es am echten Dokument in der eigenen Firmen-Boundary prüfen
 
 tickets:
-
   # ---------------- EP-01 ----------------
   - id: AITP-1
     epic: EP-01

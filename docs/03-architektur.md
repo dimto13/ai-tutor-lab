@@ -2,14 +2,14 @@
 
 ## 3.1 Leitprinzipien
 
-| # | Prinzip | Konsequenz |
-|---|---|---|
-| A1 | Trainingslogik kennt keine React-Komponente | `packages/training-engine` hat keine UI-Abhängigkeit und ist ohne Browser testbar |
-| A2 | Szenario kennt kein DOM | Highlighting über `UiTargetRef`, aufgelöst vom Adapter |
-| A3 | Simulator kennt keine Trainingslogik | Der Simulator emittiert nur Events und beantwortet Queries |
-| A4 | Transport ist austauschbar | Heute lokaler Event-Bus, später WebSocket — gleiche `TrainingEvent`-Struktur |
-| A5 | Content ist Daten, kein Code | Szenarien als YAML/JSON im Repository, schema-validiert |
-| A6 | Jede Fähigkeit hinter einer Capability | Ein Szenario, das `terminal` braucht, prüft die Capability, nicht das Produkt |
+| #   | Prinzip                                     | Konsequenz                                                                        |
+| --- | ------------------------------------------- | --------------------------------------------------------------------------------- |
+| A1  | Trainingslogik kennt keine React-Komponente | `packages/training-engine` hat keine UI-Abhängigkeit und ist ohne Browser testbar |
+| A2  | Szenario kennt kein DOM                     | Highlighting über `UiTargetRef`, aufgelöst vom Adapter                            |
+| A3  | Simulator kennt keine Trainingslogik        | Der Simulator emittiert nur Events und beantwortet Queries                        |
+| A4  | Transport ist austauschbar                  | Heute lokaler Event-Bus, später WebSocket — gleiche `TrainingEvent`-Struktur      |
+| A5  | Content ist Daten, kein Code                | Szenarien als YAML/JSON im Repository, schema-validiert                           |
+| A6  | Jede Fähigkeit hinter einer Capability      | Ein Szenario, das `terminal` braucht, prüft die Capability, nicht das Produkt     |
 
 ## 3.2 Schichtenmodell (Zielbild MVP)
 
@@ -45,6 +45,7 @@
 Der Kern der visuellen Führung, und die Komponente mit dem größten Fehlerpotenzial.
 
 Ablauf:
+
 1. Engine setzt Schritt auf `ACTIVE` und meldet `highlightTarget`.
 2. Overlay fragt `adapter.resolveTarget(ref)` → `DOMRect`.
 3. Overlay rendert Maske (Rest abgedunkelt), Rahmen um das Ziel, Tooltip daneben.
@@ -150,13 +151,13 @@ Diese Entscheidung ist als `ADR-01` festgehalten und sollte bewusst getroffen we
 
 ## 3.7 Teststrategie
 
-| Ebene | Gegenstand | Werkzeug |
-|---|---|---|
-| Unit | State Machine, Validatoren, Scoring | Vitest, ohne DOM |
-| Contract | Jeder `RuntimeAdapter` gegen eine gemeinsame Testsuite | Vitest |
-| Content | Alle Szenarien gegen JSON-Schema + Referenzprüfung (`UiTargetRef` existiert im Adapter, `learningObjective` existiert im Katalog) | CI-Skript |
-| E2E | Ein Szenario komplett durchklicken, je Modus | Playwright |
-| Didaktik | Completion-Rate, Hinweisnutzung, Abbruchpunkte | Telemetrie-Auswertung |
+| Ebene    | Gegenstand                                                                                                                        | Werkzeug              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Unit     | State Machine, Validatoren, Scoring                                                                                               | Vitest, ohne DOM      |
+| Contract | Jeder `RuntimeAdapter` gegen eine gemeinsame Testsuite                                                                            | Vitest                |
+| Content  | Alle Szenarien gegen JSON-Schema + Referenzprüfung (`UiTargetRef` existiert im Adapter, `learningObjective` existiert im Katalog) | CI-Skript             |
+| E2E      | Ein Szenario komplett durchklicken, je Modus                                                                                      | Playwright            |
+| Didaktik | Completion-Rate, Hinweisnutzung, Abbruchpunkte                                                                                    | Telemetrie-Auswertung |
 
 Die Content-Prüfung ist die wichtigste und am leichtesten zu übersehende: Ein Szenario, das
 auf ein nicht existierendes UI-Ziel zeigt, fällt sonst erst beim Nutzer auf.

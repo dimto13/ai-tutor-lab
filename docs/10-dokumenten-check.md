@@ -11,10 +11,10 @@ Heute wird diese Frage entweder gar nicht gestellt (Risiko für die Firma) oder 
 pauschal mit Nein beantwortet (Produktivitätsverlust). Beides ist schlecht. Die Plattform
 schließt diese Lücke mit **zwei klar getrennten Bausteinen**:
 
-| Baustein | Was | Daten | Wo |
-|---|---|---|---|
-| **A — Lernmodul "Datenklassifizierung & KI-Nutzung"** | Verstehen, was öffentlich / intern / vertraulich / streng vertraulich bedeutet und was daraus für KI-Werkzeuge folgt | ausschließlich **synthetische Übungsdokumente** | normale Trainingsplattform |
-| **B — Dokumenten-Check (Prüfwerkzeug)** | Echtes Dokument hochladen → Klassifizierungsvorschlag mit Begründung → Freigabematrix je KI-Werkzeug | echte Firmendokumente | **dedizierte, mandantenverwaltete Infrastruktur** |
+| Baustein                                              | Was                                                                                                                  | Daten                                           | Wo                                                |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------- |
+| **A — Lernmodul "Datenklassifizierung & KI-Nutzung"** | Verstehen, was öffentlich / intern / vertraulich / streng vertraulich bedeutet und was daraus für KI-Werkzeuge folgt | ausschließlich **synthetische Übungsdokumente** | normale Trainingsplattform                        |
+| **B — Dokumenten-Check (Prüfwerkzeug)**               | Echtes Dokument hochladen → Klassifizierungsvorschlag mit Begründung → Freigabematrix je KI-Werkzeug                 | echte Firmendokumente                           | **dedizierte, mandantenverwaltete Infrastruktur** |
 
 Die Trennung ist das zentrale Sicherheitsprinzip: **Geübt wird an synthetischen Dokumenten,
 geprüft wird nur in der eigenen Firmen-Boundary.** Ein Trainingssystem, das echte vertrauliche
@@ -93,7 +93,7 @@ streng vertraulich) ist nur der Startpunkt. Konfigurierbar pro Mandant:
 classificationScheme:
   tenantId: firma-x
   levels:
-    - id: public          # Reihenfolge = Rangfolge
+    - id: public # Reihenfolge = Rangfolge
       label: Öffentlich
     - id: internal
       label: Intern
@@ -101,7 +101,7 @@ classificationScheme:
       label: Vertraulich
     - id: strictly_confidential
       label: Streng vertraulich
-  indicators:                       # Merkmale → Mindeststufe
+  indicators: # Merkmale → Mindeststufe
     - id: personal_data
       label: Personenbezogene Daten
       minLevel: confidential
@@ -114,25 +114,26 @@ classificationScheme:
     - id: marking_internal
       label: Kennzeichnung "intern"
       minLevel: internal
-  aiPolicy:                         # Freigabematrix
+  aiPolicy: # Freigabematrix
     - tool: m365-copilot-tenant
-      maxLevel: confidential        # bis einschließlich dieser Stufe erlaubt
+      maxLevel: confidential # bis einschließlich dieser Stufe erlaubt
     - tool: public-ai-chat
       maxLevel: public
     - tool: github-copilot
       maxLevel: internal
-  defaultOnUncertainty: escalate    # im Zweifel: höhere Stufe + Hinweis
+  defaultOnUncertainty: escalate # im Zweifel: höhere Stufe + Hinweis
 ```
 
 ### Klassifizierungs-Engine — dreistufig, konservativ
 
-| Stufe | Verfahren | Datenfluss |
-|---|---|---|
-| 1 | **Kennzeichnungserkennung** — vorhandene Labels, Fußzeilen, Vertraulichkeitsvermerke, Dokumenteigenschaften | lokal in der Mandanten-Boundary |
-| 2 | **Musterbasierte Analyse** — Personenbezug (Namen, Ausweis-/Personalnummern, Gehälter), Kundenbezug, Finanzkennzahlen, Schlüsselwortlisten des Mandanten | lokal in der Mandanten-Boundary |
-| 3 | **LLM-gestützte Bewertung** (optional) — Kontextverständnis für Grenzfälle | **nur** mit Modell innerhalb der Mandanten-Boundary (z. B. Bedrock im eigenen Konto) oder ausdrücklichem Mandanten-Opt-in |
+| Stufe | Verfahren                                                                                                                                                | Datenfluss                                                                                                                |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1     | **Kennzeichnungserkennung** — vorhandene Labels, Fußzeilen, Vertraulichkeitsvermerke, Dokumenteigenschaften                                              | lokal in der Mandanten-Boundary                                                                                           |
+| 2     | **Musterbasierte Analyse** — Personenbezug (Namen, Ausweis-/Personalnummern, Gehälter), Kundenbezug, Finanzkennzahlen, Schlüsselwortlisten des Mandanten | lokal in der Mandanten-Boundary                                                                                           |
+| 3     | **LLM-gestützte Bewertung** (optional) — Kontextverständnis für Grenzfälle                                                                               | **nur** mit Modell innerhalb der Mandanten-Boundary (z. B. Bedrock im eigenen Konto) oder ausdrücklichem Mandanten-Opt-in |
 
 Regeln:
+
 - Die Stufen 1 und 2 arbeiten deterministisch und sind allein lauffähig — der Check
   funktioniert also auch **ganz ohne LLM**.
 - Mehrere ausgelöste Merkmale → die **höchste** Mindeststufe gewinnt.

@@ -12,31 +12,31 @@ vom POC zur produktreifen Plattform.
 
 ## Ausgangslage
 
-| Artefakt | Inhalt | Status |
-|---|---|---|
-| Ursprungskonzept | Enterprise-Zielarchitektur (K8s, FastAPI, code-server, RAG-Tutor) | vorhanden |
-| POC-Spezifikation | 8-Schritt-Szenario "Git, VS Code & Copilot", simulierte Umgebung | umgesetzt |
-| Live-POC | Prototyp-Deployment (URL intern dokumentiert) | lauffähig |
-| POC-Review | Kritik: zu eng auf VS Code/Git/Copilot zugeschnitten, fehlende Trennung von Lerninhalt und Werkzeug | eingearbeitet |
-| Neu | Punktesystem / Motivationsmechanik | in `05-gamification.md` spezifiziert |
-| Neu | Datenklassifizierung & Dokumenten-Check | in `10-dokumenten-check.md` spezifiziert |
+| Artefakt          | Inhalt                                                                                              | Status                                   |
+| ----------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Ursprungskonzept  | Enterprise-Zielarchitektur (K8s, FastAPI, code-server, RAG-Tutor)                                   | vorhanden                                |
+| POC-Spezifikation | 8-Schritt-Szenario "Git, VS Code & Copilot", simulierte Umgebung                                    | umgesetzt                                |
+| Live-POC          | Prototyp-Deployment (URL intern dokumentiert)                                                       | lauffähig                                |
+| POC-Review        | Kritik: zu eng auf VS Code/Git/Copilot zugeschnitten, fehlende Trennung von Lerninhalt und Werkzeug | eingearbeitet                            |
+| Neu               | Punktesystem / Motivationsmechanik                                                                  | in `05-gamification.md` spezifiziert     |
+| Neu               | Datenklassifizierung & Dokumenten-Check                                                             | in `10-dokumenten-check.md` spezifiziert |
 
 ## Dokumentenlandkarte
 
-| Datei | Zweck | Zielgruppe |
-|---|---|---|
-| `01-vision-und-scope.md` | Warum, für wen, was gehört dazu — und was nicht | alle |
-| `02-domaenenmodell.md` | Fachliches Modell, Entitäten, TypeScript-Contracts | Entwicklung, LLM-Agenten |
-| `03-architektur.md` | Schichtenmodell, Runtime-Adapter, Event-Bus, Deployment-Stufen | Entwicklung |
-| `04-anforderungen.md` | Nummerierte funktionale/nicht-funktionale Anforderungen (FR/NFR) | Product, QA |
-| `05-gamification.md` | Punkte-, Kompetenz- und Nachweissystem | Product, Compliance |
-| `06-backlog.md` | Ursprünglicher Planungsstand — **Archiv**, siehe [`../backlog/README.md`](../backlog/README.md) | Historie |
-| `07-roadmap.md` | Meilensteine M0–M6, Reihenfolge, Abbruchkriterien | Steuerung |
-| `08-offene-entscheidungen.md` | ADRs, Risiken, offene Fragen an dich | Entscheider |
-| `09-glossar.md` | Begriffe, damit Modelle konsistent bleiben | alle |
-| `10-dokumenten-check.md` | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary | Product, Security |
-| `../prompts/model-briefing.md` | Kompakter Kontext-Prompt für beliebige LLMs | dich |
-| `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug | dich |
+| Datei                                | Zweck                                                                                           | Zielgruppe               |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
+| `01-vision-und-scope.md`             | Warum, für wen, was gehört dazu — und was nicht                                                 | alle                     |
+| `02-domaenenmodell.md`               | Fachliches Modell, Entitäten, TypeScript-Contracts                                              | Entwicklung, LLM-Agenten |
+| `03-architektur.md`                  | Schichtenmodell, Runtime-Adapter, Event-Bus, Deployment-Stufen                                  | Entwicklung              |
+| `04-anforderungen.md`                | Nummerierte funktionale/nicht-funktionale Anforderungen (FR/NFR)                                | Product, QA              |
+| `05-gamification.md`                 | Punkte-, Kompetenz- und Nachweissystem                                                          | Product, Compliance      |
+| `06-backlog.md`                      | Ursprünglicher Planungsstand — **Archiv**, siehe [`../backlog/README.md`](../backlog/README.md) | Historie                 |
+| `07-roadmap.md`                      | Meilensteine M0–M6, Reihenfolge, Abbruchkriterien                                               | Steuerung                |
+| `08-offene-entscheidungen.md`        | ADRs, Risiken, offene Fragen an dich                                                            | Entscheider              |
+| `09-glossar.md`                      | Begriffe, damit Modelle konsistent bleiben                                                      | alle                     |
+| `10-dokumenten-check.md`             | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary                            | Product, Security        |
+| `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich                     |
+| `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
 
 Die **aktuelle** Aufgabenlage steht nicht in einer Datei, sondern in den
 [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues).
@@ -47,16 +47,16 @@ Aufgaben werden **ausschließlich als GitHub Issues** geführt. Es gibt keine Ba
 mehr, die parallel gepflegt werden müsste, und keinen Sync-Mechanismus — der Issue-Text ist
 die Quelle.
 
-| Konzept | GitHub-Entsprechung |
-|---|---|
-| Ticket | Issue, Titelpräfix `AITP-x:` bei fortgeführten Tickets aus der Erstplanung |
-| Epic | Eigenes Issue mit Label `type: epic`; zugehörige Tickets sind **Sub-Issues** davon |
-| Zuordnung zum Epic | zusätzlich Label `epic: EP-xx` (für Filter und Board-Gruppierung) |
-| Priorität | Label `prio: must/should/could` |
-| Typ | Label `type: story/task/chore/spike` |
-| Meilenstein M1–M6 | GitHub Milestone |
-| Akzeptanzkriterien | Checkboxen im Issue-Body |
-| Board/Tracking | [GitHub Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3) |
+| Konzept            | GitHub-Entsprechung                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| Ticket             | Issue, Titelpräfix `AITP-x:` bei fortgeführten Tickets aus der Erstplanung             |
+| Epic               | Eigenes Issue mit Label `type: epic`; zugehörige Tickets sind **Sub-Issues** davon     |
+| Zuordnung zum Epic | zusätzlich Label `epic: EP-xx` (für Filter und Board-Gruppierung)                      |
+| Priorität          | Label `prio: must/should/could`                                                        |
+| Typ                | Label `type: story/task/chore/spike`                                                   |
+| Meilenstein M1–M6  | GitHub Milestone                                                                       |
+| Akzeptanzkriterien | Checkboxen im Issue-Body                                                               |
+| Board/Tracking     | [GitHub Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3) |
 
 **Ein neues Issue anlegen:**
 

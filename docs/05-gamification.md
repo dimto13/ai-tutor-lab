@@ -2,8 +2,8 @@
 
 ## 5.1 Zielkonflikt und Leitentscheidung
 
-Die POC-Spezifikation fordert ausdrücklich: *keine verspielte Gamification, kein
-Kinder-Lernplattform-Stil*. Gleichzeitig soll ein Punktesystem motivieren. Das ist kein
+Die POC-Spezifikation fordert ausdrücklich: _keine verspielte Gamification, kein
+Kinder-Lernplattform-Stil_. Gleichzeitig soll ein Punktesystem motivieren. Das ist kein
 Widerspruch, wenn Punkte nicht als Spielmechanik, sondern als **Kompetenzwährung** gestaltet
 werden.
 
@@ -18,20 +18,20 @@ geschätzter Minute, gerundet auf Zehner.
 
 **Modus-Multiplikator** — belohnt Eigenständigkeit:
 
-| Modus | Faktor | Begründung |
-|---|---|---|
-| Explore | ×0,5 | Orientierung ist wertvoll, aber kein Kompetenznachweis |
-| Guided | ×1,0 | Referenzwert |
-| Challenge | ×2,0 | Selbstständige Lösung, echter Nachweis |
+| Modus     | Faktor | Begründung                                             |
+| --------- | ------ | ------------------------------------------------------ |
+| Explore   | ×0,5   | Orientierung ist wertvoll, aber kein Kompetenznachweis |
+| Guided    | ×1,0   | Referenzwert                                           |
+| Challenge | ×2,0   | Selbstständige Lösung, echter Nachweis                 |
 
 **Hinweise:** Ein Szenario besteht aus **Basispunkten (70 %)** und **Bonuspunkten (30 %)**.
 Hinweise reduzieren ausschließlich den Bonus:
 
-| Genutzte Hilfestufe | Bonusabzug je Schritt |
-|---|---|
-| Stufe 1 (Hinweis) | 10 % des Schrittbonus |
-| Stufe 2 (Anweisung) | 25 % |
-| Stufe 3 (visuelle Hilfe) | 50 % |
+| Genutzte Hilfestufe      | Bonusabzug je Schritt |
+| ------------------------ | --------------------- |
+| Stufe 1 (Hinweis)        | 10 % des Schrittbonus |
+| Stufe 2 (Anweisung)      | 25 %                  |
+| Stufe 3 (visuelle Hilfe) | 50 %                  |
 
 Im **Explore-Modus gibt es keinen Abzug** — dort ist Erklärung der Zweck.
 
@@ -44,6 +44,7 @@ weil sie didaktisch interessant sind — aber Bestrafung von Versuchen widerspri
 "ausprobieren trauen".
 
 **Anti-Gaming:**
+
 - Punkte je (Szenario-ID + Version) nur einmal. Wiederholungen erscheinen als "Übung" ohne Punkte.
 - Ein Szenario, das schneller als 25 % der Schätzzeit abgeschlossen wird, wird als
   `suspect_fast` markiert und zählt nicht für Nachweise (verhindert Durchklicken).
@@ -62,12 +63,12 @@ AI Coding Assistant (Copilot) ███░░░░░░░  Novice         120
 Office Assistant (M365)       ░░░░░░░░░░  —                0 SP
 ```
 
-| Stufe | Schwelle | Bedeutung |
-|---|---|---|
-| Novice | > 0 SP | erste Berührung |
-| Advanced Beginner | ≥ 150 SP | Grundlagen geführt bewältigt |
-| Practitioner | ≥ 400 SP inkl. ≥ 1 Challenge | selbstständig arbeitsfähig |
-| Proficient | ≥ 800 SP inkl. ≥ 3 Challenges verschiedener Module | sicher, kann anleiten |
+| Stufe             | Schwelle                                           | Bedeutung                    |
+| ----------------- | -------------------------------------------------- | ---------------------------- |
+| Novice            | > 0 SP                                             | erste Berührung              |
+| Advanced Beginner | ≥ 150 SP                                           | Grundlagen geführt bewältigt |
+| Practitioner      | ≥ 400 SP inkl. ≥ 1 Challenge                       | selbstständig arbeitsfähig   |
+| Proficient        | ≥ 800 SP inkl. ≥ 3 Challenges verschiedener Module | sicher, kann anleiten        |
 
 Schwellen sind Startwerte und nach dem Pilot zu kalibrieren.
 
@@ -91,7 +92,7 @@ attestation:
   learningObjectives: [understand_vscode_ui, understand_workspace, create_file]
   productVersion: "vscode@1.x"
   issuedAt: 2026-08-08
-  validUntil: 2027-08-08          # 12 Monate
+  validUntil: 2027-08-08 # 12 Monate
   evidence:
     mode: challenge
     hintsUsed: 1

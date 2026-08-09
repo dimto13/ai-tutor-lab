@@ -1,12 +1,10 @@
 ---
 name: Aufgabe
 about: Neue Aufgabe außerhalb des generierten Backlogs
-labels: 'type: task'
+labels: "type: task"
 ---
 
 ## Beschreibung
-
-
 
 ## Akzeptanzkriterien
 
