@@ -88,6 +88,24 @@ test("terminal engine accepts the absolute workspace paths printed by pwd", () =
   ]);
 });
 
+test("terminal engine resolves a bare workspace name relative to the current directory", () => {
+  let context = baseContext();
+
+  const nested = executeTerminalCommand("cd src", context);
+  assert.equal(nested.exitCode, 0);
+  assert.equal(nested.cwd, "src");
+  context = nextContext(context, nested);
+
+  const bareWorkspace = executeTerminalCommand("cd ai-training-demo", context);
+  assert.equal(bareWorkspace.exitCode, 1);
+  assert.equal(bareWorkspace.cwd, "src");
+  assert.match(bareWorkspace.output.join("\n"), /No such file or directory/);
+
+  const explicitWorkspace = executeTerminalCommand("cd ~/ai-training-demo", context);
+  assert.equal(explicitWorkspace.exitCode, 0);
+  assert.equal(explicitWorkspace.cwd, "");
+});
+
 test("terminal engine stages and commits the actual changed files", () => {
   let context = baseContext();
 

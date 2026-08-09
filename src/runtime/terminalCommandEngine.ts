@@ -80,7 +80,7 @@ function knownDirectories(context: TerminalCommandContext): Set<string> {
 
 function resolvePath(context: TerminalCommandContext, rawPath: string): string {
   const value = rawPath.trim();
-  if (!value || value === "~" || value === "/" || value === context.workspaceRoot) return "";
+  if (!value || value === "~" || value === "/") return "";
 
   let relative = value;
   const absoluteWorkspaceRoot = `/home/user/${context.workspaceRoot}`;
