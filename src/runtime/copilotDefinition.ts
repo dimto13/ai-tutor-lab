@@ -47,6 +47,7 @@ export const COPILOT_RUNTIME_DEFINITION = {
   ],
   querySelectors: [
     "copilot.enabled",
+    "copilot.chat.open",
     "copilot.profile.id",
     "copilot.product.version",
     "copilot.conversation.id",
