@@ -23,6 +23,18 @@ export interface CopilotInlineSuggestion {
   status: CopilotSuggestionStatus;
 }
 
+interface CopilotInlineSuggestionTemplate {
+  file: string;
+  text: string;
+  whenContentEquals?: string;
+}
+
+interface CopilotChatResponseTemplate {
+  response: string;
+  file?: string;
+  promptContains?: string;
+}
+
 export interface CopilotRuntimeState {
   enabled: boolean;
   chatOpen: boolean;
@@ -53,8 +65,12 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
   setMode(mode: CopilotChatModeId): void;
   setModel(modelId: string): void;
   startConversation(): string;
-  submitPrompt(prompt: string): string;
+  submitPrompt(prompt: string, activeFileContent?: string | null): string;
   offerInlineSuggestion(file: string, text: string): CopilotInlineSuggestion;
+  offerConfiguredInlineSuggestion(
+    file: string,
+    currentContent: string,
+  ): CopilotInlineSuggestion | null;
   acceptInlineSuggestion(): string | null;
   rejectInlineSuggestion(): void;
   reset(): void;
@@ -103,6 +119,125 @@ function initialState(profile: CopilotProductProfile): CopilotRuntimeState {
 
 function hasOwn(seed: RuntimeSeed, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(seed, key);
+}
+
+function inlineSuggestionTemplatesFromSeed(seed?: RuntimeSeed): CopilotInlineSuggestionTemplate[] {
+  if (!seed || !hasOwn(seed, "inlineSuggestions")) return [];
+  const value = seed["inlineSuggestions"];
+  if (!Array.isArray(value)) {
+    throw new TypeError("Invalid Copilot runtime seed field: inlineSuggestions");
+  }
+
+  return value.map((item) => {
+    if (!isRecord(item)) {
+      throw new TypeError("Invalid Copilot inline suggestion seed");
+    }
+    const file = item["file"];
+    const text = item["text"];
+    const whenContentEquals = item["whenContentEquals"];
+    if (
+      typeof file !== "string" ||
+      !file.trim() ||
+      typeof text !== "string" ||
+      !text ||
+      (whenContentEquals !== undefined && typeof whenContentEquals !== "string")
+    ) {
+      throw new TypeError("Invalid Copilot inline suggestion seed");
+    }
+    return {
+      file,
+      text,
+      ...(whenContentEquals === undefined ? {} : { whenContentEquals }),
+    };
+  });
+}
+
+function chatResponseTemplatesFromSeed(seed?: RuntimeSeed): CopilotChatResponseTemplate[] {
+  if (!seed || !hasOwn(seed, "chatResponses")) return [];
+  const value = seed["chatResponses"];
+  if (!Array.isArray(value)) {
+    throw new TypeError("Invalid Copilot runtime seed field: chatResponses");
+  }
+
+  return value.map((item) => {
+    if (!isRecord(item)) throw new TypeError("Invalid Copilot chat response seed");
+    const response = item["response"];
+    const file = item["file"];
+    const promptContains = item["promptContains"];
+    if (
+      typeof response !== "string" ||
+      !response ||
+      (file !== undefined && (typeof file !== "string" || !file.trim())) ||
+      (promptContains !== undefined &&
+        (typeof promptContains !== "string" || !promptContains.trim()))
+    ) {
+      throw new TypeError("Invalid Copilot chat response seed");
+    }
+    return {
+      response,
+      ...(file === undefined ? {} : { file }),
+      ...(promptContains === undefined ? {} : { promptContains }),
+    };
+  });
+}
+
+function describeActiveFile(activeFile: string, activeFileContent?: string | null): string {
+  if (activeFileContent === undefined || activeFileContent === null) {
+    return `Die aktuell geöffnete ${activeFile} ist als Dateikontext ausgewählt. Ihr Inhalt wurde dieser Anfrage jedoch nicht übergeben.`;
+  }
+
+  const nonEmptyLines = activeFileContent
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0);
+
+  if (nonEmptyLines.length === 0) {
+    return `Die aktuell geöffnete ${activeFile} ist derzeit leer.`;
+  }
+
+  const firstLine = nonEmptyLines[0]?.trim() ?? "";
+  const isBarePythonFunction = /^def\s+[A-Za-z_]\w*\([^)]*\):$/.test(firstLine);
+  if (isBarePythonFunction && nonEmptyLines.length === 1) {
+    return `Die aktuell geöffnete ${activeFile} enthält die Funktionsdefinition \`${firstLine}\`, aber noch keinen Funktionskörper.`;
+  }
+
+  const preview = nonEmptyLines
+    .slice(0, 2)
+    .map((line) => `\`${line.trim()}\``)
+    .join(" und ");
+  const lineLabel = nonEmptyLines.length === 1 ? "nicht-leere Zeile" : "nicht-leere Zeilen";
+  return `Die aktuell geöffnete ${activeFile} enthält ${nonEmptyLines.length} ${lineLabel}. Im aktuellen Inhalt sehe ich ${preview}.`;
+}
+
+function createAssistantResponse(
+  prompt: string,
+  activeFile: string | null,
+  activeFileContent: string | null | undefined,
+  responseTemplates: CopilotChatResponseTemplate[],
+): string {
+  const normalizedPrompt = prompt.toLowerCase();
+  const configuredResponse = responseTemplates.find(
+    (entry) =>
+      (entry.file === undefined || entry.file === activeFile) &&
+      (entry.promptContains === undefined ||
+        normalizedPrompt.includes(entry.promptContains.toLowerCase())),
+  );
+  if (configuredResponse) return configuredResponse.response;
+
+  const asksAboutFile =
+    normalizedPrompt.includes("datei") ||
+    normalizedPrompt.includes("kontext") ||
+    normalizedPrompt.includes("was macht") ||
+    normalizedPrompt.includes("erklär") ||
+    normalizedPrompt.includes("erklaer");
+
+  if (activeFile && asksAboutFile) {
+    return describeActiveFile(activeFile, activeFileContent);
+  }
+  if (activeFile) {
+    return `Ich berücksichtige ${activeFile} als aktiven Dateikontext. Formuliere konkret, was du zu dieser Datei verstehen oder ändern möchtest.`;
+  }
+  return "Aktuell ist keine Datei als Kontext geöffnet. Öffne eine relevante Datei, damit ich meine Antwort auf diesen Arbeitsstand beziehen kann.";
 }
 
 function messagesFromSeed(seed: RuntimeSeed): CopilotChatMessage[] {
@@ -219,6 +354,8 @@ export function createCopilotRuntime(
   let state = initialState(profile);
   let mountedInitialState: CopilotRuntimeState | null = null;
   let mountedContainer: ParentNode | null = null;
+  let inlineSuggestionTemplates: CopilotInlineSuggestionTemplate[] = [];
+  let chatResponseTemplates: CopilotChatResponseTemplate[] = [];
   let activeSessionId = createIdentifier("copilot-session");
   const eventListeners = new Set<EventListener>();
   const stateListeners = new Set<StateListener>();
@@ -257,6 +394,8 @@ export function createCopilotRuntime(
     async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
       mountedContainer = container;
       activeSessionId = createIdentifier("copilot-session");
+      inlineSuggestionTemplates = inlineSuggestionTemplatesFromSeed(seed);
+      chatResponseTemplates = chatResponseTemplatesFromSeed(seed);
       mountedInitialState = stateFromSeed(profile, seed);
       replaceState(mountedInitialState, "mount");
     },
@@ -264,6 +403,8 @@ export function createCopilotRuntime(
     async unmount(): Promise<void> {
       mountedContainer = null;
       mountedInitialState = null;
+      inlineSuggestionTemplates = [];
+      chatResponseTemplates = [];
     },
 
     subscribe(handler: EventListener): () => void {
@@ -356,7 +497,7 @@ export function createCopilotRuntime(
       return conversationId;
     },
 
-    submitPrompt(rawPrompt: string): string {
+    submitPrompt(rawPrompt: string, activeFileContent?: string | null): string {
       const prompt = rawPrompt.trim();
       if (!prompt) throw new TypeError("Copilot prompt must not be empty");
       if (!state.enabled) throw new Error("Copilot runtime is disabled");
@@ -366,8 +507,12 @@ export function createCopilotRuntime(
         role: "user",
         content: prompt,
       };
-      const contextLabel = state.contextActiveFile ?? "kein geöffneter Dateikontext";
-      const responseText = `Simulierte Copilot-Antwort mit Kontext ${contextLabel}: ${prompt}`;
+      const responseText = createAssistantResponse(
+        prompt,
+        state.contextActiveFile,
+        activeFileContent,
+        chatResponseTemplates,
+      );
       const assistantMessage: CopilotChatMessage = {
         id: createIdentifier("copilot-message"),
         role: "assistant",
@@ -401,6 +546,19 @@ export function createCopilotRuntime(
       replaceState({ ...state, inlineSuggestion: suggestion }, "mutation");
       emit("ai.suggestion.shown", { suggestionId: suggestion.id, file, text });
       return { ...suggestion };
+    },
+
+    offerConfiguredInlineSuggestion(
+      file: string,
+      currentContent: string,
+    ): CopilotInlineSuggestion | null {
+      const template = inlineSuggestionTemplates.find(
+        (entry) =>
+          entry.file === file &&
+          (entry.whenContentEquals === undefined || entry.whenContentEquals === currentContent),
+      );
+      if (!template) return null;
+      return adapter.offerInlineSuggestion(file, template.text);
     },
 
     acceptInlineSuggestion(): string | null {

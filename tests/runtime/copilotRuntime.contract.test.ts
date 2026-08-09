@@ -115,6 +115,57 @@ test("copilotRuntime: emits accept and reject events for inline suggestions", as
   }
 });
 
+test("copilotRuntime: configured inline suggestions come from runtime seed and guard the source state", async () => {
+  const runtime = createCopilotRuntime();
+  await runtime.mount(createContainer(), {
+    inlineSuggestions: [
+      {
+        file: "example.py",
+        whenContentEquals: "def multiply(a, b):\n",
+        text: "    return a * b\n",
+      },
+    ],
+  });
+
+  try {
+    assert.equal(runtime.offerConfiguredInlineSuggestion("example.py", "x = 1\n"), null);
+    const suggestion = runtime.offerConfiguredInlineSuggestion(
+      "example.py",
+      "def multiply(a, b):\n",
+    );
+    assert.equal(suggestion?.text, "    return a * b\n");
+    assert.equal(runtime.acceptInlineSuggestion(), "    return a * b\n");
+  } finally {
+    await runtime.unmount();
+  }
+});
+
+test("copilotRuntime: configured chat responses come from runtime seed", async () => {
+  const runtime = createCopilotRuntime();
+  await runtime.mount(createContainer(), {
+    chatResponses: [
+      {
+        file: "example.py",
+        promptContains: "multipl",
+        response: "def multiply(a, b):\n    return a * b",
+      },
+    ],
+  });
+
+  try {
+    runtime.setContextActiveFile("example.py");
+    const response = runtime.submitPrompt(
+      "Erstelle eine Funktion zum Multiplizieren zweier Zahlen.",
+    );
+    assert.equal(response, "def multiply(a, b):\n    return a * b");
+
+    const fallback = runtime.submitPrompt("Was macht die aktuell geöffnete Datei?", "x = 1\n");
+    assert.match(fallback, /x = 1/);
+  } finally {
+    await runtime.unmount();
+  }
+});
+
 test("copilotRuntime: chat response and event carry the opened file context", async () => {
   const payloads: Array<Record<string, unknown>> = [];
   const unsubscribe = copilotRuntime.subscribe((event) => {

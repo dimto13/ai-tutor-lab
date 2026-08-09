@@ -17,11 +17,18 @@
       "files": ["README.md", "calculator.py"],
       "contents": {
         "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
-        "calculator.py": "def add(a, b):\n    pass\n"
+        "calculator.py": "def add(a, b):\n"
       },
       "openTabs": ["calculator.py"],
       "activeFile": "calculator.py",
-      "activePanel": null
+      "activePanel": null,
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "def add(a, b):\n",
+          "text": "    return a + b\n"
+        }
+      ]
     }
   },
   "estimatedMinutes": 12,
@@ -129,11 +136,12 @@
       "validation": {
         "kind": "event",
         "type": "copilot.prompt.submitted",
-        "match": { "activeFile": "calculator.py" }
+        "match": { "activeFile": "calculator.py" },
+        "contains": { "prompt": "aktuell geöffnete Datei" }
       },
       "highlightTarget": "copilot.chat.prompt",
-      "highlightTooltip": "Stelle eine Frage im aktuellen Dateikontext.",
-      "successMessage": "Die Anfrage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
+      "highlightTooltip": "Stelle die geforderte Frage im aktuellen Dateikontext.",
+      "successMessage": "Die konkrete Frage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
     },
     {
       "id": "select-plan-mode",
@@ -219,17 +227,18 @@
       "helpLevels": [
         "Im unteren Teil des Copilot-Panels findest du Inline-Vorschlag.",
         "Klicke zuerst Vorschlag erzeugen und danach Annehmen.",
-        "Der Inline-Vorschlag und die Annehmen-Aktion werden im Copilot-Bereich angezeigt."
+        "Die Schaltfläche Vorschlag erzeugen wird hervorgehoben. Danach prüfst und übernimmst du den erzeugten Vorschlag."
       ],
       "expectedEvent": "ai.suggestion.accepted",
       "validation": {
         "kind": "event",
         "type": "ai.suggestion.accepted",
-        "match": { "file": "calculator.py" }
+        "match": { "file": "calculator.py" },
+        "contains": { "text": "return a + b" }
       },
-      "highlightTarget": "copilot.inline.suggestion",
-      "highlightTooltip": "Prüfe den vorgeschlagenen Code und übernimm ihn bewusst.",
-      "successMessage": "Inline-Vorschlag angenommen und in calculator.py übernommen."
+      "highlightTarget": "copilot.inline.generate",
+      "highlightTooltip": "Erzeuge zuerst den Inline-Vorschlag und übernimm ihn danach bewusst.",
+      "successMessage": "Inline-Vorschlag angenommen und calculator.py sinnvoll vervollständigt."
     },
     {
       "id": "understand-mcp",

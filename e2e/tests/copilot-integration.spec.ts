@@ -42,14 +42,20 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
   await copilotPrompt.fill("Erkläre den aktiven Dateikontext");
   await copilotPrompt.press("Enter");
-  await expect(page.getByText(/Simulierte Copilot-Antwort mit Kontext hello\.py/)).toBeVisible();
+  await expect(page.getByText(/hello\.py ist derzeit leer/)).toBeVisible();
+  await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
+
+  await copilotPrompt.fill("Erstelle eine Python-Funktion zum Addieren zweier Zahlen.");
+  await copilotPrompt.press("Enter");
+  await expect(page.getByText(/def add\(a, b\):/)).toBeVisible();
+  await expect(page.getByText(/return a \+ b/)).toBeVisible();
 
   await page.getByRole("button", { name: "Vorschlag erzeugen" }).click();
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
-    "def add(a, b):",
+    'print("Hello from Copilot")',
   );
   await page.getByRole("button", { name: "Annehmen" }).click();
-  await expect(page.locator("textarea")).toHaveValue(/def add\(a, b\):/);
+  await expect(page.locator("textarea")).toHaveValue('print("Hello from Copilot")\n');
 });
 
 test("Copilot kann deaktiviert werden, ohne den VS-Code-Simulator zu deaktivieren", async ({
