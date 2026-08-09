@@ -1,0 +1,78 @@
+name: AITP-23 State Fix
+
+on:
+  push:
+    branches:
+      - feat/aitp-23-terminal-simulator
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feat/aitp-23-terminal-simulator
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --install-strategy=nested
+      - name: Patch committed baseline inference
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/runtime/vscodeRuntime.ts')
+          text = path.read_text()
+
+          old_migration = '''  const committedContents =
+            candidate.committedContents === undefined && isStringArray(trackedFiles)
+              ? Object.fromEntries(trackedFiles.map((file) => [file, contents[file] ?? ""]))
+              : candidate.committedContents;'''
+          new_migration = '''  const committedContents =
+            candidate.committedContents === undefined &&
+            isStringArray(trackedFiles) &&
+            isStringArray(scmChangedFiles)
+              ? Object.fromEntries(
+                  trackedFiles
+                    .filter((file) => !scmChangedFiles.includes(file))
+                    .map((file) => [file, contents[file] ?? ""]),
+                )
+              : candidate.committedContents;'''
+
+          old_seed = '''  let committedContents = Object.fromEntries(
+            trackedFiles.map((file) => [file, contents[file] ?? ""]),
+          );'''
+          new_seed = '''  let committedContents = Object.fromEntries(
+            trackedFiles
+              .filter((file) => !scmChangedFiles.includes(file))
+              .map((file) => [file, contents[file] ?? ""]),
+          );'''
+
+          if old_migration not in text:
+              raise SystemExit('migration snippet not found')
+          if old_seed not in text:
+              raise SystemExit('seed snippet not found')
+
+          text = text.replace(old_migration, new_migration, 1)
+          text = text.replace(old_seed, new_seed, 1)
+          path.write_text(text)
+          PY
+      - name: Format
+        run: npx prettier --write src/runtime/vscodeRuntime.ts
+      - name: Verify runtime contracts
+        run: npm run test:runtime-contracts
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/runtime/vscodeRuntime.ts
+          git commit -m "fix: preserve unknown baseline for seeded SCM changes"
+          git push origin HEAD:feat/aitp-23-terminal-simulator
