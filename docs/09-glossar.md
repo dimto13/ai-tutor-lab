@@ -32,6 +32,9 @@ Verbindliche Begriffe. Modelle und Mitarbeitende sollen dieselben Wörter benutz
 
 | Begriff                                                    | Einfache Erklärung                                                                                                                                               |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Code**                                                   | Genaue, schriftliche Arbeitsanweisungen für einen Computer; eine Excel-Formel ist ein vertrautes Beispiel                                                        |
+| **Programmierung**                                         | Eine Aufgabe in eindeutige, prüfbare Schritte zerlegen und diese als Code aufschreiben                                                                           |
+| **Python**                                                 | Eine Programmiersprache mit gut lesbaren Regeln; Dateien mit der Endung `.py` enthalten Python-Code                                                              |
 | **Workspace**                                              | Der Arbeitskontext von VS Code: ein oder mehrere Ordner plus eigene Einstellungen, Empfehlungen und Konfigurationen                                              |
 | **Ordner öffnen**                                          | Nur ein Verzeichnis öffnen — ohne Workspace-Einstellungen                                                                                                        |
 | **Repository**                                             | Ein Projekt inklusive seiner vollständigen Änderungsgeschichte                                                                                                   |
@@ -47,6 +50,24 @@ Verbindliche Begriffe. Modelle und Mitarbeitende sollen dieselben Wörter benutz
 | **Öffentlich / Intern / Vertraulich / Streng vertraulich** | Aufsteigende Vertraulichkeitsstufen: frei teilbar → nur firmenintern → nur berechtigter Personenkreis → strengster Schutz (z. B. Gehälter, Geschäftsgeheimnisse) |
 | **Freigabematrix**                                         | Tabelle, die je KI-Werkzeug zeigt, bis zu welcher Stufe Dokumente hinein dürfen                                                                                  |
 
-Diese Tabelle ist die Quelle für `AITP-93` und für Tutor-Stufe 1. Jeder Begriff bekommt dort
-zusätzlich eine Vertiefung und eine Verknüpfung zu einem `UiTargetRef`, damit er im
-Explore-Modus anklickbar ist.
+Die ausführliche und maschinenlesbare Quelle liegt in `content/glossary/de.json`. Dort ist jeder
+Begriff einer oder mehreren `Technology`-IDs zugeordnet und erhält eine einfache sowie eine
+technische Erklärung. Oberflächenbegriffe können zusätzlich mit einem `UiTargetRef` verbunden sein.
+
+## Persona und Begriffsvermittlung
+
+Lernenden-Personas werden als Daten in `content/personas/*.json` gepflegt. Ein Szenario referenziert
+die Persona über `audience.personaId` und listet unter `audience.glossaryConcepts` genau die Begriffe,
+die im Guide kontextuell als abrufbare Erklärungen erscheinen. `audience.introductionStepIds`
+kennzeichnet einen zusammenhängenden Block optionaler Erklärungsschritte. Der aktuelle Einstieg für
+programmiernahe Grundlagen verwendet die Persona `non-programmer`: Office-Erfahrung und einfache
+Excel-Formeln werden vorausgesetzt, Programmiererfahrung dagegen nicht.
+
+Die Verantwortungsgrenze ist verbindlich:
+
+- **Proaktive Einführung ist Content.** Optionale Erklärungsschritte führen notwendige Begriffe vor
+  ihrer ersten praktischen Verwendung ein. Erfahrene Lernende können den zusammenhängenden
+  Einführungsblock ausdrücklich überspringen.
+- **Reaktive Erklärung ist Tutor-Funktion.** Rückfragen wie „Was ist ein Workspace?“ werden aus
+  demselben Glossar deterministisch beantwortet. Der Tutor erfindet keine zusätzlichen
+  Bedienhandlungen und ersetzt nicht die Einführungssequenz.

@@ -9,22 +9,36 @@ import {
   Lightbulb,
   RotateCcw,
   Search,
+  SkipForward,
   Target,
 } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
 import { TutorChat } from "@/components/tutor/TutorChat";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { getGlossaryConceptByKey, getGlossaryConceptForTarget } from "@/lib/glossary";
+import { GlossaryText } from "@/components/training/GlossaryText";
 
 export function GuidePanel() {
-  const { scenario, mode, progress, feedback, helpLevel, revealHelp, completeExplanationStep } =
-    useTraining();
+  const {
+    scenario,
+    mode,
+    progress,
+    feedback,
+    helpLevel,
+    revealHelp,
+    completeExplanationStep,
+    skipOptionalSteps,
+  } = useTraining();
   const step = scenario.steps.find((candidate) => candidate.id === progress.activeStepId);
   const [showWhy, setShowWhy] = useState(false);
   const stepNumber = step
     ? scenario.steps.findIndex((candidate) => candidate.id === step.id) + 1
     : scenario.steps.length;
   const isExplanation = step?.stepType === "explanation";
+  const isIntroduction = step
+    ? (scenario.audience?.introductionStepIds?.includes(step.id) ?? false)
+    : false;
+  const glossaryConceptKeys = scenario.audience?.glossaryConcepts ?? [];
 
   return (
     <aside className="flex w-[380px] shrink-0 flex-col border-l border-border bg-panel">
@@ -45,7 +59,7 @@ export function GuidePanel() {
                   Schritt {stepNumber} – {step.title}
                 </h2>
                 <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-                  {step.description}
+                  <GlossaryText conceptKeys={glossaryConceptKeys}>{step.description}</GlossaryText>
                 </p>
 
                 <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
@@ -53,20 +67,33 @@ export function GuidePanel() {
                     {isExplanation ? "Konzept" : "Deine Aufgabe"}
                   </p>
                   <p className="mt-1 text-[13.5px] leading-relaxed text-foreground">
-                    {step.instruction}
+                    <GlossaryText conceptKeys={glossaryConceptKeys}>
+                      {step.instruction}
+                    </GlossaryText>
                   </p>
                 </div>
 
                 {feedback ? <Feedback feedback={feedback} /> : null}
 
                 {isExplanation ? (
-                  <button
-                    type="button"
-                    onClick={completeExplanationStep}
-                    className="mt-4 w-full rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent/20"
-                  >
-                    Verstanden – weiter
-                  </button>
+                  <div className="mt-4 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={completeExplanationStep}
+                      className="w-full rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent/20"
+                    >
+                      {isIntroduction ? "Grundbegriff verstanden" : "Konzept verstanden"}
+                    </button>
+                    {isIntroduction && step.optional ? (
+                      <button
+                        type="button"
+                        onClick={skipOptionalSteps}
+                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+                      >
+                        <SkipForward className="h-3.5 w-3.5" /> Grundbegriffe überspringen
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -95,7 +122,7 @@ export function GuidePanel() {
 
                 {showWhy ? (
                   <p className="mt-3 rounded-lg border border-border bg-card p-3 text-[13px] leading-relaxed text-muted-foreground">
-                    {step.why}
+                    <GlossaryText conceptKeys={glossaryConceptKeys}>{step.why}</GlossaryText>
                   </p>
                 ) : null}
 
@@ -109,7 +136,9 @@ export function GuidePanel() {
                         <span className="mr-1.5 text-[11px] font-semibold uppercase tracking-wider text-warning">
                           Hilfe {index + 1}
                         </span>
-                        <span className="text-muted-foreground">{hint}</span>
+                        <span className="text-muted-foreground">
+                          <GlossaryText conceptKeys={glossaryConceptKeys}>{hint}</GlossaryText>
+                        </span>
                       </li>
                     ))}
                   </ol>
@@ -130,6 +159,8 @@ export function GuidePanel() {
                     <li key={scenarioStep.id} className="flex items-center gap-2 text-[13px]">
                       {status === "COMPLETED" ? (
                         <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                      ) : status === "SKIPPED" ? (
+                        <SkipForward className="h-4 w-4 shrink-0 text-muted-foreground" />
                       ) : status === "ACTIVE" || status === "VALIDATION_FAILED" ? (
                         <CircleDot className="h-4 w-4 shrink-0 text-accent" />
                       ) : (
@@ -139,12 +170,15 @@ export function GuidePanel() {
                         className={
                           status === "COMPLETED"
                             ? "text-muted-foreground line-through decoration-muted-foreground/40"
-                            : status === "ACTIVE" || status === "VALIDATION_FAILED"
-                              ? "font-medium text-foreground"
-                              : "text-muted-foreground"
+                            : status === "SKIPPED"
+                              ? "text-muted-foreground"
+                              : status === "ACTIVE" || status === "VALIDATION_FAILED"
+                                ? "font-medium text-foreground"
+                                : "text-muted-foreground"
                         }
                       >
                         {index + 1}. {scenarioStep.title}
+                        {status === "SKIPPED" ? " (übersprungen)" : ""}
                       </span>
                     </li>
                   );
