@@ -1,5 +1,5 @@
-import glossaryData from "../../content/glossary/de.json";
-import productGlossaryData from "../../content/glossary/products.de.json";
+import glossaryData from "../../content/glossary/de.json" with { type: "json" };
+import productGlossaryData from "../../content/glossary/products.de.json" with { type: "json" };
 import type { TechnologyId } from "../types/training";
 
 export interface GlossaryConcept {
