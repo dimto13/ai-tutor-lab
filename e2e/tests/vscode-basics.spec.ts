@@ -100,6 +100,12 @@ test("Guided: schmaler Viewport hält Kopfzeile, Explorer, Editor und Highlight 
   await page.getByRole("button", { name: "Guide anzeigen" }).click();
   await expectGuidedStep(page, 1, "Explorer kennenlernen");
   await expect(page.getByRole("button", { name: "Arbeitsbereich anzeigen" })).toBeVisible();
+  await expect(page.getByTestId("highlight-frame")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await expect(page.getByRole("button", { name: "Explorer", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Arbeitsbereich anzeigen" })).toBeHidden();
+  await expect(page.getByTestId("highlight-frame")).toBeVisible();
 });
 
 test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bewertet", async ({

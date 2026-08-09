@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen, GraduationCap, LogOut, Eye, EyeOff, Monitor } from "lucide-react";
 import { TrainingProvider, useTraining } from "@/state/trainingStore";
 import { Workspace } from "@/components/workspace/Workspace";
 import { GuidePanel } from "@/components/training/GuidePanel";
 import { CompletionScreen } from "@/components/training/CompletionScreen";
 import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
+
+const DESKTOP_LAYOUT_MEDIA_QUERY = "(min-width: 64rem)";
 
 export const Route = createFileRoute("/training/$scenarioId")({
   head: () => ({
@@ -55,6 +57,16 @@ function TrainingLayout() {
     ? scenario.steps.findIndex((s) => s.id === step.id) + 1
     : scenario.steps.length;
   const exploreTotal = scenario.exploreTargets?.length ?? 0;
+
+  useEffect(() => {
+    const desktopLayout = window.matchMedia(DESKTOP_LAYOUT_MEDIA_QUERY);
+    const restoreWorkspaceOnDesktop = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) setMobileSurface("workspace");
+    };
+    restoreWorkspaceOnDesktop(desktopLayout);
+    desktopLayout.addEventListener("change", restoreWorkspaceOnDesktop);
+    return () => desktopLayout.removeEventListener("change", restoreWorkspaceOnDesktop);
+  }, []);
 
   return (
     <div
