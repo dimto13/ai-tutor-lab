@@ -4,6 +4,52 @@ async function waitUntilReady(page: Page) {
   await expect(page.getByRole("status")).toContainText("Training bereit");
 }
 
+const legacyGuidedStepIds = [
+  "open-copilot-chat",
+  "session-vs-conversation",
+  "new-conversation",
+  "use-file-context",
+  "select-plan-mode",
+  "understand-chat-modes",
+  "select-explicit-model",
+  "select-auto-model",
+  "accept-inline-suggestion",
+  "understand-mcp",
+  "understand-agent-skills",
+] as const;
+
+test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate((stepIds) => {
+    localStorage.setItem(
+      "ai-training-lab:copilot-basics.guided:v2",
+      JSON.stringify({
+        statuses: Object.fromEntries(stepIds.map((stepId) => [stepId, "COMPLETED"])),
+        activeStepId: null,
+        startedAt: 1_786_280_000_000,
+        finishedAt: 1_786_283_600_000,
+        challengeOutcome: null,
+        hintsUsed: 2,
+        mistakes: 1,
+        lastAction: null,
+        exploredTargets: [],
+        lastInspectedRef: null,
+      }),
+    );
+  }, legacyGuidedStepIds);
+
+  await page.goto("/training/copilot-basics.guided");
+  await waitUntilReady(page);
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(page.getByText("14 von 14", { exact: true })).toBeVisible();
+  await expect(page.getByText("140", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Training erneut starten" }).click();
+  await expect(page.getByText("Schritt 1 – Code und Programmierung einordnen")).toBeVisible();
+});
+
 test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel durchlaufbar", async ({
   page,
 }) => {
@@ -15,6 +61,21 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
   await expect(page.getByRole("button", { name: "Konzept verstanden" })).toHaveCount(0);
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
+  const chat = page.locator('[data-highlight="copilot.chat"]');
+  await expect(chat).toBeVisible();
+  expect(
+    await chat.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + 50);
+      return hit !== null && element.contains(hit);
+    }),
+  ).toBe(true);
+  await page.setViewportSize({ width: 323, height: 646 });
+  const narrowChatBox = await chat.boundingBox();
+  expect(narrowChatBox).not.toBeNull();
+  expect(narrowChatBox!.x).toBeGreaterThanOrEqual(0);
+  expect(narrowChatBox!.x + narrowChatBox!.width).toBeLessThanOrEqual(323);
+  await page.setViewportSize({ width: 1280, height: 720 });
   await expect(
     page.getByText("Schritt 5 – Training-Session und Copilot-Unterhaltung unterscheiden"),
   ).toBeVisible();

@@ -129,7 +129,7 @@ export async function loadScenarioReferences(
       environment?: {
         productId?: unknown;
         runtimeAdapterId?: unknown;
-        integrationRuntimeAdapterIds?: unknown;
+        integrations?: unknown;
       };
     };
     const id = requireString(input.id, `${file}.id`);
@@ -138,10 +138,19 @@ export async function loadScenarioReferences(
       input.environment?.runtimeAdapterId,
       `${file}.environment.runtimeAdapterId`,
     );
-    const integrations = input.environment?.integrationRuntimeAdapterIds ?? [];
-    if (!Array.isArray(integrations) || !integrations.every((value) => typeof value === "string")) {
-      throw new Error(`${file}.environment.integrationRuntimeAdapterIds must be a string array`);
+    const integrations = input.environment?.integrations ?? [];
+    if (!Array.isArray(integrations)) {
+      throw new Error(`${file}.environment.integrations must be an array`);
     }
+    const integrationRuntimeAdapterIds = integrations.map((integration, index) => {
+      if (!integration || typeof integration !== "object" || Array.isArray(integration)) {
+        throw new Error(`${file}.environment.integrations[${index}] must be an object`);
+      }
+      return requireString(
+        (integration as { runtimeAdapterId?: unknown }).runtimeAdapterId,
+        `${file}.environment.integrations[${index}].runtimeAdapterId`,
+      );
+    });
     if (scenarios.has(id)) throw new Error(`duplicate scenario id ${id}`);
 
     scenarios.set(id, {
@@ -149,7 +158,7 @@ export async function loadScenarioReferences(
       filePath: toRepositoryPath(filePath),
       productId,
       runtimeAdapterId,
-      integrationRuntimeAdapterIds: [...integrations],
+      integrationRuntimeAdapterIds,
     });
   }
 

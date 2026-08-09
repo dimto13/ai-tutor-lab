@@ -1,0 +1,197 @@
+{
+  "id": "artifact-preview-foundation.guided",
+  "moduleId": "runtime-foundations",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Artefakt-Vorschau – technischer Nachweis",
+  "description": "Prüfe die generische Ergebnisfläche mit HTML-, Tabellen- und Datenartefakten sowie einer deterministischen Revision.",
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["workflow-demo"],
+      "files": ["README.md"],
+      "activeFile": "README.md",
+      "openTabs": ["README.md"],
+      "artifactPreview": {
+        "activeArtifactId": "summary-page",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "summary-page",
+            "type": "html",
+            "title": "Team-Übersicht",
+            "description": "Sicher gerenderte HTML-Vorschau ohne Skriptausführung.",
+            "html": "<section><h1>Projektstatus</h1><p>Die Vorbereitung läuft planmäßig.</p><ul><li>Konzept geprüft</li><li>Review offen</li></ul></section>"
+          },
+          {
+            "id": "status-table",
+            "type": "table",
+            "title": "Status-Tabelle",
+            "description": "Tabellenzustand mit sichtbarer Formelmetadaten-Referenz.",
+            "columns": [
+              {
+                "key": "team",
+                "label": "Team"
+              },
+              {
+                "key": "open",
+                "label": "Offene Punkte"
+              },
+              {
+                "key": "status",
+                "label": "Status"
+              }
+            ],
+            "rows": [
+              {
+                "team": "Nord",
+                "open": 2,
+                "status": "In Arbeit"
+              },
+              {
+                "team": "Süd",
+                "open": 0,
+                "status": "Bereit"
+              }
+            ],
+            "formulas": {
+              "open": "COUNTIF(Status;Offen)"
+            }
+          },
+          {
+            "id": "structured-result",
+            "type": "data",
+            "title": "Strukturiertes Ergebnis",
+            "description": "Lesbare Datenstruktur ohne Codeausführung.",
+            "value": {
+              "project": "Workflow Demo",
+              "verified": false,
+              "nextActions": ["Review abschließen", "Ergebnis freigeben"]
+            }
+          }
+        ],
+        "revisions": [
+          {
+            "id": "summary-page-v2",
+            "artifactId": "summary-page",
+            "label": "Freigabestatus ergänzen",
+            "next": {
+              "id": "summary-page",
+              "type": "html",
+              "title": "Team-Übersicht",
+              "description": "Überarbeitete, weiterhin isolierte HTML-Vorschau.",
+              "html": "<section><h1>Projektstatus</h1><p>Die Vorbereitung läuft planmäßig.</p><ul><li>Konzept geprüft</li><li>Review abgeschlossen</li><li>Freigabe bereit</li></ul></section>"
+            }
+          }
+        ]
+      }
+    },
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ]
+  },
+  "estimatedMinutes": 5,
+  "points": 40,
+  "steps": [
+    {
+      "id": "select-html-artifact",
+      "title": "HTML-Artefakt auswählen",
+      "description": "Die Ergebnisfläche kann unterschiedliche Artefakttypen innerhalb derselben Runtime darstellen.",
+      "instruction": "Wähle in der Artefakt-Vorschau die Team-Übersicht aus.",
+      "why": "Die Auswahl ist ein semantischer Runtime-Zustand und nicht an eine bestimmte React-Komponente gekoppelt.",
+      "helpLevels": [
+        "Die Artefakte erscheinen als Reiter im Kopf der Ergebnisfläche.",
+        "Klicke auf „Team-Übersicht“.",
+        "Die Artefakt-Auswahl am oberen Rand der Vorschau wird hervorgehoben."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "summary-page",
+          "artifactType": "html"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector",
+      "highlightTooltip": "Wähle das HTML-Artefakt über seine semantische ID aus.",
+      "successMessage": "Das HTML-Artefakt ist als aktives Ergebnis ausgewählt."
+    },
+    {
+      "id": "switch-to-source",
+      "title": "Vorschau und Quelltext unterscheiden",
+      "description": "HTML wird entweder isoliert gerendert oder als unveränderter Quelltext angezeigt.",
+      "instruction": "Wechsle von der gerenderten Vorschau in den Quelltext.",
+      "why": "Die getrennte Quelltextansicht macht nachvollziehbar, was erzeugt wurde, ohne den Inhalt im Plattform-DOM auszuführen.",
+      "helpLevels": [
+        "Nutze die Umschaltung im Kopf des Artefakts.",
+        "Klicke auf „Quelltext“.",
+        "Die Umschaltung Vorschau/Quelltext wird hervorgehoben."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.viewSwitched",
+        "match": {
+          "viewMode": "source",
+          "artifactId": "summary-page"
+        }
+      },
+      "highlightTarget": "artifact.preview.viewToggle",
+      "highlightTooltip": "Wechsle in die sichere Quelltextdarstellung.",
+      "successMessage": "Quelltext und gerenderte Vorschau sind klar getrennt."
+    },
+    {
+      "id": "apply-artifact-revision",
+      "title": "Deterministische Revision anwenden",
+      "description": "Eine hinterlegte Revision verändert den Artefaktzustand reproduzierbar und ohne Codeausführung.",
+      "instruction": "Wende die Revision „Freigabestatus ergänzen“ an.",
+      "why": "Workflow-Szenarien können so sichtbare Iterationen zeigen, ohne echte KI- oder Formelberechnung auszuführen.",
+      "helpLevels": [
+        "Die verfügbare Revision steht am unteren Rand der Vorschau.",
+        "Klicke auf „Freigabestatus ergänzen“.",
+        "Die hinterlegte Revision wird hervorgehoben."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "summary-page",
+          "revisionId": "summary-page-v2"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision",
+      "highlightTooltip": "Diese Aktion wechselt in den nächsten hinterlegten Artefaktzustand.",
+      "successMessage": "Die Revision wurde reproduzierbar auf das Artefakt angewendet."
+    },
+    {
+      "id": "verify-artifact",
+      "title": "Ergebnis aktiv verifizieren",
+      "description": "Ein sichtbares Artefakt ist zunächst nur ein Entwurf; die fachliche Prüfung bleibt eine eigene Nutzeraktion.",
+      "instruction": "Markiere das aktive Ergebnis als geprüft.",
+      "why": "Der Prüfschritt verhindert, dass ein erzeugtes Ergebnis allein durch seine Darstellung als korrekt gilt.",
+      "helpLevels": [
+        "Suche die Prüfaktion unten rechts.",
+        "Klicke auf „Ergebnis geprüft“.",
+        "Die Prüfaktion wird hervorgehoben."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "summary-page",
+          "artifactType": "html",
+          "revisionId": "summary-page-v2"
+        }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "highlightTooltip": "Bestätige die fachliche Prüfung als separate Handlung.",
+      "successMessage": "Das Artefakt ist sichtbar als geprüft markiert."
+    }
+  ]
+}
