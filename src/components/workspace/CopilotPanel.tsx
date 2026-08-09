@@ -15,6 +15,7 @@ function emptyState(): CopilotRuntimeState {
   const profile = copilotRuntime.getProductProfile();
   return {
     enabled: true,
+    chatOpen: false,
     profileId: profile.id,
     productVersion: profile.productVersion,
     mode: profile.defaultMode,
@@ -29,7 +30,6 @@ function emptyState(): CopilotRuntimeState {
 export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
-  const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const profile = copilotRuntime.getProductProfile();
 
@@ -50,9 +50,11 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   }, [activeFile]);
 
   const toggleEnabled = () => {
-    const enabled = !runtimeState.enabled;
-    copilotRuntime.setEnabled(enabled);
-    if (!enabled) setOpen(false);
+    copilotRuntime.setEnabled(!runtimeState.enabled);
+  };
+
+  const toggleChat = () => {
+    copilotRuntime.setChatOpen(!runtimeState.chatOpen);
   };
 
   const submitPrompt = () => {
@@ -94,14 +96,14 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
         type="button"
         data-highlight="copilot.chat.toggle"
         disabled={!runtimeState.enabled}
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleChat}
         className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Sparkles className="h-3.5 w-3.5 text-accent" />
         Copilot
       </button>
 
-      {open && runtimeState.enabled ? (
+      {runtimeState.chatOpen && runtimeState.enabled ? (
         <div
           data-highlight="copilot.chat"
           className="absolute right-0 top-9 z-30 w-[28rem] rounded-md border border-border bg-panel p-3 shadow-2xl"
@@ -125,7 +127,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             </button>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => copilotRuntime.setChatOpen(false)}
               className="rounded p-1.5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
               aria-label="Copilot Chat schließen"
             >

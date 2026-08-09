@@ -63,8 +63,7 @@ function initialProgress(scenario: Scenario): TrainingProgress {
   const mode = modeOf(scenario);
   const statuses: Record<string, StepStatus> = {};
   scenario.steps.forEach((step, index) => {
-    statuses[step.id] =
-      mode === "explore" ? "NOT_STARTED" : index === 0 ? "ACTIVE" : "NOT_STARTED";
+    statuses[step.id] = mode === "explore" ? "NOT_STARTED" : index === 0 ? "ACTIVE" : "NOT_STARTED";
   });
   return {
     statuses,
@@ -103,7 +102,9 @@ function load(scenario: Scenario): TrainingProgress {
 }
 
 function eventPayload(event: TrainingEvent): Record<string, unknown> {
-  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) return {};
+  if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
+    return {};
+  }
   return event.payload as Record<string, unknown>;
 }
 

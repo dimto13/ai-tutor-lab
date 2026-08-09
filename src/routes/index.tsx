@@ -100,12 +100,13 @@ const toolTrainings: TrainingCardModel[] = [
   },
   {
     id: "github-copilot-basics",
-    scenarioId: null,
+    scenarioId: "copilot-basics.guided",
     title: "GitHub Copilot – Grundlagen",
     description:
       "Chat, Inline-Vorschläge, Kontext und den sinnvollen Einsatz von Copilot unabhängig vom Gesamtworkflow kennenlernen.",
+    steps: 11,
     icon: Bot,
-    available: false,
+    available: true,
     label: "AI Coding Assistant",
   },
 ];

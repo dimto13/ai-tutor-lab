@@ -1,12 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  Award,
-  RotateCcw,
-  ArrowRight,
-  LayoutGrid,
-  CheckCircle2,
-  ExternalLink,
-} from "lucide-react";
+import { Award, RotateCcw, ArrowRight, LayoutGrid, CheckCircle2, ExternalLink } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
 
 export function CompletionScreen() {

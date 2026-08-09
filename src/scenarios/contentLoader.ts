@@ -67,7 +67,10 @@ const resourceSchema = z.object({
   description: z.string().optional(),
   url: z.string().url(),
   kind: z.enum(["official", "video", "reference"]),
-  verifiedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  verifiedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 export const scenarioSchema = z
