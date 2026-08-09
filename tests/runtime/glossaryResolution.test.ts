@@ -7,8 +7,9 @@ import {
   segmentGlossaryText,
 } from "../../src/lib/glossary.ts";
 import { answerDeterministically } from "../../src/tutor/deterministicTutor.ts";
+import type { TutorContext } from "../../src/tutor/tutorContext.ts";
 
-const tutorContext = {
+const tutorContext: TutorContext = {
   scenario: {
     id: "glossary-test",
     title: "Glossar-Test",
@@ -29,7 +30,7 @@ const tutorContext = {
     hintsUsed: 0,
     mistakes: 0,
   },
-} as const;
+};
 
 test("glossary annotation prefers the longer product term over overlapping Code", () => {
   const conceptKeys = getGlossaryConceptsForTechnology("ide").map((concept) => concept.key);
