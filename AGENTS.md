@@ -26,5 +26,10 @@
    für einen konkreten Git-Vorgang entschieden wurde.
 4. Szenarien sind Daten (YAML/JSON), kein Code. Keine CSS-Selektoren, keine
    Herstellernamen in Dateinamen, kein Fortschritt per Weiter-Button.
-5. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
+5. **Nur Grünes nach `main`.** `npm run check` läuft nach der letzten inhaltlichen Änderung
+   eines Branches, nicht davor. Ein Pull Request wird erst gemergt, wenn die Jobs `validate`
+   **und** `e2e-training-modes` abgeschlossen und grün sind — ein noch laufender Workflow ist
+   kein grüner Workflow. Der Pre-Commit-Hook in `.githooks/` fängt Formatverstöße bereits beim
+   Commit ab; er wird durch `npm ci` automatisch aktiviert.
+6. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
    Synchronisation oder Fehlersuche.

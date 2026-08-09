@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Blockiert Commits, die nicht Prettier-konforme Dateien enthalten.
+# Aktivierung: automatisch ueber das "prepare"-Skript beim npm install.
+# Einmalig umgehen: git commit --no-verify
+#
+# Grund: Ein Formatverstoss laesst den CI-Schritt "Check formatting" im Job
+# "validate" fehlschlagen und blockiert damit auch den Folgejob "e2e-training-modes".
+
+BIN="./node_modules/.bin/prettier"
+if [ ! -x "$BIN" ]; then
+  echo "pre-commit: Prettier nicht gefunden, Formatpruefung uebersprungen."
+  echo "            Bitte 'npm ci' ausfuehren, damit der Hook greift."
+  exit 0
+fi
+
+DIFFERENT=$(git diff --cached --name-only --diff-filter=ACMR -z \
+  | xargs -0 -r "$BIN" --ignore-unknown --list-different 2>/dev/null)
+
+if [ -n "$DIFFERENT" ]; then
+  echo
+  echo "Commit abgebrochen: diese Dateien entsprechen nicht dem Prettier-Stil."
+  printf '%s\n' "$DIFFERENT" | sed 's/^/  - /'
+  echo
+  echo "Beheben mit:  npm run format     (danach die Dateien erneut stagen)"
+  echo
+  exit 1
+fi
