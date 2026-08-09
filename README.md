@@ -12,14 +12,14 @@ Hosting und Deployment ist AWS Amplify.
 
 ## Orientierung im Repository
 
-| Bereich | Inhalt |
-|---|---|
-| [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues) | **Aufgabenverwaltung** — alle Tickets, Epics als Sub-Issue-Struktur |
-| [`docs/`](docs/README.md) | **Produkt- und Anforderungsdokumentation** — Vision, Domänenmodell, Architektur, Anforderungen, Gamification, Roadmap, offene Entscheidungen |
-| [`prompts/model-briefing.md`](prompts/model-briefing.md) | Kontext-Briefing für jede LLM-Sitzung an diesem Projekt |
-| `src/` | POC-Quellcode (React/TypeScript/Vite) — wird gemäß Meilenstein M1 refaktoriert |
-| [`backlog/`](backlog/README.md) | Archiv des ursprünglichen Planungsstands (nicht mehr gepflegt) |
-| [`docs/archiv/`](docs/archiv/poc-spezifikation.md) | Ursprüngliche POC-Spezifikation (abgelöst durch `docs/01`–`10`) |
+| Bereich                                                         | Inhalt                                                                                                                                       |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues) | **Aufgabenverwaltung** — alle Tickets, Epics als Sub-Issue-Struktur                                                                          |
+| [`docs/`](docs/README.md)                                       | **Produkt- und Anforderungsdokumentation** — Vision, Domänenmodell, Architektur, Anforderungen, Gamification, Roadmap, offene Entscheidungen |
+| [`prompts/model-briefing.md`](prompts/model-briefing.md)        | Kontext-Briefing für jede LLM-Sitzung an diesem Projekt                                                                                      |
+| `src/`                                                          | POC-Quellcode (React/TypeScript/Vite) — wird gemäß Meilenstein M1 refaktoriert                                                               |
+| [`backlog/`](backlog/README.md)                                 | Archiv des ursprünglichen Planungsstands (nicht mehr gepflegt)                                                                               |
+| [`docs/archiv/`](docs/archiv/poc-spezifikation.md)              | Ursprüngliche POC-Spezifikation (abgelöst durch `docs/01`–`10`)                                                                              |
 
 **Einstieg:** [`docs/README.md`](docs/README.md) — dort stehen Dokumentenlandkarte,
 Arbeitsweise und die Anleitung zur Aufgabenverwaltung über GitHub Issues.

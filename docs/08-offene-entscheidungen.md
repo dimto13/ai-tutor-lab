@@ -4,34 +4,34 @@
 
 Jede ADR bekommt später eine eigene Datei mit Status (vorgeschlagen / entschieden / abgelöst).
 
-| ID | Frage | Empfehlung | Konsequenz bei Fehlentscheidung |
-|---|---|---|---|
-| **ADR-01** | Simulation oder echte Runtime? | **Hybrid:** Explore/Guided simuliert, Challenge/Zertifizierung später real | Rein simuliert → Transferproblem; rein real → Kosten und Startzeiten |
-| **ADR-02** | Content als TypeScript oder YAML/JSON? | **YAML mit JSON-Schema.** Nur so können Nicht-Entwickler und LLMs Kurse erzeugen | TS-Content bindet jede Kursänderung an einen Entwickler-Release |
-| **ADR-03** | Amplify Data (DynamoDB) oder Postgres? | Fortschritt/Punkte in Amplify Data; **Katalog und Content im Git**, nicht in der DB | Relationalen Katalog in DynamoDB abzubilden erzeugt dauerhaften Reibungsverlust |
-| **ADR-04** | Tutor-LLM: welcher Anbieter, wo gehostet? | Serverseitiger Proxy, austauschbarer Anbieter, Stufe 1 immer ohne LLM lauffähig | Direkte Client-Anbindung = Schlüsselabfluss + Datenschutzproblem |
-| **ADR-05** | Overlay im iFrame realer Runtimes | Muss vor M6 mit `AITP-27` geklärt werden | Ein Overlay, das über code-server nicht funktioniert, kippt das Führungskonzept |
-| **ADR-06** | Eigene Plattform oder bestehende Lösung (Instruqt, Killercoda o. ä.)? | **Vor M2 bewusst prüfen** | Ein halbes Jahr Eigenbau für etwas Kaufbares |
-| **ADR-07** | Telemetrie-Tiefe vs. Datenschutz | Roh-Events 90 Tage, danach Aggregate; Pseudonymisierung schaltbar | Zu viel → Betriebsrat blockiert; zu wenig → Didaktik nicht verbesserbar |
-| **ADR-08** | Anbindung an ein vorhandenes LMS (SCORM/xAPI)? | Nur prüfen, wenn im Zielunternehmen ein LMS existiert | Doppelte Nachweisführung, Akzeptanzproblem bei L&D |
-| **ADR-09** | Interne Plattform oder Produkt für Fremdkunden? | **Muss beantwortet werden, bevor M2 startet** | Bestimmt, ob Multi-Tenancy, Branding und Abrechnung Must oder Won't sind |
+| ID         | Frage                                                                                                                       | Empfehlung                                                                            | Konsequenz bei Fehlentscheidung                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **ADR-01** | Simulation oder echte Runtime?                                                                                              | **Hybrid:** Explore/Guided simuliert, Challenge/Zertifizierung später real            | Rein simuliert → Transferproblem; rein real → Kosten und Startzeiten                   |
+| **ADR-02** | Content als TypeScript oder YAML/JSON?                                                                                      | **YAML mit JSON-Schema.** Nur so können Nicht-Entwickler und LLMs Kurse erzeugen      | TS-Content bindet jede Kursänderung an einen Entwickler-Release                        |
+| **ADR-03** | Amplify Data (DynamoDB) oder Postgres?                                                                                      | Fortschritt/Punkte in Amplify Data; **Katalog und Content im Git**, nicht in der DB   | Relationalen Katalog in DynamoDB abzubilden erzeugt dauerhaften Reibungsverlust        |
+| **ADR-04** | Tutor-LLM: welcher Anbieter, wo gehostet?                                                                                   | Serverseitiger Proxy, austauschbarer Anbieter, Stufe 1 immer ohne LLM lauffähig       | Direkte Client-Anbindung = Schlüsselabfluss + Datenschutzproblem                       |
+| **ADR-05** | Overlay im iFrame realer Runtimes                                                                                           | Muss vor M6 mit `AITP-27` geklärt werden                                              | Ein Overlay, das über code-server nicht funktioniert, kippt das Führungskonzept        |
+| **ADR-06** | Eigene Plattform oder bestehende Lösung (Instruqt, Killercoda o. ä.)?                                                       | **Vor M2 bewusst prüfen**                                                             | Ein halbes Jahr Eigenbau für etwas Kaufbares                                           |
+| **ADR-07** | Telemetrie-Tiefe vs. Datenschutz                                                                                            | Roh-Events 90 Tage, danach Aggregate; Pseudonymisierung schaltbar                     | Zu viel → Betriebsrat blockiert; zu wenig → Didaktik nicht verbesserbar                |
+| **ADR-08** | Anbindung an ein vorhandenes LMS (SCORM/xAPI)?                                                                              | Nur prüfen, wenn im Zielunternehmen ein LMS existiert                                 | Doppelte Nachweisführung, Akzeptanzproblem bei L&D                                     |
+| **ADR-09** | Interne Plattform oder Produkt für Fremdkunden?                                                                             | **Muss beantwortet werden, bevor M2 startet**                                         | Bestimmt, ob Multi-Tenancy, Branding und Abrechnung Must oder Won't sind               |
 | **ADR-10** | Klassifizierungs-Engine: rein regelbasiert, LLM in der Mandanten-Boundary (z. B. Bedrock im Firmenkonto) oder externes API? | **Stufenmodell:** Regeln immer, LLM nur in der Boundary; externes API nie ohne Opt-in | Ein Check, der Dokumente an fremde APIs schickt, zerstört sein eigenes Wertversprechen |
-| **ADR-11** | Dokumenten-Check-Deployment: eigenes AWS-Konto je Firma, eigene VPC/DB im Plattformkonto oder On-Premises-Paket? | Eigenes Konto je Firma als Standard; On-Premises als Option für regulierte Branchen | Geteilte Infrastruktur ist für dieses Feature ein Ausschlusskriterium im Vertrieb |
+| **ADR-11** | Dokumenten-Check-Deployment: eigenes AWS-Konto je Firma, eigene VPC/DB im Plattformkonto oder On-Premises-Paket?            | Eigenes Konto je Firma als Standard; On-Premises als Option für regulierte Branchen   | Geteilte Infrastruktur ist für dieses Feature ein Ausschlusskriterium im Vertrieb      |
 
 ## Teil B — Risiken
 
-| ID | Risiko | Eintritt | Wirkung | Gegenmaßnahme |
-|---|---|---|---|---|
-| R1 | **Simulator-Drift** — VS Code und Copilot ändern ihre Oberfläche mehrmals jährlich; die Simulation veraltet still | hoch | hoch | `AITP-114` Prüfzyklus, Versionsbindung der Szenarien, Nachweise mit Ablaufdatum |
-| R2 | **Transferproblem** — Nutzer bestehen die Simulation, scheitern am echten Werkzeug | mittel | hoch | Challenge-Modus, später echte Runtime für Zertifizierung, Transfer im Pilot messen |
-| R3 | **Scope Creep durch Multi-Provider** — fünf Anbieter halb umgesetzt statt einer vollständig | hoch | mittel | Genau ein zweiter Adapter als Generizitätsbeweis (`AITP-25`), mehr nicht vor M4 |
-| R4 | **Mitbestimmung/Datenschutz** blockiert die Einführung wegen Punktesystem und Telemetrie | mittel | hoch | Sichtbarkeitsstufen, Transparenzseite, Muster-Betriebsvereinbarung (`AITP-100/101/104`) |
-| R5 | **Runtime-Kosten** echter Umgebungen sprengen den Business Case | mittel | hoch | Hybrid-Strategie, Spike `AITP-27` mit belastbarer Kostenrechnung vor M6 |
-| R6 | **Tutor halluziniert** nicht existierende UI-Schritte und verwirrt genau die unsichere Zielgruppe | mittel | hoch | Stufe 1 deterministisch als Standard, Guardrails in Stufe 2 |
-| R7 | **Prototyp-Codebasis** aus dem Prototyping-Werkzeug trägt die Plattform nicht | mittel | mittel | M1 vor jedem Feature-Ausbau; klare Abhängigkeitsrichtung per Lint erzwungen |
-| R9 | **Falsche Sicherheit durch den Dokumenten-Check** — ein False Negative ("unbedenklich", obwohl streng vertraulich) verleitet zum Upload und schadet mehr als kein Check | mittel | sehr hoch | Konservative Asymmetrie (`FR-77`), Empfehlungs-Disclaimer (`FR-78`), Kennzeichnungs- und Mustererkennung vor jeder LLM-Bewertung, rechtliche Positionierung (`AITP-127`), Testkorpus mit bekannten Grenzfällen |
-| R10 | **Der Check wird selbst zum Datenrisiko** — Inhalte landen in Logs, Telemetrie oder geteilter DB | mittel | sehr hoch | Keine Inhaltspersistenz (`FR-75`), dedizierte Mandanten-Boundary (`FR-74`), Penetrations-/Datenflussprüfung vor Freigabe |
-| R8 | **Content-Aufwand unterschätzt** — ein gutes Modul kostet mehr Zeit als der Simulator | hoch | mittel | Autorenwerkzeug (`AITP-94`), Wiederverwendung über Lernziele, ein Modul vollständig statt fünf halb |
+| ID  | Risiko                                                                                                                                                                  | Eintritt | Wirkung   | Gegenmaßnahme                                                                                                                                                                                                  |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | **Simulator-Drift** — VS Code und Copilot ändern ihre Oberfläche mehrmals jährlich; die Simulation veraltet still                                                       | hoch     | hoch      | `AITP-114` Prüfzyklus, Versionsbindung der Szenarien, Nachweise mit Ablaufdatum                                                                                                                                |
+| R2  | **Transferproblem** — Nutzer bestehen die Simulation, scheitern am echten Werkzeug                                                                                      | mittel   | hoch      | Challenge-Modus, später echte Runtime für Zertifizierung, Transfer im Pilot messen                                                                                                                             |
+| R3  | **Scope Creep durch Multi-Provider** — fünf Anbieter halb umgesetzt statt einer vollständig                                                                             | hoch     | mittel    | Genau ein zweiter Adapter als Generizitätsbeweis (`AITP-25`), mehr nicht vor M4                                                                                                                                |
+| R4  | **Mitbestimmung/Datenschutz** blockiert die Einführung wegen Punktesystem und Telemetrie                                                                                | mittel   | hoch      | Sichtbarkeitsstufen, Transparenzseite, Muster-Betriebsvereinbarung (`AITP-100/101/104`)                                                                                                                        |
+| R5  | **Runtime-Kosten** echter Umgebungen sprengen den Business Case                                                                                                         | mittel   | hoch      | Hybrid-Strategie, Spike `AITP-27` mit belastbarer Kostenrechnung vor M6                                                                                                                                        |
+| R6  | **Tutor halluziniert** nicht existierende UI-Schritte und verwirrt genau die unsichere Zielgruppe                                                                       | mittel   | hoch      | Stufe 1 deterministisch als Standard, Guardrails in Stufe 2                                                                                                                                                    |
+| R7  | **Prototyp-Codebasis** aus dem Prototyping-Werkzeug trägt die Plattform nicht                                                                                           | mittel   | mittel    | M1 vor jedem Feature-Ausbau; klare Abhängigkeitsrichtung per Lint erzwungen                                                                                                                                    |
+| R9  | **Falsche Sicherheit durch den Dokumenten-Check** — ein False Negative ("unbedenklich", obwohl streng vertraulich) verleitet zum Upload und schadet mehr als kein Check | mittel   | sehr hoch | Konservative Asymmetrie (`FR-77`), Empfehlungs-Disclaimer (`FR-78`), Kennzeichnungs- und Mustererkennung vor jeder LLM-Bewertung, rechtliche Positionierung (`AITP-127`), Testkorpus mit bekannten Grenzfällen |
+| R10 | **Der Check wird selbst zum Datenrisiko** — Inhalte landen in Logs, Telemetrie oder geteilter DB                                                                        | mittel   | sehr hoch | Keine Inhaltspersistenz (`FR-75`), dedizierte Mandanten-Boundary (`FR-74`), Penetrations-/Datenflussprüfung vor Freigabe                                                                                       |
+| R8  | **Content-Aufwand unterschätzt** — ein gutes Modul kostet mehr Zeit als der Simulator                                                                                   | hoch     | mittel    | Autorenwerkzeug (`AITP-94`), Wiederverwendung über Lernziele, ein Modul vollständig statt fünf halb                                                                                                            |
 
 R1 und R8 sind erfahrungsgemäß die unterschätzten. Die Technik ist in diesem Projekt nicht
 der schwierige Teil — der Inhalt und seine Pflege sind es.
@@ -65,11 +65,13 @@ Diese Punkte bestimmen die Priorisierung stärker als jede Architekturentscheidu
 ## Teil D — Bewertung des ursprünglichen Plans
 
 Was am ursprünglichen Konzept stark ist:
+
 - Die Grundidee — Handeln im Werkzeug statt Folien — ist richtig und differenzierend.
 - Die Entscheidung, im POC zu simulieren statt zu deployen, war goldrichtig.
 - Die Kritik am ersten POC (fehlende Trennung von Inhalt und Werkzeug) trifft den Kern.
 
 Was im ursprünglichen Konzept fehlt oder zu früh kommt:
+
 - **Zu früh:** Kubernetes, PVCs, Idle-Reclaimer, Autoscaling, RAG in Phase 1–2. Das sind
   Lösungen für Probleme, die vor 500 Nutzern nicht existieren.
 - **Fehlt vollständig:** Content-Erstellung und -Pflege. Der Plan beschreibt eine Plattform,

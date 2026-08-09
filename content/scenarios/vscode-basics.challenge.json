@@ -32,7 +32,11 @@
       "description": "Du bekommst nur Ziel und Erfolgskriterien. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
       "instruction": "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.py an.",
       "why": "Die Challenge prüft, ob du die Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
-      "helpLevels": ["Überlege zuerst, wie VS Code einen Projektkontext öffnet.", "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.", "Erfolgskriterien: Arbeitskontext geöffnet und challenge.py vorhanden."],
+      "helpLevels": [
+        "Überlege zuerst, wie VS Code einen Projektkontext öffnet.",
+        "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.",
+        "Erfolgskriterien: Arbeitskontext geöffnet und challenge.py vorhanden."
+      ],
       "successMessage": "Challenge erfüllt. Der Endzustand entspricht den Erfolgskriterien."
     }
   ]

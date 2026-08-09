@@ -5,37 +5,37 @@
 
 ## Überblick
 
-| Epic | Titel | Tickets | Punkte | Must |
-|---|---|---:|---:|---:|
-| EP-01 | Domänenmodell & Technology-Katalog | 3 | 13 | 2 |
-| EP-02 | Training Engine | 7 | 37 | 7 |
-| EP-03 | Runtime-Adapter & Simulatoren | 8 | 65 | 6 |
-| EP-04 | Trainingsmodi Explore / Guided / Challenge | 4 | 24 | 3 |
-| EP-05 | Guide-Panel, Overlay & Hilfesystem | 5 | 26 | 4 |
-| EP-06 | KI-Tutor | 4 | 21 | 2 |
-| EP-07 | Punktesystem, Kompetenzprofil & Nachweise | 6 | 27 | 5 |
-| EP-08 | Dashboard, Reporting & Rollen | 4 | 23 | 1 |
-| EP-09 | Plattform, Auth, Persistenz & Deployment | 6 | 32 | 5 |
-| EP-10 | Content-Authoring & Szenariokatalog | 7 | 50 | 4 |
-| EP-11 | Compliance, Datenschutz & Barrierefreiheit | 5 | 24 | 3 |
-| EP-12 | Qualitätssicherung & Lernanalytik | 5 | 26 | 3 |
-| EP-13 | Datenklassifizierung & Dokumenten-Check | 9 | 68 | 4 |
+| Epic  | Titel                                      | Tickets | Punkte | Must |
+| ----- | ------------------------------------------ | ------: | -----: | ---: |
+| EP-01 | Domänenmodell & Technology-Katalog         |       3 |     13 |    2 |
+| EP-02 | Training Engine                            |       7 |     37 |    7 |
+| EP-03 | Runtime-Adapter & Simulatoren              |       8 |     65 |    6 |
+| EP-04 | Trainingsmodi Explore / Guided / Challenge |       4 |     24 |    3 |
+| EP-05 | Guide-Panel, Overlay & Hilfesystem         |       5 |     26 |    4 |
+| EP-06 | KI-Tutor                                   |       4 |     21 |    2 |
+| EP-07 | Punktesystem, Kompetenzprofil & Nachweise  |       6 |     27 |    5 |
+| EP-08 | Dashboard, Reporting & Rollen              |       4 |     23 |    1 |
+| EP-09 | Plattform, Auth, Persistenz & Deployment   |       6 |     32 |    5 |
+| EP-10 | Content-Authoring & Szenariokatalog        |       7 |     50 |    4 |
+| EP-11 | Compliance, Datenschutz & Barrierefreiheit |       5 |     24 |    3 |
+| EP-12 | Qualitätssicherung & Lernanalytik          |       5 |     26 |    3 |
+| EP-13 | Datenklassifizierung & Dokumenten-Check    |       9 |     68 |    4 |
 
 ## Verteilung nach Meilenstein
 
 | Meilenstein | Tickets | Punkte |
-|---|---:|---:|
-| M1 | 23 | 136 |
-| M2 | 22 | 134 |
-| M3 | 14 | 77 |
-| M4 | 11 | 71 |
-| M5 | 3 | 18 |
+| ----------- | ------: | -----: |
+| M1          |      23 |    136 |
+| M2          |      22 |    134 |
+| M3          |      14 |     77 |
+| M4          |      11 |     71 |
+| M5          |       3 |     18 |
 
 ---
 
 ## EP-01 — Domänenmodell & Technology-Katalog
 
-*Ziel: Lerninhalt und Technologie sauber trennen, Generizität strukturell verankern*
+_Ziel: Lerninhalt und Technologie sauber trennen, Generizität strukturell verankern_
 
 ### AITP-1 — Technology-Katalog als Datenmodell einführen
 
@@ -78,7 +78,7 @@ Lernziele modulübergreifend definieren, damit Nachweise und Curricula auf Ziele
 
 ## EP-02 — Training Engine
 
-*Ziel: Frameworkfreie State Machine, Events, Validierung, ohne UI-Abhängigkeit*
+_Ziel: Frameworkfreie State Machine, Events, Validierung, ohne UI-Abhängigkeit_
 
 ### AITP-10 — Training Engine als eigenes Package ohne UI-Abhängigkeit
 
@@ -166,7 +166,7 @@ Bestehende POC-Logik prüfen und alle Stellen entfernen, an denen ein Schritt al
 
 ## EP-03 — Runtime-Adapter & Simulatoren
 
-*Ziel: Einheitliches Adapter-Interface, realistischer VS-Code- und Terminal-Simulator*
+_Ziel: Einheitliches Adapter-Interface, realistischer VS-Code- und Terminal-Simulator_
 
 ### AITP-20 — RuntimeAdapter-Interface definieren
 
@@ -274,7 +274,7 @@ Untersuchen, ob code-server hinter demselben RuntimeAdapter-Interface betreibbar
 
 ## EP-04 — Trainingsmodi Explore / Guided / Challenge
 
-*Ziel: Didaktische Tiefe statt reiner Klickstrecke*
+_Ziel: Didaktische Tiefe statt reiner Klickstrecke_
 
 ### AITP-30 — Trainingsmodi als generisches Konzept einführen
 
@@ -327,7 +327,7 @@ Vorkenntnisabfrage oder Direkteinstieg in Challenge; bei Scheitern sanfte Rückf
 
 ## EP-05 — Guide-Panel, Overlay & Hilfesystem
 
-*Ziel: Visuelle Führung, die nie falsch markiert und nie überfordert*
+_Ziel: Visuelle Führung, die nie falsch markiert und nie überfordert_
 
 ### AITP-40 — Overlay-Engine auf semantische Zielreferenzen umstellen
 
@@ -397,7 +397,7 @@ Guide- und Erklärungstexte können zusätzlich zum sichtbaren Text auf ausdrüc
 
 ## EP-06 — KI-Tutor
 
-*Ziel: Kontextbewusster Tutor, Stufe 1 deterministisch, Stufe 2 LLM mit Guardrails*
+_Ziel: Kontextbewusster Tutor, Stufe 1 deterministisch, Stufe 2 LLM mit Guardrails_
 
 ### AITP-50 — Tutor-Kontextobjekt aufbauen
 
@@ -451,7 +451,7 @@ Offene Produktfrage aus dem POC - soll der Tutor dauerhaft sichtbar sein? Zwei V
 
 ## EP-07 — Punktesystem, Kompetenzprofil & Nachweise
 
-*Ziel: Motivation als Kompetenzwährung, prüffähige Nachweise*
+_Ziel: Motivation als Kompetenzwährung, prüffähige Nachweise_
 
 ### AITP-60 — Scoring Engine mit Modus-Multiplikator
 
@@ -530,7 +530,7 @@ Konfigurierbares Wochenziel, Verlauf der letzten acht Wochen, kein Verlustmechan
 
 ## EP-08 — Dashboard, Reporting & Rollen
 
-*Ziel: Überblick für Lernende und aggregierte Auswertung für L&D*
+_Ziel: Überblick für Lernende und aggregierte Auswertung für L&D_
 
 ### AITP-70 — Dashboard "Meine Trainings" auf Kompetenz- statt Kursorientierung umstellen
 
@@ -583,7 +583,7 @@ Pflichtcurricula je Rolle oder Abteilung zuweisen und deren Erfüllung verfolgen
 
 ## EP-09 — Plattform, Auth, Persistenz & Deployment
 
-*Ziel: Vom Prototyp zum betreibbaren AWS-Amplify-MVP*
+_Ziel: Vom Prototyp zum betreibbaren AWS-Amplify-MVP_
 
 ### AITP-80 — Prototyp-Quellcode in ein eigenes Git-Repository überführen
 
@@ -659,7 +659,7 @@ Event-Transport hinter ein Interface legen, damit später ein WebSocket-Backend 
 
 ## EP-10 — Content-Authoring & Szenariokatalog
 
-*Ziel: Szenarien erstellbar, validierbar und versionierbar ohne Frontend-Code*
+_Ziel: Szenarien erstellbar, validierbar und versionierbar ohne Frontend-Code_
 
 ### AITP-90 — JSON-Schema für Szenarien und CI-Validierung
 
@@ -756,7 +756,7 @@ Szenario laden, Schritt für Schritt simulieren, Zielauflösung und Validatoren 
 
 ## EP-11 — Compliance, Datenschutz & Barrierefreiheit
 
-*Ziel: Einführbarkeit im deutschen Unternehmenskontext sicherstellen*
+_Ziel: Einführbarkeit im deutschen Unternehmenskontext sicherstellen_
 
 ### AITP-100 — Sichtbarkeitsstufen für Punkte und Ranglisten
 
@@ -823,7 +823,7 @@ Externe Prüfung, wie Kompetenznachweise gegenüber der KI-Kompetenz-Anforderung
 
 ## EP-12 — Qualitätssicherung & Lernanalytik
 
-*Ziel: Technische Qualität und didaktische Wirksamkeit messbar machen*
+_Ziel: Technische Qualität und didaktische Wirksamkeit messbar machen_
 
 ### AITP-110 — Telemetrie- und Lernanalytik-Pipeline
 
@@ -888,7 +888,7 @@ Halbjährlicher Abgleich der Simulatoren mit der realen Produktoberfläche. Grö
 
 ## EP-13 — Datenklassifizierung & Dokumenten-Check
 
-*Ziel: Mitarbeitende lernen, was in KI-Werkzeuge darf - und können es am echten Dokument in der eigenen Firmen-Boundary prüfen*
+_Ziel: Mitarbeitende lernen, was in KI-Werkzeuge darf - und können es am echten Dokument in der eigenen Firmen-Boundary prüfen_
 
 ### AITP-120 — Klassifizierungsschema als mandantenkonfigurierbares Datenmodell
 

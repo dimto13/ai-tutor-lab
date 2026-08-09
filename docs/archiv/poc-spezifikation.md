@@ -23,6 +23,7 @@ erstellen → Code schreiben → Terminal öffnen → `git status` → `git add`
 → Copilot-Simulation (Additionsfunktion generieren).
 
 **Mechaniken:**
+
 - Overlay-/Highlight-System: Kontext abdunkeln, Zielelement hervorheben, Tooltip,
   Element bleibt klickbar
 - State Machine: NOT_STARTED / ACTIVE / COMPLETED (optional VALIDATION_FAILED),

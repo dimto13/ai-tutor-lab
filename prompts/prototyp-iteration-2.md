@@ -53,7 +53,9 @@ environment: { productId: "vscode", version: "1.x", runtimeAdapterId: "vscode-si
 
 ```ts
 interface RuntimeAdapter {
-  id: string; productId: string; capabilities: Capability[];
+  id: string;
+  productId: string;
+  capabilities: Capability[];
   mount(el: HTMLElement, seed?: unknown): Promise<void>;
   unmount(): Promise<void>;
   subscribe(handler: (e: TrainingEvent) => void): () => void;
@@ -91,6 +93,7 @@ gelehrt werden soll:
 ```
 
 Pflicht:
+
 - Menüleiste mit aufklappbaren Menüs (File, Edit, Selection, View, Go, Run, Terminal, Help)
 - Activity Bar mit Explorer, Search, Source Control, Extensions
 - Side Bar, Editor mit Tabs, Panel mit den Tabs Terminal / Problems / Output

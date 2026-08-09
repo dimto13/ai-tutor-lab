@@ -36,7 +36,11 @@
       "description": "Es gibt keine richtige Reihenfolge. Untersuche die sichtbaren Bereiche und öffne bei Bedarf File-Menü, Workspace und Panel.",
       "instruction": "Klicke auf Elemente der VS-Code-Oberfläche, die du kennenlernen möchtest.",
       "why": "Im Explorer-Modus baust du zunächst ein mentales Modell der Oberfläche auf, bevor du konkrete Abläufe übst.",
-      "helpLevels": ["Klicke auf einen Bereich, den du noch nicht kennst.", "Öffne auch File-Menü und Panel, damit weitere Bereiche sichtbar werden.", "Der Fortschritt zeigt dir, welche Oberflächen noch fehlen."],
+      "helpLevels": [
+        "Klicke auf einen Bereich, den du noch nicht kennst.",
+        "Öffne auch File-Menü und Panel, damit weitere Bereiche sichtbar werden.",
+        "Der Fortschritt zeigt dir, welche Oberflächen noch fehlen."
+      ],
       "successMessage": "Oberfläche vollständig erkundet."
     }
   ]

@@ -5,7 +5,12 @@
   "learningLayer": "tool",
   "title": "Visual Studio Code – Geführte Grundlagen",
   "description": "Lerne Oberfläche, Arbeitskontext, Editor und Panel Schritt für Schritt kennen.",
-  "learningObjectives": ["understand_vscode_ui", "understand_workspace", "create_file", "understand_panel_views"],
+  "learningObjectives": [
+    "understand_vscode_ui",
+    "understand_workspace",
+    "create_file",
+    "understand_panel_views"
+  ],
   "environment": {
     "productId": "vscode",
     "version": "1.x",
@@ -20,7 +25,11 @@
       "description": "Der Explorer ist die Dateiübersicht von VS Code. Das Explorer-Symbol sitzt in der Activity Bar; sein Inhalt erscheint in der Side Bar.",
       "instruction": "Öffne den Explorer in der Activity Bar.",
       "why": "VS Code trennt Navigation und Inhalt: Die Activity Bar wählt einen Bereich, die Side Bar zeigt dessen Inhalt.",
-      "helpLevels": ["Der Explorer befindet sich links in der Activity Bar.", "Klicke auf das oberste Datei-Symbol.", "Das Explorer-Symbol wird hervorgehoben."],
+      "helpLevels": [
+        "Der Explorer befindet sich links in der Activity Bar.",
+        "Klicke auf das oberste Datei-Symbol.",
+        "Das Explorer-Symbol wird hervorgehoben."
+      ],
       "expectedEvent": "explorer.opened",
       "validation": { "kind": "event", "type": "explorer.opened" },
       "highlightTarget": "vscode.activityBar.explorer",
@@ -33,9 +42,17 @@
       "description": "Mit Open Folder öffnest du einen einzelnen Ordner als Single-Folder-Arbeitskontext.",
       "instruction": "Öffne über File → Open Folder... den vorbereiteten Ordner ai-training-demo.",
       "why": "Ein geöffneter Ordner gibt VS Code einen vollständigen Projektkontext statt nur einer einzelnen Datei.",
-      "helpLevels": ["Nutze das File-Menü oben.", "Wähle Open Folder... .", "Das File-Menü wird hervorgehoben."],
+      "helpLevels": [
+        "Nutze das File-Menü oben.",
+        "Wähle Open Folder... .",
+        "Das File-Menü wird hervorgehoben."
+      ],
       "expectedEvent": "folder.opened",
-      "validation": { "kind": "event", "type": "folder.opened", "match": { "name": "ai-training-demo" } },
+      "validation": {
+        "kind": "event",
+        "type": "folder.opened",
+        "match": { "name": "ai-training-demo" }
+      },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "File enthält Befehle für Dateien, Ordner und Workspaces.",
       "successMessage": "Ordner geöffnet. VS Code arbeitet jetzt mit einem Projektordner."
@@ -46,9 +63,17 @@
       "description": "Ein gespeicherter Workspace kann mehrere Ordner zu einem Arbeitskontext zusammenfassen und eigene Einstellungen speichern.",
       "instruction": "Öffne über File → Open Workspace... den vorbereiteten Workspace.",
       "why": "Open Folder arbeitet mit einem Ordner; eine .code-workspace-Datei kann mehrere Ordner und Workspace-Einstellungen bündeln.",
-      "helpLevels": ["Öffne erneut das File-Menü.", "Wähle Open Workspace... .", "Danach siehst du zwei Ordner und eine Workspace-Einstellung."],
+      "helpLevels": [
+        "Öffne erneut das File-Menü.",
+        "Wähle Open Workspace... .",
+        "Danach siehst du zwei Ordner und eine Workspace-Einstellung."
+      ],
       "expectedEvent": "workspace.opened",
-      "validation": { "kind": "event", "type": "workspace.opened", "match": { "name": "ai-training-lab.code-workspace" } },
+      "validation": {
+        "kind": "event",
+        "type": "workspace.opened",
+        "match": { "name": "ai-training-lab.code-workspace" }
+      },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "Ein gespeicherter Workspace kann mehrere Ordner zusammenfassen.",
       "successMessage": "Workspace geöffnet. Du siehst jetzt einen Mehrordner-Kontext."
@@ -59,9 +84,17 @@
       "description": "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an.",
       "instruction": "Erstelle im Projektordner ai-training-demo eine Datei hello.py.",
       "why": "Der Explorer ist ein zentraler Einstiegspunkt für Dateioperationen.",
-      "helpLevels": ["Im Explorer-Kopf gibt es Neue Datei.", "Klicke auf Neue Datei und tippe hello.py.", "Der Neue-Datei-Button wird hervorgehoben."],
+      "helpLevels": [
+        "Im Explorer-Kopf gibt es Neue Datei.",
+        "Klicke auf Neue Datei und tippe hello.py.",
+        "Der Neue-Datei-Button wird hervorgehoben."
+      ],
       "expectedEvent": "file.created",
-      "validation": { "kind": "event", "type": "file.created", "match": { "filename": "hello.py" } },
+      "validation": {
+        "kind": "event",
+        "type": "file.created",
+        "match": { "filename": "hello.py" }
+      },
       "highlightTarget": "vscode.explorer.newFile",
       "highlightTooltip": "Neue Datei im aktuellen Projektordner anlegen.",
       "successMessage": "hello.py wurde erstellt und im Editor geöffnet."
@@ -72,9 +105,18 @@
       "description": "Der Editor ist der große Arbeitsbereich in der Mitte. Geöffnete Dateien erscheinen oben als Tabs.",
       "instruction": "Schreibe print(\"Hello AI Training\") in hello.py.",
       "why": "Explorer und Editor haben getrennte Rollen: navigieren im Explorer, Inhalte bearbeiten im Editor.",
-      "helpLevels": ["Klicke in den Editor.", "Schreibe genau print(\"Hello AI Training\").", "Der Editorbereich wird hervorgehoben."],
+      "helpLevels": [
+        "Klicke in den Editor.",
+        "Schreibe genau print(\"Hello AI Training\").",
+        "Der Editorbereich wird hervorgehoben."
+      ],
       "expectedEvent": "file.updated",
-      "validation": { "kind": "event", "type": "file.updated", "match": { "filename": "hello.py" }, "contains": { "content": "Hello AI Training" } },
+      "validation": {
+        "kind": "event",
+        "type": "file.updated",
+        "match": { "filename": "hello.py" },
+        "contains": { "content": "Hello AI Training" }
+      },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Editor: Inhalt der aktuell geöffneten Datei bearbeiten.",
       "successMessage": "Code erkannt. Explorer und Editor erfüllen unterschiedliche Aufgaben."
@@ -85,7 +127,11 @@
       "description": "Unter dem Editor liegt das Panel. Terminal, Problems und Output sind getrennte Views darin.",
       "instruction": "Öffne das integrierte Terminal.",
       "why": "Das Panel bündelt Werkzeuge und Ausgaben, die zur Arbeit im Editor gehören.",
-      "helpLevels": ["Nutze den Terminal-Button in der Status Bar.", "Klicke unten rechts auf Terminal.", "Der Terminal-Button wird hervorgehoben."],
+      "helpLevels": [
+        "Nutze den Terminal-Button in der Status Bar.",
+        "Klicke unten rechts auf Terminal.",
+        "Der Terminal-Button wird hervorgehoben."
+      ],
       "expectedEvent": "terminal.opened",
       "validation": { "kind": "event", "type": "terminal.opened" },
       "highlightTarget": "vscode.statusBar",
@@ -98,7 +144,11 @@
       "description": "Problems zeigt Diagnosen wie Fehler und Warnungen und ist nicht dasselbe wie das Terminal.",
       "instruction": "Wechsle im Panel auf Problems.",
       "why": "Je nach Aufgabe brauchst du interaktive Befehle, Diagnosen oder Protokolle. Die Views haben unterschiedliche Zwecke.",
-      "helpLevels": ["Die Panel-Tabs stehen oberhalb der Ausgabe.", "Klicke auf Problems.", "Der Problems-Tab wird hervorgehoben."],
+      "helpLevels": [
+        "Die Panel-Tabs stehen oberhalb der Ausgabe.",
+        "Klicke auf Problems.",
+        "Der Problems-Tab wird hervorgehoben."
+      ],
       "expectedEvent": "panel.opened",
       "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "problems" } },
       "highlightTarget": "vscode.panel.problems",
@@ -111,7 +161,11 @@
       "description": "Output zeigt Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
       "instruction": "Wechsle im Panel auf Output.",
       "why": "Output eignet sich für Protokolle und technische Ausgaben, die nicht interaktiv eingegeben werden.",
-      "helpLevels": ["Bleibe im unteren Panel.", "Klicke auf Output.", "Der Output-Tab wird hervorgehoben."],
+      "helpLevels": [
+        "Bleibe im unteren Panel.",
+        "Klicke auf Output.",
+        "Der Output-Tab wird hervorgehoben."
+      ],
       "expectedEvent": "panel.opened",
       "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "output" } },
       "highlightTarget": "vscode.panel.output",

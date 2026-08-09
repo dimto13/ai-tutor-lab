@@ -39,97 +39,109 @@ overlay.querySelector(".explorer-icon")  ❌  Szenario kennt DOM
 
 ### Technologie-Katalog
 
-| Entität | Beschreibung | Beispiel |
-|---|---|---|
-| `Technology` | Werkzeugklasse, das eigentliche Lernziel | IDE, Source Control, AI Coding Assistant, CLI Agent, Office Assistant, AI Chat |
-| `Provider` | Hersteller | Microsoft, GitHub, Anthropic, OpenAI, Google, Amazon |
-| `Product` | Konkretes Produkt einer Technology eines Providers | VS Code, GitHub Copilot, Claude Code, M365 Copilot |
-| `ProductVersion` | Versionsstand, an dem gelehrt wird | `vscode@1.9x` |
-| `Capability` | Was die Laufzeit kann | `filesystem`, `editor`, `terminal`, `extensions`, `source_control`, `chat`, `inline_completion`, `agent_mode` |
-| `Integration` | Produkt läuft *in* einem anderen Produkt | `github-copilot` hostet in `vscode` |
-| `RuntimeAdapter` | Technische Umsetzung einer Laufzeit | `vscode-simulator` (heute), `code-server` (später) |
+| Entität          | Beschreibung                                       | Beispiel                                                                                                      |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Technology`     | Werkzeugklasse, das eigentliche Lernziel           | IDE, Source Control, AI Coding Assistant, CLI Agent, Office Assistant, AI Chat                                |
+| `Provider`       | Hersteller                                         | Microsoft, GitHub, Anthropic, OpenAI, Google, Amazon                                                          |
+| `Product`        | Konkretes Produkt einer Technology eines Providers | VS Code, GitHub Copilot, Claude Code, M365 Copilot                                                            |
+| `ProductVersion` | Versionsstand, an dem gelehrt wird                 | `vscode@1.9x`                                                                                                 |
+| `Capability`     | Was die Laufzeit kann                              | `filesystem`, `editor`, `terminal`, `extensions`, `source_control`, `chat`, `inline_completion`, `agent_mode` |
+| `Integration`    | Produkt läuft _in_ einem anderen Produkt           | `github-copilot` hostet in `vscode`                                                                           |
+| `RuntimeAdapter` | Technische Umsetzung einer Laufzeit                | `vscode-simulator` (heute), `code-server` (später)                                                            |
 
 ### Lerninhalt
 
-| Entität | Beschreibung |
-|---|---|
-| `Curriculum` | Lernpfad einer Rolle/Zielgruppe, z. B. "KI-Grundbefähigung Fachbereich" |
-| `Course` | Zusammenhängender Kurs, z. B. "Entwickeln mit VS Code und Copilot" |
-| `Module` | Kleinste vermarktbare Lerneinheit, hat genau **eine** `learningLayer` (`tool`/`concept`/`ai_workflow`) |
-| `Scenario` | Durchführbare Übung in einem Modus (`explore`/`guided`/`challenge`), gebunden an eine Umgebung |
-| `Step` | Einzelner Trainingsschritt mit Aufgabe, Hilfestufen, Validierung, Highlight-Ziel |
-| `LearningObjective` | Lernziel-ID, referenzierbar über Module hinweg (Grundlage für Nachweise) |
+| Entität             | Beschreibung                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------ |
+| `Curriculum`        | Lernpfad einer Rolle/Zielgruppe, z. B. "KI-Grundbefähigung Fachbereich"                                |
+| `Course`            | Zusammenhängender Kurs, z. B. "Entwickeln mit VS Code und Copilot"                                     |
+| `Module`            | Kleinste vermarktbare Lerneinheit, hat genau **eine** `learningLayer` (`tool`/`concept`/`ai_workflow`) |
+| `Scenario`          | Durchführbare Übung in einem Modus (`explore`/`guided`/`challenge`), gebunden an eine Umgebung         |
+| `Step`              | Einzelner Trainingsschritt mit Aufgabe, Hilfestufen, Validierung, Highlight-Ziel                       |
+| `LearningObjective` | Lernziel-ID, referenzierbar über Module hinweg (Grundlage für Nachweise)                               |
 
 ### Laufzeit / Fortschritt
 
-| Entität | Beschreibung |
-|---|---|
-| `TrainingSession` | Ein Durchlauf eines Szenarios durch eine Person |
-| `StepState` | `NOT_STARTED` → `ACTIVE` → (`VALIDATION_FAILED`) → `COMPLETED` / `SKIPPED` |
-| `TrainingEvent` | Alles, was in der Laufzeit passiert (Grundlage für Validierung **und** Telemetrie) |
-| `Attempt` | Fehlversuch mit Grund |
-| `HintUsage` | Genutzte Hilfestufe je Schritt |
-| `SkillProfile` | Aggregierte Punkte/Level je Technology (siehe `05-gamification.md`) |
-| `Attestation` | Kompetenznachweis mit Gültigkeitszeitraum |
+| Entität           | Beschreibung                                                                       |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `TrainingSession` | Ein Durchlauf eines Szenarios durch eine Person                                    |
+| `StepState`       | `NOT_STARTED` → `ACTIVE` → (`VALIDATION_FAILED`) → `COMPLETED` / `SKIPPED`         |
+| `TrainingEvent`   | Alles, was in der Laufzeit passiert (Grundlage für Validierung **und** Telemetrie) |
+| `Attempt`         | Fehlversuch mit Grund                                                              |
+| `HintUsage`       | Genutzte Hilfestufe je Schritt                                                     |
+| `SkillProfile`    | Aggregierte Punkte/Level je Technology (siehe `05-gamification.md`)                |
+| `Attestation`     | Kompetenznachweis mit Gültigkeitszeitraum                                          |
 
 ### Datenklassifizierung (siehe `docs/10-dokumenten-check.md`)
 
-| Entität | Beschreibung |
-|---|---|
-| `ClassificationScheme` | Mandantenspezifisches Schema: Stufen in Rangfolge, Merkmale mit Mindeststufe, KI-Freigabematrix, Unsicherheitsregel |
-| `ClassificationLevel` | Vertraulichkeitsstufe (Standard: public → internal → confidential → strictly_confidential) |
-| `Indicator` | Merkmal, das eine Mindeststufe auslöst (Personenbezug, Gehaltsdaten, Kennzeichnung …) |
-| `AiToolPolicy` | Je KI-Werkzeug die höchste erlaubte Stufe |
-| `DocumentCheckResult` | Metadaten eines Prüfvorgangs: Zeitpunkt, Dateityp, Ergebnisstufe, ausgelöste Merkmals-IDs — **niemals Dokumentinhalt** |
+| Entität                | Beschreibung                                                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `ClassificationScheme` | Mandantenspezifisches Schema: Stufen in Rangfolge, Merkmale mit Mindeststufe, KI-Freigabematrix, Unsicherheitsregel    |
+| `ClassificationLevel`  | Vertraulichkeitsstufe (Standard: public → internal → confidential → strictly_confidential)                             |
+| `Indicator`            | Merkmal, das eine Mindeststufe auslöst (Personenbezug, Gehaltsdaten, Kennzeichnung …)                                  |
+| `AiToolPolicy`         | Je KI-Werkzeug die höchste erlaubte Stufe                                                                              |
+| `DocumentCheckResult`  | Metadaten eines Prüfvorgangs: Zeitpunkt, Dateityp, Ergebnisstufe, ausgelöste Merkmals-IDs — **niemals Dokumentinhalt** |
 
 ## 2.3 TypeScript-Contracts (verbindlich)
 
 ```ts
 // ---------- Katalog ----------
-export type TechnologyId = 'ide' | 'source_control' | 'terminal'
-  | 'ai_coding_assistant' | 'cli_agent' | 'office_assistant' | 'ai_chat';
+export type TechnologyId =
+  | "ide"
+  | "source_control"
+  | "terminal"
+  | "ai_coding_assistant"
+  | "cli_agent"
+  | "office_assistant"
+  | "ai_chat";
 
 export interface Product {
-  id: string;                 // 'vscode'
-  providerId: string;         // 'microsoft'
+  id: string; // 'vscode'
+  providerId: string; // 'microsoft'
   technologyId: TechnologyId; // 'ide'
   name: string;
-  hostProductId?: string;     // 'github-copilot' läuft in 'vscode'
+  hostProductId?: string; // 'github-copilot' läuft in 'vscode'
 }
 
 export type Capability =
-  | 'filesystem' | 'editor' | 'terminal' | 'extensions'
-  | 'source_control' | 'chat' | 'inline_completion' | 'agent_mode';
+  | "filesystem"
+  | "editor"
+  | "terminal"
+  | "extensions"
+  | "source_control"
+  | "chat"
+  | "inline_completion"
+  | "agent_mode";
 
 // ---------- Lerninhalt ----------
-export type LearningLayer = 'tool' | 'concept' | 'ai_workflow';
-export type TrainingMode  = 'explore' | 'guided' | 'challenge';
+export type LearningLayer = "tool" | "concept" | "ai_workflow";
+export type TrainingMode = "explore" | "guided" | "challenge";
 
 export interface Scenario {
-  id: string;                       // 'vscode-basics.guided'
+  id: string; // 'vscode-basics.guided'
   moduleId: string;
   mode: TrainingMode;
   title: string;
   description: string;
-  learningObjectives: string[];     // ['understand_vscode_ui', 'understand_workspace']
+  learningObjectives: string[]; // ['understand_vscode_ui', 'understand_workspace']
   environment: {
     productId: string;
-    version: string;                // SemVer-Range, z. B. '1.x'
-    runtimeAdapterId: string;       // 'vscode-simulator'
-    seed?: RuntimeSeed;             // Startzustand: Dateibaum, offene Tabs, Repo-Status
+    version: string; // SemVer-Range, z. B. '1.x'
+    runtimeAdapterId: string; // 'vscode-simulator'
+    seed?: RuntimeSeed; // Startzustand: Dateibaum, offene Tabs, Repo-Status
   };
   steps: Step[];
   estimatedMinutes: number;
-  points: number;                   // Basispunkte, siehe Gamification
+  points: number; // Basispunkte, siehe Gamification
 }
 
 export interface Step {
   id: string;
   title: string;
-  instruction: string;              // was der Nutzer tun soll
-  rationale?: string;               // Antwort auf "Warum mache ich das?"
+  instruction: string; // was der Nutzer tun soll
+  rationale?: string; // Antwort auf "Warum mache ich das?"
   helpLevels: [string, string, string]; // Hinweis → konkrete Anweisung → visuelle Hilfe
-  highlightTarget?: UiTargetRef;    // semantisch, NIE ein CSS-Selektor
+  highlightTarget?: UiTargetRef; // semantisch, NIE ein CSS-Selektor
   validation: Validation;
   optional?: boolean;
   onFailure?: { message: string; markTarget?: UiTargetRef };
@@ -141,9 +153,9 @@ export type UiTargetRef = string; // 'vscode.activityBar.explorer', 'vscode.pane
 // ---------- Events ----------
 export interface TrainingEvent<P = unknown> {
   id: string;
-  source: string;      // 'vscode-simulator'
-  type: string;        // 'file.created'
-  timestamp: string;   // ISO 8601
+  source: string; // 'vscode-simulator'
+  type: string; // 'file.created'
+  timestamp: string; // ISO 8601
   sessionId: string;
   payload: P;
 }
@@ -165,12 +177,17 @@ ui.element.inspected    (Explore-Modus)
 
 ```ts
 export type Validation =
-  | { kind: 'event';  type: string; match?: Record<string, unknown> }
-  | { kind: 'state';  selector: string; equals?: unknown; matches?: string }
-  | { kind: 'sequence'; of: Validation[]; ordered: boolean }
-  | { kind: 'all' | 'any'; of: Validation[] }
-  | { kind: 'classification'; documentId: string; expectedLevel: string; expectedAiDecision?: Record<string, boolean> }
-  | { kind: 'llm-rubric'; rubric: string; input: string }; // nur für AI-Workflow-Schritte
+  | { kind: "event"; type: string; match?: Record<string, unknown> }
+  | { kind: "state"; selector: string; equals?: unknown; matches?: string }
+  | { kind: "sequence"; of: Validation[]; ordered: boolean }
+  | { kind: "all" | "any"; of: Validation[] }
+  | {
+      kind: "classification";
+      documentId: string;
+      expectedLevel: string;
+      expectedAiDecision?: Record<string, boolean>;
+    }
+  | { kind: "llm-rubric"; rubric: string; input: string }; // nur für AI-Workflow-Schritte
 ```
 
 **Wichtig für den Challenge-Modus:** Dort wird nicht die Event-Kette geprüft, sondern der
@@ -242,7 +259,12 @@ steps:
   - id: create-file
     title: Datei anlegen
     instruction: Erstelle im Projektverzeichnis eine Datei hello.py.
-    helpLevels: ["Nutze das Neue-Datei-Symbol im Explorer.", "Explorer → Symbolleiste → Neue Datei → Namen eingeben → Enter", "__highlight__"]
+    helpLevels:
+      [
+        "Nutze das Neue-Datei-Symbol im Explorer.",
+        "Explorer → Symbolleiste → Neue Datei → Namen eingeben → Enter",
+        "__highlight__",
+      ]
     highlightTarget: vscode.explorer.newFile
     validation: { kind: event, type: file.created, match: { filename: hello.py } }
     onFailure:
@@ -252,12 +274,12 @@ steps:
 
 ## 2.5 Persistenzmodell (MVP)
 
-| Datenklasse | Speicher | Begründung |
-|---|---|---|
-| Katalog + Szenarien | Git-Repository, JSON-Schema-validiert | Versionierbar, reviewbar, von LLMs erzeugbar, kein Datenbank-Deployment für Content nötig |
-| Fortschritt, Sessions, Punkte | Datenbank (Amplify Data / DynamoDB oder Postgres) | Nutzerbezogen, veränderlich |
-| Events / Telemetrie | Append-only Log, getrennt, mit Aufbewahrungsfrist | Datenschutzrechtlich eigene Klasse (→ `docs/08` ADR-07) |
-| Nachweise (`Attestation`) | Datenbank + signierter Export | Prüffähigkeit |
+| Datenklasse                   | Speicher                                          | Begründung                                                                                |
+| ----------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Katalog + Szenarien           | Git-Repository, JSON-Schema-validiert             | Versionierbar, reviewbar, von LLMs erzeugbar, kein Datenbank-Deployment für Content nötig |
+| Fortschritt, Sessions, Punkte | Datenbank (Amplify Data / DynamoDB oder Postgres) | Nutzerbezogen, veränderlich                                                               |
+| Events / Telemetrie           | Append-only Log, getrennt, mit Aufbewahrungsfrist | Datenschutzrechtlich eigene Klasse (→ `docs/08` ADR-07)                                   |
+| Nachweise (`Attestation`)     | Datenbank + signierter Export                     | Prüffähigkeit                                                                             |
 
 Szenarien referenzieren Produktversionen. Wird ein Simulator aktualisiert, entsteht eine neue
 Szenario-Version — bereits vergebene Punkte und Nachweise bleiben an die alte Version gebunden

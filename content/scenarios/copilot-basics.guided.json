@@ -105,7 +105,11 @@
         "Das Plus-Symbol für eine neue Unterhaltung wird hervorgehoben."
       ],
       "expectedEvent": "copilot.conversation.started",
-      "validation": { "kind": "event", "type": "copilot.conversation.started", "match": { "activeFile": "calculator.py" } },
+      "validation": {
+        "kind": "event",
+        "type": "copilot.conversation.started",
+        "match": { "activeFile": "calculator.py" }
+      },
       "highlightTarget": "copilot.chat.newConversation",
       "highlightTooltip": "Beginne einen neuen Chat-Verlauf.",
       "successMessage": "Neue Unterhaltung gestartet; calculator.py bleibt als Arbeitskontext erhalten."
@@ -122,7 +126,11 @@
         "Das Prompt-Feld wird hervorgehoben."
       ],
       "expectedEvent": "copilot.prompt.submitted",
-      "validation": { "kind": "event", "type": "copilot.prompt.submitted", "match": { "activeFile": "calculator.py" } },
+      "validation": {
+        "kind": "event",
+        "type": "copilot.prompt.submitted",
+        "match": { "activeFile": "calculator.py" }
+      },
       "highlightTarget": "copilot.chat.prompt",
       "highlightTooltip": "Stelle eine Frage im aktuellen Dateikontext.",
       "successMessage": "Die Anfrage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
@@ -139,7 +147,11 @@
         "Die Modusauswahl wird hervorgehoben."
       ],
       "expectedEvent": "copilot.mode.changed",
-      "validation": { "kind": "event", "type": "copilot.mode.changed", "match": { "mode": "plan" } },
+      "validation": {
+        "kind": "event",
+        "type": "copilot.mode.changed",
+        "match": { "mode": "plan" }
+      },
       "highlightTarget": "copilot.chat.modeSelector",
       "highlightTooltip": "Wähle Plan als Arbeitsmodus.",
       "successMessage": "Plan-Modus ausgewählt."
@@ -168,7 +180,11 @@
         "Die Modellauswahl wird hervorgehoben."
       ],
       "expectedEvent": "copilot.model.changed",
-      "validation": { "kind": "event", "type": "copilot.model.changed", "match": { "modelId": "gpt-5.3-codex" } },
+      "validation": {
+        "kind": "event",
+        "type": "copilot.model.changed",
+        "match": { "modelId": "gpt-5.3-codex" }
+      },
       "highlightTarget": "copilot.chat.modelSelector",
       "highlightTooltip": "Wähle bewusst ein konkretes Modell.",
       "successMessage": "Explizites Modell ausgewählt."
@@ -185,7 +201,11 @@
         "Die Modellauswahl wird hervorgehoben."
       ],
       "expectedEvent": "copilot.model.changed",
-      "validation": { "kind": "event", "type": "copilot.model.changed", "match": { "modelId": "auto" } },
+      "validation": {
+        "kind": "event",
+        "type": "copilot.model.changed",
+        "match": { "modelId": "auto" }
+      },
       "highlightTarget": "copilot.chat.modelSelector",
       "highlightTooltip": "Wechsle zurück auf Auto.",
       "successMessage": "Auto-Auswahl aktiviert."
@@ -202,7 +222,11 @@
         "Der Inline-Vorschlag und die Annehmen-Aktion werden im Copilot-Bereich angezeigt."
       ],
       "expectedEvent": "ai.suggestion.accepted",
-      "validation": { "kind": "event", "type": "ai.suggestion.accepted", "match": { "file": "calculator.py" } },
+      "validation": {
+        "kind": "event",
+        "type": "ai.suggestion.accepted",
+        "match": { "file": "calculator.py" }
+      },
       "highlightTarget": "copilot.inline.suggestion",
       "highlightTooltip": "Prüfe den vorgeschlagenen Code und übernimm ihn bewusst.",
       "successMessage": "Inline-Vorschlag angenommen und in calculator.py übernommen."
