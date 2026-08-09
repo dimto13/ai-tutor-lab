@@ -36,6 +36,21 @@
       "id": "combine_editor_git_ai_workflow",
       "title": "Editor, Git und KI-Assistent kombinieren",
       "description": "VS Code, Git und GitHub Copilot in einem zusammenhängenden Entwicklungsablauf einsetzen."
+    },
+    {
+      "id": "understand_code_and_python",
+      "title": "Code, Programmierung und Python einordnen",
+      "description": "Code als eindeutige Arbeitsanweisung verstehen, Programmierung als Übersetzung einer Aufgabe einordnen und Python als Beispielsprache erkennen."
+    },
+    {
+      "id": "understand_project_context",
+      "title": "Workspace und Repository unterscheiden",
+      "description": "Den sichtbaren VS-Code-Arbeitskontext von dem durch Git versionierten Projektbereich unterscheiden."
+    },
+    {
+      "id": "operate_copilot_basics",
+      "title": "Copilot-Grundfunktionen kontrolliert einsetzen",
+      "description": "Chat, Kontext, Arbeitsmodus, Modellauswahl und Inline-Vorschläge unterscheiden, einsetzen und vor der Übernahme prüfen."
     }
   ]
 }

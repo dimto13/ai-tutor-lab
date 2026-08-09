@@ -1,4 +1,5 @@
 import glossaryData from "../../content/glossary/de.json";
+import type { TechnologyId } from "../types/training";
 
 export interface GlossaryConcept {
   key: string;
@@ -10,6 +11,9 @@ export interface GlossaryConcept {
 }
 
 const concepts = glossaryData.concepts as GlossaryConcept[];
+const technologyConcepts = glossaryData.technologyConcepts as Partial<
+  Record<TechnologyId, string[]>
+>;
 
 const normalize = (value: string) =>
   value
@@ -21,6 +25,11 @@ const normalize = (value: string) =>
 
 export function getGlossaryConcepts(): GlossaryConcept[] {
   return concepts;
+}
+
+export function getGlossaryConceptsForTechnology(technologyId: TechnologyId): GlossaryConcept[] {
+  const keys = new Set(technologyConcepts[technologyId] ?? []);
+  return concepts.filter((concept) => keys.has(concept.key));
 }
 
 export function getGlossaryConceptByKey(key: string | undefined): GlossaryConcept | null {
@@ -53,4 +62,69 @@ export function findGlossaryConcept(question: string): GlossaryConcept | null {
     }
   }
   return best?.concept ?? null;
+}
+
+export interface GlossaryTextSegment {
+  text: string;
+  concept?: GlossaryConcept;
+}
+
+interface GlossaryMatch {
+  start: number;
+  end: number;
+  concept: GlossaryConcept;
+}
+
+const isWordCharacter = (value: string | undefined) =>
+  value !== undefined && /[\p{L}\p{N}]/u.test(value);
+
+export function segmentGlossaryText(
+  text: string,
+  conceptKeys: readonly string[],
+): GlossaryTextSegment[] {
+  if (!text || conceptKeys.length === 0) return [{ text }];
+
+  const selectedKeys = new Set(conceptKeys);
+  const lowerText = text.toLocaleLowerCase("de");
+  const matches: GlossaryMatch[] = [];
+
+  for (const concept of concepts) {
+    if (!selectedKeys.has(concept.key)) continue;
+    const candidates = [...new Set([concept.term, ...concept.aliases])].sort(
+      (left, right) => right.length - left.length,
+    );
+    for (const candidate of candidates) {
+      const lowerCandidate = candidate.toLocaleLowerCase("de");
+      let start = lowerText.indexOf(lowerCandidate);
+      while (start >= 0) {
+        const end = start + lowerCandidate.length;
+        if (!isWordCharacter(text[start - 1]) && !isWordCharacter(text[end])) {
+          matches.push({ start, end, concept });
+        }
+        start = lowerText.indexOf(lowerCandidate, start + 1);
+      }
+    }
+  }
+
+  matches.sort(
+    (left, right) => left.start - right.start || right.end - right.start - (left.end - left.start),
+  );
+  const accepted: GlossaryMatch[] = [];
+  let cursor = 0;
+  for (const match of matches) {
+    if (match.start < cursor) continue;
+    accepted.push(match);
+    cursor = match.end;
+  }
+  if (accepted.length === 0) return [{ text }];
+
+  const segments: GlossaryTextSegment[] = [];
+  cursor = 0;
+  for (const match of accepted) {
+    if (match.start > cursor) segments.push({ text: text.slice(cursor, match.start) });
+    segments.push({ text: text.slice(match.start, match.end), concept: match.concept });
+    cursor = match.end;
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor) });
+  return segments;
 }

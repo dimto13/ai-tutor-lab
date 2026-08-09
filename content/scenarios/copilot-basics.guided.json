@@ -4,8 +4,28 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "GitHub Copilot – Grundlagen",
-  "description": "Verstehe Copilot Chat, Unterhaltung und Kontext, Ask/Plan/Agent, Modellwahl und Auto-Auswahl sowie den Unterschied zu Inline-Vorschlägen. MCP und Agent Skills werden als Erweiterungskonzepte eingeordnet.",
-  "learningObjectives": ["combine_editor_git_ai_workflow"],
+  "description": "Lerne zuerst die nötigen Grundbegriffe und nutze danach Copilot Chat, Kontext, Arbeitsmodi, Modellauswahl und Inline-Vorschläge kontrolliert in einem synthetischen Beispiel.",
+  "learningObjectives": [
+    "understand_code_and_python",
+    "understand_project_context",
+    "operate_copilot_basics"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "foundation.programming",
+      "programming.python",
+      "vscode.workspace",
+      "git.repository",
+      "copilot.inline_suggestion"
+    ],
+    "introductionStepIds": [
+      "understand-code-and-programming",
+      "understand-python-example",
+      "understand-project-context"
+    ]
+  },
   "environment": {
     "productId": "vscode",
     "version": "1.x",
@@ -31,8 +51,8 @@
       ]
     }
   },
-  "estimatedMinutes": 12,
-  "points": 120,
+  "estimatedMinutes": 16,
+  "points": 140,
   "resources": [
     {
       "title": "GitHub Docs: Copilot Chat in der IDE",
@@ -72,11 +92,44 @@
   ],
   "steps": [
     {
+      "id": "understand-code-and-programming",
+      "stepType": "explanation",
+      "optional": true,
+      "title": "Code und Programmierung einordnen",
+      "description": "Wenn du eine Excel-Formel wie =SUMME(A1:A3) verwendest, gibst du dem Computer bereits eine genaue Arbeitsanweisung. Code funktioniert nach demselben Grundgedanken.",
+      "instruction": "Merke dir: Code beschreibt eindeutige Anweisungen für einen Computer. Programmierung bedeutet, eine Aufgabe in solche prüfbaren Anweisungen zu übersetzen.",
+      "why": "Copilot unterstützt beim Lesen und Erstellen von Code. Du musst nicht selbst programmieren können, solltest Vorschläge aber als Arbeitsanweisungen erkennen und ihr Ergebnis prüfen.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Code und Programmierung sind mit einer bekannten Excel-Arbeitsweise verknüpft."
+    },
+    {
+      "id": "understand-python-example",
+      "stepType": "explanation",
+      "optional": true,
+      "title": "Python als Beispielsprache verstehen",
+      "description": "Python ist eine Programmiersprache. Dateien mit der Endung .py enthalten Python-Code – ähnlich wie .xlsx eine Excel-Arbeitsmappe kennzeichnet.",
+      "instruction": "Sieh dir calculator.py im Editor an: `def add(a, b):` beginnt eine kleine Rechenfunktion namens add. Die zwei Platzhalter a und b sind ihre Eingaben; die eigentliche Rechenanweisung fehlt noch.",
+      "why": "Der einfache, synthetische Python-Ausschnitt macht sichtbar, welchen Teil Copilot später vorschlägt. Es geht hier um die kontrollierte Nutzung des Werkzeugs, nicht um einen Programmierkurs.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Python und der vorbereitete Beispielcode sind verständlich eingeordnet."
+    },
+    {
+      "id": "understand-project-context",
+      "stepType": "explanation",
+      "optional": true,
+      "title": "Workspace und Repository unterscheiden",
+      "description": "Ein Workspace ist der Arbeitskontext, den VS Code gerade zeigt. Ein Repository ist der von Git versionierte Projektbereich mit seiner Änderungsgeschichte.",
+      "instruction": "Merke dir für dieses Training: Der Workspace ai-training-demo ist geöffnet. Darin liegt das synthetische Repository mit README.md und calculator.py.",
+      "why": "Copilot kann Informationen aus dem geöffneten Arbeitskontext berücksichtigen. Deshalb musst du erkennen, welche Dateien zum Kontext gehören und welche Inhalte du einer KI bereitstellen darfst.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Workspace und Repository sind als unterschiedliche Projektkontexte eingeordnet."
+    },
+    {
       "id": "open-copilot-chat",
       "title": "Copilot Chat öffnen",
-      "description": "GitHub Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Chat und Inline-Vorschläge sind unterschiedliche Arbeitsformen.",
+      "description": "GitHub Copilot ist ein KI-Assistent, der in VS Code eingebunden ist. Im Chat stellst du Fragen; ein Inline-Vorschlag erscheint dagegen direkt in einer geöffneten Datei.",
       "instruction": "Öffne Copilot Chat über den Copilot-Button im Editorbereich.",
-      "why": "Im Chat formulierst du Fragen und Aufgaben als Unterhaltung. Inline-Vorschläge dagegen erscheinen direkt im Editor und werden einzeln angenommen oder verworfen.",
+      "why": "Die beiden Arbeitsformen haben unterschiedliche Zwecke. Im Chat erklärst du ein Ziel in Worten; einen Inline-Vorschlag prüfst und übernimmst du direkt an der passenden Stelle im Code.",
       "helpLevels": [
         "Der Copilot-Button befindet sich rechts oberhalb des Editors.",
         "Klicke auf den Button mit der Beschriftung Copilot.",
@@ -92,7 +145,7 @@
       "id": "session-vs-conversation",
       "stepType": "explanation",
       "title": "Training-Session und Copilot-Unterhaltung unterscheiden",
-      "description": "Die Lernplattform und GitHub Copilot verwalten zwei verschiedene Arten von Sitzungen.",
+      "description": "Die Lernplattform und Copilot speichern zwei voneinander getrennte Verläufe.",
       "instruction": "Merke dir: Deine Training-Session speichert Lernfortschritt und Trainingszustand. Eine Copilot-Unterhaltung speichert dagegen den Gesprächsverlauf innerhalb von Copilot Chat.",
       "why": "Wenn du eine neue Copilot-Unterhaltung startest, beginnt der Chat-Verlauf neu. Dein Training und der geöffnete VS-Code-Arbeitskontext werden dadurch nicht neu gestartet.",
       "helpLevels": ["", "", ""],
@@ -103,7 +156,7 @@
     {
       "id": "new-conversation",
       "title": "Neue Copilot-Unterhaltung beginnen",
-      "description": "Ein neuer Chat-Verlauf verwirft die bisherige Gesprächshistorie, während der aktuelle Arbeitskontext erhalten bleiben kann.",
+      "description": "Eine neue Unterhaltung beginnt ohne die bisherigen Chat-Nachrichten. Die geöffnete Datei und der Workspace können trotzdem weiter als Arbeitskontext verfügbar sein.",
       "instruction": "Starte über das Plus-Symbol eine neue Copilot-Unterhaltung.",
       "why": "Eine neue Unterhaltung ist sinnvoll, wenn du einen Themenwechsel sauber vom bisherigen Dialog trennen möchtest. Die aktuell geöffnete Datei kann trotzdem weiterhin als Arbeitskontext verfügbar sein.",
       "helpLevels": [
@@ -124,7 +177,7 @@
     {
       "id": "use-file-context",
       "title": "Dateikontext bewusst nutzen",
-      "description": "Die Datei calculator.py ist im Editor geöffnet und wird dem simulierten Copilot als aktueller Arbeitskontext übergeben.",
+      "description": "calculator.py ist im Editor geöffnet. Der simulierte Copilot erhält deshalb diese Python-Datei als aktuellen Kontext für deine Frage.",
       "instruction": "Frage Copilot: Was macht die aktuell geöffnete Datei?",
       "why": "Kontext hilft der KI, eine allgemeine Frage auf deinen konkreten Arbeitsstand zu beziehen. Prüfe trotzdem immer, welche Informationen tatsächlich in den Kontext gelangen dürfen.",
       "helpLevels": [
@@ -146,7 +199,7 @@
     {
       "id": "select-plan-mode",
       "title": "Plan-Modus auswählen",
-      "description": "Copilot bietet unterschiedliche Arbeitsmodi. Die genaue Verfügbarkeit hängt von Produktversion und Unternehmensrichtlinien ab.",
+      "description": "Ein Arbeitsmodus legt fest, wie weit Copilot bei einer Aufgabe gehen soll: nur erklären, zuerst planen oder mehrere Schritte selbst ausführen.",
       "instruction": "Wähle im Modus-Menü Plan aus.",
       "why": "Plan eignet sich, wenn vor Änderungen zuerst ein strukturierter Implementierungsplan entstehen soll. Ask ist stärker auf Fragen und Erklärungen ausgerichtet; Agent auf mehrstufige Aufgaben mit Werkzeugnutzung.",
       "helpLevels": [
