@@ -33,7 +33,9 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");
   await expect(
-    page.getByText(/calculator\.py definiert die Funktion add\(a, b\).*Funktionskörper ist noch leer/),
+    page.getByText(
+      /calculator\.py definiert die Funktion add\(a, b\).*Funktionskörper ist noch leer/,
+    ),
   ).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
   await expect(page.getByText("Schritt 5 – Plan-Modus auswählen")).toBeVisible();
