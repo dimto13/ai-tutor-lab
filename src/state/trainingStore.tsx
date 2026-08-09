@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import { normalizeGuidedStepProgress } from "@/state/trainingProgress";
 import type {
   ChallengeOutcome,
   Scenario,
@@ -93,13 +94,23 @@ function load(scenario: Scenario): TrainingProgress {
     const raw = window.localStorage.getItem(storageKey(scenario.id));
     if (!raw) return initialProgress(scenario);
     const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
-    if (!parsed.statuses) return initialProgress(scenario);
+    if (!parsed.statuses || typeof parsed.statuses !== "object" || Array.isArray(parsed.statuses)) {
+      return initialProgress(scenario);
+    }
     const mode = modeOf(scenario);
+    const guidedProgress =
+      mode === "guided"
+        ? normalizeGuidedStepProgress(scenario, {
+            statuses: parsed.statuses,
+            activeStepId: parsed.activeStepId,
+            finishedAt: parsed.finishedAt,
+          })
+        : null;
     return {
-      statuses: parsed.statuses,
-      activeStepId: parsed.activeStepId ?? null,
+      statuses: guidedProgress?.statuses ?? parsed.statuses,
+      activeStepId: guidedProgress?.activeStepId ?? parsed.activeStepId ?? null,
       startedAt: parsed.startedAt ?? Date.now(),
-      finishedAt: parsed.finishedAt ?? null,
+      finishedAt: guidedProgress?.finishedAt ?? parsed.finishedAt ?? null,
       challengeOutcome:
         mode === "challenge"
           ? (parsed.challengeOutcome ?? (parsed.finishedAt ? "passed" : "active"))
@@ -619,8 +630,21 @@ export function useStoredProgressPercent(scenarioId: string | null) {
         setPercent(passed ? 100 : 0);
         return;
       }
+      if (
+        !parsed.statuses ||
+        typeof parsed.statuses !== "object" ||
+        Array.isArray(parsed.statuses)
+      ) {
+        setPercent(0);
+        return;
+      }
+      const normalized = normalizeGuidedStepProgress(scenario, {
+        statuses: parsed.statuses,
+        activeStepId: parsed.activeStepId,
+        finishedAt: parsed.finishedAt,
+      });
       const done = scenario.steps.filter((step) => {
-        const status = parsed.statuses?.[step.id];
+        const status = normalized.statuses[step.id];
         return status === "COMPLETED" || status === "SKIPPED";
       }).length;
       setPercent(Math.round((done / Math.max(scenario.steps.length, 1)) * 100));
