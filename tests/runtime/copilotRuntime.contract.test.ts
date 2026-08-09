@@ -140,6 +140,30 @@ test("copilotRuntime: configured inline suggestions come from runtime seed and g
   }
 });
 
+test("copilotRuntime: configured chat responses come from runtime seed", async () => {
+  const runtime = createCopilotRuntime();
+  await runtime.mount(createContainer(), {
+    chatResponses: [
+      {
+        file: "example.py",
+        promptContains: "multipl",
+        response: "def multiply(a, b):\n    return a * b",
+      },
+    ],
+  });
+
+  try {
+    runtime.setContextActiveFile("example.py");
+    const response = runtime.submitPrompt("Erstelle eine Funktion zum Multiplizieren zweier Zahlen.");
+    assert.equal(response, "def multiply(a, b):\n    return a * b");
+
+    const fallback = runtime.submitPrompt("Was macht die aktuell geöffnete Datei?", "x = 1\n");
+    assert.match(fallback, /x = 1/);
+  } finally {
+    await runtime.unmount();
+  }
+});
+
 test("copilotRuntime: chat response and event carry the opened file context", async () => {
   const payloads: Array<Record<string, unknown>> = [];
   const unsubscribe = copilotRuntime.subscribe((event) => {

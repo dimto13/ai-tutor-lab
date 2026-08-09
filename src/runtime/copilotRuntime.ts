@@ -29,6 +29,12 @@ interface CopilotInlineSuggestionTemplate {
   whenContentEquals?: string;
 }
 
+interface CopilotChatResponseTemplate {
+  response: string;
+  file?: string;
+  promptContains?: string;
+}
+
 export interface CopilotRuntimeState {
   enabled: boolean;
   chatOpen: boolean;
@@ -146,6 +152,35 @@ function inlineSuggestionTemplatesFromSeed(seed?: RuntimeSeed): CopilotInlineSug
   });
 }
 
+function chatResponseTemplatesFromSeed(seed?: RuntimeSeed): CopilotChatResponseTemplate[] {
+  if (!seed || !hasOwn(seed, "chatResponses")) return [];
+  const value = seed["chatResponses"];
+  if (!Array.isArray(value)) {
+    throw new TypeError("Invalid Copilot runtime seed field: chatResponses");
+  }
+
+  return value.map((item) => {
+    if (!isRecord(item)) throw new TypeError("Invalid Copilot chat response seed");
+    const response = item["response"];
+    const file = item["file"];
+    const promptContains = item["promptContains"];
+    if (
+      typeof response !== "string" ||
+      !response ||
+      (file !== undefined && (typeof file !== "string" || !file.trim())) ||
+      (promptContains !== undefined &&
+        (typeof promptContains !== "string" || !promptContains.trim()))
+    ) {
+      throw new TypeError("Invalid Copilot chat response seed");
+    }
+    return {
+      response,
+      ...(file === undefined ? {} : { file }),
+      ...(promptContains === undefined ? {} : { promptContains }),
+    };
+  });
+}
+
 function describeActiveFile(activeFile: string, activeFileContent?: string | null): string {
   if (activeFileContent === undefined || activeFileContent === null) {
     return `Die aktuell geöffnete ${activeFile} ist als Dateikontext ausgewählt. Ihr Inhalt wurde dieser Anfrage jedoch nicht übergeben.`;
@@ -177,9 +212,18 @@ function describeActiveFile(activeFile: string, activeFileContent?: string | nul
 function createAssistantResponse(
   prompt: string,
   activeFile: string | null,
-  activeFileContent?: string | null,
+  activeFileContent: string | null | undefined,
+  responseTemplates: CopilotChatResponseTemplate[],
 ): string {
   const normalizedPrompt = prompt.toLowerCase();
+  const configuredResponse = responseTemplates.find(
+    (entry) =>
+      (entry.file === undefined || entry.file === activeFile) &&
+      (entry.promptContains === undefined ||
+        normalizedPrompt.includes(entry.promptContains.toLowerCase())),
+  );
+  if (configuredResponse) return configuredResponse.response;
+
   const asksAboutFile =
     normalizedPrompt.includes("datei") ||
     normalizedPrompt.includes("kontext") ||
@@ -311,6 +355,7 @@ export function createCopilotRuntime(
   let mountedInitialState: CopilotRuntimeState | null = null;
   let mountedContainer: ParentNode | null = null;
   let inlineSuggestionTemplates: CopilotInlineSuggestionTemplate[] = [];
+  let chatResponseTemplates: CopilotChatResponseTemplate[] = [];
   let activeSessionId = createIdentifier("copilot-session");
   const eventListeners = new Set<EventListener>();
   const stateListeners = new Set<StateListener>();
@@ -350,6 +395,7 @@ export function createCopilotRuntime(
       mountedContainer = container;
       activeSessionId = createIdentifier("copilot-session");
       inlineSuggestionTemplates = inlineSuggestionTemplatesFromSeed(seed);
+      chatResponseTemplates = chatResponseTemplatesFromSeed(seed);
       mountedInitialState = stateFromSeed(profile, seed);
       replaceState(mountedInitialState, "mount");
     },
@@ -358,6 +404,7 @@ export function createCopilotRuntime(
       mountedContainer = null;
       mountedInitialState = null;
       inlineSuggestionTemplates = [];
+      chatResponseTemplates = [];
     },
 
     subscribe(handler: EventListener): () => void {
@@ -464,6 +511,7 @@ export function createCopilotRuntime(
         prompt,
         state.contextActiveFile,
         activeFileContent,
+        chatResponseTemplates,
       );
       const assistantMessage: CopilotChatMessage = {
         id: createIdentifier("copilot-message"),

@@ -10,7 +10,28 @@
     "productId": "vscode",
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator",
-    "integrationRuntimeAdapterIds": ["github-copilot-vscode-simulator"]
+    "integrationRuntimeAdapterIds": ["github-copilot-vscode-simulator"],
+    "seed": {
+      "chatResponses": [
+        {
+          "file": "hello.py",
+          "promptContains": "addier",
+          "response": "Hier ist eine einfache Python-Funktion zum Addieren zweier Zahlen:\n\ndef add(a, b):\n    return a + b"
+        }
+      ],
+      "inlineSuggestions": [
+        {
+          "file": "hello.py",
+          "whenContentEquals": "",
+          "text": "print(\"Hello from Copilot\")\n"
+        },
+        {
+          "file": "hello.py",
+          "whenContentEquals": "print(\"Hello AI Training\")",
+          "text": "\n\ndef add(a, b):\n    return a + b\n"
+        }
+      ]
+    }
   },
   "points": 100,
   "steps": [
