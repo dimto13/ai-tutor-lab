@@ -22,6 +22,18 @@ const workspaceEventNameSchema = z.enum([
   "ai.suggestion.shown",
   "ai.suggestion.accepted",
   "ai.suggestion.rejected",
+  "platform.overview.opened",
+  "platform.code.opened",
+  "platform.commit.history.opened",
+  "platform.pull_requests.opened",
+  "platform.branch.created",
+  "platform.pull_request.created",
+  "platform.pull_request.diff.opened",
+  "platform.pull_request.review.replied",
+  "platform.pull_request.checks.opened",
+  "platform.pull_request.merge_readiness.opened",
+  "platform.issues.opened",
+  "platform.issue.opened",
   "ui.element.inspected",
 ]);
 

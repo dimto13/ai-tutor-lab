@@ -1,0 +1,65 @@
+{
+  "id": "source-control-platform-basics.explore",
+  "moduleId": "github-basics",
+  "mode": "explore",
+  "learningLayer": "tool",
+  "title": "GitHub – Grundlagen erkunden",
+  "description": "Untersuche ein vollständig synthetisches Repository und ordne Git-Grundlagen den Kollaborationsfunktionen einer Hosting-Plattform zu.",
+  "learningObjectives": [
+    "distinguish_git_and_platform",
+    "understand_repository_and_remote",
+    "manage_platform_branches",
+    "read_commit_history",
+    "create_reviewable_pull_request",
+    "handle_review_feedback",
+    "interpret_merge_requirements",
+    "distinguish_issues_and_pull_requests",
+    "explain_clone_fork_remote"
+  ],
+  "environment": {
+    "productId": "github",
+    "version": "simulated-2026-08",
+    "runtimeAdapterId": "source-control-platform-simulator",
+    "seed": {
+      "platformName": "GitHub",
+      "repositoryOwner": "contoso-labs",
+      "repositoryName": "onboarding-guide",
+      "currentBranch": "feature/readme-guide",
+      "branches": ["main", "feature/readme-guide"],
+      "pullRequestCreated": true,
+      "pullRequestTitle": "README um Einstieg ergänzen",
+      "pullRequestDescription": "Ergänzt einen geprüften Einstieg für neue Teammitglieder.",
+      "pullRequestHeadBranch": "feature/readme-guide"
+    }
+  },
+  "estimatedMinutes": 12,
+  "points": 60,
+  "exploreTargets": [
+    "platform.repository.header",
+    "platform.navigation.overview",
+    "platform.navigation.code",
+    "platform.branch.selector",
+    "platform.commit.history",
+    "platform.pullRequests",
+    "platform.pullRequest.diff",
+    "platform.pullRequest.review",
+    "platform.pullRequest.checks",
+    "platform.issues",
+    "platform.remote.help"
+  ],
+  "steps": [
+    {
+      "id": "explore-platform-surface",
+      "title": "Repository-Oberfläche frei erkunden",
+      "description": "Alle Bereiche sind synthetisch und dürfen in beliebiger Reihenfolge untersucht werden.",
+      "instruction": "Öffne Navigation, Branch-Auswahl, Historie, Pull Request, Diff, Review, Checks, Issues und die Erklärung zu Clone, Fork und Remote.",
+      "why": "Freies Erkunden baut ein mentales Modell der Plattform auf, bevor ein fester Arbeitsablauf geübt wird.",
+      "helpLevels": [
+        "Beginne mit dem Überblick und dem Repository-Kopf.",
+        "Wechsle anschließend zwischen Code, Commits, Pull Requests und Issues.",
+        "Im vorbereiteten Pull Request findest du Diff, Review und Checks als eigene Reiter beziehungsweise Bereiche."
+      ],
+      "successMessage": "Du hast die zentralen Bereiche der Source-Control-Plattform untersucht."
+    }
+  ]
+}

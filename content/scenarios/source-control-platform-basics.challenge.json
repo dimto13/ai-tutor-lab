@@ -1,0 +1,94 @@
+{
+  "id": "source-control-platform-basics.challenge",
+  "moduleId": "github-basics",
+  "mode": "challenge",
+  "learningLayer": "tool",
+  "title": "Challenge: Reviewbaren Pull Request vorbereiten",
+  "description": "Stelle ohne Klickführung einen prüfbaren Pull Request vom eigenen Branch bis zur Merge-Bereitschaft her. Bewertet wird ausschließlich der Endzustand.",
+  "learningObjectives": [
+    "manage_platform_branches",
+    "create_reviewable_pull_request",
+    "handle_review_feedback",
+    "interpret_merge_requirements"
+  ],
+  "environment": {
+    "productId": "github",
+    "version": "simulated-2026-08",
+    "runtimeAdapterId": "source-control-platform-simulator",
+    "seed": {
+      "platformName": "GitHub",
+      "repositoryOwner": "contoso-labs",
+      "repositoryName": "onboarding-guide",
+      "currentBranch": "main",
+      "branches": ["main"]
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 220,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "state",
+        "selector": "platform.branch.current",
+        "equals": "feature/readme-guide"
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.created",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.headBranch",
+        "equals": "feature/readme-guide"
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.description",
+        "includes": "geprüft"
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.diffViewed",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.reviewReplied",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.checkStatus",
+        "equals": "success"
+      },
+      {
+        "kind": "state",
+        "selector": "platform.pullRequest.mergeReady",
+        "equals": true
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Branch feature/readme-guide als getrennte Entwicklungslinie erstellt",
+    "Pull Request mit nachvollziehbarer Beschreibung und Prüfnachweis geöffnet",
+    "Diff aktiv angesehen und Review-Feedback beantwortet",
+    "Status Check erfolgreich; gemeinsamer Endzustand ist merge-bereit"
+  ],
+  "steps": [
+    {
+      "id": "prepare-reviewable-pull-request",
+      "title": "Reviewbaren Pull Request herstellen",
+      "description": "Du entscheidest selbst über Reihenfolge und Navigation. Es gibt keine automatische Klickführung.",
+      "instruction": "Erstelle den Branch „feature/readme-guide“, öffne daraus einen Pull Request mit einer Beschreibung, die „geprüft“ enthält, sieh den Diff an, beantworte das Review-Feedback und bringe die Checks auf erfolgreich.",
+      "why": "Die Challenge prüft, ob du Branch, Pull Request, Diff, Review und Status Checks als zusammenhängenden Kollaborationsablauf selbstständig einsetzen kannst.",
+      "helpLevels": [
+        "Bewertet wird nur der Endzustand, nicht die Reihenfolge deiner Klicks.",
+        "Der Pull Request muss vom Branch feature/readme-guide nach main zeigen und einen Prüfnachweis enthalten.",
+        "Merge-bereit wird der Zustand erst, wenn Diff angesehen, Review beantwortet und Check erfolgreich ist."
+      ],
+      "successMessage": "Der Pull Request ist vollständig reviewbar und merge-bereit."
+    }
+  ]
+}

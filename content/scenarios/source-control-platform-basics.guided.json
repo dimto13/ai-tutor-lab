@@ -1,0 +1,224 @@
+{
+  "id": "source-control-platform-basics.guided",
+  "moduleId": "github-basics",
+  "mode": "guided",
+  "learningLayer": "tool",
+  "title": "GitHub – Pull Request verstehen",
+  "description": "Führe einen synthetischen Änderungsvorschlag vom Branch über Review und Status Check bis zur Merge-Bereitschaft.",
+  "learningObjectives": [
+    "distinguish_git_and_platform",
+    "understand_repository_and_remote",
+    "manage_platform_branches",
+    "read_commit_history",
+    "create_reviewable_pull_request",
+    "handle_review_feedback",
+    "interpret_merge_requirements",
+    "distinguish_issues_and_pull_requests",
+    "explain_clone_fork_remote"
+  ],
+  "environment": {
+    "productId": "github",
+    "version": "simulated-2026-08",
+    "runtimeAdapterId": "source-control-platform-simulator",
+    "seed": {
+      "platformName": "GitHub",
+      "repositoryOwner": "contoso-labs",
+      "repositoryName": "onboarding-guide",
+      "currentBranch": "main",
+      "branches": ["main"]
+    }
+  },
+  "estimatedMinutes": 18,
+  "points": 140,
+  "steps": [
+    {
+      "id": "understand-git-and-platform",
+      "title": "Git und GitHub unterscheiden",
+      "description": "Git versioniert lokal. GitHub hostet das Remote-Repository und ergänzt Zusammenarbeit.",
+      "instruction": "Öffne in der Repository-Navigation den Bereich „Überblick“ und lies den Weg vom Working Tree bis zu Review und Checks.",
+      "why": "Wer Werkzeug und Plattform trennt, versteht später besser, welche Aktionen lokal funktionieren und welche eine Verbindung oder Plattformberechtigung benötigen.",
+      "helpLevels": [
+        "Der Überblick ist der erste Reiter der Repository-Navigation.",
+        "Klicke oben auf „Überblick“.",
+        "Das gesuchte Ziel erklärt Git lokal und die Plattform als Team-Schicht."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.overview.opened"
+      },
+      "highlightTarget": "platform.navigation.overview",
+      "highlightTooltip": "Hier wird Git von der Hosting- und Kollaborationsplattform abgegrenzt.",
+      "successMessage": "Richtig: Git verwaltet Versionen; GitHub ergänzt Hosting, Zusammenarbeit und Automatisierung."
+    },
+    {
+      "id": "open-hosted-code",
+      "title": "Gehosteten Branch-Stand ansehen",
+      "description": "Die Code-Ansicht zeigt den Stand eines Branches im entfernten Repository – nicht automatisch ungespeicherte lokale Änderungen.",
+      "instruction": "Öffne die Code-Ansicht und ordne Repository, Working Tree und Remote voneinander ab.",
+      "why": "Diese Trennung verhindert die verbreitete Annahme, jede lokale Dateiänderung sei sofort auf GitHub sichtbar.",
+      "helpLevels": [
+        "Suche den Reiter mit dem Code-Symbol.",
+        "Klicke in der oberen Navigation auf „Code“.",
+        "Die Code-Ansicht liegt direkt rechts neben dem Überblick."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.code.opened"
+      },
+      "highlightTarget": "platform.navigation.code",
+      "highlightTooltip": "Die Code-Ansicht zeigt den gehosteten Stand des gewählten Branches.",
+      "successMessage": "Die gehostete Code-Ansicht ist geöffnet."
+    },
+    {
+      "id": "create-working-branch",
+      "title": "Separaten Arbeitsbranch erstellen",
+      "description": "Ein eigener Branch isoliert die Dokumentationsänderung vom stabilen Standardbranch main.",
+      "instruction": "Öffne die Branch-Auswahl und erstelle den Branch „feature/readme-guide“.",
+      "why": "Pull Requests vergleichen einen Head-Branch mit einem Base-Branch. Ohne separaten Arbeitsbranch fehlt dieser prüfbare Vergleich.",
+      "helpLevels": [
+        "Die aktuelle Auswahl zeigt zunächst main.",
+        "Öffne die Branch-Auswahl, trage feature/readme-guide ein und wähle „Erstellen“.",
+        "Die Branch-Auswahl befindet sich rechts oberhalb der Dateiliste."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.branch.created",
+        "match": {
+          "branch": "feature/readme-guide"
+        }
+      },
+      "highlightTarget": "platform.branch.selector",
+      "highlightTooltip": "Erstelle hier den Head-Branch für den Änderungsvorschlag.",
+      "successMessage": "Der Arbeitsbranch feature/readme-guide ist aktiv."
+    },
+    {
+      "id": "inspect-commit-history",
+      "title": "Commit-Historie einordnen",
+      "description": "Nachrichten, Autoren und Kennungen machen die Entwicklungslinie nachvollziehbar.",
+      "instruction": "Öffne die Commit-Historie und prüfe, welche Informationen ein Commit auf der Plattform sichtbar macht.",
+      "why": "Ein Pull Request baut auf Commits auf. Verständliche Commit-Nachrichten erleichtern Review, Fehlersuche und spätere Nachvollziehbarkeit.",
+      "helpLevels": [
+        "Der gesuchte Bereich liegt in der Repository-Navigation.",
+        "Klicke oben auf „Commits“.",
+        "Das Symbol zeigt einen Punkt auf einer Entwicklungslinie."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.commit.history.opened"
+      },
+      "highlightTarget": "platform.commit.history",
+      "highlightTooltip": "Hier wird die synthetische Git-Historie des Repositorys sichtbar.",
+      "successMessage": "Du kannst Commit-Nachricht, Autor und Kennung in der Historie zuordnen."
+    },
+    {
+      "id": "create-pull-request",
+      "title": "Pull Request nachvollziehbar beschreiben",
+      "description": "Titel und Beschreibung geben Reviewenden Ziel, Kontext und Prüfnachweis der Änderung.",
+      "instruction": "Öffne „Pull Requests“. Erstelle einen Pull Request mit dem vorgegebenen Titel und einer Beschreibung, die den Satz „Einrichtung geprüft“ enthält.",
+      "why": "Der Diff zeigt das Was; eine gute Beschreibung erklärt zusätzlich Warum, Wirkung und Prüfung.",
+      "helpLevels": [
+        "Öffne zunächst den Reiter Pull Requests.",
+        "Trage in der Beschreibung beispielsweise „Einrichtung geprüft; keine Zugangsdaten enthalten.“ ein.",
+        "Erstelle den Pull Request erst, wenn Head-Branch feature/readme-guide und Base-Branch main angezeigt werden."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.pull_request.created",
+        "match": {
+          "headBranch": "feature/readme-guide"
+        },
+        "contains": {
+          "description": "Einrichtung geprüft"
+        }
+      },
+      "highlightTarget": "platform.pullRequests",
+      "highlightTooltip": "Hier entsteht der prüfbare Änderungsvorschlag aus deinem Branch.",
+      "successMessage": "Der Pull Request verbindet Branch, Zweck und Prüfnachweis."
+    },
+    {
+      "id": "inspect-pull-request-diff",
+      "title": "Tatsächlichen Diff prüfen",
+      "description": "Der Diff zeigt die konkrete Änderung zwischen Head- und Base-Branch.",
+      "instruction": "Öffne im Pull Request den Reiter „Geänderte Dateien“ und lies die hinzugefügte Zeile.",
+      "why": "Reviewende müssen die tatsächliche Änderung prüfen; Titel und Beschreibung allein belegen nicht, was im Branch geändert wurde.",
+      "helpLevels": [
+        "Suche die Reiter direkt unter dem Pull-Request-Kopf.",
+        "Klicke auf „Geänderte Dateien“.",
+        "Der Reiter liegt zwischen Unterhaltung und Checks."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.pull_request.diff.opened"
+      },
+      "highlightTarget": "platform.pullRequest.diff",
+      "highlightTooltip": "Der Diff ist die Grundlage eines inhaltlichen Reviews.",
+      "successMessage": "Du hast die tatsächlich vorgeschlagene Änderung geprüft."
+    },
+    {
+      "id": "reply-to-review",
+      "title": "Review-Feedback beantworten",
+      "description": "Requested Changes blockiert je nach Regel den Merge, bis die Rückfrage geklärt oder die Änderung korrigiert ist.",
+      "instruction": "Wechsle zur Unterhaltung und beantworte den Review-Kommentar mit einer Nachricht, die „geprüft“ enthält.",
+      "why": "Eine nachvollziehbare Antwort dokumentiert, wie mit Feedback umgegangen wurde, und hält den Review-Kontext für das Team fest.",
+      "helpLevels": [
+        "Öffne wieder den Reiter Unterhaltung.",
+        "Schreibe zum Beispiel „Links und Inhalte geprüft; keine Zugangsdaten enthalten.“.",
+        "Das Antwortfeld befindet sich direkt im gelb markierten Review-Bereich."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.pull_request.review.replied",
+        "contains": {
+          "reply": "geprüft"
+        }
+      },
+      "highlightTarget": "platform.pullRequest.review",
+      "highlightTooltip": "Antworte fachlich auf den angefragten Änderungsbedarf.",
+      "successMessage": "Das Review-Feedback ist beantwortet und nachvollziehbar erledigt."
+    },
+    {
+      "id": "complete-status-checks",
+      "title": "Status Checks bewerten",
+      "description": "Automatisierte Prüfungen ergänzen das menschliche Review und können eine verbindliche Merge-Anforderung sein.",
+      "instruction": "Öffne „Checks“ und aktualisiere den synthetischen Prüflauf, bis er erfolgreich ist.",
+      "why": "Ein erfolgreicher Check zeigt, dass definierte automatische Kriterien erfüllt sind. Er ersetzt dennoch nicht die fachliche Prüfung.",
+      "helpLevels": [
+        "Wechsle zum Pull-Request-Reiter Checks.",
+        "Klicke auf „Checks aktualisieren“.",
+        "Der Status muss anschließend „Erfolgreich“ anzeigen."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.pull_request.checks.opened",
+        "match": {
+          "status": "success"
+        }
+      },
+      "highlightTarget": "platform.pullRequest.checks",
+      "highlightTooltip": "Hier werden automatisierte Ergebnisse und ihr Status sichtbar.",
+      "successMessage": "Der Status Check ist erfolgreich; alle Anforderungen werden neu bewertet."
+    },
+    {
+      "id": "confirm-merge-readiness",
+      "title": "Merge-Bereitschaft erklären",
+      "description": "Branch, Beschreibung, Diff, Review und Check bilden gemeinsam den prüfbaren Endzustand.",
+      "instruction": "Wechsle zur Unterhaltung und öffne in den Merge-Anforderungen den Status „Bereit zum Merge“.",
+      "why": "Merge-Bereitschaft ist kein einzelner Klick, sondern das Ergebnis mehrerer erfüllter fachlicher und technischer Regeln.",
+      "helpLevels": [
+        "Wechsle zurück zum Reiter Unterhaltung.",
+        "Prüfe rechts die vier Merge-Anforderungen und klicke auf den Status darunter.",
+        "Der Status ist grün, wenn Diff, Review und Check vollständig sind."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "platform.pull_request.merge_readiness.opened",
+        "match": {
+          "mergeReady": true
+        }
+      },
+      "highlightTarget": "platform.pullRequest.review",
+      "highlightTooltip": "Die Zusammenfassung verbindet Review und technische Merge-Anforderungen.",
+      "successMessage": "Der Pull Request ist reviewbar und erfüllt die simulierten Merge-Anforderungen."
+    }
+  ]
+}

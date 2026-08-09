@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { GraduationCap, LogOut, Eye, EyeOff } from "lucide-react";
 import { TrainingProvider, useTraining } from "@/state/trainingStore";
-import { Workspace } from "@/components/workspace/Workspace";
+import { RuntimeWorkspace } from "@/components/workspace/RuntimeWorkspace";
 import { GuidePanel } from "@/components/training/GuidePanel";
 import { CompletionScreen } from "@/components/training/CompletionScreen";
 import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
@@ -121,7 +121,7 @@ function TrainingLayout() {
         <CompletionScreen />
       ) : (
         <div className="flex min-h-0 flex-1">
-          <Workspace key={scenario.id} />
+          <RuntimeWorkspace key={scenario.id} />
           <GuidePanel />
         </div>
       )}
