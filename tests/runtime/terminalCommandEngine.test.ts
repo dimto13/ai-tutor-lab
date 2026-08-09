@@ -18,6 +18,10 @@ function baseContext(): TerminalCommandContext {
       "hello.py": 'print("Hello AI Training")\n',
       "src/app.py": 'print("Hello from src")\n',
     },
+    committedContents: {
+      "README.md": "# Demo\n",
+      "src/app.py": 'print("Hello from src")\n',
+    },
     trackedFiles: ["README.md", "src/app.py"],
     changedFiles: ["hello.py"],
     stagedFiles: [],
@@ -166,6 +170,38 @@ test("terminal engine preserves edits made after git add as unstaged changes", (
   const statusAfterCommit = executeTerminalCommand("git status", context);
   assert.match(statusAfterCommit.output.join("\n"), /Changes not staged[\s\S]*hello\.py/);
   assert.doesNotMatch(statusAfterCommit.output.join("\n"), /working tree clean/);
+});
+
+test("terminal engine removes a staged tracked file when git add restores the committed baseline", () => {
+  let context: TerminalCommandContext = {
+    ...baseContext(),
+    contents: {
+      ...baseContext().contents,
+      "README.md": "# Changed\n",
+    },
+    changedFiles: ["README.md"],
+  };
+
+  const firstAdd = executeTerminalCommand("git add README.md", context);
+  assert.deepEqual(firstAdd.stagedFiles, ["README.md"]);
+  assert.deepEqual(firstAdd.stagedContents, { "README.md": "# Changed\n" });
+  context = nextContext(context, firstAdd);
+  context = {
+    ...context,
+    contents: { ...context.contents, "README.md": "# Demo\n" },
+    changedFiles: ["README.md"],
+  };
+
+  const secondAdd = executeTerminalCommand("git add README.md", context);
+  assert.equal(secondAdd.exitCode, 0);
+  assert.deepEqual(secondAdd.stagedFiles, []);
+  assert.deepEqual(secondAdd.stagedContents, {});
+  assert.deepEqual(secondAdd.changedFiles, []);
+  assert.deepEqual(secondAdd.stagedFilesChanged, ["README.md"]);
+  context = nextContext(context, secondAdd);
+
+  const status = executeTerminalCommand("git status", context);
+  assert.match(status.output.join("\n"), /nothing to commit, working tree clean/);
 });
 
 test("terminal engine returns realistic, helpful errors for invalid commands", () => {
