@@ -35,6 +35,8 @@ function createContainer(): HTMLElement {
   return {
     querySelector: (selector: string) =>
       selector === `[data-highlight="${targetRef}"]` ? target : null,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
   } as unknown as HTMLElement;
 }
 

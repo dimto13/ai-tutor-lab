@@ -21,6 +21,8 @@ import type {
 } from "@/types/training";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
+const CHALLENGE_TIMEOUT_MESSAGE =
+  "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
 
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
 const modeMultiplier = (mode: TrainingMode) =>
@@ -191,6 +193,20 @@ async function validateState(
   return true;
 }
 
+function challengeDeadlineAt(scenario: Scenario, progress: TrainingProgress): number | null {
+  if (scenario.timeLimitSeconds === undefined) return null;
+  return progress.startedAt + scenario.timeLimitSeconds * 1000;
+}
+
+function isChallengeDeadlineExpired(
+  scenario: Scenario,
+  progress: TrainingProgress,
+  now = Date.now(),
+): boolean {
+  const deadline = challengeDeadlineAt(scenario, progress);
+  return deadline !== null && now >= deadline;
+}
+
 export function TrainingProvider({
   scenarioId,
   children,
@@ -224,6 +240,22 @@ export function TrainingProvider({
     window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(progress));
   }, [progress, hydrated, scenario.id]);
 
+  const markChallengeTimedOut = useCallback(() => {
+    if (progressRef.current.challengeOutcome !== "active") return;
+    const challengeStep = scenario.steps[0];
+    setProgress((current) => {
+      if (current.challengeOutcome !== "active") return current;
+      return {
+        ...current,
+        statuses: challengeStep
+          ? { ...current.statuses, [challengeStep.id]: "VALIDATION_FAILED" }
+          : current.statuses,
+        activeStepId: null,
+        challengeOutcome: "timed_out",
+      };
+    });
+  }, [scenario.steps]);
+
   useEffect(() => {
     if (!hydrated || mode !== "challenge" || scenario.timeLimitSeconds === undefined) {
       setChallengeRemainingSeconds(null);
@@ -238,7 +270,8 @@ export function TrainingProvider({
       return;
     }
 
-    const deadline = progress.startedAt + scenario.timeLimitSeconds * 1000;
+    const deadline = challengeDeadlineAt(scenario, progress);
+    if (deadline === null) return;
     const updateRemaining = () => {
       const remainingMs = deadline - Date.now();
       if (remainingMs > 0) {
@@ -246,23 +279,7 @@ export function TrainingProvider({
         return true;
       }
 
-      setChallengeRemainingSeconds(0);
-      const challengeStep = scenario.steps[0];
-      setProgress((current) => {
-        if (current.challengeOutcome !== "active") return current;
-        return {
-          ...current,
-          statuses: challengeStep
-            ? { ...current.statuses, [challengeStep.id]: "VALIDATION_FAILED" }
-            : current.statuses,
-          activeStepId: null,
-          challengeOutcome: "timed_out",
-        };
-      });
-      setFeedback({
-        kind: "error",
-        message: "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.",
-      });
+      markChallengeTimedOut();
       return false;
     };
 
@@ -271,7 +288,14 @@ export function TrainingProvider({
       if (!updateRemaining()) window.clearInterval(timer);
     }, 250);
     return () => window.clearInterval(timer);
-  }, [hydrated, mode, progress.challengeOutcome, progress.startedAt, scenario]);
+  }, [
+    hydrated,
+    mode,
+    progress.challengeOutcome,
+    progress.startedAt,
+    scenario,
+    markChallengeTimedOut,
+  ]);
 
   const completeStep = useCallback(
     (stepId: string, successMessage: string) => {
@@ -328,24 +352,47 @@ export function TrainingProvider({
       }
 
       if (mode === "challenge") {
-        if (progressRef.current.challengeOutcome !== "active") return;
+        const startedProgress = progressRef.current;
+        if (startedProgress.challengeOutcome !== "active") return;
+        if (isChallengeDeadlineExpired(scenario, startedProgress)) {
+          markChallengeTimedOut();
+          return;
+        }
+        const challengeStartedAt = startedProgress.startedAt;
         if (!(await validateState(scenario.completionValidation, scenario))) return;
+
+        const currentProgress = progressRef.current;
+        if (
+          currentProgress.challengeOutcome !== "active" ||
+          currentProgress.startedAt !== challengeStartedAt
+        ) {
+          return;
+        }
+        const completedAt = Date.now();
+        if (isChallengeDeadlineExpired(scenario, currentProgress, completedAt)) {
+          markChallengeTimedOut();
+          return;
+        }
+
         const challengeStep = scenario.steps[0];
         setProgress((current) => {
-          if (current.challengeOutcome !== "active") return current;
+          if (
+            current.challengeOutcome !== "active" ||
+            current.startedAt !== challengeStartedAt ||
+            isChallengeDeadlineExpired(scenario, current, completedAt)
+          ) {
+            return current;
+          }
           return {
             ...current,
             statuses: challengeStep
               ? { ...current.statuses, [challengeStep.id]: "COMPLETED" }
               : current.statuses,
             activeStepId: null,
-            finishedAt: current.finishedAt ?? Date.now(),
+            finishedAt: current.finishedAt ?? completedAt,
             challengeOutcome: "passed",
           };
         });
-        if (challengeStep) {
-          setFeedback({ kind: "success", message: challengeStep.successMessage });
-        }
         return;
       }
 
@@ -391,7 +438,7 @@ export function TrainingProvider({
     return () => {
       for (const unsubscribe of unsubscribes) unsubscribe();
     };
-  }, [scenario, mode, completeStep]);
+  }, [scenario, mode, completeStep, markChallengeTimedOut]);
 
   useEffect(() => {
     if (feedback?.kind !== "success") return;
@@ -409,6 +456,9 @@ export function TrainingProvider({
     ).length;
     const challengeComplete = progress.challengeOutcome === "passed";
     const isChallengeFailed = progress.challengeOutcome === "timed_out";
+    const effectiveFeedback = isChallengeFailed
+      ? ({ kind: "error", message: CHALLENGE_TIMEOUT_MESSAGE } as const)
+      : feedback;
 
     const completedCount =
       mode === "explore"
@@ -446,12 +496,12 @@ export function TrainingProvider({
       isFinished,
       isChallengeFailed,
       isReady: hydrated,
-      feedback,
+      feedback: effectiveFeedback,
       helpLevel,
       scoreMultiplier,
       earnedPoints: Math.round(basePoints * scoreMultiplier),
       challengeOutcome: progress.challengeOutcome,
-      challengeRemainingSeconds,
+      challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
         if (mode !== "guided") return;
         setHelpLevel((level) => {
