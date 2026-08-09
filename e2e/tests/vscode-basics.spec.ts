@@ -48,26 +48,6 @@ async function expectSpotlightAround(spotlight: Locator, target: Locator): Promi
     .toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
 }
 
-async function expectSpotlightAround(spotlight: Locator, target: Locator): Promise<void> {
-  await expect(spotlight).toBeVisible();
-  await expect
-    .poll(async () => {
-      const [spotlightBox, targetBox] = await Promise.all([
-        spotlight.boundingBox(),
-        target.boundingBox(),
-      ]);
-      if (!spotlightBox || !targetBox) return null;
-
-      return {
-        top: Math.round(spotlightBox.y - targetBox.y),
-        right: Math.round(spotlightBox.x + spotlightBox.width - (targetBox.x + targetBox.width)),
-        bottom: Math.round(spotlightBox.y + spotlightBox.height - (targetBox.y + targetBox.height)),
-        left: Math.round(spotlightBox.x - targetBox.x),
-      };
-    })
-    .toEqual({ top: -6, right: 6, bottom: 6, left: -6 });
-}
-
 async function reachCreateFileStep(page: Page): Promise<void> {
   await page.goto(guidedUrl);
   await waitForTrainingReady(page);
@@ -263,19 +243,6 @@ test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf
   await expect(
     page.getByText("File enthält Befehle für Dateien, Ordner und Workspaces.", { exact: true }),
   ).toBeVisible();
-});
-
-test("Guided: Highlight-Rahmen umschließt das semantische Ziel geometrisch", async ({ page }) => {
-  await page.goto(guidedUrl);
-  await waitForTrainingReady(page);
-
-  const spotlight = page.getByTestId("highlight-spotlight");
-  const explorer = page.getByRole("button", { name: "Explorer", exact: true });
-  await expectSpotlightAround(spotlight, explorer);
-
-  await explorer.click();
-  await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");
-  await expectSpotlightAround(spotlight, page.getByRole("button", { name: "File", exact: true }));
 });
 
 test("Guided: Highlight-Rahmen folgt dem geklemmten Geometrievertrag", async ({ page }) => {
