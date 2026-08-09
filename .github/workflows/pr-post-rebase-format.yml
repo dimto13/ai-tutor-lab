@@ -1,0 +1,40 @@
+name: PR Post-Rebase Format
+
+on:
+  push:
+    branches:
+      - feat/aitp-139-source-control-platform-basics
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --install-strategy=nested
+
+      - name: Format glossary
+        run: npx prettier --write content/glossary/de.json
+
+      - name: Commit formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/glossary/de.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: format glossary after rebase"
+          git push
