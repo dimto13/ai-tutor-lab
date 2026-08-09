@@ -1,4 +1,4 @@
-import type { Scenario } from "@/types/training";
+import type { LearningLayer, Scenario } from "@/types/training";
 import { parseScenario } from "./contentLoader";
 import vscodeExploreRaw from "../../content/scenarios/vscode-basics.explore.json";
 import vscodeGuidedRaw from "../../content/scenarios/vscode-basics.guided.json";
@@ -45,4 +45,8 @@ export function getScenarioIds(): string[] {
 
 export function getScenariosForModule(moduleId: string): Scenario[] {
   return Object.values(scenarios).filter((scenario) => scenario.moduleId === moduleId);
+}
+
+export function getScenariosForLearningLayer(learningLayer: LearningLayer): Scenario[] {
+  return Object.values(scenarios).filter((scenario) => scenario.learningLayer === learningLayer);
 }
