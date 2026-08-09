@@ -1,6 +1,11 @@
 import { workspaceBus } from "../state/eventBus.ts";
 import type { UiTargetRef } from "../types/training.ts";
 import type { RuntimeAdapter, RuntimeSeed, RuntimeSurfaceDescription } from "./runtimeAdapter.ts";
+import {
+  executeTerminalCommand as evaluateTerminalCommand,
+  formatTerminalPrompt,
+  type TerminalCommit,
+} from "./terminalCommandEngine.ts";
 import { getVscodeSurfaceTarget, VSCODE_RUNTIME_DEFINITION } from "./vscodeDefinition.ts";
 
 type WorkspaceMode = "none" | "folder" | "workspace";
@@ -9,6 +14,7 @@ type PanelName = "terminal" | "problems" | "output" | null;
 export interface VscodeRuntimeState {
   workspaceMode: WorkspaceMode;
   folders: string[];
+  directories: string[];
   files: string[];
   contents: Record<string, string>;
   openTabs: string[];
@@ -16,9 +22,21 @@ export interface VscodeRuntimeState {
   activePanel: PanelName;
   terminalLines: string[];
   terminalCommand: string;
+  terminalCwd: string;
+  trackedFiles: string[];
+  scmChangedFiles: string[];
+  stagedFiles: string[];
+  commits: TerminalCommit[];
   staged: boolean;
   wrongFile: string | null;
   dirtyFiles: string[];
+}
+
+export interface VscodeTerminalExecution {
+  lines: string[];
+  prompt: string;
+  staged: boolean;
+  exitCode: number;
 }
 
 export type VscodeRuntimeStateChangeReason = "mount" | "reset" | "mutation" | "restore";
@@ -39,6 +57,9 @@ interface VscodeRuntimeAdapter extends RuntimeAdapter {
   setActiveFile(filename: string | null): void;
   closeFile(filename: string): void;
   setActivePanel(panel: PanelName): void;
+  initializeTerminal(): string[];
+  getTerminalPrompt(): string;
+  executeTerminalCommand(command: string): VscodeTerminalExecution;
   setTerminalLines(lines: string[]): void;
   setTerminalCommand(command: string): void;
   setStaged(staged: boolean): void;
@@ -48,6 +69,7 @@ interface VscodeRuntimeAdapter extends RuntimeAdapter {
 const initialState = (): VscodeRuntimeState => ({
   workspaceMode: "none",
   folders: [],
+  directories: ["src", "docs"],
   files: ["README.md"],
   contents: {
     "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
@@ -57,6 +79,11 @@ const initialState = (): VscodeRuntimeState => ({
   activePanel: null,
   terminalLines: [],
   terminalCommand: "",
+  terminalCwd: "",
+  trackedFiles: ["README.md"],
+  scmChangedFiles: [],
+  stagedFiles: [],
+  commits: [],
   staged: false,
   wrongFile: null,
   dirtyFiles: [],
@@ -74,6 +101,20 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
+function isTerminalCommit(value: unknown): value is TerminalCommit {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const commit = value as Partial<TerminalCommit>;
+  return (
+    typeof commit.hash === "string" &&
+    typeof commit.message === "string" &&
+    isStringArray(commit.files)
+  );
+}
+
+function isTerminalCommitArray(value: unknown): value is TerminalCommit[] {
+  return Array.isArray(value) && value.every(isTerminalCommit);
+}
+
 function isRuntimeState(value: unknown): value is VscodeRuntimeState {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<VscodeRuntimeState>;
@@ -82,6 +123,7 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
       candidate.workspaceMode === "folder" ||
       candidate.workspaceMode === "workspace") &&
     isStringArray(candidate.folders) &&
+    isStringArray(candidate.directories) &&
     isStringArray(candidate.files) &&
     isStringRecord(candidate.contents) &&
     isStringArray(candidate.openTabs) &&
@@ -92,6 +134,11 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
       candidate.activePanel === "output") &&
     isStringArray(candidate.terminalLines) &&
     typeof candidate.terminalCommand === "string" &&
+    typeof candidate.terminalCwd === "string" &&
+    isStringArray(candidate.trackedFiles) &&
+    isStringArray(candidate.scmChangedFiles) &&
+    isStringArray(candidate.stagedFiles) &&
+    isTerminalCommitArray(candidate.commits) &&
     typeof candidate.staged === "boolean" &&
     (candidate.wrongFile === null || typeof candidate.wrongFile === "string") &&
     isStringArray(candidate.dirtyFiles)
@@ -102,10 +149,15 @@ function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
   return {
     ...value,
     folders: [...value.folders],
+    directories: [...value.directories],
     files: [...value.files],
     contents: { ...value.contents },
     openTabs: [...value.openTabs],
     terminalLines: [...value.terminalLines],
+    trackedFiles: [...value.trackedFiles],
+    scmChangedFiles: [...value.scmChangedFiles],
+    stagedFiles: [...value.stagedFiles],
+    commits: value.commits.map((commit) => ({ ...commit, files: [...commit.files] })),
     dirtyFiles: [...value.dirtyFiles],
   };
 }
@@ -116,7 +168,16 @@ function hasOwn(value: RuntimeSeed, key: string): boolean {
 
 function stringArrayFromSeed(
   seed: RuntimeSeed,
-  key: "folders" | "files" | "openTabs" | "terminalLines" | "dirtyFiles",
+  key:
+    | "folders"
+    | "directories"
+    | "files"
+    | "openTabs"
+    | "terminalLines"
+    | "dirtyFiles"
+    | "trackedFiles"
+    | "scmChangedFiles"
+    | "stagedFiles",
   fallback: string[],
 ): string[] {
   if (!hasOwn(seed, key)) return [...fallback];
@@ -140,13 +201,28 @@ function nullableStringFromSeed(
   return value;
 }
 
-function stringFromSeed(seed: RuntimeSeed, key: "terminalCommand", fallback: string): string {
+function stringFromSeed(
+  seed: RuntimeSeed,
+  key: "terminalCommand" | "terminalCwd",
+  fallback: string,
+): string {
   if (!hasOwn(seed, key)) return fallback;
   const value = seed[key];
   if (typeof value !== "string") {
     throw new TypeError(`Invalid VS Code runtime seed field: ${key}`);
   }
   return value;
+}
+
+function commitsFromSeed(seed: RuntimeSeed, fallback: TerminalCommit[]): TerminalCommit[] {
+  if (!hasOwn(seed, "commits")) {
+    return fallback.map((commit) => ({ ...commit, files: [...commit.files] }));
+  }
+  const value = seed["commits"];
+  if (!isTerminalCommitArray(value)) {
+    throw new TypeError("Invalid VS Code runtime seed field: commits");
+  }
+  return value.map((commit) => ({ ...commit, files: [...commit.files] }));
 }
 
 function booleanFromSeed(seed: RuntimeSeed, key: "staged", fallback: boolean): boolean {
@@ -172,10 +248,19 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
   }
 
   const folders = stringArrayFromSeed(seed, "folders", base.folders);
+  const directories = stringArrayFromSeed(seed, "directories", base.directories);
   const files = stringArrayFromSeed(seed, "files", base.files);
   const openTabs = stringArrayFromSeed(seed, "openTabs", base.openTabs);
   const terminalLines = stringArrayFromSeed(seed, "terminalLines", base.terminalLines);
   const dirtyFiles = stringArrayFromSeed(seed, "dirtyFiles", base.dirtyFiles);
+  const trackedFiles = stringArrayFromSeed(seed, "trackedFiles", files);
+  const scmChangedFiles = stringArrayFromSeed(seed, "scmChangedFiles", base.scmChangedFiles);
+  const seededStaged = booleanFromSeed(seed, "staged", base.staged);
+  const stagedFiles = hasOwn(seed, "stagedFiles")
+    ? stringArrayFromSeed(seed, "stagedFiles", base.stagedFiles)
+    : seededStaged
+      ? [...(scmChangedFiles.length ? scmChangedFiles : files)]
+      : [];
 
   let contents = { ...base.contents };
   if (hasOwn(seed, "contents")) {
@@ -200,6 +285,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
   return {
     workspaceMode,
     folders,
+    directories,
     files,
     contents,
     openTabs,
@@ -207,7 +293,12 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     activePanel,
     terminalLines,
     terminalCommand: stringFromSeed(seed, "terminalCommand", base.terminalCommand),
-    staged: booleanFromSeed(seed, "staged", base.staged),
+    terminalCwd: stringFromSeed(seed, "terminalCwd", base.terminalCwd),
+    trackedFiles,
+    scmChangedFiles,
+    stagedFiles,
+    commits: commitsFromSeed(seed, base.commits),
+    staged: stagedFiles.length > 0 || seededStaged,
     wrongFile: nullableStringFromSeed(seed, "wrongFile", base.wrongFile),
     dirtyFiles,
   };
@@ -233,6 +324,18 @@ function replaceState(nextState: VscodeRuntimeState, reason: VscodeRuntimeStateC
   state = cloneState(nextState);
   const snapshot = cloneState(state);
   for (const listener of stateListeners) listener(snapshot, reason);
+}
+
+function addUnique(values: readonly string[], value: string): string[] {
+  return values.includes(value) ? [...values] : [...values, value];
+}
+
+function terminalWorkspaceRoot(): string {
+  return state.folders[0]?.trim() || "ai-training-demo";
+}
+
+function currentTerminalPrompt(): string {
+  return formatTerminalPrompt(terminalWorkspaceRoot(), state.terminalCwd);
 }
 
 function saveFile(filename: string): void {
@@ -345,7 +448,10 @@ export const vscodeRuntime = {
   },
 
   setWorkspace(mode: Exclude<WorkspaceMode, "none">, folders: string[]): void {
-    replaceState({ ...state, workspaceMode: mode, folders: [...folders] }, "mutation");
+    replaceState(
+      { ...state, workspaceMode: mode, folders: [...folders], terminalCwd: "" },
+      "mutation",
+    );
   },
 
   addFile(filename: string): void {
@@ -356,6 +462,7 @@ export const vscodeRuntime = {
         files: [...state.files, filename],
         contents: { ...state.contents, [filename]: "" },
         dirtyFiles: [...state.dirtyFiles, filename],
+        scmChangedFiles: addUnique(state.scmChangedFiles, filename),
       },
       "mutation",
     );
@@ -370,6 +477,9 @@ export const vscodeRuntime = {
           state.files.includes(filename) && !state.dirtyFiles.includes(filename)
             ? [...state.dirtyFiles, filename]
             : state.dirtyFiles,
+        scmChangedFiles: state.files.includes(filename)
+          ? addUnique(state.scmChangedFiles, filename)
+          : state.scmChangedFiles,
       },
       "mutation",
     );
@@ -408,6 +518,65 @@ export const vscodeRuntime = {
     replaceState({ ...state, activePanel: panel }, "mutation");
   },
 
+  initializeTerminal(): string[] {
+    if (state.terminalLines.length > 0) return [...state.terminalLines];
+    const terminalLines = ["AI Training Lab – simulierte Shell (bash)"];
+    replaceState({ ...state, terminalLines }, "mutation");
+    return [...terminalLines];
+  },
+
+  getTerminalPrompt(): string {
+    return currentTerminalPrompt();
+  },
+
+  executeTerminalCommand(rawCommand: string): VscodeTerminalExecution {
+    const command = rawCommand.trim();
+    const promptBeforeExecution = currentTerminalPrompt();
+    const result = evaluateTerminalCommand(command, {
+      workspaceRoot: terminalWorkspaceRoot(),
+      cwd: state.terminalCwd,
+      directories: state.directories,
+      files: state.files,
+      contents: state.contents,
+      trackedFiles: state.trackedFiles,
+      changedFiles: state.scmChangedFiles,
+      stagedFiles: state.stagedFiles,
+      commits: state.commits,
+    });
+    const terminalLines = result.clear
+      ? []
+      : [...state.terminalLines, `${promptBeforeExecution} ${command}`, ...result.output];
+    const staged = result.stagedFiles.length > 0;
+    replaceState(
+      {
+        ...state,
+        terminalLines,
+        terminalCommand: "",
+        terminalCwd: result.cwd,
+        trackedFiles: result.trackedFiles,
+        scmChangedFiles: result.changedFiles,
+        stagedFiles: result.stagedFiles,
+        commits: result.commits,
+        staged,
+      },
+      "mutation",
+    );
+    workspaceBus.emit("terminal.command.executed", {
+      command,
+      cwd: result.cwd || ".",
+      exitCode: result.exitCode,
+      output: result.output.join("\n"),
+      staged: result.committed || staged,
+      committed: result.committed,
+    });
+    return {
+      lines: [...terminalLines],
+      prompt: currentTerminalPrompt(),
+      staged,
+      exitCode: result.exitCode,
+    };
+  },
+
   setTerminalLines(lines: string[]): void {
     replaceState({ ...state, terminalLines: [...lines] }, "mutation");
   },
@@ -417,7 +586,10 @@ export const vscodeRuntime = {
   },
 
   setStaged(staged: boolean): void {
-    replaceState({ ...state, staged }, "mutation");
+    const stagedFiles = staged
+      ? [...(state.scmChangedFiles.length ? state.scmChangedFiles : state.files)]
+      : [];
+    replaceState({ ...state, staged, stagedFiles }, "mutation");
   },
 
   setWrongFile(filename: string | null): void {
@@ -457,8 +629,20 @@ export const vscodeRuntime = {
       case "terminal.lines":
         value = [...state.terminalLines];
         break;
+      case "terminal.cwd":
+        value = state.terminalCwd;
+        break;
       case "scm.staged":
         value = state.staged;
+        break;
+      case "scm.stagedFiles":
+        value = [...state.stagedFiles];
+        break;
+      case "scm.changedFiles":
+        value = [...state.scmChangedFiles];
+        break;
+      case "scm.commits":
+        value = state.commits.map((commit) => ({ ...commit, files: [...commit.files] }));
         break;
       default:
         value = undefined;

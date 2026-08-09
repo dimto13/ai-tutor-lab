@@ -74,6 +74,7 @@ export function Workspace() {
   const [activePanel, setActivePanel] = useState<PanelView>("terminal");
   const [lines, setLines] = useState<string[]>([]);
   const [command, setCommand] = useState("");
+  const [terminalPrompt, setTerminalPrompt] = useState("user@lab:~/ai-training-demo$");
   const [staged, setStaged] = useState(false);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
 
@@ -100,6 +101,7 @@ export function Workspace() {
       if (runtimeState.activePanel) setActivePanel(runtimeState.activePanel);
       setLines([...runtimeState.terminalLines]);
       setCommand(runtimeState.terminalCommand);
+      setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
       setStaged(runtimeState.staged);
       setWrongFile(runtimeState.wrongFile);
       setFileMenuOpen(false);
@@ -139,6 +141,7 @@ export function Workspace() {
     const folders =
       nextMode === "folder" ? ["ai-training-demo"] : ["ai-training-demo", "shared-tools"];
     vscodeRuntime.setWorkspace(nextMode, folders);
+    setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
     setWorkspaceMode(nextMode);
     setRepoOpen(true);
     setView("explorer");
@@ -156,6 +159,7 @@ export function Workspace() {
 
   const openRepo = () => {
     vscodeRuntime.setWorkspace("folder", ["ai-training-demo"]);
+    setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
     setWorkspaceMode("folder");
     setRepoOpen(true);
     setView("explorer");
@@ -205,77 +209,21 @@ export function Workspace() {
     workspaceBus.emit("panel.opened", { panel });
   };
 
-  const replaceTerminalLines = (nextLines: string[]) => {
-    setLines(nextLines);
-    vscodeRuntime.setTerminalLines(nextLines);
-  };
-
   const openTerminal = () => {
     openPanel("terminal");
-    if (lines.length === 0) {
-      replaceTerminalLines([
-        "AI Training Lab – simulierte Shell (bash)",
-        "user@lab:~/ai-training-demo$",
-      ]);
-    }
+    setLines(vscodeRuntime.initializeTerminal());
+    setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
     workspaceBus.emit("terminal.opened");
   };
 
   const runCommand = () => {
     const cmd = command.trim();
     if (!cmd) return;
+    const result = vscodeRuntime.executeTerminalCommand(cmd);
     setCommand("");
-    vscodeRuntime.setTerminalCommand("");
-    const out: string[] = [`user@lab:~/ai-training-demo$ ${cmd}`];
-    const hasHello = files.some((file) => file.name === "hello.py");
-
-    if (cmd === "git status") {
-      out.push(
-        "On branch main",
-        "Your branch is up to date with 'origin/main'.",
-        "",
-        staged ? "Changes to be committed:" : "Untracked files:",
-        staged
-          ? '  (use "git restore --staged <file>..." to unstage)'
-          : '  (use "git add <file>..." to include in what will be committed)',
-        staged ? "\tnew file:   hello.py" : "\thello.py",
-        "",
-        staged
-          ? ""
-          : 'nothing added to commit but untracked files present (use "git add" to track)',
-      );
-    } else if (/^git add\s+/.test(cmd)) {
-      if (cmd.includes("hello.py") || cmd.includes(".")) {
-        if (!hasHello) out.push("fatal: pathspec 'hello.py' did not match any files");
-        else {
-          setStaged(true);
-          vscodeRuntime.setStaged(true);
-          out.push("");
-        }
-      } else {
-        out.push("fatal: pathspec did not match any files");
-      }
-    } else if (cmd.startsWith("git commit")) {
-      if (!staged) out.push('nothing added to commit (use "git add" to track files)');
-      else {
-        out.push(
-          "[main abc123] add hello example",
-          " 1 file changed, 1 insertion(+)",
-          " create mode 100644 hello.py",
-        );
-      }
-    } else if (cmd === "clear") {
-      replaceTerminalLines([]);
-      workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
-      return;
-    } else if (cmd === "ls") {
-      out.push(files.map((file) => file.name).join("  "));
-    } else {
-      out.push(`bash: ${cmd.split(" ")[0]}: command not found`);
-    }
-
-    replaceTerminalLines([...lines, ...out]);
-    workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
+    setLines(result.lines);
+    setTerminalPrompt(result.prompt);
+    setStaged(result.staged);
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -642,7 +590,7 @@ export function Workspace() {
                     className="flex items-center gap-2"
                     data-highlight="vscode.panel.terminal.input"
                   >
-                    <span className="text-success">user@lab:~/ai-training-demo$</span>
+                    <span className="text-success">{terminalPrompt}</span>
                     <input
                       ref={terminalInputRef}
                       value={command}

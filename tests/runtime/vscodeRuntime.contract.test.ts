@@ -196,6 +196,94 @@ test("vscodeRuntime: save clears dirty state and emits file.saved", async () => 
   }
 });
 
+test("vscodeRuntime: terminal commands use runtime filesystem and Git state", async () => {
+  const terminalEvents: Array<Record<string, unknown>> = [];
+  const unsubscribe = vscodeRuntime.subscribe((event) => {
+    if (event.type === "terminal.command.executed") {
+      terminalEvents.push(event.payload as Record<string, unknown>);
+    }
+  });
+  await vscodeRuntime.mount(createContainer(), {
+    workspaceMode: "folder",
+    folders: ["ai-training-demo"],
+    files: ["README.md"],
+    contents: { "README.md": "# Demo\n" },
+  });
+
+  try {
+    vscodeRuntime.initializeTerminal();
+    vscodeRuntime.addFile("hello.py");
+    vscodeRuntime.setFileContent("hello.py", 'print("Hello AI Training")\n');
+
+    const status = vscodeRuntime.executeTerminalCommand("git status");
+    assert.equal(status.exitCode, 0);
+    assert.match(status.lines.join("\n"), /Untracked files:[\s\S]*hello\.py/);
+
+    const add = vscodeRuntime.executeTerminalCommand("git add hello.py");
+    assert.equal(add.exitCode, 0);
+    assert.equal(add.staged, true);
+    assert.deepEqual(await vscodeRuntime.query("scm.stagedFiles"), ["hello.py"]);
+
+    const commit = vscodeRuntime.executeTerminalCommand('git commit -m "add hello example"');
+    assert.equal(commit.exitCode, 0);
+    assert.equal(commit.staged, false);
+    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), []);
+    assert.deepEqual(await vscodeRuntime.query("scm.stagedFiles"), []);
+    assert.deepEqual(await vscodeRuntime.query("scm.commits"), [
+      {
+        hash: "0000001",
+        message: "add hello example",
+        files: ["hello.py"],
+      },
+    ]);
+
+    const python = vscodeRuntime.executeTerminalCommand("python hello.py");
+    assert.equal(python.exitCode, 0);
+    assert.match(python.lines.join("\n"), /Hello AI Training/);
+
+    assert.deepEqual(
+      terminalEvents.map((event) => event["command"]),
+      ["git status", "git add hello.py", 'git commit -m "add hello example"', "python hello.py"],
+    );
+    assert.equal(terminalEvents[2]?.["staged"], true);
+    assert.equal(terminalEvents[2]?.["committed"], true);
+    assert.equal(terminalEvents[3]?.["exitCode"], 0);
+  } finally {
+    unsubscribe();
+    await vscodeRuntime.unmount();
+  }
+});
+
+test("vscodeRuntime: failed terminal commands are emitted without mutating simulator state", async () => {
+  const terminalEvents: Array<Record<string, unknown>> = [];
+  const unsubscribe = vscodeRuntime.subscribe((event) => {
+    if (event.type === "terminal.command.executed") {
+      terminalEvents.push(event.payload as Record<string, unknown>);
+    }
+  });
+  await vscodeRuntime.mount(createContainer(), seededRuntimeState);
+
+  try {
+    const before = await vscodeRuntime.snapshot();
+    const failure = vscodeRuntime.executeTerminalCommand("git stats");
+
+    assert.equal(failure.exitCode, 1);
+    assert.match(failure.lines.join("\n"), /not a git command/);
+    assert.equal(terminalEvents[0]?.["exitCode"], 1);
+    assert.match(String(terminalEvents[0]?.["output"]), /not a git command/);
+
+    const after = (await vscodeRuntime.snapshot()) as VscodeRuntimeState;
+    const beforeState = before as VscodeRuntimeState;
+    assert.deepEqual(after.files, beforeState.files);
+    assert.deepEqual(after.contents, beforeState.contents);
+    assert.deepEqual(after.stagedFiles, beforeState.stagedFiles);
+    assert.deepEqual(after.commits, beforeState.commits);
+  } finally {
+    unsubscribe();
+    await vscodeRuntime.unmount();
+  }
+});
+
 test("vscodeRuntime: has no Copilot capabilities or state selectors", async () => {
   assert.equal(vscodeRuntime.capabilities.includes("chat" as never), false);
   assert.equal(await vscodeRuntime.query("copilot.model"), undefined);
