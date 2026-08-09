@@ -7,11 +7,7 @@
   "description": "Formuliere eine Recherche, verfolge mehrere simulierte Suchläufe, iteriere eine Vergleichstabelle und finde zwei eingebaute Quellenmängel.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "copilot.mcp",
-      "ai.agent",
-      "research.source_evidence"
-    ]
+    "glossaryConcepts": ["copilot.mcp", "ai.agent", "research.source_evidence"]
   },
   "environment": {
     "productId": "vscode",
@@ -31,18 +27,12 @@
     ],
     "seed": {
       "workspaceMode": "folder",
-      "folders": [
-        "team-research"
-      ],
-      "files": [
-        "research-brief.md"
-      ],
+      "folders": ["team-research"],
+      "files": ["research-brief.md"],
       "contents": {
         "research-brief.md": "# Team-Entscheidung\nVergleiche drei Recherchewerkzeuge mit aktuellen Quellen."
       },
-      "openTabs": [
-        "research-brief.md"
-      ],
+      "openTabs": ["research-brief.md"],
       "activeFile": "research-brief.md",
       "chatResponses": [
         {
@@ -338,11 +328,7 @@
       "description": "Ein Agent kann über MCP externe Suchwerkzeuge nutzen; eine eingebaute Suche kann denselben fachlichen Zweck im Produkt erfüllen.",
       "instruction": "Merke dir: Suchanfrage und Kontext können Systemgrenzen verlassen. Eine Quelle/Beleg-Angabe ist keine Garantie und muss vor einer geschäftlichen Entscheidung geprüft werden.",
       "why": "Der reale Schaden entsteht durch ungeprüfte Übernahme plausibler Ergebnisse.",
-      "helpLevels": [
-        "",
-        "",
-        ""
-      ],
+      "helpLevels": ["", "", ""],
       "successMessage": "Du kannst Nutzen, Datenfluss und Prüfpflicht einordnen.",
       "stepType": "explanation"
     }
