@@ -13,6 +13,12 @@ interface CopilotPanelProps {
   onApplySuggestion: (text: string) => void;
 }
 
+interface SuggestionSourceState {
+  suggestionId: string;
+  file: string;
+  content: string;
+}
+
 function emptyState(): CopilotRuntimeState {
   const profile = copilotRuntime.getProductProfile();
   return {
@@ -33,6 +39,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   const { scenario } = useTraining();
   const runtimeSeed = scenario.environment?.seed;
   const rootRef = useRef<HTMLDivElement>(null);
+  const suggestionSourceRef = useRef<SuggestionSourceState | null>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
   const [prompt, setPrompt] = useState("");
   const profile = copilotRuntime.getProductProfile();
@@ -50,6 +57,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   }, [runtimeSeed]);
 
   useEffect(() => {
+    suggestionSourceRef.current = null;
     copilotRuntime.rejectInlineSuggestion();
     copilotRuntime.setContextActiveFile(activeFile);
   }, [activeFile]);
@@ -79,23 +87,44 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     if (!activeFile || !runtimeState.enabled) return;
     const content = (await activeContent()) ?? "";
     const suggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
-    if (!suggestion) copilotRuntime.rejectInlineSuggestion();
+    if (!suggestion) {
+      suggestionSourceRef.current = null;
+      copilotRuntime.rejectInlineSuggestion();
+      return;
+    }
+    suggestionSourceRef.current = {
+      suggestionId: suggestion.id,
+      file: activeFile,
+      content,
+    };
   };
 
   const acceptSuggestion = async () => {
     const pendingSuggestion = runtimeState.inlineSuggestion;
+    const sourceState = suggestionSourceRef.current;
     if (!activeFile || !pendingSuggestion || pendingSuggestion.status !== "pending") return;
 
     const content = await activeContent();
-    if (content === null) return;
-    const refreshedSuggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
-    if (!refreshedSuggestion || refreshedSuggestion.text !== pendingSuggestion.text) {
+    if (
+      content === null ||
+      !sourceState ||
+      sourceState.suggestionId !== pendingSuggestion.id ||
+      sourceState.file !== activeFile ||
+      sourceState.content !== content
+    ) {
+      suggestionSourceRef.current = null;
       copilotRuntime.rejectInlineSuggestion();
       return;
     }
 
     const text = copilotRuntime.acceptInlineSuggestion();
+    suggestionSourceRef.current = null;
     if (text) onApplySuggestion(text);
+  };
+
+  const rejectSuggestion = () => {
+    suggestionSourceRef.current = null;
+    copilotRuntime.rejectInlineSuggestion();
   };
 
   const visibleSuggestion =
@@ -269,7 +298,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
                     <button
                       type="button"
                       data-highlight="copilot.inline.reject"
-                      onClick={() => copilotRuntime.rejectInlineSuggestion()}
+                      onClick={rejectSuggestion}
                       className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[10px] text-foreground hover:border-ring"
                     >
                       <X className="h-3 w-3" /> Ablehnen
