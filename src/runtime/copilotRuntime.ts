@@ -105,6 +105,24 @@ function hasOwn(seed: RuntimeSeed, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(seed, key);
 }
 
+function createAssistantResponse(prompt: string, activeFile: string | null): string {
+  const normalizedPrompt = prompt.toLowerCase();
+  const asksAboutFile =
+    normalizedPrompt.includes("datei") ||
+    normalizedPrompt.includes("kontext") ||
+    normalizedPrompt.includes("was macht") ||
+    normalizedPrompt.includes("erklär") ||
+    normalizedPrompt.includes("erklaer");
+
+  if (activeFile === "calculator.py" && asksAboutFile) {
+    return "Die aktuell geöffnete calculator.py definiert die Funktion add(a, b). Ihr Funktionskörper ist noch leer. Eine sinnvolle Vervollständigung ist return a + b, damit die Funktion die Summe zurückgibt.";
+  }
+  if (activeFile) {
+    return `Ich berücksichtige ${activeFile} als aktiven Dateikontext. Formuliere konkret, was du zu dieser Datei verstehen oder ändern möchtest.`;
+  }
+  return "Aktuell ist keine Datei als Kontext geöffnet. Öffne eine relevante Datei, damit ich meine Antwort auf diesen Arbeitsstand beziehen kann.";
+}
+
 function messagesFromSeed(seed: RuntimeSeed): CopilotChatMessage[] {
   if (!hasOwn(seed, "messages")) return [];
   const value = seed["messages"];
@@ -366,8 +384,7 @@ export function createCopilotRuntime(
         role: "user",
         content: prompt,
       };
-      const contextLabel = state.contextActiveFile ?? "kein geöffneter Dateikontext";
-      const responseText = `Simulierte Copilot-Antwort mit Kontext ${contextLabel}: ${prompt}`;
+      const responseText = createAssistantResponse(prompt, state.contextActiveFile);
       const assistantMessage: CopilotChatMessage = {
         id: createIdentifier("copilot-message"),
         role: "assistant",

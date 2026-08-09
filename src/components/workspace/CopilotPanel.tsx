@@ -27,6 +27,10 @@ function emptyState(): CopilotRuntimeState {
   };
 }
 
+function suggestionFor(file: string): string {
+  return file === "calculator.py" ? "    return a + b\n" : 'print("Hello from Copilot")\n';
+}
+
 export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
@@ -66,7 +70,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
 
   const offerSuggestion = () => {
     if (!activeFile || !runtimeState.enabled) return;
-    copilotRuntime.offerInlineSuggestion(activeFile, "\ndef add(a, b):\n    return a + b\n");
+    copilotRuntime.offerInlineSuggestion(activeFile, suggestionFor(activeFile));
   };
 
   const acceptSuggestion = () => {
@@ -212,6 +216,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
               </div>
               <button
                 type="button"
+                data-highlight="copilot.inline.generate"
                 disabled={!activeFile}
                 onClick={offerSuggestion}
                 className="rounded border border-border px-2 py-1 text-[10px] text-foreground hover:border-ring disabled:opacity-40"
