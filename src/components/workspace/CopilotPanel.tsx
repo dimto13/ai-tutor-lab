@@ -50,6 +50,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   }, [runtimeSeed]);
 
   useEffect(() => {
+    copilotRuntime.rejectInlineSuggestion();
     copilotRuntime.setContextActiveFile(activeFile);
   }, [activeFile]);
 
@@ -77,16 +78,29 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   const offerSuggestion = async () => {
     if (!activeFile || !runtimeState.enabled) return;
     const content = (await activeContent()) ?? "";
-    copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
+    const suggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
+    if (!suggestion) copilotRuntime.rejectInlineSuggestion();
   };
 
-  const acceptSuggestion = () => {
+  const acceptSuggestion = async () => {
+    const pendingSuggestion = runtimeState.inlineSuggestion;
+    if (!activeFile || !pendingSuggestion || pendingSuggestion.status !== "pending") return;
+
+    const content = await activeContent();
+    if (content === null) return;
+    const refreshedSuggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
+    if (!refreshedSuggestion || refreshedSuggestion.text !== pendingSuggestion.text) {
+      copilotRuntime.rejectInlineSuggestion();
+      return;
+    }
+
     const text = copilotRuntime.acceptInlineSuggestion();
     if (text) onApplySuggestion(text);
   };
 
-  const suggestionStatus: CopilotSuggestionStatus | null =
-    runtimeState.inlineSuggestion?.status ?? null;
+  const visibleSuggestion =
+    runtimeState.inlineSuggestion?.file === activeFile ? runtimeState.inlineSuggestion : null;
+  const suggestionStatus: CopilotSuggestionStatus | null = visibleSuggestion?.status ?? null;
   const lastAssistantMessage = [...runtimeState.messages]
     .reverse()
     .find((message) => message.role === "assistant");
@@ -234,20 +248,20 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
               </button>
             </div>
 
-            {runtimeState.inlineSuggestion ? (
+            {visibleSuggestion ? (
               <div
                 data-highlight="copilot.inline.suggestion"
                 className="mt-2 rounded border border-border bg-editor p-2"
               >
                 <pre className="whitespace-pre-wrap font-mono text-[11px] text-success">
-                  {runtimeState.inlineSuggestion.text}
+                  {visibleSuggestion.text}
                 </pre>
                 {suggestionStatus === "pending" ? (
                   <div className="mt-2 flex gap-2">
                     <button
                       type="button"
                       data-highlight="copilot.inline.accept"
-                      onClick={acceptSuggestion}
+                      onClick={() => void acceptSuggestion()}
                       className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[10px] text-foreground hover:border-ring"
                     >
                       <Check className="h-3 w-3" /> Annehmen
