@@ -110,6 +110,14 @@ export const runtimeSeedSchema = z
   })
   .catchall(z.unknown());
 
+const integrationEnvironmentSchema = z
+  .object({
+    productId: z.string().min(1),
+    version: z.string().min(1),
+    runtimeAdapterId: z.string().min(1),
+  })
+  .strict();
+
 export const scenarioSchema = z
   .object({
     id: z.string().min(1),
@@ -125,9 +133,10 @@ export const scenarioSchema = z
         productId: z.string().min(1),
         version: z.string().min(1),
         runtimeAdapterId: z.string().min(1),
-        integrationRuntimeAdapterIds: z.array(z.string().min(1)).optional(),
+        integrations: z.array(integrationEnvironmentSchema).optional(),
         seed: runtimeSeedSchema.optional(),
       })
+      .strict()
       .optional(),
     estimatedMinutes: z.number().nonnegative().optional(),
     points: z.number().nonnegative().optional(),
@@ -161,13 +170,14 @@ export const scenarioSchema = z
 
     const runtimeIds = [
       scenario.environment?.runtimeAdapterId,
-      ...(scenario.environment?.integrationRuntimeAdapterIds ?? []),
+      ...(scenario.environment?.integrations?.map(({ runtimeAdapterId }) => runtimeAdapterId) ??
+        []),
     ].filter((id): id is string => Boolean(id));
     if (new Set(runtimeIds).size !== runtimeIds.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "runtime adapter ids must be unique within an environment",
-        path: ["environment", "integrationRuntimeAdapterIds"],
+        path: ["environment", "integrations"],
       });
     }
 
@@ -200,5 +210,16 @@ export const scenarioSchema = z
   });
 
 export function parseScenario(raw: unknown): Scenario {
-  return scenarioSchema.parse(raw) as Scenario;
+  const scenario = scenarioSchema.parse(raw);
+  if (!scenario.environment) return scenario as Scenario;
+
+  return {
+    ...scenario,
+    environment: {
+      ...scenario.environment,
+      integrationRuntimeAdapterIds: scenario.environment.integrations?.map(
+        ({ runtimeAdapterId }) => runtimeAdapterId,
+      ),
+    },
+  } as Scenario;
 }

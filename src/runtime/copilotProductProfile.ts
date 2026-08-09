@@ -34,6 +34,12 @@ export interface CopilotProductProfile {
   }>;
 }
 
+export interface CopilotProductProfileReference {
+  productId: string;
+  hostProductId: string;
+  version: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -139,3 +145,24 @@ export function parseCopilotProductProfile(value: unknown): CopilotProductProfil
 }
 
 export const DEFAULT_COPILOT_PRODUCT_PROFILE = parseCopilotProductProfile(defaultProfileJson);
+
+const COPILOT_PRODUCT_PROFILES = [DEFAULT_COPILOT_PRODUCT_PROFILE] as const;
+
+export function resolveCopilotProductProfile(
+  reference: CopilotProductProfileReference,
+): CopilotProductProfile {
+  const profile = COPILOT_PRODUCT_PROFILES.find(
+    (candidate) =>
+      candidate.productId === reference.productId &&
+      candidate.hostProductId === reference.hostProductId &&
+      candidate.productVersion === reference.version,
+  );
+
+  if (!profile) {
+    throw new RangeError(
+      `No Copilot product profile for ${reference.productId}@${reference.version} hosted by ${reference.hostProductId}`,
+    );
+  }
+
+  return parseCopilotProductProfile(profile);
+}
