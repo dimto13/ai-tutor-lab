@@ -1,0 +1,73 @@
+name: Temporary AITP-112 integration
+
+on:
+  push:
+    branches:
+      - test/aitp-112-overlay-geometry
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: test/aitp-112-overlay-geometry
+
+      - name: Merge current main and migrate overlay geometry contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+
+          set +e
+          git merge --no-commit --no-ff origin/main
+          merge_status=$?
+          set -e
+          if [ "$merge_status" -ne 0 ]; then
+            git checkout --theirs -- e2e/tests/vscode-basics.spec.ts src/components/overlay/HighlightOverlay.tsx
+            git add e2e/tests/vscode-basics.spec.ts src/components/overlay/HighlightOverlay.tsx
+            unresolved="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$unresolved" ]; then
+              echo "Unexpected unresolved merge conflicts:"
+              echo "$unresolved"
+              exit 1
+            fi
+          fi
+
+          python - <<'PY'
+          from pathlib import Path
+
+          spec = Path("e2e/tests/vscode-basics.spec.ts")
+          text = spec.read_text()
+          text = text.replace(
+              'import { expect, test, type Page } from "@playwright/test";',
+              'import { expect, test, type Locator, type Page } from "@playwright/test";',
+              1,
+          )
+
+          anchor = '''async function openFileMenu(page: Page): Promise<void> {\n  await page.getByRole("button", { name: "File", exact: true }).click();\n}\n\n'''
+          helper = '''async function expectSpotlightAround(spotlight: Locator, target: Locator): Promise<void> {\n  await expect(spotlight).toBeVisible();\n  await expect\n    .poll(async () => {\n      const [spotlightBox, targetBox, viewport] = await Promise.all([\n        spotlight.boundingBox(),\n        target.boundingBox(),\n        target.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })),\n      ]);\n      if (!spotlightBox || !targetBox) return null;\n\n      const padding = 6;\n      const viewportInset = 2;\n      const expectedLeft = Math.max(viewportInset, targetBox.x - padding);\n      const expectedTop = Math.max(viewportInset, targetBox.y - padding);\n      const expectedRight = Math.min(\n        viewport.width - viewportInset,\n        targetBox.x + targetBox.width + padding,\n      );\n      const expectedBottom = Math.min(\n        viewport.height - viewportInset,\n        targetBox.y + targetBox.height + padding,\n      );\n\n      return {\n        top: Math.round(spotlightBox.y - expectedTop),\n        right: Math.round(spotlightBox.x + spotlightBox.width - expectedRight),\n        bottom: Math.round(spotlightBox.y + spotlightBox.height - expectedBottom),\n        left: Math.round(spotlightBox.x - expectedLeft),\n      };\n    })\n    .toEqual({ top: 0, right: 0, bottom: 0, left: 0 });\n}\n\n'''
+          if helper not in text:
+              if anchor not in text:
+                  raise SystemExit("openFileMenu anchor not found")
+              text = text.replace(anchor, anchor + helper, 1)
+
+          test = '''\n\ntest("Guided: Highlight-Rahmen folgt dem geklemmten Geometrievertrag", async ({ page }) => {\n  await page.setViewportSize({ width: 323, height: 646 });\n  await page.goto(guidedUrl);\n  await waitForTrainingReady(page);\n\n  const spotlight = page.getByTestId("highlight-frame");\n  const explorer = page.getByRole("button", { name: "Explorer", exact: true });\n  await expectSpotlightAround(spotlight, explorer);\n\n  await explorer.click();\n  await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");\n  await expectSpotlightAround(spotlight, page.getByRole("button", { name: "File", exact: true }));\n});\n'''
+          if "Highlight-Rahmen folgt dem geklemmten Geometrievertrag" not in text:
+              text = text.rstrip() + test
+
+          spec.write_text(text)
+          PY
+
+          npx prettier --write e2e/tests/vscode-basics.spec.ts
+          rm .github/workflows/tmp-aitp-112-integrate.yml
+          git add -A
+          git commit -m "test: align overlay geometry with viewport clamping"
+          git push origin HEAD:test/aitp-112-overlay-geometry
