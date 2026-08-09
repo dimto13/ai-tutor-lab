@@ -25,10 +25,11 @@ test("Guided: Recherche wird iteriert und beide eingebauten Quellenmängel werde
   await expectGuidedStep(page, 1, "Rechercheauftrag selbst formulieren");
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  await page
-    .getByPlaceholder("Ask Copilot...")
-    .fill("Vergleiche drei Optionen der letzten 12 Monate als Vergleichstabelle mit Quellen.");
-  await page.getByRole("button", { name: "Senden", exact: true }).click();
+  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  await copilotPrompt.fill(
+    "Vergleiche drei Optionen der letzten 12 Monate als Vergleichstabelle mit Quellen.",
+  );
+  await copilotPrompt.press("Enter");
   await expectGuidedStep(page, 2, "Drei Suchläufe sichtbar ausführen");
 
   await page.getByRole("button", { name: /Suche 1 · Marktüberblick/ }).click();
