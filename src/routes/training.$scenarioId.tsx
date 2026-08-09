@@ -43,6 +43,7 @@ function TrainingLayout() {
     percent,
     completedCount,
     isFinished,
+    isChallengeFailed,
     isReady,
     helpLevel,
     scoreMultiplier,
@@ -80,7 +81,9 @@ function TrainingLayout() {
             : mode === "challenge"
               ? isFinished
                 ? "Challenge erfüllt"
-                : "Endzustand offen"
+                : isChallengeFailed
+                  ? "Challenge fehlgeschlagen"
+                  : "Endzustand offen"
               : `Schritt ${Math.min(stepNumber, scenario.steps.length)} von ${scenario.steps.length}`}
         </span>
         <div className="flex w-40 items-center gap-2">
