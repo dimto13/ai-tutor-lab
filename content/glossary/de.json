@@ -63,10 +63,7 @@
     {
       "key": "foundation.code",
       "term": "Code",
-      "aliases": [
-        "Quellcode",
-        "Programmcode"
-      ],
+      "aliases": ["Quellcode", "Programmcode"],
       "simple": "Code ist eine genaue, schriftliche Arbeitsanweisung für einen Computer. Eine Excel-Formel ist ein vertrautes Beispiel für eine solche Anweisung.",
       "advanced": "Quellcode besteht aus Anweisungen in einer Programmiersprache. Werkzeuge übersetzen oder interpretieren diese Anweisungen, damit der Computer sie ausführen kann.",
       "uiTargets": []
@@ -74,9 +71,7 @@
     {
       "key": "foundation.programming",
       "term": "Programmierung",
-      "aliases": [
-        "Programmieren"
-      ],
+      "aliases": ["Programmieren"],
       "simple": "Programmierung bedeutet, eine Aufgabe in eindeutige Schritte zu zerlegen und diese Schritte als Code aufzuschreiben.",
       "advanced": "Zur Programmierung gehören neben dem Schreiben von Code auch das Verstehen von Anforderungen, Prüfen von Ergebnissen, Beheben von Fehlern und Pflegen bestehender Programme.",
       "uiTargets": []
@@ -84,10 +79,7 @@
     {
       "key": "programming.python",
       "term": "Python",
-      "aliases": [
-        "Python-Datei",
-        ".py-Datei"
-      ],
+      "aliases": ["Python-Datei", ".py-Datei"],
       "simple": "Python ist eine Programmiersprache mit vergleichsweise gut lesbaren Regeln. Dateien mit der Endung .py enthalten Python-Code.",
       "advanced": "Python-Code wird üblicherweise von einem Python-Interpreter ausgeführt. Im Beispiel `def add(a, b):` beginnt die Definition einer Funktion namens add, die zwei Eingaben erhält.",
       "uiTargets": []
@@ -95,9 +87,7 @@
     {
       "key": "vscode.activity_bar",
       "term": "Activity Bar",
-      "aliases": [
-        "Aktivitätsleiste"
-      ],
+      "aliases": ["Aktivitätsleiste"],
       "simple": "Die schmale Leiste ganz links in VS Code. Mit ihren Symbolen wechselst du zwischen Explorer, Suche, Source Control und Extensions.",
       "advanced": "Die Activity Bar wählt einen primären Arbeitsbereich aus. Der Inhalt dieses Bereichs erscheint daneben in der Side Bar.",
       "uiTargets": [
@@ -110,35 +100,23 @@
     {
       "key": "vscode.file_menu",
       "term": "File-Menü",
-      "aliases": [
-        "File",
-        "Datei-Menü"
-      ],
+      "aliases": ["File", "Datei-Menü"],
       "simple": "Im File-Menü öffnest du Dateien, Ordner und gespeicherte Workspaces und legst damit deinen Arbeitskontext fest.",
       "advanced": "Die Befehle Open Folder und Open Workspace führen zu unterschiedlichen Workspace-Typen. Das Menü ist deshalb ein zentraler Einstiegspunkt für den Arbeitskontext.",
-      "uiTargets": [
-        "vscode.menu.file"
-      ]
+      "uiTargets": ["vscode.menu.file"]
     },
     {
       "key": "vscode.side_bar",
       "term": "Side Bar",
-      "aliases": [
-        "Seitenleiste"
-      ],
+      "aliases": ["Seitenleiste"],
       "simple": "Der Bereich neben der Activity Bar. Hier zeigt VS Code den Inhalt des ausgewählten Werkzeugs, zum Beispiel den Dateibaum des Explorers.",
       "advanced": "Die Side Bar ist ein Container für Views. Ihr Inhalt hängt von der Auswahl in der Activity Bar ab.",
-      "uiTargets": [
-        "vscode.sideBar"
-      ]
+      "uiTargets": ["vscode.sideBar"]
     },
     {
       "key": "vscode.explorer",
       "term": "Explorer",
-      "aliases": [
-        "Datei-Explorer",
-        "Dateibaum"
-      ],
+      "aliases": ["Datei-Explorer", "Dateibaum"],
       "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts und bietet Dateiaktionen wie Neue Datei.",
       "advanced": "Der Explorer ist eine View in der Side Bar. Bei einem Multi-Root-Workspace kann er mehrere Stammordner gleichzeitig darstellen.",
       "uiTargets": [
@@ -150,179 +128,111 @@
     {
       "key": "vscode.search",
       "term": "Suche",
-      "aliases": [
-        "Search",
-        "Volltextsuche"
-      ],
+      "aliases": ["Search", "Volltextsuche"],
       "simple": "Die Suche findet Text über Dateien im aktuell geöffneten Arbeitskontext hinweg.",
       "advanced": "Die Search View arbeitet auf dem Workspace und kann Dateien einschließen oder ausschließen. Sie ist von der Suche innerhalb einer einzelnen Datei getrennt.",
-      "uiTargets": [
-        "vscode.activityBar.search"
-      ]
+      "uiTargets": ["vscode.activityBar.search"]
     },
     {
       "key": "vscode.source_control",
       "term": "Source Control",
-      "aliases": [
-        "Quellcodeverwaltung",
-        "SCM"
-      ],
+      "aliases": ["Quellcodeverwaltung", "SCM"],
       "simple": "Source Control zeigt erkannte Versionsverwaltungs-Änderungen im aktuellen Arbeitskontext.",
       "advanced": "Die View stellt Funktionen eines Versionsverwaltungssystems wie Git dar. VS Code selbst ist dabei die Oberfläche; das Repository bleibt ein eigenes fachliches Konzept.",
-      "uiTargets": [
-        "vscode.activityBar.scm"
-      ]
+      "uiTargets": ["vscode.activityBar.scm"]
     },
     {
       "key": "vscode.extensions",
       "term": "Extensions",
-      "aliases": [
-        "Erweiterungen",
-        "Extension Marketplace"
-      ],
+      "aliases": ["Erweiterungen", "Extension Marketplace"],
       "simple": "Extensions erweitern VS Code um zusätzliche Sprachen, Werkzeuge und Funktionen.",
       "advanced": "Extensions laufen als Erweiterungen der IDE und können Views, Befehle, Statusinformationen und Sprachunterstützung hinzufügen.",
-      "uiTargets": [
-        "vscode.activityBar.extensions"
-      ]
+      "uiTargets": ["vscode.activityBar.extensions"]
     },
     {
       "key": "vscode.editor",
       "term": "Editor",
-      "aliases": [
-        "Editorbereich"
-      ],
+      "aliases": ["Editorbereich"],
       "simple": "Im Editor öffnest und bearbeitest du den Inhalt von Dateien.",
       "advanced": "Editoren erscheinen in Editor Groups und besitzen Tabs. Der Editor ist vom Explorer und vom unteren Panel getrennt.",
-      "uiTargets": [
-        "vscode.editor"
-      ]
+      "uiTargets": ["vscode.editor"]
     },
     {
       "key": "vscode.panel",
       "term": "Panel",
-      "aliases": [
-        "Unteres Panel"
-      ],
+      "aliases": ["Unteres Panel"],
       "simple": "Das Panel ist der Bereich unter dem Editor. Dort findest du unter anderem Terminal, Problems und Output.",
       "advanced": "Terminal, Problems und Output sind unterschiedliche Views innerhalb des Panels; das Terminal ist nicht das Panel selbst.",
-      "uiTargets": [
-        "vscode.panel.terminal",
-        "vscode.panel.problems",
-        "vscode.panel.output"
-      ]
+      "uiTargets": ["vscode.panel.terminal", "vscode.panel.problems", "vscode.panel.output"]
     },
     {
       "key": "vscode.terminal",
       "term": "Terminal",
-      "aliases": [
-        "Integrated Terminal",
-        "Shell"
-      ],
+      "aliases": ["Integrated Terminal", "Shell"],
       "simple": "Das integrierte Terminal führt Textbefehle direkt im Kontext deines geöffneten Projekts aus.",
       "advanced": "Das Terminal ist eine View im Panel. Es startet eine Shell und übernimmt typischerweise den aktuellen Workspace-Ordner als Arbeitsverzeichnis.",
-      "uiTargets": [
-        "vscode.panel.terminal"
-      ]
+      "uiTargets": ["vscode.panel.terminal"]
     },
     {
       "key": "vscode.problems",
       "term": "Problems",
-      "aliases": [
-        "Probleme",
-        "Fehlerliste"
-      ],
+      "aliases": ["Probleme", "Fehlerliste"],
       "simple": "Problems sammelt erkannte Fehler und Warnungen aus Dateien deines Arbeitskontexts.",
       "advanced": "Diagnosen stammen beispielsweise von Sprachservern, Lintern oder Compilern und können direkt zu betroffenen Stellen im Editor führen.",
-      "uiTargets": [
-        "vscode.panel.problems"
-      ]
+      "uiTargets": ["vscode.panel.problems"]
     },
     {
       "key": "vscode.output",
       "term": "Output",
-      "aliases": [
-        "Ausgabe"
-      ],
+      "aliases": ["Ausgabe"],
       "simple": "Output zeigt Protokoll- und Statusausgaben von VS Code und installierten Erweiterungen.",
       "advanced": "Verschiedene Komponenten stellen eigene Output Channels bereit. Das unterscheidet die View vom interaktiven Terminal.",
-      "uiTargets": [
-        "vscode.panel.output"
-      ]
+      "uiTargets": ["vscode.panel.output"]
     },
     {
       "key": "vscode.status_bar",
       "term": "Status Bar",
-      "aliases": [
-        "Statusleiste"
-      ],
+      "aliases": ["Statusleiste"],
       "simple": "Die Statusleiste ganz unten zeigt Informationen über deinen aktuellen Arbeitskontext, zum Beispiel Git-Branch oder Sprachumgebung.",
       "advanced": "Extensions können eigene Statusinformationen und Aktionen in der Status Bar bereitstellen.",
-      "uiTargets": [
-        "vscode.statusBar"
-      ]
+      "uiTargets": ["vscode.statusBar"]
     },
     {
       "key": "vscode.folder",
       "term": "Ordner öffnen",
-      "aliases": [
-        "Open Folder",
-        "Single-Folder Workspace"
-      ],
+      "aliases": ["Open Folder", "Single-Folder Workspace"],
       "simple": "Mit Open Folder öffnest du einen einzelnen Ordner als Arbeitskontext in VS Code.",
       "advanced": "Ein geöffneter Ordner verhält sich als Single-Folder-Workspace. Explorer, Suche, Terminal, Git-Erkennung und Workspace-Einstellungen beziehen sich auf diesen Ordner.",
-      "uiTargets": [
-        "vscode.menu.file.openFolder"
-      ]
+      "uiTargets": ["vscode.menu.file.openFolder"]
     },
     {
       "key": "vscode.workspace",
       "term": "Workspace",
-      "aliases": [
-        "VS Code Workspace",
-        ".code-workspace",
-        "Multi-Root Workspace"
-      ],
+      "aliases": ["VS Code Workspace", ".code-workspace", "Multi-Root Workspace"],
       "simple": "Ein Workspace beschreibt deinen Arbeitskontext in VS Code. Ein gespeicherter Workspace kann mehrere Ordner gemeinsam öffnen.",
       "advanced": "Eine .code-workspace-Datei kann mehrere Root-Ordner sowie Workspace-spezifische Einstellungen und Extension-Empfehlungen speichern. Ein einzelner geöffneter Ordner ist bereits ein einfacher Single-Folder-Workspace, während ein gespeicherter Multi-Root-Workspace mehrere Ordner zusammenfasst.",
-      "uiTargets": [
-        "vscode.menu.file.openWorkspace",
-        "vscode.workspace.context"
-      ]
+      "uiTargets": ["vscode.menu.file.openWorkspace", "vscode.workspace.context"]
     },
     {
       "key": "vscode.extension",
       "term": "Extension",
-      "aliases": [
-        "Erweiterung",
-        "VS Code Extension"
-      ],
+      "aliases": ["Erweiterung", "VS Code Extension"],
       "simple": "Eine Extension ist ein installierbares Zusatzmodul für VS Code.",
       "advanced": "Extensions können neue Befehle, Editorfunktionen, Views, Sprachunterstützung und Integrationen bereitstellen. Sie laufen getrennt vom eigentlichen Projektinhalt.",
-      "uiTargets": [
-        "vscode.activityBar.extensions"
-      ]
+      "uiTargets": ["vscode.activityBar.extensions"]
     },
     {
       "key": "git.repository",
       "term": "Repository",
-      "aliases": [
-        "Git Repository",
-        "Repo"
-      ],
+      "aliases": ["Git Repository", "Repo"],
       "simple": "Ein Git-Repository ist ein Projektbereich, dessen Änderungen Git versioniert.",
       "advanced": "Repository und VS-Code-Workspace sind verschiedene Konzepte: Ein Workspace beschreibt den Editor-Arbeitskontext; ein Git-Repository beschreibt den von Git versionierten Bereich. Ein Workspace kann mehrere Ordner und damit auch mehrere Repositories enthalten.",
-      "uiTargets": [
-        "vscode.activityBar.scm"
-      ]
+      "uiTargets": ["vscode.activityBar.scm"]
     },
     {
       "key": "git.working_tree",
       "term": "Working Tree",
-      "aliases": [
-        "Working Directory",
-        "Arbeitsbaum"
-      ],
+      "aliases": ["Working Directory", "Arbeitsbaum"],
       "simple": "Der Working Tree ist der aktuell ausgecheckte Dateistand, an dem du gerade arbeitest.",
       "advanced": "Git unterscheidet Working Tree, Staging Area und Commit-Historie. Änderungen im Working Tree sind noch nicht automatisch Teil des nächsten Commits.",
       "uiTargets": []
@@ -330,50 +240,31 @@
     {
       "key": "git.stage",
       "term": "Stage",
-      "aliases": [
-        "Staging",
-        "Staging Area",
-        "Index",
-        "git add"
-      ],
+      "aliases": ["Staging", "Staging Area", "Index", "git add"],
       "simple": "Die Stage ist die Auswahl der Änderungen, die in den nächsten Commit aufgenommen werden sollen.",
       "advanced": "Mit git add wird der gewünschte Dateistand in den Git-Index übernommen. Dadurch können nur bestimmte Änderungen für einen Commit vorbereitet werden.",
-      "uiTargets": [
-        "vscode.activityBar.scm"
-      ]
+      "uiTargets": ["vscode.activityBar.scm"]
     },
     {
       "key": "git.commit",
       "term": "Commit",
-      "aliases": [
-        "git commit",
-        "Speicherpunkt"
-      ],
+      "aliases": ["git commit", "Speicherpunkt"],
       "simple": "Ein Commit ist ein nachvollziehbarer Speicherpunkt der zuvor vorgemerkten Änderungen.",
       "advanced": "Ein Commit referenziert einen vollständigen Projektzustand, besitzt Metadaten und verweist auf seine Vorgänger. Die Commit-Nachricht beschreibt den Zweck der Änderung.",
-      "uiTargets": [
-        "vscode.activityBar.scm"
-      ]
+      "uiTargets": ["vscode.activityBar.scm"]
     },
     {
       "key": "git.branch",
       "term": "Branch",
-      "aliases": [
-        "Git Branch",
-        "Zweig"
-      ],
+      "aliases": ["Git Branch", "Zweig"],
       "simple": "Ein Branch ist eine bewegliche Referenz auf eine Entwicklungslinie in der Git-Historie.",
       "advanced": "Branches ermöglichen parallele Entwicklungsstände. Ein neuer Commit verschiebt die aktuell ausgecheckte Branch-Referenz auf den neuen Commit.",
-      "uiTargets": [
-        "vscode.statusBar"
-      ]
+      "uiTargets": ["vscode.statusBar"]
     },
     {
       "key": "github.platform",
       "term": "GitHub",
-      "aliases": [
-        "GitHub Plattform"
-      ],
+      "aliases": ["GitHub Plattform"],
       "simple": "GitHub ist eine Plattform zum Speichern von Git-Repositories und für Zusammenarbeit wie Pull Requests und Reviews.",
       "advanced": "GitHub baut auf Git auf, ergänzt aber Hosting, Berechtigungen, Pull Requests, Issues, Actions und weitere Kollaborationsfunktionen.",
       "uiTargets": []
@@ -381,10 +272,7 @@
     {
       "key": "git.github_difference",
       "term": "Unterschied Git und GitHub",
-      "aliases": [
-        "Git vs GitHub",
-        "Git und GitHub"
-      ],
+      "aliases": ["Git vs GitHub", "Git und GitHub"],
       "simple": "Git ist das Versionsverwaltungswerkzeug. GitHub ist eine Plattform, die Git-Repositories hostet und Zusammenarbeit ergänzt.",
       "advanced": "Git funktioniert lokal und unabhängig von GitHub. GitHub stellt Remotes, Rechte, Pull Requests, Reviews und Automatisierung rund um Git-Repositories bereit.",
       "uiTargets": []
@@ -392,10 +280,7 @@
     {
       "key": "ai.prompt",
       "term": "Prompt",
-      "aliases": [
-        "KI-Anweisung",
-        "Anfrage an die KI"
-      ],
+      "aliases": ["KI-Anweisung", "Anfrage an die KI"],
       "simple": "Ein Prompt ist die Anweisung oder Frage, die du an ein KI-System richtest.",
       "advanced": "Ein guter Prompt beschreibt Ziel, relevanten Kontext, Randbedingungen und gewünschtes Ergebnis so präzise wie nötig.",
       "uiTargets": []
@@ -403,110 +288,63 @@
     {
       "key": "ai.context",
       "term": "Kontext",
-      "aliases": [
-        "AI Context",
-        "KI-Kontext"
-      ],
+      "aliases": ["AI Context", "KI-Kontext"],
       "simple": "Kontext sind die Informationen, die eine KI zusätzlich zu deiner eigentlichen Frage für ihre Antwort berücksichtigen kann.",
       "advanced": "Kontext kann aus geöffneten Dateien, ausgewähltem Text, Gesprächshistorie oder explizit bereitgestellten Informationen bestehen. Relevanz und Datenschutz sind dabei entscheidend.",
-      "uiTargets": [
-        "copilot.chat.prompt"
-      ]
+      "uiTargets": ["copilot.chat.prompt"]
     },
     {
       "key": "github.copilot",
       "term": "GitHub Copilot",
-      "aliases": [
-        "Copilot",
-        "AI Coding Assistant"
-      ],
+      "aliases": ["Copilot", "AI Coding Assistant"],
       "simple": "GitHub Copilot ist ein KI-Assistent für Entwicklungsaufgaben, der unter anderem Chat und Codevorschläge bereitstellt.",
       "advanced": "Copilot kann je nach Funktion Editor- und Projektkontext verwenden. Vorschläge müssen fachlich geprüft werden; die Verantwortung bleibt beim Nutzer.",
-      "uiTargets": [
-        "vscode.activityBar.extensions"
-      ]
+      "uiTargets": ["vscode.activityBar.extensions"]
     },
     {
       "key": "copilot.chat",
       "term": "Copilot Chat",
-      "aliases": [
-        "Chat",
-        "GitHub Copilot Chat"
-      ],
+      "aliases": ["Chat", "GitHub Copilot Chat"],
       "simple": "Copilot Chat ist die dialogorientierte Arbeitsform: Du stellst Fragen oder Aufgaben und erhältst Antworten im Verlauf einer Unterhaltung.",
       "advanced": "Eine Chat-Anfrage wird mit dem jeweils verfügbaren Kontext verarbeitet. Chat ist von Inline-Vorschlägen im Editor getrennt und kann je nach Modus von reiner Erklärung bis zu agentischer Arbeit reichen.",
-      "uiTargets": [
-        "copilot.chat",
-        "copilot.chat.toggle"
-      ]
+      "uiTargets": ["copilot.chat", "copilot.chat.toggle"]
     },
     {
       "key": "copilot.session",
       "term": "Copilot-Unterhaltung",
-      "aliases": [
-        "Chat-Session",
-        "Conversation",
-        "Unterhaltung"
-      ],
+      "aliases": ["Chat-Session", "Conversation", "Unterhaltung"],
       "simple": "Eine Copilot-Unterhaltung ist der Gesprächsverlauf im Copilot Chat. Sie ist nicht dasselbe wie deine Training-Session in der Lernplattform.",
       "advanced": "Eine neue Unterhaltung startet einen neuen Chat-Verlauf. Der Arbeitskontext des geöffneten VS-Code-Workspaces kann weiterhin verfügbar sein, während die bisherige Gesprächshistorie nicht Teil der neuen Unterhaltung ist.",
-      "uiTargets": [
-        "copilot.chat.newConversation"
-      ]
+      "uiTargets": ["copilot.chat.newConversation"]
     },
     {
       "key": "copilot.chat_mode",
       "term": "Copilot Chat-Modus",
-      "aliases": [
-        "Ask",
-        "Plan",
-        "Agent",
-        "Agent-Modus"
-      ],
+      "aliases": ["Ask", "Plan", "Agent", "Agent-Modus"],
       "simple": "Der Modus bestimmt, welche Art von Arbeit Copilot im Chat übernehmen soll: erklären, planen oder selbstständiger handeln.",
       "advanced": "Ask eignet sich für Fragen und Erklärungen, Plan für einen strukturierten Umsetzungsplan vor Änderungen und Agent für mehrstufige Aufgaben mit Werkzeugnutzung und Änderungen. Verfügbare Modi hängen von Produktversion und Richtlinien ab.",
-      "uiTargets": [
-        "copilot.chat.modeSelector"
-      ]
+      "uiTargets": ["copilot.chat.modeSelector"]
     },
     {
       "key": "copilot.model_selection",
       "term": "Modellauswahl",
-      "aliases": [
-        "Model Picker",
-        "Auto",
-        "KI-Modell"
-      ],
+      "aliases": ["Model Picker", "Auto", "KI-Modell"],
       "simple": "Über die Modellauswahl bestimmst du, welches verfügbare KI-Modell eine Chat-Aufgabe bearbeiten soll – oder lässt die Auswahl automatisch treffen.",
       "advanced": "Auto kann ein geeignetes verfügbares Modell auswählen. Eine explizite Auswahl ist sinnvoll, wenn du für eine Aufgabe bewusst Eigenschaften wie Geschwindigkeit, tiefes Reasoning oder Code-/Agentenkompetenz priorisieren willst. Es gibt kein universell bestes Modell; Verfügbarkeit kann sich je Plan, Richtlinie und Produktversion ändern.",
-      "uiTargets": [
-        "copilot.chat.modelSelector"
-      ]
+      "uiTargets": ["copilot.chat.modelSelector"]
     },
     {
       "key": "copilot.inline_suggestion",
       "term": "Inline-Vorschlag",
-      "aliases": [
-        "Inline Suggestion",
-        "Code Completion",
-        "Ghost Text"
-      ],
+      "aliases": ["Inline Suggestion", "Code Completion", "Ghost Text"],
       "simple": "Ein Inline-Vorschlag erscheint direkt im Editor als vorgeschlagener Code, den du annehmen oder verwerfen kannst.",
       "advanced": "Inline-Vervollständigung ist eine andere Arbeitsform als Chat. Sie reagiert unmittelbar auf den Editor-Kontext; ein Chat-Modellwechsel muss deshalb nicht automatisch dieselbe Modellwahl für Inline-Vorschläge bedeuten.",
-      "uiTargets": [
-        "copilot.inline.suggestion",
-        "copilot.inline.accept",
-        "copilot.inline.reject"
-      ]
+      "uiTargets": ["copilot.inline.suggestion", "copilot.inline.accept", "copilot.inline.reject"]
     },
     {
       "key": "copilot.mcp",
       "term": "Model Context Protocol (MCP)",
-      "aliases": [
-        "MCP",
-        "MCP Server",
-        "MCP-Server"
-      ],
+      "aliases": ["MCP", "MCP Server", "MCP-Server"],
       "simple": "MCP ist ein offener Standard, über den ein KI-Agent auf zusätzliche Werkzeuge und Datenquellen zugreifen kann.",
       "advanced": "Ein MCP-Server stellt definierte Werkzeuge oder Ressourcen bereit, etwa für APIs, Datenbanken oder externe Dienste. MCP erweitert damit die Reichweite des Agenten; welche Server erlaubt sind, sollte in Unternehmensumgebungen zentral gesteuert werden.",
       "uiTargets": []
@@ -514,11 +352,7 @@
     {
       "key": "copilot.agent_skill",
       "term": "Agent Skill",
-      "aliases": [
-        "Skill",
-        "Agent Skills",
-        "Copilot Skill"
-      ],
+      "aliases": ["Skill", "Agent Skills", "Copilot Skill"],
       "simple": "Ein Agent Skill bündelt wiederverwendbare Anweisungen und optional Skripte oder Ressourcen für eine spezialisierte Aufgabe.",
       "advanced": "Skills werden bedarfsabhängig in agentischen Workflows genutzt und können als portable Ordnerstruktur gepflegt werden. Sie beschreiben wiederkehrendes Fachwissen oder Abläufe; die praktische Erstellung und Governance gehört in ein Advanced-Modul.",
       "uiTargets": []
@@ -526,123 +360,74 @@
     {
       "key": "platform.repository",
       "term": "Gehostetes Repository",
-      "aliases": [
-        "Remote Repository",
-        "Repository auf der Plattform"
-      ],
+      "aliases": ["Remote Repository", "Repository auf der Plattform"],
       "simple": "Ein gehostetes Repository stellt Git-Historie, Branches und Dateien für berechtigte Teammitglieder über eine zentrale Plattform bereit.",
       "advanced": "Das gehostete Repository ist nicht dein lokaler Working Tree. Lokale und entfernte Zustände werden über Git-Remotes und Operationen wie Fetch, Pull und Push miteinander abgeglichen.",
-      "uiTargets": [
-        "platform.repository.header"
-      ]
+      "uiTargets": ["platform.repository.header"]
     },
     {
       "key": "platform.branch_selector",
       "term": "Branch-Auswahl",
-      "aliases": [
-        "Branch Picker",
-        "Branch wechseln"
-      ],
+      "aliases": ["Branch Picker", "Branch wechseln"],
       "simple": "Mit der Branch-Auswahl betrachtest du eine bestimmte Entwicklungslinie oder erstellst einen neuen Arbeitsbranch.",
       "advanced": "Ein Pull Request vergleicht üblicherweise einen Head-Branch mit einem Base-Branch. Ein separater Head-Branch isoliert die vorgeschlagene Änderung vom stabilen Standardbranch.",
-      "uiTargets": [
-        "platform.branch.selector"
-      ]
+      "uiTargets": ["platform.branch.selector"]
     },
     {
       "key": "platform.commit_history",
       "term": "Commit-Historie",
-      "aliases": [
-        "History",
-        "Versionsverlauf"
-      ],
+      "aliases": ["History", "Versionsverlauf"],
       "simple": "Die Commit-Historie zeigt nachvollziehbare Speicherpunkte mit Nachricht, Autor und Kennung.",
       "advanced": "Commits bilden einen gerichteten Verlauf über Vorgängerreferenzen. Die Plattform visualisiert diese Git-Daten und kann zusätzlich Verknüpfungen zu Pull Requests oder Status Checks anzeigen.",
-      "uiTargets": [
-        "platform.commit.history"
-      ]
+      "uiTargets": ["platform.commit.history"]
     },
     {
       "key": "platform.pull_request",
       "term": "Pull Request",
-      "aliases": [
-        "PR",
-        "Änderungsvorschlag"
-      ],
+      "aliases": ["PR", "Änderungsvorschlag"],
       "simple": "Ein Pull Request bittet andere, die Änderungen eines Branches zu prüfen und anschließend zusammenzuführen.",
       "advanced": "Der Pull Request verbindet Base- und Head-Branch, Diff, Beschreibung, Review-Unterhaltungen und Prüfergebnisse. Er ist eine Plattformfunktion und kein eigener Git-Objekttyp.",
-      "uiTargets": [
-        "platform.pullRequests"
-      ]
+      "uiTargets": ["platform.pullRequests"]
     },
     {
       "key": "platform.diff",
       "term": "Diff",
-      "aliases": [
-        "Änderungsvergleich",
-        "Files changed"
-      ],
+      "aliases": ["Änderungsvergleich", "Files changed"],
       "simple": "Ein Diff zeigt, welche Zeilen zwischen zwei Ständen hinzugefügt, entfernt oder verändert wurden.",
       "advanced": "Im Pull Request wird der Head-Branch gegen den Base-Branch verglichen. Gute Reviews prüfen den tatsächlichen Diff sowie seine Wirkung und verlassen sich nicht nur auf Titel oder Beschreibung.",
-      "uiTargets": [
-        "platform.pullRequest.diff"
-      ]
+      "uiTargets": ["platform.pullRequest.diff"]
     },
     {
       "key": "platform.review",
       "term": "Code Review",
-      "aliases": [
-        "Review",
-        "Änderungen angefragt",
-        "Approval"
-      ],
+      "aliases": ["Review", "Änderungen angefragt", "Approval"],
       "simple": "Im Review prüfen andere die Änderung, stellen Fragen, stimmen zu oder fordern Korrekturen an.",
       "advanced": "Review-Kommentare können einzelne Diff-Zeilen oder den gesamten Pull Request betreffen. Approval und Requested Changes sind formale Review-Zustände, die in Branch-Regeln als Merge-Anforderung dienen können.",
-      "uiTargets": [
-        "platform.pullRequest.review"
-      ]
+      "uiTargets": ["platform.pullRequest.review"]
     },
     {
       "key": "platform.status_checks",
       "term": "Status Checks",
-      "aliases": [
-        "Checks",
-        "CI-Prüfung",
-        "Merge Check"
-      ],
+      "aliases": ["Checks", "CI-Prüfung", "Merge Check"],
       "simple": "Status Checks zeigen, ob automatisierte Prüfungen wie Tests oder Richtlinienkontrollen erfolgreich waren.",
       "advanced": "Branch-Schutzregeln können erfolgreiche Checks, aktuelle Branch-Stände und bestimmte Review-Zustände vor dem Merge verlangen. Ein grüner Check allein garantiert nicht automatisch fachliche Korrektheit.",
-      "uiTargets": [
-        "platform.pullRequest.checks"
-      ]
+      "uiTargets": ["platform.pullRequest.checks"]
     },
     {
       "key": "platform.issues",
       "term": "Issue",
-      "aliases": [
-        "Ticket",
-        "Aufgabe",
-        "Fehlerbericht"
-      ],
+      "aliases": ["Ticket", "Aufgabe", "Fehlerbericht"],
       "simple": "Ein Issue beschreibt eine Aufgabe, Frage oder einen Fehler und unterstützt Planung und Diskussion.",
       "advanced": "Ein Issue enthält nicht automatisch eine Codeänderung. Ein Pull Request dagegen referenziert konkrete Branches und einen Diff; beide Objekte können für Nachvollziehbarkeit miteinander verknüpft werden.",
-      "uiTargets": [
-        "platform.issues"
-      ]
+      "uiTargets": ["platform.issues"]
     },
     {
       "key": "platform.remote",
       "term": "Clone, Fork und Remote",
-      "aliases": [
-        "origin",
-        "Repository klonen",
-        "Repository forken"
-      ],
+      "aliases": ["origin", "Repository klonen", "Repository forken"],
       "simple": "Clone erstellt eine lokale Kopie, Fork eine serverseitige Kopie und Remote speichert die Adresse zu einem entfernten Repository.",
       "advanced": "Ein Clone richtet üblicherweise ein Remote namens origin ein. Ein Fork besitzt eine eigene Serveridentität und Berechtigungsgrenze; zusätzlich kann das ursprüngliche Repository als weiteres Remote, häufig upstream, eingetragen werden.",
-      "uiTargets": [
-        "platform.remote.help"
-      ]
+      "uiTargets": ["platform.remote.help"]
     }
   ]
 }
