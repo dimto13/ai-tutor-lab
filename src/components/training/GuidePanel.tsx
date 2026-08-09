@@ -41,7 +41,7 @@ export function GuidePanel() {
   const glossaryConceptKeys = scenario.audience?.glossaryConcepts ?? [];
 
   return (
-    <aside className="flex w-[380px] shrink-0 flex-col border-l border-border bg-panel">
+    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel lg:w-[380px] lg:flex-none lg:border-l">
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {mode === "explore" ? (
           <ExploreGuide />
