@@ -183,8 +183,14 @@ function migrateRuntimeStateSnapshot(value: unknown): unknown {
       ? Object.fromEntries(stagedFiles.map((file) => [file, contents[file] ?? ""]))
       : undefined);
   const committedContents =
-    candidate.committedContents === undefined && isStringArray(trackedFiles)
-      ? Object.fromEntries(trackedFiles.map((file) => [file, contents[file] ?? ""]))
+    candidate.committedContents === undefined &&
+    isStringArray(trackedFiles) &&
+    isStringArray(scmChangedFiles)
+      ? Object.fromEntries(
+          trackedFiles
+            .filter((file) => !scmChangedFiles.includes(file))
+            .map((file) => [file, contents[file] ?? ""]),
+        )
       : candidate.committedContents;
   const staged = isStringArray(stagedFiles) ? stagedFiles.length > 0 : candidate.staged;
 
@@ -335,7 +341,9 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     stagedContents = { ...value };
   }
   let committedContents = Object.fromEntries(
-    trackedFiles.map((file) => [file, contents[file] ?? ""]),
+    trackedFiles
+      .filter((file) => !scmChangedFiles.includes(file))
+      .map((file) => [file, contents[file] ?? ""]),
   );
   if (hasOwn(seed, "committedContents")) {
     const value = seed["committedContents"];
