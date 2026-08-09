@@ -1,4 +1,5 @@
-import glossaryData from "../../content/glossary/de.json";
+import glossaryData from "../../content/glossary/de.json" with { type: "json" };
+import productGlossaryData from "../../content/glossary/products.de.json" with { type: "json" };
 import type { TechnologyId } from "../types/training";
 
 export interface GlossaryConcept {
@@ -10,10 +11,23 @@ export interface GlossaryConcept {
   uiTargets: string[];
 }
 
-const concepts = glossaryData.concepts as GlossaryConcept[];
-const technologyConcepts = glossaryData.technologyConcepts as Partial<
-  Record<TechnologyId, string[]>
->;
+interface GlossaryDataSource {
+  concepts: GlossaryConcept[];
+  technologyConcepts: Partial<Record<TechnologyId, string[]>>;
+}
+
+const glossarySources = [glossaryData, productGlossaryData] as unknown as GlossaryDataSource[];
+const concepts = glossarySources.flatMap((source) => source.concepts);
+const technologyConcepts = glossarySources.reduce<Partial<Record<TechnologyId, string[]>>>(
+  (merged, source) => {
+    for (const [technologyId, conceptKeys] of Object.entries(source.technologyConcepts)) {
+      const id = technologyId as TechnologyId;
+      merged[id] = [...(merged[id] ?? []), ...conceptKeys];
+    }
+    return merged;
+  },
+  {},
+);
 
 const normalize = (value: string) =>
   value

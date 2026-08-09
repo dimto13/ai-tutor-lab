@@ -1,0 +1,17 @@
+{
+  "language": "de",
+  "technologyConcepts": {
+    "ide": ["vscode.product"],
+    "ai_coding_assistant": ["vscode.product"]
+  },
+  "concepts": [
+    {
+      "key": "vscode.product",
+      "term": "VS Code",
+      "aliases": ["Visual Studio Code"],
+      "simple": "VS Code ist ein Code-Editor von Microsoft. Er bündelt Editor, Explorer, Suche, Terminal, Versionsverwaltung und Erweiterungen in einer Arbeitsoberfläche.",
+      "advanced": "Visual Studio Code ist ein erweiterbarer Desktop-Editor. Über Extensions kann er Sprachunterstützung, Debugging, Versionsverwaltung und KI-Werkzeuge integrieren; ein geöffneter Ordner oder Workspace bestimmt dabei den Arbeitskontext.",
+      "uiTargets": []
+    }
+  ]
+}
