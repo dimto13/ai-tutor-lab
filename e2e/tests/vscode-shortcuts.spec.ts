@@ -103,6 +103,22 @@ test("Speed Challenge: Ctrl+S außerhalb des Simulators speichert die aktive Dat
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
+test("Speed Challenge: Shortcuts bleiben nach Klick auf eine nicht fokussierbare Simulatorfläche aktiv", async ({
+  page,
+}) => {
+  await createDirtyChallengeFile(page);
+
+  await page.getByRole("button", { name: "Suche", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Neue Datei", exact: true })).not.toBeVisible();
+
+  await page.getByText("main", { exact: true }).click();
+  await page.keyboard.press("Control+Shift+E");
+  await expect(page.getByRole("button", { name: "Neue Datei", exact: true })).toBeVisible();
+
+  await page.keyboard.press("Control+S");
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
 test("Speed Challenge: Timeout ist ein harter Fehlschlag und kann nicht nachträglich erfüllt werden", async ({
   page,
 }) => {
