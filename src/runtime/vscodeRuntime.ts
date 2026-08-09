@@ -245,6 +245,7 @@ function clickRuntimeTarget(ref: UiTargetRef): boolean {
   if (!mountedContainer) return false;
   const element = mountedContainer.querySelector<HTMLElement>(`[data-highlight="${ref}"]`);
   if (!element) return false;
+  element.focus();
   element.click();
   return true;
 }
@@ -252,11 +253,6 @@ function clickRuntimeTarget(ref: UiTargetRef): boolean {
 function handleKeyboardShortcut(event: KeyboardEvent): void {
   if (!mountedContainer || (!event.ctrlKey && !event.metaKey) || event.altKey) return;
   const key = event.key.toLowerCase();
-
-  if (key === "n" && !event.shiftKey) {
-    if (clickRuntimeTarget("vscode.explorer.newFile")) event.preventDefault();
-    return;
-  }
 
   if (key === "s" && !event.shiftKey) {
     if (!state.activeFile) return;
