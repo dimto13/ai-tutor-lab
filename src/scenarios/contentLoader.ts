@@ -76,9 +76,11 @@ const resourceSchema = z.object({
     .optional(),
 });
 
+const nonBlankSeedStringSchema = z.string().trim().min(1);
+
 const copilotInlineSuggestionSeedSchema = z
   .object({
-    file: z.string().min(1),
+    file: nonBlankSeedStringSchema,
     text: z.string().min(1),
     whenContentEquals: z.string().optional(),
   })
@@ -87,8 +89,8 @@ const copilotInlineSuggestionSeedSchema = z
 const copilotChatResponseSeedSchema = z
   .object({
     response: z.string().min(1),
-    file: z.string().min(1).optional(),
-    promptContains: z.string().min(1).optional(),
+    file: nonBlankSeedStringSchema.optional(),
+    promptContains: nonBlankSeedStringSchema.optional(),
   })
   .strict();
 
