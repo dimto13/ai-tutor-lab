@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { technologyCatalog, validateCatalogEnvironmentReference } from "../src/catalog/index.ts";
+import { resolveCopilotProductProfile } from "../src/runtime/copilotProductProfile.ts";
 import { parseScenario } from "../src/scenarios/contentLoader.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
@@ -18,6 +19,24 @@ for (const file of files) {
   );
   for (const issue of environmentIssues) {
     issues.push(`content/scenarios/${file}:${issue.path}: ${issue.message}`);
+  }
+
+  for (const [index, integration] of (scenario.environment.integrations ?? []).entries()) {
+    if (integration.runtimeAdapterId !== "github-copilot-vscode-simulator") continue;
+
+    try {
+      resolveCopilotProductProfile({
+        productId: integration.productId,
+        hostProductId: scenario.environment.productId,
+        version: integration.version,
+      });
+    } catch {
+      issues.push(
+        `content/scenarios/${file}:environment.integrations[${index}].version: ` +
+          `No registered runtime product profile for ${integration.productId}@${integration.version} ` +
+          `hosted by ${scenario.environment.productId}`,
+      );
+    }
   }
 }
 
