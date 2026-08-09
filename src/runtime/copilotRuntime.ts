@@ -36,7 +36,11 @@ export interface CopilotRuntimeState {
 }
 
 export type CopilotRuntimeStateChangeReason =
-  "mount" | "reset" | "mutation" | "restore" | "profile";
+  | "mount"
+  | "reset"
+  | "mutation"
+  | "restore"
+  | "profile";
 
 type StateListener = (state: CopilotRuntimeState, reason: CopilotRuntimeStateChangeReason) => void;
 type EventListener = (event: TrainingEvent) => void;
@@ -47,6 +51,7 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
   getProductProfile(): CopilotProductProfile;
   subscribeState(handler: StateListener): () => void;
   setEnabled(enabled: boolean): void;
+  openChat(): void;
   setContextActiveFile(filename: string | null): void;
   setMode(mode: CopilotChatModeId): void;
   setModel(modelId: string): void;
@@ -288,6 +293,16 @@ export function createCopilotRuntime(
       if (state.enabled === enabled) return;
       replaceState({ ...state, enabled }, "mutation");
       emit("copilot.enabled.changed", { enabled });
+    },
+
+    openChat(): void {
+      if (!state.enabled) return;
+      emit("copilot.chat.opened", {
+        conversationId: state.conversationId,
+        activeFile: state.contextActiveFile,
+        mode: state.mode,
+        modelId: state.modelId,
+      });
     },
 
     setContextActiveFile(filename: string | null): void {
