@@ -63,6 +63,7 @@ const challengeCompletion: Validation = {
     { kind: "state", selector: "artifact.verifiedIds", includes: "source-a" },
     { kind: "state", selector: "artifact.verifiedIds", includes: "source-b" },
     { kind: "state", selector: "artifact.verifiedIds", excludes: "source-c" },
+    { kind: "state", selector: "artifact.active.id", equals: "source-c" },
   ],
 };
 
