@@ -8,6 +8,7 @@ const workspaceEventNameSchema = z.enum([
   "repository.opened",
   "file.created",
   "file.updated",
+  "file.saved",
   "terminal.opened",
   "terminal.command.executed",
   "panel.opened",
@@ -36,6 +37,8 @@ const stateValidationSchema = z.object({
   selector: z.string().min(1),
   equals: z.unknown().optional(),
   includes: z.unknown().optional(),
+  excludes: z.unknown().optional(),
+  match: z.record(z.unknown()).optional(),
 });
 
 export const validationSchema: z.ZodType<Validation> = z.lazy(
@@ -93,6 +96,7 @@ export const scenarioSchema = z
       .optional(),
     estimatedMinutes: z.number().nonnegative().optional(),
     points: z.number().nonnegative().optional(),
+    timeLimitSeconds: z.number().int().positive().optional(),
     resources: z.array(resourceSchema).optional(),
     exploreTargets: z.array(z.string().min(1)).optional(),
     completionValidation: validationSchema.optional(),
@@ -148,6 +152,14 @@ export const scenarioSchema = z
         code: z.ZodIssueCode.custom,
         message: "challenge scenarios require completionValidation",
         path: ["completionValidation"],
+      });
+    }
+
+    if (scenario.timeLimitSeconds !== undefined && scenario.mode !== "challenge") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "timeLimitSeconds is only valid for challenge scenarios",
+        path: ["timeLimitSeconds"],
       });
     }
   });
