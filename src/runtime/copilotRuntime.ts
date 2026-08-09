@@ -71,7 +71,6 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
     file: string,
     currentContent: string,
   ): CopilotInlineSuggestion | null;
-  matchesConfiguredInlineSuggestion(file: string, currentContent: string, text: string): boolean;
   acceptInlineSuggestion(): string | null;
   rejectInlineSuggestion(): void;
   reset(): void;
@@ -560,15 +559,6 @@ export function createCopilotRuntime(
       );
       if (!template) return null;
       return adapter.offerInlineSuggestion(file, template.text);
-    },
-
-    matchesConfiguredInlineSuggestion(file: string, currentContent: string, text: string): boolean {
-      return inlineSuggestionTemplates.some(
-        (entry) =>
-          entry.file === file &&
-          entry.text === text &&
-          (entry.whenContentEquals === undefined || entry.whenContentEquals === currentContent),
-      );
     },
 
     acceptInlineSuggestion(): string | null {
