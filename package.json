@@ -8,6 +8,7 @@
   },
   "packageManager": "npm@10.9.2",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "dev": "vite dev",
     "dev:local": "vite dev --host 0.0.0.0",
     "build": "vite build",
