@@ -37,7 +37,7 @@
     ]
   },
   "solutionComparison": [
-    "Mit Ctrl+N eine neue Datei starten und als challenge.py anlegen.",
+    "Mit Ctrl+Shift+E den Explorer öffnen und dort eine neue Datei challenge.py anlegen.",
     "Den vorgegebenen Text exakt eintragen: # Status für Marco: Review abgeschlossen.",
     "Mit Ctrl+S speichern. Entscheidend sind korrekter Inhalt und gespeicherter Endzustand vor Ablauf der Zeit."
   ],
@@ -49,8 +49,8 @@
       "instruction": "Lege challenge.py an, trage exakt „# Status für Marco: Review abgeschlossen.“ ein und speichere die Datei innerhalb von 30 Sekunden. Nutze dafür möglichst die Tastatur.",
       "why": "Die Aufgabe prüft, ob du einen kurzen Editor-Workflow effizient und ohne vorgegebenen Klickpfad beherrschst.",
       "helpLevels": [
-        "Nutze bekannte VS-Code-Shortcuts für neue Dateien und Speichern.",
-        "Windows/Linux: Ctrl+N für eine neue Datei und Ctrl+S zum Speichern.",
+        "Nutze bekannte VS-Code-Shortcuts, um den Explorer zu öffnen und die Datei zu speichern.",
+        "Windows/Linux: Ctrl+Shift+E öffnet den Explorer; Ctrl+S speichert die aktive Datei.",
         "Erfolgskriterien: challenge.py existiert, enthält exakt den vorgegebenen Text und ist gespeichert."
       ],
       "successMessage": "Shortcut-Challenge erfüllt. Datei, Inhalt und gespeicherter Zustand wurden rechtzeitig erreicht."
