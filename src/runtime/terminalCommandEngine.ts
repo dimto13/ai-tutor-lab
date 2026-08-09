@@ -10,6 +10,7 @@ export interface TerminalCommandContext {
   directories: string[];
   files: string[];
   contents: Record<string, string>;
+  committedContents?: Record<string, string>;
   trackedFiles: string[];
   changedFiles: string[];
   stagedFiles: string[];
@@ -370,14 +371,36 @@ function gitAdd(
     selected.push(...matches);
   }
 
+  const selectedFiles = unique(selected);
+  const tracked = new Set(context.trackedFiles);
+  const committedContents = context.committedContents ?? {};
+  const noOpFiles = selectedFiles.filter(
+    (file) =>
+      tracked.has(file) &&
+      Object.hasOwn(committedContents, file) &&
+      context.contents[file] === committedContents[file],
+  );
+  const noOpSet = new Set(noOpFiles);
+  const filesToStage = selectedFiles.filter((file) => !noOpSet.has(file));
+  const stagedContents = { ...context.stagedContents };
+  for (const file of noOpFiles) delete stagedContents[file];
+  for (const file of filesToStage) stagedContents[file] = context.contents[file] ?? "";
+  const stagedFilesChanged = selectedFiles.filter((file) => {
+    if (noOpSet.has(file)) return context.stagedFiles.includes(file);
+    return (
+      !context.stagedFiles.includes(file) || context.stagedContents[file] !== context.contents[file]
+    );
+  });
+
   return {
     ...unchangedResult(command, context, []),
-    stagedFiles: unique([...context.stagedFiles, ...selected]),
-    stagedContents: selected.reduce(
-      (contents, file) => ({ ...contents, [file]: context.contents[file] ?? "" }),
-      { ...context.stagedContents },
-    ),
-    stagedFilesChanged: unique(selected),
+    changedFiles: context.changedFiles.filter((file) => !noOpSet.has(file)),
+    stagedFiles: unique([
+      ...context.stagedFiles.filter((file) => !noOpSet.has(file)),
+      ...filesToStage,
+    ]),
+    stagedContents,
+    stagedFilesChanged,
   };
 }
 
@@ -416,9 +439,9 @@ function gitCommit(
     `[main ${hash}] ${message}`,
     ` ${committedFiles.length} file${committedFiles.length === 1 ? "" : "s"} changed, ${insertions} insertion${insertions === 1 ? "" : "s"}(+)`,
   ];
-  const tracked = new Set(context.trackedFiles);
+  const trackedFiles = new Set(context.trackedFiles);
   for (const file of committedFiles) {
-    if (!tracked.has(file)) output.push(` create mode 100644 ${file}`);
+    if (!trackedFiles.has(file)) output.push(` create mode 100644 ${file}`);
   }
 
   return {
