@@ -17,15 +17,8 @@ import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { getGlossaryConceptByKey, getGlossaryConceptForTarget } from "@/lib/glossary";
 
 export function GuidePanel() {
-  const {
-    scenario,
-    mode,
-    progress,
-    feedback,
-    helpLevel,
-    revealHelp,
-    completeExplanationStep,
-  } = useTraining();
+  const { scenario, mode, progress, feedback, helpLevel, revealHelp, completeExplanationStep } =
+    useTraining();
   const step = scenario.steps.find((candidate) => candidate.id === progress.activeStepId);
   const [showWhy, setShowWhy] = useState(false);
   const stepNumber = step
@@ -250,13 +243,8 @@ function formatRemainingTime(seconds: number): string {
 }
 
 function ChallengeGuide() {
-  const {
-    scenario,
-    feedback,
-    challengeOutcome,
-    challengeRemainingSeconds,
-    restart,
-  } = useTraining();
+  const { scenario, feedback, challengeOutcome, challengeRemainingSeconds, restart } =
+    useTraining();
   const goal = scenario.steps[0];
   const timedOut = challengeOutcome === "timed_out";
 
