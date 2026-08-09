@@ -263,9 +263,7 @@ function ChallengeGuide() {
       {scenario.timeLimitSeconds !== undefined ? (
         <div
           className={`mt-3 flex items-center justify-between rounded-lg border p-3 ${
-            timedOut
-              ? "border-destructive/40 bg-destructive/10"
-              : "border-warning/40 bg-warning/10"
+            timedOut ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"
           }`}
         >
           <div className="flex items-center gap-2">
