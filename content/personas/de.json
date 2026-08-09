@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "language": "de",
+  "personas": [
+    {
+      "id": "non-programmer",
+      "name": "Nicht-Programmierer mit Office-Erfahrung",
+      "description": "Mitarbeitende ohne Programmiererfahrung, die mit Office-Anwendungen und einfachen Excel-Formeln vertraut sind.",
+      "assumedKnowledge": [
+        "Dateien und Ordner in einer grafischen Oberfläche öffnen",
+        "Texte in Office-Anwendungen bearbeiten",
+        "einfache Excel-Formeln als Arbeitsanweisungen lesen"
+      ],
+      "guidancePrinciples": [
+        "Fachbegriffe vor ihrer ersten Verwendung in einfacher Sprache erklären",
+        "neue Konzepte an bekannte Office-Arbeitsweisen anknüpfen",
+        "Zweck und erwartetes Ergebnis jeder Handlung sichtbar machen",
+        "technische Vertiefungen optional anbieten"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,15 @@
-export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "VALIDATION_FAILED";
+export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "SKIPPED" | "VALIDATION_FAILED";
 
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
+export type TechnologyId =
+  | "ide"
+  | "source_control"
+  | "terminal"
+  | "ai_coding_assistant"
+  | "cli_agent"
+  | "office_assistant"
+  | "ai_chat";
 export type TrainingStepType = "action" | "explanation";
 export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
@@ -89,8 +97,19 @@ export interface TrainingStep {
   highlightTarget?: UiTargetRef;
   highlightTooltip?: string;
   successMessage: string;
+  /** Optional content can be skipped through an explicit learner choice. */
+  optional?: boolean;
   /** Transitional compatibility for the older Git/Copilot POC scenario. */
   validate?: (payload: Record<string, unknown>) => ValidationResult;
+}
+
+export interface ScenarioAudience {
+  /** Stable reference into the declarative learner-persona catalog. */
+  personaId: string;
+  /** Glossary concepts that this scenario introduces and renders inline. */
+  glossaryConcepts: string[];
+  /** Optional explanation steps that form a skippable introduction block. */
+  introductionStepIds?: string[];
 }
 
 export interface ScenarioEnvironment {
@@ -118,6 +137,7 @@ export interface Scenario {
   title: string;
   description: string;
   learningObjectives?: string[];
+  audience?: ScenarioAudience;
   environment?: ScenarioEnvironment;
   estimatedMinutes?: number;
   /** Base points before the mode multiplier is applied. */
