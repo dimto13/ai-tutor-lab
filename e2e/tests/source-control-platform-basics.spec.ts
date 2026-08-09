@@ -55,6 +55,20 @@ test("Explore: Repository, Pull Request, Review, Checks und Remote-Hilfe frei er
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
+test("Explore: inspizierter Fortschritt bleibt ohne Runtime-Snapshot erhalten", async ({
+  page,
+}) => {
+  await page.goto("/training/source-control-platform-basics.explore");
+  await waitForTrainingReady(page);
+  await page.getByRole("button", { name: /contoso-labs.*onboarding-guide/ }).click();
+  await expect(page.getByText("1 von 11 Oberflächen untersucht", { exact: true })).toBeVisible();
+
+  await page.goto("/");
+  await page.goto("/training/source-control-platform-basics.explore");
+  await waitForTrainingReady(page);
+  await expect(page.getByText("1 von 11 Oberflächen untersucht", { exact: true })).toBeVisible();
+});
+
 test("Guided: kompletter Pull-Request- und Review-Ablauf entsteht durch Aktionen", async ({
   page,
 }) => {
@@ -76,9 +90,16 @@ test("Guided: kompletter Pull-Request- und Review-Ablauf entsteht durch Aktionen
   await createTrainingPullRequest(page, "Prüfung folgt.");
   await expectGuidedStep(page, 5, "Pull Request nachvollziehbar beschreiben");
   await page.getByRole("button", { name: "Pull Request bearbeiten", exact: true }).click();
+  await page.getByRole("textbox", { name: "Pull-Request-Titel" }).fill("");
   await page
     .getByRole("textbox", { name: "Pull-Request-Beschreibung" })
     .fill("Einrichtung geprüft; keine Zugangsdaten enthalten.");
+  await page.getByRole("button", { name: "Änderungen speichern", exact: true }).click();
+  await expectGuidedStep(page, 5, "Pull Request nachvollziehbar beschreiben");
+  await page.getByRole("button", { name: "Pull Request bearbeiten", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Pull-Request-Titel" })
+    .fill("README um Einstieg ergänzen");
   await page.getByRole("button", { name: "Änderungen speichern", exact: true }).click();
   await expectGuidedStep(page, 6, "Tatsächlichen Diff prüfen");
 

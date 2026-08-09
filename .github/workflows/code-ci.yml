@@ -50,6 +50,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Technology catalog tests
+        run: npm run test:catalog
+
       - name: Runtime adapter contract tests
         run: npm run test:runtime-contracts
 

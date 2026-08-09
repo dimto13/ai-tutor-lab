@@ -25,7 +25,22 @@
       "repositoryOwner": "contoso-labs",
       "repositoryName": "onboarding-guide",
       "currentBranch": "main",
-      "branches": ["main"]
+      "branches": ["main"],
+      "repositoryFiles": ["docs/", "src/", "README.md", "CONTRIBUTING.md"],
+      "commitHistory": [
+        ["a1b2c3d", "Dokumentation für neue Teammitglieder vorbereiten", "Maria Schmidt"],
+        ["9f8e7d6", "Beispiele für lokale Einrichtung ergänzen", "Jonas Weber"],
+        ["4c3b2a1", "Projektstruktur initialisieren", "Maria Schmidt"]
+      ],
+      "latestCommitRelativeTime": "vor 2 Stunden",
+      "diffFilePath": "README.md",
+      "diffContextOldLine": "8",
+      "diffContextNewLine": "8",
+      "diffContextText": "## Projekt lokal starten",
+      "diffAddedNewLine": "9",
+      "diffAddedText": "+ Folge der geprüften Einrichtung in docs/setup.md.",
+      "reviewAuthor": "Jonas Weber",
+      "reviewBody": "Bitte bestätige, dass der neue Einstieg keine internen Zugangsdaten enthält und der Link zur Einrichtung geprüft wurde."
     }
   },
   "estimatedMinutes": 18,
@@ -125,7 +140,8 @@
         "kind": "event",
         "type": "platform.pull_request.created",
         "match": {
-          "headBranch": "feature/readme-guide"
+          "headBranch": "feature/readme-guide",
+          "title": "README um Einstieg ergänzen"
         },
         "contains": {
           "description": "Einrichtung geprüft"

@@ -84,6 +84,32 @@ defineRuntimeAdapterContractTests("sourceControlPlatformRuntime", () => {
   };
 });
 
+test("sourceControlPlatformRuntime: exposes scenario-authored repository and review content", async () => {
+  await sourceControlPlatformRuntime.mount(createContainer(), {
+    repositoryFiles: ["TRAINING.md"],
+    commitHistory: [["abc1234", "Szenarioinhalt", "Ada"]],
+    latestCommitRelativeTime: "gerade eben",
+    diffFilePath: "TRAINING.md",
+    diffContextOldLine: "1",
+    diffContextNewLine: "1",
+    diffContextText: "# Alt",
+    diffAddedNewLine: "2",
+    diffAddedText: "+ Neu",
+    reviewAuthor: "Reviewer",
+    reviewBody: "Bitte prüfen.",
+  });
+  try {
+    const snapshot = (await sourceControlPlatformRuntime.snapshot()) as SourceControlPlatformState;
+    assert.deepEqual(snapshot.repositoryFiles, ["TRAINING.md"]);
+    assert.deepEqual(snapshot.commitHistory, [["abc1234", "Szenarioinhalt", "Ada"]]);
+    assert.equal(snapshot.diffFilePath, "TRAINING.md");
+    assert.equal(snapshot.reviewAuthor, "Reviewer");
+    assert.equal(snapshot.reviewBody, "Bitte prüfen.");
+  } finally {
+    await sourceControlPlatformRuntime.unmount();
+  }
+});
+
 test("sourceControlPlatformRuntime: computes merge readiness from final state, independent of action order", async () => {
   await sourceControlPlatformRuntime.mount(createContainer());
   try {

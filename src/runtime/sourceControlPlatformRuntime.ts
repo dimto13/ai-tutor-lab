@@ -13,6 +13,17 @@ export interface SourceControlPlatformState {
   platformName: string;
   repositoryOwner: string;
   repositoryName: string;
+  repositoryFiles: string[];
+  commitHistory: Array<[string, string, string]>;
+  latestCommitRelativeTime: string;
+  diffFilePath: string;
+  diffContextOldLine: string;
+  diffContextNewLine: string;
+  diffContextText: string;
+  diffAddedNewLine: string;
+  diffAddedText: string;
+  reviewAuthor: string;
+  reviewBody: string;
   activeView: PlatformView;
   currentBranch: string;
   branches: string[];
@@ -55,6 +66,22 @@ const initialState = (): SourceControlPlatformState => ({
   platformName: "GitHub",
   repositoryOwner: "contoso-labs",
   repositoryName: "onboarding-guide",
+  repositoryFiles: ["docs/", "src/", "README.md", "CONTRIBUTING.md"],
+  commitHistory: [
+    ["a1b2c3d", "Dokumentation für neue Teammitglieder vorbereiten", "Maria Schmidt"],
+    ["9f8e7d6", "Beispiele für lokale Einrichtung ergänzen", "Jonas Weber"],
+    ["4c3b2a1", "Projektstruktur initialisieren", "Maria Schmidt"],
+  ],
+  latestCommitRelativeTime: "vor 2 Stunden",
+  diffFilePath: "README.md",
+  diffContextOldLine: "8",
+  diffContextNewLine: "8",
+  diffContextText: "## Projekt lokal starten",
+  diffAddedNewLine: "9",
+  diffAddedText: "+ Folge der geprüften Einrichtung in docs/setup.md.",
+  reviewAuthor: "Jonas Weber",
+  reviewBody:
+    "Bitte bestätige, dass der neue Einstieg keine internen Zugangsdaten enthält und der Link zur Einrichtung geprüft wurde.",
   activeView: "overview",
   currentBranch: "main",
   branches: ["main"],
@@ -72,7 +99,14 @@ const initialState = (): SourceControlPlatformState => ({
 });
 
 function cloneState(value: SourceControlPlatformState): SourceControlPlatformState {
-  return { ...value, branches: [...value.branches] };
+  return {
+    ...value,
+    branches: [...value.branches],
+    repositoryFiles: [...value.repositoryFiles],
+    commitHistory: value.commitHistory.map(
+      ([hash, message, author]) => [hash, message, author] as [string, string, string],
+    ),
+  };
 }
 
 function hasOwn(seed: RuntimeSeed, key: string): boolean {
@@ -97,6 +131,27 @@ function stringArrayFromSeed(seed: RuntimeSeed, key: string, fallback: string[])
   return [...new Set(value)];
 }
 
+function commitHistoryFromSeed(
+  seed: RuntimeSeed,
+  key: string,
+  fallback: Array<[string, string, string]>,
+): Array<[string, string, string]> {
+  if (!hasOwn(seed, key)) {
+    return fallback.map(([hash, message, author]) => [hash, message, author]);
+  }
+  const value = seed[key];
+  if (
+    !Array.isArray(value) ||
+    !value.every(
+      (item) =>
+        Array.isArray(item) && item.length === 3 && item.every((part) => typeof part === "string"),
+    )
+  ) {
+    throw new TypeError(`Invalid source-control platform runtime seed field: ${key}`);
+  }
+  return value.map((item) => [item[0], item[1], item[2]] as [string, string, string]);
+}
+
 function booleanFromSeed(seed: RuntimeSeed, key: string, fallback: boolean): boolean {
   if (!hasOwn(seed, key)) return fallback;
   const value = seed[key];
@@ -117,6 +172,21 @@ function stateFromSeed(seed?: RuntimeSeed): SourceControlPlatformState {
     platformName: stringFromSeed(seed, "platformName", base.platformName),
     repositoryOwner: stringFromSeed(seed, "repositoryOwner", base.repositoryOwner),
     repositoryName: stringFromSeed(seed, "repositoryName", base.repositoryName),
+    repositoryFiles: stringArrayFromSeed(seed, "repositoryFiles", base.repositoryFiles),
+    commitHistory: commitHistoryFromSeed(seed, "commitHistory", base.commitHistory),
+    latestCommitRelativeTime: stringFromSeed(
+      seed,
+      "latestCommitRelativeTime",
+      base.latestCommitRelativeTime,
+    ),
+    diffFilePath: stringFromSeed(seed, "diffFilePath", base.diffFilePath),
+    diffContextOldLine: stringFromSeed(seed, "diffContextOldLine", base.diffContextOldLine),
+    diffContextNewLine: stringFromSeed(seed, "diffContextNewLine", base.diffContextNewLine),
+    diffContextText: stringFromSeed(seed, "diffContextText", base.diffContextText),
+    diffAddedNewLine: stringFromSeed(seed, "diffAddedNewLine", base.diffAddedNewLine),
+    diffAddedText: stringFromSeed(seed, "diffAddedText", base.diffAddedText),
+    reviewAuthor: stringFromSeed(seed, "reviewAuthor", base.reviewAuthor),
+    reviewBody: stringFromSeed(seed, "reviewBody", base.reviewBody),
     currentBranch,
     branches: branches.includes(currentBranch) ? branches : [...branches, currentBranch],
     pullRequestCreated,
@@ -147,6 +217,24 @@ function isRuntimeState(value: unknown): value is SourceControlPlatformState {
     typeof candidate.platformName === "string" &&
     typeof candidate.repositoryOwner === "string" &&
     typeof candidate.repositoryName === "string" &&
+    Array.isArray(candidate.repositoryFiles) &&
+    candidate.repositoryFiles.every((file) => typeof file === "string") &&
+    Array.isArray(candidate.commitHistory) &&
+    candidate.commitHistory.every(
+      (commit) =>
+        Array.isArray(commit) &&
+        commit.length === 3 &&
+        commit.every((part) => typeof part === "string"),
+    ) &&
+    typeof candidate.latestCommitRelativeTime === "string" &&
+    typeof candidate.diffFilePath === "string" &&
+    typeof candidate.diffContextOldLine === "string" &&
+    typeof candidate.diffContextNewLine === "string" &&
+    typeof candidate.diffContextText === "string" &&
+    typeof candidate.diffAddedNewLine === "string" &&
+    typeof candidate.diffAddedText === "string" &&
+    typeof candidate.reviewAuthor === "string" &&
+    typeof candidate.reviewBody === "string" &&
     (candidate.activeView === "overview" ||
       candidate.activeView === "code" ||
       candidate.activeView === "commits" ||

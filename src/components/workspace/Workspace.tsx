@@ -74,6 +74,7 @@ export function Workspace() {
   const [activePanel, setActivePanel] = useState<PanelView>("terminal");
   const [lines, setLines] = useState<string[]>([]);
   const [command, setCommand] = useState("");
+  const [terminalPrompt, setTerminalPrompt] = useState("user@lab:~/ai-training-demo$");
   const [staged, setStaged] = useState(false);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
 
@@ -100,6 +101,7 @@ export function Workspace() {
       if (runtimeState.activePanel) setActivePanel(runtimeState.activePanel);
       setLines([...runtimeState.terminalLines]);
       setCommand(runtimeState.terminalCommand);
+      setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
       setStaged(runtimeState.staged);
       setWrongFile(runtimeState.wrongFile);
       setFileMenuOpen(false);
@@ -139,6 +141,7 @@ export function Workspace() {
     const folders =
       nextMode === "folder" ? ["ai-training-demo"] : ["ai-training-demo", "shared-tools"];
     vscodeRuntime.setWorkspace(nextMode, folders);
+    setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
     setWorkspaceMode(nextMode);
     setRepoOpen(true);
     setView("explorer");
@@ -156,6 +159,7 @@ export function Workspace() {
 
   const openRepo = () => {
     vscodeRuntime.setWorkspace("folder", ["ai-training-demo"]);
+    setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
     setWorkspaceMode("folder");
     setRepoOpen(true);
     setView("explorer");
@@ -205,77 +209,21 @@ export function Workspace() {
     workspaceBus.emit("panel.opened", { panel });
   };
 
-  const replaceTerminalLines = (nextLines: string[]) => {
-    setLines(nextLines);
-    vscodeRuntime.setTerminalLines(nextLines);
-  };
-
   const openTerminal = () => {
     openPanel("terminal");
-    if (lines.length === 0) {
-      replaceTerminalLines([
-        "AI Training Lab – simulierte Shell (bash)",
-        "user@lab:~/ai-training-demo$",
-      ]);
-    }
+    setLines(vscodeRuntime.initializeTerminal());
+    setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
     workspaceBus.emit("terminal.opened");
   };
 
   const runCommand = () => {
     const cmd = command.trim();
     if (!cmd) return;
+    const result = vscodeRuntime.executeTerminalCommand(cmd);
     setCommand("");
-    vscodeRuntime.setTerminalCommand("");
-    const out: string[] = [`user@lab:~/ai-training-demo$ ${cmd}`];
-    const hasHello = files.some((file) => file.name === "hello.py");
-
-    if (cmd === "git status") {
-      out.push(
-        "On branch main",
-        "Your branch is up to date with 'origin/main'.",
-        "",
-        staged ? "Changes to be committed:" : "Untracked files:",
-        staged
-          ? '  (use "git restore --staged <file>..." to unstage)'
-          : '  (use "git add <file>..." to include in what will be committed)',
-        staged ? "\tnew file:   hello.py" : "\thello.py",
-        "",
-        staged
-          ? ""
-          : 'nothing added to commit but untracked files present (use "git add" to track)',
-      );
-    } else if (/^git add\s+/.test(cmd)) {
-      if (cmd.includes("hello.py") || cmd.includes(".")) {
-        if (!hasHello) out.push("fatal: pathspec 'hello.py' did not match any files");
-        else {
-          setStaged(true);
-          vscodeRuntime.setStaged(true);
-          out.push("");
-        }
-      } else {
-        out.push("fatal: pathspec did not match any files");
-      }
-    } else if (cmd.startsWith("git commit")) {
-      if (!staged) out.push('nothing added to commit (use "git add" to track files)');
-      else {
-        out.push(
-          "[main abc123] add hello example",
-          " 1 file changed, 1 insertion(+)",
-          " create mode 100644 hello.py",
-        );
-      }
-    } else if (cmd === "clear") {
-      replaceTerminalLines([]);
-      workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
-      return;
-    } else if (cmd === "ls") {
-      out.push(files.map((file) => file.name).join("  "));
-    } else {
-      out.push(`bash: ${cmd.split(" ")[0]}: command not found`);
-    }
-
-    replaceTerminalLines([...lines, ...out]);
-    workspaceBus.emit("terminal.command.executed", { command: cmd, staged });
+    setLines(result.lines);
+    setTerminalPrompt(result.prompt);
+    setStaged(result.staged);
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -296,23 +244,28 @@ export function Workspace() {
   };
 
   return (
-    <div ref={runtimeRootRef} className="flex min-h-0 flex-1 flex-col overflow-hidden bg-editor">
-      <div className="relative flex h-8 shrink-0 items-center border-b border-border bg-panel px-2 text-[12px] text-foreground/85">
-        {MENU_ITEMS.map((item) => (
-          <button
-            key={item}
-            data-highlight={item === "File" ? "vscode.menu.file" : undefined}
-            onClick={() => {
-              if (item !== "File") return;
-              inspect("vscode.menu.file");
-              setFileMenuOpen((open) => !open);
-            }}
-            className="rounded px-2 py-1 hover:bg-white/10"
-          >
-            {item}
-          </button>
-        ))}
-        <span className="ml-auto pr-2 text-[11px] text-muted-foreground">
+    <div
+      ref={runtimeRootRef}
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-editor"
+    >
+      <div className="relative flex h-8 min-w-0 shrink-0 items-center border-b border-border bg-panel px-1 text-[12px] text-foreground/85 sm:px-2">
+        <div className="flex min-w-0 flex-1 items-center overflow-x-auto overflow-y-hidden">
+          {MENU_ITEMS.map((item) => (
+            <button
+              key={item}
+              data-highlight={item === "File" ? "vscode.menu.file" : undefined}
+              onClick={() => {
+                if (item !== "File") return;
+                inspect("vscode.menu.file");
+                setFileMenuOpen((open) => !open);
+              }}
+              className="shrink-0 rounded px-2 py-1 hover:bg-white/10"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <span className="hidden shrink-0 pr-2 text-[11px] text-muted-foreground lg:inline">
           {workspaceMode === "workspace"
             ? "ai-training-lab (Workspace)"
             : workspaceMode === "folder"
@@ -360,7 +313,7 @@ export function Workspace() {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-activity py-2">
+        <div className="flex w-10 shrink-0 flex-col items-center gap-1 border-r border-border bg-activity py-2 sm:w-12">
           {activityItems.map(({ id, icon: Icon, label, target }) => (
             <button
               key={id}
@@ -368,7 +321,7 @@ export function Workspace() {
               onClick={() => openView(id, target)}
               title={label}
               aria-label={label}
-              className={`flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground ${
+              className={`flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground sm:h-10 sm:w-10 ${
                 view === id ? "bg-white/5 text-foreground" : ""
               }`}
             >
@@ -380,7 +333,7 @@ export function Workspace() {
         <aside
           data-highlight="vscode.sideBar"
           onClickCapture={() => inspect("vscode.sideBar")}
-          className="flex w-60 shrink-0 flex-col border-r border-border bg-panel"
+          className="flex w-28 shrink-0 flex-col border-r border-border bg-panel sm:w-44 md:w-60"
         >
           <div className="flex h-9 items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <span>
@@ -531,36 +484,38 @@ export function Workspace() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-9 items-stretch border-b border-border bg-panel">
-            {tabs.length === 0 ? (
-              <span className="flex items-center px-3 text-xs text-muted-foreground">
-                Keine Datei geöffnet
-              </span>
-            ) : (
-              tabs.map((tab) => (
-                <div
-                  key={tab}
-                  className={`flex items-center gap-2 border-r border-border px-3 text-[13px] ${
-                    activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  <button onClick={() => openFile(tab)}>{tab}</button>
-                  <button
-                    aria-label={`${tab} schließen`}
-                    onClick={() => {
-                      setTabs((current) => current.filter((item) => item !== tab));
-                      if (activeFile === tab) setActiveFile(null);
-                      vscodeRuntime.closeFile(tab);
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
+          <div className="relative flex h-9 min-w-0 items-stretch border-b border-border bg-panel">
+            <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto overflow-y-hidden">
+              {tabs.length === 0 ? (
+                <span className="flex items-center px-3 text-xs text-muted-foreground">
+                  Keine Datei geöffnet
+                </span>
+              ) : (
+                tabs.map((tab) => (
+                  <div
+                    key={tab}
+                    className={`flex shrink-0 items-center gap-2 border-r border-border px-3 text-[13px] ${
+                      activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
+                    }`}
                   >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
+                    <button onClick={() => openFile(tab)}>{tab}</button>
+                    <button
+                      aria-label={`${tab} schließen`}
+                      onClick={() => {
+                        setTabs((current) => current.filter((item) => item !== tab));
+                        if (activeFile === tab) setActiveFile(null);
+                        vscodeRuntime.closeFile(tab);
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
             {copilotIntegrated ? (
-              <div className="ml-auto flex items-center pr-2">
+              <div className="flex shrink-0 items-center pr-2">
                 <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
               </div>
             ) : null}
@@ -582,7 +537,7 @@ export function Workspace() {
                   value={contents[activeFile] ?? ""}
                   onChange={(event) => updateContent(event.target.value)}
                   spellCheck={false}
-                  className="h-full flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
+                  className="h-full min-w-0 flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
                   placeholder='print("Hello AI Training")'
                 />
               </div>
@@ -642,7 +597,7 @@ export function Workspace() {
                     className="flex items-center gap-2"
                     data-highlight="vscode.panel.terminal.input"
                   >
-                    <span className="text-success">user@lab:~/ai-training-demo$</span>
+                    <span className="text-success">{terminalPrompt}</span>
                     <input
                       ref={terminalInputRef}
                       value={command}
@@ -688,25 +643,25 @@ export function Workspace() {
       <div
         data-highlight="vscode.statusBar"
         onClickCapture={() => inspect("vscode.statusBar")}
-        className="flex h-7 shrink-0 items-center gap-4 border-t border-border bg-statusbar px-3 text-[11px] text-foreground/80"
+        className="flex h-7 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-border bg-statusbar px-2 text-[11px] text-foreground/80 sm:gap-4 sm:px-3"
       >
-        <span className="flex items-center gap-1">
+        <span className="flex shrink-0 items-center gap-1">
           <GitBranch className="h-3.5 w-3.5" /> main
         </span>
-        <span>
+        <span className="hidden min-w-0 truncate sm:inline">
           {workspaceMode === "workspace"
             ? "Workspace · 2 Ordner"
             : repoOpen
               ? "Ordner · ai-training-demo"
               : "kein Arbeitskontext"}
         </span>
-        <span className="text-muted-foreground">
+        <span className="hidden min-w-0 truncate text-muted-foreground md:inline">
           {activeFile ? `${activeFile} · Python` : "Python 3.12"}
         </span>
         <button
           data-highlight="vscode.statusBar.terminal"
           onClick={openTerminal}
-          className="ml-auto flex items-center gap-1.5 rounded px-2 py-0.5 transition-colors hover:bg-white/10"
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded px-2 py-0.5 transition-colors hover:bg-white/10"
         >
           <TerminalIcon className="h-3.5 w-3.5" /> Terminal
         </button>

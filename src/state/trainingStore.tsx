@@ -277,7 +277,7 @@ export function TrainingProvider({
           Object.values(persistedProgress.statuses).some(
             (status) => status === "COMPLETED" || status === "VALIDATION_FAILED",
           ));
-      if (hasStarted) {
+      if (mode !== "explore" && hasStarted) {
         const freshProgress = initialProgress(scenario);
         window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(freshProgress));
         setProgress(freshProgress);
@@ -286,7 +286,7 @@ export function TrainingProvider({
       }
       return false;
     },
-    [scenario, scenarioRuntimes],
+    [mode, scenario, scenarioRuntimes],
   );
 
   useEffect(() => {

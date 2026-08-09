@@ -28,6 +28,22 @@ const EMPTY_STATE: SourceControlPlatformState = {
   platformName: "Source-Control-Plattform",
   repositoryOwner: "contoso-labs",
   repositoryName: "onboarding-guide",
+  repositoryFiles: ["docs/", "src/", "README.md", "CONTRIBUTING.md"],
+  commitHistory: [
+    ["a1b2c3d", "Dokumentation für neue Teammitglieder vorbereiten", "Maria Schmidt"],
+    ["9f8e7d6", "Beispiele für lokale Einrichtung ergänzen", "Jonas Weber"],
+    ["4c3b2a1", "Projektstruktur initialisieren", "Maria Schmidt"],
+  ],
+  latestCommitRelativeTime: "vor 2 Stunden",
+  diffFilePath: "README.md",
+  diffContextOldLine: "8",
+  diffContextNewLine: "8",
+  diffContextText: "## Projekt lokal starten",
+  diffAddedNewLine: "9",
+  diffAddedText: "+ Folge der geprüften Einrichtung in docs/setup.md.",
+  reviewAuthor: "Jonas Weber",
+  reviewBody:
+    "Bitte bestätige, dass der neue Einstieg keine internen Zugangsdaten enthält und der Link zur Einrichtung geprüft wurde.",
   activeView: "overview",
   currentBranch: "main",
   branches: ["main"],
@@ -182,7 +198,7 @@ export function SourceControlPlatformWorkspace() {
               inspect={inspect}
             />
           ) : null}
-          {state.activeView === "commits" ? <CommitsView /> : null}
+          {state.activeView === "commits" ? <CommitsView state={state} /> : null}
           {state.activeView === "pull-requests" ? (
             <PullRequestsView
               state={state}
@@ -323,6 +339,7 @@ function CodeView({
   setNewBranch(value: string): void;
   inspect(ref: string): void;
 }) {
+  const latestCommit = state.commitHistory[0];
   return (
     <section>
       <div className="relative flex flex-wrap items-center justify-between gap-3">
@@ -378,10 +395,12 @@ function CodeView({
       <div className="mt-4 overflow-hidden rounded-lg border border-border bg-card text-xs">
         <div className="flex items-center gap-3 border-b border-border bg-white/[0.03] px-4 py-3">
           <GitCommitHorizontal className="h-4 w-4 text-accent" />
-          <span className="font-medium">Dokumentation für neue Teammitglieder vorbereiten</span>
-          <span className="ml-auto text-muted-foreground">a1b2c3d · vor 2 Stunden</span>
+          <span className="font-medium">{latestCommit?.[1] ?? ""}</span>
+          <span className="ml-auto text-muted-foreground">
+            {latestCommit?.[0] ?? ""} · {state.latestCommitRelativeTime}
+          </span>
         </div>
-        {["docs/", "src/", "README.md", "CONTRIBUTING.md"].map((file) => (
+        {state.repositoryFiles.map((file) => (
           <div key={file} className="flex border-b border-border px-4 py-2.5 last:border-0">
             <Code2 className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-accent">{file}</span>
@@ -392,12 +411,8 @@ function CodeView({
   );
 }
 
-function CommitsView() {
-  const commits = [
-    ["a1b2c3d", "Dokumentation für neue Teammitglieder vorbereiten", "Maria Schmidt"],
-    ["9f8e7d6", "Beispiele für lokale Einrichtung ergänzen", "Jonas Weber"],
-    ["4c3b2a1", "Projektstruktur initialisieren", "Maria Schmidt"],
-  ];
+function CommitsView({ state }: { state: SourceControlPlatformState }) {
+  const commits = state.commitHistory;
   return (
     <section>
       <h2 className="text-base font-semibold">Commit-Historie</h2>
@@ -583,12 +598,10 @@ function PullRequestsView({
               className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-xs"
             >
               <div className="flex items-center gap-2 font-semibold text-warning">
-                <MessageSquareText className="h-4 w-4" /> Änderungen angefragt · Jonas Weber
+                <MessageSquareText className="h-4 w-4" /> Änderungen angefragt ·{" "}
+                {state.reviewAuthor}
               </div>
-              <p className="mt-2 leading-relaxed text-foreground">
-                Bitte bestätige, dass der neue Einstieg keine internen Zugangsdaten enthält und der
-                Link zur Einrichtung geprüft wurde.
-              </p>
+              <p className="mt-2 leading-relaxed text-foreground">{state.reviewBody}</p>
               {state.reviewReplied ? (
                 <div className="mt-3 rounded-md border border-success/40 bg-success/10 p-3">
                   <p className="font-medium text-success">Zuletzt gesendete Antwort</p>
@@ -617,7 +630,7 @@ function PullRequestsView({
         </div>
       ) : null}
 
-      {tab === "diff" ? <DiffView /> : null}
+      {tab === "diff" ? <DiffView state={state} /> : null}
       {tab === "checks" ? <ChecksView state={state} /> : null}
     </section>
   );
@@ -648,21 +661,27 @@ function PrTab({
   );
 }
 
-function DiffView() {
+function DiffView({ state }: { state: SourceControlPlatformState }) {
   return (
     <div className="mt-4 overflow-hidden rounded-lg border border-border bg-card font-mono text-xs">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-sans font-medium">
-        <FileDiff className="h-4 w-4 text-accent" /> README.md
+        <FileDiff className="h-4 w-4 text-accent" /> {state.diffFilePath}
       </div>
       <div className="grid grid-cols-[44px_44px_1fr] border-b border-border bg-white/[0.02] text-muted-foreground">
-        <span className="border-r border-border px-2 py-1 text-right">8</span>
-        <span className="border-r border-border px-2 py-1 text-right">8</span>
-        <span className="px-3 py-1">## Projekt lokal starten</span>
+        <span className="border-r border-border px-2 py-1 text-right">
+          {state.diffContextOldLine}
+        </span>
+        <span className="border-r border-border px-2 py-1 text-right">
+          {state.diffContextNewLine}
+        </span>
+        <span className="px-3 py-1">{state.diffContextText}</span>
       </div>
       <div className="grid grid-cols-[44px_44px_1fr] bg-success/10 text-success">
         <span className="border-r border-success/20 px-2 py-1 text-right">+</span>
-        <span className="border-r border-success/20 px-2 py-1 text-right">9</span>
-        <span className="px-3 py-1">+ Folge der geprüften Einrichtung in docs/setup.md.</span>
+        <span className="border-r border-success/20 px-2 py-1 text-right">
+          {state.diffAddedNewLine}
+        </span>
+        <span className="px-3 py-1">{state.diffAddedText}</span>
       </div>
       <p className="border-t border-border p-3 font-sans text-muted-foreground">
         Der Diff zeigt ausschließlich die Änderung zwischen Ausgangs- und Zielbranch. Beim Review
