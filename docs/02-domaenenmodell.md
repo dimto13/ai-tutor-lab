@@ -124,6 +124,11 @@ export interface Scenario {
   title: string;
   description: string;
   learningObjectives: string[]; // ['understand_vscode_ui', 'understand_workspace']
+  audience?: {
+    personaId: string; // Referenz auf content/personas/*.json
+    glossaryConcepts: string[]; // im Guide kontextuell erklärte Mindestbegriffe
+    introductionStepIds?: string[]; // zusammenhängender, optionaler Einstiegsblock
+  };
   environment: {
     productId: string;
     version: string; // SemVer-Range, z. B. '1.x'
