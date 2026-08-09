@@ -112,11 +112,19 @@ export interface ScenarioAudience {
   introductionStepIds?: string[];
 }
 
+export interface ScenarioIntegrationEnvironment {
+  productId: string;
+  version: string;
+  runtimeAdapterId: string;
+}
+
 export interface ScenarioEnvironment {
   productId: string;
   version: string;
   runtimeAdapterId: string;
-  /** Optional product integrations hosted inside the primary runtime surface. */
+  /** Version-pinned product integrations hosted inside the primary runtime surface. */
+  integrations?: ScenarioIntegrationEnvironment[];
+  /** Derived by parseScenario for runtime consumers; never authored in scenario JSON. */
   integrationRuntimeAdapterIds?: string[];
   seed?: RuntimeSeed;
 }
