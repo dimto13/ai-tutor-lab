@@ -41,6 +41,14 @@ jobs:
           if redundant not in script:
               raise SystemExit('Expected already-applied RuntimeCapability patch not found')
           script = script.replace(redundant, '', 1)
+          glossary_anchor = 'concepts = glossary["concepts"]\n'
+          if glossary_anchor not in script:
+              raise SystemExit('Glossary assignment anchor not found')
+          script = script.replace(
+              glossary_anchor,
+              glossary_anchor + 'glossary["technologyConcepts"]["artifact_preview"] = ["artifact.preview"]\n',
+              1,
+          )
           Path('/tmp/run-aitp-152.sh').write_text(script)
           PY
           bash /tmp/run-aitp-152.sh
