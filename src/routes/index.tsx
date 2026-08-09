@@ -112,7 +112,7 @@ const toolTrainings: TrainingCardModel[] = [
     title: "GitHub Copilot – Grundlagen",
     description:
       "Chat, Inline-Vorschläge, Kontext und den sinnvollen Einsatz von Copilot unabhängig vom Gesamtworkflow kennenlernen.",
-    steps: 11,
+    steps: 14,
     icon: Bot,
     available: true,
     label: "AI Coding Assistant",

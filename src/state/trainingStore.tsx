@@ -60,6 +60,7 @@ interface TrainingContextValue {
   revealHelp: () => void;
   resetHelp: () => void;
   completeExplanationStep: () => void;
+  skipOptionalSteps: () => void;
   restart: () => void;
   registerMistake: (message: string) => void;
 }
@@ -447,9 +448,10 @@ export function TrainingProvider({
   }, [feedback]);
 
   const value = useMemo<TrainingContextValue>(() => {
-    const guidedCompleted = scenario.steps.filter(
-      (step) => progress.statuses[step.id] === "COMPLETED",
-    ).length;
+    const guidedCompleted = scenario.steps.filter((step) => {
+      const status = progress.statuses[step.id];
+      return status === "COMPLETED" || status === "SKIPPED";
+    }).length;
     const exploreTotal = scenario.exploreTargets?.length ?? 0;
     const exploreCompleted = progress.exploredTargets.filter((ref) =>
       (scenario.exploreTargets ?? []).includes(ref),
@@ -519,6 +521,37 @@ export function TrainingProvider({
         if (!step || step.stepType !== "explanation") return;
         completeStep(step.id, step.successMessage);
       },
+      skipOptionalSteps: () => {
+        if (mode !== "guided") return;
+        const stepId = progressRef.current.activeStepId;
+        const startIndex = scenario.steps.findIndex((step) => step.id === stepId);
+        if (startIndex < 0 || !scenario.steps[startIndex]?.optional) return;
+
+        const skippedStepIds: string[] = [];
+        let nextIndex = startIndex;
+        while (scenario.steps[nextIndex]?.optional) {
+          skippedStepIds.push(scenario.steps[nextIndex]!.id);
+          nextIndex += 1;
+        }
+        const next = scenario.steps[nextIndex];
+
+        setProgress((current) => {
+          const statuses = { ...current.statuses };
+          for (const skippedStepId of skippedStepIds) statuses[skippedStepId] = "SKIPPED";
+          if (next) statuses[next.id] = "ACTIVE";
+          return {
+            ...current,
+            statuses,
+            activeStepId: next?.id ?? null,
+            finishedAt: next ? null : Date.now(),
+          };
+        });
+        setHelpLevel(0);
+        setFeedback({
+          kind: "success",
+          message: "Grundbegriffe übersprungen. Du kannst sie jederzeit über das Glossar öffnen.",
+        });
+      },
       restart: () => {
         for (const runtime of getRuntimeAdapters(
           scenario.environment?.runtimeAdapterId,
@@ -586,9 +619,10 @@ export function useStoredProgressPercent(scenarioId: string | null) {
         setPercent(passed ? 100 : 0);
         return;
       }
-      const done = scenario.steps.filter(
-        (step) => parsed.statuses?.[step.id] === "COMPLETED",
-      ).length;
+      const done = scenario.steps.filter((step) => {
+        const status = parsed.statuses?.[step.id];
+        return status === "COMPLETED" || status === "SKIPPED";
+      }).length;
       setPercent(Math.round((done / Math.max(scenario.steps.length, 1)) * 100));
     } catch {
       setPercent(0);
