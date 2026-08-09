@@ -10,10 +10,7 @@ import {
 import type { ReactNode } from "react";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
-import {
-  findNextIncompleteStepId,
-  normalizeGuidedStepProgress,
-} from "@/state/trainingProgress";
+import { findNextIncompleteStepId, normalizeGuidedStepProgress } from "@/state/trainingProgress";
 import type {
   ChallengeOutcome,
   Scenario,

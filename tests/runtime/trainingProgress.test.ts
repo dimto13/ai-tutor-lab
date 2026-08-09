@@ -84,11 +84,7 @@ test("advancement preserves migrated skipped optional steps", () => {
   const advancementScenario = {
     id: "migration-advance.guided",
     mode: "guided",
-    steps: [
-      { id: "current" },
-      { id: "new-optional", optional: true },
-      { id: "next-required" },
-    ],
+    steps: [{ id: "current" }, { id: "new-optional", optional: true }, { id: "next-required" }],
   } as unknown as Scenario;
 
   const next = findNextIncompleteStepId(
