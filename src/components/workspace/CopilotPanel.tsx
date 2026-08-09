@@ -175,7 +175,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
       {runtimeState.chatOpen && runtimeState.enabled ? (
         <div
           data-highlight="copilot.chat"
-          className="absolute right-0 top-9 z-30 w-[28rem] rounded-md border border-border bg-panel p-3 shadow-2xl"
+          className="absolute right-0 top-9 z-30 w-[calc(100vw-1.5rem)] max-w-[28rem] rounded-md border border-border bg-panel p-3 shadow-2xl"
         >
           <div className="mb-3 flex items-center gap-2">
             <div className="min-w-0 flex-1">
