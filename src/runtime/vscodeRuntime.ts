@@ -211,9 +211,9 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
 }
 
 let state = initialState();
-let mountedContainer: ParentNode | null = null;
+let mountedContainer: HTMLElement | null = null;
 let mountedInitialState: VscodeRuntimeState | null = null;
-let keyboardDocument: Document | null = null;
+let keyboardContainer: HTMLElement | null = null;
 const stateListeners = new Set<RuntimeStateListener>();
 let identifierSequence = 0;
 let activeSessionId = createIdentifier("session");
@@ -272,18 +272,18 @@ export const vscodeRuntime = {
   capabilities: ["filesystem", "editor", "terminal", "extensions", "source_control"] as const,
 
   async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
+    keyboardContainer?.removeEventListener("keydown", handleKeyboardShortcut, true);
     mountedContainer = container;
+    keyboardContainer = container;
     activeSessionId = createIdentifier("session");
     mountedInitialState = stateFromSeed(seed);
     replaceState(mountedInitialState, "mount");
-    keyboardDocument?.removeEventListener("keydown", handleKeyboardShortcut, true);
-    keyboardDocument = container.ownerDocument ?? null;
-    keyboardDocument?.addEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardContainer.addEventListener("keydown", handleKeyboardShortcut, true);
   },
 
   async unmount(): Promise<void> {
-    keyboardDocument?.removeEventListener("keydown", handleKeyboardShortcut, true);
-    keyboardDocument = null;
+    keyboardContainer?.removeEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardContainer = null;
     mountedContainer = null;
     mountedInitialState = null;
   },
