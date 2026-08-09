@@ -15,8 +15,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts",
+    "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
-    "check": "npm run format:check && npm run validate:content && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
+    "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
