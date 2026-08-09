@@ -71,7 +71,9 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
   await expect(page.getByText(/Ollama/i)).toHaveCount(0);
 });
 
-test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({ page }) => {
+test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({
+  page,
+}) => {
   await page.goto("/training/copilot-basics.guided");
   await waitUntilReady(page);
 
