@@ -115,6 +115,31 @@ test("copilotRuntime: emits accept and reject events for inline suggestions", as
   }
 });
 
+test("copilotRuntime: configured inline suggestions come from runtime seed and guard the source state", async () => {
+  const runtime = createCopilotRuntime();
+  await runtime.mount(createContainer(), {
+    inlineSuggestions: [
+      {
+        file: "example.py",
+        whenContentEquals: "def multiply(a, b):\n",
+        text: "    return a * b\n",
+      },
+    ],
+  });
+
+  try {
+    assert.equal(runtime.offerConfiguredInlineSuggestion("example.py", "x = 1\n"), null);
+    const suggestion = runtime.offerConfiguredInlineSuggestion(
+      "example.py",
+      "def multiply(a, b):\n",
+    );
+    assert.equal(suggestion?.text, "    return a * b\n");
+    assert.equal(runtime.acceptInlineSuggestion(), "    return a * b\n");
+  } finally {
+    await runtime.unmount();
+  }
+});
+
 test("copilotRuntime: chat response and event carry the opened file context", async () => {
   const payloads: Array<Record<string, unknown>> = [];
   const unsubscribe = copilotRuntime.subscribe((event) => {

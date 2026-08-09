@@ -21,7 +21,14 @@
       },
       "openTabs": ["calculator.py"],
       "activeFile": "calculator.py",
-      "activePanel": null
+      "activePanel": null,
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "def add(a, b):\n",
+          "text": "    return a + b\n"
+        }
+      ]
     }
   },
   "estimatedMinutes": 12,
@@ -51,7 +58,7 @@
     {
       "title": "GitHub Docs: Copilot mit MCP erweitern",
       "description": "Offizielle Einführung in MCP-Server als Erweiterung für agentische Copilot-Workflows.",
-      "url": "https://docs.github.com/en/copilot/customizing-copilot/extending-copilot-chat-with-mcp",
+      "url": "https://docs.github.com/en/copilot/customizing-copilot-chat-with-mcp",
       "kind": "official",
       "verifiedAt": "2026-08-09"
     },

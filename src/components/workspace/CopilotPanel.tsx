@@ -6,6 +6,7 @@ import {
   type CopilotSuggestionStatus,
 } from "@/runtime/copilotRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
+import { useTraining } from "@/state/trainingStore";
 
 interface CopilotPanelProps {
   activeFile: string | null;
@@ -28,30 +29,9 @@ function emptyState(): CopilotRuntimeState {
   };
 }
 
-function suggestionFor(file: string, content: string): string {
-  const normalizedContent = content.trimEnd();
-  const simplePythonFunction = normalizedContent.match(
-    /^def\s+([A-Za-z_]\w*)\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\):$/,
-  );
-
-  if (file.endsWith(".py") && simplePythonFunction) {
-    const functionName = simplePythonFunction[1] ?? "";
-    const leftOperand = simplePythonFunction[2] ?? "left";
-    const rightOperand = simplePythonFunction[3] ?? "right";
-    if (/^(add|sum|plus)$/i.test(functionName)) {
-      return `    return ${leftOperand} + ${rightOperand}\n`;
-    }
-    return "    pass\n";
-  }
-
-  if (file.endsWith(".py") && normalizedContent.length === 0) {
-    return 'print("Hello from Copilot")\n';
-  }
-
-  return file.endsWith(".py") ? "\n# Copilot-Vorschlag\n" : "\nCopilot-Vorschlag\n";
-}
-
 export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProps) {
+  const { scenario } = useTraining();
+  const runtimeSeed = scenario.environment?.seed;
   const rootRef = useRef<HTMLDivElement>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
   const [prompt, setPrompt] = useState("");
@@ -62,12 +42,12 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     if (!container) return;
 
     const unsubscribe = copilotRuntime.subscribeState((state) => setRuntimeState(state));
-    void copilotRuntime.mount(container);
+    void copilotRuntime.mount(container, runtimeSeed);
     return () => {
       unsubscribe();
       void copilotRuntime.unmount();
     };
-  }, []);
+  }, [runtimeSeed]);
 
   useEffect(() => {
     copilotRuntime.setContextActiveFile(activeFile);
@@ -97,7 +77,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   const offerSuggestion = async () => {
     if (!activeFile || !runtimeState.enabled) return;
     const content = (await activeContent()) ?? "";
-    copilotRuntime.offerInlineSuggestion(activeFile, suggestionFor(activeFile, content));
+    copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
   };
 
   const acceptSuggestion = () => {

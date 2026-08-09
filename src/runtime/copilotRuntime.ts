@@ -23,6 +23,12 @@ export interface CopilotInlineSuggestion {
   status: CopilotSuggestionStatus;
 }
 
+interface CopilotInlineSuggestionTemplate {
+  file: string;
+  text: string;
+  whenContentEquals?: string;
+}
+
 export interface CopilotRuntimeState {
   enabled: boolean;
   chatOpen: boolean;
@@ -55,6 +61,10 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
   startConversation(): string;
   submitPrompt(prompt: string, activeFileContent?: string | null): string;
   offerInlineSuggestion(file: string, text: string): CopilotInlineSuggestion;
+  offerConfiguredInlineSuggestion(
+    file: string,
+    currentContent: string,
+  ): CopilotInlineSuggestion | null;
   acceptInlineSuggestion(): string | null;
   rejectInlineSuggestion(): void;
   reset(): void;
@@ -103,6 +113,37 @@ function initialState(profile: CopilotProductProfile): CopilotRuntimeState {
 
 function hasOwn(seed: RuntimeSeed, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(seed, key);
+}
+
+function inlineSuggestionTemplatesFromSeed(seed?: RuntimeSeed): CopilotInlineSuggestionTemplate[] {
+  if (!seed || !hasOwn(seed, "inlineSuggestions")) return [];
+  const value = seed["inlineSuggestions"];
+  if (!Array.isArray(value)) {
+    throw new TypeError("Invalid Copilot runtime seed field: inlineSuggestions");
+  }
+
+  return value.map((item) => {
+    if (!isRecord(item)) {
+      throw new TypeError("Invalid Copilot inline suggestion seed");
+    }
+    const file = item["file"];
+    const text = item["text"];
+    const whenContentEquals = item["whenContentEquals"];
+    if (
+      typeof file !== "string" ||
+      !file.trim() ||
+      typeof text !== "string" ||
+      !text ||
+      (whenContentEquals !== undefined && typeof whenContentEquals !== "string")
+    ) {
+      throw new TypeError("Invalid Copilot inline suggestion seed");
+    }
+    return {
+      file,
+      text,
+      ...(whenContentEquals === undefined ? {} : { whenContentEquals }),
+    };
+  });
 }
 
 function describeActiveFile(activeFile: string, activeFileContent?: string | null): string {
@@ -269,6 +310,7 @@ export function createCopilotRuntime(
   let state = initialState(profile);
   let mountedInitialState: CopilotRuntimeState | null = null;
   let mountedContainer: ParentNode | null = null;
+  let inlineSuggestionTemplates: CopilotInlineSuggestionTemplate[] = [];
   let activeSessionId = createIdentifier("copilot-session");
   const eventListeners = new Set<EventListener>();
   const stateListeners = new Set<StateListener>();
@@ -307,6 +349,7 @@ export function createCopilotRuntime(
     async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
       mountedContainer = container;
       activeSessionId = createIdentifier("copilot-session");
+      inlineSuggestionTemplates = inlineSuggestionTemplatesFromSeed(seed);
       mountedInitialState = stateFromSeed(profile, seed);
       replaceState(mountedInitialState, "mount");
     },
@@ -314,6 +357,7 @@ export function createCopilotRuntime(
     async unmount(): Promise<void> {
       mountedContainer = null;
       mountedInitialState = null;
+      inlineSuggestionTemplates = [];
     },
 
     subscribe(handler: EventListener): () => void {
@@ -454,6 +498,19 @@ export function createCopilotRuntime(
       replaceState({ ...state, inlineSuggestion: suggestion }, "mutation");
       emit("ai.suggestion.shown", { suggestionId: suggestion.id, file, text });
       return { ...suggestion };
+    },
+
+    offerConfiguredInlineSuggestion(
+      file: string,
+      currentContent: string,
+    ): CopilotInlineSuggestion | null {
+      const template = inlineSuggestionTemplates.find(
+        (entry) =>
+          entry.file === file &&
+          (entry.whenContentEquals === undefined || entry.whenContentEquals === currentContent),
+      );
+      if (!template) return null;
+      return adapter.offerInlineSuggestion(file, template.text);
     },
 
     acceptInlineSuggestion(): string | null {
