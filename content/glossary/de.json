@@ -1,7 +1,80 @@
 {
-  "version": 3,
+  "version": 4,
   "language": "de",
+  "technologyConcepts": {
+    "ide": [
+      "foundation.code",
+      "foundation.programming",
+      "programming.python",
+      "vscode.activity_bar",
+      "vscode.file_menu",
+      "vscode.side_bar",
+      "vscode.explorer",
+      "vscode.search",
+      "vscode.source_control",
+      "vscode.extensions",
+      "vscode.editor",
+      "vscode.panel",
+      "vscode.terminal",
+      "vscode.problems",
+      "vscode.output",
+      "vscode.status_bar",
+      "vscode.folder",
+      "vscode.workspace",
+      "vscode.extension"
+    ],
+    "source_control": [
+      "git.repository",
+      "git.working_tree",
+      "git.stage",
+      "git.commit",
+      "git.branch",
+      "github.platform",
+      "git.github_difference"
+    ],
+    "ai_coding_assistant": [
+      "foundation.code",
+      "foundation.programming",
+      "programming.python",
+      "vscode.workspace",
+      "git.repository",
+      "ai.prompt",
+      "ai.context",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.session",
+      "copilot.chat_mode",
+      "copilot.model_selection",
+      "copilot.inline_suggestion",
+      "copilot.mcp",
+      "copilot.agent_skill"
+    ]
+  },
   "concepts": [
+    {
+      "key": "foundation.code",
+      "term": "Code",
+      "aliases": ["Quellcode", "Programmcode"],
+      "simple": "Code ist eine genaue, schriftliche Arbeitsanweisung für einen Computer. Eine Excel-Formel ist ein vertrautes Beispiel für eine solche Anweisung.",
+      "advanced": "Quellcode besteht aus Anweisungen in einer Programmiersprache. Werkzeuge übersetzen oder interpretieren diese Anweisungen, damit der Computer sie ausführen kann.",
+      "uiTargets": []
+    },
+    {
+      "key": "foundation.programming",
+      "term": "Programmierung",
+      "aliases": ["Programmieren"],
+      "simple": "Programmierung bedeutet, eine Aufgabe in eindeutige Schritte zu zerlegen und diese Schritte als Code aufzuschreiben.",
+      "advanced": "Zur Programmierung gehören neben dem Schreiben von Code auch das Verstehen von Anforderungen, Prüfen von Ergebnissen, Beheben von Fehlern und Pflegen bestehender Programme.",
+      "uiTargets": []
+    },
+    {
+      "key": "programming.python",
+      "term": "Python",
+      "aliases": ["Python-Datei", ".py-Datei"],
+      "simple": "Python ist eine Programmiersprache mit vergleichsweise gut lesbaren Regeln. Dateien mit der Endung .py enthalten Python-Code.",
+      "advanced": "Python-Code wird üblicherweise von einem Python-Interpreter ausgeführt. Im Beispiel `def add(a, b):` beginnt die Definition einer Funktion namens add, die zwei Eingaben erhält.",
+      "uiTargets": []
+    },
     {
       "key": "vscode.activity_bar",
       "term": "Activity Bar",

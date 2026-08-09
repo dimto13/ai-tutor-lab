@@ -69,6 +69,13 @@ const stepSchema = z.object({
   highlightTarget: z.string().min(1).optional(),
   highlightTooltip: z.string().optional(),
   successMessage: z.string(),
+  optional: z.boolean().optional(),
+});
+
+const audienceSchema = z.object({
+  personaId: z.string().min(1),
+  glossaryConcepts: z.array(z.string().min(1)).min(1),
+  introductionStepIds: z.array(z.string().min(1)).min(1).optional(),
 });
 
 const resourceSchema = z.object({
@@ -117,6 +124,7 @@ export const scenarioSchema = z
     title: z.string().min(1),
     description: z.string(),
     learningObjectives: z.array(z.string().min(1)).optional(),
+    audience: audienceSchema.optional(),
     environment: z
       .object({
         productId: z.string().min(1),
