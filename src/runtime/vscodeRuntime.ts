@@ -621,6 +621,7 @@ export const vscodeRuntime = {
       directories: state.directories,
       files: state.files,
       contents: state.contents,
+      committedContents: state.committedContents,
       trackedFiles: state.trackedFiles,
       changedFiles: state.scmChangedFiles,
       stagedFiles: state.stagedFiles,
@@ -658,7 +659,7 @@ export const vscodeRuntime = {
       cwd: result.cwd || ".",
       exitCode: result.exitCode,
       output: result.output.join("\n"),
-      staged: result.committed || staged,
+      staged: result.committed || (result.exitCode === 0 && staged),
       committed: result.committed,
     });
     if (result.stagedFilesChanged.length > 0) {
