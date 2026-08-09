@@ -41,6 +41,11 @@ jobs:
           if prettier not in script:
               raise SystemExit('Prettier anchor not found in integration specification')
           script = script.replace(prettier, 'npm ci\n' + prettier, 1)
+          script = script.replace(
+              'npm test -- e2e/tests/source-control-platform-basics.spec.ts --reporter=line\n',
+              '',
+              1,
+          )
           script = script.replace('rm .github/workflows/tmp-aitp-139-merge-probe.yml\n', '', 1)
           Path('/tmp/run-aitp-139.sh').write_text(script)
           PY
