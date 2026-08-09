@@ -36,9 +36,10 @@ test("Speed Challenge: Shortcut-Pfad erreicht den gespeicherten Zielzustand inne
   await page.keyboard.press("Control+S");
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(page.getByText("Lösungsvergleich", { exact: true })).toBeVisible();
   await expect(
     page.getByText(
-      "Shortcut-Challenge erfüllt. Datei, Inhalt und gespeicherter Zustand wurden rechtzeitig erreicht.",
+      "Mit Ctrl+S speichern. Entscheidend sind korrekter Inhalt und gespeicherter Endzustand vor Ablauf der Zeit.",
       { exact: true },
     ),
   ).toBeVisible();
