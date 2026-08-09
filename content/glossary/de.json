@@ -274,6 +274,24 @@
       "simple": "Ein Agent Skill bündelt wiederverwendbare Anweisungen und optional Skripte oder Ressourcen für eine spezialisierte Aufgabe.",
       "advanced": "Skills werden bedarfsabhängig in agentischen Workflows genutzt und können als portable Ordnerstruktur gepflegt werden. Sie beschreiben wiederkehrendes Fachwissen oder Abläufe; die praktische Erstellung und Governance gehört in ein Advanced-Modul.",
       "uiTargets": []
+    },
+    {
+      "key": "artifact.preview",
+      "term": "Artefakt-Vorschau",
+      "aliases": ["Ergebnisvorschau", "Artifact Preview"],
+      "simple": "Die Artefakt-Vorschau macht ein erzeugtes Ergebnis als Seite, Tabelle oder strukturierte Daten sichtbar und prüfbar.",
+      "advanced": "Die Vorschau stellt ausschließlich deterministisch hinterlegte Zustände dar. HTML läuft isoliert ohne Skriptrechte; Wechsel, Revisionen und Prüfstatus werden über semantische Runtime-Events und Queries abgebildet.",
+      "uiTargets": [
+        "artifact.preview.panel",
+        "artifact.preview.selector",
+        "artifact.preview.rendered",
+        "artifact.preview.source",
+        "artifact.preview.table",
+        "artifact.preview.data",
+        "artifact.preview.viewToggle",
+        "artifact.preview.applyRevision",
+        "artifact.preview.verify"
+      ]
     }
   ]
 }

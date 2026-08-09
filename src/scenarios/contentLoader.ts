@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Scenario, Validation } from "../types/training";
+import { artifactPreviewSeedSchema } from "../runtime/artifactPreviewContent.ts";
 
 const workspaceEventNameSchema = z.enum([
   "explorer.opened",
@@ -22,6 +23,11 @@ const workspaceEventNameSchema = z.enum([
   "ai.suggestion.shown",
   "ai.suggestion.accepted",
   "ai.suggestion.rejected",
+  "artifact.created",
+  "artifact.selected",
+  "artifact.updated",
+  "artifact.viewSwitched",
+  "artifact.verified",
   "ui.element.inspected",
 ]);
 
@@ -98,6 +104,7 @@ export const runtimeSeedSchema = z
   .object({
     inlineSuggestions: z.array(copilotInlineSuggestionSeedSchema).optional(),
     chatResponses: z.array(copilotChatResponseSeedSchema).optional(),
+    artifactPreview: artifactPreviewSeedSchema.optional(),
   })
   .catchall(z.unknown());
 

@@ -103,3 +103,39 @@ test("content loader rejects whitespace-only Copilot seed matchers", () => {
     ),
   );
 });
+
+test("content loader accepts safe artifact preview data and rejects executable HTML", () => {
+  assert.doesNotThrow(() =>
+    parseScenario(
+      scenarioWithSeed({
+        artifactPreview: {
+          artifacts: [
+            {
+              id: "safe-page",
+              type: "html",
+              title: "Safe page",
+              html: "<section><h1>Safe</h1><p>Validated content</p></section>",
+            },
+          ],
+        },
+      }),
+    ),
+  );
+
+  assert.throws(() =>
+    parseScenario(
+      scenarioWithSeed({
+        artifactPreview: {
+          artifacts: [
+            {
+              id: "unsafe-page",
+              type: "html",
+              title: "Unsafe page",
+              html: "<script>globalThis.compromised = true</script>",
+            },
+          ],
+        },
+      }),
+    ),
+  );
+});

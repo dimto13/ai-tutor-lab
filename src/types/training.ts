@@ -28,6 +28,11 @@ export type WorkspaceEventName =
   | "ai.suggestion.shown"
   | "ai.suggestion.accepted"
   | "ai.suggestion.rejected"
+  | "artifact.created"
+  | "artifact.selected"
+  | "artifact.updated"
+  | "artifact.viewSwitched"
+  | "artifact.verified"
   | "ui.element.inspected";
 
 /** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
