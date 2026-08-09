@@ -1,11 +1,13 @@
 import { useState } from "react";
 import {
+  AlertTriangle,
   CheckCircle2,
   Circle,
   CircleDot,
-  AlertTriangle,
-  Lightbulb,
+  Clock3,
   HelpCircle,
+  Lightbulb,
+  RotateCcw,
   Search,
   Target,
 } from "lucide-react";
@@ -235,9 +237,16 @@ function ExploreGuide() {
   );
 }
 
+function formatRemainingTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 function ChallengeGuide() {
-  const { scenario, feedback } = useTraining();
+  const { scenario, feedback, challengeOutcome, challengeRemainingSeconds, restart } =
+    useTraining();
   const goal = scenario.steps[0];
+  const timedOut = challengeOutcome === "timed_out";
 
   return (
     <>
@@ -250,6 +259,29 @@ function ChallengeGuide() {
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
         {scenario.description}
       </p>
+
+      {scenario.timeLimitSeconds !== undefined ? (
+        <div
+          className={`mt-3 flex items-center justify-between rounded-lg border p-3 ${
+            timedOut ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Clock3 className={`h-4 w-4 ${timedOut ? "text-destructive" : "text-warning"}`} />
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Harte Zeitgrenze
+              </p>
+              <p className="text-[12px] text-muted-foreground">
+                Nach Ablauf ist dieser Versuch fehlgeschlagen.
+              </p>
+            </div>
+          </div>
+          <span className="font-mono text-lg font-semibold text-foreground">
+            {formatRemainingTime(challengeRemainingSeconds ?? scenario.timeLimitSeconds)}
+          </span>
+        </div>
+      ) : null}
 
       {goal ? (
         <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
@@ -264,11 +296,22 @@ function ChallengeGuide() {
         </p>
         <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
           Es gibt keine automatische Klickführung. Das System prüft ausschließlich den erreichten
-          Endzustand.
+          Endzustand. Bei einer Zeit-Challenge muss dieser Zustand zusätzlich vor Ablauf der
+          Zeitgrenze erreicht sein.
         </p>
       </div>
 
       {feedback ? <Feedback feedback={feedback} /> : null}
+
+      {timedOut ? (
+        <button
+          type="button"
+          onClick={restart}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-ring hover:bg-white/5"
+        >
+          <RotateCcw className="h-4 w-4" /> Challenge neu starten
+        </button>
+      ) : null}
     </>
   );
 }

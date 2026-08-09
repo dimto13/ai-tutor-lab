@@ -3,6 +3,7 @@ export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "VALIDATION_FA
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
 export type TrainingStepType = "action" | "explanation";
+export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
 export type RuntimeSeed = Record<string, unknown>;
 
@@ -13,6 +14,7 @@ export type WorkspaceEventName =
   | "repository.opened"
   | "file.created"
   | "file.updated"
+  | "file.saved"
   | "terminal.opened"
   | "terminal.command.executed"
   | "panel.opened"
@@ -62,6 +64,8 @@ export type Validation =
       selector: string;
       equals?: unknown;
       includes?: unknown;
+      excludes?: unknown;
+      match?: Record<string, unknown>;
     }
   | {
       kind: "all";
@@ -118,6 +122,8 @@ export interface Scenario {
   estimatedMinutes?: number;
   /** Base points before the mode multiplier is applied. */
   points?: number;
+  /** Optional hard deadline for challenge scenarios. */
+  timeLimitSeconds?: number;
   /** Maintained learning links, kept outside React components. */
   resources?: LearningResource[];
   /** Explore mode: semantic targets that must be inspected. */

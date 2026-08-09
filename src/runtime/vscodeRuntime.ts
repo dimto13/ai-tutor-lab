@@ -18,6 +18,7 @@ export interface VscodeRuntimeState {
   terminalCommand: string;
   staged: boolean;
   wrongFile: string | null;
+  dirtyFiles: string[];
 }
 
 export type VscodeRuntimeStateChangeReason = "mount" | "reset" | "mutation" | "restore";
@@ -34,6 +35,7 @@ interface VscodeRuntimeAdapter extends RuntimeAdapter {
   setWorkspace(mode: Exclude<WorkspaceMode, "none">, folders: string[]): void;
   addFile(filename: string): void;
   setFileContent(filename: string, content: string): void;
+  saveFile(filename: string): void;
   setActiveFile(filename: string | null): void;
   closeFile(filename: string): void;
   setActivePanel(panel: PanelName): void;
@@ -57,6 +59,7 @@ const initialState = (): VscodeRuntimeState => ({
   terminalCommand: "",
   staged: false,
   wrongFile: null,
+  dirtyFiles: [],
 });
 
 function isStringRecord(value: unknown): value is Record<string, string> {
@@ -87,7 +90,8 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
     isStringArray(candidate.terminalLines) &&
     typeof candidate.terminalCommand === "string" &&
     typeof candidate.staged === "boolean" &&
-    (candidate.wrongFile === null || typeof candidate.wrongFile === "string")
+    (candidate.wrongFile === null || typeof candidate.wrongFile === "string") &&
+    isStringArray(candidate.dirtyFiles)
   );
 }
 
@@ -99,6 +103,7 @@ function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
     contents: { ...value.contents },
     openTabs: [...value.openTabs],
     terminalLines: [...value.terminalLines],
+    dirtyFiles: [...value.dirtyFiles],
   };
 }
 
@@ -108,7 +113,7 @@ function hasOwn(value: RuntimeSeed, key: string): boolean {
 
 function stringArrayFromSeed(
   seed: RuntimeSeed,
-  key: "folders" | "files" | "openTabs" | "terminalLines",
+  key: "folders" | "files" | "openTabs" | "terminalLines" | "dirtyFiles",
   fallback: string[],
 ): string[] {
   if (!hasOwn(seed, key)) return [...fallback];
@@ -167,6 +172,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
   const files = stringArrayFromSeed(seed, "files", base.files);
   const openTabs = stringArrayFromSeed(seed, "openTabs", base.openTabs);
   const terminalLines = stringArrayFromSeed(seed, "terminalLines", base.terminalLines);
+  const dirtyFiles = stringArrayFromSeed(seed, "dirtyFiles", base.dirtyFiles);
 
   let contents = { ...base.contents };
   if (hasOwn(seed, "contents")) {
@@ -200,12 +206,14 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     terminalCommand: stringFromSeed(seed, "terminalCommand", base.terminalCommand),
     staged: booleanFromSeed(seed, "staged", base.staged),
     wrongFile: nullableStringFromSeed(seed, "wrongFile", base.wrongFile),
+    dirtyFiles,
   };
 }
 
 let state = initialState();
 let mountedContainer: ParentNode | null = null;
 let mountedInitialState: VscodeRuntimeState | null = null;
+let keyboardDocument: Document | null = null;
 const stateListeners = new Set<RuntimeStateListener>();
 let identifierSequence = 0;
 let activeSessionId = createIdentifier("session");
@@ -224,6 +232,40 @@ function replaceState(nextState: VscodeRuntimeState, reason: VscodeRuntimeStateC
   for (const listener of stateListeners) listener(snapshot, reason);
 }
 
+function saveFile(filename: string): void {
+  if (!state.files.includes(filename)) return;
+  replaceState(
+    { ...state, dirtyFiles: state.dirtyFiles.filter((file) => file !== filename) },
+    "mutation",
+  );
+  workspaceBus.emit("file.saved", { filename });
+}
+
+function clickRuntimeTarget(ref: UiTargetRef): boolean {
+  if (!mountedContainer) return false;
+  const element = mountedContainer.querySelector<HTMLElement>(`[data-highlight="${ref}"]`);
+  if (!element) return false;
+  element.focus();
+  element.click();
+  return true;
+}
+
+function handleKeyboardShortcut(event: KeyboardEvent): void {
+  if (!mountedContainer || (!event.ctrlKey && !event.metaKey) || event.altKey) return;
+  const key = event.key.toLowerCase();
+
+  if (key === "s" && !event.shiftKey) {
+    if (!state.activeFile) return;
+    event.preventDefault();
+    saveFile(state.activeFile);
+    return;
+  }
+
+  if (key === "e" && event.shiftKey) {
+    if (clickRuntimeTarget("vscode.activityBar.explorer")) event.preventDefault();
+  }
+}
+
 export const vscodeRuntime = {
   id: VSCODE_RUNTIME_DEFINITION.id,
   productId: VSCODE_RUNTIME_DEFINITION.productId,
@@ -234,9 +276,14 @@ export const vscodeRuntime = {
     activeSessionId = createIdentifier("session");
     mountedInitialState = stateFromSeed(seed);
     replaceState(mountedInitialState, "mount");
+    keyboardDocument?.removeEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardDocument = container.ownerDocument ?? null;
+    keyboardDocument?.addEventListener("keydown", handleKeyboardShortcut, true);
   },
 
   async unmount(): Promise<void> {
+    keyboardDocument?.removeEventListener("keydown", handleKeyboardShortcut, true);
+    keyboardDocument = null;
     mountedContainer = null;
     mountedInitialState = null;
   },
@@ -294,6 +341,7 @@ export const vscodeRuntime = {
         ...state,
         files: [...state.files, filename],
         contents: { ...state.contents, [filename]: "" },
+        dirtyFiles: [...state.dirtyFiles, filename],
       },
       "mutation",
     );
@@ -304,9 +352,17 @@ export const vscodeRuntime = {
       {
         ...state,
         contents: { ...state.contents, [filename]: content },
+        dirtyFiles:
+          state.files.includes(filename) && !state.dirtyFiles.includes(filename)
+            ? [...state.dirtyFiles, filename]
+            : state.dirtyFiles,
       },
       "mutation",
     );
+  },
+
+  saveFile(filename: string): void {
+    saveFile(filename);
   },
 
   setActiveFile(filename: string | null): void {
@@ -369,11 +425,17 @@ export const vscodeRuntime = {
       case "filesystem.files":
         value = [...state.files];
         break;
+      case "filesystem.contents":
+        value = { ...state.contents };
+        break;
       case "editor.activeFile":
         value = state.activeFile;
         break;
       case "editor.openTabs":
         value = [...state.openTabs];
+        break;
+      case "editor.dirtyFiles":
+        value = [...state.dirtyFiles];
         break;
       case "panel.active":
         value = state.activePanel;

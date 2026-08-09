@@ -86,6 +86,7 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         });
       },
       mutate: () => {
+        vscodeRuntime.saveFile("snapshot.py");
         vscodeRuntime.setWorkspace("workspace", ["ai-training-demo", "shared-tools"]);
         vscodeRuntime.addFile("mutated.py");
         vscodeRuntime.setFileContent("snapshot.py", "print('mutated')\n");
@@ -109,6 +110,7 @@ defineRuntimeAdapterContractTests("vscodeRuntime", () => {
         assert.equal(restoredPresentation.terminalCommand, "git status");
         assert.equal(restoredPresentation.staged, true);
         assert.equal(restoredPresentation.wrongFile, "wrong.py");
+        assert.deepEqual(restoredPresentation.dirtyFiles, ["snapshot.py"]);
         unsubscribeState?.();
         unsubscribeState = null;
       },
@@ -135,6 +137,7 @@ test("vscodeRuntime: publishes the supplied seed to presentation subscribers on 
     assert.equal(captured.current.activePanel, "terminal");
     assert.deepEqual(captured.current.terminalLines, []);
     assert.equal(captured.current.staged, false);
+    assert.deepEqual(captured.current.dirtyFiles, []);
   } finally {
     unsubscribe();
     await vscodeRuntime.unmount();
@@ -156,7 +159,37 @@ test("vscodeRuntime: reset preserves the active mount seed", async () => {
     assert.equal(await vscodeRuntime.query("editor.activeFile"), "seeded.py");
     assert.deepEqual(await vscodeRuntime.query("terminal.lines"), []);
     assert.equal(await vscodeRuntime.query("scm.staged"), false);
+    assert.deepEqual(await vscodeRuntime.query("editor.dirtyFiles"), []);
   } finally {
+    await vscodeRuntime.unmount();
+  }
+});
+
+test("vscodeRuntime: save clears dirty state and emits file.saved", async () => {
+  const events: string[] = [];
+  const unsubscribe = vscodeRuntime.subscribe((event) => events.push(event.type));
+  await vscodeRuntime.mount(createContainer(), {
+    workspaceMode: "folder",
+    folders: ["ai-training-demo"],
+  });
+
+  try {
+    vscodeRuntime.addFile("challenge.py");
+    vscodeRuntime.setFileContent("challenge.py", "# Status für Marco: Review abgeschlossen.");
+    vscodeRuntime.setActiveFile("challenge.py");
+
+    assert.deepEqual(await vscodeRuntime.query("editor.dirtyFiles"), ["challenge.py"]);
+    assert.deepEqual(await vscodeRuntime.query("filesystem.contents"), {
+      "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
+      "challenge.py": "# Status für Marco: Review abgeschlossen.",
+    });
+
+    vscodeRuntime.saveFile("challenge.py");
+
+    assert.deepEqual(await vscodeRuntime.query("editor.dirtyFiles"), []);
+    assert.ok(events.includes("file.saved"));
+  } finally {
+    unsubscribe();
     await vscodeRuntime.unmount();
   }
 });

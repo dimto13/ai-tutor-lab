@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
 import type {
+  ChallengeOutcome,
   Scenario,
   StepStatus,
   TrainingEvent,
@@ -30,6 +31,7 @@ export interface TrainingProgress {
   activeStepId: string | null;
   startedAt: number;
   finishedAt: number | null;
+  challengeOutcome: ChallengeOutcome | null;
   hintsUsed: number;
   mistakes: number;
   lastAction: string | null;
@@ -45,11 +47,14 @@ interface TrainingContextValue {
   completedCount: number;
   percent: number;
   isFinished: boolean;
+  isChallengeFailed: boolean;
   isReady: boolean;
   feedback: { kind: "success" | "error"; message: string } | null;
   helpLevel: number;
   scoreMultiplier: number;
   earnedPoints: number;
+  challengeOutcome: ChallengeOutcome | null;
+  challengeRemainingSeconds: number | null;
   revealHelp: () => void;
   resetHelp: () => void;
   completeExplanationStep: () => void;
@@ -70,6 +75,7 @@ function initialProgress(scenario: Scenario): TrainingProgress {
     activeStepId: mode === "explore" ? null : (scenario.steps[0]?.id ?? null),
     startedAt: Date.now(),
     finishedAt: null,
+    challengeOutcome: mode === "challenge" ? "active" : null,
     hintsUsed: 0,
     mistakes: 0,
     lastAction: null,
@@ -85,11 +91,16 @@ function load(scenario: Scenario): TrainingProgress {
     if (!raw) return initialProgress(scenario);
     const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
     if (!parsed.statuses) return initialProgress(scenario);
+    const mode = modeOf(scenario);
     return {
       statuses: parsed.statuses,
       activeStepId: parsed.activeStepId ?? null,
       startedAt: parsed.startedAt ?? Date.now(),
       finishedAt: parsed.finishedAt ?? null,
+      challengeOutcome:
+        mode === "challenge"
+          ? (parsed.challengeOutcome ?? (parsed.finishedAt ? "passed" : "active"))
+          : null,
       hintsUsed: parsed.hintsUsed ?? 0,
       mistakes: parsed.mistakes ?? 0,
       lastAction: parsed.lastAction ?? null,
@@ -153,9 +164,29 @@ async function validateState(
   if (Object.prototype.hasOwnProperty.call(validation, "equals") && value !== validation.equals)
     return false;
   if (Object.prototype.hasOwnProperty.call(validation, "includes")) {
-    if (Array.isArray(value)) return value.includes(validation.includes);
-    if (typeof value === "string") return value.includes(String(validation.includes));
-    return false;
+    if (Array.isArray(value)) {
+      if (!value.includes(validation.includes)) return false;
+    } else if (typeof value === "string") {
+      if (!value.includes(String(validation.includes))) return false;
+    } else {
+      return false;
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(validation, "excludes")) {
+    if (Array.isArray(value)) {
+      if (value.includes(validation.excludes)) return false;
+    } else if (typeof value === "string") {
+      if (value.includes(String(validation.excludes))) return false;
+    } else {
+      return false;
+    }
+  }
+  if (validation.match) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const record = value as Record<string, unknown>;
+    for (const [key, expected] of Object.entries(validation.match)) {
+      if (record[key] !== expected) return false;
+    }
   }
   return true;
 }
@@ -175,6 +206,7 @@ export function TrainingProvider({
   const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
   const [helpLevel, setHelpLevel] = useState(0);
+  const [challengeRemainingSeconds, setChallengeRemainingSeconds] = useState<number | null>(null);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -183,6 +215,7 @@ export function TrainingProvider({
     setProgress(load(scenario));
     setHelpLevel(0);
     setFeedback(null);
+    setChallengeRemainingSeconds(null);
     setHydrated(true);
   }, [scenario]);
 
@@ -190,6 +223,55 @@ export function TrainingProvider({
     if (!hydrated) return;
     window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(progress));
   }, [progress, hydrated, scenario.id]);
+
+  useEffect(() => {
+    if (!hydrated || mode !== "challenge" || scenario.timeLimitSeconds === undefined) {
+      setChallengeRemainingSeconds(null);
+      return;
+    }
+    if (progress.challengeOutcome === "timed_out") {
+      setChallengeRemainingSeconds(0);
+      return;
+    }
+    if (progress.challengeOutcome !== "active") {
+      setChallengeRemainingSeconds(null);
+      return;
+    }
+
+    const deadline = progress.startedAt + scenario.timeLimitSeconds * 1000;
+    const updateRemaining = () => {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs > 0) {
+        setChallengeRemainingSeconds(Math.ceil(remainingMs / 1000));
+        return true;
+      }
+
+      setChallengeRemainingSeconds(0);
+      const challengeStep = scenario.steps[0];
+      setProgress((current) => {
+        if (current.challengeOutcome !== "active") return current;
+        return {
+          ...current,
+          statuses: challengeStep
+            ? { ...current.statuses, [challengeStep.id]: "VALIDATION_FAILED" }
+            : current.statuses,
+          activeStepId: null,
+          challengeOutcome: "timed_out",
+        };
+      });
+      setFeedback({
+        kind: "error",
+        message: "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.",
+      });
+      return false;
+    };
+
+    if (!updateRemaining()) return;
+    const timer = window.setInterval(() => {
+      if (!updateRemaining()) window.clearInterval(timer);
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [hydrated, mode, progress.challengeOutcome, progress.startedAt, scenario]);
 
   const completeStep = useCallback(
     (stepId: string, successMessage: string) => {
@@ -246,16 +328,21 @@ export function TrainingProvider({
       }
 
       if (mode === "challenge") {
+        if (progressRef.current.challengeOutcome !== "active") return;
         if (!(await validateState(scenario.completionValidation, scenario))) return;
         const challengeStep = scenario.steps[0];
-        setProgress((current) => ({
-          ...current,
-          statuses: challengeStep
-            ? { ...current.statuses, [challengeStep.id]: "COMPLETED" }
-            : current.statuses,
-          activeStepId: null,
-          finishedAt: current.finishedAt ?? Date.now(),
-        }));
+        setProgress((current) => {
+          if (current.challengeOutcome !== "active") return current;
+          return {
+            ...current,
+            statuses: challengeStep
+              ? { ...current.statuses, [challengeStep.id]: "COMPLETED" }
+              : current.statuses,
+            activeStepId: null,
+            finishedAt: current.finishedAt ?? Date.now(),
+            challengeOutcome: "passed",
+          };
+        });
         if (challengeStep) {
           setFeedback({ kind: "success", message: challengeStep.successMessage });
         }
@@ -320,7 +407,8 @@ export function TrainingProvider({
     const exploreCompleted = progress.exploredTargets.filter((ref) =>
       (scenario.exploreTargets ?? []).includes(ref),
     ).length;
-    const challengeComplete = progress.finishedAt !== null;
+    const challengeComplete = progress.challengeOutcome === "passed";
+    const isChallengeFailed = progress.challengeOutcome === "timed_out";
 
     const completedCount =
       mode === "explore"
@@ -356,11 +444,14 @@ export function TrainingProvider({
       completedCount,
       percent: Math.round((completedCount / totalCount) * 100),
       isFinished,
+      isChallengeFailed,
       isReady: hydrated,
       feedback,
       helpLevel,
       scoreMultiplier,
       earnedPoints: Math.round(basePoints * scoreMultiplier),
+      challengeOutcome: progress.challengeOutcome,
+      challengeRemainingSeconds,
       revealHelp: () => {
         if (mode !== "guided") return;
         setHelpLevel((level) => {
@@ -395,7 +486,16 @@ export function TrainingProvider({
         setFeedback({ kind: "error", message });
       },
     };
-  }, [scenario, mode, progress, hydrated, feedback, helpLevel, completeStep]);
+  }, [
+    scenario,
+    mode,
+    progress,
+    hydrated,
+    feedback,
+    helpLevel,
+    challengeRemainingSeconds,
+    completeStep,
+  ]);
 
   return <TrainingContext.Provider value={value}>{children}</TrainingContext.Provider>;
 }
@@ -431,7 +531,9 @@ export function useStoredProgressPercent(scenarioId: string | null) {
         return;
       }
       if (storedMode === "challenge") {
-        setPercent(parsed.finishedAt ? 100 : 0);
+        const passed =
+          parsed.challengeOutcome === "passed" || (!parsed.challengeOutcome && parsed.finishedAt);
+        setPercent(passed ? 100 : 0);
         return;
       }
       const done = scenario.steps.filter(

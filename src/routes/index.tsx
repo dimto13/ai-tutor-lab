@@ -1,16 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  GraduationCap,
-  PlayCircle,
   ArrowRight,
-  Terminal,
   Bot,
+  Code2,
   GitBranch,
   Github,
-  Code2,
-  Search,
+  GraduationCap,
+  PlayCircle,
   Route as RouteIcon,
+  Search,
   Target,
+  Terminal,
+  Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useStoredProgressPercent } from "@/state/trainingStore";
@@ -63,7 +64,7 @@ const toolTrainings: TrainingCardModel[] = [
       "Oberfläche, Activity Bar, Explorer, Ordner, Workspaces, Editor und Panel verstehen und selbst bedienen.",
     icon: Code2,
     available: true,
-    label: "IDE · 3 Modi",
+    label: "IDE · 3 Modi · 4 Übungen",
     modes: [
       {
         scenarioId: "vscode-basics.explore",
@@ -84,6 +85,13 @@ const toolTrainings: TrainingCardModel[] = [
         label: "Challenge",
         description: "Ziel selbstständig erreichen",
         icon: Target,
+        multiplier: "×2,0",
+      },
+      {
+        scenarioId: "vscode-shortcuts.challenge",
+        label: "Speed Challenge",
+        description: "Datei per Shortcuts in 30 Sekunden bearbeiten",
+        icon: Timer,
         multiplier: "×2,0",
       },
     ],
