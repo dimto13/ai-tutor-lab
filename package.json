@@ -19,7 +19,7 @@
     "check": "npm run format:check && npm run validate:content && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --write e2e/tests/vscode-shortcuts.spec.ts src/runtime/vscodeRuntime.ts src/state/trainingStore.tsx tests/runtime/vscodeRuntime.contract.test.ts && git diff -- e2e/tests/vscode-shortcuts.spec.ts src/runtime/vscodeRuntime.ts src/state/trainingStore.tsx tests/runtime/vscodeRuntime.contract.test.ts && exit 1"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -62,7 +62,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
-    "react-day-picker": "^9.14.0",
+    "react-day-picker": "^9.14.2",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.2",
     "react-resizable-panels": "^4.6.5",
