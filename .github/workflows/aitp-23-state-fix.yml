@@ -32,29 +32,11 @@ jobs:
           path = Path('src/runtime/vscodeRuntime.ts')
           text = path.read_text()
 
-          old_migration = '''  const committedContents =
-            candidate.committedContents === undefined && isStringArray(trackedFiles)
-              ? Object.fromEntries(trackedFiles.map((file) => [file, contents[file] ?? ""]))
-              : candidate.committedContents;'''
-          new_migration = '''  const committedContents =
-            candidate.committedContents === undefined &&
-            isStringArray(trackedFiles) &&
-            isStringArray(scmChangedFiles)
-              ? Object.fromEntries(
-                  trackedFiles
-                    .filter((file) => !scmChangedFiles.includes(file))
-                    .map((file) => [file, contents[file] ?? ""]),
-                )
-              : candidate.committedContents;'''
+          old_migration = '  const committedContents =\n    candidate.committedContents === undefined && isStringArray(trackedFiles)\n      ? Object.fromEntries(trackedFiles.map((file) => [file, contents[file] ?? ""]))\n      : candidate.committedContents;'
+          new_migration = '  const committedContents =\n    candidate.committedContents === undefined &&\n    isStringArray(trackedFiles) &&\n    isStringArray(scmChangedFiles)\n      ? Object.fromEntries(\n          trackedFiles\n            .filter((file) => !scmChangedFiles.includes(file))\n            .map((file) => [file, contents[file] ?? ""]),\n        )\n      : candidate.committedContents;'
 
-          old_seed = '''  let committedContents = Object.fromEntries(
-            trackedFiles.map((file) => [file, contents[file] ?? ""]),
-          );'''
-          new_seed = '''  let committedContents = Object.fromEntries(
-            trackedFiles
-              .filter((file) => !scmChangedFiles.includes(file))
-              .map((file) => [file, contents[file] ?? ""]),
-          );'''
+          old_seed = '  let committedContents = Object.fromEntries(\n    trackedFiles.map((file) => [file, contents[file] ?? ""]),\n  );'
+          new_seed = '  let committedContents = Object.fromEntries(\n    trackedFiles\n      .filter((file) => !scmChangedFiles.includes(file))\n      .map((file) => [file, contents[file] ?? ""]),\n  );'
 
           if old_migration not in text:
               raise SystemExit('migration snippet not found')
