@@ -27,8 +27,10 @@ function createModeVariant(base: Scenario, variant: ModeVariant): Scenario {
 const exploreStep: TrainingStep = {
   id: "explore-research",
   title: "Rechercheflächen frei untersuchen",
-  description: "Erkunde, wie Suchläufe, Ergebnisartefakt, Iteration und Quellenprüfung zusammenhängen.",
-  instruction: "Untersuche Rechercheprotokoll, Vergleichstabelle und Quellen in eigener Reihenfolge.",
+  description:
+    "Erkunde, wie Suchläufe, Ergebnisartefakt, Iteration und Quellenprüfung zusammenhängen.",
+  instruction:
+    "Untersuche Rechercheprotokoll, Vergleichstabelle und Quellen in eigener Reihenfolge.",
   why: "Explore baut ein mentales Modell des gesamten Workflows auf, bevor ein geführter Ablauf folgt.",
   helpLevels: [
     "Beginne beim Rechercheprotokoll.",
