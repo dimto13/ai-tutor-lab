@@ -152,19 +152,19 @@ Eine reale Web-, Datei- oder Modellintegration darf später denselben Vertrag er
 
 Für jedes neue Workflow-Modul wird vor der Implementierung festgelegt:
 
-| Feld | Verpflichtende Aussage |
-| --- | --- |
-| `moduleId` | stabile Modul-ID für die zusammengehörigen Modi |
-| `learningLayer` | immer `ai_workflow` |
-| Zielgruppe | mit oder ohne Programmierkenntnisse |
-| Ausgangslage | reale, ohne KI mühsame Aufgabe |
-| Auftrag | welche Bestandteile der Lernende selbst formuliert |
-| sichtbare KI-Arbeit | welche Zwischenstufen gezeigt werden |
-| Artefakt | welches prüfbare Ergebnis entsteht |
-| Iteration | welche sichtbare Änderung angefordert wird |
-| eingebauter Schwachpunkt | exakter Fehler und seine Quelle im Seed |
-| Prüfnachweis | Event/State, das die Erkennung des Fehlers belegt |
-| Einordnung | Risiken, Grenzen und geeigneter Einsatz |
+| Feld                     | Verpflichtende Aussage                             |
+| ------------------------ | -------------------------------------------------- |
+| `moduleId`               | stabile Modul-ID für die zusammengehörigen Modi    |
+| `learningLayer`          | immer `ai_workflow`                                |
+| Zielgruppe               | mit oder ohne Programmierkenntnisse                |
+| Ausgangslage             | reale, ohne KI mühsame Aufgabe                     |
+| Auftrag                  | welche Bestandteile der Lernende selbst formuliert |
+| sichtbare KI-Arbeit      | welche Zwischenstufen gezeigt werden               |
+| Artefakt                 | welches prüfbare Ergebnis entsteht                 |
+| Iteration                | welche sichtbare Änderung angefordert wird         |
+| eingebauter Schwachpunkt | exakter Fehler und seine Quelle im Seed            |
+| Prüfnachweis             | Event/State, das die Erkennung des Fehlers belegt  |
+| Einordnung               | Risiken, Grenzen und geeigneter Einsatz            |
 
 Explore, Guided und Challenge dürfen dieselbe fachliche Geschichte unterschiedlich führen. Der Challenge-Modus bewertet bevorzugt den Zielzustand und nicht eine vorgeschriebene Klickfolge.
 
