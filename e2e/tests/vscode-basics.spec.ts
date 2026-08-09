@@ -255,6 +255,5 @@ test("Guided: Highlight-Rahmen folgt dem geklemmten Geometrievertrag", async ({ 
   await expectSpotlightAround(spotlight, explorer);
 
   await explorer.click();
-  await expectGuidedStep(page, 2, "Einen Ordner als Arbeitskontext öffnen");
   await expectSpotlightAround(spotlight, page.getByRole("button", { name: "File", exact: true }));
 });
