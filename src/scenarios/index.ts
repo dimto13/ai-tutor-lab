@@ -1,5 +1,6 @@
 import type { LearningLayer, Scenario } from "@/types/training";
 import { parseScenario } from "./contentLoader";
+import { createHtmlPageWorkflowVariants } from "./htmlPageWorkflowVariants";
 import { createResearchWorkflowVariants } from "./researchWorkflowVariants";
 import vscodeExploreRaw from "../../content/scenarios/vscode-basics.explore.json";
 import vscodeGuidedRaw from "../../content/scenarios/vscode-basics.guided.json";
@@ -8,6 +9,7 @@ import vscodeShortcutsChallengeRaw from "../../content/scenarios/vscode-shortcut
 import developerWorkflowRaw from "../../content/scenarios/developer-workflow-basics.guided.json";
 import copilotBasicsRaw from "../../content/scenarios/copilot-basics.guided.json";
 import artifactPreviewFoundationRaw from "../../content/scenarios/artifact-preview-foundation.guided.json";
+import htmlPageWorkflowGuidedRaw from "../../content/scenarios/html-page-workflow.guided.json";
 import researchWorkflowGuidedRaw from "../../content/scenarios/research-workflow.guided.json";
 import sourceControlPlatformExploreRaw from "../../content/scenarios/source-control-platform-basics.explore.json";
 import sourceControlPlatformGuidedRaw from "../../content/scenarios/source-control-platform-basics.guided.json";
@@ -20,6 +22,9 @@ const vscodeShortcutsChallengeScenario = parseScenario(vscodeShortcutsChallengeR
 const developerWorkflowScenario = parseScenario(developerWorkflowRaw);
 const copilotBasicsScenario = parseScenario(copilotBasicsRaw);
 const artifactPreviewFoundationScenario = parseScenario(artifactPreviewFoundationRaw);
+const htmlPageWorkflowGuidedScenario = parseScenario(htmlPageWorkflowGuidedRaw);
+const [htmlPageWorkflowExploreScenario, htmlPageWorkflowChallengeScenario] =
+  createHtmlPageWorkflowVariants(htmlPageWorkflowGuidedScenario);
 const researchWorkflowGuidedScenario = parseScenario(researchWorkflowGuidedRaw);
 const [researchWorkflowExploreScenario, researchWorkflowChallengeScenario] =
   createResearchWorkflowVariants(researchWorkflowGuidedScenario);
@@ -35,6 +40,9 @@ const scenarios: Record<string, Scenario> = {
   [developerWorkflowScenario.id]: developerWorkflowScenario,
   [copilotBasicsScenario.id]: copilotBasicsScenario,
   [artifactPreviewFoundationScenario.id]: artifactPreviewFoundationScenario,
+  [htmlPageWorkflowExploreScenario.id]: htmlPageWorkflowExploreScenario,
+  [htmlPageWorkflowGuidedScenario.id]: htmlPageWorkflowGuidedScenario,
+  [htmlPageWorkflowChallengeScenario.id]: htmlPageWorkflowChallengeScenario,
   [researchWorkflowExploreScenario.id]: researchWorkflowExploreScenario,
   [researchWorkflowGuidedScenario.id]: researchWorkflowGuidedScenario,
   [researchWorkflowChallengeScenario.id]: researchWorkflowChallengeScenario,

@@ -1,0 +1,345 @@
+{
+  "id": "html-page-workflow.guided",
+  "moduleId": "html-page-workflow",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Eine Seite entstehen lassen – HTML iterativ verbessern",
+  "description": "Erzeuge aus einem fachlichen Auftrag eine kleine Teamübersicht, verändere sie mehrfach und erkenne einen stillen Verlust zwischen zwei Revisionen.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["vscode.product"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["projekt-atlas"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Projekt Atlas\nErstelle eine kleine interne Teamübersicht mit Name, Rolle und Status. Ausgangsteam: Lea Fischer, Omar Yilmaz und Nora Berger."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "chatResponses": [
+        {
+          "promptContains": "teamübersicht",
+          "response": "Der Auftrag ist klar. Ich habe eine erste Teamübersicht als HTML-Entwurf vorbereitet. Prüfe das Ergebnis in der Vorschau und verändere es anschließend schrittweise."
+        },
+        {
+          "promptContains": "nora berger",
+          "response": "Prüfung notiert: Nora Berger war zuvor enthalten und fehlt nach der letzten Änderung. Korrigiere nur diesen Verlust und erhalte die übrigen Änderungen."
+        }
+      ],
+      "artifactPreview": {
+        "activeArtifactId": "team-page",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "team-page",
+            "type": "html",
+            "title": "Projekt Atlas · Teamübersicht",
+            "description": "Interner HTML-Entwurf im isolierten Sandbox-Rendering.",
+            "html": "<main><h1>Projekt Atlas · Teamübersicht</h1><p>Interner Arbeitsstand</p><ul><li>Lea Fischer — Projektleitung — Bereit</li><li>Omar Yilmaz — Einkauf — Offen</li><li>Nora Berger — Kommunikation — Bereit</li></ul></main>"
+          }
+        ],
+        "revisions": [
+          {
+            "id": "add-mika",
+            "artifactId": "team-page",
+            "label": "Mika Scholz ergänzen",
+            "next": {
+              "id": "team-page",
+              "type": "html",
+              "title": "Projekt Atlas · Teamübersicht",
+              "description": "Revision 1: Inhalt ergänzt.",
+              "html": "<main><h1>Projekt Atlas · Teamübersicht</h1><p>Interner Arbeitsstand</p><ul><li>Lea Fischer — Projektleitung — Bereit</li><li>Omar Yilmaz — Einkauf — Offen</li><li>Nora Berger — Kommunikation — Bereit</li><li>Mika Scholz — Controlling — In Arbeit</li></ul></main>"
+            }
+          },
+          {
+            "id": "switch-to-table",
+            "artifactId": "team-page",
+            "label": "Als Tabelle darstellen",
+            "next": {
+              "id": "team-page",
+              "type": "html",
+              "title": "Projekt Atlas · Teamübersicht",
+              "description": "Revision 2: Darstellung von Liste auf Tabelle geändert.",
+              "html": "<main><h1>Projekt Atlas · Teamübersicht</h1><p>Interner Arbeitsstand</p><table><thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Rolle</th><th scope=\"col\">Status</th></tr></thead><tbody><tr><td>Lea Fischer</td><td>Projektleitung</td><td>Bereit</td></tr><tr><td>Omar Yilmaz</td><td>Einkauf</td><td>Offen</td></tr><tr><td>Nora Berger</td><td>Kommunikation</td><td>Bereit</td></tr><tr><td>Mika Scholz</td><td>Controlling</td><td>In Arbeit</td></tr></tbody></table></main>"
+            }
+          },
+          {
+            "id": "add-native-behavior",
+            "artifactId": "team-page",
+            "label": "Sprunglink ergänzen",
+            "next": {
+              "id": "team-page",
+              "type": "html",
+              "title": "Projekt Atlas · Teamübersicht",
+              "description": "Revision 3: native Navigation ergänzt; dabei ist unbemerkt ein Datensatz verloren gegangen.",
+              "html": "<main><h1>Projekt Atlas · Teamübersicht</h1><p>Interner Arbeitsstand</p><p><a href=\"#\">Zum Seitenanfang</a></p><table><thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Rolle</th><th scope=\"col\">Status</th></tr></thead><tbody><tr><td>Lea Fischer</td><td>Projektleitung</td><td>Bereit</td></tr><tr><td>Omar Yilmaz</td><td>Einkauf</td><td>Offen</td></tr><tr><td>Mika Scholz</td><td>Controlling</td><td>In Arbeit</td></tr></tbody></table><p>Hinweis: Diese Übersicht ist ein interner Entwurf.</p><p>Bei Änderungen immer den vollständigen Inhalt gegenprüfen.</p></main>"
+            }
+          },
+          {
+            "id": "restore-missing-row",
+            "artifactId": "team-page",
+            "label": "Gefundenen Verlust korrigieren",
+            "next": {
+              "id": "team-page",
+              "type": "html",
+              "title": "Projekt Atlas · Teamübersicht",
+              "description": "Prüfkorrektur: der erkannte Verlust wurde behoben, ohne die anderen Änderungen zurückzunehmen.",
+              "html": "<main><h1>Projekt Atlas · Teamübersicht</h1><p>Interner Arbeitsstand</p><p><a href=\"#\">Zum Seitenanfang</a></p><table><thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Rolle</th><th scope=\"col\">Status</th></tr></thead><tbody><tr><td>Lea Fischer</td><td>Projektleitung</td><td>Bereit</td></tr><tr><td>Omar Yilmaz</td><td>Einkauf</td><td>Offen</td></tr><tr><td>Nora Berger</td><td>Kommunikation</td><td>Bereit</td></tr><tr><td>Mika Scholz</td><td>Controlling</td><td>In Arbeit</td></tr></tbody></table><p>Hinweis: Diese Übersicht ist ein interner Entwurf.</p><p>Bei Änderungen immer den vollständigen Inhalt gegenprüfen.</p></main>"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 18,
+  "points": 180,
+  "steps": [
+    {
+      "id": "prompt",
+      "title": "Auftrag in eigenen Worten formulieren",
+      "description": "Du brauchst eine kleine interne Seite für das Projektteam. Beschreibe das gewünschte Ergebnis fachlich, ohne HTML-Anweisungen zu schreiben.",
+      "instruction": "Öffne Copilot und sende einen eigenen Auftrag für eine Teamübersicht mit Name, Rolle und Status.",
+      "why": "Der Lernpunkt ist Zielbeschreibung: Die KI soll aus dem fachlichen Bedarf einen ersten Entwurf erzeugen.",
+      "helpLevels": [
+        "Öffne Copilot Chat.",
+        "Beschreibe Inhalt und Zweck der Übersicht.",
+        "Verwende in deinem Auftrag das Wort „Teamübersicht“."
+      ],
+      "successMessage": "Der fachliche Auftrag wurde formuliert.",
+      "validation": {
+        "kind": "event",
+        "type": "copilot.prompt.submitted",
+        "contains": {
+          "prompt": "Teamübersicht"
+        }
+      },
+      "highlightTarget": "copilot.chat.prompt"
+    },
+    {
+      "id": "inspect-first-page",
+      "title": "Erste Seite als Ergebnis ansehen",
+      "description": "Aus dem Auftrag ist ein HTML-Entwurf entstanden. Du musst den Code nicht verstehen, um das Ergebnis prüfen zu können.",
+      "instruction": "Schließe Copilot bei Bedarf und wähle die Projekt-Atlas-Teamübersicht in der Ergebnisfläche aus.",
+      "why": "Der direkte Wechsel vom Satz zum sichtbaren Artefakt erzeugt den zentralen Aha-Moment des Workflows.",
+      "helpLevels": [
+        "Die Ergebnisfläche steht rechts neben dem Arbeitsbereich.",
+        "Wähle den Reiter „Projekt Atlas · Teamübersicht“.",
+        "Die Artefakt-Auswahl wird hervorgehoben."
+      ],
+      "successMessage": "Die erste HTML-Seite ist sichtbar.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "team-page",
+          "artifactType": "html"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector"
+    },
+    {
+      "id": "add-content",
+      "title": "Revision 1: Inhalt ergänzen",
+      "description": "Die Seite enthält drei Teammitglieder. Ergänze jetzt eine vierte Person, ohne den Rest neu zu bauen.",
+      "instruction": "Wende die Revision „Mika Scholz ergänzen“ an und prüfe die sichtbare Änderung.",
+      "why": "Eine gezielte Änderung zeigt den Zyklus beschreiben → sehen → nachschärfen.",
+      "helpLevels": [
+        "Die nächste Revision steht unten in der Ergebnisfläche.",
+        "Klicke auf „Mika Scholz ergänzen“.",
+        "Achte danach auf den zusätzlichen Eintrag."
+      ],
+      "successMessage": "Der Inhalt wurde gezielt erweitert.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "team-page",
+          "revisionId": "add-mika"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "change-presentation",
+      "title": "Revision 2: Darstellung ändern",
+      "description": "Die Inhalte stimmen, aber eine Tabelle ist für die Übersicht leichter zu scannen.",
+      "instruction": "Wende „Als Tabelle darstellen“ an und vergleiche die Darstellung mit der vorherigen Liste.",
+      "why": "Die fachlichen Daten bleiben dieselben, während die Präsentationsform geändert wird.",
+      "helpLevels": [
+        "Nutze erneut die nächste Revision.",
+        "Klicke auf „Als Tabelle darstellen“.",
+        "Kontrolliere, ob weiterhin alle vier Personen enthalten sind."
+      ],
+      "successMessage": "Die Teamübersicht ist jetzt als Tabelle dargestellt.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "team-page",
+          "revisionId": "switch-to-table"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "view-source",
+      "title": "Vorschau und Quelltext bewusst wechseln",
+      "description": "Der sichtbaren Seite liegt HTML zugrunde. Du sollst es nicht programmieren, sondern einmal sehen, was tatsächlich erzeugt wurde.",
+      "instruction": "Wechsle von „Vorschau“ zu „Quelltext“.",
+      "why": "Die Quelltextansicht nimmt dem technischen Artefakt die Abstraktion, ohne HTML-Kenntnisse vorauszusetzen.",
+      "helpLevels": [
+        "Die Umschaltung steht oben rechts im Artefakt.",
+        "Klicke auf „Quelltext“.",
+        "Der Umschalter Vorschau/Quelltext wird hervorgehoben."
+      ],
+      "successMessage": "Der erzeugte HTML-Quelltext ist sichtbar.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.viewSwitched",
+        "match": {
+          "viewMode": "source",
+          "artifactId": "team-page"
+        }
+      },
+      "highlightTarget": "artifact.preview.viewToggle"
+    },
+    {
+      "id": "back-to-preview",
+      "title": "Zur gerenderten Seite zurückkehren",
+      "description": "Für die nächste fachliche Änderung ist die Vorschau wieder die wichtigste Prüffläche.",
+      "instruction": "Wechsle zurück auf „Vorschau“.",
+      "why": "Quelltext und Ergebnis sind zwei Ansichten desselben Artefakts; geprüft wird primär das sichtbare Ergebnis.",
+      "helpLevels": [
+        "Nutze denselben Umschalter.",
+        "Klicke auf „Vorschau“.",
+        "Die gerenderte Seite erscheint wieder."
+      ],
+      "successMessage": "Die gerenderte Vorschau ist wieder aktiv.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.viewSwitched",
+        "match": {
+          "viewMode": "preview",
+          "artifactId": "team-page"
+        }
+      },
+      "highlightTarget": "artifact.preview.viewToggle"
+    },
+    {
+      "id": "add-behavior",
+      "title": "Revision 3: Verhalten ergänzen",
+      "description": "Ergänze einen einfachen internen Sprunglink. Die Navigation funktioniert nativ im isolierten HTML und braucht kein JavaScript.",
+      "instruction": "Wende „Sprunglink ergänzen“ an und prüfe den Link in der Vorschau.",
+      "why": "Auch Verhalten kann iterativ ergänzt werden. Genau hier musst du trotzdem den übrigen Inhalt erneut prüfen.",
+      "helpLevels": [
+        "Wende die nächste Revision an.",
+        "Klicke auf „Sprunglink ergänzen“.",
+        "Prüfe danach den Link und kontrolliere anschließend erneut die Tabelle."
+      ],
+      "successMessage": "Die Seite enthält jetzt eine native Navigation.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "team-page",
+          "revisionId": "add-native-behavior"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "detect-loss",
+      "title": "Stillen Verlust selbst erkennen",
+      "description": "Bei der letzten Änderung ist unbemerkt ein zuvor vorhandener Datensatz verschwunden. Vergleiche den aktuellen Stand mit den vorherigen Revisionen.",
+      "instruction": "Finde die fehlende Person und schreibe ihren vollständigen Namen in Copilot. Der Schritt gilt nur, wenn du den tatsächlich verlorenen Datensatz benennst.",
+      "why": "KI-Änderungen können neben dem Auftrag unbeabsichtigt Bestehendes verändern. Deshalb wird nach jeder Iteration gegengeprüft.",
+      "helpLevels": [
+        "Vergleiche die vier Personen aus der Tabellenrevision mit dem aktuellen Stand.",
+        "Es fehlt genau eine Person.",
+        "Die fehlende Person heißt Nora Berger; sende diesen Namen an Copilot."
+      ],
+      "successMessage": "Der stille Verlust wurde korrekt identifiziert.",
+      "validation": {
+        "kind": "event",
+        "type": "copilot.prompt.submitted",
+        "contains": {
+          "prompt": "Nora Berger"
+        }
+      },
+      "highlightTarget": "copilot.chat.prompt"
+    },
+    {
+      "id": "restore-loss",
+      "title": "Erkannten Verlust gezielt korrigieren",
+      "description": "Korrigiere nur den gefundenen Fehler und behalte Tabellenform und Sprunglink bei.",
+      "instruction": "Wende „Gefundenen Verlust korrigieren“ an.",
+      "why": "Eine gute Korrekturschleife repariert den Fehler, ohne bereits gewünschte Änderungen wieder zurückzunehmen.",
+      "helpLevels": [
+        "Schließe Copilot bei Bedarf und kehre zur Ergebnisfläche zurück.",
+        "Nutze die nächste Revision.",
+        "Klicke auf „Gefundenen Verlust korrigieren“ und prüfe, dass Nora Berger wieder vorhanden ist."
+      ],
+      "successMessage": "Der verlorene Datensatz ist wiederhergestellt.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "team-page",
+          "revisionId": "restore-missing-row"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "verify-final",
+      "title": "Endstand fachlich prüfen",
+      "description": "Der finale Entwurf enthält wieder alle vier Personen, die Tabellenform und den Sprunglink.",
+      "instruction": "Markiere die Teamübersicht erst jetzt als geprüft.",
+      "why": "Die Freigabe folgt auf die Prüfung – nicht auf die bloße Erzeugung oder Änderung eines Artefakts.",
+      "helpLevels": [
+        "Prüfe nochmals Namen, Rollen und Status.",
+        "Achte auf Nora Berger und Mika Scholz.",
+        "Klicke danach auf „Ergebnis geprüft“."
+      ],
+      "successMessage": "Der korrigierte Endstand ist fachlich geprüft.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "team-page",
+          "artifactType": "html",
+          "revisionId": "restore-missing-row"
+        }
+      },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "classify",
+      "title": "Einsatzgrenzen einordnen",
+      "description": "Solche Seiten tragen für interne Übersichten, Prototypen und Entwürfe zum Weiterreichen. Produktive Kundenseiten brauchen Review, Betrieb und Sicherheitsprüfung.",
+      "instruction": "Merke dir außerdem: Personenbezogene oder vertrauliche Daten gehören nicht ungeprüft in einen KI-Prompt.",
+      "why": "Der Aha-Moment soll praktische Handlungsfähigkeit schaffen, nicht den Eindruck, jeder generierte Entwurf sei automatisch produktionsreif.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Du kannst Nutzen und Grenzen des Workflows einordnen.",
+      "stepType": "explanation"
+    }
+  ]
+}
