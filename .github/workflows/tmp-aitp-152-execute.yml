@@ -1,0 +1,46 @@
+name: Temporary execute AITP-152 integration
+
+on:
+  push:
+    branches:
+      - feat/aitp-152-artifact-preview
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/aitp-152-artifact-preview
+
+      - name: Execute corrected integration specification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path('.github/workflows/tmp-aitp-152-integrate.yml').read_text().splitlines()
+          marker = '        run: |'
+          start = source.index(marker) + 1
+          script_lines = []
+          for line in source[start:]:
+              if line.startswith('          '):
+                  script_lines.append(line[10:])
+              elif line.strip() == '':
+                  script_lines.append('')
+              else:
+                  break
+          script = '\n'.join(script_lines) + '\n'
+          redundant = '''replace_once("src/runtime/runtimeAdapter.ts", '  | "agent_mode";', '  | "agent_mode"\\n  | "artifact_preview";')\n'''
+          if redundant not in script:
+              raise SystemExit('Expected already-applied RuntimeCapability patch not found')
+          script = script.replace(redundant, '', 1)
+          Path('/tmp/run-aitp-152.sh').write_text(script)
+          PY
+          bash /tmp/run-aitp-152.sh
