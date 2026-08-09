@@ -31,6 +31,7 @@ test("Guided: Recherche wird iteriert und beide eingebauten Quellenmängel werde
   );
   await copilotPrompt.press("Enter");
   await expectGuidedStep(page, 2, "Drei Suchläufe sichtbar ausführen");
+  await page.getByRole("button", { name: "Copilot Chat schließen", exact: true }).click();
 
   await page.getByRole("button", { name: /Suche 1 · Marktüberblick/ }).click();
   await page.getByRole("button", { name: /Suche 2 · Zeitraum eingrenzen/ }).click();
