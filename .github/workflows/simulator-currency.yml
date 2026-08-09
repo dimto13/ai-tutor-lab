@@ -1,0 +1,41 @@
+name: Simulator Currency
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/simulator-currency.json"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: simulator-currency
+  cancel-in-progress: false
+
+jobs:
+  sync-review-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies reproducibly
+        run: npm ci --install-strategy=nested
+
+      - name: Validate policy and synchronize due work
+        run: node --experimental-strip-types scripts/check-simulator-currency.ts --sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
