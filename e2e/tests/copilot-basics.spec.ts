@@ -13,7 +13,9 @@ test("Copilot Grundlagen erklärt Sessions, Kontext, Modi, Modelle und Erweiteru
   await expect(page.getByText("Schritt 1 – Copilot Chat öffnen")).toBeVisible();
   await expect(page.getByRole("button", { name: "Verstanden – weiter" })).toHaveCount(0);
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  await expect(page.getByText("Schritt 2 – Training-Session und Copilot-Unterhaltung unterscheiden")).toBeVisible();
+  await expect(
+    page.getByText("Schritt 2 – Training-Session und Copilot-Unterhaltung unterscheiden"),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Verstanden – weiter" }).click();
   await expect(page.getByText("Schritt 3 – Neue Copilot-Unterhaltung beginnen")).toBeVisible();
@@ -24,7 +26,9 @@ test("Copilot Grundlagen erklärt Sessions, Kontext, Modi, Modelle und Erweiteru
   await expect(page.getByText("Kontext: calculator.py")).toBeVisible();
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");
-  await expect(page.getByText(/Simulierte Copilot-Antwort mit Kontext calculator\.py/)).toBeVisible();
+  await expect(
+    page.getByText(/Simulierte Copilot-Antwort mit Kontext calculator\.py/),
+  ).toBeVisible();
 
   await page.getByLabel("Modus").selectOption("plan");
   await expect(page.getByLabel("Modus")).toHaveValue("plan");
