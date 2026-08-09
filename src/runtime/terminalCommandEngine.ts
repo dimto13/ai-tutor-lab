@@ -28,6 +28,7 @@ export interface TerminalCommandResult {
   stagedFiles: string[];
   stagedContents: Record<string, string>;
   commits: TerminalCommit[];
+  stagedFilesChanged: string[];
   committed: boolean;
 }
 
@@ -176,6 +177,7 @@ function unchangedResult(
     stagedFiles: [...context.stagedFiles],
     stagedContents: { ...context.stagedContents },
     commits: context.commits.map((commit) => ({ ...commit, files: [...commit.files] })),
+    stagedFilesChanged: [],
     committed: false,
   };
 }
@@ -375,6 +377,7 @@ function gitAdd(
       (contents, file) => ({ ...contents, [file]: context.contents[file] ?? "" }),
       { ...context.stagedContents },
     ),
+    stagedFilesChanged: unique(selected),
   };
 }
 

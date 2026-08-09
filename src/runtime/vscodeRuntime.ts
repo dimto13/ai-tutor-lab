@@ -148,6 +148,30 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
   );
 }
 
+function migrateRuntimeStateSnapshot(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const candidate = value as Partial<VscodeRuntimeState>;
+  const files = isStringArray(candidate.files) ? candidate.files : [];
+  const contents = isStringRecord(candidate.contents) ? candidate.contents : {};
+  const migrated = {
+    directories: initialState().directories,
+    terminalCwd: "",
+    trackedFiles: files,
+    scmChangedFiles: [],
+    stagedFiles: candidate.staged === true ? files : [],
+    commits: [],
+    ...candidate,
+  };
+  const stagedFiles = migrated.stagedFiles ?? (migrated.staged === true ? files : []);
+  const stagedContents =
+    migrated.stagedContents ??
+    (isStringArray(stagedFiles)
+      ? Object.fromEntries(stagedFiles.map((file) => [file, contents[file] ?? ""]))
+      : undefined);
+
+  return { ...migrated, stagedFiles, stagedContents };
+}
+
 function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
   return {
     ...value,
@@ -584,6 +608,22 @@ export const vscodeRuntime = {
       staged: result.committed || staged,
       committed: result.committed,
     });
+    if (result.stagedFilesChanged.length > 0) {
+      workspaceBus.emit("scm.staged", {
+        files: [...result.stagedFilesChanged],
+        stagedFiles: [...result.stagedFiles],
+      });
+    }
+    if (result.committed) {
+      const commit = result.commits.at(-1);
+      if (commit) {
+        workspaceBus.emit("scm.committed", {
+          hash: commit.hash,
+          message: commit.message,
+          files: [...commit.files],
+        });
+      }
+    }
     return {
       lines: [...terminalLines],
       prompt: currentTerminalPrompt(),
@@ -673,19 +713,10 @@ export const vscodeRuntime = {
   },
 
   async restore(snapshot: unknown): Promise<void> {
-    if (!isRuntimeState(snapshot)) {
+    const migratedSnapshot = migrateRuntimeStateSnapshot(snapshot);
+    if (!isRuntimeState(migratedSnapshot)) {
       throw new TypeError("Invalid VS Code runtime snapshot");
     }
-    replaceState(
-      {
-        ...snapshot,
-        stagedContents:
-          snapshot.stagedContents ??
-          Object.fromEntries(
-            snapshot.stagedFiles.map((file) => [file, snapshot.contents[file] ?? ""]),
-          ),
-      },
-      "restore",
-    );
+    replaceState(migratedSnapshot, "restore");
   },
 } satisfies VscodeRuntimeAdapter;

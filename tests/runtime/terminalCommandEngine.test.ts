@@ -97,11 +97,13 @@ test("terminal engine stages and commits the actual changed files", () => {
   const add = executeTerminalCommand("git add hello.py", context);
   assert.equal(add.exitCode, 0);
   assert.deepEqual(add.stagedFiles, ["hello.py"]);
+  assert.deepEqual(add.stagedFilesChanged, ["hello.py"]);
   context = nextContext(context, add);
 
   const commit = executeTerminalCommand('git commit -m "add hello example"', context);
   assert.equal(commit.exitCode, 0);
   assert.equal(commit.committed, true);
+  assert.deepEqual(commit.stagedFilesChanged, []);
   assert.match(commit.output[0] ?? "", /\[main 0000001\] add hello example/);
   assert.deepEqual(commit.stagedFiles, []);
   assert.deepEqual(commit.changedFiles, []);
@@ -162,6 +164,10 @@ test("terminal engine returns realistic, helpful errors for invalid commands", (
   const missingDirectory = executeTerminalCommand("cd examples", context);
   assert.equal(missingDirectory.exitCode, 1);
   assert.match(missingDirectory.output.join("\n"), /No such file or directory/);
+
+  const missingGitPath = executeTerminalCommand("git add missing.py", context);
+  assert.equal(missingGitPath.exitCode, 128);
+  assert.deepEqual(missingGitPath.stagedFilesChanged, []);
 
   const unknownCommand = executeTerminalCommand("gti status", context);
   assert.equal(unknownCommand.exitCode, 127);

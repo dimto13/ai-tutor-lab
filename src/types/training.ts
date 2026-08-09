@@ -25,6 +25,8 @@ export type WorkspaceEventName =
   | "file.saved"
   | "terminal.opened"
   | "terminal.command.executed"
+  | "scm.staged"
+  | "scm.committed"
   | "panel.opened"
   | "copilot.enabled.changed"
   | "copilot.chat.opened"

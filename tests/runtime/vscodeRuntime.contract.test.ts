@@ -201,9 +201,13 @@ test("vscodeRuntime: save clears dirty state and emits file.saved", async () => 
 
 test("vscodeRuntime: terminal commands use runtime filesystem and Git state", async () => {
   const terminalEvents: Array<Record<string, unknown>> = [];
+  const scmEvents: Array<{ type: string; payload: Record<string, unknown> }> = [];
   const unsubscribe = vscodeRuntime.subscribe((event) => {
     if (event.type === "terminal.command.executed") {
       terminalEvents.push(event.payload as Record<string, unknown>);
+    }
+    if (event.type === "scm.staged" || event.type === "scm.committed") {
+      scmEvents.push({ type: event.type, payload: event.payload as Record<string, unknown> });
     }
   });
   await vscodeRuntime.mount(createContainer(), {
@@ -251,8 +255,54 @@ test("vscodeRuntime: terminal commands use runtime filesystem and Git state", as
     assert.equal(terminalEvents[2]?.["staged"], true);
     assert.equal(terminalEvents[2]?.["committed"], true);
     assert.equal(terminalEvents[3]?.["exitCode"], 0);
+    assert.deepEqual(scmEvents, [
+      {
+        type: "scm.staged",
+        payload: { files: ["hello.py"], stagedFiles: ["hello.py"] },
+      },
+      {
+        type: "scm.committed",
+        payload: { hash: "0000001", message: "add hello example", files: ["hello.py"] },
+      },
+    ]);
   } finally {
     unsubscribe();
+    await vscodeRuntime.unmount();
+  }
+});
+
+test("vscodeRuntime: migrates snapshots from before terminal Git state was introduced", async () => {
+  await vscodeRuntime.mount(createContainer());
+  const legacySnapshot = {
+    workspaceMode: "folder",
+    folders: ["legacy-project"],
+    files: ["README.md", "legacy.py"],
+    contents: { "README.md": "# Legacy\n", "legacy.py": "print('ok')\n" },
+    openTabs: ["legacy.py"],
+    activeFile: "legacy.py",
+    activePanel: "terminal",
+    terminalLines: ["legacy terminal"],
+    terminalCommand: "git status",
+    staged: true,
+    wrongFile: null,
+    dirtyFiles: ["legacy.py"],
+  };
+
+  try {
+    await vscodeRuntime.restore(legacySnapshot);
+
+    assert.equal(await vscodeRuntime.query("terminal.cwd"), "");
+    assert.deepEqual(await vscodeRuntime.query("scm.stagedFiles"), ["README.md", "legacy.py"]);
+    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), []);
+    assert.deepEqual(await vscodeRuntime.query("scm.commits"), []);
+    const restored = (await vscodeRuntime.snapshot()) as VscodeRuntimeState;
+    assert.deepEqual(restored.directories, ["src", "docs"]);
+    assert.deepEqual(restored.trackedFiles, ["README.md", "legacy.py"]);
+    assert.deepEqual(restored.stagedContents, {
+      "README.md": "# Legacy\n",
+      "legacy.py": "print('ok')\n",
+    });
+  } finally {
     await vscodeRuntime.unmount();
   }
 });
