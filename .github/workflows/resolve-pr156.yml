@@ -1,0 +1,277 @@
+name: Resolve PR 156
+
+on:
+  push:
+    branches:
+      - fix/aitp-161-progress-migration
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge current main and apply AITP-161 fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-commit --no-ff -X theirs origin/main
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          store_path = Path("src/state/trainingStore.tsx")
+          text = store_path.read_text()
+
+          runtime_import = 'import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";\n'
+          progress_import = 'import { findNextIncompleteStepId, normalizeGuidedStepProgress } from "@/state/trainingProgress";\n'
+          if progress_import not in text:
+              if runtime_import not in text:
+                  raise SystemExit("runtime import anchor not found")
+              text = text.replace(runtime_import, runtime_import + progress_import, 1)
+
+          old_load = '''    const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
+              if (!parsed.statuses) return initialProgress(scenario);
+              const mode = modeOf(scenario);
+              return {
+                statuses: parsed.statuses,
+                activeStepId: parsed.activeStepId ?? null,
+                startedAt: parsed.startedAt ?? Date.now(),
+                finishedAt: parsed.finishedAt ?? null,
+                challengeOutcome:
+                  mode === "challenge"
+                    ? (parsed.challengeOutcome ?? (parsed.finishedAt ? "passed" : "active"))
+                    : null,
+          '''.replace("              ", "")
+          new_load = '''    const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
+              if (!parsed.statuses || typeof parsed.statuses !== "object" || Array.isArray(parsed.statuses)) {
+                return initialProgress(scenario);
+              }
+              const mode = modeOf(scenario);
+              const guidedProgress =
+                mode === "guided"
+                  ? normalizeGuidedStepProgress(scenario, {
+                      statuses: parsed.statuses,
+                      activeStepId: parsed.activeStepId,
+                      finishedAt: parsed.finishedAt,
+                    })
+                  : null;
+              return {
+                statuses: guidedProgress?.statuses ?? parsed.statuses,
+                activeStepId: guidedProgress?.activeStepId ?? parsed.activeStepId ?? null,
+                startedAt: parsed.startedAt ?? Date.now(),
+                finishedAt: guidedProgress?.finishedAt ?? parsed.finishedAt ?? null,
+                challengeOutcome:
+                  mode === "challenge"
+                    ? (parsed.challengeOutcome ?? (parsed.finishedAt ? "passed" : "active"))
+                    : null,
+          '''.replace("              ", "")
+          if "const guidedProgress =" not in text:
+              if old_load not in text:
+                  raise SystemExit("load() migration anchor not found")
+              text = text.replace(old_load, new_load, 1)
+
+          old_complete = '''  const completeStep = useCallback(
+            (stepId: string, successMessage: string) => {
+              const index = scenario.steps.findIndex((step) => step.id === stepId);
+              if (index < 0) return;
+              const next = scenario.steps[index + 1];
+              setProgress((current) => ({
+                ...current,
+                statuses: {
+                  ...current.statuses,
+                  [stepId]: "COMPLETED",
+                  ...(next ? { [next.id]: "ACTIVE" as StepStatus } : {}),
+                },
+                activeStepId: next ? next.id : null,
+                finishedAt: next ? null : Date.now(),
+              }));
+              setHelpLevel(0);
+              setFeedback({ kind: "success", message: successMessage });
+            },
+            [scenario],
+          );'''
+          new_complete = '''  const completeStep = useCallback(
+            (stepId: string, successMessage: string) => {
+              const index = scenario.steps.findIndex((step) => step.id === stepId);
+              if (index < 0) return;
+              setProgress((current) => {
+                const statuses: Record<string, StepStatus> = {
+                  ...current.statuses,
+                  [stepId]: "COMPLETED",
+                };
+                const nextStepId = findNextIncompleteStepId(scenario, statuses, stepId);
+                if (nextStepId) statuses[nextStepId] = "ACTIVE";
+                return {
+                  ...current,
+                  statuses,
+                  activeStepId: nextStepId,
+                  finishedAt: nextStepId ? null : Date.now(),
+                };
+              });
+              setHelpLevel(0);
+              setFeedback({ kind: "success", message: successMessage });
+            },
+            [scenario],
+          );'''
+          if "findNextIncompleteStepId(scenario, statuses, stepId)" not in text:
+              if old_complete not in text:
+                  raise SystemExit("completeStep anchor not found")
+              text = text.replace(old_complete, new_complete, 1)
+
+          old_percent = '''      const done = scenario.steps.filter((step) => {
+                const status = parsed.statuses?.[step.id];
+                return status === "COMPLETED" || status === "SKIPPED";
+              }).length;'''.replace("              ", "")
+          new_percent = '''      if (
+                !parsed.statuses ||
+                typeof parsed.statuses !== "object" ||
+                Array.isArray(parsed.statuses)
+              ) {
+                setPercent(0);
+                return;
+              }
+              const normalized = normalizeGuidedStepProgress(scenario, {
+                statuses: parsed.statuses,
+                activeStepId: parsed.activeStepId,
+                finishedAt: parsed.finishedAt,
+              });
+              const done = scenario.steps.filter((step) => {
+                const status = normalized.statuses[step.id];
+                return status === "COMPLETED" || status === "SKIPPED";
+              }).length;'''.replace("              ", "")
+          if "const normalized = normalizeGuidedStepProgress(scenario" not in text:
+              if old_percent not in text:
+                  raise SystemExit("stored progress percent anchor not found")
+              text = text.replace(old_percent, new_percent, 1)
+
+          store_path.write_text(text)
+
+          progress_path = Path("src/state/trainingProgress.ts")
+          progress = progress_path.read_text()
+          helper = '''
+
+          export function findNextIncompleteStepId(
+            scenario: Scenario,
+            statuses: Record<string, StepStatus>,
+            completedStepId: string,
+          ): string | null {
+            const completedIndex = scenario.steps.findIndex((step) => step.id === completedStepId);
+            if (completedIndex < 0) return null;
+            for (const step of scenario.steps.slice(completedIndex + 1)) {
+              const status = statuses[step.id] ?? "NOT_STARTED";
+              if (!isComplete(status)) return step.id;
+            }
+            return null;
+          }
+          '''.replace("          ", "")
+          if "export function findNextIncompleteStepId" not in progress:
+              anchor = "export interface StoredGuidedStepProgress {"
+              if anchor not in progress:
+                  raise SystemExit("trainingProgress helper anchor not found")
+              progress = progress.replace(anchor, helper + "\n" + anchor, 1)
+          progress_path.write_text(progress)
+
+          test_path = Path("tests/runtime/trainingProgress.test.ts")
+          tests = test_path.read_text()
+          tests = tests.replace(
+              'import { normalizeGuidedStepProgress } from "../../src/state/trainingProgress.ts";',
+              'import {\n  findNextIncompleteStepId,\n  normalizeGuidedStepProgress,\n} from "../../src/state/trainingProgress.ts";',
+              1,
+          )
+          if "advancement preserves migrated skipped optional steps" not in tests:
+              tests += '''
+
+          test("advancement preserves migrated skipped optional steps", () => {
+            const advancementScenario = {
+              id: "migration-advance.guided",
+              mode: "guided",
+              steps: [
+                { id: "current" },
+                { id: "new-optional", optional: true },
+                { id: "next-required" },
+              ],
+            } as unknown as Scenario;
+            const next = findNextIncompleteStepId(
+              advancementScenario,
+              {
+                current: "COMPLETED",
+                "new-optional": "SKIPPED",
+                "next-required": "NOT_STARTED",
+              },
+              "current",
+            );
+            assert.equal(next, "next-required");
+          });
+          '''.replace("          ", "")
+          test_path.write_text(tests)
+
+          e2e_path = Path("e2e/tests/copilot-basics.spec.ts")
+          e2e = e2e_path.read_text()
+          if "const legacyGuidedStepIds" not in e2e:
+              anchor = '''async function waitUntilReady(page: Page) {
+            await expect(page.getByRole("status")).toContainText("Training bereit");
+          }
+          '''.replace("          ", "")
+              block = '''
+
+          const legacyGuidedStepIds = [
+            "open-copilot-chat",
+            "session-vs-conversation",
+            "new-conversation",
+            "use-file-context",
+            "select-plan-mode",
+            "understand-chat-modes",
+            "select-explicit-model",
+            "select-auto-model",
+            "accept-inline-suggestion",
+            "understand-mcp",
+            "understand-agent-skills",
+          ] as const;
+
+          test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({ page }) => {
+            await page.goto("/");
+            await page.evaluate((stepIds) => {
+              localStorage.setItem(
+                "ai-training-lab:copilot-basics.guided:v2",
+                JSON.stringify({
+                  statuses: Object.fromEntries(stepIds.map((stepId) => [stepId, "COMPLETED"])),
+                  activeStepId: null,
+                  startedAt: 1_786_280_000_000,
+                  finishedAt: 1_786_283_600_000,
+                  challengeOutcome: null,
+                  hintsUsed: 2,
+                  mistakes: 1,
+                  lastAction: null,
+                  exploredTargets: [],
+                  lastInspectedRef: null,
+                }),
+              );
+            }, legacyGuidedStepIds);
+            await page.goto("/training/copilot-basics.guided");
+            await waitUntilReady(page);
+            await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+            await expect(page.getByText("14 von 14", { exact: true })).toBeVisible();
+          });
+          '''.replace("          ", "")
+              if anchor not in e2e:
+                  raise SystemExit("e2e insertion anchor not found")
+              e2e = e2e.replace(anchor, anchor + block, 1)
+          e2e_path.write_text(e2e)
+          PY
+
+          git rm .github/workflows/resolve-pr156.yml
+          npm ci
+          node --experimental-strip-types --test tests/runtime/trainingProgress.test.ts
+          npm run check
+          git add -A
+          git commit -m "fix: resolve AITP-161 against current main"
+          git push origin HEAD:fix/aitp-161-progress-migration
