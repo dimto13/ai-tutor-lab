@@ -2,7 +2,7 @@
   "language": "de",
   "technologyConcepts": {
     "ide": ["vscode.product"],
-    "ai_coding_assistant": ["vscode.product"]
+    "ai_coding_assistant": ["vscode.product", "ai.agent", "research.source_evidence"]
   },
   "concepts": [
     {
@@ -11,6 +11,22 @@
       "aliases": ["Visual Studio Code"],
       "simple": "VS Code ist ein Code-Editor von Microsoft. Er bündelt Editor, Explorer, Suche, Terminal, Versionsverwaltung und Erweiterungen in einer Arbeitsoberfläche.",
       "advanced": "Visual Studio Code ist ein erweiterbarer Desktop-Editor. Über Extensions kann er Sprachunterstützung, Debugging, Versionsverwaltung und KI-Werkzeuge integrieren; ein geöffneter Ordner oder Workspace bestimmt dabei den Arbeitskontext.",
+      "uiTargets": []
+    },
+    {
+      "key": "ai.agent",
+      "term": "Agent",
+      "aliases": ["KI-Agent"],
+      "simple": "Ein Agent ist ein KI-System, das ein Ziel in mehrere Arbeitsschritte zerlegen und dafür Werkzeuge verwenden kann.",
+      "advanced": "Ein KI-Agent verbindet Modellentscheidungen mit Werkzeugaufrufen und Zustandsänderungen. Seine Ergebnisse bleiben prüfpflichtig, besonders wenn externe Daten oder Dienste beteiligt sind.",
+      "uiTargets": []
+    },
+    {
+      "key": "research.source_evidence",
+      "term": "Quelle/Beleg",
+      "aliases": ["Quelle", "Beleg", "Quellenangabe"],
+      "simple": "Eine Quelle oder ein Beleg zeigt, woher eine Aussage stammt. Sie muss aktuell sein und die konkrete Aussage tatsächlich stützen.",
+      "advanced": "Eine Quellenangabe erhöht Nachvollziehbarkeit, beweist aber nicht automatisch Richtigkeit. Prüfe Autorität, Aktualität, Kontext und ob der zitierte Inhalt die abgeleitete Behauptung trägt.",
       "uiTargets": []
     }
   ]

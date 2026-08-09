@@ -11,29 +11,34 @@ import type { RuntimeReferenceDefinition } from "../src/runtime/vscodeDefinition
 import type { Scenario, Validation } from "../src/types/training.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
-const glossaryPath = resolve(process.cwd(), "content/glossary/de.json");
+const glossaryDir = resolve(process.cwd(), "content/glossary");
 const objectivesPath = resolve(process.cwd(), "content/learning-objectives/de.json");
 const personasPath = resolve(process.cwd(), "content/personas/de.json");
 
 const technologyIds = new Set(technologyCatalog.technologies.map((technology) => technology.id));
 
+const glossaryConceptSchema = z.object({
+  key: z.string().min(1),
+  term: z.string().min(1),
+  aliases: z.array(z.string()).optional(),
+  simple: z.string().min(1),
+  advanced: z.string().min(1),
+  uiTargets: z.array(z.string().min(1)),
+});
+
 const glossarySchema = z.object({
-  version: z.number().int().positive(),
+  version: z.number().int().positive().optional(),
   language: z.string().min(1),
   technologyConcepts: z.record(z.array(z.string().min(1)).min(1)),
-  concepts: z
-    .array(
-      z.object({
-        key: z.string().min(1),
-        term: z.string().min(1),
-        aliases: z.array(z.string()).optional(),
-        simple: z.string().min(1),
-        advanced: z.string().min(1),
-        uiTargets: z.array(z.string().min(1)),
-      }),
-    )
-    .min(1),
+  concepts: z.array(glossaryConceptSchema).min(1),
 });
+
+type GlossaryData = z.infer<typeof glossarySchema>;
+
+interface GlossarySource {
+  file: string;
+  data: GlossaryData;
+}
 
 const personasSchema = z.object({
   version: z.number().int().positive(),
@@ -330,17 +335,27 @@ function formatZodIssues(file: string, error: ZodError): ValidationIssue[] {
 }
 
 const files = (await readdir(scenariosDir)).filter((name) => name.endsWith(".json")).sort();
+const glossaryFiles = (await readdir(glossaryDir)).filter((name) => name.endsWith(".json")).sort();
 
 if (files.length === 0) {
   throw new Error("No declarative scenario files found in content/scenarios");
 }
+if (glossaryFiles.length === 0) {
+  throw new Error("No declarative glossary files found in content/glossary");
+}
 
 const issues: ValidationIssue[] = [];
+const glossarySources: GlossarySource[] = [];
 
-const glossaryRaw = JSON.parse(await readFile(glossaryPath, "utf8"));
-const glossaryResult = glossarySchema.safeParse(glossaryRaw);
-if (!glossaryResult.success) {
-  issues.push(...formatZodIssues("content/glossary/de.json", glossaryResult.error));
+for (const file of glossaryFiles) {
+  const relativeFile = `content/glossary/${file}`;
+  const raw = JSON.parse(await readFile(resolve(glossaryDir, file), "utf8"));
+  const result = glossarySchema.safeParse(raw);
+  if (!result.success) {
+    issues.push(...formatZodIssues(relativeFile, result.error));
+    continue;
+  }
+  glossarySources.push({ file: relativeFile, data: result.data });
 }
 
 const objectivesRaw = JSON.parse(await readFile(objectivesPath, "utf8"));
@@ -355,9 +370,10 @@ if (!personasResult.success) {
   issues.push(...formatZodIssues("content/personas/de.json", personasResult.error));
 }
 
-const glossaryKeys = new Set(
-  glossaryResult.success ? glossaryResult.data.concepts.map((concept) => concept.key) : [],
+const allGlossaryConcepts = glossarySources.flatMap(({ file, data }) =>
+  data.concepts.map((concept, index) => ({ file, concept, index })),
 );
+const glossaryKeys = new Set(allGlossaryConcepts.map(({ concept }) => concept.key));
 const objectiveIds = new Set(
   objectivesResult.success ? objectivesResult.data.objectives.map((objective) => objective.id) : [],
 );
@@ -365,14 +381,18 @@ const personaIds = new Set(
   personasResult.success ? personasResult.data.personas.map((persona) => persona.id) : [],
 );
 
-if (glossaryResult.success) {
-  pushDuplicateIssues(
-    issues,
-    "content/glossary/de.json",
-    "concepts",
-    glossaryResult.data.concepts.map((concept) => concept.key),
-    "glossary concept key",
-  );
+const seenGlossaryKeys = new Map<string, string>();
+for (const { file, concept, index } of allGlossaryConcepts) {
+  const firstFile = seenGlossaryKeys.get(concept.key);
+  if (firstFile) {
+    issues.push({
+      file,
+      path: `concepts[${index}].key`,
+      message: `duplicate glossary concept key: ${concept.key} (already declared in ${firstFile})`,
+    });
+  } else {
+    seenGlossaryKeys.set(concept.key, file);
+  }
 }
 
 if (objectivesResult.success) {
@@ -395,21 +415,19 @@ if (personasResult.success) {
   );
 }
 
-if (glossaryResult.success) {
-  const mappedConceptKeys = new Set<string>();
-  for (const [technologyId, conceptKeys] of Object.entries(
-    glossaryResult.data.technologyConcepts,
-  )) {
+const mappedConceptKeys = new Set<string>();
+for (const source of glossarySources) {
+  for (const [technologyId, conceptKeys] of Object.entries(source.data.technologyConcepts)) {
     if (!technologyIds.has(technologyId)) {
       issues.push({
-        file: "content/glossary/de.json",
+        file: source.file,
         path: `technologyConcepts.${technologyId}`,
         message: `unknown technology id: ${technologyId}`,
       });
     }
     pushDuplicateIssues(
       issues,
-      "content/glossary/de.json",
+      source.file,
       `technologyConcepts.${technologyId}`,
       conceptKeys,
       "technology glossary concept",
@@ -418,22 +436,23 @@ if (glossaryResult.success) {
       mappedConceptKeys.add(conceptKey);
       if (!glossaryKeys.has(conceptKey)) {
         issues.push({
-          file: "content/glossary/de.json",
+          file: source.file,
           path: `technologyConcepts.${technologyId}[${index}]`,
           message: `unknown glossary concept: ${conceptKey}`,
         });
       }
     });
   }
-  glossaryResult.data.concepts.forEach((concept, index) => {
-    if (!mappedConceptKeys.has(concept.key)) {
-      issues.push({
-        file: "content/glossary/de.json",
-        path: `concepts[${index}].key`,
-        message: `glossary concept is not assigned to a technology: ${concept.key}`,
-      });
-    }
-  });
+}
+
+for (const { file, concept, index } of allGlossaryConcepts) {
+  if (!mappedConceptKeys.has(concept.key)) {
+    issues.push({
+      file,
+      path: `concepts[${index}].key`,
+      message: `glossary concept is not assigned to a technology: ${concept.key}`,
+    });
+  }
 }
 
 const allRuntimeTargets = new Set<string>();
@@ -457,17 +476,15 @@ for (const runtime of RUNTIME_REFERENCE_CATALOG) {
   }
 }
 
-if (glossaryResult.success) {
-  glossaryResult.data.concepts.forEach((concept, conceptIndex) => {
-    concept.uiTargets.forEach((ref, targetIndex) => {
-      if (!allRuntimeTargets.has(ref)) {
-        issues.push({
-          file: "content/glossary/de.json",
-          path: `concepts[${conceptIndex}].uiTargets[${targetIndex}]`,
-          message: `glossary target ${ref} is not exposed by any runtime adapter`,
-        });
-      }
-    });
+for (const { file, concept, index } of allGlossaryConcepts) {
+  concept.uiTargets.forEach((ref, targetIndex) => {
+    if (!allRuntimeTargets.has(ref)) {
+      issues.push({
+        file,
+        path: `concepts[${index}].uiTargets[${targetIndex}]`,
+        message: `glossary target ${ref} is not exposed by any runtime adapter`,
+      });
+    }
   });
 }
 
@@ -502,5 +519,5 @@ if (issues.length > 0) {
 }
 
 console.log(
-  `Validated ${files.length} scenario file(s), ${objectiveIds.size} learning objective(s), ${glossaryKeys.size} glossary concept(s), ${personaIds.size} learner persona(s) and ${RUNTIME_REFERENCE_CATALOG.length} runtime adapter definition(s).`,
+  `Validated ${files.length} scenario file(s), ${objectiveIds.size} learning objective(s), ${glossaryKeys.size} glossary concept(s) from ${glossarySources.length} source file(s), ${personaIds.size} learner persona(s) and ${RUNTIME_REFERENCE_CATALOG.length} runtime adapter definition(s).`,
 );

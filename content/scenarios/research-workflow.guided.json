@@ -1,0 +1,336 @@
+{
+  "id": "research-workflow.guided",
+  "moduleId": "research-workflow",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Recherche mit Websuche/MCP – Ergebnisse prüfen",
+  "description": "Formuliere eine Recherche, verfolge mehrere simulierte Suchläufe, iteriere eine Vergleichstabelle und finde zwei eingebaute Quellenmängel.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["copilot.mcp", "ai.agent", "research.source_evidence"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["team-research"],
+      "files": ["research-brief.md"],
+      "contents": {
+        "research-brief.md": "# Team-Entscheidung\nVergleiche drei Recherchewerkzeuge mit aktuellen Quellen."
+      },
+      "openTabs": ["research-brief.md"],
+      "activeFile": "research-brief.md",
+      "chatResponses": [
+        {
+          "promptContains": "vergleichstabelle",
+          "response": "Auftrag verstanden. Die Recherche wird in Marktüberblick, Aktualitätsfilter und Quellenabgleich zerlegt. Führe die drei sichtbaren Suchschritte im Rechercheprotokoll aus."
+        }
+      ],
+      "artifactPreview": {
+        "activeArtifactId": "research-log",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "research-log",
+            "type": "data",
+            "title": "Rechercheprotokoll",
+            "value": "Auftrag verstanden. Noch keine Suche ausgeführt."
+          },
+          {
+            "id": "comparison",
+            "type": "table",
+            "title": "Vergleichstabelle",
+            "columns": [
+              {
+                "key": "option",
+                "label": "Option"
+              },
+              {
+                "key": "fit",
+                "label": "Eignung"
+              },
+              {
+                "key": "source",
+                "label": "Quelle"
+              }
+            ],
+            "rows": [
+              {
+                "option": "TeamSearch",
+                "fit": "Sehr gut für verteilte Teams",
+                "source": "Quelle A"
+              },
+              {
+                "option": "DocScout",
+                "fit": "Günstig und aktuell",
+                "source": "Quelle B"
+              },
+              {
+                "option": "ResearchHub",
+                "fit": "Gute Quellenübersicht",
+                "source": "Quelle C"
+              }
+            ]
+          },
+          {
+            "id": "source-a",
+            "type": "data",
+            "title": "Quelle A · Produktseite",
+            "value": "18.04.2026: TeamSearch bündelt Suchergebnisse und Exporte. Keine Aussage zur besonderen Eignung für verteilte Teams."
+          },
+          {
+            "id": "source-b",
+            "type": "data",
+            "title": "Quelle B · Marktübersicht",
+            "value": "10.05.2023: DocScout wurde mit einem Einstiegspreis von 12 € beschrieben. Die Quelle ist mehr als drei Jahre alt."
+          },
+          {
+            "id": "source-c",
+            "type": "data",
+            "title": "Quelle C · Anbieterinfo",
+            "value": "02.06.2026: ResearchHub dokumentiert Quellen, Datum und Exportformat pro Recherche. Aussage und Aktualität sind nachvollziehbar."
+          }
+        ],
+        "revisions": [
+          {
+            "id": "search-1",
+            "artifactId": "research-log",
+            "label": "Suche 1 · Marktüberblick",
+            "next": {
+              "id": "research-log",
+              "type": "data",
+              "title": "Rechercheprotokoll",
+              "value": "Suche 1/3: Marktüberblick – 8 Kandidaten gefunden."
+            }
+          },
+          {
+            "id": "search-2",
+            "artifactId": "research-log",
+            "label": "Suche 2 · Zeitraum eingrenzen",
+            "next": {
+              "id": "research-log",
+              "type": "data",
+              "title": "Rechercheprotokoll",
+              "value": "Suche 2/3: 5 Kandidaten mit aktuellen Treffern priorisiert."
+            }
+          },
+          {
+            "id": "search-3",
+            "artifactId": "research-log",
+            "label": "Suche 3 · Quellen abgleichen",
+            "next": {
+              "id": "research-log",
+              "type": "data",
+              "title": "Rechercheprotokoll",
+              "value": "Suche 3/3: 3 Optionen mit Quellenbezug ausgewählt."
+            }
+          },
+          {
+            "id": "add-costs",
+            "artifactId": "comparison",
+            "label": "Kosten ergänzen",
+            "next": {
+              "id": "comparison",
+              "type": "table",
+              "title": "Vergleichstabelle",
+              "columns": [
+                {
+                  "key": "option",
+                  "label": "Option"
+                },
+                {
+                  "key": "fit",
+                  "label": "Eignung"
+                },
+                {
+                  "key": "source",
+                  "label": "Quelle"
+                },
+                {
+                  "key": "cost",
+                  "label": "Kosten"
+                }
+              ],
+              "rows": [
+                {
+                  "option": "TeamSearch",
+                  "fit": "Sehr gut für verteilte Teams",
+                  "source": "Quelle A",
+                  "cost": "29 €/Monat"
+                },
+                {
+                  "option": "DocScout",
+                  "fit": "Günstig und aktuell",
+                  "source": "Quelle B",
+                  "cost": "12 €/Monat"
+                },
+                {
+                  "option": "ResearchHub",
+                  "fit": "Gute Quellenübersicht",
+                  "source": "Quelle C",
+                  "cost": "24 €/Monat"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 18,
+  "points": 170,
+  "steps": [
+    {
+      "id": "prompt",
+      "title": "Rechercheauftrag selbst formulieren",
+      "description": "Für eine Team-Entscheidung sollen drei aktuelle, belegte Optionen verglichen werden. Formuliere dafür Ziel, Umfang, Zeitraum und Ausgabeformat selbst.",
+      "instruction": "Öffne Copilot und sende einen selbst formulierten Auftrag für drei Optionen, Stand höchstens 12 Monate, Quellen und eine Vergleichstabelle.",
+      "why": "Eigene Formulierung trainiert übertragbare Prompt-Kompetenz statt Abschreiben.",
+      "helpLevels": [
+        "Öffne zuerst Copilot Chat.",
+        "Nenne drei Optionen, 12 Monate und Quellen.",
+        "Verwende das gewünschte Format „Vergleichstabelle“."
+      ],
+      "successMessage": "Der Rechercheauftrag wurde gesendet.",
+      "validation": {
+        "kind": "event",
+        "type": "copilot.prompt.submitted",
+        "contains": {
+          "prompt": "Vergleichstabelle"
+        }
+      },
+      "highlightTarget": "copilot.chat.prompt"
+    },
+    {
+      "id": "searches",
+      "title": "Drei Suchläufe sichtbar ausführen",
+      "description": "Die Recherche ist als Abfolge aus Marktüberblick, Aktualitätsfilter und Quellenabgleich modelliert.",
+      "instruction": "Öffne das Rechercheprotokoll und führe nacheinander Suche 1, Suche 2 und Suche 3 aus.",
+      "why": "Mehrere sichtbare Suchschritte machen die Entstehung des Ergebnisses nachvollziehbar.",
+      "helpLevels": [
+        "Wähle Rechercheprotokoll.",
+        "Wende die angebotenen Revisionen nacheinander an.",
+        "Der Schritt endet nach „Suche 3 · Quellen abgleichen“."
+      ],
+      "successMessage": "Alle drei Suchläufe sind sichtbar erfolgt.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "research-log",
+          "revisionId": "search-3"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "iterate",
+      "title": "Vergleichstabelle iterieren",
+      "description": "Das Ergebnis enthält Optionen und Quellen; für die Entscheidung fehlen noch Kosten.",
+      "instruction": "Wähle Vergleichstabelle und wende „Kosten ergänzen“ an.",
+      "why": "Eine gezielte Iteration verbessert das bestehende Artefakt, ohne die Recherche neu zu starten.",
+      "helpLevels": [
+        "Wähle Vergleichstabelle.",
+        "Suche die Revision am unteren Rand.",
+        "Wende Kosten ergänzen an."
+      ],
+      "successMessage": "Die Kostenspalte ist sichtbar.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": {
+          "artifactId": "comparison",
+          "revisionId": "add-costs"
+        }
+      },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "source-a",
+      "title": "Unbelegte Aussage erkennen",
+      "description": "Quelle A nennt TeamSearch, trägt aber die behauptete besondere Eignung nicht.",
+      "instruction": "Öffne Quelle A, vergleiche sie mit der Tabelle und markiere das Ergebnis als geprüft.",
+      "why": "Eine Quellenangabe ist nur dann ein Beleg, wenn sie die konkrete Aussage tatsächlich trägt.",
+      "helpLevels": [
+        "Öffne Quelle A.",
+        "Vergleiche Wortlaut und Tabellenbehauptung.",
+        "Markiere den gefundenen Mangel über Ergebnis geprüft."
+      ],
+      "successMessage": "Die unbelegte Aussage ist markiert.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "source-a"
+        }
+      },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "source-b",
+      "title": "Veraltete Quelle erkennen",
+      "description": "Quelle B ist echt, aber älter als der geforderte Zeitraum.",
+      "instruction": "Öffne Quelle B, prüfe das Datum und markiere den Mangel als geprüft.",
+      "why": "Veraltete Informationen können eine aktuelle Entscheidung verzerren.",
+      "helpLevels": [
+        "Öffne Quelle B.",
+        "Vergleiche Datum und 12-Monats-Vorgabe.",
+        "Markiere den Mangel über Ergebnis geprüft."
+      ],
+      "successMessage": "Die veraltete Quelle ist markiert.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "source-b"
+        }
+      },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "source-c",
+      "title": "Kontrollquelle prüfen",
+      "description": "Quelle C ist aktuell und deckt die Aussage. Nicht jede Quelle ist mangelhaft.",
+      "instruction": "Öffne Quelle C und prüfe sie, ohne sie als Mangel zu markieren.",
+      "why": "Gute Prüfung unterscheidet belastbare von problematischen Quellen.",
+      "helpLevels": [
+        "Öffne Quelle C.",
+        "Prüfe Datum und Aussage.",
+        "Lass die Prüfmarkierung aus, weil kein Mangel vorliegt."
+      ],
+      "successMessage": "Auch die dritte Quelle wurde kontrolliert.",
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "source-c"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector"
+    },
+    {
+      "id": "classify",
+      "title": "MCP, Agent und Quelle einordnen",
+      "description": "Ein Agent kann über MCP externe Suchwerkzeuge nutzen; eine eingebaute Suche kann denselben fachlichen Zweck im Produkt erfüllen.",
+      "instruction": "Merke dir: Suchanfrage und Kontext können Systemgrenzen verlassen. Eine Quelle/Beleg-Angabe ist keine Garantie und muss vor einer geschäftlichen Entscheidung geprüft werden.",
+      "why": "Der reale Schaden entsteht durch ungeprüfte Übernahme plausibler Ergebnisse.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Du kannst Nutzen, Datenfluss und Prüfpflicht einordnen.",
+      "stepType": "explanation"
+    }
+  ]
+}
