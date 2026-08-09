@@ -8,7 +8,8 @@ export type RuntimeCapability =
   | "source_control"
   | "chat"
   | "inline_completion"
-  | "agent_mode";
+  | "agent_mode"
+  | "artifact_preview";
 
 export type { RuntimeSeed } from "../types/training.ts";
 

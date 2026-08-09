@@ -9,6 +9,7 @@ export const technologyIdSchema = z.enum([
   "cli_agent",
   "office_assistant",
   "ai_chat",
+  "artifact_preview",
 ]);
 
 export const capabilitySchema = z.enum([
@@ -20,6 +21,7 @@ export const capabilitySchema = z.enum([
   "chat",
   "inline_completion",
   "agent_mode",
+  "artifact_preview",
 ]);
 
 const technologySchema = z

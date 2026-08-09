@@ -15,6 +15,10 @@
     {
       "id": "source_control",
       "name": "Source Control"
+    },
+    {
+      "id": "artifact_preview",
+      "name": "Artifact Preview"
     }
   ],
   "providers": [
@@ -29,6 +33,10 @@
     {
       "id": "anthropic",
       "name": "Anthropic"
+    },
+    {
+      "id": "ai-train-lab",
+      "name": "AI Train Lab"
     }
   ],
   "products": [
@@ -55,6 +63,12 @@
       "providerId": "github",
       "technologyId": "source_control",
       "name": "GitHub"
+    },
+    {
+      "id": "artifact-preview",
+      "providerId": "ai-train-lab",
+      "technologyId": "artifact_preview",
+      "name": "Artifact Preview"
     }
   ],
   "productVersions": [
@@ -84,6 +98,13 @@
       "version": "simulated-2026-08",
       "capabilities": ["source_control"],
       "runtimeAdapterIds": ["source-control-platform-simulator"]
+    },
+    {
+      "id": "artifact-preview@1.x",
+      "productId": "artifact-preview",
+      "version": "1.x",
+      "capabilities": ["artifact_preview"],
+      "runtimeAdapterIds": ["artifact-preview-simulator"]
     }
   ],
   "integrations": [
@@ -92,6 +113,12 @@
       "productId": "github-copilot",
       "hostProductId": "vscode",
       "capabilities": ["chat", "inline_completion", "agent_mode"]
+    },
+    {
+      "id": "artifact-preview-in-vscode",
+      "productId": "artifact-preview",
+      "hostProductId": "vscode",
+      "capabilities": ["artifact_preview"]
     }
   ],
   "runtimeAdapters": [
@@ -113,6 +140,13 @@
       "productId": "github",
       "kind": "simulator",
       "capabilities": ["source_control"]
+    },
+    {
+      "id": "artifact-preview-simulator",
+      "productId": "artifact-preview",
+      "integrationId": "artifact-preview-in-vscode",
+      "kind": "simulator",
+      "capabilities": ["artifact_preview"]
     }
   ]
 }

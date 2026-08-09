@@ -57,7 +57,8 @@
       "copilot.inline_suggestion",
       "copilot.mcp",
       "copilot.agent_skill"
-    ]
+    ],
+    "artifact_preview": ["artifact.preview"]
   },
   "concepts": [
     {
@@ -428,6 +429,24 @@
       "simple": "Clone erstellt eine lokale Kopie, Fork eine serverseitige Kopie und Remote speichert die Adresse zu einem entfernten Repository.",
       "advanced": "Ein Clone richtet üblicherweise ein Remote namens origin ein. Ein Fork besitzt eine eigene Serveridentität und Berechtigungsgrenze; zusätzlich kann das ursprüngliche Repository als weiteres Remote, häufig upstream, eingetragen werden.",
       "uiTargets": ["platform.remote.help"]
+    },
+    {
+      "key": "artifact.preview",
+      "term": "Artefakt-Vorschau",
+      "aliases": ["Ergebnisvorschau", "Artifact Preview"],
+      "simple": "Die Artefakt-Vorschau macht ein erzeugtes Ergebnis als Seite, Tabelle oder strukturierte Daten sichtbar und prüfbar.",
+      "advanced": "Die Vorschau stellt ausschließlich deterministisch hinterlegte Zustände dar. HTML läuft isoliert ohne Skriptrechte; Wechsel, Revisionen und Prüfstatus werden über semantische Runtime-Events und Queries abgebildet.",
+      "uiTargets": [
+        "artifact.preview.panel",
+        "artifact.preview.selector",
+        "artifact.preview.rendered",
+        "artifact.preview.source",
+        "artifact.preview.table",
+        "artifact.preview.data",
+        "artifact.preview.viewToggle",
+        "artifact.preview.applyRevision",
+        "artifact.preview.verify"
+      ]
     }
   ]
 }

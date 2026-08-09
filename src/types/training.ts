@@ -9,7 +9,8 @@ export type TechnologyId =
   | "ai_coding_assistant"
   | "cli_agent"
   | "office_assistant"
-  | "ai_chat";
+  | "ai_chat"
+  | "artifact_preview";
 export type TrainingStepType = "action" | "explanation";
 export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
@@ -38,6 +39,11 @@ export type WorkspaceEventName =
   | "ai.suggestion.shown"
   | "ai.suggestion.accepted"
   | "ai.suggestion.rejected"
+  | "artifact.created"
+  | "artifact.selected"
+  | "artifact.updated"
+  | "artifact.viewSwitched"
+  | "artifact.verified"
   | "platform.overview.opened"
   | "platform.code.opened"
   | "platform.commit.history.opened"

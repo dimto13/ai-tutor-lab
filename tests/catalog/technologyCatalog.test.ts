@@ -7,7 +7,7 @@ import {
 } from "../../src/catalog/index.ts";
 
 test("technology catalog loads in Node without the frontend build", () => {
-  assert.equal(technologyCatalog.providers.length, 3);
+  assert.ok(technologyCatalog.providers.some(({ id }) => id === "ai-train-lab"));
   assert.ok(technologyCatalog.products.some(({ id }) => id === "vscode"));
   assert.ok(technologyCatalog.products.some(({ id }) => id === "github-copilot"));
   assert.ok(technologyCatalog.products.some(({ id }) => id === "claude-code"));

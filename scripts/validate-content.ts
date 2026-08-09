@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { z, ZodError } from "zod";
+import { technologyCatalog } from "../src/catalog/index.ts";
 import {
   RUNTIME_REFERENCE_CATALOG,
   getRuntimeReferenceDefinition,
@@ -14,15 +15,7 @@ const glossaryPath = resolve(process.cwd(), "content/glossary/de.json");
 const objectivesPath = resolve(process.cwd(), "content/learning-objectives/de.json");
 const personasPath = resolve(process.cwd(), "content/personas/de.json");
 
-const technologyIds = new Set([
-  "ide",
-  "source_control",
-  "terminal",
-  "ai_coding_assistant",
-  "cli_agent",
-  "office_assistant",
-  "ai_chat",
-]);
+const technologyIds = new Set(technologyCatalog.technologies.map((technology) => technology.id));
 
 const glossarySchema = z.object({
   version: z.number().int().positive(),

@@ -5,7 +5,8 @@ export type TechnologyId =
   | "ai_coding_assistant"
   | "cli_agent"
   | "office_assistant"
-  | "ai_chat";
+  | "ai_chat"
+  | "artifact_preview";
 
 export type Capability =
   | "filesystem"
@@ -15,7 +16,8 @@ export type Capability =
   | "source_control"
   | "chat"
   | "inline_completion"
-  | "agent_mode";
+  | "agent_mode"
+  | "artifact_preview";
 
 export interface Technology {
   id: TechnologyId;

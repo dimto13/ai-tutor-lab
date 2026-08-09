@@ -18,6 +18,8 @@ import {
   X,
 } from "lucide-react";
 import { CopilotPanel } from "./CopilotPanel";
+import { ArtifactPreviewPanel } from "./ArtifactPreviewPanel";
+import { artifactPreviewRuntime } from "@/runtime/artifactPreviewRuntime";
 import { copilotRuntime } from "@/runtime/copilotRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { workspaceBus } from "@/state/eventBus";
@@ -59,6 +61,9 @@ export function Workspace() {
   const runtimeSeed = scenario.environment?.seed;
   const copilotIntegrated =
     scenario.environment?.integrationRuntimeAdapterIds?.includes(copilotRuntime.id) ?? false;
+  const artifactPreviewIntegrated =
+    scenario.environment?.integrationRuntimeAdapterIds?.includes(artifactPreviewRuntime.id) ??
+    false;
 
   const [view, setView] = useState<View | null>(null);
   const [repoOpen, setRepoOpen] = useState(false);
@@ -521,31 +526,34 @@ export function Workspace() {
             ) : null}
           </div>
 
-          <div
-            data-highlight="vscode.editor"
-            onClickCapture={() => inspect("vscode.editor")}
-            className="relative min-h-0 flex-1"
-          >
-            {activeFile ? (
-              <div className="flex h-full">
-                <div className="select-none border-r border-border bg-editor px-3 py-3 text-right font-mono text-[12px] leading-6 text-muted-foreground">
-                  {(contents[activeFile] ?? "").split("\n").map((_, index) => (
-                    <div key={index}>{index + 1}</div>
-                  ))}
+          <div className="flex min-h-0 flex-1">
+            <div
+              data-highlight="vscode.editor"
+              onClickCapture={() => inspect("vscode.editor")}
+              className="relative min-h-0 min-w-0 flex-1"
+            >
+              {activeFile ? (
+                <div className="flex h-full">
+                  <div className="select-none border-r border-border bg-editor px-3 py-3 text-right font-mono text-[12px] leading-6 text-muted-foreground">
+                    {(contents[activeFile] ?? "").split("\n").map((_, index) => (
+                      <div key={index}>{index + 1}</div>
+                    ))}
+                  </div>
+                  <textarea
+                    value={contents[activeFile] ?? ""}
+                    onChange={(event) => updateContent(event.target.value)}
+                    spellCheck={false}
+                    className="h-full min-w-0 flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
+                    placeholder='print("Hello AI Training")'
+                  />
                 </div>
-                <textarea
-                  value={contents[activeFile] ?? ""}
-                  onChange={(event) => updateContent(event.target.value)}
-                  spellCheck={false}
-                  className="h-full min-w-0 flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
-                  placeholder='print("Hello AI Training")'
-                />
-              </div>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Öffne eine Datei im Explorer, um sie zu bearbeiten.
-              </div>
-            )}
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  Öffne eine Datei im Explorer, um sie zu bearbeiten.
+                </div>
+              )}
+            </div>
+            {artifactPreviewIntegrated ? <ArtifactPreviewPanel /> : null}
           </div>
 
           {panelOpen ? (

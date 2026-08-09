@@ -1,3 +1,4 @@
+import { artifactPreviewRuntime } from "./artifactPreviewRuntime";
 import { copilotRuntime } from "./copilotRuntime";
 import { getRuntimeReferenceDefinition } from "./referenceCatalog";
 import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime";
@@ -13,6 +14,14 @@ export type {
 } from "./runtimeAdapter";
 export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime";
 export type { CopilotProductProfile } from "./copilotProductProfile";
+export type { ArtifactPreviewRuntimeAdapter, ArtifactPreviewState } from "./artifactPreviewRuntime";
+export type {
+  ArtifactPreviewSeed,
+  DataArtifact,
+  HtmlArtifact,
+  PreviewArtifact,
+  TableArtifact,
+} from "./artifactPreviewContent";
 export type {
   SourceControlPlatformAdapter,
   SourceControlPlatformState,
@@ -21,6 +30,7 @@ export type {
 const runtimes: Record<string, RuntimeAdapter> = {
   [vscodeRuntime.id]: vscodeRuntime,
   [copilotRuntime.id]: copilotRuntime,
+  [artifactPreviewRuntime.id]: artifactPreviewRuntime,
   [sourceControlPlatformRuntime.id]: sourceControlPlatformRuntime,
 };
 
