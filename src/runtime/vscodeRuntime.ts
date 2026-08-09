@@ -17,6 +17,7 @@ export interface VscodeRuntimeState {
   directories: string[];
   files: string[];
   contents: Record<string, string>;
+  committedContents: Record<string, string>;
   openTabs: string[];
   activeFile: string | null;
   activePanel: PanelName;
@@ -75,6 +76,9 @@ const initialState = (): VscodeRuntimeState => ({
   contents: {
     "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
   },
+  committedContents: {
+    "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
+  },
   openTabs: [],
   activeFile: null,
   activePanel: null,
@@ -128,6 +132,7 @@ function isRuntimeState(value: unknown): value is VscodeRuntimeState {
     isStringArray(candidate.directories) &&
     isStringArray(candidate.files) &&
     isStringRecord(candidate.contents) &&
+    isStringRecord(candidate.committedContents) &&
     isStringArray(candidate.openTabs) &&
     (candidate.activeFile === null || typeof candidate.activeFile === "string") &&
     (candidate.activePanel === null ||
@@ -153,23 +158,45 @@ function migrateRuntimeStateSnapshot(value: unknown): unknown {
   const candidate = value as Partial<VscodeRuntimeState>;
   const files = isStringArray(candidate.files) ? candidate.files : [];
   const contents = isStringRecord(candidate.contents) ? candidate.contents : {};
+  const legacyChangedFiles = isStringArray(candidate.dirtyFiles) ? candidate.dirtyFiles : [];
   const migrated = {
     directories: initialState().directories,
     terminalCwd: "",
     trackedFiles: files,
-    scmChangedFiles: [],
-    stagedFiles: candidate.staged === true ? files : [],
+    scmChangedFiles: legacyChangedFiles,
+    stagedFiles: candidate.staged === true ? legacyChangedFiles : [],
     commits: [],
     ...candidate,
   };
-  const stagedFiles = migrated.stagedFiles ?? (migrated.staged === true ? files : []);
+  const trackedFiles = candidate.trackedFiles === undefined ? files : candidate.trackedFiles;
+  const scmChangedFiles =
+    candidate.scmChangedFiles === undefined ? legacyChangedFiles : candidate.scmChangedFiles;
+  const stagedFiles =
+    candidate.stagedFiles === undefined
+      ? candidate.staged === true
+        ? scmChangedFiles
+        : []
+      : candidate.stagedFiles;
   const stagedContents =
-    migrated.stagedContents ??
+    candidate.stagedContents ??
     (isStringArray(stagedFiles)
       ? Object.fromEntries(stagedFiles.map((file) => [file, contents[file] ?? ""]))
       : undefined);
+  const committedContents =
+    candidate.committedContents === undefined && isStringArray(trackedFiles)
+      ? Object.fromEntries(trackedFiles.map((file) => [file, contents[file] ?? ""]))
+      : candidate.committedContents;
+  const staged = isStringArray(stagedFiles) ? stagedFiles.length > 0 : candidate.staged;
 
-  return { ...migrated, stagedFiles, stagedContents };
+  return {
+    ...migrated,
+    trackedFiles,
+    scmChangedFiles,
+    stagedFiles,
+    stagedContents,
+    committedContents,
+    staged,
+  };
 }
 
 function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
@@ -179,6 +206,7 @@ function cloneState(value: VscodeRuntimeState): VscodeRuntimeState {
     directories: [...value.directories],
     files: [...value.files],
     contents: { ...value.contents },
+    committedContents: { ...value.committedContents },
     openTabs: [...value.openTabs],
     terminalLines: [...value.terminalLines],
     trackedFiles: [...value.trackedFiles],
@@ -306,6 +334,16 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     }
     stagedContents = { ...value };
   }
+  let committedContents = Object.fromEntries(
+    trackedFiles.map((file) => [file, contents[file] ?? ""]),
+  );
+  if (hasOwn(seed, "committedContents")) {
+    const value = seed["committedContents"];
+    if (!isStringRecord(value)) {
+      throw new TypeError("Invalid VS Code runtime seed field: committedContents");
+    }
+    committedContents = { ...value };
+  }
 
   const activeFile = nullableStringFromSeed(seed, "activeFile", base.activeFile);
 
@@ -324,6 +362,7 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
     directories,
     files,
     contents,
+    committedContents,
     openTabs,
     activeFile,
     activePanel,
@@ -506,6 +545,11 @@ export const vscodeRuntime = {
   },
 
   setFileContent(filename: string, content: string): void {
+    const committedContent = state.committedContents[filename];
+    const workingTreeChanged =
+      !state.trackedFiles.includes(filename) || committedContent !== content;
+    const indexChanged =
+      state.stagedFiles.includes(filename) && state.stagedContents[filename] !== committedContent;
     replaceState(
       {
         ...state,
@@ -514,9 +558,11 @@ export const vscodeRuntime = {
           state.files.includes(filename) && !state.dirtyFiles.includes(filename)
             ? [...state.dirtyFiles, filename]
             : state.dirtyFiles,
-        scmChangedFiles: state.files.includes(filename)
-          ? addUnique(state.scmChangedFiles, filename)
-          : state.scmChangedFiles,
+        scmChangedFiles: !state.files.includes(filename)
+          ? state.scmChangedFiles
+          : workingTreeChanged || indexChanged
+            ? addUnique(state.scmChangedFiles, filename)
+            : state.scmChangedFiles.filter((file) => file !== filename),
       },
       "mutation",
     );
@@ -585,6 +631,12 @@ export const vscodeRuntime = {
       ? []
       : [...state.terminalLines, `${promptBeforeExecution} ${command}`, ...result.output];
     const staged = result.stagedFiles.length > 0;
+    const committedContents = { ...state.committedContents };
+    if (result.committed) {
+      for (const file of result.commits.at(-1)?.files ?? []) {
+        committedContents[file] = state.stagedContents[file] ?? state.contents[file] ?? "";
+      }
+    }
     replaceState(
       {
         ...state,
@@ -596,6 +648,7 @@ export const vscodeRuntime = {
         stagedFiles: result.stagedFiles,
         stagedContents: result.stagedContents,
         commits: result.commits,
+        committedContents,
         staged,
       },
       "mutation",

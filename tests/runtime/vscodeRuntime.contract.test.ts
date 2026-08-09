@@ -292,16 +292,43 @@ test("vscodeRuntime: migrates snapshots from before terminal Git state was intro
     await vscodeRuntime.restore(legacySnapshot);
 
     assert.equal(await vscodeRuntime.query("terminal.cwd"), "");
-    assert.deepEqual(await vscodeRuntime.query("scm.stagedFiles"), ["README.md", "legacy.py"]);
-    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), []);
+    assert.deepEqual(await vscodeRuntime.query("scm.stagedFiles"), ["legacy.py"]);
+    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), ["legacy.py"]);
     assert.deepEqual(await vscodeRuntime.query("scm.commits"), []);
     const restored = (await vscodeRuntime.snapshot()) as VscodeRuntimeState;
     assert.deepEqual(restored.directories, ["src", "docs"]);
     assert.deepEqual(restored.trackedFiles, ["README.md", "legacy.py"]);
     assert.deepEqual(restored.stagedContents, {
-      "README.md": "# Legacy\n",
       "legacy.py": "print('ok')\n",
     });
+    const status = vscodeRuntime.executeTerminalCommand("git status");
+    assert.match(status.lines.join("\n"), /Changes to be committed:[\s\S]*legacy\.py/);
+    assert.doesNotMatch(status.lines.join("\n"), /working tree clean/);
+    vscodeRuntime.executeTerminalCommand('git commit -m "restore legacy work"');
+    assert.deepEqual(await vscodeRuntime.query("scm.commits"), [
+      { hash: "0000001", message: "restore legacy work", files: ["legacy.py"] },
+    ]);
+  } finally {
+    await vscodeRuntime.unmount();
+  }
+});
+
+test("vscodeRuntime: clears a tracked change when editor content returns to the committed baseline", async () => {
+  await vscodeRuntime.mount(createContainer(), {
+    workspaceMode: "folder",
+    folders: ["ai-training-demo"],
+    files: ["README.md"],
+    contents: { "README.md": "# Original\n" },
+  });
+
+  try {
+    vscodeRuntime.setFileContent("README.md", "# Changed\n");
+    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), ["README.md"]);
+
+    vscodeRuntime.setFileContent("README.md", "# Original\n");
+    assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), []);
+    const status = vscodeRuntime.executeTerminalCommand("git status");
+    assert.match(status.lines.join("\n"), /working tree clean/);
   } finally {
     await vscodeRuntime.unmount();
   }
