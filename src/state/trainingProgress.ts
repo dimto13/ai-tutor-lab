@@ -34,6 +34,11 @@ export function findNextIncompleteStepId(
     const status = statuses[step.id] ?? "NOT_STARTED";
     if (!isComplete(status)) return step.id;
   }
+
+  for (const step of scenario.steps.slice(0, completedIndex)) {
+    const status = statuses[step.id] ?? "NOT_STARTED";
+    if (!step.optional && status === "NOT_STARTED") return step.id;
+  }
   return null;
 }
 
