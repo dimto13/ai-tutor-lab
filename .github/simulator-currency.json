@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "cadenceMonths": 6,
+  "epicIssue": 83,
+  "milestone": 4,
+  "reviewLabels": ["epic: EP-12", "prio: should", "type: chore"],
+  "deviationLabels": ["epic: EP-12", "prio: should", "type: bug"],
+  "products": [
+    {
+      "productId": "vscode",
+      "displayName": "Visual Studio Code",
+      "runtimeAdapterId": "vscode-simulator",
+      "version": "1.x",
+      "owner": "dimto13",
+      "lastReviewedAt": null,
+      "nextReviewAt": "2026-08-09",
+      "scenarioIds": [
+        "vscode-basics.explore",
+        "vscode-basics.guided",
+        "vscode-basics.challenge",
+        "vscode-shortcuts.challenge",
+        "git-basics",
+        "copilot-basics.guided"
+      ],
+      "checklist": [
+        "Menüleiste, Activity Bar, Side Bar, Editor, Panel und Statusleiste mit der aktuellen Produktoberfläche vergleichen.",
+        "Alle semantischen Highlight-Ziele im Simulator gegen ihre aktuelle Position und Bedeutung prüfen.",
+        "Ordner-, Workspace-, Datei-, Terminal- und Source-Control-Aktionen mit der aktuellen Produktoberfläche vergleichen.",
+        "Bezeichnungen, Hilfetexte und Screenshots der betroffenen Szenarien auf veraltete Begriffe prüfen.",
+        "Jede Abweichung mit betroffenen Szenario-IDs unter deviations dokumentieren und den Prüfzeitpunkt fortschreiben."
+      ],
+      "deviations": []
+    },
+    {
+      "productId": "github-copilot",
+      "displayName": "GitHub Copilot in Visual Studio Code",
+      "runtimeAdapterId": "github-copilot-vscode-simulator",
+      "version": "2026-08",
+      "owner": "dimto13",
+      "lastReviewedAt": null,
+      "nextReviewAt": "2026-08-09",
+      "scenarioIds": ["copilot-basics.guided", "git-basics"],
+      "checklist": [
+        "Chat-Einstieg, neue Unterhaltung, Prompt-Eingabe und Dateikontext mit der aktuellen Produktoberfläche vergleichen.",
+        "Verfügbare Chat-Modi und Modellauswahl gegen das gepflegte Produktprofil prüfen.",
+        "Inline-Vorschlag sowie Annehmen und Ablehnen mit dem aktuellen Interaktionsverhalten vergleichen.",
+        "Alle semantischen Highlight-Ziele der Integration auf Auflösbarkeit und korrekte Bedeutung prüfen.",
+        "Jede Abweichung mit betroffenen Szenario-IDs unter deviations dokumentieren und den Prüfzeitpunkt fortschreiben."
+      ],
+      "deviations": []
+    }
+  ]
+}

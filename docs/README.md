@@ -35,6 +35,7 @@ vom POC zur produktreifen Plattform.
 | `08-offene-entscheidungen.md`        | ADRs, Risiken, offene Fragen an dich                                                            | Entscheider              |
 | `09-glossar.md`                      | Begriffe, damit Modelle konsistent bleiben                                                      | alle                     |
 | `10-dokumenten-check.md`             | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary                            | Product, Security        |
+| `12-simulator-aktualitaet.md`        | Halbjährliche Produktprüfung, Verantwortlichkeit und automatische Drift-Tickets                 | Product, QA, Entwicklung |
 | `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich                     |
 | `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
 
