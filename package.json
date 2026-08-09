@@ -16,9 +16,10 @@
     "typecheck": "tsc --noEmit",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts",
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
-    "check": "npm run validate:content && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
+    "check": "npm run format:check && npm run validate:content && npm run lint && npm run typecheck && npm run test:runtime-contracts && npm run build",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

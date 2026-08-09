@@ -35,6 +35,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Validate scenario content
         run: npm run validate:content
 
