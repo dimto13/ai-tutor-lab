@@ -71,6 +71,36 @@ test("Copilot Grundlagen ist von Schritt 1 bis 11 vollständig und plausibel dur
   await expect(page.getByText(/Ollama/i)).toHaveCount(0);
 });
 
+test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({ page }) => {
+  await page.goto("/training/copilot-basics.guided");
+  await waitUntilReady(page);
+
+  await page.getByRole("button", { name: "Copilot", exact: true }).click();
+  const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
+  const inlineSuggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
+
+  await generateSuggestion.click();
+  await expect(inlineSuggestion).toContainText("return a + b");
+  await expect(page.getByRole("button", { name: "Annehmen" })).toBeVisible();
+
+  await page.getByRole("button", { name: "README.md", exact: true }).click();
+  await expect(page.getByText("Kontext: README.md")).toBeVisible();
+  await expect(inlineSuggestion).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Annehmen" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "calculator.py", exact: true }).first().click();
+  await expect(page.getByText("Kontext: calculator.py")).toBeVisible();
+  await generateSuggestion.click();
+  await expect(inlineSuggestion).toContainText("return a + b");
+
+  const editor = page.locator("textarea");
+  await editor.fill("def add(a, b):\n    return a - b\n");
+  await page.getByRole("button", { name: "Annehmen" }).click();
+
+  await expect(editor).toHaveValue("def add(a, b):\n    return a - b\n");
+  await expect(page.getByRole("button", { name: "Annehmen" })).toHaveCount(0);
+});
+
 test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktprofil", async ({
   page,
 }) => {
