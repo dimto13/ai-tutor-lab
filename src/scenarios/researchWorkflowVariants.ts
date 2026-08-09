@@ -69,7 +69,7 @@ const challengeCompletion: Validation = {
   ],
 };
 
-export function createResearchWorkflowVariants(base: Scenario): Scenario[] {
+export function createResearchWorkflowVariants(base: Scenario): [Scenario, Scenario] {
   return [
     createModeVariant(base, {
       id: "research-workflow.explore",
