@@ -27,9 +27,7 @@ test(
     await page.getByPlaceholder("dateiname.py").press("Enter");
     await page.getByPlaceholder('print("Hello AI Training")').fill(challengeText);
 
-    await expect(
-      page.getByRole("heading", { name: "Training abgeschlossen" }),
-    ).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).not.toBeVisible();
 
     await page.keyboard.press("Control+S");
 
@@ -83,8 +81,6 @@ test(
     await page.keyboard.press("Control+S");
 
     await expect(page.getByText("Challenge fehlgeschlagen", { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Training abgeschlossen" }),
-    ).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).not.toBeVisible();
   },
 );
