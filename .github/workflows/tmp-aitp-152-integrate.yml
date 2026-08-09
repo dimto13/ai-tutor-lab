@@ -1,0 +1,307 @@
+name: Temporary AITP-152 integration
+
+on:
+  push:
+    branches:
+      - feat/aitp-152-artifact-preview
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/aitp-152-artifact-preview
+
+      - name: Merge current main and migrate Artifact Preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+
+          set +e
+          git merge --no-commit --no-ff origin/main
+          merge_status=$?
+          set -e
+          if [ "$merge_status" -ne 0 ]; then
+            for file in \
+              content/glossary/de.json \
+              src/components/workspace/Workspace.tsx \
+              src/runtime/index.ts \
+              src/runtime/referenceCatalog.ts \
+              src/scenarios/contentLoader.ts \
+              src/scenarios/index.ts \
+              src/types/training.ts \
+              tests/runtime/contentLoader.test.ts
+            do
+              if git diff --name-only --diff-filter=U | grep -Fxq "$file"; then
+                git checkout --theirs -- "$file"
+                git add "$file"
+              fi
+            done
+            unresolved="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$unresolved" ]; then
+              echo "Unexpected unresolved conflicts:"
+              echo "$unresolved"
+              exit 1
+            fi
+          fi
+
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"Anchor not found in {path}: {old[:100]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          catalog_path = Path("content/catalog/technology-catalog.json")
+          catalog = json.loads(catalog_path.read_text())
+          if not any(item["id"] == "artifact_preview" for item in catalog["technologies"]):
+              catalog["technologies"].append({"id": "artifact_preview", "name": "Artifact Preview"})
+          if not any(item["id"] == "ai-train-lab" for item in catalog["providers"]):
+              catalog["providers"].append({"id": "ai-train-lab", "name": "AI Train Lab"})
+          if not any(item["id"] == "artifact-preview" for item in catalog["products"]):
+              catalog["products"].append({
+                  "id": "artifact-preview",
+                  "providerId": "ai-train-lab",
+                  "technologyId": "artifact_preview",
+                  "name": "Artifact Preview",
+              })
+          if not any(item["id"] == "artifact-preview@1.x" for item in catalog["productVersions"]):
+              catalog["productVersions"].append({
+                  "id": "artifact-preview@1.x",
+                  "productId": "artifact-preview",
+                  "version": "1.x",
+                  "capabilities": ["artifact_preview"],
+                  "runtimeAdapterIds": ["artifact-preview-simulator"],
+              })
+          if not any(item["id"] == "artifact-preview-in-vscode" for item in catalog["integrations"]):
+              catalog["integrations"].append({
+                  "id": "artifact-preview-in-vscode",
+                  "productId": "artifact-preview",
+                  "hostProductId": "vscode",
+                  "capabilities": ["artifact_preview"],
+              })
+          if not any(item["id"] == "artifact-preview-simulator" for item in catalog["runtimeAdapters"]):
+              catalog["runtimeAdapters"].append({
+                  "id": "artifact-preview-simulator",
+                  "productId": "artifact-preview",
+                  "integrationId": "artifact-preview-in-vscode",
+                  "kind": "simulator",
+                  "capabilities": ["artifact_preview"],
+              })
+          catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n")
+
+          replace_once("src/catalog/types.ts", '  | "ai_chat";', '  | "ai_chat"\n  | "artifact_preview";')
+          replace_once("src/catalog/types.ts", '  | "agent_mode";', '  | "agent_mode"\n  | "artifact_preview";')
+          replace_once("src/catalog/schema.ts", '  "ai_chat",\n]);', '  "ai_chat",\n  "artifact_preview",\n]);')
+          replace_once("src/catalog/schema.ts", '  "agent_mode",\n]);', '  "agent_mode",\n  "artifact_preview",\n]);')
+          replace_once("src/runtime/runtimeAdapter.ts", '  | "agent_mode";', '  | "agent_mode"\n  | "artifact_preview";')
+          replace_once("src/types/training.ts", '  | "ai_chat";', '  | "ai_chat"\n  | "artifact_preview";')
+          replace_once(
+              "src/types/training.ts",
+              '  | "ai.suggestion.rejected"\n',
+              '  | "ai.suggestion.rejected"\n  | "artifact.created"\n  | "artifact.selected"\n  | "artifact.updated"\n  | "artifact.viewSwitched"\n  | "artifact.verified"\n',
+          )
+
+          replace_once(
+              "src/scenarios/contentLoader.ts",
+              'import type { Scenario, Validation } from "../types/training";\n',
+              'import type { Scenario, Validation } from "../types/training";\nimport { artifactPreviewSeedSchema } from "../runtime/artifactPreviewContent.ts";\n',
+          )
+          replace_once(
+              "src/scenarios/contentLoader.ts",
+              '  "ai.suggestion.rejected",\n',
+              '  "ai.suggestion.rejected",\n  "artifact.created",\n  "artifact.selected",\n  "artifact.updated",\n  "artifact.viewSwitched",\n  "artifact.verified",\n',
+          )
+          replace_once(
+              "src/scenarios/contentLoader.ts",
+              '    chatResponses: z.array(copilotChatResponseSeedSchema).optional(),\n',
+              '    chatResponses: z.array(copilotChatResponseSeedSchema).optional(),\n    artifactPreview: artifactPreviewSeedSchema.optional(),\n',
+          )
+
+          replace_once(
+              "src/runtime/index.ts",
+              'import { copilotRuntime } from "./copilotRuntime";\n',
+              'import { artifactPreviewRuntime } from "./artifactPreviewRuntime";\nimport { copilotRuntime } from "./copilotRuntime";\n',
+          )
+          replace_once(
+              "src/runtime/index.ts",
+              'export type { CopilotProductProfile } from "./copilotProductProfile";\n',
+              'export type { CopilotProductProfile } from "./copilotProductProfile";\nexport type { ArtifactPreviewRuntimeAdapter, ArtifactPreviewState } from "./artifactPreviewRuntime";\nexport type {\n  ArtifactPreviewSeed,\n  DataArtifact,\n  HtmlArtifact,\n  PreviewArtifact,\n  TableArtifact,\n} from "./artifactPreviewContent";\n',
+          )
+          replace_once(
+              "src/runtime/index.ts",
+              '  [copilotRuntime.id]: copilotRuntime,\n',
+              '  [copilotRuntime.id]: copilotRuntime,\n  [artifactPreviewRuntime.id]: artifactPreviewRuntime,\n',
+          )
+          replace_once(
+              "src/runtime/referenceCatalog.ts",
+              'import { COPILOT_RUNTIME_DEFINITION } from "./copilotDefinition.ts";\n',
+              'import { ARTIFACT_PREVIEW_DEFINITION } from "./artifactPreviewDefinition.ts";\nimport { COPILOT_RUNTIME_DEFINITION } from "./copilotDefinition.ts";\n',
+          )
+          replace_once(
+              "src/runtime/referenceCatalog.ts",
+              '  COPILOT_RUNTIME_DEFINITION,\n',
+              '  COPILOT_RUNTIME_DEFINITION,\n  ARTIFACT_PREVIEW_DEFINITION,\n',
+          )
+
+          replace_once(
+              "src/scenarios/index.ts",
+              'import copilotBasicsRaw from "../../content/scenarios/copilot-basics.guided.json";\n',
+              'import copilotBasicsRaw from "../../content/scenarios/copilot-basics.guided.json";\nimport artifactPreviewFoundationRaw from "../../content/scenarios/artifact-preview-foundation.guided.json";\n',
+          )
+          replace_once(
+              "src/scenarios/index.ts",
+              'const copilotBasicsScenario = parseScenario(copilotBasicsRaw);\n',
+              'const copilotBasicsScenario = parseScenario(copilotBasicsRaw);\nconst artifactPreviewFoundationScenario = parseScenario(artifactPreviewFoundationRaw);\n',
+          )
+          replace_once(
+              "src/scenarios/index.ts",
+              '  [copilotBasicsScenario.id]: copilotBasicsScenario,\n',
+              '  [copilotBasicsScenario.id]: copilotBasicsScenario,\n  [artifactPreviewFoundationScenario.id]: artifactPreviewFoundationScenario,\n',
+          )
+
+          glossary_path = Path("content/glossary/de.json")
+          glossary = json.loads(glossary_path.read_text())
+          concepts = glossary["concepts"]
+          if not any(item["key"] == "artifact.preview" for item in concepts):
+              concepts.append({
+                  "key": "artifact.preview",
+                  "term": "Artefakt-Vorschau",
+                  "aliases": ["Ergebnisvorschau", "Artifact Preview"],
+                  "simple": "Die Artefakt-Vorschau macht ein erzeugtes Ergebnis als Seite, Tabelle oder strukturierte Daten sichtbar und prüfbar.",
+                  "advanced": "Die Vorschau stellt ausschließlich deterministisch hinterlegte Zustände dar. HTML läuft isoliert ohne Skriptrechte; Wechsel, Revisionen und Prüfstatus werden über semantische Runtime-Events und Queries abgebildet.",
+                  "uiTargets": [
+                      "artifact.preview.panel",
+                      "artifact.preview.selector",
+                      "artifact.preview.rendered",
+                      "artifact.preview.source",
+                      "artifact.preview.table",
+                      "artifact.preview.data",
+                      "artifact.preview.viewToggle",
+                      "artifact.preview.applyRevision",
+                      "artifact.preview.verify",
+                  ],
+              })
+          glossary_path.write_text(json.dumps(glossary, ensure_ascii=False, indent=2) + "\n")
+
+          scenario_path = Path("content/scenarios/artifact-preview-foundation.guided.json")
+          scenario = json.loads(scenario_path.read_text())
+          environment = scenario["environment"]
+          environment.pop("integrationRuntimeAdapterIds", None)
+          environment["integrations"] = [{
+              "productId": "artifact-preview",
+              "version": "1.x",
+              "runtimeAdapterId": "artifact-preview-simulator",
+          }]
+          verify_step = next(step for step in scenario["steps"] if step["id"] == "verify-artifact")
+          verify_step["validation"]["match"]["revisionId"] = "summary-page-v2"
+          scenario_path.write_text(json.dumps(scenario, ensure_ascii=False, indent=2) + "\n")
+
+          replace_once(
+              "src/components/workspace/Workspace.tsx",
+              'import { CopilotPanel } from "./CopilotPanel";\n',
+              'import { CopilotPanel } from "./CopilotPanel";\nimport { ArtifactPreviewPanel } from "./ArtifactPreviewPanel";\nimport { artifactPreviewRuntime } from "@/runtime/artifactPreviewRuntime";\n',
+          )
+          replace_once(
+              "src/components/workspace/Workspace.tsx",
+              '  const copilotIntegrated =\n    scenario.environment?.integrationRuntimeAdapterIds?.includes(copilotRuntime.id) ?? false;\n',
+              '  const copilotIntegrated =\n    scenario.environment?.integrationRuntimeAdapterIds?.includes(copilotRuntime.id) ?? false;\n  const artifactPreviewIntegrated =\n    scenario.environment?.integrationRuntimeAdapterIds?.includes(artifactPreviewRuntime.id) ?? false;\n',
+          )
+          workspace_path = Path("src/components/workspace/Workspace.tsx")
+          text = workspace_path.read_text()
+          start_marker = '          <div\n            data-highlight="vscode.editor"'
+          end_marker = '\n\n          {panelOpen ? ('
+          start = text.find(start_marker)
+          end = text.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit("Workspace editor block markers not found")
+          editor_block = text[start:end]
+          if 'artifactPreviewIntegrated ? <ArtifactPreviewPanel />' not in editor_block:
+              editor_block = editor_block.replace(
+                  'className="relative min-h-0 flex-1"',
+                  'className="relative min-h-0 min-w-0 flex-1"',
+                  1,
+              )
+              indented = '\n'.join('  ' + line for line in editor_block.splitlines())
+              wrapped = (
+                  '          <div className="flex min-h-0 flex-1">\n'
+                  + indented
+                  + '\n            {artifactPreviewIntegrated ? <ArtifactPreviewPanel /> : null}\n'
+                  + '          </div>'
+              )
+              text = text[:start] + wrapped + text[end:]
+          workspace_path.write_text(text)
+
+          replace_once(
+              "src/components/workspace/ArtifactPreviewPanel.tsx",
+              '  const { mode, scenario } = useTraining();',
+              '  const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();',
+          )
+          old_effect = '''  useEffect(() => {\n    const container = rootRef.current;\n    if (!container) return;\n    const unsubscribe = artifactPreviewRuntime.subscribeState((nextState) => setState(nextState));\n    void artifactPreviewRuntime.mount(container, scenario.environment?.seed);\n    return () => {\n      unsubscribe();\n      void artifactPreviewRuntime.unmount();\n    };\n  }, [scenario.environment?.seed]);'''
+          new_effect = '''  useEffect(() => {\n    const container = rootRef.current;\n    if (!container) return;\n    let disposed = false;\n    const unsubscribe = artifactPreviewRuntime.subscribeState((nextState, reason) => {\n      setState(nextState);\n      if (reason === "mutation") {\n        persistRuntimeSnapshot(artifactPreviewRuntime.id, nextState);\n      }\n    });\n    void (async () => {\n      await artifactPreviewRuntime.mount(container, scenario.environment?.seed);\n      if (!disposed) await restoreRuntimeSnapshot(artifactPreviewRuntime.id);\n    })();\n    return () => {\n      disposed = true;\n      unsubscribe();\n      void artifactPreviewRuntime.unmount();\n    };\n  }, [scenario.environment?.seed, persistRuntimeSnapshot, restoreRuntimeSnapshot]);'''
+          replace_once("src/components/workspace/ArtifactPreviewPanel.tsx", old_effect, new_effect)
+
+          runtime_path = Path("src/runtime/artifactPreviewRuntime.ts")
+          text = runtime_path.read_text()
+          old_verify = '''    verifyActiveArtifact() {\n      const artifact = activeArtifact();\n      if (!artifact) return;\n      const verifiedIds = state.verifiedIds.includes(artifact.id)\n        ? state.verifiedIds\n        : [...state.verifiedIds, artifact.id];\n      replaceState({ ...state, verifiedIds }, "mutation");\n      emit("artifact.verified", { artifactId: artifact.id, artifactType: artifact.type });\n    },'''
+          new_verify = '''    verifyActiveArtifact() {\n      const artifact = activeArtifact();\n      if (!artifact) return;\n      const revisionId = [...state.appliedRevisionIds]\n        .reverse()\n        .map((id) => state.revisions.find((revision) => revision.id === id))\n        .find((revision) => revision?.artifactId === artifact.id)?.id;\n      const verifiedIds = state.verifiedIds.includes(artifact.id)\n        ? state.verifiedIds\n        : [...state.verifiedIds, artifact.id];\n      replaceState({ ...state, verifiedIds }, "mutation");\n      emit("artifact.verified", {\n        artifactId: artifact.id,\n        artifactType: artifact.type,\n        revisionId: revisionId ?? null,\n      });\n    },'''
+          if old_verify not in text:
+              raise SystemExit("Artifact verification anchor not found")
+          runtime_path.write_text(text.replace(old_verify, new_verify, 1))
+
+          test_path = Path("tests/runtime/contentLoader.test.ts")
+          text = test_path.read_text()
+          safe_test = '''\n\ntest("content loader accepts safe artifact preview data and rejects executable HTML", () => {\n  assert.doesNotThrow(() =>\n    parseScenario(\n      scenarioWithSeed({\n        artifactPreview: {\n          artifacts: [\n            {\n              id: "safe-page",\n              type: "html",\n              title: "Safe page",\n              html: "<section><h1>Safe</h1><p>Validated content</p></section>",\n            },\n          ],\n        },\n      }),\n    ),\n  );\n\n  assert.throws(() =>\n    parseScenario(\n      scenarioWithSeed({\n        artifactPreview: {\n          artifacts: [\n            {\n              id: "unsafe-page",\n              type: "html",\n              title: "Unsafe page",\n              html: "<script>globalThis.compromised = true</script>",\n            },\n          ],\n        },\n      }),\n    ),\n  );\n});\n'''
+          if 'content loader accepts safe artifact preview data and rejects executable HTML' not in text:
+              test_path.write_text(text.rstrip() + safe_test)
+
+          e2e_path = Path("e2e/tests/artifact-preview.spec.ts")
+          text = e2e_path.read_text()
+          resume_test = '''\n\ntest("Artefakt-Vorschau: Revision bleibt nach Reload erhalten", async ({ page }) => {\n  await page.goto(scenarioUrl);\n  await waitForTrainingReady(page);\n  await page.getByRole("button", { name: /Team-Übersicht/ }).click();\n  await page.getByRole("button", { name: "Quelltext", exact: true }).click();\n  await page.getByRole("button", { name: /Freigabestatus ergänzen/ }).click();\n  await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");\n  await expect(page.getByText("Freigabe bereit", { exact: false })).toBeVisible();\n\n  await page.reload();\n  await waitForTrainingReady(page);\n  await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");\n  await expect(page.getByText("Freigabe bereit", { exact: false })).toBeVisible();\n  await expect(page.getByRole("button", { name: /Freigabestatus ergänzen/ })).toHaveCount(0);\n\n  await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();\n  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();\n});\n'''
+          if 'Revision bleibt nach Reload erhalten' not in text:
+              e2e_path.write_text(text.rstrip() + resume_test)
+
+          runtime_test_path = Path("tests/runtime/artifactPreviewRuntime.contract.test.ts")
+          text = runtime_test_path.read_text()
+          revision_event_test = '''\n\ntest("artifactPreviewRuntime: verification reports the applied revision", async () => {\n  const runtime = createArtifactPreviewRuntime();\n  let verifiedPayload: Record<string, unknown> | null = null;\n  const unsubscribe = runtime.subscribe((event) => {\n    if (event.type === "artifact.verified") {\n      verifiedPayload = event.payload as Record<string, unknown>;\n    }\n  });\n  await runtime.mount(createContainer(), {\n    artifactPreview: {\n      artifacts: [htmlArtifact],\n      revisions: [\n        {\n          id: "page-v2",\n          artifactId: "page",\n          label: "Update",\n          next: { ...htmlArtifact, html: "<section><h1>Safe preview</h1><p>Updated</p></section>" },\n        },\n      ],\n    },\n  });\n  try {\n    runtime.applyRevision("page-v2");\n    runtime.verifyActiveArtifact();\n    assert.equal(verifiedPayload?.["revisionId"], "page-v2");\n  } finally {\n    unsubscribe();\n    await runtime.unmount();\n  }\n});\n'''
+          if 'verification reports the applied revision' not in text:
+              runtime_test_path.write_text(text.rstrip() + revision_event_test)
+          PY
+
+          npm ci
+          npx prettier --write \
+            content/catalog/technology-catalog.json \
+            content/glossary/de.json \
+            content/scenarios/artifact-preview-foundation.guided.json \
+            src/catalog/types.ts \
+            src/catalog/schema.ts \
+            src/runtime/runtimeAdapter.ts \
+            src/types/training.ts \
+            src/scenarios/contentLoader.ts \
+            src/runtime/index.ts \
+            src/runtime/referenceCatalog.ts \
+            src/scenarios/index.ts \
+            src/components/workspace/Workspace.tsx \
+            src/components/workspace/ArtifactPreviewPanel.tsx \
+            src/runtime/artifactPreviewRuntime.ts \
+            tests/runtime/contentLoader.test.ts \
+            tests/runtime/artifactPreviewRuntime.contract.test.ts \
+            e2e/tests/artifact-preview.spec.ts
+          npm run check
+
+          git add -A
+          git commit -m "fix: integrate artifact preview runtime contracts"
+          git push origin HEAD:feat/aitp-152-artifact-preview
