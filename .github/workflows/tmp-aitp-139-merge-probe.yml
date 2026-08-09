@@ -1,0 +1,33 @@
+name: Temporary AITP-139 merge probe
+
+on:
+  push:
+    branches:
+      - feat/aitp-139-source-control-platform-basics
+
+jobs:
+  probe:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/aitp-139-source-control-platform-basics
+
+      - name: Probe merge with current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          set +e
+          git merge --no-commit --no-ff origin/main
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "UNRESOLVED_FILES_BEGIN"
+            git diff --name-only --diff-filter=U
+            echo "UNRESOLVED_FILES_END"
+            exit 1
+          fi
+          echo "Merge is conflict-free"
