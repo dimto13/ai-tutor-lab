@@ -1,0 +1,21 @@
+{
+  "name": "ai-tutor-runtime-bridge",
+  "displayName": "AI Tutor Runtime Bridge",
+  "description": "Spike-only metadata bridge for a real browser editor runtime.",
+  "version": "0.1.0",
+  "publisher": "ai-tutor",
+  "private": true,
+  "engines": {
+    "vscode": ">=1.117.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./extension.js"
+}
