@@ -119,7 +119,7 @@ function describeActiveFile(activeFile: string, activeFileContent?: string | nul
     return `Die aktuell geöffnete ${activeFile} ist derzeit leer.`;
   }
 
-  const firstLine = nonEmptyLines[0].trim();
+  const firstLine = nonEmptyLines[0]?.trim() ?? "";
   const isBarePythonFunction = /^def\s+[A-Za-z_]\w*\([^)]*\):$/.test(firstLine);
   if (isBarePythonFunction && nonEmptyLines.length === 1) {
     return `Die aktuell geöffnete ${activeFile} enthält die Funktionsdefinition \`${firstLine}\`, aber noch keinen Funktionskörper.`;

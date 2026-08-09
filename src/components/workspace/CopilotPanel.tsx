@@ -35,7 +35,9 @@ function suggestionFor(file: string, content: string): string {
   );
 
   if (file.endsWith(".py") && simplePythonFunction) {
-    const [, functionName, leftOperand, rightOperand] = simplePythonFunction;
+    const functionName = simplePythonFunction[1] ?? "";
+    const leftOperand = simplePythonFunction[2] ?? "left";
+    const rightOperand = simplePythonFunction[3] ?? "right";
     if (/^(add|sum|plus)$/i.test(functionName)) {
       return `    return ${leftOperand} + ${rightOperand}\n`;
     }
