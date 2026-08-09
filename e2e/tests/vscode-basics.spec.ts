@@ -96,6 +96,27 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   ).toBeVisible();
 });
 
+test("Challenge: alternativer Workspace-Pfad erfüllt denselben Endzustand", async ({ page }) => {
+  await page.goto("/training/vscode-basics.challenge");
+  await waitForTrainingReady(page);
+
+  await openFileMenu(page);
+  await page.getByRole("button", { name: "Open Workspace...", exact: true }).click();
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
+  await page.getByPlaceholder("dateiname.py").fill("challenge.py");
+  await page.getByPlaceholder("dateiname.py").press("Enter");
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(
+    page.getByText(
+      "Der konkrete Klickweg darf abweichen; bewertet wird nur, ob Arbeitskontext und Zieldatei vorhanden sind.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+});
+
 test("Reload: geführter Fortschritt bleibt erhalten", async ({ page }) => {
   await page.goto(guidedUrl);
   await waitForTrainingReady(page);
