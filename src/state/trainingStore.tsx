@@ -531,7 +531,8 @@ export function useStoredProgressPercent(scenarioId: string | null) {
         return;
       }
       if (storedMode === "challenge") {
-        const passed = parsed.challengeOutcome === "passed" || (!parsed.challengeOutcome && parsed.finishedAt);
+        const passed =
+          parsed.challengeOutcome === "passed" || (!parsed.challengeOutcome && parsed.finishedAt);
         setPercent(passed ? 100 : 0);
         return;
       }
