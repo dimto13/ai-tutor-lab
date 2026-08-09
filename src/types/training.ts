@@ -9,7 +9,8 @@ export type TechnologyId =
   | "ai_coding_assistant"
   | "cli_agent"
   | "office_assistant"
-  | "ai_chat";
+  | "ai_chat"
+  | "artifact_preview";
 export type TrainingStepType = "action" | "explanation";
 export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
@@ -25,6 +26,8 @@ export type WorkspaceEventName =
   | "file.saved"
   | "terminal.opened"
   | "terminal.command.executed"
+  | "scm.staged"
+  | "scm.committed"
   | "panel.opened"
   | "copilot.enabled.changed"
   | "copilot.chat.opened"
@@ -36,6 +39,23 @@ export type WorkspaceEventName =
   | "ai.suggestion.shown"
   | "ai.suggestion.accepted"
   | "ai.suggestion.rejected"
+  | "artifact.created"
+  | "artifact.selected"
+  | "artifact.updated"
+  | "artifact.viewSwitched"
+  | "artifact.verified"
+  | "platform.overview.opened"
+  | "platform.code.opened"
+  | "platform.commit.history.opened"
+  | "platform.pull_requests.opened"
+  | "platform.branch.created"
+  | "platform.pull_request.created"
+  | "platform.pull_request.diff.opened"
+  | "platform.pull_request.review.replied"
+  | "platform.pull_request.checks.opened"
+  | "platform.pull_request.merge_readiness.opened"
+  | "platform.issues.opened"
+  | "platform.issue.opened"
   | "ui.element.inspected";
 
 /** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
@@ -112,11 +132,19 @@ export interface ScenarioAudience {
   introductionStepIds?: string[];
 }
 
+export interface ScenarioIntegrationEnvironment {
+  productId: string;
+  version: string;
+  runtimeAdapterId: string;
+}
+
 export interface ScenarioEnvironment {
   productId: string;
   version: string;
   runtimeAdapterId: string;
-  /** Optional product integrations hosted inside the primary runtime surface. */
+  /** Version-pinned product integrations hosted inside the primary runtime surface. */
+  integrations?: ScenarioIntegrationEnvironment[];
+  /** Derived by parseScenario for runtime consumers; never authored in scenario JSON. */
   integrationRuntimeAdapterIds?: string[];
   seed?: RuntimeSeed;
 }

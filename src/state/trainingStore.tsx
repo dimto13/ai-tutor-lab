@@ -9,8 +9,11 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { getScenario } from "@/scenarios";
-import { getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
-import { normalizeGuidedStepProgress } from "@/state/trainingProgress";
+import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import {
+  findNextIncompleteStepId,
+  normalizeGuidedStepProgress,
+} from "@/state/trainingProgress";
 import type {
   ChallengeOutcome,
   Scenario,
@@ -22,6 +25,8 @@ import type {
 } from "@/types/training";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
+const runtimeStorageKey = (scenarioId: string, runtimeId: string) =>
+  `ai-training-lab:${scenarioId}:runtime:${runtimeId}:v1`;
 const CHALLENGE_TIMEOUT_MESSAGE =
   "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
 
@@ -64,6 +69,8 @@ interface TrainingContextValue {
   skipOptionalSteps: () => void;
   restart: () => void;
   registerMistake: (message: string) => void;
+  persistRuntimeSnapshot: (runtimeId: string, snapshot: unknown) => void;
+  restoreRuntimeSnapshot: (runtimeId: string) => Promise<boolean>;
 }
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
@@ -238,6 +245,64 @@ export function TrainingProvider({
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
+  const scenarioRuntimes = useMemo(
+    () =>
+      getRuntimeAdapters(
+        scenario.environment?.runtimeAdapterId,
+        scenario.environment?.integrationRuntimeAdapterIds,
+      ),
+    [scenario],
+  );
+
+  const persistRuntimeSnapshot = useCallback(
+    (runtimeId: string, snapshot: unknown) => {
+      if (!scenarioRuntimes.some((runtime) => runtime.id === runtimeId)) return;
+      try {
+        window.localStorage.setItem(
+          runtimeStorageKey(scenario.id, runtimeId),
+          JSON.stringify(snapshot),
+        );
+      } catch {
+        // Progress remains usable when a runtime snapshot cannot be serialized or stored.
+      }
+    },
+    [scenario.id, scenarioRuntimes],
+  );
+
+  const restoreRuntimeSnapshot = useCallback(
+    async (runtimeId: string) => {
+      const runtime = getRuntimeAdapter(runtimeId);
+      if (!runtime || !scenarioRuntimes.includes(runtime)) return false;
+
+      try {
+        const raw = window.localStorage.getItem(runtimeStorageKey(scenario.id, runtimeId));
+        if (raw) {
+          await runtime.restore(JSON.parse(raw));
+          return true;
+        }
+      } catch {
+        // A missing or incompatible snapshot falls back to a consistent fresh session below.
+      }
+
+      const persistedProgress = load(scenario);
+      const hasStarted =
+        persistedProgress.finishedAt === null &&
+        (persistedProgress.lastAction !== null ||
+          Object.values(persistedProgress.statuses).some(
+            (status) => status === "COMPLETED" || status === "VALIDATION_FAILED",
+          ));
+      if (mode !== "explore" && hasStarted) {
+        const freshProgress = initialProgress(scenario);
+        window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(freshProgress));
+        setProgress(freshProgress);
+        setHelpLevel(0);
+        setFeedback(null);
+      }
+      return false;
+    },
+    [mode, scenario, scenarioRuntimes],
+  );
+
   useEffect(() => {
     setHydrated(false);
     setProgress(load(scenario));
@@ -313,17 +378,20 @@ export function TrainingProvider({
     (stepId: string, successMessage: string) => {
       const index = scenario.steps.findIndex((step) => step.id === stepId);
       if (index < 0) return;
-      const next = scenario.steps[index + 1];
-      setProgress((current) => ({
-        ...current,
-        statuses: {
+      setProgress((current) => {
+        const statuses: Record<string, StepStatus> = {
           ...current.statuses,
           [stepId]: "COMPLETED",
-          ...(next ? { [next.id]: "ACTIVE" as StepStatus } : {}),
-        },
-        activeStepId: next ? next.id : null,
-        finishedAt: next ? null : Date.now(),
-      }));
+        };
+        const nextStepId = findNextIncompleteStepId(scenario, statuses, stepId);
+        if (nextStepId) statuses[nextStepId] = "ACTIVE";
+        return {
+          ...current,
+          statuses,
+          activeStepId: nextStepId,
+          finishedAt: nextStepId ? null : Date.now(),
+        };
+      });
       setHelpLevel(0);
       setFeedback({ kind: "success", message: successMessage });
     },
@@ -564,10 +632,8 @@ export function TrainingProvider({
         });
       },
       restart: () => {
-        for (const runtime of getRuntimeAdapters(
-          scenario.environment?.runtimeAdapterId,
-          scenario.environment?.integrationRuntimeAdapterIds,
-        )) {
+        for (const runtime of scenarioRuntimes) {
+          window.localStorage.removeItem(runtimeStorageKey(scenario.id, runtime.id));
           runtime.reset?.();
         }
         setProgress(initialProgress(scenario));
@@ -579,6 +645,8 @@ export function TrainingProvider({
         setProgress((current) => ({ ...current, mistakes: current.mistakes + 1 }));
         setFeedback({ kind: "error", message });
       },
+      persistRuntimeSnapshot,
+      restoreRuntimeSnapshot,
     };
   }, [
     scenario,
@@ -589,6 +657,9 @@ export function TrainingProvider({
     helpLevel,
     challengeRemainingSeconds,
     completeStep,
+    scenarioRuntimes,
+    persistRuntimeSnapshot,
+    restoreRuntimeSnapshot,
   ]);
 
   return <TrainingContext.Provider value={value}>{children}</TrainingContext.Provider>;

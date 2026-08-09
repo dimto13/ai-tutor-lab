@@ -94,7 +94,11 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "editor.dirtyFiles",
     "panel.active",
     "terminal.lines",
+    "terminal.cwd",
     "scm.staged",
+    "scm.stagedFiles",
+    "scm.changedFiles",
+    "scm.commits",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 

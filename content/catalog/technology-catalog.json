@@ -1,0 +1,152 @@
+{
+  "technologies": [
+    {
+      "id": "ide",
+      "name": "IDE"
+    },
+    {
+      "id": "ai_coding_assistant",
+      "name": "AI Coding Assistant"
+    },
+    {
+      "id": "cli_agent",
+      "name": "CLI Agent"
+    },
+    {
+      "id": "source_control",
+      "name": "Source Control"
+    },
+    {
+      "id": "artifact_preview",
+      "name": "Artifact Preview"
+    }
+  ],
+  "providers": [
+    {
+      "id": "microsoft",
+      "name": "Microsoft"
+    },
+    {
+      "id": "github",
+      "name": "GitHub"
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic"
+    },
+    {
+      "id": "ai-train-lab",
+      "name": "AI Train Lab"
+    }
+  ],
+  "products": [
+    {
+      "id": "vscode",
+      "providerId": "microsoft",
+      "technologyId": "ide",
+      "name": "Visual Studio Code"
+    },
+    {
+      "id": "github-copilot",
+      "providerId": "github",
+      "technologyId": "ai_coding_assistant",
+      "name": "GitHub Copilot"
+    },
+    {
+      "id": "claude-code",
+      "providerId": "anthropic",
+      "technologyId": "cli_agent",
+      "name": "Claude Code"
+    },
+    {
+      "id": "github",
+      "providerId": "github",
+      "technologyId": "source_control",
+      "name": "GitHub"
+    },
+    {
+      "id": "artifact-preview",
+      "providerId": "ai-train-lab",
+      "technologyId": "artifact_preview",
+      "name": "Artifact Preview"
+    }
+  ],
+  "productVersions": [
+    {
+      "id": "vscode@1.x",
+      "productId": "vscode",
+      "version": "1.x",
+      "capabilities": ["filesystem", "editor", "terminal", "extensions", "source_control"],
+      "runtimeAdapterIds": ["vscode-simulator"]
+    },
+    {
+      "id": "github-copilot@2026.08",
+      "productId": "github-copilot",
+      "version": "2026.08",
+      "capabilities": ["chat", "inline_completion", "agent_mode"],
+      "runtimeAdapterIds": ["github-copilot-vscode-simulator"]
+    },
+    {
+      "id": "claude-code@1.x",
+      "productId": "claude-code",
+      "version": "1.x",
+      "capabilities": ["terminal", "chat", "agent_mode"]
+    },
+    {
+      "id": "github@simulated-2026-08",
+      "productId": "github",
+      "version": "simulated-2026-08",
+      "capabilities": ["source_control"],
+      "runtimeAdapterIds": ["source-control-platform-simulator"]
+    },
+    {
+      "id": "artifact-preview@1.x",
+      "productId": "artifact-preview",
+      "version": "1.x",
+      "capabilities": ["artifact_preview"],
+      "runtimeAdapterIds": ["artifact-preview-simulator"]
+    }
+  ],
+  "integrations": [
+    {
+      "id": "github-copilot-in-vscode",
+      "productId": "github-copilot",
+      "hostProductId": "vscode",
+      "capabilities": ["chat", "inline_completion", "agent_mode"]
+    },
+    {
+      "id": "artifact-preview-in-vscode",
+      "productId": "artifact-preview",
+      "hostProductId": "vscode",
+      "capabilities": ["artifact_preview"]
+    }
+  ],
+  "runtimeAdapters": [
+    {
+      "id": "vscode-simulator",
+      "productId": "vscode",
+      "kind": "simulator",
+      "capabilities": ["filesystem", "editor", "terminal", "extensions", "source_control"]
+    },
+    {
+      "id": "github-copilot-vscode-simulator",
+      "productId": "github-copilot",
+      "integrationId": "github-copilot-in-vscode",
+      "kind": "simulator",
+      "capabilities": ["chat", "inline_completion", "agent_mode"]
+    },
+    {
+      "id": "source-control-platform-simulator",
+      "productId": "github",
+      "kind": "simulator",
+      "capabilities": ["source_control"]
+    },
+    {
+      "id": "artifact-preview-simulator",
+      "productId": "artifact-preview",
+      "integrationId": "artifact-preview-in-vscode",
+      "kind": "simulator",
+      "capabilities": ["artifact_preview"]
+    }
+  ]
+}

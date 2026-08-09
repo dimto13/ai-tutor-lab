@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { normalizeGuidedStepProgress } from "../../src/state/trainingProgress.ts";
+import {
+  findNextIncompleteStepId,
+  normalizeGuidedStepProgress,
+} from "../../src/state/trainingProgress.ts";
 import type { Scenario } from "../../src/types/training.ts";
 
 const scenario = {
@@ -75,4 +78,28 @@ test("guided progress migration preserves one valid failed or active step", () =
   assert.equal(normalized.statuses["finish-task"], "VALIDATION_FAILED");
   assert.equal(normalized.activeStepId, "finish-task");
   assert.equal(normalized.finishedAt, null);
+});
+
+test("advancement preserves migrated skipped optional steps", () => {
+  const advancementScenario = {
+    id: "migration-advance.guided",
+    mode: "guided",
+    steps: [
+      { id: "current" },
+      { id: "new-optional", optional: true },
+      { id: "next-required" },
+    ],
+  } as unknown as Scenario;
+
+  const next = findNextIncompleteStepId(
+    advancementScenario,
+    {
+      current: "COMPLETED",
+      "new-optional": "SKIPPED",
+      "next-required": "NOT_STARTED",
+    },
+    "current",
+  );
+
+  assert.equal(next, "next-required");
 });

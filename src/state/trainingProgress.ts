@@ -22,6 +22,21 @@ export interface GuidedStepProgress {
   finishedAt: number | null;
 }
 
+export function findNextIncompleteStepId(
+  scenario: Scenario,
+  statuses: Record<string, StepStatus>,
+  completedStepId: string,
+): string | null {
+  const completedIndex = scenario.steps.findIndex((step) => step.id === completedStepId);
+  if (completedIndex < 0) return null;
+
+  for (const step of scenario.steps.slice(completedIndex + 1)) {
+    const status = statuses[step.id] ?? "NOT_STARTED";
+    if (!isComplete(status)) return step.id;
+  }
+  return null;
+}
+
 /**
  * Reconciles persisted guided progress with the current scenario structure.
  * Existing results survive content updates; newly introduced optional steps
