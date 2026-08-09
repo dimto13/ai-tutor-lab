@@ -1,0 +1,59 @@
+{
+  "id": "vscode-shortcuts.challenge",
+  "moduleId": "vscode-basics",
+  "mode": "challenge",
+  "learningLayer": "tool",
+  "title": "Visual Studio Code – Shortcut Challenge",
+  "description": "Erreiche den vorgegebenen Dateizustand innerhalb der Zeitgrenze. Nutze Tastatur-Shortcuts, um den Arbeitsablauf effizient auszuführen.",
+  "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["README.md"],
+      "contents": {
+        "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n"
+      }
+    }
+  },
+  "estimatedMinutes": 2,
+  "points": 120,
+  "timeLimitSeconds": 30,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      { "kind": "state", "selector": "filesystem.files", "includes": "challenge.py" },
+      {
+        "kind": "state",
+        "selector": "filesystem.contents",
+        "match": {
+          "challenge.py": "# Status für Marco: Review abgeschlossen."
+        }
+      },
+      { "kind": "state", "selector": "editor.dirtyFiles", "excludes": "challenge.py" }
+    ]
+  },
+  "solutionComparison": [
+    "Mit Ctrl+N eine neue Datei starten und als challenge.py anlegen.",
+    "Den vorgegebenen Text exakt eintragen: # Status für Marco: Review abgeschlossen.",
+    "Mit Ctrl+S speichern. Entscheidend sind korrekter Inhalt und gespeicherter Endzustand vor Ablauf der Zeit."
+  ],
+  "steps": [
+    {
+      "id": "shortcut_challenge_goal",
+      "title": "Datei in 30 Sekunden erstellen, befüllen und speichern",
+      "description": "Der Projektordner ist bereits geöffnet. Es gibt keine Schritt-für-Schritt-Führung und keine automatische Markierung.",
+      "instruction": "Lege challenge.py an, trage exakt „# Status für Marco: Review abgeschlossen.“ ein und speichere die Datei innerhalb von 30 Sekunden. Nutze dafür möglichst die Tastatur.",
+      "why": "Die Aufgabe prüft, ob du einen kurzen Editor-Workflow effizient und ohne vorgegebenen Klickpfad beherrschst.",
+      "helpLevels": [
+        "Nutze bekannte VS-Code-Shortcuts für neue Dateien und Speichern.",
+        "Windows/Linux: Ctrl+N für eine neue Datei und Ctrl+S zum Speichern.",
+        "Erfolgskriterien: challenge.py existiert, enthält exakt den vorgegebenen Text und ist gespeichert."
+      ],
+      "successMessage": "Shortcut-Challenge erfüllt. Datei, Inhalt und gespeicherter Zustand wurden rechtzeitig erreicht."
+    }
+  ]
+}
