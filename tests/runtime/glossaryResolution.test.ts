@@ -34,7 +34,7 @@ const tutorContext: TutorContext = {
 
 test("glossary annotation prefers the longer product term over overlapping Code", () => {
   const conceptKeys = getGlossaryConceptsForTechnology("ide").map((concept) => concept.key);
-  const segments = segmentGlossaryText("VS Code zeigt Code im Editor.", conceptKeys);
+  const segments = segmentGlossaryText("VS Code zeigt Code.", conceptKeys);
   const annotated = segments
     .filter((segment) => segment.concept)
     .map((segment) => ({ text: segment.text, key: segment.concept?.key }));
