@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - main
-      - "feature/**"
   pull_request:
     branches:
       - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -46,6 +49,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Technology catalog tests
+        run: npm run test:catalog
 
       - name: Runtime adapter contract tests
         run: npm run test:runtime-contracts

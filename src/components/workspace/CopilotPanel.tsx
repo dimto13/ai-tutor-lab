@@ -5,6 +5,7 @@ import {
   type CopilotRuntimeState,
   type CopilotSuggestionStatus,
 } from "@/runtime/copilotRuntime";
+import { resolveCopilotProductProfile } from "@/runtime/copilotProductProfile";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { useTraining } from "@/state/trainingStore";
 
@@ -38,6 +39,12 @@ function emptyState(): CopilotRuntimeState {
 export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProps) {
   const { scenario } = useTraining();
   const runtimeSeed = scenario.environment?.seed;
+  const hostProductId = scenario.environment?.productId;
+  const integration = scenario.environment?.integrations?.find(
+    ({ runtimeAdapterId }) => runtimeAdapterId === copilotRuntime.id,
+  );
+  const integrationProductId = integration?.productId;
+  const integrationVersion = integration?.version;
   const rootRef = useRef<HTMLDivElement>(null);
   const suggestionSourceRef = useRef<SuggestionSourceState | null>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
@@ -46,7 +53,15 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
 
   useEffect(() => {
     const container = rootRef.current;
-    if (!container) return;
+    if (!container || !hostProductId || !integrationProductId || !integrationVersion) return;
+
+    copilotRuntime.configureProductProfile(
+      resolveCopilotProductProfile({
+        productId: integrationProductId,
+        hostProductId,
+        version: integrationVersion,
+      }),
+    );
 
     const unsubscribe = copilotRuntime.subscribeState((state) => setRuntimeState(state));
     void copilotRuntime.mount(container, runtimeSeed);
@@ -54,7 +69,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
       unsubscribe();
       void copilotRuntime.unmount();
     };
-  }, [runtimeSeed]);
+  }, [hostProductId, integrationProductId, integrationVersion, runtimeSeed]);
 
   useEffect(() => {
     suggestionSourceRef.current = null;
