@@ -259,7 +259,10 @@ export function CopilotPanel({
   const inlineSuggestionPortal =
     editorPortalTarget && visibleSuggestion
       ? createPortal(
-          <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-live="polite">
+          <div
+            className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+            aria-live="polite"
+          >
             <pre className="absolute bottom-0 left-12 right-0 top-0 m-0 whitespace-pre-wrap px-3 py-3 font-mono text-[13px] leading-6">
               <span className="invisible">{suggestionSourceRef.current?.content ?? ""}</span>
               <span className="text-muted-foreground/70">{visibleSuggestion.text}</span>
