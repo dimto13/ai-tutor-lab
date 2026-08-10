@@ -7,7 +7,14 @@
   "description": "Erzeuge aus einem fachlichen Auftrag eine kleine Teamübersicht, verändere sie mehrfach und erkenne einen stillen Verlust zwischen zwei Revisionen.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["vscode.product"]
+    "glossaryConcepts": [
+      "vscode.product",
+      "web.html",
+      "artifact.preview",
+      "github.copilot",
+      "copilot.chat",
+      "platform.review"
+    ]
   },
   "environment": {
     "productId": "vscode",

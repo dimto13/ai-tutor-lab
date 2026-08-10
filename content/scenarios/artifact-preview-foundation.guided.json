@@ -3,8 +3,8 @@
   "moduleId": "runtime-foundations",
   "mode": "guided",
   "learningLayer": "ai_workflow",
-  "title": "Artefakt-Vorschau – technischer Nachweis",
-  "description": "Prüfe die generische Ergebnisfläche mit HTML-, Tabellen- und Datenartefakten sowie einer deterministischen Revision.",
+  "title": "Ergebnisse prüfen – Vorschau und Überarbeitungen",
+  "description": "Lerne, unterschiedliche erzeugte Ergebnisse anzusehen, zwischen Vorschau und Quelltext zu wechseln, eine vorbereitete Überarbeitung zu übernehmen und das Ergebnis bewusst zu prüfen.",
   "environment": {
     "productId": "vscode",
     "version": "1.x",
@@ -103,9 +103,9 @@
     {
       "id": "select-html-artifact",
       "title": "HTML-Artefakt auswählen",
-      "description": "Die Ergebnisfläche kann unterschiedliche Artefakttypen innerhalb derselben Runtime darstellen.",
+      "description": "Die Ergebnisfläche kann unterschiedliche Ergebnisarten wie eine HTML-Seite, eine Tabelle oder strukturierte Daten anzeigen.",
       "instruction": "Wähle in der Artefakt-Vorschau die Team-Übersicht aus.",
-      "why": "Die Auswahl ist ein semantischer Runtime-Zustand und nicht an eine bestimmte React-Komponente gekoppelt.",
+      "why": "So kannst du mehrere erzeugte Ergebnisse in derselben Arbeitsfläche unterscheiden und gezielt auswählen.",
       "helpLevels": [
         "Die Artefakte erscheinen als Reiter im Kopf der Ergebnisfläche.",
         "Klicke auf „Team-Übersicht“.",
@@ -126,9 +126,9 @@
     {
       "id": "switch-to-source",
       "title": "Vorschau und Quelltext unterscheiden",
-      "description": "HTML wird entweder isoliert gerendert oder als unveränderter Quelltext angezeigt.",
+      "description": "Eine HTML-Seite kann entweder als fertige Vorschau oder als zugrunde liegender HTML-Text betrachtet werden.",
       "instruction": "Wechsle von der gerenderten Vorschau in den Quelltext.",
-      "why": "Die getrennte Quelltextansicht macht nachvollziehbar, was erzeugt wurde, ohne den Inhalt im Plattform-DOM auszuführen.",
+      "why": "Die Quelltextansicht zeigt nachvollziehbar, was erzeugt wurde, ohne dass du HTML selbst schreiben musst.",
       "helpLevels": [
         "Nutze die Umschaltung im Kopf des Artefakts.",
         "Klicke auf „Quelltext“.",
@@ -149,9 +149,9 @@
     {
       "id": "apply-artifact-revision",
       "title": "Deterministische Revision anwenden",
-      "description": "Eine hinterlegte Revision verändert den Artefaktzustand reproduzierbar und ohne Codeausführung.",
+      "description": "Eine vorbereitete Überarbeitung verändert das Ergebnis reproduzierbar und macht eine typische Iteration sichtbar.",
       "instruction": "Wende die Revision „Freigabestatus ergänzen“ an.",
-      "why": "Workflow-Szenarien können so sichtbare Iterationen zeigen, ohne echte KI- oder Formelberechnung auszuführen.",
+      "why": "So siehst du, wie sich ein Ergebnis nach einer gezielten Änderungsanforderung weiterentwickeln kann.",
       "helpLevels": [
         "Die verfügbare Revision steht am unteren Rand der Vorschau.",
         "Klicke auf „Freigabestatus ergänzen“.",
@@ -172,7 +172,7 @@
     {
       "id": "verify-artifact",
       "title": "Ergebnis aktiv verifizieren",
-      "description": "Ein sichtbares Artefakt ist zunächst nur ein Entwurf; die fachliche Prüfung bleibt eine eigene Nutzeraktion.",
+      "description": "Ein sichtbares Ergebnis ist zunächst nur ein Entwurf; die fachliche Prüfung bleibt eine eigene Nutzeraktion.",
       "instruction": "Markiere das aktive Ergebnis als geprüft.",
       "why": "Der Prüfschritt verhindert, dass ein erzeugtes Ergebnis allein durch seine Darstellung als korrekt gilt.",
       "helpLevels": [
@@ -193,5 +193,9 @@
       "highlightTooltip": "Bestätige die fachliche Prüfung als separate Handlung.",
       "successMessage": "Das Artefakt ist sichtbar als geprüft markiert."
     }
-  ]
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["artifact.preview", "web.html"]
+  }
 }

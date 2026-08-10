@@ -7,7 +7,14 @@
   "description": "Formuliere eine Recherche, verfolge mehrere simulierte Suchläufe, iteriere eine Vergleichstabelle und finde zwei eingebaute Quellenmängel.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["copilot.mcp", "ai.agent", "research.source_evidence"]
+    "glossaryConcepts": [
+      "copilot.mcp",
+      "ai.agent",
+      "research.source_evidence",
+      "github.copilot",
+      "copilot.chat",
+      "artifact.preview"
+    ]
   },
   "environment": {
     "productId": "vscode",

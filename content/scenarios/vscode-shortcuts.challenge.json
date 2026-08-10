@@ -6,6 +6,16 @@
   "title": "Visual Studio Code – Shortcut Challenge",
   "description": "Erreiche den vorgegebenen Dateizustand innerhalb der Zeitgrenze. Nutze Tastatur-Shortcuts, um den Arbeitsablauf effizient auszuführen.",
   "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "platform.review",
+      "vscode.shortcut",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.folder"
+    ]
+  },
   "environment": {
     "productId": "vscode",
     "version": "1.x",

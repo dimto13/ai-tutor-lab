@@ -18,7 +18,13 @@
       "programming.python",
       "vscode.workspace",
       "git.repository",
-      "copilot.inline_suggestion"
+      "copilot.inline_suggestion",
+      "vscode.editor",
+      "vscode.panel",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.mcp",
+      "copilot.agent_skill"
     ],
     "introductionStepIds": [
       "understand-code-and-programming",

@@ -15,7 +15,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts",
+    "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
     "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
     "test:catalog": "node --experimental-strip-types --test tests/catalog/*.test.ts",
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",

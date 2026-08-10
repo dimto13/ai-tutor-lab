@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "language": "de",
   "technologyConcepts": {
     "ide": [
@@ -22,7 +22,8 @@
       "vscode.status_bar",
       "vscode.folder",
       "vscode.workspace",
-      "vscode.extension"
+      "vscode.extension",
+      "vscode.shortcut"
     ],
     "source_control": [
       "git.repository",
@@ -59,7 +60,7 @@
       "copilot.mcp",
       "copilot.agent_skill"
     ],
-    "artifact_preview": ["artifact.preview"]
+    "artifact_preview": ["artifact.preview", "web.html"]
   },
   "concepts": [
     {
@@ -456,6 +457,22 @@
         "artifact.preview.applyRevision",
         "artifact.preview.verify"
       ]
+    },
+    {
+      "key": "web.html",
+      "term": "HTML",
+      "aliases": ["HTML-Seite", "HTML-Dokument"],
+      "simple": "HTML beschreibt die Struktur und den Inhalt einer Webseite, ähnlich wie eine Dokumentvorlage festlegt, welche Überschriften, Texte, Listen oder Tabellen an welcher Stelle stehen.",
+      "advanced": "HTML ist eine Auszeichnungssprache. Elemente wie Überschriften, Absätze, Links und Tabellen werden mit strukturellen Tags beschrieben und vom Browser dargestellt.",
+      "uiTargets": []
+    },
+    {
+      "key": "vscode.shortcut",
+      "term": "Shortcut",
+      "aliases": ["Tastenkürzel", "Keyboard Shortcut"],
+      "simple": "Ein Shortcut ist eine Tastenkombination, mit der du einen Befehl direkt ausführst, statt ihn über ein Menü anzuklicken – ähnlich wie Strg+C zum Kopieren in Office.",
+      "advanced": "VS Code ordnet Befehlen konfigurierbare Tastenkombinationen zu. Shortcuts beschleunigen wiederkehrende Aktionen, sind aber keine Voraussetzung, um die Funktion grundsätzlich zu verstehen.",
+      "uiTargets": []
     }
   ]
 }
