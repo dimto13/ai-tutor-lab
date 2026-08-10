@@ -6,7 +6,7 @@ import type { TrainingEvent, Validation, WorkspaceEventName } from "../src/types
 function event(
   type: WorkspaceEventName,
   payload: Record<string, unknown> = {},
-  id = type,
+  id: string = type,
 ): TrainingEvent<Record<string, unknown>> {
   return {
     id,
