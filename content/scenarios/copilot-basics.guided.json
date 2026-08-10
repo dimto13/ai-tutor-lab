@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "GitHub Copilot – Grundlagen",
-  "description": "Lerne zuerst die nötigen Grundbegriffe und nutze danach Copilot Chat als View in der Secondary Side Bar sowie Kontext, Arbeitsmodi, Modellauswahl und Inline-Vorschläge kontrolliert in einem synthetischen Beispiel.",
+  "description": "Lerne zuerst die nötigen Grundbegriffe und nutze danach Copilot Chat als View in der Secondary Side Bar sowie gezielt angehängten Kontext, Arbeitsmodi, Modellauswahl und Inline-Vorschläge direkt im Editor.",
   "learningObjectives": [
     "understand_code_and_python",
     "understand_project_context",
@@ -191,9 +191,9 @@
     {
       "id": "new-conversation",
       "title": "Neue Copilot-Unterhaltung beginnen",
-      "description": "Eine neue Unterhaltung beginnt ohne die bisherigen Chat-Nachrichten. Die geöffnete Datei und der Workspace können trotzdem weiter als Arbeitskontext verfügbar sein.",
+      "description": "Eine neue Unterhaltung beginnt ohne die bisherigen Chat-Nachrichten. Dateien werden nicht automatisch über einen Simulator-Schalter als Kontext mitgeschickt; relevanten Kontext fügst du im nächsten Schritt bewusst hinzu.",
       "instruction": "Starte über das Plus-Symbol eine neue Copilot-Unterhaltung.",
-      "why": "Eine neue Unterhaltung ist sinnvoll, wenn du einen Themenwechsel sauber vom bisherigen Dialog trennen möchtest. Die aktuell geöffnete Datei kann trotzdem weiterhin als Arbeitskontext verfügbar sein.",
+      "why": "Eine neue Unterhaltung ist sinnvoll, wenn du einen Themenwechsel sauber vom bisherigen Dialog trennen möchtest. Danach entscheidest du erneut bewusst, welche Dateien oder Referenzen die neue Aufgabe benötigt.",
       "helpLevels": [
         "Im Kopf des Copilot-Chats gibt es ein Plus-Symbol.",
         "Klicke auf Neue Copilot-Unterhaltung.",
@@ -202,25 +202,22 @@
       "expectedEvent": "copilot.conversation.started",
       "validation": {
         "kind": "event",
-        "type": "copilot.conversation.started",
-        "match": {
-          "activeFile": "calculator.py"
-        }
+        "type": "copilot.conversation.started"
       },
       "highlightTarget": "copilot.chat.newConversation",
       "highlightTooltip": "Beginne einen neuen Chat-Verlauf.",
-      "successMessage": "Neue Unterhaltung gestartet; calculator.py bleibt als Arbeitskontext erhalten."
+      "successMessage": "Neue Unterhaltung gestartet. Den nötigen Dateikontext fügst du jetzt gezielt hinzu."
     },
     {
       "id": "use-file-context",
-      "title": "Dateikontext bewusst nutzen",
-      "description": "calculator.py ist im Editor geöffnet. Nutze nur diese synthetische Datei als Kontext. private-notes.txt enthält bewusst einen synthetischen Geheimnis-Marker und bleibt außerhalb der Anfrage.",
-      "instruction": "Frage Copilot in eigenen Worten, was die aktuell geöffnete Datei macht, und bitte um eine kurze, klar gegliederte Antwort.",
+      "title": "Dateikontext bewusst hinzufügen",
+      "description": "calculator.py ist im Editor geöffnet. Hänge nur diese synthetische Datei über die Kontext-Aktion an. Alternativ können aktuelle Copilot-Chats Dateien über # referenzieren. private-notes.txt enthält bewusst einen synthetischen Geheimnis-Marker und bleibt außerhalb der Anfrage.",
+      "instruction": "Wähle Kontext hinzufügen, hänge calculator.py an und frage Copilot anschließend in eigenen Worten, was die Datei macht. Bitte um eine kurze, klar gegliederte Antwort.",
       "why": "Ein guter Prompt verbindet Ziel, relevanten Kontext, Randbedingungen und gewünschte Ausgabe. Gib nur Informationen frei, die für die Aufgabe erforderlich und zulässig sind.",
       "helpLevels": [
-        "Nutze das Eingabefeld Ask Copilot... im geöffneten Chat.",
-        "Formuliere eine Frage zur Aufgabe oder zum Zweck der aktuell geöffneten Datei und drücke Enter.",
-        "Das Prompt-Feld wird hervorgehoben. Frage dort in eigenen Worten nach der Aufgabe der aktuell geöffneten Datei und drücke Enter."
+        "Nutze die +-Aktion Kontext hinzufügen unter dem Chat und wähle calculator.py.",
+        "Prüfe, dass calculator.py als Kontext-Chip sichtbar ist. Formuliere danach deine Frage im Feld Ask Copilot... und drücke Enter.",
+        "Die Kontext-Aktion wird hervorgehoben. Hänge calculator.py an, frage anschließend nach Aufgabe oder Zweck der Datei und drücke Enter."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
@@ -233,9 +230,9 @@
           "prompt": ["Datei", "macht", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
         }
       },
-      "highlightTarget": "copilot.chat.prompt",
-      "highlightTooltip": "Stelle die geforderte Frage im aktuellen Dateikontext.",
-      "successMessage": "Deine frei formulierte Frage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
+      "highlightTarget": "copilot.chat.addContext",
+      "highlightTooltip": "Füge calculator.py gezielt als Chat-Kontext hinzu und stelle danach deine Frage.",
+      "successMessage": "Deine frei formulierte Frage wurde mit bewusst angehängter calculator.py verarbeitet."
     },
     {
       "id": "select-plan-mode",
@@ -320,14 +317,14 @@
     },
     {
       "id": "accept-inline-suggestion",
-      "title": "Unpassenden Vorschlag erkennen und korrigieren",
-      "description": "Der erste synthetische Inline-Vorschlag ist absichtlich fachlich falsch. Deine Aufgabe ist nicht, KI-Ausgaben blind zu übernehmen.",
-      "instruction": "Erzeuge einen Inline-Vorschlag für calculator.py. Prüfe die Rechenoperation und lehne den falschen ersten Vorschlag ab. Bitte Copilot im Chat um eine Korrektur auf Addition, erzeuge den Vorschlag erneut und nimm erst die fachlich richtige Variante an.",
-      "why": "Ablehnen verwirft einen ungeeigneten Vorschlag vor der Übernahme. Durch eine präzise Korrektur behältst du Ziel und Kontrolle, statt eine falsche Änderung weiterzuverwenden.",
+      "title": "Unpassenden Vorschlag im Editor erkennen und korrigieren",
+      "description": "Der erste synthetische Inline-Vorschlag erscheint als Ghost Text direkt in calculator.py und ist absichtlich fachlich falsch. Deine Aufgabe ist nicht, KI-Ausgaben blind zu übernehmen.",
+      "instruction": "Wechsle zum Editor und prüfe den sichtbaren Inline-Vorschlag. Verwirf die falsche Subtraktion mit Esc. Bitte Copilot im Chat um eine Korrektur auf Addition. Prüfe den neuen Ghost-Text im Editor und nimm erst die fachlich richtige Variante mit Tab an.",
+      "why": "Inline-Vorschläge gehören an die Stelle, die sie verändern würden. Esc verwirft einen ungeeigneten Vorschlag; Tab übernimmt nur die Variante, die du fachlich geprüft hast.",
       "helpLevels": [
-        "Vergleiche den vorgeschlagenen Rechenoperator mit der Anforderung Addition.",
-        "Erzeuge den Vorschlag, lehne die Subtraktion ab, formuliere im Chat eine Korrektur auf Addition und erzeuge erneut.",
-        "Prüfe zuerst den Vorschlag bei Inline-Vorschlag. Klicke bei der falschen Subtraktion auf Ablehnen, bitte im Prompt-Feld um Addition, erzeuge erneut und nimm nur return a + b an."
+        "Vergleiche den als Ghost Text angezeigten Rechenoperator im Editor mit der Anforderung Addition.",
+        "Fokussiere calculator.py und drücke Esc für die falsche Subtraktion. Bitte danach im Chat um Addition.",
+        "Der Editor wird hervorgehoben. Verwirf dort return a - b mit Esc, fordere im Chat a + b an, kehre zum Editor zurück und bestätige nur return a + b mit Tab."
       ],
       "expectedEvent": "ai.suggestion.accepted",
       "validation": {
@@ -340,9 +337,9 @@
           "text": "return a + b"
         }
       },
-      "highlightTarget": "copilot.inline.generate",
-      "highlightTooltip": "Prüfe den ersten Vorschlag fachlich; eine falsche Rechenoperation wird nicht übernommen.",
-      "successMessage": "Falschen Vorschlag verworfen, Copilot korrigiert und nur die passende Addition übernommen."
+      "highlightTarget": "vscode.editor",
+      "highlightTooltip": "Prüfe Inline-Vorschläge direkt im Editor; Esc verwirft, Tab übernimmt.",
+      "successMessage": "Falschen Ghost-Text verworfen, Copilot korrigiert und nur die passende Addition im Editor übernommen."
     },
     {
       "id": "understand-mcp",
