@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { CopilotPanel } from "./CopilotPanel";
 import { ArtifactPreviewPanel } from "./ArtifactPreviewPanel";
+import { VscodeMenuBar } from "./VscodeMenuBar";
 import { artifactPreviewRuntime } from "@/runtime/artifactPreviewRuntime";
 import { copilotRuntime } from "@/runtime/copilotRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
@@ -44,8 +45,6 @@ const INITIAL_CONTENT: Record<string, string> = {
   "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
 };
 
-const MENU_ITEMS = ["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Help"] as const;
-
 function toFileNodes(runtimeFiles: string[]): FileNode[] {
   const baseNames = new Set(BASE_FILES.map((node) => node.name));
   return [
@@ -68,7 +67,6 @@ export function Workspace() {
   const [view, setView] = useState<View | null>(null);
   const [repoOpen, setRepoOpen] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("none");
-  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [treeExpanded, setTreeExpanded] = useState(true);
   const [files, setFiles] = useState<FileNode[]>(BASE_FILES);
   const [contents, setContents] = useState<Record<string, string>>(INITIAL_CONTENT);
@@ -109,7 +107,6 @@ export function Workspace() {
       setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
       setStaged(runtimeState.staged);
       setWrongFile(runtimeState.wrongFile);
-      setFileMenuOpen(false);
       setNewFileName(null);
     });
 
@@ -150,7 +147,6 @@ export function Workspace() {
     setWorkspaceMode(nextMode);
     setRepoOpen(true);
     setView("explorer");
-    setFileMenuOpen(false);
     if (nextMode === "folder") {
       workspaceBus.emit("folder.opened", { name: "ai-training-demo", folderCount: 1 });
     } else {
@@ -254,21 +250,14 @@ export function Workspace() {
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-editor"
     >
       <div className="relative flex h-8 min-w-0 shrink-0 items-center border-b border-border bg-panel px-1 text-[12px] text-foreground/85 sm:px-2">
-        <div className="flex min-w-0 flex-1 items-center overflow-x-auto overflow-y-hidden">
-          {MENU_ITEMS.map((item) => (
-            <button
-              key={item}
-              data-highlight={item === "File" ? "vscode.menu.file" : undefined}
-              onClick={() => {
-                if (item !== "File") return;
-                inspect("vscode.menu.file");
-                setFileMenuOpen((open) => !open);
-              }}
-              className="shrink-0 rounded px-2 py-1 hover:bg-white/10"
-            >
-              {item}
-            </button>
-          ))}
+        <div className="min-w-0 flex-1">
+          <VscodeMenuBar
+            inspect={inspect}
+            openWorkingContext={applyWorkingContext}
+            openView={openView}
+            openPanel={openPanel}
+            openTerminal={openTerminal}
+          />
         </div>
         <span className="hidden shrink-0 pr-2 text-[11px] text-muted-foreground lg:inline">
           {workspaceMode === "workspace"
@@ -277,44 +266,6 @@ export function Workspace() {
               ? "ai-training-demo"
               : "Visual Studio Code"}
         </span>
-
-        {fileMenuOpen ? (
-          <div className="absolute left-2 top-8 z-30 w-72 rounded-md border border-border bg-panel py-1 shadow-2xl">
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
-              New Text File
-            </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
-              Open File...
-            </button>
-            <div className="my-1 border-t border-border" />
-            <button
-              data-highlight="vscode.menu.file.openFolder"
-              onClick={() => {
-                inspect("vscode.menu.file.openFolder");
-                applyWorkingContext("folder");
-              }}
-              className="block w-full px-3 py-1.5 text-left hover:bg-white/10"
-            >
-              Open Folder...
-            </button>
-            <button
-              data-highlight="vscode.menu.file.openWorkspace"
-              onClick={() => {
-                inspect("vscode.menu.file.openWorkspace");
-                applyWorkingContext("workspace");
-              }}
-              className="block w-full px-3 py-1.5 text-left hover:bg-white/10"
-            >
-              Open Workspace...
-            </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
-              Add Folder to Workspace...
-            </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-white/10">
-              Save Workspace As...
-            </button>
-          </div>
-        ) : null}
       </div>
 
       <div className="flex min-h-0 flex-1">
