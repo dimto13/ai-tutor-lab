@@ -36,8 +36,8 @@ export function FeedbackCapture({
         (source === "completion" ? (scenario.steps.at(-1)?.id ?? null) : null),
       mode,
       runtimeAdapterId: scenario.environment?.runtimeAdapterId ?? null,
-      appVersion: import.meta.env.VITE_APP_VERSION || "0.0.0-local",
-      commit: import.meta.env.VITE_APP_COMMIT_SHA || "local",
+      appVersion: import.meta.env["VITE_APP_VERSION"] || "0.0.0-local",
+      commit: import.meta.env["VITE_APP_COMMIT_SHA"] || "local",
     }),
     [mode, progress.activeStepId, scenario, source],
   );
@@ -118,8 +118,14 @@ export function FeedbackCapture({
             </label>
 
             <div className="mt-3 rounded-md border border-border bg-card p-2.5 text-[11px] leading-relaxed text-muted-foreground">
-              Kontext: {context.scenarioId} · {context.stepId ?? "kein aktiver Schritt"} ·{" "}
-              {context.mode}· {context.runtimeAdapterId ?? "kein Runtime-Adapter"} ·{" "}
+              Kontext: {context.scenarioId}
+              {" · "}
+              {context.stepId ?? "kein aktiver Schritt"}
+              {" · "}
+              {context.mode}
+              {" · "}
+              {context.runtimeAdapterId ?? "kein Runtime-Adapter"}
+              {" · "}
               {context.commit}
             </div>
 
