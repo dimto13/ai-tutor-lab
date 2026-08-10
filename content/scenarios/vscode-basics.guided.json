@@ -88,13 +88,13 @@
     {
       "id": "open_workspace",
       "title": "Ordner und Workspace unterscheiden",
-      "description": "Ein Workspace ist ein gespeicherter Arbeitskontext. Anders als ein einzelner Ordner kann er mehrere Ordner zusammenfassen und eigene VS-Code-Einstellungen speichern.",
-      "instruction": "Öffne über File → Open Workspace... den vorbereiteten Workspace.",
+      "description": "Ein Workspace ist ein gespeicherter Arbeitskontext. Anders als ein einzelner Ordner kann er mehrere Ordner zusammenfassen und eigene VS-Code-Einstellungen speichern. Im File-Menü heißt der passende Befehl Open Workspace from File....",
+      "instruction": "Öffne über File → Open Workspace from File... den vorbereiteten Workspace.",
       "why": "Open Folder arbeitet mit einem einzelnen Ordner; eine .code-workspace-Datei kann mehrere Ordner und gemeinsame Einstellungen bündeln.",
       "helpLevels": [
         "Öffne erneut das File-Menü.",
-        "Wähle Open Workspace... .",
-        "Öffne File und klicke auf Open Workspace... . Danach siehst du zwei Ordner und eine Workspace-Einstellung."
+        "Wähle Open Workspace from File... .",
+        "Öffne File und klicke auf Open Workspace from File... . Danach siehst du zwei Ordner und eine Workspace-Einstellung."
       ],
       "expectedEvent": "workspace.opened",
       "validation": {
