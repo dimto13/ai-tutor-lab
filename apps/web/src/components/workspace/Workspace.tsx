@@ -288,10 +288,16 @@ export function Workspace() {
         </div>
 
         <aside
-          data-highlight="vscode.sideBar"
-          onClickCapture={() => inspect("vscode.sideBar")}
-          className="flex w-28 shrink-0 flex-col border-r border-border bg-panel sm:w-44 md:w-60"
+          data-highlight="vscode.primarySideBar"
+          onClickCapture={() => inspect("vscode.primarySideBar")}
+          aria-label="Primary Side Bar"
+          className="relative flex w-28 shrink-0 flex-col border-r border-border bg-panel sm:w-44 md:w-60"
         >
+          <span
+            data-highlight="vscode.sideBar"
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+          />
           <div className="flex h-9 items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <span>
               {view === "explorer" || view === null
@@ -471,11 +477,6 @@ export function Workspace() {
                 ))
               )}
             </div>
-            {copilotIntegrated ? (
-              <div className="flex shrink-0 items-center pr-2">
-                <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
-              </div>
-            ) : null}
           </div>
 
           <div className="flex min-h-0 flex-1">
@@ -599,6 +600,10 @@ export function Workspace() {
             </div>
           ) : null}
         </div>
+
+        {copilotIntegrated ? (
+          <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
+        ) : null}
       </div>
 
       <div
