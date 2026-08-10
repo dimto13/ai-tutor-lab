@@ -35,6 +35,14 @@ Verbindliche Begriffe. Modelle und Mitarbeitende sollen dieselben Wörter benutz
 | **Code**                                                   | Genaue, schriftliche Arbeitsanweisungen für einen Computer; eine Excel-Formel ist ein vertrautes Beispiel                                                        |
 | **Programmierung**                                         | Eine Aufgabe in eindeutige, prüfbare Schritte zerlegen und diese als Code aufschreiben                                                                           |
 | **Python**                                                 | Eine Programmiersprache mit gut lesbaren Regeln; Dateien mit der Endung `.py` enthalten Python-Code                                                              |
+| **Activity Bar**                                           | Schmale Navigation ganz links; ähnlich der Navigationsleiste in Outlook wählt sie den Hauptbereich aus                                                           |
+| **Side Bar**                                               | Inhaltsbereich neben der Activity Bar; ähnlich dem Navigationsbereich in Word zeigt sie den Inhalt der gewählten Funktion                                        |
+| **View**                                                   | Spezialisierte Ansicht innerhalb von Side Bar oder Panel, vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office                       |
+| **Explorer**                                               | Datei- und Ordnerübersicht des Arbeitskontexts; ähnlich Windows Explorer oder dem Office-Dialog „Öffnen“                                                         |
+| **Editor**                                                 | Zentrale Arbeitsfläche für Dateiinhalt; vergleichbar mit Dokumentbereich in Word oder Arbeitsblatt in Excel                                                      |
+| **Panel**                                                  | Zusätzlicher Werkzeug- und Informationsbereich, meist unter dem Editor                                                                                            |
+| **Terminal**                                               | Textbasierte Befehlsansicht ohne direkten Office-Gegenpart; Befehle sind eindeutige Arbeitsanweisungen ähnlich dem Grundprinzip einer Excel-Formel                 |
+| **Status Bar**                                             | Kompakte Zustandsanzeige am unteren Rand, vergleichbar mit der Statusleiste in Word oder Excel                                                                    |
 | **Workspace**                                              | Der Arbeitskontext von VS Code: ein oder mehrere Ordner plus eigene Einstellungen, Empfehlungen und Konfigurationen                                              |
 | **Ordner öffnen**                                          | Nur ein Verzeichnis öffnen — ohne Workspace-Einstellungen                                                                                                        |
 | **Repository**                                             | Ein Projekt inklusive seiner vollständigen Änderungsgeschichte                                                                                                   |
@@ -58,10 +66,20 @@ technische Erklärung. Oberflächenbegriffe können zusätzlich mit einem `UiTar
 
 Lernenden-Personas werden als Daten in `content/personas/*.json` gepflegt. Ein Szenario referenziert
 die Persona über `audience.personaId` und listet unter `audience.glossaryConcepts` genau die Begriffe,
-die im Guide kontextuell als abrufbare Erklärungen erscheinen. `audience.introductionStepIds`
-kennzeichnet einen zusammenhängenden Block optionaler Erklärungsschritte. Der aktuelle Einstieg für
-programmiernahe Grundlagen verwendet die Persona `non-programmer`: Office-Erfahrung und einfache
-Excel-Formeln werden vorausgesetzt, Programmiererfahrung dagegen nicht.
+die im Guide kontextuell als abrufbare Erklärungen erscheinen.
+
+Für proaktive Einführungen gibt es zwei Formen:
+
+- `audience.introductionStepRefs` referenziert wiederverwendbare Erklärungsschritte aus
+  `content/introductions/de.json`. Der Content-Loader stellt diese bei Guided-Szenarien vor die
+  szenariospezifischen Schritte und leitet daraus die effektiven `introductionStepIds` ab.
+- `audience.introductionStepIds` kennzeichnet lokale, direkt im Szenario definierte optionale
+  Erklärungsschritte. Diese bleiben für szenariospezifische Grundlagen und bestehende Inhalte erhalten.
+
+Gemeinsame und lokale Einführungsschritte bilden zusammen einen zusammenhängenden optionalen Block am
+Anfang eines Guided-Szenarios. Der aktuelle Einstieg für programmiernahe Grundlagen verwendet die
+Persona `non-programmer`: Office-Erfahrung und einfache Excel-Formeln werden vorausgesetzt,
+Programmiererfahrung dagegen nicht.
 
 Die Verantwortungsgrenze ist verbindlich:
 
@@ -71,3 +89,17 @@ Die Verantwortungsgrenze ist verbindlich:
 - **Reaktive Erklärung ist Tutor-Funktion.** Rückfragen wie „Was ist ein Workspace?“ werden aus
   demselben Glossar deterministisch beantwortet. Der Tutor erfindet keine zusätzlichen
   Bedienhandlungen und ersetzt nicht die Einführungssequenz.
+
+## Sprachregel für Produktoberflächen
+
+Bei sichtbaren UI-Bezeichnungen bleibt der originale Produktbegriff die Referenz. Die deutsche
+Erklärung dient der Einordnung, darf aber keine zweite konkurrierende Bezeichnung etablieren.
+
+1. Beim ersten notwendigen Auftreten wird der originale UI-Begriff mit einer kurzen deutschen
+   Erklärung verbunden, zum Beispiel `File (Datei)` oder `Activity Bar (linke Navigationsleiste)`.
+2. Danach wird im selben Lernkontext konsequent der originale UI-Begriff verwendet, insbesondere in
+   Handlungsanweisungen, damit Text und sichtbare Oberfläche übereinstimmen.
+3. Sichtbare Menüpunkte und Schaltflächen werden nicht durch frei erfundene deutsche Produktnamen
+   ersetzt. Die Erklärung beschreibt die Funktion, nicht eine vermeintliche offizielle Übersetzung.
+4. Gibt es keinen sinnvollen Office-Gegenpart, wird das ausdrücklich gesagt. Die Analogie soll das
+   Verständnis erleichtern und keine fachlich falsche Gleichsetzung erzeugen.
