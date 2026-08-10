@@ -4,8 +4,24 @@
   "mode": "challenge",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Challenge",
-  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Entscheidend ist der Endzustand, nicht dein Klickweg.",
+  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Die Challenge baut auf den zuvor erklärten VS-Code-Grundbegriffen auf. Entscheidend ist der Endzustand, nicht dein Klickweg.",
   "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "vscode.activity_bar",
+      "vscode.file_menu",
+      "vscode.side_bar",
+      "vscode.view",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.panel",
+      "vscode.terminal",
+      "vscode.status_bar",
+      "vscode.folder",
+      "vscode.workspace"
+    ]
+  },
   "environment": {
     "productId": "vscode",
     "version": "1.x",
@@ -29,11 +45,11 @@
     {
       "id": "challenge_goal",
       "title": "Bestehendes Projekt öffnen und Datei anlegen",
-      "description": "Du bekommst nur Ziel und Erfolgskriterien. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
+      "description": "Du bekommst nur Ziel und Erfolgskriterien. Die Begriffe Ordner, Workspace und Explorer wurden in den Grundlagen bereits eingeführt. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
       "instruction": "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.py an.",
-      "why": "Die Challenge prüft, ob du die Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
+      "why": "Die Challenge prüft, ob du die bereits erklärte Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
       "helpLevels": [
-        "Überlege zuerst, wie VS Code einen Projektkontext öffnet.",
+        "Überlege zuerst, wie VS Code einen bestehenden Ordner oder Workspace als Arbeitskontext öffnet.",
         "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.",
         "Erfolgskriterien: Arbeitskontext geöffnet und challenge.py vorhanden."
       ],
