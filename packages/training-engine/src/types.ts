@@ -1,4 +1,9 @@
-export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "SKIPPED" | "VALIDATION_FAILED";
+export type StepStatus =
+  | "NOT_STARTED"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "SKIPPED"
+  | "VALIDATION_FAILED";
 
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
@@ -16,18 +21,34 @@ export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
 export type RuntimeSeed = Record<string, unknown>;
 
-export type WorkspaceEventName =
-  | "explorer.opened"
-  | "folder.opened"
+/** Stable cross-runtime vocabulary defined by the domain model. */
+export type CanonicalTrainingEventType =
   | "workspace.opened"
   | "repository.opened"
+  | "explorer.opened"
   | "file.created"
   | "file.updated"
-  | "file.saved"
+  | "file.deleted"
+  | "file.opened"
+  | "editor.selection.changed"
   | "terminal.opened"
   | "terminal.command.executed"
   | "scm.staged"
   | "scm.committed"
+  | "ai.prompt.submitted"
+  | "ai.suggestion.accepted"
+  | "ai.suggestion.rejected"
+  | "ui.element.inspected";
+
+/**
+ * Canonical events plus product/runtime-specific events that are still emitted
+ * by existing simulators. New generic engine behavior should prefer the
+ * canonical subset above.
+ */
+export type WorkspaceEventName =
+  | CanonicalTrainingEventType
+  | "folder.opened"
+  | "file.saved"
   | "panel.opened"
   | "copilot.enabled.changed"
   | "copilot.chat.opened"
@@ -37,8 +58,6 @@ export type WorkspaceEventName =
   | "copilot.model.changed"
   | "copilot.context.changed"
   | "ai.suggestion.shown"
-  | "ai.suggestion.accepted"
-  | "ai.suggestion.rejected"
   | "artifact.created"
   | "artifact.selected"
   | "artifact.updated"
@@ -55,8 +74,7 @@ export type WorkspaceEventName =
   | "platform.pull_request.checks.opened"
   | "platform.pull_request.merge_readiness.opened"
   | "platform.issues.opened"
-  | "platform.issue.opened"
-  | "ui.element.inspected";
+  | "platform.issue.opened";
 
 /** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
 export interface WorkspaceEvent {
@@ -68,7 +86,7 @@ export interface WorkspaceEvent {
 export interface TrainingEvent<P = unknown> {
   id: string;
   source: string;
-  type: string;
+  type: WorkspaceEventName;
   timestamp: string;
   sessionId: string;
   payload: P;
@@ -112,8 +130,7 @@ export type Validation =
   | {
       kind: "sequence";
       of: Validation[];
-      /** When true, matching events must occur in authored order. */
-      ordered?: boolean;
+      ordered: boolean;
     }
   | {
       kind: "all";
