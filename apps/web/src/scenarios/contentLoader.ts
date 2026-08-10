@@ -10,7 +10,10 @@ const workspaceEventNameSchema = z.enum([
   "repository.opened",
   "file.created",
   "file.updated",
+  "file.deleted",
+  "file.opened",
   "file.saved",
+  "editor.selection.changed",
   "terminal.opened",
   "terminal.command.executed",
   "scm.staged",
@@ -23,6 +26,7 @@ const workspaceEventNameSchema = z.enum([
   "copilot.mode.changed",
   "copilot.model.changed",
   "copilot.context.changed",
+  "ai.prompt.submitted",
   "ai.suggestion.shown",
   "ai.suggestion.accepted",
   "ai.suggestion.rejected",
@@ -69,7 +73,13 @@ export const validationSchema: z.ZodType<Validation> = z.lazy(
     z.union([
       eventValidationSchema,
       stateValidationSchema,
+      z.object({
+        kind: z.literal("sequence"),
+        of: z.array(validationSchema).min(1),
+        ordered: z.boolean(),
+      }),
       z.object({ kind: z.literal("all"), of: z.array(validationSchema).min(1) }),
+      z.object({ kind: z.literal("any"), of: z.array(validationSchema).min(1) }),
     ]) as z.ZodType<Validation>,
 );
 
