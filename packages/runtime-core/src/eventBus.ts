@@ -1,21 +1,28 @@
 import type { WorkspaceEvent, WorkspaceEventName } from "@ai-train-lab/training-engine";
 
+export {
+  InProcessTrainingEventBus,
+  createTrainingEvent,
+  type TelemetrySink,
+  type TrainingEventBus,
+  type TrainingEventHandler,
+} from "@ai-train-lab/training-engine";
+
 type Handler = (event: WorkspaceEvent) => void;
 
 /**
- * Minimal runtime-agnostic event bus. The simulated workspace emits events here;
- * the training engine subscribes. Real runtime adapters (VSCodeRuntimeAdapter,
- * TerminalRuntimeAdapter, M365RuntimeAdapter) can later emit the same events.
+ * Transitional simulator-internal bus. Runtime adapters translate these events
+ * into canonical TrainingEvent objects at their public subscribe boundary.
  */
 export class EventBus {
-  private handlers = new Set<Handler>();
+  private readonly handlers = new Set<Handler>();
 
-  emit(name: WorkspaceEventName, payload: Record<string, unknown> = {}) {
+  emit(name: WorkspaceEventName, payload: Record<string, unknown> = {}): void {
     const event: WorkspaceEvent = { name, payload };
-    this.handlers.forEach((h) => h(event));
+    this.handlers.forEach((handler) => handler(event));
   }
 
-  subscribe(handler: Handler) {
+  subscribe(handler: Handler): () => void {
     this.handlers.add(handler);
     return () => {
       this.handlers.delete(handler);
