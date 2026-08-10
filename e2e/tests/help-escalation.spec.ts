@@ -23,9 +23,7 @@ test("Guided eskaliert Orientierung zu exakter Aktion und starkem Highlight", as
 
   await page.getByRole("button", { name: "Mehr Hilfe" }).click();
   await expect(
-    page.getByText(
-      "Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol.",
-    ),
+    page.getByText("Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol."),
   ).toBeVisible();
   await expect(spotlight).toHaveClass(/animate-pulse/);
 });
