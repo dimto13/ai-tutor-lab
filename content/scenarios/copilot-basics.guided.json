@@ -208,6 +208,9 @@
         "type": "copilot.prompt.submitted",
         "match": {
           "activeFile": "calculator.py"
+        },
+        "containsAny": {
+          "prompt": ["Datei", "macht", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
         }
       },
       "highlightTarget": "copilot.chat.prompt",

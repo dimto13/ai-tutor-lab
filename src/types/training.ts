@@ -86,12 +86,16 @@ export type Validation =
       type: WorkspaceEventName;
       match?: Record<string, unknown>;
       contains?: Record<string, string>;
+      /** Case-insensitive synonym fragments; at least one fragment per field must match. */
+      containsAny?: Record<string, string[]>;
     }
   | {
       kind: "state";
       selector: string;
       equals?: unknown;
       includes?: unknown;
+      /** Tolerant alternative values/fragments; at least one must match. */
+      includesAny?: unknown[];
       excludes?: unknown;
       match?: Record<string, unknown>;
     }

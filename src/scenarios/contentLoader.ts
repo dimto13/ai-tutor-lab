@@ -51,6 +51,7 @@ const eventValidationSchema = z.object({
   type: workspaceEventNameSchema,
   match: z.record(z.unknown()).optional(),
   contains: z.record(z.string()).optional(),
+  containsAny: z.record(z.array(z.string().min(1)).min(1)).optional(),
 });
 
 const stateValidationSchema = z.object({
@@ -58,6 +59,7 @@ const stateValidationSchema = z.object({
   selector: z.string().min(1),
   equals: z.unknown().optional(),
   includes: z.unknown().optional(),
+  includesAny: z.array(z.unknown()).min(1).optional(),
   excludes: z.unknown().optional(),
   match: z.record(z.unknown()).optional(),
 });
@@ -161,6 +163,7 @@ const copilotChatResponseSeedSchema = z
     response: z.string().min(1),
     file: nonBlankSeedStringSchema.optional(),
     promptContains: nonBlankSeedStringSchema.optional(),
+    promptContainsAny: z.array(nonBlankSeedStringSchema).min(1).optional(),
   })
   .strict();
 

@@ -33,6 +33,7 @@ interface CopilotChatResponseTemplate {
   response: string;
   file?: string;
   promptContains?: string;
+  promptContainsAny?: string[];
 }
 
 export interface CopilotRuntimeState {
@@ -164,12 +165,19 @@ function chatResponseTemplatesFromSeed(seed?: RuntimeSeed): CopilotChatResponseT
     const response = item["response"];
     const file = item["file"];
     const promptContains = item["promptContains"];
+    const promptContainsAny = item["promptContainsAny"];
     if (
       typeof response !== "string" ||
       !response ||
       (file !== undefined && (typeof file !== "string" || !file.trim())) ||
       (promptContains !== undefined &&
-        (typeof promptContains !== "string" || !promptContains.trim()))
+        (typeof promptContains !== "string" || !promptContains.trim())) ||
+      (promptContainsAny !== undefined &&
+        (!Array.isArray(promptContainsAny) ||
+          promptContainsAny.length === 0 ||
+          !promptContainsAny.every(
+            (fragment) => typeof fragment === "string" && fragment.trim().length > 0,
+          )))
     ) {
       throw new TypeError("Invalid Copilot chat response seed");
     }
@@ -177,6 +185,7 @@ function chatResponseTemplatesFromSeed(seed?: RuntimeSeed): CopilotChatResponseT
       response,
       ...(file === undefined ? {} : { file }),
       ...(promptContains === undefined ? {} : { promptContains }),
+      ...(promptContainsAny === undefined ? {} : { promptContainsAny }),
     };
   });
 }
@@ -220,7 +229,11 @@ function createAssistantResponse(
     (entry) =>
       (entry.file === undefined || entry.file === activeFile) &&
       (entry.promptContains === undefined ||
-        normalizedPrompt.includes(entry.promptContains.toLowerCase())),
+        normalizedPrompt.includes(entry.promptContains.toLowerCase())) &&
+      (entry.promptContainsAny === undefined ||
+        entry.promptContainsAny.some((fragment) =>
+          normalizedPrompt.includes(fragment.toLowerCase()),
+        )),
   );
   if (configuredResponse) return configuredResponse.response;
 

@@ -137,6 +137,18 @@ function eventPayload(event: TrainingEvent): Record<string, unknown> {
   return event.payload as Record<string, unknown>;
 }
 
+function normalizeComparableText(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .replace(/ß/g, "ss")
+    .toLocaleLowerCase("de-DE");
+}
+
+function containsNormalizedFragment(actual: string, expected: string): boolean {
+  return normalizeComparableText(actual).includes(normalizeComparableText(expected));
+}
+
 function validateEvent(validation: Validation | undefined, event: TrainingEvent): ValidationResult {
   if (!validation) return { ok: true };
   if (validation.kind !== "event") return { ok: false };
@@ -154,6 +166,15 @@ function validateEvent(validation: Validation | undefined, event: TrainingEvent)
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
     if (typeof actual !== "string" || !actual.includes(expectedFragment)) {
+      return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };
+    }
+  }
+  for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {
+    const actual = payload[key];
+    if (
+      typeof actual !== "string" ||
+      !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))
+    ) {
       return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };
     }
   }
@@ -186,6 +207,20 @@ async function validateState(
       if (!value.includes(validation.includes)) return false;
     } else if (typeof value === "string") {
       if (!value.includes(String(validation.includes))) return false;
+    } else {
+      return false;
+    }
+  }
+  if (validation.includesAny) {
+    if (Array.isArray(value)) {
+      if (!validation.includesAny.some((candidate) => value.includes(candidate))) return false;
+    } else if (typeof value === "string") {
+      if (
+        !validation.includesAny.some((candidate) =>
+          containsNormalizedFragment(value, String(candidate)),
+        )
+      )
+        return false;
     } else {
       return false;
     }
