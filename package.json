@@ -33,7 +33,7 @@
     "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
     "lint": "eslint apps packages scripts tests",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "bash -c 'cp apps/web/src/components/workspace/CopilotPanel.tsx /tmp/CopilotPanel.before; prettier --write apps/web/src/components/workspace/CopilotPanel.tsx >/dev/null; diff -u /tmp/CopilotPanel.before apps/web/src/components/workspace/CopilotPanel.tsx | gzip -c | base64 -w 1000 | while IFS= read -r chunk; do printf \"::error title=FMTDIFF::%s\\n\" \"$chunk\"; done; exit 1'"
   },
   "dependencies": {
     "zod": "^3.24.2"
