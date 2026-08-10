@@ -15,8 +15,7 @@
     {
       "id": "plan",
       "label": "Plan",
-      "description": "Einen detaillierten Implementierungsplan erstellen, bevor Code geändert wird.",
-      "status": "preview"
+      "description": "Einen detaillierten Implementierungsplan erstellen, bevor Code geändert wird."
     },
     {
       "id": "agent",
