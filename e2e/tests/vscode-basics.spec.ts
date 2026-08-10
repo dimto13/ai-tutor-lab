@@ -160,11 +160,11 @@ test("Guided: Explorer, Folder, Workspace, Editor und Panel laufen als Aktionske
   await reachCreateFileStep(page);
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("hello.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
+  await page.getByPlaceholder("dateiname.ext").fill("notiz.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
   await expectGuidedStep(page, 11, "Editor verwenden");
 
-  await page.getByPlaceholder('print("Hello AI Training")').fill('print("Hello AI Training")');
+  await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Hello AI Training");
   await expectGuidedStep(page, 12, "Panel und seine Views unterscheiden");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).last().click();
@@ -237,8 +237,8 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await page.getByRole("button", { name: "ai-training-demo", exact: true }).click();
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("challenge.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
+  await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
@@ -260,8 +260,8 @@ test("Challenge: alternativer Workspace-Pfad erfüllt denselben Endzustand", asy
   await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("challenge.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
+  await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
@@ -292,8 +292,8 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
   await reachCreateFileStep(page);
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("wrong.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
+  await page.getByPlaceholder("dateiname.ext").fill("wrong.py");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
 
   await expectGuidedStep(page, 10, "Datei erstellen");
   await expect(
@@ -303,8 +303,8 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("hello.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
+  await page.getByPlaceholder("dateiname.ext").fill("notiz.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
   await expectGuidedStep(page, 11, "Editor verwenden");
 });
 

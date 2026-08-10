@@ -53,7 +53,10 @@
         "Das Explorer-Symbol wird deutlich hervorgehoben. Klicke genau auf dieses oberste Datei-Symbol in der Activity Bar."
       ],
       "expectedEvent": "explorer.opened",
-      "validation": { "kind": "event", "type": "explorer.opened" },
+      "validation": {
+        "kind": "event",
+        "type": "explorer.opened"
+      },
       "highlightTarget": "vscode.activityBar.explorer",
       "highlightTooltip": "Öffne den Explorer für den Projektworkflow.",
       "successMessage": "Explorer geöffnet. Jetzt kannst du mit dem vorbereiteten Projekt arbeiten."
@@ -73,7 +76,9 @@
       "validation": {
         "kind": "event",
         "type": "repository.opened",
-        "match": { "name": "ai-training-demo" }
+        "match": {
+          "name": "ai-training-demo"
+        }
       },
       "highlightTarget": "vscode.explorer.preparedRepository",
       "highlightTooltip": "Öffne das vorbereitete Repository ai-training-demo.",
@@ -94,7 +99,9 @@
       "validation": {
         "kind": "event",
         "type": "file.created",
-        "match": { "filename": "hello.py" }
+        "match": {
+          "filename": "hello.py"
+        }
       },
       "highlightTarget": "vscode.explorer.newFile",
       "highlightTooltip": "Neue Datei im Projekt anlegen.",
@@ -102,25 +109,29 @@
     },
     {
       "id": "step_4",
-      "title": "Code schreiben",
-      "description": "Bearbeite die neue Datei im Editor.",
-      "instruction": "Schreibe print(\"Hello AI Training\") in die Datei hello.py.",
-      "why": "Die Änderung wird im nächsten Schritt von Git erkannt. Damit siehst du den Übergang vom Editor zur Versionsverwaltung.",
+      "title": "Ersten Code von Copilot erzeugen und prüfen",
+      "description": "hello.py ist eine Python-Datei, aber du musst den ersten Code nicht selbst erfinden oder abtippen. Copilot erzeugt einen vorbereiteten Inline-Vorschlag, den du vor dem Übernehmen prüfst.",
+      "instruction": "Öffne Copilot, erzeuge den Inline-Vorschlag für hello.py und nimm ihn nach der Sichtprüfung an.",
+      "why": "So lernst du einen realistischen KI-Workflow: Ziel und Kontext festlegen, Vorschlag erzeugen lassen, Ergebnis prüfen und erst danach übernehmen.",
       "helpLevels": [
-        "Klicke in den Editor und tippe die Zeile ab.",
-        "Schreibe genau: print(\"Hello AI Training\")",
-        "Der Editorbereich wird hervorgehoben. Klicke hinein und schreibe genau print(\"Hello AI Training\")."
+        "Öffne Copilot über den Button rechts oberhalb des Editors.",
+        "Klicke im Bereich Inline-Vorschlag zuerst auf Vorschlag erzeugen und prüfe den angezeigten Text.",
+        "Der Copilot-Button wird hervorgehoben. Öffne Copilot, klicke auf Vorschlag erzeugen, prüfe print(\"Hello from Copilot\") und klicke anschließend auf Annehmen."
       ],
-      "expectedEvent": "file.updated",
+      "expectedEvent": "ai.suggestion.accepted",
       "validation": {
         "kind": "event",
-        "type": "file.updated",
-        "match": { "filename": "hello.py" },
-        "contains": { "content": "Hello AI Training" }
+        "type": "ai.suggestion.accepted",
+        "match": {
+          "file": "hello.py"
+        },
+        "contains": {
+          "text": "Hello from Copilot"
+        }
       },
-      "highlightTarget": "vscode.editor",
-      "highlightTooltip": "Bearbeite die Datei, bevor du die Änderung mit Git prüfst.",
-      "successMessage": "Datei geändert. Jetzt kann Git den neuen Stand erkennen."
+      "highlightTarget": "copilot.chat.toggle",
+      "highlightTooltip": "Öffne Copilot und erzeuge den vorbereiteten Inline-Vorschlag.",
+      "successMessage": "Der erste Code wurde von Copilot erzeugt, geprüft und bewusst übernommen."
     },
     {
       "id": "step_5",
@@ -134,7 +145,10 @@
         "Der Terminal-Button unten rechts wird hervorgehoben. Klicke genau auf diesen Button."
       ],
       "expectedEvent": "terminal.opened",
-      "validation": { "kind": "event", "type": "terminal.opened" },
+      "validation": {
+        "kind": "event",
+        "type": "terminal.opened"
+      },
       "highlightTarget": "vscode.statusBar.terminal",
       "highlightTooltip": "Öffne das Terminal für die Git-Befehle.",
       "successMessage": "Terminal geöffnet. Jetzt kannst du den Repository-Status prüfen."
@@ -154,7 +168,9 @@
       "validation": {
         "kind": "event",
         "type": "terminal.command.executed",
-        "match": { "command": "git status" }
+        "match": {
+          "command": "git status"
+        }
       },
       "highlightTarget": "vscode.panel.terminal.input",
       "highlightTooltip": "Befehle eingeben und mit Enter ausführen.",
@@ -175,8 +191,12 @@
       "validation": {
         "kind": "event",
         "type": "terminal.command.executed",
-        "match": { "staged": true },
-        "contains": { "command": "git commit" }
+        "match": {
+          "staged": true
+        },
+        "contains": {
+          "command": "git commit"
+        }
       },
       "highlightTarget": "vscode.panel.terminal.input",
       "highlightTooltip": "Erst git add, dann git commit.",
@@ -197,8 +217,12 @@
       "validation": {
         "kind": "event",
         "type": "copilot.prompt.submitted",
-        "match": { "activeFile": "hello.py" },
-        "contains": { "prompt": "Addieren zweier Zahlen" }
+        "match": {
+          "activeFile": "hello.py"
+        },
+        "contains": {
+          "prompt": "Addieren zweier Zahlen"
+        }
       },
       "highlightTarget": "copilot.chat.toggle",
       "highlightTooltip": "GitHub Copilot als integriertes, aber eigenständiges Produkt öffnen.",

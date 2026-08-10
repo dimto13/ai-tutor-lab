@@ -25,33 +25,41 @@
   "completionValidation": {
     "kind": "all",
     "of": [
-      { "kind": "state", "selector": "filesystem.files", "includes": "challenge.py" },
+      {
+        "kind": "state",
+        "selector": "filesystem.files",
+        "includes": "challenge.txt"
+      },
       {
         "kind": "state",
         "selector": "filesystem.contents",
         "match": {
-          "challenge.py": "# Status für Marco: Review abgeschlossen."
+          "challenge.txt": "Status für Marco: Review abgeschlossen."
         }
       },
-      { "kind": "state", "selector": "editor.dirtyFiles", "excludes": "challenge.py" }
+      {
+        "kind": "state",
+        "selector": "editor.dirtyFiles",
+        "excludes": "challenge.txt"
+      }
     ]
   },
   "solutionComparison": [
-    "Mit Ctrl+Shift+E den Explorer öffnen und dort eine neue Datei challenge.py anlegen.",
-    "Den vorgegebenen Text exakt eintragen: # Status für Marco: Review abgeschlossen.",
+    "Mit Ctrl+Shift+E den Explorer öffnen und dort eine neue Datei challenge.txt anlegen.",
+    "Den vorgegebenen Text exakt eintragen: Status für Marco: Review abgeschlossen.",
     "Mit Ctrl+S speichern. Entscheidend sind korrekter Inhalt und gespeicherter Endzustand vor Ablauf der Zeit."
   ],
   "steps": [
     {
       "id": "shortcut_challenge_goal",
-      "title": "Datei in 30 Sekunden erstellen, befüllen und speichern",
+      "title": "Textdatei in 30 Sekunden erstellen, befüllen und speichern",
       "description": "Der Projektordner ist bereits geöffnet. Es gibt keine Schritt-für-Schritt-Führung und keine automatische Markierung.",
-      "instruction": "Lege challenge.py an, trage exakt „# Status für Marco: Review abgeschlossen.“ ein und speichere die Datei innerhalb von 30 Sekunden. Nutze dafür möglichst die Tastatur.",
+      "instruction": "Lege challenge.txt an, trage exakt „Status für Marco: Review abgeschlossen.“ ein und speichere die Datei innerhalb von 30 Sekunden. Nutze dafür möglichst die Tastatur.",
       "why": "Die Aufgabe prüft, ob du einen kurzen Editor-Workflow effizient und ohne vorgegebenen Klickpfad beherrschst.",
       "helpLevels": [
         "Nutze bekannte VS-Code-Shortcuts, um den Explorer zu öffnen und die Datei zu speichern.",
         "Windows/Linux: Ctrl+Shift+E öffnet den Explorer; Ctrl+S speichert die aktive Datei.",
-        "Drücke Ctrl+Shift+E, lege im Explorer challenge.py an, trage exakt „# Status für Marco: Review abgeschlossen.“ ein und drücke anschließend Ctrl+S, damit die Datei gespeichert ist."
+        "Drücke Ctrl+Shift+E, lege im Explorer challenge.txt an, trage exakt „Status für Marco: Review abgeschlossen.“ ein und drücke anschließend Ctrl+S, damit die Datei gespeichert ist."
       ],
       "successMessage": "Shortcut-Challenge erfüllt. Datei, Inhalt und gespeicherter Zustand wurden rechtzeitig erreicht."
     }

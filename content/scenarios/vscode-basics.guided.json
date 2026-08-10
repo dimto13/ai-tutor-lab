@@ -26,9 +26,7 @@
       "vscode.output",
       "vscode.status_bar",
       "vscode.folder",
-      "vscode.workspace",
-      "foundation.code",
-      "programming.python"
+      "vscode.workspace"
     ],
     "introductionStepRefs": [
       "vscode.ui.activity-bar",
@@ -59,7 +57,10 @@
         "Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol."
       ],
       "expectedEvent": "explorer.opened",
-      "validation": { "kind": "event", "type": "explorer.opened" },
+      "validation": {
+        "kind": "event",
+        "type": "explorer.opened"
+      },
       "highlightTarget": "vscode.activityBar.explorer",
       "highlightTooltip": "Explorer: Dateien und Ordner des aktuellen Arbeitskontexts.",
       "successMessage": "Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben."
@@ -79,7 +80,9 @@
       "validation": {
         "kind": "event",
         "type": "folder.opened",
-        "match": { "name": "ai-training-demo" }
+        "match": {
+          "name": "ai-training-demo"
+        }
       },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "File enthält Befehle für Dateien, Ordner und Workspaces.",
@@ -100,7 +103,9 @@
       "validation": {
         "kind": "event",
         "type": "workspace.opened",
-        "match": { "name": "ai-training-lab.code-workspace" }
+        "match": {
+          "name": "ai-training-lab.code-workspace"
+        }
       },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "Ein gespeicherter Workspace kann mehrere Ordner zusammenfassen.",
@@ -109,45 +114,51 @@
     {
       "id": "create_file",
       "title": "Datei erstellen",
-      "description": "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an.",
-      "instruction": "Erstelle im Projektordner ai-training-demo eine Datei hello.py.",
-      "why": "Der Explorer ist der zentrale Bereich, um Dateien und Ordner im Arbeitskontext zu finden und zu verwalten.",
+      "description": "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an. Für diesen Grundlagenkurs verwenden wir bewusst eine normale Textdatei statt Programmcode.",
+      "instruction": "Erstelle im Projektordner ai-training-demo eine Datei notiz.txt.",
+      "why": "So übst du die Dateioperation im Explorer, ohne gleichzeitig eine Programmiersprache lernen zu müssen.",
       "helpLevels": [
         "Im Kopf des Explorers gibt es die Aktion Neue Datei.",
-        "Klicke auf Neue Datei und tippe hello.py ein.",
-        "Der Neue-Datei-Button wird hervorgehoben. Klicke darauf, gib hello.py ein und bestätige mit Enter."
+        "Klicke auf Neue Datei und tippe notiz.txt ein.",
+        "Der Neue-Datei-Button wird hervorgehoben. Klicke darauf, gib notiz.txt ein und bestätige mit Enter."
       ],
       "expectedEvent": "file.created",
       "validation": {
         "kind": "event",
         "type": "file.created",
-        "match": { "filename": "hello.py" }
+        "match": {
+          "filename": "notiz.txt"
+        }
       },
       "highlightTarget": "vscode.explorer.newFile",
       "highlightTooltip": "Neue Datei im aktuellen Projektordner anlegen.",
-      "successMessage": "hello.py wurde erstellt und im Editor geöffnet."
+      "successMessage": "notiz.txt wurde erstellt und im Editor geöffnet."
     },
     {
       "id": "edit_file",
-      "title": "Editor verwenden",
-      "description": "Die Endung .py kennzeichnet eine Python-Datei. Python ist eine Programmiersprache; für diesen Schritt musst du die Beispielzeile noch nicht selbst verstehen oder erfinden. Du arbeitest jetzt nur damit, wo Dateiinhalt im Editor bearbeitet wird.",
-      "instruction": "Tippe die vorbereitete Beispielzeile print(\"Hello AI Training\") in hello.py.",
-      "why": "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt.",
+      "title": "Editor mit einfachem Text verwenden",
+      "description": "Der Editor ist die große Arbeitsfläche für den Inhalt einer Datei. In diesem VS-Code-Grundkurs musst du keinen Code schreiben: Du bearbeitest nur einen normalen Text.",
+      "instruction": "Tippe den Text Hello AI Training in notiz.txt.",
+      "why": "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt. Programmierung ist dafür nicht erforderlich.",
       "helpLevels": [
         "Klicke in die große Arbeitsfläche des Editors.",
-        "Tippe genau print(\"Hello AI Training\").",
-        "Der Editorbereich wird hervorgehoben. Klicke hinein und tippe genau print(\"Hello AI Training\")."
+        "Tippe genau den Text Hello AI Training ein.",
+        "Der Editorbereich wird hervorgehoben. Klicke hinein und tippe genau Hello AI Training."
       ],
       "expectedEvent": "file.updated",
       "validation": {
         "kind": "event",
         "type": "file.updated",
-        "match": { "filename": "hello.py" },
-        "contains": { "content": "Hello AI Training" }
+        "match": {
+          "filename": "notiz.txt"
+        },
+        "contains": {
+          "content": "Hello AI Training"
+        }
       },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Editor: Inhalt der aktuell geöffneten Datei bearbeiten.",
-      "successMessage": "Inhalt erkannt. Explorer und Editor erfüllen unterschiedliche Aufgaben."
+      "successMessage": "Text erkannt. Du hast den Editor verwendet, ohne Programmcode schreiben zu müssen."
     },
     {
       "id": "open_terminal",
@@ -161,7 +172,10 @@
         "Der Terminal-Button in der Status Bar wird hervorgehoben. Klicke genau darauf."
       ],
       "expectedEvent": "terminal.opened",
-      "validation": { "kind": "event", "type": "terminal.opened" },
+      "validation": {
+        "kind": "event",
+        "type": "terminal.opened"
+      },
       "highlightTarget": "vscode.statusBar",
       "highlightTooltip": "Die Status Bar bietet unter anderem den Einstieg ins Terminal.",
       "successMessage": "Panel geöffnet. Das Terminal ist eine View innerhalb des Panels."
@@ -178,7 +192,13 @@
         "Der Problems-Tab wird hervorgehoben. Klicke genau auf Problems."
       ],
       "expectedEvent": "panel.opened",
-      "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "problems" } },
+      "validation": {
+        "kind": "event",
+        "type": "panel.opened",
+        "match": {
+          "panel": "problems"
+        }
+      },
       "highlightTarget": "vscode.panel.problems",
       "highlightTooltip": "Problems sammelt Fehler und Warnungen.",
       "successMessage": "Problems geöffnet. Diese View zeigt Diagnosen statt Textbefehle."
@@ -195,7 +215,13 @@
         "Der Output-Tab wird hervorgehoben. Klicke genau auf Output."
       ],
       "expectedEvent": "panel.opened",
-      "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "output" } },
+      "validation": {
+        "kind": "event",
+        "type": "panel.opened",
+        "match": {
+          "panel": "output"
+        }
+      },
       "highlightTarget": "vscode.panel.output",
       "highlightTooltip": "Output zeigt Protokoll- und Statusausgaben.",
       "successMessage": "Output geöffnet. Du kannst Terminal, Problems und Output jetzt fachlich unterscheiden."
