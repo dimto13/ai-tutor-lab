@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Plus, Sparkles, X } from "lucide-react";
 import { copilotRuntime, type CopilotRuntimeState } from "@/runtime/copilotRuntime";
-import { getProductProfileForRuntime } from "@/scenarios/contentLoader";
+import { resolveCopilotProductProfile } from "@/runtime/copilotProductProfile";
+import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { useTraining } from "@/state/trainingStore";
 
 interface CopilotPanelProps {
@@ -12,6 +13,7 @@ interface CopilotPanelProps {
 }
 
 interface SuggestionSourceState {
+  suggestionId: string;
   file: string;
   content: string;
 }
@@ -38,9 +40,13 @@ export function CopilotPanel({
   onChatOpenChange,
 }: CopilotPanelProps) {
   const { mode, scenario } = useTraining();
-  const integrationSeed = scenario.environment?.integrationSeeds?.[copilotRuntime.id];
-  const runtimeSeed = integrationSeed ?? scenario.environment?.seed;
-  const profileFromContent = getProductProfileForRuntime(copilotRuntime.id);
+  const runtimeSeed = scenario.environment?.seed;
+  const hostProductId = scenario.environment?.productId;
+  const integration = scenario.environment?.integrations?.find(
+    ({ runtimeAdapterId }) => runtimeAdapterId === copilotRuntime.id,
+  );
+  const integrationProductId = integration?.productId;
+  const integrationVersion = integration?.version;
   const rootRef = useRef<HTMLDivElement>(null);
   const suggestionSourceRef = useRef<SuggestionSourceState | null>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
@@ -50,10 +56,16 @@ export function CopilotPanel({
 
   useEffect(() => {
     const container = rootRef.current;
-    if (!container) return;
+    if (!container || !hostProductId || !integrationProductId || !integrationVersion) return;
     let active = true;
 
-    copilotRuntime.configureProductProfile(profileFromContent);
+    copilotRuntime.configureProductProfile(
+      resolveCopilotProductProfile({
+        productId: integrationProductId,
+        hostProductId,
+        version: integrationVersion,
+      }),
+    );
     const unsubscribe = copilotRuntime.subscribeState((state) => {
       if (active) setRuntimeState(state);
     });
@@ -68,7 +80,7 @@ export function CopilotPanel({
       unsubscribe();
       void copilotRuntime.unmount();
     };
-  }, [profileFromContent, runtimeSeed]);
+  }, [hostProductId, integrationProductId, integrationVersion, runtimeSeed]);
 
   useEffect(() => {
     onChatOpenChange?.(runtimeState.chatOpen);
@@ -80,23 +92,18 @@ export function CopilotPanel({
 
   const activeContent = async (): Promise<string | null> => {
     if (!activeFile) return null;
-    const contents = await copilotRuntime.query<Record<string, string> | undefined>(
-      "filesystem.contents",
-    );
-    if (contents && Object.prototype.hasOwnProperty.call(contents, activeFile)) {
-      return contents[activeFile] ?? "";
-    }
-
-    const editor = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Editor-Inhalt"]');
-    return editor?.value ?? null;
+    const contents = await vscodeRuntime.query<Record<string, string>>("filesystem.contents");
+    return contents[activeFile] ?? "";
   };
 
   const offerEditorSuggestion = async () => {
-    if (!activeFile) return;
+    if (!activeFile || !runtimeState.enabled) return;
     const content = await activeContent();
     if (content === null) return;
     const suggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
-    suggestionSourceRef.current = suggestion ? { file: activeFile, content } : null;
+    suggestionSourceRef.current = suggestion
+      ? { suggestionId: suggestion.id, file: activeFile, content }
+      : null;
   };
 
   useEffect(() => {
@@ -104,8 +111,7 @@ export function CopilotPanel({
     copilotRuntime.rejectInlineSuggestion();
     if (!runtimeReady || !activeFile) return;
     void offerEditorSuggestion();
-    // The first suggestion is intentionally offered by the editor/runtime itself, not by a simulator button.
-    // A rejected suggestion is only regenerated after the learner requests a correction in chat.
+    // A rejected suggestion is intentionally regenerated only after a correction request in chat.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFile, runtimeReady]);
 
@@ -133,7 +139,7 @@ export function CopilotPanel({
 
   const submitPrompt = async () => {
     const value = prompt.trim();
-    if (!value) return;
+    if (!value || !runtimeState.enabled) return;
     inspect("copilot.chat.prompt");
 
     const referencesActiveFile = Boolean(activeFile && value.includes(`#${activeFile}`));
@@ -148,7 +154,9 @@ export function CopilotPanel({
 
     if (shouldRefreshRejectedSuggestion && activeFile) {
       const suggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content ?? "");
-      suggestionSourceRef.current = suggestion ? { file: activeFile, content: content ?? "" } : null;
+      suggestionSourceRef.current = suggestion
+        ? { suggestionId: suggestion.id, file: activeFile, content: content ?? "" }
+        : null;
     }
   };
 
@@ -160,6 +168,7 @@ export function CopilotPanel({
 
     const currentContent = await activeContent();
     if (
+      suggestion.id !== source.suggestionId ||
       suggestion.file !== activeFile ||
       source.file !== activeFile ||
       currentContent === null ||
@@ -177,6 +186,7 @@ export function CopilotPanel({
 
   const rejectSuggestion = () => {
     inspect("copilot.inline.reject");
+    suggestionSourceRef.current = null;
     copilotRuntime.rejectInlineSuggestion();
   };
 
@@ -191,7 +201,10 @@ export function CopilotPanel({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
-      if (!(target instanceof HTMLTextAreaElement) || target.getAttribute("aria-label") !== "Editor-Inhalt") {
+      if (
+        !(target instanceof HTMLTextAreaElement) ||
+        target.getAttribute("aria-label") !== "Editor-Inhalt"
+      ) {
         return;
       }
       if (event.key === "Tab") {
@@ -327,7 +340,9 @@ export function CopilotPanel({
                 data-highlight="copilot.chat.modeSelector"
                 value={runtimeState.mode}
                 onFocus={() => inspect("copilot.chat.modeSelector")}
-                onChange={(event) => copilotRuntime.setMode(event.target.value as typeof runtimeState.mode)}
+                onChange={(event) =>
+                  copilotRuntime.setMode(event.target.value as typeof runtimeState.mode)
+                }
                 aria-label="Modus"
                 className="w-full appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-[11px] text-foreground outline-none focus:border-ring"
               >
