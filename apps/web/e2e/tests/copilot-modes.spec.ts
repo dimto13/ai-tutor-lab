@@ -27,7 +27,7 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   const generate = page.locator('[data-highlight="copilot.inline.generate"]');
   await generate.click();
   const suggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
-  await suggestion.click();
+  await suggestion.click({ position: { x: 8, y: 8 } });
   await page.getByRole("button", { name: "Ablehnen" }).click();
   await generate.click();
   await page.getByRole("button", { name: "Annehmen" }).click();
