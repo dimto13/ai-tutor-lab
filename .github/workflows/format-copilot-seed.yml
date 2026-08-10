@@ -1,0 +1,39 @@
+name: Format Copilot seed
+
+on:
+  push:
+    branches:
+      - fix/remove-temporary-aitp155-runner
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/remove-temporary-aitp155-runner
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --install-strategy=nested
+      - run: npx prettier --write content/scenarios/copilot-basics.guided.json
+
+      - name: Remove temporary workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/format-copilot-seed.yml
+          git config user.name "dimto13"
+          git config user.email "93082815+dimto13@users.noreply.github.com"
+          git add content/scenarios/copilot-basics.guided.json .github/workflows/format-copilot-seed.yml
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "format Copilot context seed"
+          git push origin HEAD:fix/remove-temporary-aitp155-runner
