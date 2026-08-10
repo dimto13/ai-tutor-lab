@@ -10,10 +10,10 @@
       "productId": "vscode",
       "displayName": "Visual Studio Code",
       "runtimeAdapterId": "vscode-simulator",
-      "version": "1.x",
+      "version": "1.131",
       "owner": "dimto13",
-      "lastReviewedAt": null,
-      "nextReviewAt": "2026-08-09",
+      "lastReviewedAt": "2026-08-10",
+      "nextReviewAt": "2027-02-10",
       "scenarioIds": [
         "vscode-basics.explore",
         "vscode-basics.guided",
@@ -29,7 +29,29 @@
         "Bezeichnungen, Hilfetexte und Screenshots der betroffenen Szenarien auf veraltete Begriffe prüfen.",
         "Jede Abweichung mit betroffenen Szenario-IDs unter deviations dokumentieren und den Prüfzeitpunkt fortschreiben."
       ],
-      "deviations": []
+      "deviations": [
+        {
+          "id": "vscode-secondary-side-bar-2026-08",
+          "summary": "Primary und Secondary Side Bar werden im Simulator nicht getrennt",
+          "details": "VS Code 1.131 unterscheidet Primary Side Bar und Secondary Side Bar; die Chat-View liegt standardmäßig in der Secondary Side Bar. Der Simulator modelliert dagegen nur den generischen Zielbereich vscode.sideBar und vermittelt diese Informationsarchitektur in den Grundlagen nicht.",
+          "observedVersion": "1.131",
+          "scenarioIds": [
+            "vscode-basics.explore",
+            "vscode-basics.guided",
+            "vscode-basics.challenge",
+            "copilot-basics.guided"
+          ],
+          "status": "open"
+        },
+        {
+          "id": "vscode-terminal-statusbar-entry-2026-08",
+          "summary": "Terminal-Einstieg wird fälschlich über die Status Bar gelehrt",
+          "details": "Der geführte Grundlagenpfad verwendet einen simulierten Terminal-Button in der Status Bar. VS Code 1.131 dokumentiert stattdessen View > Terminal, Terminal > New Terminal, die Command Palette, den Explorer-Kontextbefehl oder Ctrl+` als reguläre Einstiege. Der aktuelle Simulator vermittelt dadurch einen nicht produktgetreuen Klickweg.",
+          "observedVersion": "1.131",
+          "scenarioIds": ["vscode-basics.guided"],
+          "status": "open"
+        }
+      ]
     },
     {
       "productId": "github-copilot",
@@ -37,8 +59,8 @@
       "runtimeAdapterId": "github-copilot-vscode-simulator",
       "version": "2026-08",
       "owner": "dimto13",
-      "lastReviewedAt": null,
-      "nextReviewAt": "2026-08-09",
+      "lastReviewedAt": "2026-08-10",
+      "nextReviewAt": "2027-02-10",
       "scenarioIds": ["copilot-basics.guided", "git-basics"],
       "checklist": [
         "Chat-Einstieg, neue Unterhaltung, Prompt-Eingabe und Dateikontext mit der aktuellen Produktoberfläche vergleichen.",
@@ -47,7 +69,40 @@
         "Alle semantischen Highlight-Ziele der Integration auf Auflösbarkeit und korrekte Bedeutung prüfen.",
         "Jede Abweichung mit betroffenen Szenario-IDs unter deviations dokumentieren und den Prüfzeitpunkt fortschreiben."
       ],
-      "deviations": []
+      "deviations": [
+        {
+          "id": "copilot-chat-placement-2026-08",
+          "summary": "Copilot Chat wird als Popup statt als VS-Code-Chat-View dargestellt",
+          "details": "Der Simulator öffnet Copilot Chat über einen Button rechts im Editor-Tab-Bereich als frei schwebendes Popup. Die aktuelle VS-Code-Informationsarchitektur führt Chat als View und platziert sie standardmäßig in der Secondary Side Bar. Einstieg, räumliche Zuordnung und Bedienmodell weichen damit sichtbar vom Produkt ab.",
+          "observedVersion": "2026-08 / VS Code 1.131",
+          "scenarioIds": ["copilot-basics.guided"],
+          "status": "open"
+        },
+        {
+          "id": "copilot-inline-editor-2026-08",
+          "summary": "Inline-Vorschläge werden nicht produktgetreu im Editor dargestellt",
+          "details": "Der Simulator erzeugt Inline-Vorschläge über einen expliziten Button im Copilot-Popup und zeigt sie dort als Codekarte mit Annehmen-/Ablehnen-Buttons. Aktuelles VS Code zeigt Copilot-Inline-Vorschläge als Ghost Text beziehungsweise Next Edit Suggestions direkt im Editor; Vorschläge werden unter anderem mit Tab navigiert und angenommen.",
+          "observedVersion": "2026-08 / VS Code 1.131",
+          "scenarioIds": ["copilot-basics.guided"],
+          "status": "open"
+        },
+        {
+          "id": "copilot-plan-preview-label-2026-08",
+          "summary": "Plan-Modus wird im Produktprofil noch als Preview gekennzeichnet",
+          "details": "Das gepflegte Produktprofil markiert Plan mit status=preview und die Simulator-Oberfläche zeigt deshalb Plan (Preview). Die aktuelle offizielle VS-Code-Dokumentation führt Ask, Plan und Agent gleichrangig als die drei Agent-Modi ohne Preview-Kennzeichnung.",
+          "observedVersion": "2026-08 / VS Code 1.131",
+          "scenarioIds": ["copilot-basics.guided"],
+          "status": "open"
+        },
+        {
+          "id": "copilot-context-selector-2026-08",
+          "summary": "Dateikontext wird über ein simulator-eigenes Dropdown statt über aktuelle Chat-Kontextmechanismen bedient",
+          "details": "Der Simulator bietet einen Kontext-Select mit Aktive Datei oder Keine Datei. Die aktuelle VS-Code-Chat-Oberfläche erlaubt das Anhängen konkreter Dateien und Ordner über die Plus-Aktion sowie Kontextreferenzen über #; Agenten können zusätzlich Workspace-Kontext selbst ermitteln. Der derzeitige Select ist daher keine produktgetreue Interaktion.",
+          "observedVersion": "2026-08 / VS Code 1.131",
+          "scenarioIds": ["copilot-basics.guided"],
+          "status": "open"
+        }
+      ]
     }
   ]
 }
