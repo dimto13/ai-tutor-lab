@@ -29,12 +29,12 @@ test("due product reviews become fully classified Epic sub-issue plans", async (
     product.deviations = [];
   }
   const policy = parseSimulatorCurrencyPolicy(input);
-
-  assert.equal(
-    buildSimulatorCurrencyIssuePlan({ policy, scenarios: context.scenarios }, "2026-08-08")
-      .length,
-    0,
+  const beforeDueDate = buildSimulatorCurrencyIssuePlan(
+    { policy, scenarios: context.scenarios },
+    "2026-08-08",
   );
+
+  assert.equal(beforeDueDate.length, 0);
   const plan = buildSimulatorCurrencyIssuePlan(
     { policy, scenarios: context.scenarios },
     "2026-08-09",
@@ -57,7 +57,9 @@ test("due product reviews become fully classified Epic sub-issue plans", async (
 test("open deviations mark assigned scenarios and create bug issue plans", async () => {
   const context = await loadSimulatorCurrencyContext();
   const input = structuredClone(context.policy);
-  for (const product of input.products) product.deviations = [];
+  for (const product of input.products) {
+    product.deviations = [];
+  }
   input.products[1]?.deviations.push({
     id: "chat-mode-label-2026-10",
     summary: "Chat-Modus ist veraltet",
@@ -96,7 +98,9 @@ test("unknown or wrongly assigned scenarios fail policy validation", async () =>
 test("GitHub synchronization deduplicates markers and attaches new issues below the Epic", async () => {
   const context = await loadSimulatorCurrencyContext();
   const input = structuredClone(context.policy);
-  for (const product of input.products) product.deviations = [];
+  for (const product of input.products) {
+    product.deviations = [];
+  }
   input.products[0]!.lastReviewedAt = null;
   input.products[0]!.nextReviewAt = "2026-08-09";
   input.products[1]!.nextReviewAt = "2027-02-10";
