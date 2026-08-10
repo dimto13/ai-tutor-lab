@@ -41,7 +41,7 @@
             "vscode-basics.challenge",
             "copilot-basics.guided"
           ],
-          "status": "open"
+          "status": "resolved"
         },
         {
           "id": "vscode-terminal-statusbar-entry-2026-08",
@@ -76,7 +76,7 @@
           "details": "Der Simulator öffnet Copilot Chat über einen Button rechts im Editor-Tab-Bereich als frei schwebendes Popup. Die aktuelle VS-Code-Informationsarchitektur führt Chat als View und platziert sie standardmäßig in der Secondary Side Bar. Einstieg, räumliche Zuordnung und Bedienmodell weichen damit sichtbar vom Produkt ab.",
           "observedVersion": "2026-08 / VS Code 1.131",
           "scenarioIds": ["copilot-basics.guided"],
-          "status": "open"
+          "status": "resolved"
         },
         {
           "id": "copilot-inline-editor-2026-08",
