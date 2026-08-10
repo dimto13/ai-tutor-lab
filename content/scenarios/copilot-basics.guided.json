@@ -139,7 +139,7 @@
       "helpLevels": [
         "Der Copilot-Button befindet sich rechts oberhalb des Editors.",
         "Klicke auf den Button mit der Beschriftung Copilot.",
-        "Der Copilot-Button wird hervorgehoben – öffne dort den Chat."
+        "Der Copilot-Button wird hervorgehoben. Klicke genau auf Copilot, um den Chat zu öffnen."
       ],
       "expectedEvent": "copilot.chat.opened",
       "validation": { "kind": "event", "type": "copilot.chat.opened" },
@@ -168,7 +168,7 @@
       "helpLevels": [
         "Im Kopf des Copilot-Chats gibt es ein Plus-Symbol.",
         "Klicke auf Neue Copilot-Unterhaltung.",
-        "Das Plus-Symbol für eine neue Unterhaltung wird hervorgehoben."
+        "Das Plus-Symbol für eine neue Unterhaltung wird hervorgehoben. Klicke genau darauf, um eine neue Copilot-Unterhaltung zu starten."
       ],
       "expectedEvent": "copilot.conversation.started",
       "validation": {
@@ -189,7 +189,7 @@
       "helpLevels": [
         "Nutze das Eingabefeld Ask Copilot... im geöffneten Chat.",
         "Tippe die Frage in das Prompt-Feld und drücke Enter.",
-        "Das Prompt-Feld wird hervorgehoben."
+        "Das Prompt-Feld wird hervorgehoben. Tippe dort „Was macht die aktuell geöffnete Datei?“ ein und drücke Enter."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
@@ -211,7 +211,7 @@
       "helpLevels": [
         "Die Modusauswahl steht links neben der Modellauswahl.",
         "Öffne das Dropdown Modus und wähle Plan.",
-        "Die Modusauswahl wird hervorgehoben."
+        "Die Modusauswahl wird hervorgehoben. Öffne dort das Dropdown Modus und wähle Plan."
       ],
       "expectedEvent": "copilot.mode.changed",
       "validation": {
@@ -244,7 +244,7 @@
       "helpLevels": [
         "Die Modellauswahl befindet sich rechts neben der Modusauswahl.",
         "Öffne das Dropdown Modell und wähle GPT-5.3-Codex.",
-        "Die Modellauswahl wird hervorgehoben."
+        "Die Modellauswahl wird hervorgehoben. Öffne dort das Dropdown Modell und wähle GPT-5.3-Codex."
       ],
       "expectedEvent": "copilot.model.changed",
       "validation": {
@@ -265,7 +265,7 @@
       "helpLevels": [
         "Öffne erneut die Modellauswahl.",
         "Wähle den Eintrag Auto.",
-        "Die Modellauswahl wird hervorgehoben."
+        "Die Modellauswahl wird hervorgehoben. Öffne sie und wähle den Eintrag Auto."
       ],
       "expectedEvent": "copilot.model.changed",
       "validation": {
@@ -286,7 +286,7 @@
       "helpLevels": [
         "Im unteren Teil des Copilot-Panels findest du Inline-Vorschlag.",
         "Klicke zuerst Vorschlag erzeugen und danach Annehmen.",
-        "Die Schaltfläche Vorschlag erzeugen wird hervorgehoben. Danach prüfst und übernimmst du den erzeugten Vorschlag."
+        "Die Schaltfläche Vorschlag erzeugen wird hervorgehoben. Klicke darauf, prüfe den Vorschlag und klicke anschließend auf Annehmen."
       ],
       "expectedEvent": "ai.suggestion.accepted",
       "validation": {
