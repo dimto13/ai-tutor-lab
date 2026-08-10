@@ -64,11 +64,7 @@ async function reachCreateFileStep(page: Page): Promise<void> {
 
   await openFileMenu(page);
   await page.getByRole("menuitem", { name: /Open Folder\.\.\./ }).click();
-  await expectGuidedStep(page, 9, "Ordner und Workspace unterscheiden");
-
-  await openFileMenu(page);
-  await page.getByRole("menuitem", { name: /Open Workspace from File\.\.\./ }).click();
-  await expectGuidedStep(page, 10, "Datei erstellen");
+  await expectGuidedStep(page, 9, "Datei erstellen");
 }
 
 test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das Konzept", async ({
@@ -151,27 +147,25 @@ test("Guided: Grundbegriffe sind vor der ersten Aufgabe optional vorgeschaltet",
   await expect(page.getByRole("button", { name: "Grundbegriffe überspringen" })).toBeVisible();
 
   await skipGuidedIntroductions(page);
-  await expect(page.getByText("Schritt 7 von 14", { exact: true })).toBeVisible();
+  await expect(page.getByText("Schritt 7 von 13", { exact: true })).toBeVisible();
 });
 
-test("Guided: Explorer, Folder, Workspace, Editor und Panel laufen als Aktionskette", async ({
-  page,
-}) => {
+test("Guided: Explorer, Folder, Editor und Panel laufen als Anfängerpfad", async ({ page }) => {
   await reachCreateFileStep(page);
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("notiz.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
-  await expectGuidedStep(page, 11, "Editor verwenden");
+  await expectGuidedStep(page, 10, "Editor mit einfachem Text verwenden");
 
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Hello AI Training");
-  await expectGuidedStep(page, 12, "Panel und seine Views unterscheiden");
+  await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).last().click();
-  await expectGuidedStep(page, 13, "Problems-View verwenden");
+  await expectGuidedStep(page, 12, "Problems-View verwenden");
 
   await page.getByRole("button", { name: "Problems", exact: true }).click();
-  await expectGuidedStep(page, 14, "Output-View verwenden");
+  await expectGuidedStep(page, 13, "Output-View verwenden");
 
   await page.getByRole("button", { name: "Output", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
@@ -295,7 +289,7 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
   await page.getByPlaceholder("dateiname.ext").fill("wrong.py");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
 
-  await expectGuidedStep(page, 10, "Datei erstellen");
+  await expectGuidedStep(page, 9, "Datei erstellen");
   await expect(
     page.getByText("Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.", {
       exact: true,
@@ -305,7 +299,7 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("notiz.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
-  await expectGuidedStep(page, 11, "Editor verwenden");
+  await expectGuidedStep(page, 10, "Editor mit einfachem Text verwenden");
 });
 
 test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf", async ({
