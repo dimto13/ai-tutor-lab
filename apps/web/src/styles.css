@@ -169,4 +169,9 @@
   input[aria-label="Terminal-Eingabe"] {
     font-family: var(--font-mono);
   }
+
+  /* VS Code 1.131 exposes Terminal through menus/commands, not a Status Bar launcher. */
+  [data-highlight="vscode.statusBar.terminal"] {
+    display: none;
+  }
 }
