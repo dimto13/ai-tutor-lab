@@ -128,7 +128,6 @@ test("Menüs: Untermenüs und simulierte Aktionen funktionieren", async ({ page 
   await expect(page.getByRole("menu", { name: "Appearance submenu" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Full Screen", exact: true })).toBeVisible();
 
-  await page.locator('[data-highlight="vscode.menu.view"]').click();
   await page.getByRole("menuitem", { name: "Problems", exact: true }).click();
   await expect(page.getByText("No problems have been detected in the workspace.")).toBeVisible();
 
