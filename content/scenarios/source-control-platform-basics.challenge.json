@@ -101,7 +101,7 @@
       "helpLevels": [
         "Bewertet wird nur der Endzustand, nicht die Reihenfolge deiner Klicks.",
         "Der Pull Request muss vom Branch feature/readme-guide nach main zeigen und einen Prüfnachweis enthalten.",
-        "Merge-bereit wird der Zustand erst, wenn Diff angesehen, Review beantwortet und Check erfolgreich ist."
+        "Erstelle feature/readme-guide, öffne daraus den Pull Request nach main, schreibe „geprüft“ in die Beschreibung, öffne den Diff, beantworte das Review und führe den Status Check aus, bis er erfolgreich und der Pull Request merge-bereit ist."
       ],
       "successMessage": "Der Pull Request ist vollständig reviewbar und merge-bereit."
     }
