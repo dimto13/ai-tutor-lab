@@ -109,7 +109,7 @@
       "helpLevels": [
         "Die Artefakte erscheinen als Reiter im Kopf der Ergebnisfläche.",
         "Klicke auf „Team-Übersicht“.",
-        "Die Artefakt-Auswahl am oberen Rand der Vorschau wird hervorgehoben."
+        "Die Artefakt-Auswahl am oberen Rand der Vorschau wird hervorgehoben. Klicke dort auf „Team-Übersicht“."
       ],
       "validation": {
         "kind": "event",
@@ -132,7 +132,7 @@
       "helpLevels": [
         "Nutze die Umschaltung im Kopf des Artefakts.",
         "Klicke auf „Quelltext“.",
-        "Die Umschaltung Vorschau/Quelltext wird hervorgehoben."
+        "Die Umschaltung Vorschau/Quelltext wird hervorgehoben. Klicke dort auf „Quelltext“."
       ],
       "validation": {
         "kind": "event",
@@ -155,7 +155,7 @@
       "helpLevels": [
         "Die verfügbare Revision steht am unteren Rand der Vorschau.",
         "Klicke auf „Freigabestatus ergänzen“.",
-        "Die hinterlegte Revision wird hervorgehoben."
+        "Die hinterlegte Revision wird hervorgehoben. Klicke auf „Freigabestatus ergänzen“."
       ],
       "validation": {
         "kind": "event",
@@ -178,7 +178,7 @@
       "helpLevels": [
         "Suche die Prüfaktion unten rechts.",
         "Klicke auf „Ergebnis geprüft“.",
-        "Die Prüfaktion wird hervorgehoben."
+        "Die Prüfaktion wird hervorgehoben. Klicke genau auf „Ergebnis geprüft“."
       ],
       "validation": {
         "kind": "event",
