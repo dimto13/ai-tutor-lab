@@ -376,7 +376,9 @@ export function Workspace() {
                       <span className="block font-medium text-foreground">
                         ai-training-lab.code-workspace
                       </span>
-                      <span className="block text-muted-foreground">2 Ordner im Arbeitskontext</span>
+                      <span className="block text-muted-foreground">
+                        2 Ordner im Arbeitskontext
+                      </span>
                       <span className="mt-1 flex items-center gap-1 text-muted-foreground">
                         <Settings className="h-3 w-3" /> Workspace-Einstellung: formatOnSave = true
                       </span>
