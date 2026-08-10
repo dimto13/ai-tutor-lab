@@ -116,7 +116,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");
   await expect(
-    page.getByText(/Ich berücksichtige calculator\.py als aktiven Dateikontext/),
+    page.getByText(/Die aktuell geöffnete calculator\.py enthält die Funktionsdefinition/),
   ).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
   await expect(page.getByText("Schritt 8 – Plan-Modus auswählen")).toBeVisible();
@@ -165,7 +165,7 @@ test("Einsteiger können Grundbegriffe lesen und direkt im Guide nachschlagen", 
   await expect(page.getByText("Schritt 2 – Python als Beispielsprache verstehen")).toBeVisible();
   await page.getByRole("button", { name: "Python: Begriffserklärung öffnen" }).first().click();
   await expect(page.getByRole("heading", { name: "Python", exact: true })).toBeVisible();
-  await expect(page.getByText(/Programmiersprache.*\.py/)).toBeVisible();
+  await expect(page.getByText(/Programmiersprache.*\.py/).first()).toBeVisible();
   await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
