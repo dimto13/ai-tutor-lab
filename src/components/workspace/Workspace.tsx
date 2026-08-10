@@ -182,7 +182,8 @@ export function Workspace() {
     setContents((current) => ({ ...current, [name]: "" }));
     vscodeRuntime.addFile(name);
     openFile(name);
-    const nextWrongFile = name === "hello.py" || name === "challenge.py" ? null : name;
+    const acceptedTrainingFiles = new Set(["hello.py", "notiz.txt", "challenge.txt"]);
+    const nextWrongFile = acceptedTrainingFiles.has(name) ? null : name;
     setWrongFile(nextWrongFile);
     vscodeRuntime.setWrongFile(nextWrongFile);
     workspaceBus.emit("file.created", { filename: name });
@@ -421,7 +422,7 @@ export function Workspace() {
                             if (event.key === "Enter") createFile(newFileName);
                             if (event.key === "Escape") setNewFileName(null);
                           }}
-                          placeholder="dateiname.py"
+                          placeholder="dateiname.ext"
                           className="w-full rounded border border-ring bg-editor px-1.5 py-1 font-mono text-[13px] text-foreground outline-none"
                         />
                       </li>
@@ -495,7 +496,8 @@ export function Workspace() {
                     onChange={(event) => updateContent(event.target.value)}
                     spellCheck={false}
                     className="h-full min-w-0 flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
-                    placeholder='print("Hello AI Training")'
+                    placeholder="Dateiinhalt bearbeiten..."
+                    aria-label="Editor-Inhalt"
                   />
                 </div>
               ) : (
@@ -615,7 +617,9 @@ export function Workspace() {
               : "kein Arbeitskontext"}
         </span>
         <span className="hidden min-w-0 truncate text-muted-foreground md:inline">
-          {activeFile ? `${activeFile} · Python` : "Python 3.12"}
+          {activeFile
+            ? `${activeFile} · ${activeFile.endsWith(".py") ? "Python" : "Text"}`
+            : "UTF-8"}
         </span>
         <button
           data-highlight="vscode.statusBar.terminal"

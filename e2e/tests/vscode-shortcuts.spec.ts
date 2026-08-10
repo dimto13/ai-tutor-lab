@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const scenarioUrl = "/training/vscode-shortcuts.challenge";
 const storageKey = "ai-training-lab:vscode-shortcuts.challenge:v2";
-const challengeText = "# Status für Marco: Review abgeschlossen.";
+const challengeText = "Status für Marco: Review abgeschlossen.";
 
 async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
@@ -32,9 +32,9 @@ async function startChallenge(page: Page): Promise<void> {
 
 async function createDirtyChallengeFile(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("challenge.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
-  await page.getByPlaceholder('print("Hello AI Training")').fill(challengeText);
+  await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
+  await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill(challengeText);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -125,7 +125,7 @@ test("Speed Challenge: Ctrl+S außerhalb des Simulators speichert die aktive Dat
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).not.toBeVisible();
   await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
 
-  await page.getByPlaceholder('print("Hello AI Training")').focus();
+  await page.getByRole("textbox", { name: "Editor-Inhalt" }).focus();
   await page.keyboard.press("Control+S");
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();

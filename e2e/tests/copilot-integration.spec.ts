@@ -25,8 +25,8 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await page.getByRole("button", { name: "ai-training-demo", exact: true }).click();
   await page.getByRole("button", { name: "Neue Datei" }).click();
-  await page.getByPlaceholder("dateiname.py").fill("hello.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
+  await page.getByPlaceholder("dateiname.ext").fill("hello.py");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
 
   const copilotButton = page.getByRole("button", { name: "Copilot", exact: true });
   await expect(copilotButton).toBeVisible();
