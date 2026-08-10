@@ -14,7 +14,9 @@ test("Feedback speichert Kontext lokal, übersteht Reload und lässt sich als JS
   await page.getByRole("button", { name: "Feedback geben" }).click();
   const dialog = page.getByRole("dialog", { name: "Feedback geben" });
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText("keine personenbezogenen, vertraulichen oder geheimen Inhalte");
+  await expect(dialog).toContainText(
+    "keine personenbezogenen, vertraulichen oder geheimen Inhalte",
+  );
   await expect(dialog).toContainText("vscode-basics.guided");
   await expect(dialog).toContainText("vscode-simulator");
 

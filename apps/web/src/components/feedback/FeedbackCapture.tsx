@@ -101,8 +101,8 @@ export function FeedbackCapture({
             {!noticeAcknowledged ? (
               <div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-[12px] leading-relaxed text-foreground">
                 Dein Feedback wird zur Verbesserung des Produkts ausgewertet und vorerst nur lokal
-                in diesem Browser gespeichert. Gib bitte keine personenbezogenen, vertraulichen
-                oder geheimen Inhalte ein. Es findet noch kein automatischer Versand statt.
+                in diesem Browser gespeichert. Gib bitte keine personenbezogenen, vertraulichen oder
+                geheimen Inhalte ein. Es findet noch kein automatischer Versand statt.
               </div>
             ) : null}
 
@@ -118,8 +118,9 @@ export function FeedbackCapture({
             </label>
 
             <div className="mt-3 rounded-md border border-border bg-card p-2.5 text-[11px] leading-relaxed text-muted-foreground">
-              Kontext: {context.scenarioId} · {context.stepId ?? "kein aktiver Schritt"} · {context.mode}
-              · {context.runtimeAdapterId ?? "kein Runtime-Adapter"} · {context.commit}
+              Kontext: {context.scenarioId} · {context.stepId ?? "kein aktiver Schritt"} ·{" "}
+              {context.mode}· {context.runtimeAdapterId ?? "kein Runtime-Adapter"} ·{" "}
+              {context.commit}
             </div>
 
             {saved ? (
