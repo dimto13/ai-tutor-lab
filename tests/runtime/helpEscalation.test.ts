@@ -71,6 +71,19 @@ test("level three rejects highlight-only wording", () => {
   assert.ok(violations.some((violation) => violation.code === "level-three-highlight-only"));
 });
 
+test("Unicode action words such as Öffne are recognized", () => {
+  assert.deepEqual(
+    validateHelpEscalation(
+      step([
+        "Beginne mit dem Überblick.",
+        "Wechsle anschließend zwischen den Hauptbereichen.",
+        "Öffne nacheinander Überblick, Code, Commits, Pull Requests und Issues und prüfe jeden Bereich.",
+      ]),
+    ),
+    [],
+  );
+});
+
 test("level three accepts highlight plus exact action", () => {
   assert.deepEqual(
     validateHelpEscalation(
