@@ -166,7 +166,6 @@ export function CopilotPanel({
     if (referencesActiveFile && activeFile) {
       copilotRuntime.setContextActiveFile(activeFile);
     }
-
     const contextFile = referencesActiveFile ? activeFile : runtimeState.contextActiveFile;
     const contextContent = contextFile ? await fileContent(contextFile) : null;
     const shouldRefreshRejectedSuggestion = runtimeState.inlineSuggestion?.status === "rejected";
@@ -237,7 +236,6 @@ export function CopilotPanel({
       ) {
         return;
       }
-
       if (event.key === "Tab") {
         event.preventDefault();
         void acceptSuggestion();
@@ -261,14 +259,9 @@ export function CopilotPanel({
   const inlineSuggestionPortal =
     editorPortalTarget && visibleSuggestion
       ? createPortal(
-          <div
-            className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
-            aria-live="polite"
-          >
+          <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-live="polite">
             <pre className="absolute bottom-0 left-12 right-0 top-0 m-0 whitespace-pre-wrap px-3 py-3 font-mono text-[13px] leading-6">
-              <span className="invisible">
-                {suggestionSourceRef.current?.content ?? ""}
-              </span>
+              <span className="invisible">{suggestionSourceRef.current?.content ?? ""}</span>
               <span className="text-muted-foreground/70">{visibleSuggestion.text}</span>
             </pre>
             <div
@@ -283,7 +276,7 @@ export function CopilotPanel({
                 <span
                   data-highlight="copilot.inline.accept"
                   onClick={() => inspectTarget("copilot.inline.accept")}
-                  className="flex items-center gap-1 cursor-default"
+                  className="flex cursor-default items-center gap-1"
                 >
                   <kbd className="rounded bg-editor px-1.5 py-0.5 text-foreground">Tab</kbd>
                   <span>annehmen</span>
@@ -292,7 +285,7 @@ export function CopilotPanel({
                 <span
                   data-highlight="copilot.inline.reject"
                   onClick={() => inspectTarget("copilot.inline.reject")}
-                  className="flex items-center gap-1 cursor-default"
+                  className="flex cursor-default items-center gap-1"
                 >
                   <kbd className="rounded bg-editor px-1.5 py-0.5 text-foreground">Esc</kbd>
                   <span>verwerfen</span>
