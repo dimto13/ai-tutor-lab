@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { Scenario, Validation } from "../types/training";
+import introductionData from "../../content/introductions/de.json" with { type: "json" };
+import type { Scenario, TrainingStep, Validation } from "../types/training";
 import { artifactPreviewSeedSchema } from "../runtime/artifactPreviewContent.ts";
 
 const workspaceEventNameSchema = z.enum([
@@ -86,9 +87,50 @@ const stepSchema = z.object({
   optional: z.boolean().optional(),
 });
 
+const introductionLibrarySchema = z
+  .object({
+    version: z.number().int().positive(),
+    language: z.string().min(1),
+    steps: z.array(stepSchema).min(1),
+  })
+  .superRefine((library, ctx) => {
+    const ids = new Set<string>();
+    library.steps.forEach((step, index) => {
+      if (ids.has(step.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `duplicate shared introduction step id: ${step.id}`,
+          path: ["steps", index, "id"],
+        });
+      }
+      ids.add(step.id);
+
+      if (step.stepType !== "explanation" || !step.optional) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "shared introduction steps must be optional explanation steps",
+          path: ["steps", index],
+        });
+      }
+      if (step.validation || step.expectedEvent) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "shared introduction steps must not define RuntimeEvent validation",
+          path: ["steps", index],
+        });
+      }
+    });
+  });
+
+const introductionLibrary = introductionLibrarySchema.parse(introductionData);
+const sharedIntroductionSteps = new Map<string, TrainingStep>(
+  introductionLibrary.steps.map((step) => [step.id, step as TrainingStep]),
+);
+
 const audienceSchema = z.object({
   personaId: z.string().min(1),
   glossaryConcepts: z.array(z.string().min(1)).min(1),
+  introductionStepRefs: z.array(z.string().min(1)).min(1).optional(),
   introductionStepIds: z.array(z.string().min(1)).min(1).optional(),
 });
 
@@ -187,6 +229,42 @@ export const scenarioSchema = z
       }
     });
 
+    const sharedRefs = scenario.audience?.introductionStepRefs ?? [];
+    const seenSharedRefs = new Set<string>();
+    sharedRefs.forEach((ref, index) => {
+      if (seenSharedRefs.has(ref)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `duplicate shared introduction step reference: ${ref}`,
+          path: ["audience", "introductionStepRefs", index],
+        });
+      }
+      seenSharedRefs.add(ref);
+
+      if (!sharedIntroductionSteps.has(ref)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `unknown shared introduction step: ${ref}`,
+          path: ["audience", "introductionStepRefs", index],
+        });
+      }
+      if (ids.has(ref)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `shared introduction step collides with authored step id: ${ref}`,
+          path: ["audience", "introductionStepRefs", index],
+        });
+      }
+    });
+
+    if (sharedRefs.length > 0 && scenario.mode !== "guided") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "shared introduction steps are only valid for guided scenarios",
+        path: ["audience", "introductionStepRefs"],
+      });
+    }
+
     const runtimeIds = [
       scenario.environment?.runtimeAdapterId,
       ...(scenario.environment?.integrations?.map(({ runtimeAdapterId }) => runtimeAdapterId) ??
@@ -229,8 +307,30 @@ export const scenarioSchema = z
   });
 
 export function parseScenario(raw: unknown): Scenario {
-  const scenario = scenarioSchema.parse(raw);
-  if (!scenario.environment) return scenario as Scenario;
+  const authoredScenario = scenarioSchema.parse(raw);
+  const resolvedIntroductionSteps =
+    authoredScenario.audience?.introductionStepRefs?.map(
+      (ref) => sharedIntroductionSteps.get(ref)!,
+    ) ?? [];
+  const authoredIntroductionStepIds = authoredScenario.audience?.introductionStepIds ?? [];
+  const introductionStepIds = [
+    ...resolvedIntroductionSteps.map((step) => step.id),
+    ...authoredIntroductionStepIds,
+  ];
+
+  const scenario = {
+    ...authoredScenario,
+    audience: authoredScenario.audience
+      ? {
+          ...authoredScenario.audience,
+          introductionStepIds:
+            introductionStepIds.length > 0 ? introductionStepIds : undefined,
+        }
+      : undefined,
+    steps: [...resolvedIntroductionSteps, ...authoredScenario.steps],
+  } as Scenario;
+
+  if (!scenario.environment) return scenario;
 
   return {
     ...scenario,
