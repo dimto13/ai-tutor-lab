@@ -33,6 +33,14 @@ async function clickCurrentConceptButton(page: Page) {
   await page.getByRole("button", { name: "Konzept verstanden" }).click();
 }
 
+async function attachCalculatorContext(page: Page) {
+  await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
+  await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
+  await expect(page.locator('[data-highlight="copilot.chat.contextAttachment"]')).toContainText(
+    "calculator.py",
+  );
+}
+
 test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({
   page,
 }) => {
@@ -103,16 +111,15 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
 
   await expect(page.getByText("Schritt 6 – Neue Copilot-Unterhaltung beginnen")).toBeVisible();
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
-  await expect(page.getByText(/calculator\.py bleibt als Arbeitskontext erhalten/)).toBeVisible();
-  await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
+  await expect(page.getByText(/Dateikontext fügst du jetzt gezielt hinzu/)).toBeVisible();
+  await expect(page.getByText("Schritt 7 – Dateikontext bewusst hinzufügen")).toBeVisible();
+  await expect(page.getByLabel("Kontext")).toHaveCount(0);
 
-  const prompt = page.getByPlaceholder("Ask Copilot...");
-  const contextSelect = page.getByLabel("Kontext");
-  await expect(contextSelect).toHaveValue("active");
-  await expect(contextSelect.locator("option:checked")).toHaveText("Aktive Datei: calculator.py");
+  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  await attachCalculatorContext(page);
   await prompt.fill("test");
   await prompt.press("Enter");
-  await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
+  await expect(page.getByText("Schritt 7 – Dateikontext bewusst hinzufügen")).toBeVisible();
   await expect(page.getByText(/erwartete Inhalt fehlt noch/)).toBeVisible();
 
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
@@ -135,27 +142,27 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await page.getByLabel("Modell").selectOption("auto");
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
   await expect(
-    page.getByText("Schritt 12 – Unpassenden Vorschlag erkennen und korrigieren"),
+    page.getByText("Schritt 12 – Unpassenden Vorschlag im Editor erkennen und korrigieren"),
   ).toBeVisible();
 
-  const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
-  await expect(generateSuggestion).toBeVisible();
-  await generateSuggestion.click();
-  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
-    "return a - b",
-  );
-  await page.getByRole("button", { name: "Ablehnen" }).click();
+  const suggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
+  await expect(suggestion).toContainText("return a - b");
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Escape");
+  await expect(suggestion).toHaveCount(0);
+
   await prompt.fill("Korrigiere den Vorschlag bitte auf Addition mit a + b.");
   await prompt.press("Enter");
   await expect(
     page.getByText(/Für die geforderte Addition muss die Funktion a \+ b zurückgeben/),
   ).toBeVisible();
-  await generateSuggestion.click();
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
     "return a + b",
   );
-  await page.getByRole("button", { name: "Annehmen" }).click();
-  await expect(page.locator("textarea")).toHaveValue("def add(a, b):\n    return a + b\n");
+  await editor.focus();
+  await editor.press("Tab");
+  await expect(editor).toHaveValue("def add(a, b):\n    return a + b\n");
 
   await expect(page.getByText("Schritt 13 – MCP als Erweiterungskonzept verstehen")).toBeVisible();
   await clickCurrentConceptButton(page);
@@ -197,7 +204,8 @@ test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel",
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   await clickCurrentConceptButton(page);
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await attachCalculatorContext(page);
+  const prompt = page.getByPlaceholder(/Ask Copilot/);
   await prompt.fill("Was macht diese Datei?");
   await prompt.press("Enter");
   await page.getByLabel("Modus").selectOption("plan");
@@ -205,12 +213,10 @@ test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel",
   await page.getByLabel("Modell").selectOption("gpt-5.3-codex");
   await page.getByLabel("Modell").selectOption("auto");
 
-  const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
-  await generateSuggestion.click();
-  await expect(page.getByRole("button", { name: "Annehmen" })).toBeVisible();
-
+  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
+    "return a - b",
+  );
   await page.getByRole("button", { name: "README.md", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Annehmen" })).toHaveCount(0);
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toHaveCount(0);
 });
 
@@ -223,7 +229,8 @@ test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktp
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   await clickCurrentConceptButton(page);
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await attachCalculatorContext(page);
+  const prompt = page.getByPlaceholder(/Ask Copilot/);
   await prompt.fill("Was macht diese Datei?");
   await prompt.press("Enter");
   await page.getByLabel("Modus").selectOption("plan");
