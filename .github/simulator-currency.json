@@ -49,7 +49,7 @@
           "details": "Der geführte Grundlagenpfad verwendet einen simulierten Terminal-Button in der Status Bar. VS Code 1.131 dokumentiert stattdessen View > Terminal, Terminal > New Terminal, die Command Palette, den Explorer-Kontextbefehl oder Ctrl+` als reguläre Einstiege. Der aktuelle Simulator vermittelt dadurch einen nicht produktgetreuen Klickweg.",
           "observedVersion": "1.131",
           "scenarioIds": ["vscode-basics.guided"],
-          "status": "open"
+          "status": "resolved"
         }
       ]
     },
