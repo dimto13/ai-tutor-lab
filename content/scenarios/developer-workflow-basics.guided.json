@@ -137,21 +137,21 @@
       "id": "step_5",
       "title": "Terminal öffnen",
       "description": "Wechsle für die Git-Befehle in das integrierte Terminal.",
-      "instruction": "Öffne das integrierte Terminal.",
-      "why": "Der Workflow verbindet Editor und Kommandozeile innerhalb desselben Projektkontexts.",
+      "instruction": "Öffne über Terminal → New Terminal ein integriertes Terminal.",
+      "why": "Der Workflow verbindet Editor und Kommandozeile innerhalb desselben Projektkontexts. Das Terminal-Menü ist ein regulärer Einstieg in die Terminal-View.",
       "helpLevels": [
-        "Das Terminal öffnest du über den Terminal-Button.",
-        "Klicke auf den Button Terminal unten rechts.",
-        "Der Terminal-Button unten rechts wird hervorgehoben. Klicke genau auf diesen Button."
+        "Öffne oben in der Menüleiste das Menü Terminal.",
+        "Wähle im geöffneten Terminal-Menü New Terminal.",
+        "Das Terminal-Menü wird hervorgehoben. Öffne es und klicke auf New Terminal."
       ],
       "expectedEvent": "terminal.opened",
       "validation": {
         "kind": "event",
         "type": "terminal.opened"
       },
-      "highlightTarget": "vscode.statusBar.terminal",
-      "highlightTooltip": "Öffne das Terminal für die Git-Befehle.",
-      "successMessage": "Terminal geöffnet. Jetzt kannst du den Repository-Status prüfen."
+      "highlightTarget": "vscode.menu.terminal",
+      "highlightTooltip": "Terminal → New Terminal öffnet das Terminal für die Git-Befehle.",
+      "successMessage": "Terminal über den regulären Terminal-Menüpfad geöffnet. Jetzt kannst du den Repository-Status prüfen."
     },
     {
       "id": "step_6",
