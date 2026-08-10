@@ -26,7 +26,7 @@ async function validateFile(path: string, displayPath: string): Promise<string[]
   if (!Array.isArray(parsed.steps)) return [];
 
   const issues: string[] = [];
-  parsed.steps.forEach((rawStep, index) => {
+  parsed.steps.forEach((rawStep) => {
     if (!isTrainingStep(rawStep)) return;
     for (const violation of validateHelpEscalation(rawStep)) {
       issues.push(
