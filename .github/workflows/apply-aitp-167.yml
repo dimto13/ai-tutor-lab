@@ -1,0 +1,94 @@
+name: Apply AITP-167
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aitp-167-beginner-scope
+          fetch-depth: 0
+
+      - name: Remove advanced mandatory steps
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("content/scenarios/vscode-basics.guided.json")
+          scenario = json.loads(path.read_text())
+          scenario["description"] = "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und Panel. Erweiterte Workspace-Konfiguration bleibt optional."
+
+          steps = scenario["steps"]
+          open_folder = next(step for step in steps if step["id"] == "open_folder")
+          open_folder["title"] = "Einen Ordner als Arbeitskontext öffnen"
+          open_folder["description"] = "Mit Open Folder öffnest du einen einzelnen Ordner als Arbeitskontext. Ein gespeicherter Workspace kann zusätzlich mehrere Ordner und eigene VS-Code-Einstellungen bündeln. Diese Multi-Root-Konfiguration musst du im Anfängerpfad noch nicht bedienen."
+          open_folder["instruction"] = "Öffne über File → Open Folder... den vorbereiteten Ordner ai-training-demo."
+          open_folder["why"] = "Für viele einfache Aufgaben reicht ein einzelner geöffneter Ordner. Den Unterschied zum Workspace sollst du verstehen, ohne schon eine erweiterte Workspace-Konfiguration durchführen zu müssen."
+          open_folder["helpLevels"] = [
+              "Öffne oben das File-Menü.",
+              "Wähle im File-Menü Open Folder... .",
+              "Das File-Menü wird hervorgehoben. Öffne es und klicke auf Open Folder... ."
+          ]
+          open_folder["successMessage"] = "Ordner geöffnet. Du arbeitest jetzt in einem einfachen Arbeitskontext; ein Workspace kann später mehrere Ordner und Einstellungen bündeln."
+
+          scenario["steps"] = [step for step in steps if step["id"] != "open_workspace"]
+          path.write_text(json.dumps(scenario, ensure_ascii=False, indent=2) + "\n")
+
+          # Update the VS Code E2E flow and step numbers after removing one mandatory action.
+          path = Path("e2e/tests/vscode-basics.spec.ts")
+          text = path.read_text()
+          old = '''  await openFileMenu(page);\n  await page.getByRole("menuitem", { name: /Open Folder\\.\\.\\./ }).click();\n  await expectGuidedStep(page, 9, "Ordner und Workspace unterscheiden");\n\n  await openFileMenu(page);\n  await page.getByRole("menuitem", { name: /Open Workspace from File\\.\\.\\./ }).click();\n  await expectGuidedStep(page, 10, "Datei erstellen");'''
+          new = '''  await openFileMenu(page);\n  await page.getByRole("menuitem", { name: /Open Folder\\.\\.\\./ }).click();\n  await expectGuidedStep(page, 9, "Datei erstellen");'''
+          if old not in text:
+              raise SystemExit("expected guided workspace sequence not found")
+          text = text.replace(old, new)
+          text = text.replace(
+              'test("Guided: Explorer, Folder, Workspace, Editor und Panel laufen als Aktionskette"',
+              'test("Guided: Explorer, Folder, Editor und Panel laufen als Anfängerpfad"'
+          )
+          replacements = {
+              'expectGuidedStep(page, 11, "Editor verwenden")': 'expectGuidedStep(page, 10, "Editor mit einfachem Text verwenden")',
+              'expectGuidedStep(page, 12, "Panel und seine Views unterscheiden")': 'expectGuidedStep(page, 11, "Panel und seine Views unterscheiden")',
+              'expectGuidedStep(page, 13, "Problems-View verwenden")': 'expectGuidedStep(page, 12, "Problems-View verwenden")',
+              'expectGuidedStep(page, 14, "Output-View verwenden")': 'expectGuidedStep(page, 13, "Output-View verwenden")',
+              'expectGuidedStep(page, 10, "Datei erstellen")': 'expectGuidedStep(page, 9, "Datei erstellen")',
+              'expectGuidedStep(page, 11, "Editor mit einfachem Text verwenden")': 'expectGuidedStep(page, 10, "Editor mit einfachem Text verwenden")',
+              '"Schritt 7 von 14"': '"Schritt 7 von 13"',
+          }
+          for old_value, new_value in replacements.items():
+              text = text.replace(old_value, new_value)
+          path.write_text(text)
+
+          # Authoring rule: advanced tool concepts may be explained but not forced in the beginner path.
+          Path("docs/15-anfaenger-pflichtpfad.md").write_text('''# 15 — Anfänger-Pflichtpfad und Advanced-Konzepte\n\nFür Szenarien mit `personaId: "non-programmer"` gilt: Der Pflichtpfad enthält nur Bedienhandlungen und Konzepte, die für das aktuelle Lernziel unmittelbar nötig sind.\n\n## Grundregel\n\nEin fortgeschrittenes Konzept darf im Anfängerpfad erklärt oder im Explore-Modus angeboten werden, aber nicht als Pflichtaktion erscheinen, wenn das Lernziel auch ohne diese Konfiguration erreicht werden kann.\n\nBeispiele:\n\n- **Workspace:** Anfänger verstehen den Unterschied zwischen `Open Folder` und einem gespeicherten Workspace. Einen Multi-Root-Workspace mit mehreren Ordnern und Workspace-Einstellungen müssen sie im VS-Code-Grundkurs nicht konfigurieren.\n- **Terminal:** Das Terminal als Bereich darf erklärt und geöffnet werden. Spezielle Shell-Flags, komplexe Kommandozeilen oder fortgeschrittene Terminalkonfiguration gehören nur in ein Modul, dessen Lernziel genau das erfordert.\n- **Inline-Vervollständigung:** Sie darf in einem Copilot-Modul praktisch verwendet werden, wenn sie dort erklärt wird. Sie ist keine Voraussetzung für allgemeine VS-Code-Grundlagen.\n- **Erweiterte Editor-/Debug-Funktionen:** Multi-Cursor, Debug-Konfiguration, komplexe Editor-Layouts oder ähnliche Funktionen bleiben Explore-/Advanced-Inhalte, solange sie nicht explizites Lernziel sind.\n\n## Entscheidung für Autoren\n\nVor jedem Aktionsschritt ist zu prüfen:\n\n1. Ist diese Handlung für das Lernziel zwingend erforderlich?\n2. Wurde das dafür nötige Konzept bereits erklärt?\n3. Kann derselbe Lernzweck mit einer einfacheren Handlung erreicht werden?\n4. Ist der Schritt nur deshalb enthalten, weil das echte Produkt diese Funktion ebenfalls besitzt?\n\nWenn Frage 1 mit Nein oder Frage 3 mit Ja beantwortet wird, gehört die Handlung nicht in den Anfänger-Pflichtpfad. Sie kann stattdessen als Erklärung, Explore-Ziel oder späteres Advanced-Szenario erhalten bleiben.\n\n## VS-Code-Grundlagen\n\nDer verpflichtende Guided-Pfad verwendet `Open Folder` als einfachsten Arbeitskontext. Der Workspace-Begriff wird dabei erklärt. `Open Workspace from File...` bleibt im Explore-Modus verfügbar, damit interessierte Nutzer den Unterschied praktisch untersuchen können, ohne dass Multi-Root-Konfiguration zur Einstiegshürde wird.\n''')
+          PY
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format repository
+        run: npx prettier --write .
+
+      - name: Commit migration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "AITP-167: remove advanced VS Code actions from beginner path"
+          git push origin HEAD:agent/aitp-167-beginner-scope
