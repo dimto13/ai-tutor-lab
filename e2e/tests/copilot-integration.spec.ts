@@ -9,6 +9,7 @@ test("VS Code Grundlagen bleibt ohne Copilot-Integration lauffähig", async ({ p
   await waitUntilReady(page);
 
   await expect(page.getByRole("button", { name: "Copilot", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await expect(
     page.getByText("Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben."),
