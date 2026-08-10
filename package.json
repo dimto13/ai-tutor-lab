@@ -12,8 +12,12 @@
   ],
   "scripts": {
     "prepare": "node scripts/setup-git-hooks.mjs",
+    "check:workspace-links": "node scripts/check-workspace-links.mjs",
+    "predev": "npm run check:workspace-links",
     "dev": "npm run dev -w @ai-train-lab/web",
+    "predev:local": "npm run check:workspace-links",
     "dev:local": "npm run dev:local -w @ai-train-lab/web",
+    "prebuild": "npm run check:workspace-links",
     "build": "npm run build:packages && npm run build -w @ai-train-lab/web",
     "build:dev": "npm run build:dev -w @ai-train-lab/web",
     "build:packages": "npm run build -w @ai-train-lab/training-engine && npm run build -w @ai-train-lab/runtime-core && npm run build -w @ai-train-lab/runtime-terminal-sim && npm run build -w @ai-train-lab/runtime-vscode-sim && npm run build -w @ai-train-lab/catalog",
