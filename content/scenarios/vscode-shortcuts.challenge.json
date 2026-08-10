@@ -8,7 +8,13 @@
   "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["platform.review"]
+    "glossaryConcepts": [
+      "platform.review",
+      "vscode.shortcut",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.folder"
+    ]
   },
   "environment": {
     "productId": "vscode",

@@ -105,5 +105,26 @@
       ],
       "successMessage": "Der Pull Request ist vollständig reviewbar und merge-bereit."
     }
-  ]
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "git.repository",
+      "git.working_tree",
+      "git.stage",
+      "git.commit",
+      "git.branch",
+      "github.platform",
+      "git.github_difference",
+      "platform.repository",
+      "platform.branch_selector",
+      "platform.commit_history",
+      "platform.pull_request",
+      "platform.diff",
+      "platform.review",
+      "platform.status_checks",
+      "platform.issues",
+      "platform.remote"
+    ]
+  }
 }

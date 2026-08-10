@@ -225,5 +225,22 @@
       "highlightTooltip": "GitHub Copilot als integriertes, aber eigenständiges Produkt öffnen.",
       "successMessage": "Copilot hat deine frei formulierte Anfrage im aktuellen Dateikontext verarbeitet."
     }
-  ]
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "programming.python",
+      "vscode.activity_bar",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.terminal",
+      "git.repository",
+      "git.stage",
+      "git.commit",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.inline_suggestion"
+    ]
+  }
 }

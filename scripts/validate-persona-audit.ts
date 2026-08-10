@@ -28,7 +28,7 @@ interface TermRule {
 
 const scenarioDir = resolve(process.cwd(), "content/scenarios");
 const personaPath = resolve(process.cwd(), "content/personas/de.json");
-const glossaryPath = resolve(process.cwd(), "content/glossary/de.json");
+const glossaryDir = resolve(process.cwd(), "content/glossary");
 
 const termRules: TermRule[] = [
   { pattern: /\bActivity Bar\b/i, concepts: ["vscode.activity_bar"], label: "Activity Bar" },
@@ -38,7 +38,21 @@ const termRules: TermRule[] = [
   { pattern: /\bPanel\b/i, concepts: ["vscode.panel"], label: "Panel" },
   { pattern: /\bTerminal\b/i, concepts: ["vscode.terminal"], label: "Terminal" },
   { pattern: /\bWorkspace\b/i, concepts: ["vscode.workspace"], label: "Workspace" },
+  { pattern: /\bShortcuts?\b/i, concepts: ["vscode.shortcut"], label: "Shortcut" },
+  { pattern: /\bHTML\b/i, concepts: ["web.html"], label: "HTML" },
+  { pattern: /\bWorking Tree\b/i, concepts: ["git.working_tree"], label: "Working Tree" },
+  { pattern: /\bRemote\b/i, concepts: ["platform.remote"], label: "Remote" },
   { pattern: /\bPython\b|\.py\b/i, concepts: ["programming.python"], label: "Python" },
+  {
+    pattern: /\bGitHub\b/i,
+    concepts: ["github.platform", "github.copilot"],
+    label: "GitHub",
+  },
+  {
+    pattern: /\bCopilot\b/i,
+    concepts: ["github.copilot"],
+    label: "Copilot",
+  },
   {
     pattern: /\bRepository\b/i,
     concepts: ["git.repository", "platform.repository"],
@@ -106,10 +120,16 @@ function collectPersonaIds(document: PersonaDocument): Set<string> {
 const personas = collectPersonaIds(
   JSON.parse(await readFile(personaPath, "utf8")) as PersonaDocument,
 );
-const glossary = JSON.parse(await readFile(glossaryPath, "utf8")) as GlossaryDocument;
-const glossaryKeys = new Set(
-  (glossary.concepts ?? []).flatMap((concept) => (concept.key ? [concept.key] : [])),
-);
+const glossaryFiles = (await readdir(glossaryDir)).filter((file) => file.endsWith(".json")).sort();
+const glossaryKeys = new Set<string>();
+for (const file of glossaryFiles) {
+  const glossary = JSON.parse(
+    await readFile(resolve(glossaryDir, file), "utf8"),
+  ) as GlossaryDocument;
+  for (const concept of glossary.concepts ?? []) {
+    if (concept.key) glossaryKeys.add(concept.key);
+  }
+}
 const scenarioFiles = (await readdir(scenarioDir)).filter((file) => file.endsWith(".json")).sort();
 const issues: string[] = [];
 
