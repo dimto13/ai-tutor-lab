@@ -1,20 +1,24 @@
 version: 1
-applications:
-  - appRoot: apps/web
-    frontend:
-      buildPath: /
-      phases:
-        preBuild:
-          commands:
-            - nvm use 22
-            - npm ci --install-strategy=nested
-        build:
-          commands:
-            - VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
-      artifacts:
-        baseDirectory: apps/web/.amplify-hosting
-        files:
-          - "**/*"
-      cache:
-        paths:
-          - .npm/**/*
+backend:
+  phases:
+    build:
+      commands:
+        - nvm use 22
+        - npm ci --install-strategy=nested
+        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm use 22
+        - npm ci --install-strategy=nested
+    build:
+      commands:
+        - VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
+  artifacts:
+    baseDirectory: apps/web/.amplify-hosting
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - .npm/**/*
