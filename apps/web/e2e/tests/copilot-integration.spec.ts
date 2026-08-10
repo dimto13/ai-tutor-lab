@@ -35,7 +35,7 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehäng
   await copilotButton.click();
 
   await expect(page.getByText(/Profil github-copilot-vscode-2026-08 · 2026\.08/)).toBeVisible();
-  await expect(page.getByLabel("Kontext")).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Kontext", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
   await page.getByRole("button", { name: "Datei anhängen: hello.py" }).click();
   await expect(page.locator('[data-highlight="copilot.chat.contextAttachment"]')).toContainText(
