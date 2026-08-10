@@ -24,6 +24,7 @@
       "programming.python",
       "vscode.workspace",
       "vscode.side_bar",
+      "vscode.explorer",
       "git.repository",
       "copilot.inline_suggestion",
       "vscode.editor",
