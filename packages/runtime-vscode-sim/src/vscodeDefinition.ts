@@ -92,11 +92,6 @@ export const VSCODE_RUNTIME_DEFINITION = {
     { ref: "vscode.panel.output", label: "Output", conceptKey: "vscode.output" },
     { ref: "vscode.statusBar", label: "Status Bar", conceptKey: "vscode.status_bar" },
     {
-      ref: "vscode.statusBar.terminal",
-      label: "Terminal öffnen",
-      conceptKey: "vscode.terminal",
-    },
-    {
       ref: "vscode.menu.file.openFolder",
       label: "Open Folder",
       conceptKey: "vscode.folder",
