@@ -175,19 +175,50 @@ export function CopilotPanel({
 
   return (
     <div ref={rootRef} className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <style>{`
+        [data-highlight="vscode.secondarySideBar"] {
+          transition-property: width !important;
+        }
+
+        @media (max-width: 639px) {
+          body:has([data-highlight="vscode.secondarySideBar"] [data-highlight="copilot.chat"])
+            [data-highlight="vscode.primarySideBar"] {
+            display: none;
+          }
+
+          [data-highlight="vscode.secondarySideBar"]:has([data-highlight="copilot.chat"]) {
+            width: 9rem !important;
+          }
+        }
+      `}</style>
+
       {!runtimeState.chatOpen ? (
-        <button
-          type="button"
-          data-highlight="copilot.chat.toggle"
-          disabled={!runtimeState.enabled}
-          onClick={toggleChat}
-          aria-label="Copilot"
-          title="Copilot Chat öffnen"
-          className="flex h-10 w-full shrink-0 items-center justify-center text-foreground transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Sparkles className="h-4 w-4 text-accent" />
-          <span className="sr-only">Copilot</span>
-        </button>
+        <div className="flex w-full shrink-0 flex-col items-center">
+          <button
+            type="button"
+            data-highlight="copilot.chat.toggle"
+            disabled={!runtimeState.enabled}
+            onClick={toggleChat}
+            aria-label="Copilot"
+            title="Copilot Chat öffnen"
+            className="flex h-10 w-full shrink-0 items-center justify-center text-foreground transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Sparkles className="h-4 w-4 text-accent" />
+            <span className="sr-only">Copilot</span>
+          </button>
+          {runtimeState.enabled ? (
+            <button
+              type="button"
+              onClick={toggleEnabled}
+              aria-label="Copilot an"
+              aria-pressed="true"
+              className="flex h-7 w-full items-center justify-center border-t border-border text-[9px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              title="GitHub Copilot für diesen Simulator ausschalten"
+            >
+              An
+            </button>
+          ) : null}
+        </div>
       ) : runtimeState.enabled ? (
         <div
           data-highlight="copilot.chat"
@@ -405,6 +436,7 @@ export function CopilotPanel({
           onClick={toggleEnabled}
           className="flex h-10 w-full items-center justify-center text-[10px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
           title="GitHub Copilot wieder aktivieren"
+          aria-label="Copilot aus"
         >
           Aus
         </button>
