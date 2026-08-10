@@ -7,16 +7,6 @@
 # Grund: Ein Formatverstoss laesst den CI-Schritt "Check formatting" im Job
 # "validate" fehlschlagen und blockiert damit auch den Folgejob "e2e-training-modes".
 
-# Einmalige AITP-81-Migrationshilfe: GitHub Actions darf mit seinem GITHUB_TOKEN
-# keine Workflow-Dateien veraendern. Der Migrationslauf validiert die angepasste
-# CI-Datei trotzdem, nimmt Workflow-Aenderungen aber nicht in seinen Bot-Commit
-# auf. Sie werden danach ueber den GitHub-Connector geschrieben.
-if [ -d "apps/web" ]; then
-  git restore --source=HEAD --staged --worktree -- \
-    .github/workflows/code-ci.yml \
-    .github/workflows/aitp-81-migrate.yml 2>/dev/null || true
-fi
-
 BIN="./node_modules/.bin/prettier"
 if [ ! -x "$BIN" ]; then
   echo "pre-commit: Prettier nicht gefunden, Formatpruefung uebersprungen."
