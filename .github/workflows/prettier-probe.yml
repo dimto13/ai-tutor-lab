@@ -1,0 +1,32 @@
+name: Prettier Probe
+
+on:
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format probe files
+        run: npx prettier --write e2e/tests/help-escalation.spec.ts src/scenarios/helpEscalation.ts tests/runtime/helpEscalation.test.ts
+
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: prettier-probe-output
+          path: |
+            e2e/tests/help-escalation.spec.ts
+            src/scenarios/helpEscalation.ts
+            tests/runtime/helpEscalation.test.ts
