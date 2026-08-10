@@ -37,6 +37,29 @@ test("level three must add information instead of duplicating level two", () => 
   assert.ok(violations.some((violation) => violation.code === "level-three-duplicate"));
 });
 
+test("level three requires an executable action", () => {
+  const violations = validateHelpEscalation(
+    step([
+      "Suche den Prüfschritt unten rechts.",
+      "Klicke auf Ergebnis geprüft.",
+      "Die Prüfaktion befindet sich unten rechts neben der Vorschau und ist gut sichtbar.",
+    ]),
+  );
+  assert.ok(violations.some((violation) => violation.code === "level-three-no-action"));
+});
+
+test("action detection does not mistake nouns for imperative instructions", () => {
+  const violations = validateHelpEscalation(
+    step([
+      "Suche den Prüfschritt unten rechts.",
+      "Klicke auf Ergebnis geprüft.",
+      "Die Prüfaktion wird deutlich hervorgehoben und mit einem Rahmen markiert.",
+    ]),
+  );
+  assert.ok(violations.some((violation) => violation.code === "level-three-no-action"));
+  assert.ok(violations.some((violation) => violation.code === "level-three-highlight-only"));
+});
+
 test("level three rejects highlight-only wording", () => {
   const violations = validateHelpEscalation(
     step([
