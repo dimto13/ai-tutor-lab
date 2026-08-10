@@ -1,0 +1,247 @@
+name: Apply AITP-169
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aitp-169-tolerant-freetext
+          fetch-depth: 0
+
+      - name: Migrate free-text validations
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          def load(path):
+              return json.loads(Path(path).read_text())
+
+          def save(path, data):
+              Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          # Research: own wording must not depend on the magic word "Vergleichstabelle".
+          path = "content/scenarios/research-workflow.guided.json"
+          scenario = load(path)
+          step = next(step for step in scenario["steps"] if step["id"] == "prompt")
+          step["instruction"] = "Öffne Copilot und formuliere in eigenen Worten einen Auftrag für drei aktuelle Optionen, einen Zeitraum von höchstens 12 Monaten, nachvollziehbare Quellen und eine tabellarische Gegenüberstellung."
+          step["helpLevels"] = [
+              "Öffne zuerst Copilot Chat.",
+              "Nenne drei Optionen, einen Zeitraum von höchstens 12 Monaten und nachvollziehbare Quellen.",
+              "Formuliere einen eigenen Prompt mit drei Optionen, höchstens 12 Monaten Aktualität, Quellen und einer tabellarischen Gegenüberstellung und sende ihn ab. Die genaue Wortwahl ist frei."
+          ]
+          step["validation"].pop("contains", None)
+          step["successMessage"] = "Der frei formulierte Rechercheauftrag wurde gesendet."
+          for response in scenario["environment"]["seed"].get("chatResponses", []):
+              response.pop("promptContains", None)
+          save(path, scenario)
+
+          # HTML workflow: output goal matters, not the token "Teamübersicht".
+          path = "content/scenarios/html-page-workflow.guided.json"
+          scenario = load(path)
+          step = next(step for step in scenario["steps"] if step["id"] == "prompt")
+          step["instruction"] = "Öffne Copilot und beschreibe in eigenen Worten eine interne Übersicht des Projektteams mit Name, Rolle und Status."
+          step["helpLevels"] = [
+              "Öffne Copilot Chat.",
+              "Beschreibe Inhalt und Zweck der gewünschten Übersicht.",
+              "Formuliere einen eigenen Auftrag für eine interne Übersicht mit Name, Rolle und Status und sende ihn ab. Du musst keinen vorgegebenen Begriff verwenden."
+          ]
+          step["validation"].pop("contains", None)
+          step["successMessage"] = "Der frei formulierte fachliche Auftrag wurde gesendet."
+          detect_loss = next(step for step in scenario["steps"] if step["id"] == "detect-loss")
+          detect_loss["exactTextValidation"] = True
+          for response in scenario["environment"]["seed"].get("chatResponses", []):
+              if response.get("promptContains") == "teamübersicht":
+                  response.pop("promptContains", None)
+          save(path, scenario)
+
+          # Copilot basics: asking about the active file is semantic, not a literal phrase exercise.
+          path = "content/scenarios/copilot-basics.guided.json"
+          scenario = load(path)
+          step = next(step for step in scenario["steps"] if step["id"] == "use-file-context")
+          step["instruction"] = "Frage Copilot in eigenen Worten, was die aktuell geöffnete Datei macht."
+          step["helpLevels"] = [
+              "Nutze das Eingabefeld Ask Copilot... im geöffneten Chat.",
+              "Formuliere eine Frage zur Aufgabe oder zum Zweck der aktuell geöffneten Datei und drücke Enter.",
+              "Das Prompt-Feld wird hervorgehoben. Frage dort in eigenen Worten nach der Aufgabe der aktuell geöffneten Datei und drücke Enter."
+          ]
+          step["validation"].pop("contains", None)
+          step["successMessage"] = "Deine frei formulierte Frage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
+          scenario["environment"]["seed"].setdefault("chatResponses", []).insert(0, {
+              "file": "calculator.py",
+              "response": "calculator.py enthält eine kleine Python-Funktion namens add. Sie erhält zwei Eingaben und soll diese addieren; der aktuelle Dateikontext hilft Copilot, deine Frage auf genau diese Datei zu beziehen."
+          })
+          save(path, scenario)
+
+          # Developer workflow: the requested outcome matters, not one exact German phrase.
+          path = "content/scenarios/developer-workflow-basics.guided.json"
+          scenario = load(path)
+          step = next(step for step in scenario["steps"] if step["id"] == "step_8")
+          step["instruction"] = "Öffne Copilot Chat und bitte in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert."
+          step["helpLevels"] = [
+              "Der Copilot-Chat ist im Editorbereich erreichbar.",
+              "Klicke auf Copilot und beschreibe die gewünschte Addition zweier Zahlen in eigenen Worten.",
+              "Der Copilot-Button wird hervorgehoben. Öffne ihn, bitte im Prompt-Feld um eine Python-Funktion für die Addition zweier Zahlen und drücke Enter. Die genaue Formulierung ist frei."
+          ]
+          step["validation"].pop("contains", None)
+          step["successMessage"] = "Copilot hat deine frei formulierte Anfrage im aktuellen Dateikontext verarbeitet."
+          for response in scenario["environment"]["seed"].get("chatResponses", []):
+              if response.get("promptContains") == "addier":
+                  response.pop("promptContains", None)
+          save(path, scenario)
+
+          # Source-control guided: description/review meaning is taught, but no magic token is required.
+          path = "content/scenarios/source-control-platform-basics.guided.json"
+          scenario = load(path)
+          create_pr = next(step for step in scenario["steps"] if step["id"] == "create-pull-request")
+          create_pr["instruction"] = "Öffne „Pull Requests“. Erstelle den Pull Request mit dem vorgegebenen Titel und beschreibe in eigenen Worten Zweck und durchgeführte Prüfung der Änderung."
+          create_pr["helpLevels"] = [
+              "Öffne zunächst den Reiter Pull Requests.",
+              "Beschreibe kurz, was geändert wurde und wie du die Änderung kontrolliert hast.",
+              "Der Bereich Pull Requests wird hervorgehoben. Öffne ihn, prüfe Head feature/readme-guide und Base main, schreibe eine eigene nachvollziehbare Beschreibung mit Änderungszweck und Prüfnachweis und erstelle den Pull Request."
+          ]
+          create_pr["validation"].pop("contains", None)
+          create_pr["successMessage"] = "Der Pull Request verbindet Branch und Zweck mit einer frei formulierten Beschreibung."
+
+          reply = next(step for step in scenario["steps"] if step["id"] == "reply-to-review")
+          reply["instruction"] = "Wechsle zur Unterhaltung und beantworte den Review-Kommentar in eigenen Worten mit dem Ergebnis deiner Prüfung."
+          reply["helpLevels"] = [
+              "Öffne wieder den Reiter Unterhaltung.",
+              "Antworte fachlich auf die Rückfrage zu Zugangsdaten und geprüftem Link.",
+              "Der gelb markierte Review-Bereich mit dem Antwortfeld wird hervorgehoben. Schreibe dort in eigenen Worten, was du zu Zugangsdaten und Link kontrolliert hast, und sende die Antwort."
+          ]
+          reply["validation"].pop("contains", None)
+          reply["successMessage"] = "Das Review-Feedback ist mit einer frei formulierten Antwort nachvollziehbar bearbeitet."
+          save(path, scenario)
+
+          # Source-control challenge: merge readiness is the outcome; one word in the description is not.
+          path = "content/scenarios/source-control-platform-basics.challenge.json"
+          scenario = load(path)
+          scenario["completionValidation"]["of"] = [
+              rule for rule in scenario["completionValidation"]["of"]
+              if rule.get("selector") != "platform.pullRequest.description"
+          ]
+          scenario["solutionComparison"] = [
+              "Branch feature/readme-guide als getrennte Entwicklungslinie erstellt",
+              "Pull Request mit einer nachvollziehbaren eigenen Beschreibung geöffnet",
+              "Diff aktiv angesehen und Review-Feedback beantwortet",
+              "Status Check erfolgreich; gemeinsamer Endzustand ist merge-bereit"
+          ]
+          step = scenario["steps"][0]
+          step["instruction"] = "Erstelle den Branch „feature/readme-guide“, öffne daraus einen Pull Request mit einer eigenen nachvollziehbaren Beschreibung, sieh den Diff an, beantworte das Review-Feedback und bringe die Checks auf erfolgreich."
+          step["helpLevels"] = [
+              "Bewertet wird nur der fachliche Endzustand, nicht die Reihenfolge deiner Klicks oder ein bestimmtes Schlüsselwort.",
+              "Der Pull Request muss vom Branch feature/readme-guide nach main zeigen und eine eigene Beschreibung besitzen.",
+              "Erstelle feature/readme-guide, öffne daraus den Pull Request nach main, beschreibe Zweck und Prüfung in eigenen Worten, öffne den Diff, beantworte das Review und führe den Status Check aus, bis er erfolgreich und der Pull Request merge-bereit ist."
+          ]
+          save(path, scenario)
+
+          # Extend authored-step schema for intentionally exact free-text learning goals.
+          path = Path("src/scenarios/contentLoader.ts")
+          text = path.read_text()
+          marker = '  optional: z.boolean().optional(),\n});'
+          replacement = '  optional: z.boolean().optional(),\n  exactTextValidation: z.boolean().optional(),\n});'
+          if marker not in text:
+              raise SystemExit("contentLoader step schema marker not found")
+          path.write_text(text.replace(marker, replacement, 1))
+
+          path = Path("src/types/training.ts")
+          text = path.read_text()
+          if "exactTextValidation?: boolean;" not in text:
+              candidates = [
+                  "  optional?: boolean;\n",
+                  "  optional: boolean;\n",
+              ]
+              for marker in candidates:
+                  if marker in text:
+                      text = text.replace(marker, marker + "  exactTextValidation?: boolean;\n", 1)
+                      break
+              else:
+                  raise SystemExit("TrainingStep optional marker not found")
+          path.write_text(text)
+
+          # Run the new policy as part of normal content validation.
+          path = Path("package.json")
+          package = json.loads(path.read_text())
+          command = package["scripts"]["validate:content"]
+          validator = "node --experimental-strip-types scripts/validate-freetext-policy.ts"
+          if validator not in command:
+              package["scripts"]["validate:content"] = command + " && " + validator
+          path.write_text(json.dumps(package, ensure_ascii=False, indent=2) + "\n")
+          PY
+
+      - name: Add tolerant free-text E2E coverage
+        shell: bash
+        run: |
+          cat > e2e/tests/freetext-tolerance.spec.ts <<'EOF'
+          import { expect, test, type Page } from "@playwright/test";
+
+          async function waitForTrainingReady(page: Page): Promise<void> {
+            await expect(page.getByRole("status")).toHaveText("Training bereit");
+          }
+
+          test("Recherche akzeptiert sinngleiche Formulierung ohne Magic Word", async ({ page }) => {
+            await page.goto("/training/research-workflow.guided");
+            await waitForTrainingReady(page);
+
+            await page.getByRole("button", { name: "Copilot", exact: true }).click();
+            const prompt = page.getByPlaceholder("Ask Copilot...");
+            await prompt.fill(
+              "Stelle drei aktuelle Optionen mit Belegen aus dem letzten Jahr tabellarisch gegenüber.",
+            );
+            await prompt.press("Enter");
+
+            await expect(
+              page.getByRole("heading", { name: "Schritt 2 – Drei Suchläufe sichtbar ausführen" }),
+            ).toBeVisible();
+          });
+
+          test("HTML-Workflow akzeptiert eigenen Auftrag ohne Begriff Teamübersicht", async ({ page }) => {
+            await page.goto("/training/html-page-workflow.guided");
+            await waitForTrainingReady(page);
+
+            await page.getByRole("button", { name: "Copilot", exact: true }).click();
+            const prompt = page.getByPlaceholder("Ask Copilot...");
+            await prompt.fill(
+              "Erzeuge eine interne Übersicht der Personen mit ihren Namen, Funktionen und Statusangaben.",
+            );
+            await prompt.press("Enter");
+
+            await expect(
+              page.getByRole("heading", { name: "Schritt 2 – Erste Seite als Ergebnis ansehen" }),
+            ).toBeVisible();
+          });
+          EOF
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format repository
+        run: npx prettier --write .
+
+      - name: Validate implementation
+        run: npm run check
+
+      - name: Commit migration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "AITP-169: make beginner free-text validation tolerant"
+          git push origin HEAD:agent/aitp-169-tolerant-freetext
