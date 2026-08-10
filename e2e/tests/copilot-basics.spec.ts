@@ -17,7 +17,9 @@ const legacyGuidedStepIds = [
 async function openCopilotScenario(page: Page) {
   await page.goto("/training/copilot-basics.guided");
   await expect(page.getByRole("status")).toContainText("Training bereit");
-  await expect(page.getByText("GitHub Copilot – Grundlagen")).toBeVisible();
+  await expect(
+    page.getByRole("banner").getByText("GitHub Copilot – Grundlagen", { exact: true }),
+  ).toBeVisible();
 }
 
 async function completeIntroSteps(page: Page) {
@@ -114,7 +116,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");
   await expect(
-    page.getByText(/calculator\.py.*add.*zwei Eingaben.*addieren.*Dateikontext/),
+    page.getByText(/calculator\.py.*def add\(a, b\):.*noch keinen Funktionskörper/),
   ).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
   await expect(page.getByText("Schritt 8 – Plan-Modus auswählen")).toBeVisible();
@@ -154,20 +156,22 @@ test("Einsteiger können Grundbegriffe lesen und direkt im Guide nachschlagen", 
   await openCopilotScenario(page);
 
   await expect(page.getByText("Schritt 1 – Code und Programmierung einordnen")).toBeVisible();
-  await expect(page.getByText(/Excel-Formel/)).toBeVisible();
-  await expect(page.getByText(/Code funktioniert nach demselben Grundgedanken/)).toBeVisible();
+  await page.getByRole("button", { name: "Code: Begriffserklärung öffnen" }).first().click();
+  await expect(page.getByRole("heading", { name: "Code", exact: true })).toBeVisible();
+  await expect(page.getByText(/Excel-Formel ist ein vertrautes Beispiel/)).toBeVisible();
+  await page.keyboard.press("Escape");
 
-  await completeIntroSteps(page);
+  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
+  await expect(page.getByText("Schritt 2 – Python als Beispielsprache verstehen")).toBeVisible();
+  await page.getByRole("button", { name: "Python: Begriffserklärung öffnen" }).first().click();
+  await expect(page.getByRole("heading", { name: "Python", exact: true })).toBeVisible();
+  await expect(page.getByText(/Programmiersprache.*\.py/)).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
+  await expect(page.getByText("Schritt 3 – Workspace und Repository unterscheiden")).toBeVisible();
+  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
   await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
-
-  await page.getByRole("button", { name: "Guide" }).click();
-  await expect(page.getByText("Begriffe in diesem Training")).toBeVisible();
-  await expect(page.getByText("Code", { exact: true })).toBeVisible();
-  await expect(page.getByText("Programmierung", { exact: true })).toBeVisible();
-  await expect(page.getByText("Python", { exact: true })).toBeVisible();
-  await expect(page.getByText("Workspace", { exact: true })).toBeVisible();
-  await expect(page.getByText("Repository", { exact: true })).toBeVisible();
-  await expect(page.getByText("Inline-Vorschlag", { exact: true })).toBeVisible();
 });
 
 test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({
@@ -215,7 +219,8 @@ test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktp
   await expect(modelSelect.locator("option")).toHaveText([
     "Auto",
     "GPT-5.3-Codex",
-    "GPT-5.4",
-    "Claude Opus 4.6",
+    "GPT-5.5",
+    "Claude Sonnet 4.6",
+    "Gemini 3.5 Flash",
   ]);
 });
