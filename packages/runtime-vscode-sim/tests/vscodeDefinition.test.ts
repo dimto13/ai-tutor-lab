@@ -8,3 +8,16 @@ test("VS Code simulator publishes a semantic runtime definition", () => {
     VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.activityBar.explorer"),
   );
 });
+
+test("VS Code simulator distinguishes Primary and Secondary Side Bar semantically", () => {
+  const primary = VSCODE_RUNTIME_DEFINITION.surface.find(
+    (item) => item.ref === "vscode.primarySideBar",
+  );
+  const secondary = VSCODE_RUNTIME_DEFINITION.surface.find(
+    (item) => item.ref === "vscode.secondarySideBar",
+  );
+
+  assert.equal(primary?.label, "Primary Side Bar");
+  assert.equal(secondary?.label, "Secondary Side Bar");
+  assert.notEqual(primary?.ref, secondary?.ref);
+});
