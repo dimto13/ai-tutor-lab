@@ -7,4 +7,11 @@ test("VS Code simulator publishes a semantic runtime definition", () => {
   assert.ok(
     VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.activityBar.explorer"),
   );
+  assert.ok(
+    VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.primarySideBar"),
+  );
+  assert.ok(
+    VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.secondarySideBar"),
+  );
+  assert.ok(VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.sideBar"));
 });
