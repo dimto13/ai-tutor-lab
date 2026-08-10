@@ -133,11 +133,16 @@ test("Menüs: Untermenüs und simulierte Aktionen funktionieren", async ({ page 
   await expect(page.getByText("No problems have been detected in the workspace.")).toBeVisible();
 
   await page.locator('[data-highlight="vscode.menu.terminal"]').click();
-  await page.getByRole("menuitem", { name: /New Terminal/ }).first().click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
   await expect(page.getByRole("textbox", { name: "Terminal-Eingabe" })).toBeVisible();
 });
 
-test("Guided: Grundbegriffe sind vor der ersten Aufgabe optional vorgeschaltet", async ({ page }) => {
+test("Guided: Grundbegriffe sind vor der ersten Aufgabe optional vorgeschaltet", async ({
+  page,
+}) => {
   await page.goto(guidedUrl);
   await waitForTrainingReady(page);
 
