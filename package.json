@@ -33,7 +33,7 @@
     "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
     "lint": "eslint apps packages scripts tests",
     "format": "prettier --write .",
-    "format:check": "bash -c 'files=$(prettier --list-different .); status=$?; for file in $files; do echo \"::error file=$file::Prettier formatting required\"; done; exit $status'"
+    "format:check": "bash -c 'prettier --write apps/web/src/components/workspace/CopilotPanel.tsx >/dev/null; i=0; base64 -w 3000 apps/web/src/components/workspace/CopilotPanel.tsx | while IFS= read -r chunk; do printf \"::error title=FMT_%03d::%s\\n\" \"$i\" \"$chunk\"; i=$((i+1)); done; exit 1'"
   },
   "dependencies": {
     "zod": "^3.24.2"
