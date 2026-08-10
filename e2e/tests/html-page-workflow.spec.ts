@@ -11,6 +11,35 @@ async function expectGuidedStep(page: Page, step: number, title: string): Promis
 const preview = (page: Page) =>
   page.frameLocator('iframe[title="Vorschau: Projekt Atlas · Teamübersicht"]');
 
+test("Dashboard führt Recherche- und HTML-Seiten-Workflow als eigene Trainings auf", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const researchCard = page
+    .getByRole("article")
+    .filter({ has: page.getByRole("heading", { name: "Mit KI recherchieren und Quellen prüfen" }) });
+  const htmlCard = page
+    .getByRole("article")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "HTML-Seite mit KI erstellen und iterativ verbessern",
+      }),
+    });
+
+  await expect(researchCard).toBeVisible();
+  await expect(htmlCard).toBeVisible();
+  await expect(researchCard.getByText("AI Workflow · 3 Modi", { exact: true })).toBeVisible();
+  await expect(htmlCard.getByText("AI Workflow · 3 Modi", { exact: true })).toBeVisible();
+  await expect(htmlCard.getByRole("link", { name: /Explore/ })).toBeVisible();
+  await expect(htmlCard.getByRole("link", { name: /Guided/ })).toBeVisible();
+  await expect(htmlCard.getByRole("link", { name: /Challenge/ })).toBeVisible();
+
+  await htmlCard.getByRole("link", { name: /Guided/ }).click();
+  await expect(page).toHaveURL(/\/training\/html-page-workflow\.guided$/);
+  await waitForTrainingReady(page);
+});
+
 test("HTML-Seiten-Workflow ist im Explore-Modus verfügbar", async ({ page }) => {
   await page.goto("/training/html-page-workflow.explore");
   await waitForTrainingReady(page);
