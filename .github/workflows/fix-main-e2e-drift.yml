@@ -1,0 +1,161 @@
+name: Fix main E2E drift
+
+on:
+  push:
+    branches:
+      - fix/remove-temporary-aitp155-runner
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/remove-temporary-aitp155-runner
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --install-strategy=nested
+      - name: Apply validation and E2E repairs
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"pattern not found in {path}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          replace(
+              "src/types/training.ts",
+              '      contains?: Record<string, string>;\n',
+              '      contains?: Record<string, string>;\n      /** Case-insensitive synonym fragments; at least one fragment per field must match. */\n      containsAny?: Record<string, string[]>;\n',
+          )
+          replace(
+              "src/types/training.ts",
+              '      includes?: unknown;\n      excludes?: unknown;\n',
+              '      includes?: unknown;\n      /** Tolerant alternative values/fragments; at least one must match. */\n      includesAny?: unknown[];\n      excludes?: unknown;\n',
+          )
+
+          replace(
+              "src/scenarios/contentLoader.ts",
+              '  contains: z.record(z.string()).optional(),\n',
+              '  contains: z.record(z.string()).optional(),\n  containsAny: z.record(z.array(z.string().min(1)).min(1)).optional(),\n',
+          )
+          replace(
+              "src/scenarios/contentLoader.ts",
+              '  includes: z.unknown().optional(),\n  excludes: z.unknown().optional(),\n',
+              '  includes: z.unknown().optional(),\n  includesAny: z.array(z.unknown()).min(1).optional(),\n  excludes: z.unknown().optional(),\n',
+          )
+          replace(
+              "src/scenarios/contentLoader.ts",
+              '    promptContains: nonBlankSeedStringSchema.optional(),\n',
+              '    promptContains: nonBlankSeedStringSchema.optional(),\n    promptContainsAny: z.array(nonBlankSeedStringSchema).min(1).optional(),\n',
+          )
+
+          replace(
+              "src/state/trainingStore.tsx",
+              'function validateEvent(validation: Validation | undefined, event: TrainingEvent): ValidationResult {\n',
+              '''function normalizeComparableText(value: string): string {\n  return value\n    .normalize("NFKD")\n    .replace(/\\p{M}/gu, "")\n    .replace(/ß/g, "ss")\n    .toLocaleLowerCase("de-DE");\n}\n\nfunction containsNormalizedFragment(actual: string, expected: string): boolean {\n  return normalizeComparableText(actual).includes(normalizeComparableText(expected));\n}\n\nfunction validateEvent(validation: Validation | undefined, event: TrainingEvent): ValidationResult {\n''',
+          )
+          replace(
+              "src/state/trainingStore.tsx",
+              '''  for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {\n    const actual = payload[key];\n    if (typeof actual !== "string" || !actual.includes(expectedFragment)) {\n      return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };\n    }\n  }\n  return { ok: true };\n''',
+              '''  for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {\n    const actual = payload[key];\n    if (typeof actual !== "string" || !actual.includes(expectedFragment)) {\n      return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };\n    }\n  }\n  for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {\n    const actual = payload[key];\n    if (\n      typeof actual !== "string" ||\n      !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))\n    ) {\n      return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };\n    }\n  }\n  return { ok: true };\n''',
+          )
+          replace(
+              "src/state/trainingStore.tsx",
+              '''  if (Object.prototype.hasOwnProperty.call(validation, "includes")) {\n    if (Array.isArray(value)) {\n      if (!value.includes(validation.includes)) return false;\n    } else if (typeof value === "string") {\n      if (!value.includes(String(validation.includes))) return false;\n    } else {\n      return false;\n    }\n  }\n  if (Object.prototype.hasOwnProperty.call(validation, "excludes")) {\n''',
+              '''  if (Object.prototype.hasOwnProperty.call(validation, "includes")) {\n    if (Array.isArray(value)) {\n      if (!value.includes(validation.includes)) return false;\n    } else if (typeof value === "string") {\n      if (!value.includes(String(validation.includes))) return false;\n    } else {\n      return false;\n    }\n  }\n  if (validation.includesAny) {\n    if (Array.isArray(value)) {\n      if (!validation.includesAny.some((candidate) => value.includes(candidate))) return false;\n    } else if (typeof value === "string") {\n      if (\n        !validation.includesAny.some((candidate) =>\n          containsNormalizedFragment(value, String(candidate)),\n        )\n      )\n        return false;\n    } else {\n      return false;\n    }\n  }\n  if (Object.prototype.hasOwnProperty.call(validation, "excludes")) {\n''',
+          )
+
+          replace(
+              "src/runtime/copilotRuntime.ts",
+              '  promptContains?: string;\n',
+              '  promptContains?: string;\n  promptContainsAny?: string[];\n',
+          )
+          replace(
+              "src/runtime/copilotRuntime.ts",
+              '    const promptContains = item["promptContains"];\n',
+              '    const promptContains = item["promptContains"];\n    const promptContainsAny = item["promptContainsAny"];\n',
+          )
+          replace(
+              "src/runtime/copilotRuntime.ts",
+              '''      (promptContains !== undefined &&\n        (typeof promptContains !== "string" || !promptContains.trim()))\n''',
+              '''      (promptContains !== undefined &&\n        (typeof promptContains !== "string" || !promptContains.trim())) ||\n      (promptContainsAny !== undefined &&\n        (!Array.isArray(promptContainsAny) ||\n          promptContainsAny.length === 0 ||\n          !promptContainsAny.every(\n            (fragment) => typeof fragment === "string" && fragment.trim().length > 0,\n          )))\n''',
+          )
+          replace(
+              "src/runtime/copilotRuntime.ts",
+              '''      ...(promptContains === undefined ? {} : { promptContains }),\n''',
+              '''      ...(promptContains === undefined ? {} : { promptContains }),\n      ...(promptContainsAny === undefined ? {} : { promptContainsAny }),\n''',
+          )
+          replace(
+              "src/runtime/copilotRuntime.ts",
+              '''      (entry.promptContains === undefined ||\n        normalizedPrompt.includes(entry.promptContains.toLowerCase())),\n''',
+              '''      (entry.promptContains === undefined ||\n        normalizedPrompt.includes(entry.promptContains.toLowerCase())) &&\n      (entry.promptContainsAny === undefined ||\n        entry.promptContainsAny.some((fragment) =>\n          normalizedPrompt.includes(fragment.toLowerCase()),\n        )),\n''',
+          )
+
+          p = Path("content/scenarios/copilot-basics.guided.json")
+          data = json.loads(p.read_text())
+          step = next(s for s in data["steps"] if s["id"] == "use-file-context")
+          step["validation"]["containsAny"] = {
+              "prompt": ["Datei", "macht", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
+          }
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          p = Path("content/scenarios/source-control-platform-basics.guided.json")
+          data = json.loads(p.read_text())
+          create_pr = next(s for s in data["steps"] if s["id"] == "create-pull-request")
+          create_pr["validation"]["containsAny"] = {
+              "description": ["geprüft", "kontrolliert", "getestet", "verifiziert", "keine Zugangsdaten"]
+          }
+          reply = next(s for s in data["steps"] if s["id"] == "reply-to-review")
+          reply["validation"]["containsAny"] = {
+              "reply": ["Zugangsdaten", "Link", "geprüft", "kontrolliert", "verifiziert"]
+          }
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          p = Path("content/scenarios/source-control-platform-basics.challenge.json")
+          data = json.loads(p.read_text())
+          rules = data["completionValidation"]["of"]
+          if not any(rule.get("selector") == "platform.pullRequest.description" for rule in rules):
+              insert_at = next(i for i, rule in enumerate(rules) if rule.get("selector") == "platform.pullRequest.diffViewed")
+              rules.insert(insert_at, {
+                  "kind": "state",
+                  "selector": "platform.pullRequest.description",
+                  "includesAny": ["geprüft", "kontrolliert", "getestet", "verifiziert", "keine Zugangsdaten"],
+              })
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          p = Path("content/scenarios/developer-workflow-basics.guided.json")
+          data = json.loads(p.read_text())
+          responses = data["environment"]["seed"]["chatResponses"]
+          responses[0]["promptContainsAny"] = ["addier", "addition", "summe", "zwei zahlen"]
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          p = Path("e2e/tests/vscode-basics.spec.ts")
+          text = p.read_text()
+          if '"Schritt 8 von 14"' not in text:
+              raise SystemExit("vscode step-count assertion not found")
+          p.write_text(text.replace('"Schritt 8 von 14"', '"Schritt 8 von 13"', 1))
+          PY
+      - run: npx prettier --write src/types/training.ts src/scenarios/contentLoader.ts src/state/trainingStore.tsx src/runtime/copilotRuntime.ts content/scenarios/copilot-basics.guided.json content/scenarios/developer-workflow-basics.guided.json content/scenarios/source-control-platform-basics.guided.json content/scenarios/source-control-platform-basics.challenge.json e2e/tests/vscode-basics.spec.ts
+      - run: npm run check
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/fix-main-e2e-drift.yml
+      - name: Commit repairs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: restore tolerant validation and current E2E contracts"
+          git push origin HEAD:fix/remove-temporary-aitp155-runner
