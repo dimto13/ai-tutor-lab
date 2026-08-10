@@ -51,7 +51,21 @@ export const VSCODE_RUNTIME_DEFINITION = {
       label: "Extensions",
       conceptKey: "vscode.extensions",
     },
-    { ref: "vscode.sideBar", label: "Side Bar", conceptKey: "vscode.side_bar" },
+    {
+      ref: "vscode.primarySideBar",
+      label: "Primary Side Bar",
+      conceptKey: "vscode.side_bar",
+    },
+    {
+      ref: "vscode.secondarySideBar",
+      label: "Secondary Side Bar",
+      conceptKey: "vscode.side_bar",
+    },
+    {
+      ref: "vscode.sideBar",
+      label: "Side Bar",
+      conceptKey: "vscode.side_bar",
+    },
     {
       ref: "vscode.explorer.tree",
       label: "Explorer-Dateibaum",
