@@ -77,11 +77,14 @@ export interface WorkspaceEvent {
   payload?: Record<string, unknown>;
 }
 
-/** Canonical event crossing the runtime/training boundary. */
+/**
+ * Runtime transport envelope. `type` remains open for adapter-specific events;
+ * `CanonicalTrainingEventType` defines the stable cross-runtime vocabulary.
+ */
 export interface TrainingEvent<P = unknown> {
   id: string;
   source: string;
-  type: WorkspaceEventName;
+  type: string;
   timestamp: string;
   sessionId: string;
   payload: P;
