@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Check, ChevronDown, Plus, Sparkles, X } from "lucide-react";
 import {
   copilotRuntime,
@@ -51,9 +51,22 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   const [prompt, setPrompt] = useState("");
   const profile = copilotRuntime.getProductProfile();
   const chatVisible = runtimeState.chatOpen && runtimeState.enabled;
+  const secondarySideBarWidth = chatVisible
+    ? "clamp(8rem, 40vw, 20rem)"
+    : "clamp(2.5rem, 8vw, 3rem)";
 
   const inspectTarget = (ref: string) => {
     if (mode === "explore") copilotRuntime.inspect(ref);
+  };
+
+  const inspectSecondarySideBar = (event: MouseEvent<HTMLElement>) => {
+    if (mode !== "explore" || !(event.target instanceof Element)) return;
+
+    const dedicatedTarget = event.target.closest("[data-highlight]");
+    if (dedicatedTarget && dedicatedTarget !== event.currentTarget) return;
+    if (event.target.closest("button, input, select, textarea, a, label")) return;
+
+    vscodeRuntime.inspect("vscode.secondarySideBar");
   };
 
   useEffect(() => {
@@ -162,13 +175,10 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     <aside
       ref={rootRef}
       data-highlight="vscode.secondarySideBar"
-      onClickCapture={() => {
-        if (mode === "explore") vscodeRuntime.inspect("vscode.secondarySideBar");
-      }}
+      onClick={inspectSecondarySideBar}
       aria-label="Secondary Side Bar"
-      className={`flex min-w-0 shrink-0 flex-col overflow-x-hidden border-l border-border bg-panel ${
-        chatVisible ? "w-32 sm:w-72 lg:w-80" : "w-10 sm:w-12"
-      }`}
+      style={{ width: secondarySideBarWidth, maxWidth: secondarySideBarWidth }}
+      className="flex min-w-0 flex-none flex-col overflow-x-hidden border-l border-border bg-panel"
     >
       <div
         className={`flex h-9 min-w-0 shrink-0 items-center border-b border-border ${
@@ -188,6 +198,8 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
           disabled={!runtimeState.enabled}
           onClick={toggleChat}
           aria-label={chatVisible ? "Copilot Chat schließen" : "Copilot"}
+          aria-expanded={chatVisible}
+          aria-controls="copilot-chat-view"
           title={chatVisible ? "Copilot Chat schließen" : "Copilot Chat öffnen"}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -207,12 +219,16 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
           >
             {runtimeState.enabled ? "An" : "Aus"}
           </button>
-          <span className="select-none [writing-mode:vertical-rl] text-[9px] uppercase tracking-wider text-muted-foreground">
+          <span
+            aria-hidden="true"
+            className="select-none [writing-mode:vertical-rl] text-[9px] uppercase tracking-wider text-muted-foreground"
+          >
             Secondary Side Bar
           </span>
         </div>
       ) : (
         <div
+          id="copilot-chat-view"
           data-highlight="copilot.chat"
           onPointerDown={() => inspectTarget("copilot.chat")}
           className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-3"
@@ -275,7 +291,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
                   inspectTarget("copilot.chat.modeSelector");
                   copilotRuntime.setMode(event.target.value as CopilotRuntimeState["mode"]);
                 }}
-                className="mt-1 min-w-0 w-full appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-xs text-foreground outline-none focus:border-ring"
+                className="mt-1 w-full min-w-0 appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-xs text-foreground outline-none focus:border-ring"
               >
                 {profile.chatModes.map((mode) => (
                   <option key={mode.id} value={mode.id}>
@@ -297,7 +313,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
                   inspectTarget("copilot.chat.modelSelector");
                   copilotRuntime.setModel(event.target.value);
                 }}
-                className="mt-1 min-w-0 w-full appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-xs text-foreground outline-none focus:border-ring"
+                className="mt-1 w-full min-w-0 appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-xs text-foreground outline-none focus:border-ring"
               >
                 {profile.models.map((model) => (
                   <option key={model.id} value={model.id}>
@@ -323,7 +339,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
                   event.target.value === "active" ? activeFile : null,
                 );
               }}
-              className="mt-1 min-w-0 w-full rounded border border-border bg-editor px-2 py-1.5 text-xs text-foreground outline-none focus:border-ring"
+              className="mt-1 w-full min-w-0 rounded border border-border bg-editor px-2 py-1.5 text-xs text-foreground outline-none focus:border-ring"
             >
               <option value="active" disabled={!activeFile}>
                 {activeFile ? `Aktive Datei: ${activeFile}` : "Keine aktive Datei verfügbar"}
