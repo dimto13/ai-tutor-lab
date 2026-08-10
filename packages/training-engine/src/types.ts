@@ -79,17 +79,13 @@ export interface TrainingEvent<P = unknown> {
   payload: P;
 }
 
-export type ValidationStatus = "pass" | "near-miss" | "ignore";
+/** Three-valued validation result: unrelated actions stay silent. */
+export type ValidationOutcome = "pass" | "near-miss" | "ignore";
 
-/**
- * Three-valued result used by the framework-free validator registry.
- * `ignore` means that an interaction is unrelated to the active validation and
- * must not generate learner feedback. `near-miss` is a relevant but incorrect
- * interaction. `pass` completes the validation.
- */
-export interface ValidationOutcome {
-  status: ValidationStatus;
+export interface EngineValidationResult {
+  outcome: ValidationOutcome;
   message?: string;
+  details?: Record<string, unknown>;
 }
 
 /** Transitional compatibility for legacy authored validators. */
@@ -99,32 +95,30 @@ export interface ValidationResult {
   message?: string;
 }
 
-export type EventValidation = {
-  kind: "event";
-  type: WorkspaceEventName;
-  match?: Record<string, unknown>;
-  contains?: Record<string, string>;
-  /** Case-insensitive synonym fragments; at least one fragment per field must match. */
-  containsAny?: Record<string, string[]>;
-};
-
-export type StateValidation = {
-  kind: "state";
-  selector: string;
-  equals?: unknown;
-  includes?: unknown;
-  /** Tolerant alternative values/fragments; at least one must match. */
-  includesAny?: unknown[];
-  excludes?: unknown;
-  match?: Record<string, unknown>;
-};
-
 export type Validation =
-  | EventValidation
-  | StateValidation
+  | {
+      kind: "event";
+      type: WorkspaceEventName;
+      match?: Record<string, unknown>;
+      contains?: Record<string, string>;
+      /** Case-insensitive synonym fragments; at least one fragment per field must match. */
+      containsAny?: Record<string, string[]>;
+    }
+  | {
+      kind: "state";
+      selector: string;
+      equals?: unknown;
+      includes?: unknown;
+      /** Tolerant alternative values/fragments; at least one must match. */
+      includesAny?: unknown[];
+      excludes?: unknown;
+      match?: Record<string, unknown>;
+    }
   | {
       kind: "sequence";
       of: Validation[];
+      /** When true, matching events must occur in authored order. */
+      ordered?: boolean;
     }
   | {
       kind: "all";
@@ -219,60 +213,4 @@ export interface Scenario {
   /** Shown after a successful challenge as a reference solution. */
   solutionComparison?: string[];
   steps: TrainingStep[];
-}
-
-/** Top level of the declarative learning-content hierarchy. */
-export interface Curriculum {
-  id: string;
-  title: string;
-  courseIds: string[];
-}
-
-/** A coherent learning path inside a curriculum. */
-export interface Course {
-  id: string;
-  curriculumId: string;
-  title: string;
-  moduleIds: string[];
-}
-
-/** A module belongs to exactly one learning layer and references scenarios by id. */
-export interface TrainingModule {
-  id: string;
-  courseId: string;
-  title: string;
-  learningLayer: LearningLayer;
-  scenarioIds: string[];
-}
-
-export interface LearningContentCatalog {
-  curricula: Curriculum[];
-  courses: Course[];
-  modules: TrainingModule[];
-  scenarios: Scenario[];
-}
-
-export interface HintUsageRecord {
-  stepId: string;
-  level: 1 | 2 | 3;
-  usedAt: number;
-}
-
-export interface AttemptRecord {
-  stepId: string;
-  outcome: Exclude<ValidationStatus, "ignore">;
-  occurredAt: number;
-}
-
-/** Serializable engine session; persistence is provided by an external repository/port. */
-export interface TrainingSessionState {
-  scenarioId: string;
-  mode: TrainingMode;
-  statuses: Record<string, StepStatus>;
-  activeStepId: string | null;
-  startedAt: number;
-  finishedAt: number | null;
-  challengeOutcome: ChallengeOutcome | null;
-  hintUsage: HintUsageRecord[];
-  attempts: AttemptRecord[];
 }
