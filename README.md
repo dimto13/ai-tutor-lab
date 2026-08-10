@@ -69,6 +69,17 @@ npm ci --install-strategy=nested
 npm run dev:local
 ```
 
+Der Installationsschritt ist dabei nicht optional: Das Repository ist ein npm-Workspace, und
+`apps/web` bezieht `@ai-train-lab/*` über Symlinks in `node_modules/`. Kommt mit einem `git pull`
+ein neues Paket unter `packages/` dazu, fehlt dessen Symlink, bis erneut installiert wurde.
+`npm run dev`, `dev:local`, `build` und `build:dev` prüfen das vorab und brechen mit einem
+entsprechenden Hinweis ab, statt die fehlenden Links als Import-Fehler im Anwendungscode zu
+melden. Dieselbe Prüfung lässt sich einzeln aufrufen:
+
+```sh
+npm run check:workspace-links
+```
+
 Vor einem Push können Content, Linting, TypeScript und Produktions-Build gemeinsam geprüft werden:
 
 ```sh
