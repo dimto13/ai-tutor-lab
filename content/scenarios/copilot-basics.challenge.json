@@ -1,0 +1,135 @@
+{
+  "id": "copilot-basics.challenge",
+  "moduleId": "copilot-basics",
+  "mode": "challenge",
+  "learningLayer": "tool",
+  "title": "Challenge: Copilot kontrolliert zum Ziel führen",
+  "description": "Vervollständige eine kleine synthetische Python-Funktion mit Copilot. Du entscheidest selbst über Chat oder Inline-Vorschlag, Arbeitsmodus, Modell und Reihenfolge. Bewertet wird nur der sichere Endzustand.",
+  "learningObjectives": [
+    "choose_copilot_interaction",
+    "formulate_copilot_prompt",
+    "control_copilot_context",
+    "review_copilot_output",
+    "protect_copilot_context"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "programming.python",
+      "vscode.workspace",
+      "vscode.editor",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.chat_mode",
+      "copilot.model_selection",
+      "copilot.inline_suggestion",
+      "ai.context"
+    ]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["README.md", "calculator.py", "private-notes.txt"],
+      "contents": {
+        "README.md": "# ai-training-demo\n\nAufgabe: Die Funktion add soll zwei Werte addieren. Alle Daten sind synthetisch.\n",
+        "calculator.py": "def add(a, b):\n",
+        "private-notes.txt": "SYNTHETIC_SECRET=DEMO-ONLY-DO-NOT-SEND\n"
+      },
+      "openTabs": ["calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": null,
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "def add(a, b):\n",
+          "text": "    return a + b\n"
+        }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "promptContainsAny": ["add", "addition", "plus", "summe", "a + b"],
+          "response": "Die Funktion soll die beiden Eingaben addieren. Ein passender Funktionskörper gibt a + b zurück. Prüfe die Änderung im Editor, bevor du sie übernimmst."
+        }
+      ]
+    }
+  },
+  "estimatedMinutes": 8,
+  "points": 180,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "state",
+        "selector": "filesystem.contents",
+        "match": {
+          "calculator.py": "def add(a, b):\n    return a + b\n"
+        }
+      },
+      {
+        "kind": "state",
+        "selector": "copilot.context.activeFile",
+        "equals": "calculator.py"
+      },
+      {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "copilot.inline.status",
+            "equals": "accepted"
+          },
+          {
+            "kind": "all",
+            "of": [
+              {
+                "kind": "state",
+                "selector": "copilot.conversation.messageCount",
+                "equals": 2
+              },
+              {
+                "kind": "state",
+                "selector": "copilot.prompt.last",
+                "includesAny": ["add", "Addition", "plus", "Summe", "a + b"],
+                "excludes": "SYNTHETIC_SECRET"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Gemeinsamer Endzustand: calculator.py enthält eine korrekte Addition mit return a + b.",
+    "Zulässiger Weg 1: passenden Inline-Vorschlag prüfen und bewusst annehmen.",
+    "Zulässiger Weg 2: Copilot Chat mit einem klaren Auftrag nutzen und die geprüfte Änderung selbst im Editor herstellen.",
+    "private-notes.txt bleibt außerhalb des verwendeten KI-Kontexts; der synthetische Geheimnis-Marker wird nicht an Copilot übergeben."
+  ],
+  "steps": [
+    {
+      "id": "complete-addition-safely",
+      "title": "Addition mit Copilot sicher vervollständigen",
+      "description": "Es gibt keinen vorgeschriebenen Klickpfad und keine vorab gezeigte Musterlösung.",
+      "instruction": "Stelle in calculator.py eine korrekte Addition der beiden Eingaben her. Nutze Copilot so, wie du es für passend hältst, prüfe das Resultat vor der Übernahme und beschränke den KI-Kontext auf calculator.py. private-notes.txt enthält einen synthetischen Geheimnis-Marker und darf nicht an Copilot übergeben werden.",
+      "why": "Die Aufgabe prüft nicht das Nachklicken eines Ablaufs, sondern ob du Copilot mit passendem Kontext kontrolliert einsetzen und einen fachlich korrekten Endzustand herstellen kannst.",
+      "helpLevels": [
+        "Entscheide zuerst, ob du für diese kleine Änderung Chat oder einen Inline-Vorschlag verwenden möchtest.",
+        "Achte darauf, dass calculator.py der relevante Kontext bleibt und prüfe die resultierende Rechenoperation im Editor.",
+        "Nutze genau den für die Aufgabe nötigen Dateikontext, vergleiche Copilots Vorschlag mit der Anforderung Addition und übernimm nur eine fachlich passende Änderung."
+      ],
+      "successMessage": "Die Funktion ist korrekt und mit begrenztem Copilot-Kontext hergestellt."
+    }
+  ]
+}

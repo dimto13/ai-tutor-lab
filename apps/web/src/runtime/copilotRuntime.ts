@@ -63,9 +63,11 @@ export interface CopilotRuntimeAdapter extends RuntimeAdapter {
   setEnabled(enabled: boolean): void;
   setChatOpen(open: boolean): void;
   setContextActiveFile(filename: string | null): void;
+  inspect(ref: UiTargetRef): void;
   setMode(mode: CopilotChatModeId): void;
   setModel(modelId: string): void;
   startConversation(): string;
+  stopTask(): void;
   submitPrompt(prompt: string, activeFileContent?: string | null): string;
   offerInlineSuggestion(file: string, text: string): CopilotInlineSuggestion;
   offerConfiguredInlineSuggestion(
@@ -446,6 +448,16 @@ export function createCopilotRuntime(
       return COPILOT_RUNTIME_DEFINITION.surface.map((entry) => ({ ...entry }));
     },
 
+    inspect(ref: UiTargetRef): void {
+      const item = getCopilotSurfaceTarget(ref);
+      if (!item) return;
+      emit("ui.element.inspected", {
+        ref,
+        label: item.label,
+        conceptKey: item.conceptKey,
+      });
+    },
+
     resolveTarget(ref: UiTargetRef): DOMRect | null {
       if (!getCopilotSurfaceTarget(ref) || !mountedContainer) return null;
       const element = mountedContainer.querySelector<HTMLElement>(`[data-highlight="${ref}"]`);
@@ -510,6 +522,21 @@ export function createCopilotRuntime(
       return conversationId;
     },
 
+    stopTask(): void {
+      const assistantMessage: CopilotChatMessage = {
+        id: createIdentifier("copilot-message"),
+        role: "assistant",
+        content:
+          "Aufgabe gestoppt. Prüfe den aktuellen Arbeitsstand; bereits übernommene Änderungen werden nicht automatisch zurückgesetzt.",
+      };
+      replaceState({ ...state, messages: [...state.messages, assistantMessage] }, "mutation");
+      emit("copilot.task.stopped", {
+        conversationId: state.conversationId,
+        activeFile: state.contextActiveFile,
+        mode: state.mode,
+      });
+    },
+
     submitPrompt(rawPrompt: string, activeFileContent?: string | null): string {
       const prompt = rawPrompt.trim();
       if (!prompt) throw new TypeError("Copilot prompt must not be empty");
@@ -565,13 +592,19 @@ export function createCopilotRuntime(
       file: string,
       currentContent: string,
     ): CopilotInlineSuggestion | null {
-      const template = inlineSuggestionTemplates.find(
+      const matchingTemplates = inlineSuggestionTemplates.filter(
         (entry) =>
           entry.file === file &&
           (entry.whenContentEquals === undefined || entry.whenContentEquals === currentContent),
       );
-      if (!template) return null;
-      return adapter.offerInlineSuggestion(file, template.text);
+      if (matchingTemplates.length === 0) return null;
+
+      const previousRejectedText =
+        state.inlineSuggestion?.status === "rejected" ? state.inlineSuggestion.text : null;
+      const template =
+        matchingTemplates.find((entry) => entry.text !== previousRejectedText) ??
+        matchingTemplates[0];
+      return template ? adapter.offerInlineSuggestion(file, template.text) : null;
     },
 
     acceptInlineSuggestion(): string | null {
@@ -618,6 +651,11 @@ export function createCopilotRuntime(
           break;
         case "copilot.conversation.messageCount":
           value = state.messages.length;
+          break;
+        case "copilot.prompt.last":
+          value =
+            [...state.messages].reverse().find((message) => message.role === "user")?.content ??
+            null;
           break;
         case "copilot.mode":
           value = state.mode;

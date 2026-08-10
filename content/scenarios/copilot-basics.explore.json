@@ -1,0 +1,103 @@
+{
+  "id": "copilot-basics.explore",
+  "moduleId": "copilot-basics",
+  "mode": "explore",
+  "learningLayer": "tool",
+  "title": "GitHub Copilot – Grundlagen erkunden",
+  "description": "Erkunde Copilot in einer vollständig synthetischen VS-Code-Umgebung. Vergleiche Chat und Inline-Vorschläge, Kontext, Unterhaltungen, Arbeitsmodi, Modellauswahl sowie die Möglichkeiten zum Ablehnen und Stoppen.",
+  "learningObjectives": [
+    "operate_copilot_basics",
+    "choose_copilot_interaction",
+    "formulate_copilot_prompt",
+    "control_copilot_context",
+    "review_copilot_output",
+    "recover_from_copilot_mistakes",
+    "protect_copilot_context"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "programming.python",
+      "vscode.workspace",
+      "vscode.editor",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.session",
+      "copilot.chat_mode",
+      "copilot.model_selection",
+      "copilot.inline_suggestion",
+      "ai.context"
+    ]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["README.md", "calculator.py", "private-notes.txt"],
+      "contents": {
+        "README.md": "# ai-training-demo\n\nVollständig synthetische Trainingsdaten.\n",
+        "calculator.py": "def add(a, b):\n",
+        "private-notes.txt": "SYNTHETIC_SECRET=DEMO-ONLY-DO-NOT-SEND\n"
+      },
+      "openTabs": ["calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": null,
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "def add(a, b):\n",
+          "text": "    return a + b\n"
+        }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "promptContainsAny": ["add", "addition", "plus", "summe"],
+          "response": "Für die gewünschte Addition sollte die Funktion a + b zurückgeben. Prüfe den Vorschlag im Editor, bevor du ihn übernimmst."
+        }
+      ]
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 70,
+  "exploreTargets": [
+    "copilot.chat.toggle",
+    "copilot.chat",
+    "copilot.chat.newConversation",
+    "copilot.chat.contextSelector",
+    "copilot.chat.prompt",
+    "copilot.chat.modeSelector",
+    "copilot.chat.modelSelector",
+    "copilot.chat.stopTask",
+    "copilot.inline.generate",
+    "copilot.inline.suggestion",
+    "copilot.inline.accept",
+    "copilot.inline.reject"
+  ],
+  "steps": [
+    {
+      "id": "explore-copilot-surface",
+      "title": "Copilot-Arbeitsformen frei erkunden",
+      "description": "Du darfst die Bereiche in beliebiger Reihenfolge untersuchen. Die Dateien und der Geheimnis-Marker sind ausschließlich synthetische Trainingsdaten.",
+      "instruction": "Öffne Copilot Chat und untersuche neue Unterhaltung, Kontextwahl, Prompt-Feld, Ask/Plan/Agent, Modellauswahl und Aufgabe stoppen. Erzeuge außerdem einen Inline-Vorschlag, prüfe ihn und untersuche die Möglichkeiten Annehmen und Ablehnen.",
+      "why": "Bevor du Copilot für reale Aufgaben nutzt, solltest du erkennen, welche Funktion nur erklärt, welche direkt Änderungen anbietet, welcher Kontext einfließt und wo du die Kontrolle behältst.",
+      "helpLevels": [
+        "Beginne mit dem Copilot-Button und öffne den Chat.",
+        "Untersuche im Chat zuerst Kontext, Modus und Modell. Erzeuge danach unten einen Inline-Vorschlag.",
+        "Öffne den Chat, untersuche Neue Unterhaltung, Kontext, Prompt, Modus, Modell und Stoppen; erzeuge anschließend einen Inline-Vorschlag und untersuche Vorschlag, Annehmen und Ablehnen."
+      ],
+      "successMessage": "Du hast die zentralen Copilot-Arbeitsformen und Kontrollpunkte untersucht."
+    }
+  ]
+}

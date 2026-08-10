@@ -26,6 +26,7 @@ const workspaceEventNameSchema = z.enum([
   "copilot.mode.changed",
   "copilot.model.changed",
   "copilot.context.changed",
+  "copilot.task.stopped",
   "ai.prompt.submitted",
   "ai.suggestion.shown",
   "ai.suggestion.accepted",

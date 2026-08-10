@@ -7,7 +7,9 @@ import vscodeGuidedRaw from "../../../../content/scenarios/vscode-basics.guided.
 import vscodeChallengeRaw from "../../../../content/scenarios/vscode-basics.challenge.json";
 import vscodeShortcutsChallengeRaw from "../../../../content/scenarios/vscode-shortcuts.challenge.json";
 import developerWorkflowRaw from "../../../../content/scenarios/developer-workflow-basics.guided.json";
-import copilotBasicsRaw from "../../../../content/scenarios/copilot-basics.guided.json";
+import copilotBasicsExploreRaw from "../../../../content/scenarios/copilot-basics.explore.json";
+import copilotBasicsGuidedRaw from "../../../../content/scenarios/copilot-basics.guided.json";
+import copilotBasicsChallengeRaw from "../../../../content/scenarios/copilot-basics.challenge.json";
 import artifactPreviewFoundationRaw from "../../../../content/scenarios/artifact-preview-foundation.guided.json";
 import htmlPageWorkflowGuidedRaw from "../../../../content/scenarios/html-page-workflow.guided.json";
 import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-workflow.guided.json";
@@ -20,7 +22,9 @@ const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
 const vscodeChallengeScenario = parseScenario(vscodeChallengeRaw);
 const vscodeShortcutsChallengeScenario = parseScenario(vscodeShortcutsChallengeRaw);
 const developerWorkflowScenario = parseScenario(developerWorkflowRaw);
-const copilotBasicsScenario = parseScenario(copilotBasicsRaw);
+const copilotBasicsExploreScenario = parseScenario(copilotBasicsExploreRaw);
+const copilotBasicsGuidedScenario = parseScenario(copilotBasicsGuidedRaw);
+const copilotBasicsChallengeScenario = parseScenario(copilotBasicsChallengeRaw);
 const artifactPreviewFoundationScenario = parseScenario(artifactPreviewFoundationRaw);
 const htmlPageWorkflowGuidedScenario = parseScenario(htmlPageWorkflowGuidedRaw);
 const [htmlPageWorkflowExploreScenario, htmlPageWorkflowChallengeScenario] =
@@ -38,7 +42,9 @@ const scenarios: Record<string, Scenario> = {
   [vscodeChallengeScenario.id]: vscodeChallengeScenario,
   [vscodeShortcutsChallengeScenario.id]: vscodeShortcutsChallengeScenario,
   [developerWorkflowScenario.id]: developerWorkflowScenario,
-  [copilotBasicsScenario.id]: copilotBasicsScenario,
+  [copilotBasicsExploreScenario.id]: copilotBasicsExploreScenario,
+  [copilotBasicsGuidedScenario.id]: copilotBasicsGuidedScenario,
+  [copilotBasicsChallengeScenario.id]: copilotBasicsChallengeScenario,
   [artifactPreviewFoundationScenario.id]: artifactPreviewFoundationScenario,
   [htmlPageWorkflowExploreScenario.id]: htmlPageWorkflowExploreScenario,
   [htmlPageWorkflowGuidedScenario.id]: htmlPageWorkflowGuidedScenario,

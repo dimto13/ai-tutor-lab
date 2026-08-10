@@ -33,7 +33,9 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   await copilotButton.click();
 
   await expect(page.getByText(/Profil github-copilot-vscode-2026-08 · 2026\.08/)).toBeVisible();
-  await expect(page.getByText("Kontext: hello.py")).toBeVisible();
+  const contextSelect = page.getByLabel("Kontext");
+  await expect(contextSelect).toHaveValue("active");
+  await expect(contextSelect.locator("option:checked")).toHaveText("Aktive Datei: hello.py");
 
   await page.getByLabel("Modus").selectOption("plan");
   await expect(page.getByLabel("Modus")).toHaveValue("plan");

@@ -8,7 +8,13 @@
   "learningObjectives": [
     "understand_code_and_python",
     "understand_project_context",
-    "operate_copilot_basics"
+    "operate_copilot_basics",
+    "choose_copilot_interaction",
+    "formulate_copilot_prompt",
+    "control_copilot_context",
+    "review_copilot_output",
+    "recover_from_copilot_mistakes",
+    "protect_copilot_context"
   ],
   "audience": {
     "personaId": "non-programmer",
@@ -46,10 +52,11 @@
     "seed": {
       "workspaceMode": "folder",
       "folders": ["ai-training-demo"],
-      "files": ["README.md", "calculator.py"],
+      "files": ["README.md", "calculator.py", "private-notes.txt"],
       "contents": {
         "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
-        "calculator.py": "def add(a, b):\n"
+        "calculator.py": "def add(a, b):\n",
+        "private-notes.txt": "SYNTHETIC_SECRET=DEMO-ONLY-DO-NOT-SEND\n"
       },
       "openTabs": ["calculator.py"],
       "activeFile": "calculator.py",
@@ -58,7 +65,19 @@
         {
           "file": "calculator.py",
           "whenContentEquals": "def add(a, b):\n",
+          "text": "    return a - b\n"
+        },
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "def add(a, b):\n",
           "text": "    return a + b\n"
+        }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "promptContainsAny": ["korrig", "addition", "addier", "plus", "a + b"],
+          "response": "Korrektur: Für die geforderte Addition muss die Funktion a + b zurückgeben. Prüfe den neuen Inline-Vorschlag vor der Übernahme."
         }
       ]
     }
@@ -194,9 +213,9 @@
     {
       "id": "use-file-context",
       "title": "Dateikontext bewusst nutzen",
-      "description": "calculator.py ist im Editor geöffnet. Der simulierte Copilot erhält deshalb diese Python-Datei als aktuellen Kontext für deine Frage.",
-      "instruction": "Frage Copilot in eigenen Worten, was die aktuell geöffnete Datei macht.",
-      "why": "Kontext hilft der KI, eine allgemeine Frage auf deinen konkreten Arbeitsstand zu beziehen. Prüfe trotzdem immer, welche Informationen tatsächlich in den Kontext gelangen dürfen.",
+      "description": "calculator.py ist im Editor geöffnet. Nutze nur diese synthetische Datei als Kontext. private-notes.txt enthält bewusst einen synthetischen Geheimnis-Marker und bleibt außerhalb der Anfrage.",
+      "instruction": "Frage Copilot in eigenen Worten, was die aktuell geöffnete Datei macht, und bitte um eine kurze, klar gegliederte Antwort.",
+      "why": "Ein guter Prompt verbindet Ziel, relevanten Kontext, Randbedingungen und gewünschte Ausgabe. Gib nur Informationen frei, die für die Aufgabe erforderlich und zulässig sind.",
       "helpLevels": [
         "Nutze das Eingabefeld Ask Copilot... im geöffneten Chat.",
         "Formuliere eine Frage zur Aufgabe oder zum Zweck der aktuell geöffneten Datei und drücke Enter.",
@@ -245,8 +264,8 @@
       "stepType": "explanation",
       "title": "Ask, Plan und Agent einordnen",
       "description": "Die Modi verändern nicht nur die Formulierung der Antwort, sondern die erwartete Art der Zusammenarbeit.",
-      "instruction": "Ordne die Modi so ein: Ask für Fragen und Erklärungen; Plan für einen strukturierten Lösungsweg vor Änderungen; Agent für mehrstufige Aufgaben, bei denen Copilot selbstständiger Werkzeuge nutzt und Änderungen ausführt.",
-      "why": "Der passende Modus reduziert unnötige Autonomie: Für eine Verständnisfrage brauchst du keinen Agenten, für eine komplexe Umsetzung kann ein Agent dagegen sinnvoll sein.",
+      "instruction": "Ordne die Modi so ein: Ask für Fragen und Erklärungen; Plan für einen strukturierten Lösungsweg vor Änderungen; Agent für mehrstufige Aufgaben mit Werkzeugnutzung. Eine laufende agentische Aufgabe kannst du stoppen; danach prüfst du, welche Änderungen bereits entstanden sind.",
+      "why": "Der passende Modus reduziert unnötige Autonomie. Stoppen beendet weitere Arbeit, setzt aber bereits übernommene Änderungen nicht automatisch zurück.",
       "helpLevels": ["", "", ""],
       "highlightTarget": "copilot.chat.modeSelector",
       "highlightTooltip": "Der Modus beschreibt die Arbeitsweise, nicht die Modellfamilie.",
@@ -300,14 +319,14 @@
     },
     {
       "id": "accept-inline-suggestion",
-      "title": "Inline-Vorschlag prüfen und annehmen",
-      "description": "Inline-Vorschläge sind eine eigene Copilot-Arbeitsform und erscheinen direkt im Editor-Kontext.",
-      "instruction": "Erzeuge im Copilot-Panel einen Inline-Vorschlag für calculator.py und nimm ihn anschließend an.",
-      "why": "Chat-Modellwahl und Inline-Vervollständigung sind nicht dasselbe. Ein Inline-Vorschlag sollte vor dem Übernehmen fachlich geprüft werden.",
+      "title": "Unpassenden Vorschlag erkennen und korrigieren",
+      "description": "Der erste synthetische Inline-Vorschlag ist absichtlich fachlich falsch. Deine Aufgabe ist nicht, KI-Ausgaben blind zu übernehmen.",
+      "instruction": "Erzeuge einen Inline-Vorschlag für calculator.py. Prüfe die Rechenoperation und lehne den falschen ersten Vorschlag ab. Bitte Copilot im Chat um eine Korrektur auf Addition, erzeuge den Vorschlag erneut und nimm erst die fachlich richtige Variante an.",
+      "why": "Ablehnen verwirft einen ungeeigneten Vorschlag vor der Übernahme. Durch eine präzise Korrektur behältst du Ziel und Kontrolle, statt eine falsche Änderung weiterzuverwenden.",
       "helpLevels": [
-        "Im unteren Teil des Copilot-Panels findest du Inline-Vorschlag.",
-        "Klicke zuerst Vorschlag erzeugen und danach Annehmen.",
-        "Die Schaltfläche Vorschlag erzeugen wird hervorgehoben. Klicke darauf, prüfe den Vorschlag und klicke anschließend auf Annehmen."
+        "Vergleiche den vorgeschlagenen Rechenoperator mit der Anforderung Addition.",
+        "Erzeuge den Vorschlag, lehne die Subtraktion ab, formuliere im Chat eine Korrektur auf Addition und erzeuge erneut.",
+        "Prüfe zuerst den Vorschlag bei Inline-Vorschlag. Klicke bei der falschen Subtraktion auf Ablehnen, bitte im Prompt-Feld um Addition, erzeuge erneut und nimm nur return a + b an."
       ],
       "expectedEvent": "ai.suggestion.accepted",
       "validation": {
@@ -321,8 +340,8 @@
         }
       },
       "highlightTarget": "copilot.inline.generate",
-      "highlightTooltip": "Erzeuge zuerst den Inline-Vorschlag und übernimm ihn danach bewusst.",
-      "successMessage": "Inline-Vorschlag angenommen und calculator.py sinnvoll vervollständigt."
+      "highlightTooltip": "Prüfe den ersten Vorschlag fachlich; eine falsche Rechenoperation wird nicht übernommen.",
+      "successMessage": "Falschen Vorschlag verworfen, Copilot korrigiert und nur die passende Addition übernommen."
     },
     {
       "id": "understand-mcp",

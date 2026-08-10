@@ -107,7 +107,9 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
 
   const prompt = page.getByPlaceholder("Ask Copilot...");
-  await expect(page.getByText("Kontext: calculator.py")).toBeVisible();
+  const contextSelect = page.getByLabel("Kontext");
+  await expect(contextSelect).toHaveValue("active");
+  await expect(contextSelect.locator("option:checked")).toHaveText("Aktive Datei: calculator.py");
   await prompt.fill("test");
   await prompt.press("Enter");
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
@@ -132,10 +134,22 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByText("Schritt 11 – Auto-Auswahl verwenden")).toBeVisible();
   await page.getByLabel("Modell").selectOption("auto");
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
-  await expect(page.getByText("Schritt 12 – Inline-Vorschlag prüfen und annehmen")).toBeVisible();
+  await expect(
+    page.getByText("Schritt 12 – Unpassenden Vorschlag erkennen und korrigieren"),
+  ).toBeVisible();
 
   const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
   await expect(generateSuggestion).toBeVisible();
+  await generateSuggestion.click();
+  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
+    "return a - b",
+  );
+  await page.getByRole("button", { name: "Ablehnen" }).click();
+  await prompt.fill("Korrigiere den Vorschlag bitte auf Addition mit a + b.");
+  await prompt.press("Enter");
+  await expect(
+    page.getByText(/Für die geforderte Addition muss die Funktion a \+ b zurückgeben/),
+  ).toBeVisible();
   await generateSuggestion.click();
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
     "return a + b",
