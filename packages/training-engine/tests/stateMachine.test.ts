@@ -54,7 +54,7 @@ test("near-miss counts one attempt while ignore leaves progress untouched", () =
   );
 
   assert.equal(ignored, initial);
-  assert.equal(failed.statuses.one, "VALIDATION_FAILED");
+  assert.equal(failed.statuses["one"], "VALIDATION_FAILED");
   assert.equal(failed.activeStepId, "one");
   assert.equal(failed.mistakes, 1);
   assert.equal(failed.attempts.length, 1);
@@ -66,8 +66,8 @@ test("pass advances from VALIDATION_FAILED and preserves mistakes", () => {
   const failed = applyValidationResult(initial, scenario, "one", { outcome: "near-miss" }, 110);
   const passed = applyValidationResult(failed, scenario, "one", { outcome: "pass" }, 120);
 
-  assert.equal(passed.statuses.one, "COMPLETED");
-  assert.equal(passed.statuses.two, "ACTIVE");
+  assert.equal(passed.statuses["one"], "COMPLETED");
+  assert.equal(passed.statuses["two"], "ACTIVE");
   assert.equal(passed.activeStepId, "two");
   assert.equal(passed.mistakes, 1);
   assert.equal(passed.attempts.length, 2);
@@ -78,8 +78,8 @@ test("optional steps can be skipped without creating a failed attempt", () => {
   const afterOne = applyValidationResult(initial, scenario, "one", { outcome: "pass" }, 110);
   const skipped = skipOptionalStep(afterOne, scenario, "two", 120);
 
-  assert.equal(skipped.statuses.two, "SKIPPED");
-  assert.equal(skipped.statuses.three, "ACTIVE");
+  assert.equal(skipped.statuses["two"], "SKIPPED");
+  assert.equal(skipped.statuses["three"], "ACTIVE");
   assert.equal(skipped.activeStepId, "three");
   assert.equal(skipped.mistakes, 0);
 });
