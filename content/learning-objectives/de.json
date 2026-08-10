@@ -53,6 +53,36 @@
       "description": "Chat, Kontext, Arbeitsmodus, Modellauswahl und Inline-Vorschläge unterscheiden, einsetzen und vor der Übernahme prüfen."
     },
     {
+      "id": "choose_copilot_interaction",
+      "title": "Passende Copilot-Arbeitsweise wählen",
+      "description": "Chat und Inline-Vorschläge sowie Ask, Plan und Agent nach Ziel, Eingriffstiefe und gewünschter Kontrolle unterscheiden und passend auswählen."
+    },
+    {
+      "id": "formulate_copilot_prompt",
+      "title": "Copilot-Aufträge klar formulieren",
+      "description": "Ziel, relevanten Kontext, Randbedingungen und gewünschtes Ausgabeformat so formulieren, dass Ergebnis und Annahmen prüfbar bleiben."
+    },
+    {
+      "id": "control_copilot_context",
+      "title": "Copilot-Kontext bewusst steuern",
+      "description": "Aktive Datei, Workspace-Bezug und neue Unterhaltungen als unterschiedliche Kontextquellen erkennen und unnötigen Kontext ausschließen."
+    },
+    {
+      "id": "review_copilot_output",
+      "title": "Copilot-Ergebnisse vor Übernahme prüfen",
+      "description": "Vorschläge, Annahmen und resultierende Änderungen fachlich prüfen, ungeeignete Vorschläge verwerfen und erst danach übernehmen."
+    },
+    {
+      "id": "recover_from_copilot_mistakes",
+      "title": "Copilot korrigieren oder stoppen",
+      "description": "Einen ungeeigneten Vorschlag ablehnen, die Aufgabe präzisieren und eine laufende agentische Aufgabe bei Bedarf stoppen."
+    },
+    {
+      "id": "protect_copilot_context",
+      "title": "Sensible Inhalte aus KI-Kontext fernhalten",
+      "description": "Geheimnisse, personenbezogene oder nicht freigegebene Inhalte vor Prompt und Kontextauswahl erkennen und ausschließen."
+    },
+    {
       "id": "distinguish_git_and_platform",
       "title": "Git und Hosting-Plattform unterscheiden",
       "description": "Lokale Git-Versionsverwaltung von Hosting-, Review- und Kollaborationsfunktionen einer Source-Control-Plattform abgrenzen."
