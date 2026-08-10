@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Geführte Grundlagen",
-  "description": "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und Panel. Erweiterte Workspace-Konfiguration bleibt optional.",
+  "description": "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen, einschließlich Primary und Secondary Side Bar, und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und Panel. Erweiterte Workspace-Konfiguration bleibt optional.",
   "learningObjectives": [
     "understand_vscode_ui",
     "understand_workspace",
@@ -48,9 +48,9 @@
     {
       "id": "open_explorer",
       "title": "Explorer öffnen",
-      "description": "Du kennst jetzt die Rollen von Activity Bar, Side Bar und Explorer. Als Nächstes öffnest du diese Datei- und Ordnerübersicht selbst.",
+      "description": "Du kennst jetzt die Rollen von Activity Bar, Primary Side Bar, Secondary Side Bar und Explorer. Als Nächstes öffnest du die Datei- und Ordnerübersicht selbst.",
       "instruction": "Öffne den Explorer über sein Symbol in der Activity Bar.",
-      "why": "Die Activity Bar wählt den Hauptbereich aus; die Side Bar zeigt anschließend dessen Inhalt.",
+      "why": "Die Activity Bar wählt den Hauptbereich aus; dessen Inhalt erscheint in der Primary Side Bar. Die Secondary Side Bar bleibt davon getrennt und kann zusätzliche Views aufnehmen.",
       "helpLevels": [
         "Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol.",
         "Klicke auf das oberste Symbol mit den zwei Dateien.",
@@ -63,7 +63,7 @@
       },
       "highlightTarget": "vscode.activityBar.explorer",
       "highlightTooltip": "Explorer: Dateien und Ordner des aktuellen Arbeitskontexts.",
-      "successMessage": "Explorer geöffnet. Activity Bar und Side Bar haben unterschiedliche Aufgaben."
+      "successMessage": "Explorer geöffnet. Activity Bar und Primary Side Bar haben unterschiedliche Aufgaben; die Secondary Side Bar ist ein eigener zusätzlicher Bereich."
     },
     {
       "id": "open_folder",

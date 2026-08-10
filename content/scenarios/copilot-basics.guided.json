@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "GitHub Copilot – Grundlagen",
-  "description": "Lerne zuerst die nötigen Grundbegriffe und nutze danach Copilot Chat, Kontext, Arbeitsmodi, Modellauswahl und Inline-Vorschläge kontrolliert in einem synthetischen Beispiel.",
+  "description": "Lerne zuerst die nötigen Grundbegriffe und nutze danach Copilot Chat als View in der Secondary Side Bar sowie Kontext, Arbeitsmodi, Modellauswahl und Inline-Vorschläge kontrolliert in einem synthetischen Beispiel.",
   "learningObjectives": [
     "understand_code_and_python",
     "understand_project_context",
@@ -26,6 +26,7 @@
       "git.repository",
       "copilot.inline_suggestion",
       "vscode.editor",
+      "vscode.side_bar",
       "vscode.panel",
       "github.copilot",
       "copilot.chat",
@@ -158,13 +159,13 @@
     {
       "id": "open-copilot-chat",
       "title": "Copilot Chat öffnen",
-      "description": "GitHub Copilot ist ein KI-Assistent, der in VS Code eingebunden ist. Im Chat stellst du Fragen; ein Inline-Vorschlag erscheint dagegen direkt in einer geöffneten Datei.",
-      "instruction": "Öffne Copilot Chat über den Copilot-Button im Editorbereich.",
-      "why": "Die beiden Arbeitsformen haben unterschiedliche Zwecke. Im Chat erklärst du ein Ziel in Worten; einen Inline-Vorschlag prüfst und übernimmst du direkt an der passenden Stelle im Code.",
+      "description": "GitHub Copilot ist ein KI-Assistent, der in VS Code eingebunden ist. Copilot Chat ist dabei eine View in der Secondary Side Bar; ein Inline-Vorschlag erscheint dagegen direkt in einer geöffneten Datei.",
+      "instruction": "Öffne Copilot Chat über den Copilot-Einstieg in der Secondary Side Bar rechts vom Editor.",
+      "why": "Die beiden Arbeitsformen haben unterschiedliche Zwecke. Im Chat erklärst du ein Ziel in Worten und behältst den Editor daneben im Blick; einen Inline-Vorschlag prüfst und übernimmst du direkt an der passenden Stelle im Code.",
       "helpLevels": [
-        "Der Copilot-Button befindet sich rechts oberhalb des Editors.",
-        "Klicke auf den Button mit der Beschriftung Copilot.",
-        "Der Copilot-Button wird hervorgehoben. Klicke genau auf Copilot, um den Chat zu öffnen."
+        "Suche rechts vom Editor nach der schmalen Secondary Side Bar.",
+        "Klicke dort auf den Copilot-Einstieg mit dem Copilot-Symbol.",
+        "Der Copilot-Einstieg in der Secondary Side Bar wird hervorgehoben. Klicke genau darauf, um die Chat-View zu öffnen."
       ],
       "expectedEvent": "copilot.chat.opened",
       "validation": {
@@ -172,8 +173,8 @@
         "type": "copilot.chat.opened"
       },
       "highlightTarget": "copilot.chat.toggle",
-      "highlightTooltip": "Öffne Copilot Chat.",
-      "successMessage": "Copilot Chat ist geöffnet."
+      "highlightTooltip": "Öffne Copilot Chat in der Secondary Side Bar.",
+      "successMessage": "Copilot Chat ist als View in der Secondary Side Bar geöffnet."
     },
     {
       "id": "session-vs-conversation",

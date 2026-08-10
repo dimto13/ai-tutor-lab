@@ -4,7 +4,7 @@
   "mode": "challenge",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Challenge",
-  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Die Challenge baut auf den zuvor erklärten VS-Code-Grundbegriffen auf. Entscheidend ist der Endzustand, nicht dein Klickweg.",
+  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Die Challenge baut auf den zuvor erklärten VS-Code-Grundbegriffen einschließlich Primary und Secondary Side Bar auf. Entscheidend ist der Endzustand, nicht dein Klickweg.",
   "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
   "audience": {
     "personaId": "non-programmer",
@@ -53,7 +53,7 @@
     {
       "id": "challenge_goal",
       "title": "Bestehendes Projekt öffnen und Textdatei anlegen",
-      "description": "Du bekommst nur Ziel und Erfolgskriterien. Die Begriffe Ordner, Workspace und Explorer wurden in den Grundlagen bereits eingeführt. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
+      "description": "Du bekommst nur Ziel und Erfolgskriterien. Die Begriffe Ordner, Workspace, Explorer sowie Primary und Secondary Side Bar wurden in den Grundlagen bereits eingeführt. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
       "instruction": "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.txt an.",
       "why": "Die Challenge prüft, ob du die bereits erklärte Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
       "helpLevels": [
