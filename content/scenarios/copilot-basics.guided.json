@@ -39,13 +39,20 @@
     ],
     "seed": {
       "workspaceMode": "folder",
-      "folders": ["ai-training-demo"],
-      "files": ["README.md", "calculator.py"],
+      "folders": [
+        "ai-training-demo"
+      ],
+      "files": [
+        "README.md",
+        "calculator.py"
+      ],
       "contents": {
         "README.md": "# ai-training-demo\n\nDemo-Repository für das AI Training Lab.\n",
         "calculator.py": "def add(a, b):\n"
       },
-      "openTabs": ["calculator.py"],
+      "openTabs": [
+        "calculator.py"
+      ],
       "activeFile": "calculator.py",
       "activePanel": null,
       "inlineSuggestions": [
@@ -53,12 +60,6 @@
           "file": "calculator.py",
           "whenContentEquals": "def add(a, b):\n",
           "text": "    return a + b\n"
-        }
-      ],
-      "chatResponses": [
-        {
-          "file": "calculator.py",
-          "response": "calculator.py enthält eine kleine Python-Funktion namens add. Sie erhält zwei Eingaben und soll diese addieren; der aktuelle Dateikontext hilft Copilot, deine Frage auf genau diese Datei zu beziehen."
         }
       ]
     }
@@ -111,7 +112,11 @@
       "description": "Wenn du eine Excel-Formel wie =SUMME(A1:A3) verwendest, gibst du dem Computer bereits eine genaue Arbeitsanweisung. Code funktioniert nach demselben Grundgedanken.",
       "instruction": "Merke dir: Code beschreibt eindeutige Anweisungen für einen Computer. Programmierung bedeutet, eine Aufgabe in solche prüfbaren Anweisungen zu übersetzen.",
       "why": "Copilot unterstützt beim Lesen und Erstellen von Code. Du musst nicht selbst programmieren können, solltest Vorschläge aber als Arbeitsanweisungen erkennen und ihr Ergebnis prüfen.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "successMessage": "Code und Programmierung sind mit einer bekannten Excel-Arbeitsweise verknüpft."
     },
     {
@@ -122,7 +127,11 @@
       "description": "Python ist eine Programmiersprache. Dateien mit der Endung .py enthalten Python-Code – ähnlich wie .xlsx eine Excel-Arbeitsmappe kennzeichnet.",
       "instruction": "Sieh dir calculator.py im Editor an: `def add(a, b):` beginnt eine kleine Rechenfunktion namens add. Die zwei Platzhalter a und b sind ihre Eingaben; die eigentliche Rechenanweisung fehlt noch.",
       "why": "Der einfache, synthetische Python-Ausschnitt macht sichtbar, welchen Teil Copilot später vorschlägt. Es geht hier um die kontrollierte Nutzung des Werkzeugs, nicht um einen Programmierkurs.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "successMessage": "Python und der vorbereitete Beispielcode sind verständlich eingeordnet."
     },
     {
@@ -133,7 +142,11 @@
       "description": "Ein Workspace ist der Arbeitskontext, den VS Code gerade zeigt. Ein Repository ist der von Git versionierte Projektbereich mit seiner Änderungsgeschichte.",
       "instruction": "Merke dir für dieses Training: Der Workspace ai-training-demo ist geöffnet. Darin liegt das synthetische Repository mit README.md und calculator.py.",
       "why": "Copilot kann Informationen aus dem geöffneten Arbeitskontext berücksichtigen. Deshalb musst du erkennen, welche Dateien zum Kontext gehören und welche Inhalte du einer KI bereitstellen darfst.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "successMessage": "Workspace und Repository sind als unterschiedliche Projektkontexte eingeordnet."
     },
     {
@@ -163,7 +176,11 @@
       "description": "Die Lernplattform und Copilot speichern zwei voneinander getrennte Verläufe.",
       "instruction": "Merke dir: Deine Training-Session speichert Lernfortschritt und Trainingszustand. Eine Copilot-Unterhaltung speichert dagegen den Gesprächsverlauf innerhalb von Copilot Chat.",
       "why": "Wenn du eine neue Copilot-Unterhaltung startest, beginnt der Chat-Verlauf neu. Dein Training und der geöffnete VS-Code-Arbeitskontext werden dadurch nicht neu gestartet.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "copilot.chat.newConversation",
       "highlightTooltip": "Eine neue Unterhaltung betrifft Copilot Chat – nicht deine Training-Session.",
       "successMessage": "Training-Session und Copilot-Unterhaltung sind klar getrennt."
@@ -210,7 +227,15 @@
           "activeFile": "calculator.py"
         },
         "containsAny": {
-          "prompt": ["Datei", "macht", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
+          "prompt": [
+            "Datei",
+            "macht",
+            "Aufgabe",
+            "Zweck",
+            "Inhalt",
+            "Funktion",
+            "Kontext"
+          ]
         }
       },
       "highlightTarget": "copilot.chat.prompt",
@@ -247,7 +272,11 @@
       "description": "Die Modi verändern nicht nur die Formulierung der Antwort, sondern die erwartete Art der Zusammenarbeit.",
       "instruction": "Ordne die Modi so ein: Ask für Fragen und Erklärungen; Plan für einen strukturierten Lösungsweg vor Änderungen; Agent für mehrstufige Aufgaben, bei denen Copilot selbstständiger Werkzeuge nutzt und Änderungen ausführt.",
       "why": "Der passende Modus reduziert unnötige Autonomie: Für eine Verständnisfrage brauchst du keinen Agenten, für eine komplexe Umsetzung kann ein Agent dagegen sinnvoll sein.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "copilot.chat.modeSelector",
       "highlightTooltip": "Der Modus beschreibt die Arbeitsweise, nicht die Modellfamilie.",
       "successMessage": "Ask, Plan und Agent sind als unterschiedliche Arbeitsweisen eingeordnet."
@@ -331,7 +360,11 @@
       "description": "Das Model Context Protocol (MCP) ist kein Chat-Modus und kein KI-Modell.",
       "instruction": "Merke dir: MCP ist ein offener Standard, über den agentische KI-Systeme zusätzliche Werkzeuge und Datenquellen über definierte MCP-Server nutzen können.",
       "why": "MCP erweitert die Reichweite eines Agenten. In Unternehmen muss deshalb klar geregelt sein, welche Server, Werkzeuge und Datenquellen zugelassen sind. Die praktische Konfiguration folgt später in einem Advanced-Modul.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "successMessage": "MCP ist als Erweiterungsschnittstelle und nicht als Chat-Modus eingeordnet."
     },
     {
@@ -341,7 +374,11 @@
       "description": "Skills bündeln wiederverwendbare Anweisungen und optional Skripte oder Ressourcen für spezialisierte Aufgaben.",
       "instruction": "Merke dir: Ein Agent Skill beschreibt wiederverwendbares Fachwissen oder einen Ablauf, den ein Agent bei passenden Aufgaben laden kann. Das ist etwas anderes als ein Modell, ein Chat-Modus oder ein MCP-Server.",
       "why": "Skills helfen, wiederkehrende Arbeitsweisen konsistent zu machen. Erstellung, Versionierung und Governance gehören in ein späteres Advanced-Modul.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "successMessage": "Agent Skills sind als wiederverwendbare Agentenkompetenz eingeordnet."
     }
   ]
