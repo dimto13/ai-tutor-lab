@@ -128,6 +128,8 @@ export interface ScenarioAudience {
   personaId: string;
   /** Glossary concepts that this scenario introduces and renders inline. */
   glossaryConcepts: string[];
+  /** Reusable explanation steps resolved from the declarative introduction catalog. */
+  introductionStepRefs?: string[];
   /** Optional explanation steps that form a skippable introduction block. */
   introductionStepIds?: string[];
 }
