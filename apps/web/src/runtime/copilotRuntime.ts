@@ -512,7 +512,7 @@ export function createCopilotRuntime(
 
     startConversation(): string {
       const conversationId = createIdentifier("copilot-conversation");
-      replaceState({ ...state, conversationId, messages: [], inlineSuggestion: null }, "mutation");
+      replaceState({ ...state, conversationId, messages: [] }, "mutation");
       emit("copilot.conversation.started", {
         conversationId,
         activeFile: state.contextActiveFile,

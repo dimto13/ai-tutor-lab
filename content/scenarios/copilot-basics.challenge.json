@@ -79,11 +79,6 @@
         }
       },
       {
-        "kind": "state",
-        "selector": "copilot.context.activeFile",
-        "equals": "calculator.py"
-      },
-      {
         "kind": "any",
         "of": [
           {
@@ -94,6 +89,11 @@
           {
             "kind": "all",
             "of": [
+              {
+                "kind": "state",
+                "selector": "copilot.context.activeFile",
+                "equals": "calculator.py"
+              },
               {
                 "kind": "state",
                 "selector": "copilot.conversation.messageCount",
@@ -113,8 +113,8 @@
   },
   "solutionComparison": [
     "Gemeinsamer Endzustand: calculator.py enthält eine korrekte Addition mit return a + b.",
-    "Zulässiger Weg 1: passenden Inline-Vorschlag prüfen und bewusst annehmen.",
-    "Zulässiger Weg 2: Copilot Chat mit einem klaren Auftrag nutzen und die geprüfte Änderung selbst im Editor herstellen.",
+    "Zulässiger Weg 1: den direkt im Editor angebotenen Inline-Vorschlag prüfen und mit Tab bewusst annehmen; dafür ist kein Chat-Dateianhang erforderlich.",
+    "Zulässiger Weg 2: Copilot Chat nutzen, calculator.py gezielt als Chat-Kontext anhängen und die geprüfte Änderung selbst im Editor herstellen.",
     "private-notes.txt bleibt außerhalb des verwendeten KI-Kontexts; der synthetische Geheimnis-Marker wird nicht an Copilot übergeben."
   ],
   "steps": [
@@ -122,14 +122,14 @@
       "id": "complete-addition-safely",
       "title": "Addition mit Copilot sicher vervollständigen",
       "description": "Es gibt keinen vorgeschriebenen Klickpfad und keine vorab gezeigte Musterlösung.",
-      "instruction": "Stelle in calculator.py eine korrekte Addition der beiden Eingaben her. Nutze Copilot so, wie du es für passend hältst, prüfe das Resultat vor der Übernahme und beschränke den KI-Kontext auf calculator.py. private-notes.txt enthält einen synthetischen Geheimnis-Marker und darf nicht an Copilot übergeben werden.",
-      "why": "Die Aufgabe prüft nicht das Nachklicken eines Ablaufs, sondern ob du Copilot mit passendem Kontext kontrolliert einsetzen und einen fachlich korrekten Endzustand herstellen kannst.",
+      "instruction": "Stelle in calculator.py eine korrekte Addition der beiden Eingaben her. Nutze entweder den direkt im Editor angebotenen Inline-Vorschlag oder Copilot Chat. Wenn du Chat nutzt, hänge nur calculator.py über die Kontext-Aktion an. Prüfe das Resultat vor der Übernahme; private-notes.txt darf nicht an Copilot übergeben werden.",
+      "why": "Die Aufgabe prüft nicht das Nachklicken eines Ablaufs, sondern ob du Copilot mit dem zum gewählten Arbeitsweg passenden Kontext kontrolliert einsetzen und einen fachlich korrekten Endzustand herstellen kannst.",
       "helpLevels": [
-        "Entscheide zuerst, ob du für diese kleine Änderung Chat oder einen Inline-Vorschlag verwenden möchtest.",
-        "Achte darauf, dass calculator.py der relevante Kontext bleibt und prüfe die resultierende Rechenoperation im Editor.",
-        "Nutze genau den für die Aufgabe nötigen Dateikontext, vergleiche Copilots Vorschlag mit der Anforderung Addition und übernimm nur eine fachlich passende Änderung."
+        "Entscheide zuerst, ob du für diese kleine Änderung den Ghost Text im Editor oder Copilot Chat verwenden möchtest.",
+        "Beim Inline-Weg prüfst du den Vorschlag direkt in calculator.py. Beim Chat-Weg hängst du calculator.py gezielt über Kontext hinzufügen an.",
+        "Prüfe return a + b fachlich. Inline: fokussiere den Editor und bestätige mit Tab. Chat: hänge calculator.py an, formuliere den Auftrag und übernimm die geprüfte Änderung selbst im Editor."
       ],
-      "successMessage": "Die Funktion ist korrekt und mit begrenztem Copilot-Kontext hergestellt."
+      "successMessage": "Die Funktion ist korrekt und mit dem passenden, begrenzten Copilot-Kontext hergestellt."
     }
   ]
 }

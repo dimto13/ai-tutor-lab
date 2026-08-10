@@ -18,7 +18,7 @@ test("VS Code Grundlagen bleibt ohne Copilot-Integration lauffähig", async ({ p
   ).toBeVisible();
 });
 
-test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Dateikontext", async ({
+test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehängten Dateikontext", async ({
   page,
 }) => {
   await page.goto("/training/git-basics");
@@ -35,9 +35,12 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   await copilotButton.click();
 
   await expect(page.getByText(/Profil github-copilot-vscode-2026-08 · 2026\.08/)).toBeVisible();
-  const contextSelect = page.getByLabel("Kontext");
-  await expect(contextSelect).toHaveValue("active");
-  await expect(contextSelect.locator("option:checked")).toHaveText("Aktive Datei: hello.py");
+  await expect(page.getByRole("combobox", { name: "Kontext", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
+  await page.getByRole("button", { name: "Datei anhängen: hello.py" }).click();
+  await expect(page.locator('[data-highlight="copilot.chat.contextAttachment"]')).toContainText(
+    "hello.py",
+  );
 
   await page.getByLabel("Modus").selectOption("plan");
   await expect(page.getByLabel("Modus")).toHaveValue("plan");
@@ -45,7 +48,7 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
 
   const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
-  await copilotPrompt.fill("Erkläre den aktiven Dateikontext");
+  await copilotPrompt.fill("Erkläre den angehängten Dateikontext");
   await copilotPrompt.press("Enter");
   await expect(page.getByText(/hello\.py ist derzeit leer/)).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
@@ -55,12 +58,13 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und den aktiven Datei
   await expect(page.getByText(/def add\(a, b\):/)).toBeVisible();
   await expect(page.getByText(/return a \+ b/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Vorschlag erzeugen" }).click();
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
     'print("Hello from Copilot")',
   );
-  await page.getByRole("button", { name: "Annehmen" }).click();
-  await expect(page.locator("textarea")).toHaveValue('print("Hello from Copilot")\n');
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+  await expect(editor).toHaveValue('print("Hello from Copilot")\n');
 });
 
 test("Copilot kann deaktiviert werden, ohne den VS-Code-Simulator zu deaktivieren", async ({

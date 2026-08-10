@@ -19,8 +19,13 @@ export const COPILOT_RUNTIME_DEFINITION = {
       conceptKey: "copilot.session",
     },
     {
-      ref: "copilot.chat.contextSelector",
-      label: "Copilot-Kontext auswählen",
+      ref: "copilot.chat.addContext",
+      label: "Kontext zu Copilot Chat hinzufügen",
+      conceptKey: "ai.context",
+    },
+    {
+      ref: "copilot.chat.contextAttachment",
+      label: "Angehängter Chat-Kontext",
       conceptKey: "ai.context",
     },
     { ref: "copilot.chat.prompt", label: "Copilot Prompt", conceptKey: "ai.context" },
@@ -40,23 +45,18 @@ export const COPILOT_RUNTIME_DEFINITION = {
       conceptKey: "copilot.chat_mode",
     },
     {
-      ref: "copilot.inline.generate",
-      label: "Inline-Vorschlag erzeugen",
-      conceptKey: "copilot.inline_suggestion",
-    },
-    {
       ref: "copilot.inline.suggestion",
-      label: "Inline-Vorschlag",
+      label: "Inline-Vorschlag im Editor",
       conceptKey: "copilot.inline_suggestion",
     },
     {
       ref: "copilot.inline.accept",
-      label: "Inline-Vorschlag annehmen",
+      label: "Inline-Vorschlag mit Tab annehmen",
       conceptKey: "copilot.inline_suggestion",
     },
     {
       ref: "copilot.inline.reject",
-      label: "Inline-Vorschlag ablehnen",
+      label: "Inline-Vorschlag mit Escape verwerfen",
       conceptKey: "copilot.inline_suggestion",
     },
   ],
