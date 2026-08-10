@@ -16,7 +16,7 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   await expect(page.getByRole("status")).toContainText("Training bereit");
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   const chat = page.locator('[data-highlight="copilot.chat"]');
-  await chat.click({ position: { x: 10, y: 10 } });
+  await chat.getByText("GitHub Copilot Chat", { exact: true }).click();
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
   await page.locator('[data-highlight="copilot.chat.contextSelector"]').selectOption("none");
   await page.locator('[data-highlight="copilot.chat.contextSelector"]').selectOption("active");
@@ -27,7 +27,7 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   const generate = page.locator('[data-highlight="copilot.inline.generate"]');
   await generate.click();
   const suggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
-  await suggestion.click({ position: { x: 8, y: 8 } });
+  await suggestion.locator("pre").click();
   await page.getByRole("button", { name: "Ablehnen" }).click();
   await generate.click();
   await page.getByRole("button", { name: "Annehmen" }).click();
