@@ -384,7 +384,7 @@ export function VscodeMenuBar({
                   onMouseEnter={() => setOpenSubmenu(entry.children ? submenuKey : null)}
                   onClick={() => {
                     if (entry.children) {
-                      setOpenSubmenu((current) => (current === submenuKey ? null : submenuKey));
+                      setOpenSubmenu(submenuKey);
                       return;
                     }
                     if (activeMenu.id === "file" && entry.action === "open-folder") {
