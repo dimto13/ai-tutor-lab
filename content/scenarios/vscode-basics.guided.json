@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Geführte Grundlagen",
-  "description": "Lerne zuerst die wichtigsten Bereiche der VS-Code-Oberfläche in vertrauten Alltagsbegriffen kennen und übe danach Arbeitskontext, Dateien, Editor und Panel Schritt für Schritt.",
+  "description": "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und Panel. Erweiterte Workspace-Konfiguration bleibt optional.",
   "learningObjectives": [
     "understand_vscode_ui",
     "understand_workspace",
@@ -68,9 +68,9 @@
     {
       "id": "open_folder",
       "title": "Einen Ordner als Arbeitskontext öffnen",
-      "description": "Das File-Menü ist das Datei-Menü von VS Code. Dort findest du Open Folder: Damit öffnest du einen vorhandenen Ordner und machst ihn zum aktuellen Arbeitskontext.",
+      "description": "Mit Open Folder öffnest du einen einzelnen Ordner als Arbeitskontext. Ein gespeicherter Workspace kann zusätzlich mehrere Ordner und eigene VS-Code-Einstellungen bündeln. Diese Multi-Root-Konfiguration musst du im Anfängerpfad noch nicht bedienen.",
       "instruction": "Öffne über File → Open Folder... den vorbereiteten Ordner ai-training-demo.",
-      "why": "Ein geöffneter Ordner gibt VS Code einen zusammenhängenden Arbeitskontext statt nur einer einzelnen Datei.",
+      "why": "Für viele einfache Aufgaben reicht ein einzelner geöffneter Ordner. Den Unterschied zum Workspace sollst du verstehen, ohne schon eine erweiterte Workspace-Konfiguration durchführen zu müssen.",
       "helpLevels": [
         "Öffne oben das File-Menü.",
         "Wähle im File-Menü Open Folder... .",
@@ -86,30 +86,7 @@
       },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "File enthält Befehle für Dateien, Ordner und Workspaces.",
-      "successMessage": "Ordner geöffnet. VS Code arbeitet jetzt mit einem Projektordner."
-    },
-    {
-      "id": "open_workspace",
-      "title": "Ordner und Workspace unterscheiden",
-      "description": "Ein Workspace ist ein gespeicherter Arbeitskontext. Anders als ein einzelner Ordner kann er mehrere Ordner zusammenfassen und eigene VS-Code-Einstellungen speichern. Im File-Menü heißt der passende Befehl Open Workspace from File....",
-      "instruction": "Öffne über File → Open Workspace from File... den vorbereiteten Workspace.",
-      "why": "Open Folder arbeitet mit einem einzelnen Ordner; eine .code-workspace-Datei kann mehrere Ordner und gemeinsame Einstellungen bündeln.",
-      "helpLevels": [
-        "Öffne erneut das File-Menü.",
-        "Wähle Open Workspace from File... .",
-        "Öffne File und klicke auf Open Workspace from File... . Danach siehst du zwei Ordner und eine Workspace-Einstellung."
-      ],
-      "expectedEvent": "workspace.opened",
-      "validation": {
-        "kind": "event",
-        "type": "workspace.opened",
-        "match": {
-          "name": "ai-training-lab.code-workspace"
-        }
-      },
-      "highlightTarget": "vscode.menu.file",
-      "highlightTooltip": "Ein gespeicherter Workspace kann mehrere Ordner zusammenfassen.",
-      "successMessage": "Workspace geöffnet. Du siehst jetzt einen Arbeitskontext mit mehreren Ordnern."
+      "successMessage": "Ordner geöffnet. Du arbeitest jetzt in einem einfachen Arbeitskontext; ein Workspace kann später mehrere Ordner und Einstellungen bündeln."
     },
     {
       "id": "create_file",
