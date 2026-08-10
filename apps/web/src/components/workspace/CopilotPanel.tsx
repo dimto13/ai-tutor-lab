@@ -45,11 +45,12 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   );
   const integrationProductId = integration?.productId;
   const integrationVersion = integration?.version;
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const suggestionSourceRef = useRef<SuggestionSourceState | null>(null);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
   const [prompt, setPrompt] = useState("");
   const profile = copilotRuntime.getProductProfile();
+  const chatVisible = runtimeState.chatOpen && runtimeState.enabled;
 
   const inspectTarget = (ref: string) => {
     if (mode === "explore") copilotRuntime.inspect(ref);
@@ -158,33 +159,66 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
     .find((message) => message.role === "assistant");
 
   return (
-    <div ref={rootRef} className="relative flex items-center gap-1">
-      <button
-        type="button"
-        onClick={toggleEnabled}
-        aria-pressed={runtimeState.enabled}
-        className="rounded border border-border px-1.5 py-1 text-[10px] text-muted-foreground hover:border-ring hover:text-foreground"
-        title="GitHub Copilot für diesen Simulator ein-/ausschalten"
+    <aside
+      ref={rootRef}
+      data-highlight="vscode.secondarySideBar"
+      onClickCapture={() => {
+        if (mode === "explore") vscodeRuntime.inspect("vscode.secondarySideBar");
+      }}
+      aria-label="Secondary Side Bar"
+      className={`flex shrink-0 flex-col border-l border-border bg-panel transition-[width] duration-150 ${
+        chatVisible ? "w-40 sm:w-72 lg:w-80" : "w-10 sm:w-12"
+      }`}
+    >
+      <div
+        className={`flex h-9 shrink-0 items-center border-b border-border ${
+          chatVisible ? "gap-2 px-2" : "justify-center"
+        }`}
       >
-        {runtimeState.enabled ? "Copilot an" : "Copilot aus"}
-      </button>
+        {chatVisible ? (
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Chat
+            </p>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          data-highlight="copilot.chat.toggle"
+          disabled={!runtimeState.enabled}
+          onClick={toggleChat}
+          aria-label="Copilot"
+          title={chatVisible ? "Copilot Chat schließen" : "Copilot Chat öffnen"}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {chatVisible ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <Sparkles className="h-4 w-4 text-accent" />
+          )}
+        </button>
+      </div>
 
-      <button
-        type="button"
-        data-highlight="copilot.chat.toggle"
-        disabled={!runtimeState.enabled}
-        onClick={toggleChat}
-        className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-foreground transition-colors hover:border-ring hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <Sparkles className="h-3.5 w-3.5 text-accent" />
-        Copilot
-      </button>
-
-      {runtimeState.chatOpen && runtimeState.enabled ? (
+      {!chatVisible ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center gap-3 py-3">
+          <button
+            type="button"
+            onClick={toggleEnabled}
+            aria-pressed={runtimeState.enabled}
+            className="rounded border border-border px-1 py-0.5 text-[9px] text-muted-foreground hover:border-ring hover:text-foreground"
+            title="GitHub Copilot für diesen Simulator ein-/ausschalten"
+          >
+            {runtimeState.enabled ? "An" : "Aus"}
+          </button>
+          <span className="select-none [writing-mode:vertical-rl] text-[9px] uppercase tracking-wider text-muted-foreground">
+            Secondary Side Bar
+          </span>
+        </div>
+      ) : (
         <div
           data-highlight="copilot.chat"
           onPointerDown={() => inspectTarget("copilot.chat")}
-          className="absolute right-0 top-9 z-30 w-[calc(100vw-1.5rem)] max-w-[28rem] rounded-md border border-border bg-panel p-3 shadow-2xl"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3"
         >
           <div className="mb-3 flex items-center gap-2">
             <div className="min-w-0 flex-1">
@@ -206,6 +240,18 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             >
               <Plus className="h-4 w-4" />
             </button>
+          </div>
+
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleEnabled}
+              aria-pressed={runtimeState.enabled}
+              className="rounded border border-border px-1.5 py-1 text-[10px] text-muted-foreground hover:border-ring hover:text-foreground"
+              title="GitHub Copilot für diesen Simulator ein-/ausschalten"
+            >
+              {runtimeState.enabled ? "Copilot an" : "Copilot aus"}
+            </button>
             <button
               type="button"
               data-highlight="copilot.chat.stopTask"
@@ -219,17 +265,9 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             >
               Stoppen
             </button>
-            <button
-              type="button"
-              onClick={() => copilotRuntime.setChatOpen(false)}
-              className="rounded p-1.5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-              aria-label="Copilot Chat schließen"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
 
-          <div className="mb-2 grid grid-cols-2 gap-2">
+          <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="relative text-[10px] text-muted-foreground">
               Modus
               <select
@@ -303,7 +341,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             </div>
           ) : null}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               data-highlight="copilot.chat.prompt"
               value={prompt}
@@ -318,14 +356,14 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             <button
               type="button"
               onClick={() => void submitPrompt()}
-              className="rounded border border-border px-3 text-xs text-foreground hover:border-ring hover:bg-white/5"
+              className="rounded border border-border px-3 py-1.5 text-xs text-foreground hover:border-ring hover:bg-white/5"
             >
               Senden
             </button>
           </div>
 
           <div className="mt-3 border-t border-border pt-3">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[11px] font-medium text-foreground">Inline-Vorschlag</p>
                 <p className="text-[10px] text-muted-foreground">
@@ -353,7 +391,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
                   {visibleSuggestion.text}
                 </pre>
                 {suggestionStatus === "pending" ? (
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
                       data-highlight="copilot.inline.accept"
@@ -380,7 +418,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             ) : null}
           </div>
         </div>
-      ) : null}
-    </div>
+      )}
+    </aside>
   );
 }
