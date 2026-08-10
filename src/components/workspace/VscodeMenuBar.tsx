@@ -260,11 +260,7 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
       { label: "Kill Terminal", separatorBefore: true },
       {
         label: "New Terminal with Profile",
-        children: [
-          { label: "PowerShell" },
-          { label: "Command Prompt" },
-          { label: "Git Bash" },
-        ],
+        children: [{ label: "PowerShell" }, { label: "Command Prompt" }, { label: "Git Bash" }],
       },
       { label: "Select Default Profile..." },
     ],
