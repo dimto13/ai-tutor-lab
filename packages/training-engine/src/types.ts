@@ -1,4 +1,9 @@
-export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "SKIPPED" | "VALIDATION_FAILED";
+export type StepStatus =
+  | "NOT_STARTED"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "SKIPPED"
+  | "VALIDATION_FAILED";
 
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
