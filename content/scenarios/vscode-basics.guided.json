@@ -4,13 +4,41 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Geführte Grundlagen",
-  "description": "Lerne Oberfläche, Arbeitskontext, Editor und Panel Schritt für Schritt kennen.",
+  "description": "Lerne zuerst die wichtigsten Bereiche der VS-Code-Oberfläche in vertrauten Alltagsbegriffen kennen und übe danach Arbeitskontext, Dateien, Editor und Panel Schritt für Schritt.",
   "learningObjectives": [
     "understand_vscode_ui",
     "understand_workspace",
     "create_file",
     "understand_panel_views"
   ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "vscode.activity_bar",
+      "vscode.file_menu",
+      "vscode.side_bar",
+      "vscode.view",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.panel",
+      "vscode.terminal",
+      "vscode.problems",
+      "vscode.output",
+      "vscode.status_bar",
+      "vscode.folder",
+      "vscode.workspace",
+      "foundation.code",
+      "programming.python"
+    ],
+    "introductionStepRefs": [
+      "vscode.ui.activity-bar",
+      "vscode.ui.side-bar",
+      "vscode.ui.explorer",
+      "vscode.ui.editor",
+      "vscode.ui.panel",
+      "vscode.ui.status-bar"
+    ]
+  },
   "environment": {
     "productId": "vscode",
     "version": "1.x",
@@ -21,14 +49,14 @@
   "steps": [
     {
       "id": "open_explorer",
-      "title": "Explorer kennenlernen",
-      "description": "Der Explorer ist die Dateiübersicht von VS Code. Das Explorer-Symbol sitzt in der Activity Bar; sein Inhalt erscheint in der Side Bar.",
-      "instruction": "Öffne den Explorer in der Activity Bar.",
-      "why": "VS Code trennt Navigation und Inhalt: Die Activity Bar wählt einen Bereich, die Side Bar zeigt dessen Inhalt.",
+      "title": "Explorer öffnen",
+      "description": "Du kennst jetzt die Rollen von Activity Bar, Side Bar und Explorer. Als Nächstes öffnest du diese Datei- und Ordnerübersicht selbst.",
+      "instruction": "Öffne den Explorer über sein Symbol in der Activity Bar.",
+      "why": "Die Activity Bar wählt den Hauptbereich aus; die Side Bar zeigt anschließend dessen Inhalt.",
       "helpLevels": [
-        "Der Explorer befindet sich links in der Activity Bar.",
-        "Klicke auf das oberste Datei-Symbol.",
-        "Das Explorer-Symbol wird hervorgehoben."
+        "Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol.",
+        "Klicke auf das oberste Symbol mit den zwei Dateien.",
+        "Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol."
       ],
       "expectedEvent": "explorer.opened",
       "validation": { "kind": "event", "type": "explorer.opened" },
@@ -39,13 +67,13 @@
     {
       "id": "open_folder",
       "title": "Einen Ordner als Arbeitskontext öffnen",
-      "description": "Mit Open Folder öffnest du einen einzelnen Ordner als Single-Folder-Arbeitskontext.",
+      "description": "Das File-Menü ist das Datei-Menü von VS Code. Dort findest du Open Folder: Damit öffnest du einen vorhandenen Ordner und machst ihn zum aktuellen Arbeitskontext.",
       "instruction": "Öffne über File → Open Folder... den vorbereiteten Ordner ai-training-demo.",
-      "why": "Ein geöffneter Ordner gibt VS Code einen vollständigen Projektkontext statt nur einer einzelnen Datei.",
+      "why": "Ein geöffneter Ordner gibt VS Code einen zusammenhängenden Arbeitskontext statt nur einer einzelnen Datei.",
       "helpLevels": [
-        "Nutze das File-Menü oben.",
-        "Wähle Open Folder... .",
-        "Das File-Menü wird hervorgehoben."
+        "Öffne oben das File-Menü.",
+        "Wähle im File-Menü Open Folder... .",
+        "Das File-Menü wird hervorgehoben. Öffne es und klicke auf Open Folder... ."
       ],
       "expectedEvent": "folder.opened",
       "validation": {
@@ -60,13 +88,13 @@
     {
       "id": "open_workspace",
       "title": "Ordner und Workspace unterscheiden",
-      "description": "Ein gespeicherter Workspace kann mehrere Ordner zu einem Arbeitskontext zusammenfassen und eigene Einstellungen speichern.",
+      "description": "Ein Workspace ist ein gespeicherter Arbeitskontext. Anders als ein einzelner Ordner kann er mehrere Ordner zusammenfassen und eigene VS-Code-Einstellungen speichern.",
       "instruction": "Öffne über File → Open Workspace... den vorbereiteten Workspace.",
-      "why": "Open Folder arbeitet mit einem Ordner; eine .code-workspace-Datei kann mehrere Ordner und Workspace-Einstellungen bündeln.",
+      "why": "Open Folder arbeitet mit einem einzelnen Ordner; eine .code-workspace-Datei kann mehrere Ordner und gemeinsame Einstellungen bündeln.",
       "helpLevels": [
         "Öffne erneut das File-Menü.",
         "Wähle Open Workspace... .",
-        "Danach siehst du zwei Ordner und eine Workspace-Einstellung."
+        "Öffne File und klicke auf Open Workspace... . Danach siehst du zwei Ordner und eine Workspace-Einstellung."
       ],
       "expectedEvent": "workspace.opened",
       "validation": {
@@ -76,18 +104,18 @@
       },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "Ein gespeicherter Workspace kann mehrere Ordner zusammenfassen.",
-      "successMessage": "Workspace geöffnet. Du siehst jetzt einen Mehrordner-Kontext."
+      "successMessage": "Workspace geöffnet. Du siehst jetzt einen Arbeitskontext mit mehreren Ordnern."
     },
     {
       "id": "create_file",
       "title": "Datei erstellen",
       "description": "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an.",
       "instruction": "Erstelle im Projektordner ai-training-demo eine Datei hello.py.",
-      "why": "Der Explorer ist ein zentraler Einstiegspunkt für Dateioperationen.",
+      "why": "Der Explorer ist der zentrale Bereich, um Dateien und Ordner im Arbeitskontext zu finden und zu verwalten.",
       "helpLevels": [
-        "Im Explorer-Kopf gibt es Neue Datei.",
-        "Klicke auf Neue Datei und tippe hello.py.",
-        "Der Neue-Datei-Button wird hervorgehoben."
+        "Im Kopf des Explorers gibt es die Aktion Neue Datei.",
+        "Klicke auf Neue Datei und tippe hello.py ein.",
+        "Der Neue-Datei-Button wird hervorgehoben. Klicke darauf, gib hello.py ein und bestätige mit Enter."
       ],
       "expectedEvent": "file.created",
       "validation": {
@@ -102,13 +130,13 @@
     {
       "id": "edit_file",
       "title": "Editor verwenden",
-      "description": "Der Editor ist der große Arbeitsbereich in der Mitte. Geöffnete Dateien erscheinen oben als Tabs.",
-      "instruction": "Schreibe print(\"Hello AI Training\") in hello.py.",
-      "why": "Explorer und Editor haben getrennte Rollen: navigieren im Explorer, Inhalte bearbeiten im Editor.",
+      "description": "Die Endung .py kennzeichnet eine Python-Datei. Python ist eine Programmiersprache; für diesen Schritt musst du die Beispielzeile noch nicht selbst verstehen oder erfinden. Du arbeitest jetzt nur damit, wo Dateiinhalt im Editor bearbeitet wird.",
+      "instruction": "Tippe die vorbereitete Beispielzeile print(\"Hello AI Training\") in hello.py.",
+      "why": "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt.",
       "helpLevels": [
-        "Klicke in den Editor.",
-        "Schreibe genau print(\"Hello AI Training\").",
-        "Der Editorbereich wird hervorgehoben."
+        "Klicke in die große Arbeitsfläche des Editors.",
+        "Tippe genau print(\"Hello AI Training\").",
+        "Der Editorbereich wird hervorgehoben. Klicke hinein und tippe genau print(\"Hello AI Training\")."
       ],
       "expectedEvent": "file.updated",
       "validation": {
@@ -119,18 +147,18 @@
       },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Editor: Inhalt der aktuell geöffneten Datei bearbeiten.",
-      "successMessage": "Code erkannt. Explorer und Editor erfüllen unterschiedliche Aufgaben."
+      "successMessage": "Inhalt erkannt. Explorer und Editor erfüllen unterschiedliche Aufgaben."
     },
     {
       "id": "open_terminal",
-      "title": "Panel und Terminal öffnen",
-      "description": "Unter dem Editor liegt das Panel. Terminal, Problems und Output sind getrennte Views darin.",
-      "instruction": "Öffne das integrierte Terminal.",
-      "why": "Das Panel bündelt Werkzeuge und Ausgaben, die zur Arbeit im Editor gehören.",
+      "title": "Panel und seine Views unterscheiden",
+      "description": "Im Panel können mehrere spezialisierte Ansichten liegen; VS Code nennt eine solche Ansicht View. Das Terminal ist die View für Textbefehle, Problems sammelt Fehler und Warnungen, und Output zeigt Protokoll- und Statusausgaben.",
+      "instruction": "Öffne jetzt das integrierte Terminal.",
+      "why": "Wenn du Panel und View unterscheidest, erkennst du, dass Terminal, Problems und Output unterschiedliche Werkzeuge im selben unteren Bereich sind.",
       "helpLevels": [
-        "Nutze den Terminal-Button in der Status Bar.",
-        "Klicke unten rechts auf Terminal.",
-        "Der Terminal-Button wird hervorgehoben."
+        "Nutze den Terminal-Einstieg in der bereits erklärten Status Bar ganz unten.",
+        "Klicke unten rechts in der Status Bar auf Terminal.",
+        "Der Terminal-Button in der Status Bar wird hervorgehoben. Klicke genau darauf."
       ],
       "expectedEvent": "terminal.opened",
       "validation": { "kind": "event", "type": "terminal.opened" },
@@ -140,31 +168,31 @@
     },
     {
       "id": "open_problems",
-      "title": "Problems-View unterscheiden",
-      "description": "Problems zeigt Diagnosen wie Fehler und Warnungen und ist nicht dasselbe wie das Terminal.",
+      "title": "Problems-View verwenden",
+      "description": "Problems ist die View für erkannte Fehler, Warnungen und andere Diagnosen. Sie ist nicht dasselbe wie das Terminal.",
       "instruction": "Wechsle im Panel auf Problems.",
-      "why": "Je nach Aufgabe brauchst du interaktive Befehle, Diagnosen oder Protokolle. Die Views haben unterschiedliche Zwecke.",
+      "why": "Je nach Aufgabe brauchst du Textbefehle, Diagnosen oder Protokolle. Die Views haben unterschiedliche Zwecke.",
       "helpLevels": [
-        "Die Panel-Tabs stehen oberhalb der Ausgabe.",
+        "Die Views des Panels stehen als Tabs oberhalb der unteren Ausgabe.",
         "Klicke auf Problems.",
-        "Der Problems-Tab wird hervorgehoben."
+        "Der Problems-Tab wird hervorgehoben. Klicke genau auf Problems."
       ],
       "expectedEvent": "panel.opened",
       "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "problems" } },
       "highlightTarget": "vscode.panel.problems",
       "highlightTooltip": "Problems sammelt Fehler und Warnungen.",
-      "successMessage": "Problems geöffnet. Diese View zeigt Diagnosen statt Shell-Befehle."
+      "successMessage": "Problems geöffnet. Diese View zeigt Diagnosen statt Textbefehle."
     },
     {
       "id": "open_output",
-      "title": "Output-View unterscheiden",
-      "description": "Output zeigt Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
+      "title": "Output-View verwenden",
+      "description": "Output ist die View für Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
       "instruction": "Wechsle im Panel auf Output.",
-      "why": "Output eignet sich für Protokolle und technische Ausgaben, die nicht interaktiv eingegeben werden.",
+      "why": "Output eignet sich für technische Protokolle und Statusmeldungen, die du nur lesen und nicht wie im Terminal eingeben musst.",
       "helpLevels": [
-        "Bleibe im unteren Panel.",
+        "Bleibe im unteren Panel und sieh dir die Tabs der Views an.",
         "Klicke auf Output.",
-        "Der Output-Tab wird hervorgehoben."
+        "Der Output-Tab wird hervorgehoben. Klicke genau auf Output."
       ],
       "expectedEvent": "panel.opened",
       "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "output" } },
