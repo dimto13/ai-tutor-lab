@@ -51,7 +51,7 @@
       "helpLevels": [
         "Nutze bekannte VS-Code-Shortcuts, um den Explorer zu öffnen und die Datei zu speichern.",
         "Windows/Linux: Ctrl+Shift+E öffnet den Explorer; Ctrl+S speichert die aktive Datei.",
-        "Erfolgskriterien: challenge.py existiert, enthält exakt den vorgegebenen Text und ist gespeichert."
+        "Drücke Ctrl+Shift+E, lege im Explorer challenge.py an, trage exakt „# Status für Marco: Review abgeschlossen.“ ein und drücke anschließend Ctrl+S, damit die Datei gespeichert ist."
       ],
       "successMessage": "Shortcut-Challenge erfüllt. Datei, Inhalt und gespeicherter Zustand wurden rechtzeitig erreicht."
     }

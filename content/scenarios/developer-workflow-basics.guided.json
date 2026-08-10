@@ -50,7 +50,7 @@
       "helpLevels": [
         "Der Explorer befindet sich links in der Activity Bar.",
         "Klicke auf das oberste Datei-Symbol in der schmalen Leiste am linken Rand.",
-        "Das Explorer-Symbol wird jetzt deutlich hervorgehoben – klicke darauf."
+        "Das Explorer-Symbol wird deutlich hervorgehoben. Klicke genau auf dieses oberste Datei-Symbol in der Activity Bar."
       ],
       "expectedEvent": "explorer.opened",
       "validation": { "kind": "event", "type": "explorer.opened" },
@@ -67,7 +67,7 @@
       "helpLevels": [
         "Im Explorer wird ein vorbereitetes Repository angeboten.",
         "Klicke im Explorer auf den Eintrag ai-training-demo.",
-        "Das Repository im Explorer wird hervorgehoben – klicke darauf."
+        "Der Eintrag ai-training-demo wird im Explorer hervorgehoben. Klicke genau auf diesen Repository-Eintrag."
       ],
       "expectedEvent": "repository.opened",
       "validation": {
@@ -88,7 +88,7 @@
       "helpLevels": [
         "Im Explorer-Kopf gibt es eine Aktion zum Anlegen neuer Dateien.",
         "Klicke auf Neue Datei, tippe hello.py und drücke Enter.",
-        "Der Button zum Anlegen einer Datei wird hervorgehoben – klicke darauf."
+        "Der Button Neue Datei wird hervorgehoben. Klicke darauf, tippe hello.py in das Eingabefeld und drücke Enter."
       ],
       "expectedEvent": "file.created",
       "validation": {
@@ -109,7 +109,7 @@
       "helpLevels": [
         "Klicke in den Editor und tippe die Zeile ab.",
         "Schreibe genau: print(\"Hello AI Training\")",
-        "Der Editorbereich wird hervorgehoben – schreibe dort deinen Code."
+        "Der Editorbereich wird hervorgehoben. Klicke hinein und schreibe genau print(\"Hello AI Training\")."
       ],
       "expectedEvent": "file.updated",
       "validation": {
@@ -131,7 +131,7 @@
       "helpLevels": [
         "Das Terminal öffnest du über den Terminal-Button.",
         "Klicke auf den Button Terminal unten rechts.",
-        "Der Terminal-Button wird hervorgehoben – klicke darauf."
+        "Der Terminal-Button unten rechts wird hervorgehoben. Klicke genau auf diesen Button."
       ],
       "expectedEvent": "terminal.opened",
       "validation": { "kind": "event", "type": "terminal.opened" },
@@ -148,7 +148,7 @@
       "helpLevels": [
         "Tippe den Befehl in das Terminal und drücke Enter.",
         "Schreibe genau: git status",
-        "Die Terminal-Eingabezeile wird hervorgehoben – tippe dort git status."
+        "Die Terminal-Eingabezeile wird hervorgehoben. Tippe dort genau git status und drücke Enter."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -169,7 +169,7 @@
       "helpLevels": [
         "Zwei Befehle, in dieser Reihenfolge: erst vormerken, dann committen.",
         "Tippe: git add hello.py — dann: git commit -m \"add hello example\"",
-        "Die Terminal-Eingabezeile wird hervorgehoben – gib dort beide Befehle ein."
+        "Die Terminal-Eingabezeile wird hervorgehoben. Tippe zuerst git add hello.py und drücke Enter; tippe danach git commit -m \"add hello example\" und drücke erneut Enter."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -191,7 +191,7 @@
       "helpLevels": [
         "Der Copilot-Chat ist im Editorbereich erreichbar.",
         "Klicke auf Copilot, tippe genau 'Erstelle eine Python-Funktion zum Addieren zweier Zahlen.' in Ask Copilot... und drücke Enter.",
-        "Der Copilot-Button wird hervorgehoben – öffne dort den Chat und verwende die vorgegebene Anfrage."
+        "Der Copilot-Button wird hervorgehoben. Klicke darauf, tippe in Ask Copilot... genau 'Erstelle eine Python-Funktion zum Addieren zweier Zahlen.' und drücke Enter."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {

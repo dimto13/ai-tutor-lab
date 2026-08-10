@@ -55,7 +55,7 @@
       "helpLevels": [
         "Der Überblick ist der erste Reiter der Repository-Navigation.",
         "Klicke oben auf „Überblick“.",
-        "Das gesuchte Ziel erklärt Git lokal und die Plattform als Team-Schicht."
+        "Der Reiter „Überblick“ wird hervorgehoben. Klicke genau darauf und lies dort die Erklärung von Git lokal bis zur Plattform als Team-Schicht."
       ],
       "validation": {
         "kind": "event",
@@ -74,7 +74,7 @@
       "helpLevels": [
         "Suche den Reiter mit dem Code-Symbol.",
         "Klicke in der oberen Navigation auf „Code“.",
-        "Die Code-Ansicht liegt direkt rechts neben dem Überblick."
+        "Der Reiter „Code“ direkt rechts neben dem Überblick wird hervorgehoben. Klicke genau auf diesen Reiter."
       ],
       "validation": {
         "kind": "event",
@@ -93,7 +93,7 @@
       "helpLevels": [
         "Die aktuelle Auswahl zeigt zunächst main.",
         "Öffne die Branch-Auswahl, trage feature/readme-guide ein und wähle „Erstellen“.",
-        "Die Branch-Auswahl befindet sich rechts oberhalb der Dateiliste."
+        "Die Branch-Auswahl rechts oberhalb der Dateiliste wird hervorgehoben. Öffne sie, trage feature/readme-guide ein und klicke auf „Erstellen“."
       ],
       "validation": {
         "kind": "event",
@@ -115,7 +115,7 @@
       "helpLevels": [
         "Der gesuchte Bereich liegt in der Repository-Navigation.",
         "Klicke oben auf „Commits“.",
-        "Das Symbol zeigt einen Punkt auf einer Entwicklungslinie."
+        "Der Bereich „Commits“ mit dem Symbol einer Entwicklungslinie wird hervorgehoben. Klicke genau darauf und sieh dir Nachricht, Autor und Kennung an."
       ],
       "validation": {
         "kind": "event",
@@ -134,7 +134,7 @@
       "helpLevels": [
         "Öffne zunächst den Reiter Pull Requests.",
         "Trage in der Beschreibung beispielsweise „Einrichtung geprüft; keine Zugangsdaten enthalten.“ ein.",
-        "Erstelle den Pull Request erst, wenn Head-Branch feature/readme-guide und Base-Branch main angezeigt werden."
+        "Der Bereich Pull Requests wird hervorgehoben. Öffne ihn, prüfe Head feature/readme-guide und Base main, trage „Einrichtung geprüft; keine Zugangsdaten enthalten.“ in die Beschreibung ein und erstelle dann den Pull Request."
       ],
       "validation": {
         "kind": "event",
@@ -160,7 +160,7 @@
       "helpLevels": [
         "Suche die Reiter direkt unter dem Pull-Request-Kopf.",
         "Klicke auf „Geänderte Dateien“.",
-        "Der Reiter liegt zwischen Unterhaltung und Checks."
+        "Der Reiter „Geänderte Dateien“ zwischen Unterhaltung und Checks wird hervorgehoben. Klicke genau darauf und lies die hinzugefügte Zeile im Diff."
       ],
       "validation": {
         "kind": "event",
@@ -179,7 +179,7 @@
       "helpLevels": [
         "Öffne wieder den Reiter Unterhaltung.",
         "Schreibe zum Beispiel „Links und Inhalte geprüft; keine Zugangsdaten enthalten.“.",
-        "Das Antwortfeld befindet sich direkt im gelb markierten Review-Bereich."
+        "Der gelb markierte Review-Bereich mit dem Antwortfeld wird hervorgehoben. Schreibe dort „Links und Inhalte geprüft; keine Zugangsdaten enthalten.“ und sende die Antwort."
       ],
       "validation": {
         "kind": "event",
@@ -201,7 +201,7 @@
       "helpLevels": [
         "Wechsle zum Pull-Request-Reiter Checks.",
         "Klicke auf „Checks aktualisieren“.",
-        "Der Status muss anschließend „Erfolgreich“ anzeigen."
+        "Der Reiter Checks wird hervorgehoben. Öffne ihn und klicke auf „Checks aktualisieren“, bis der Status „Erfolgreich“ angezeigt wird."
       ],
       "validation": {
         "kind": "event",
@@ -223,7 +223,7 @@
       "helpLevels": [
         "Wechsle zurück zum Reiter Unterhaltung.",
         "Prüfe rechts die vier Merge-Anforderungen und klicke auf den Status darunter.",
-        "Der Status ist grün, wenn Diff, Review und Check vollständig sind."
+        "Der Bereich mit den Merge-Anforderungen wird hervorgehoben. Prüfe dort Diff, Review und Check und klicke anschließend auf den grünen Status „Bereit zum Merge“."
       ],
       "validation": {
         "kind": "event",
