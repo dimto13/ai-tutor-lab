@@ -88,7 +88,8 @@ export function validateHelpEscalation(
     violations.push({
       code: "level-three-shorter",
       level: 3,
-      message: "Hilfe 3 darf nicht kürzer als Hilfe 2 sein; sie muss die konkreteste Hilfestufe sein.",
+      message:
+        "Hilfe 3 darf nicht kürzer als Hilfe 2 sein; sie muss die konkreteste Hilfestufe sein.",
     });
   }
 
@@ -96,7 +97,8 @@ export function validateHelpEscalation(
     violations.push({
       code: "level-three-duplicate",
       level: 3,
-      message: "Hilfe 3 darf Hilfe 2 nicht nur wiederholen; sie muss zusätzliche konkrete Hilfe geben.",
+      message:
+        "Hilfe 3 darf Hilfe 2 nicht nur wiederholen; sie muss zusätzliche konkrete Hilfe geben.",
     });
   }
 
