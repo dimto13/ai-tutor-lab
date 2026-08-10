@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Prueft vor Dev-Server und Build, ob jedes Workspace-Paket in node_modules/ verlinkt ist.
 //
@@ -8,7 +9,7 @@ import { join, resolve } from "node:path";
 // betroffener Datei -- also als Import-Fehler in Anwendungscode, der in Wahrheit korrekt
 // ist. Diese Pruefung nennt stattdessen die Ursache und den einen noetigen Befehl.
 
-const repoRoot = resolve(import.meta.dirname, "..");
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function readPackageJson(directory) {
   try {
@@ -19,9 +20,20 @@ function readPackageJson(directory) {
 }
 
 // Unterstuetzt die im Repository verwendeten Muster: "verzeichnis/*" und feste Pfade.
+//
+// Ein nicht unterstuetztes Muster wird bewusst zum harten Fehler statt zu einer leeren
+// Liste: Eine Pruefung, die ihre Sollmenge stillschweigend verliert, meldet "alles in
+// Ordnung" und ist damit schlechter als gar keine Pruefung.
 function expandWorkspacePattern(pattern) {
-  if (!pattern.endsWith("/*")) {
+  const wildcardIndex = pattern.indexOf("*");
+  if (wildcardIndex === -1) {
     return [join(repoRoot, pattern)];
+  }
+  if (!pattern.endsWith("/*") || pattern.indexOf("*", wildcardIndex + 1) !== -1) {
+    throw new Error(
+      `Workspace-Muster "${pattern}" wird von scripts/check-workspace-links.mjs nicht unterstuetzt. ` +
+        `Unterstuetzt sind feste Pfade und Muster der Form "verzeichnis/*".`,
+    );
   }
   const parent = join(repoRoot, pattern.slice(0, -2));
   try {
@@ -34,7 +46,19 @@ function expandWorkspacePattern(pattern) {
 }
 
 const rootManifest = readPackageJson(repoRoot);
-const workspacePatterns = rootManifest?.workspaces ?? [];
+
+// npm akzeptiert neben dem Array auch die Objektform { "workspaces": { "packages": [...] } }.
+const declaredWorkspaces = rootManifest?.workspaces;
+const workspacePatterns = Array.isArray(declaredWorkspaces)
+  ? declaredWorkspaces
+  : (declaredWorkspaces?.packages ?? []);
+
+if (workspacePatterns.length === 0) {
+  throw new Error(
+    "In package.json der Wurzel sind keine workspaces deklariert. " +
+      "Entweder ist die Datei defekt oder scripts/check-workspace-links.mjs prueft am Repository vorbei.",
+  );
+}
 
 const expected = new Map();
 for (const pattern of workspacePatterns) {
@@ -44,6 +68,13 @@ for (const pattern of workspacePatterns) {
       expected.set(manifest.name, directory);
     }
   }
+}
+
+if (expected.size === 0) {
+  throw new Error(
+    `Kein Workspace-Paket unter ${workspacePatterns.join(", ")} gefunden. ` +
+      "Die Pruefung waere damit wirkungslos.",
+  );
 }
 
 const missing = [];
