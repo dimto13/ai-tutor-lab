@@ -52,9 +52,12 @@ export function CopilotPanel({
   const integrationVersion = integration?.version;
   const rootRef = useRef<HTMLDivElement>(null);
   const suggestionSourceRef = useRef<SuggestionSourceState | null>(null);
+  const onChatOpenChangeRef = useRef(onChatOpenChange);
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
   const [prompt, setPrompt] = useState("");
   const profile = copilotRuntime.getProductProfile();
+
+  onChatOpenChangeRef.current = onChatOpenChange;
 
   const inspectTarget = (ref: string) => {
     if (mode === "explore") copilotRuntime.inspect(ref);
@@ -74,15 +77,15 @@ export function CopilotPanel({
 
     const unsubscribe = copilotRuntime.subscribeState((state) => {
       setRuntimeState(state);
-      onChatOpenChange?.(state.chatOpen);
+      onChatOpenChangeRef.current?.(state.chatOpen);
     });
     void copilotRuntime.mount(container, runtimeSeed);
     return () => {
       unsubscribe();
-      onChatOpenChange?.(false);
+      onChatOpenChangeRef.current?.(false);
       void copilotRuntime.unmount();
     };
-  }, [hostProductId, integrationProductId, integrationVersion, onChatOpenChange, runtimeSeed]);
+  }, [hostProductId, integrationProductId, integrationVersion, runtimeSeed]);
 
   useEffect(() => {
     suggestionSourceRef.current = null;
