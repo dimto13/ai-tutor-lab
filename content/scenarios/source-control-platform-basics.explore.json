@@ -72,7 +72,7 @@
       "helpLevels": [
         "Beginne mit dem Überblick und dem Repository-Kopf.",
         "Wechsle anschließend zwischen Code, Commits, Pull Requests und Issues.",
-        "Im vorbereiteten Pull Request findest du Diff, Review und Checks als eigene Reiter beziehungsweise Bereiche."
+        "Öffne nacheinander Überblick, Code, Branch-Auswahl, Commits, Pull Requests und Issues; öffne im vorbereiteten Pull Request außerdem Geänderte Dateien, Review und Checks sowie die Erklärung zu Clone, Fork und Remote."
       ],
       "successMessage": "Du hast die zentralen Bereiche der Source-Control-Plattform untersucht."
     }
