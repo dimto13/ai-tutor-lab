@@ -8,6 +8,28 @@ async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
+async function expectChallengeBriefing(page: Page): Promise<void> {
+  await expect(
+    page.getByRole("heading", {
+      name: "Datei in 30 Sekunden erstellen, befüllen und speichern",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("Aufgabenbriefing", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Die Zeit läuft noch nicht\./)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Aufgabe verstanden · 30 Sekunden starten", exact: true }),
+  ).toBeVisible();
+}
+
+async function startChallenge(page: Page): Promise<void> {
+  await expectChallengeBriefing(page);
+  await page
+    .getByRole("button", { name: "Aufgabe verstanden · 30 Sekunden starten", exact: true })
+    .click();
+  await waitForTrainingReady(page);
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+}
+
 async function createDirtyChallengeFile(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.py").fill("challenge.py");
@@ -22,11 +44,15 @@ test.beforeEach(async ({ page }) => {
   await waitForTrainingReady(page);
 });
 
-test("Speed Challenge: Shortcut-Pfad erreicht den gespeicherten Zielzustand innerhalb des Limits", async ({
+test("Speed Challenge: Aufgabe wird vor dem Start erklärt und Countdown startet erst nach Bestätigung", async ({
   page,
 }) => {
+  await expectChallengeBriefing(page);
+  await page.waitForTimeout(1_200);
+  await expect(page.getByText(/Die Zeit läuft noch nicht\./)).toBeVisible();
+
+  await startChallenge(page);
   await expect(page.getByText("Harte Zeitgrenze", { exact: true })).toBeVisible();
-  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Suche", exact: true }).click();
   await expect(page.getByRole("button", { name: "Neue Datei", exact: true })).not.toBeVisible();
@@ -52,6 +78,7 @@ test("Speed Challenge: Shortcut-Pfad erreicht den gespeicherten Zielzustand inne
 test("Speed Challenge: Erfolgsereignis nach der Deadline wird vor dem nächsten Timer-Tick abgelehnt", async ({
   page,
 }) => {
+  await startChallenge(page);
   await createDirtyChallengeFile(page);
 
   await page.evaluate(
@@ -82,13 +109,14 @@ test("Speed Challenge: Erfolgsereignis nach der Deadline wird vor dem nächsten 
     { key: storageKey },
   );
 
-  await expect(page.getByText("Challenge fehlgeschlagen", { exact: true })).toBeVisible();
+  await expect(page.getByText("Neuer Versuch", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).not.toBeVisible();
 });
 
 test("Speed Challenge: Ctrl+S außerhalb des Simulators speichert die aktive Datei nicht", async ({
   page,
 }) => {
+  await startChallenge(page);
   await createDirtyChallengeFile(page);
 
   await page.getByPlaceholder("Frage an den Tutor…").focus();
@@ -106,6 +134,7 @@ test("Speed Challenge: Ctrl+S außerhalb des Simulators speichert die aktive Dat
 test("Speed Challenge: Shortcuts bleiben nach Klick auf eine nicht fokussierbare Simulatorfläche aktiv", async ({
   page,
 }) => {
+  await startChallenge(page);
   await createDirtyChallengeFile(page);
 
   await page.getByRole("button", { name: "Suche", exact: true }).click();
@@ -119,44 +148,39 @@ test("Speed Challenge: Shortcuts bleiben nach Klick auf eine nicht fokussierbare
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("Speed Challenge: Timeout ist ein harter Fehlschlag und kann nicht nachträglich erfüllt werden", async ({
+test("Speed Challenge: Timeout führt zurück ins Briefing und ein neuer Versuch braucht Bestätigung", async ({
   page,
 }) => {
+  await startChallenge(page);
+
   await page.evaluate(
     ({ key }) => {
       const raw = window.localStorage.getItem(key);
       if (!raw) throw new Error("training progress missing");
-      const progress = JSON.parse(raw) as Record<string, unknown>;
-      window.localStorage.setItem(
-        key,
-        JSON.stringify({
-          ...progress,
-          startedAt: Date.now() - 31_000,
-          finishedAt: null,
-          challengeOutcome: "active",
-        }),
-      );
+      const progress = JSON.parse(raw) as { startedAt?: number };
+      if (typeof progress.startedAt !== "number") throw new Error("training start missing");
+      const globalWindow = window as typeof window & { __realDateNow?: typeof Date.now };
+      globalWindow.__realDateNow = Date.now;
+      Date.now = () => progress.startedAt! + 31_000;
     },
     { key: storageKey },
   );
 
-  await page.reload();
-  await waitForTrainingReady(page);
-
-  await expect(page.getByText("Challenge fehlgeschlagen", { exact: true })).toBeVisible();
+  await expect(page.getByText("Neuer Versuch", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Die Zeit des letzten Versuchs ist abgelaufen\./)).toBeVisible();
   await expect(
-    page.getByText("Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.", {
-      exact: true,
-    }),
+    page.getByRole("button", { name: "Neuen Versuch starten · 30 Sekunden", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Challenge neu starten" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.py").fill("challenge.py");
-  await page.getByPlaceholder("dateiname.py").press("Enter");
-  await page.getByPlaceholder('print("Hello AI Training")').fill(challengeText);
-  await page.keyboard.press("Control+S");
+  await page.evaluate(() => {
+    const globalWindow = window as typeof window & { __realDateNow?: typeof Date.now };
+    if (globalWindow.__realDateNow) Date.now = globalWindow.__realDateNow;
+    delete globalWindow.__realDateNow;
+  });
 
-  await expect(page.getByText("Challenge fehlgeschlagen", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).not.toBeVisible();
+  await page
+    .getByRole("button", { name: "Neuen Versuch starten · 30 Sekunden", exact: true })
+    .click();
+  await waitForTrainingReady(page);
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
 });
