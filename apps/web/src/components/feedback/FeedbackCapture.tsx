@@ -25,21 +25,21 @@ export function FeedbackCapture({
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [saved, setSaved] = useState(false);
-  const [recordCount, setRecordCount] = useState(() => loadFeedbackRecords().length);
-  const [noticeAcknowledged, setNoticeAcknowledged] = useState(() =>
-    hasAcknowledgedFeedbackNotice(),
-  );
+  const [recordCount, setRecordCount] = useState(0);
+  const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
 
   const context = useMemo(
     () => ({
       scenarioId: scenario.id,
-      stepId: progress.activeStepId,
+      stepId:
+        progress.activeStepId ??
+        (source === "completion" ? (scenario.steps.at(-1)?.id ?? null) : null),
       mode,
       runtimeAdapterId: scenario.environment?.runtimeAdapterId ?? null,
       appVersion: import.meta.env.VITE_APP_VERSION || "0.0.0-local",
       commit: import.meta.env.VITE_APP_COMMIT_SHA || "local",
     }),
-    [mode, progress.activeStepId, scenario.environment?.runtimeAdapterId, scenario.id],
+    [mode, progress.activeStepId, scenario, source],
   );
 
   const submit = () => {
@@ -59,6 +59,7 @@ export function FeedbackCapture({
         onClick={() => {
           setSaved(false);
           setRecordCount(loadFeedbackRecords().length);
+          setNoticeAcknowledged(hasAcknowledgedFeedbackNotice());
           setOpen(true);
         }}
         className={
