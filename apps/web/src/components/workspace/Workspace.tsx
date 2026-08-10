@@ -80,6 +80,7 @@ export function Workspace() {
   const [terminalPrompt, setTerminalPrompt] = useState("user@lab:~/ai-training-demo$");
   const [staged, setStaged] = useState(false);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
+  const [copilotChatOpen, setCopilotChatOpen] = useState(false);
 
   const runtimeRootRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -288,155 +289,160 @@ export function Workspace() {
         </div>
 
         <aside
-          data-highlight="vscode.sideBar"
-          onClickCapture={() => inspect("vscode.sideBar")}
+          data-highlight="vscode.primarySideBar"
+          onClickCapture={() => inspect("vscode.primarySideBar")}
           className="flex w-28 shrink-0 flex-col border-r border-border bg-panel sm:w-44 md:w-60"
+          aria-label="Primary Side Bar"
         >
-          <div className="flex h-9 items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <span>
-              {view === "explorer" || view === null
-                ? "Explorer"
-                : view === "search"
-                  ? "Suche"
-                  : view === "scm"
-                    ? "Source Control"
-                    : "Extensions"}
-            </span>
-            {repoOpen && (view === "explorer" || view === null) ? (
-              <button
-                data-highlight="vscode.explorer.newFile"
-                onClick={() => {
-                  inspect("vscode.explorer.newFile");
-                  setNewFileName("");
-                }}
-                title="Neue Datei"
-                aria-label="Neue Datei"
-                className="rounded p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-              >
-                <FilePlus2 className="h-4 w-4" />
-              </button>
-            ) : null}
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-3 text-sm">
-            {view === null ? (
-              <p className="px-3 py-6 text-xs leading-relaxed text-muted-foreground">
-                Kein Bereich geöffnet. Wähle links ein Symbol in der Activity Bar.
-              </p>
-            ) : view === "search" ? (
-              <p className="px-3 py-6 text-xs leading-relaxed text-muted-foreground">
-                Volltextsuche über den aktuellen Arbeitskontext.
-              </p>
-            ) : view === "scm" ? (
-              <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
-                <p className="mb-2 text-foreground">Änderungen</p>
-                {files.some((file) => file.name === "hello.py") ? (
-                  <p className="font-mono text-warning">{staged ? "A" : "U"} hello.py</p>
-                ) : (
-                  <p>Keine Änderungen erkannt.</p>
-                )}
-              </div>
-            ) : view === "extensions" ? (
-              <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
-                <p className="text-foreground">GitHub Copilot</p>
-                <p>
-                  {copilotIntegrated ? "Installiert · aktiviert (simuliert)" : "Nicht aktiviert"}
-                </p>
-              </div>
-            ) : !repoOpen ? (
-              <div className="px-2 py-3">
-                <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                  Öffne über <span className="text-foreground">File</span> einen Ordner oder einen
-                  gespeicherten Workspace.
-                </p>
-                <p className="mb-2 px-1 text-xs text-muted-foreground">Vorbereitete Repositories</p>
+          <div data-highlight="vscode.sideBar" className="flex min-h-0 flex-1 flex-col">
+            <div className="flex h-9 items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span>
+                {view === "explorer" || view === null
+                  ? "Explorer"
+                  : view === "search"
+                    ? "Suche"
+                    : view === "scm"
+                      ? "Source Control"
+                      : "Extensions"}
+              </span>
+              {repoOpen && (view === "explorer" || view === null) ? (
                 <button
-                  data-highlight="vscode.explorer.preparedRepository"
-                  onClick={openRepo}
-                  className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2 py-2 text-left text-sm text-foreground transition-colors hover:border-ring hover:bg-white/5"
+                  data-highlight="vscode.explorer.newFile"
+                  onClick={() => {
+                    inspect("vscode.explorer.newFile");
+                    setNewFileName("");
+                  }}
+                  title="Neue Datei"
+                  aria-label="Neue Datei"
+                  className="rounded p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
                 >
-                  <FolderGit2 className="h-4 w-4 text-accent" />
-                  ai-training-demo
+                  <FilePlus2 className="h-4 w-4" />
                 </button>
-              </div>
-            ) : (
-              <div data-highlight="vscode.explorer.tree" className="py-1">
-                {workspaceMode === "workspace" ? (
-                  <button
-                    type="button"
-                    data-highlight="vscode.workspace.context"
-                    onClick={() => inspect("vscode.workspace.context")}
-                    className="mx-2 mb-2 block w-[calc(100%-1rem)] rounded-md border border-border bg-card p-2 text-left text-[11px] leading-relaxed"
-                  >
-                    <span className="block font-medium text-foreground">
-                      ai-training-lab.code-workspace
-                    </span>
-                    <span className="block text-muted-foreground">2 Ordner im Arbeitskontext</span>
-                    <span className="mt-1 flex items-center gap-1 text-muted-foreground">
-                      <Settings className="h-3 w-3" /> Workspace-Einstellung: formatOnSave = true
-                    </span>
-                  </button>
-                ) : null}
+              ) : null}
+            </div>
 
-                <button
-                  onClick={() => setTreeExpanded((expanded) => !expanded)}
-                  className="flex w-full items-center gap-1 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground"
-                >
-                  {treeExpanded ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
+            <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-3 text-sm">
+              {view === null ? (
+                <p className="px-3 py-6 text-xs leading-relaxed text-muted-foreground">
+                  Kein Bereich geöffnet. Wähle links ein Symbol in der Activity Bar.
+                </p>
+              ) : view === "search" ? (
+                <p className="px-3 py-6 text-xs leading-relaxed text-muted-foreground">
+                  Volltextsuche über den aktuellen Arbeitskontext.
+                </p>
+              ) : view === "scm" ? (
+                <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
+                  <p className="mb-2 text-foreground">Änderungen</p>
+                  {files.some((file) => file.name === "hello.py") ? (
+                    <p className="font-mono text-warning">{staged ? "A" : "U"} hello.py</p>
                   ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
+                    <p>Keine Änderungen erkannt.</p>
                   )}
-                  ai-training-demo
-                </button>
-                {treeExpanded ? (
-                  <ul>
-                    {files.map((file) => (
-                      <li key={file.name}>
-                        <button
-                          onClick={() => file.kind === "file" && openFile(file.name)}
-                          className={`flex w-full items-center gap-2 py-1 pl-6 pr-2 text-left text-[13px] transition-colors hover:bg-white/5 ${
-                            activeFile === file.name
-                              ? "bg-white/10 text-foreground"
-                              : "text-muted-foreground"
-                          } ${wrongFile === file.name ? "text-destructive ring-1 ring-destructive/60" : ""}`}
-                        >
-                          {file.kind === "folder" ? (
-                            <Folder className="h-4 w-4 text-accent" />
-                          ) : file.name.endsWith(".py") ? (
-                            <FileCode2 className="h-4 w-4 text-accent" />
-                          ) : (
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          {file.name}
-                        </button>
-                      </li>
-                    ))}
-                    {newFileName !== null ? (
-                      <li className="py-1 pl-6 pr-2">
-                        <input
-                          ref={newFileRef}
-                          value={newFileName}
-                          onChange={(event) => setNewFileName(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") createFile(newFileName);
-                            if (event.key === "Escape") setNewFileName(null);
-                          }}
-                          placeholder="dateiname.ext"
-                          className="w-full rounded border border-ring bg-editor px-1.5 py-1 font-mono text-[13px] text-foreground outline-none"
-                        />
-                      </li>
-                    ) : null}
-                  </ul>
-                ) : null}
+                </div>
+              ) : view === "extensions" ? (
+                <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
+                  <p className="text-foreground">GitHub Copilot</p>
+                  <p>
+                    {copilotIntegrated ? "Installiert · aktiviert (simuliert)" : "Nicht aktiviert"}
+                  </p>
+                </div>
+              ) : !repoOpen ? (
+                <div className="px-2 py-3">
+                  <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                    Öffne über <span className="text-foreground">File</span> einen Ordner oder einen
+                    gespeicherten Workspace.
+                  </p>
+                  <p className="mb-2 px-1 text-xs text-muted-foreground">
+                    Vorbereitete Repositories
+                  </p>
+                  <button
+                    data-highlight="vscode.explorer.preparedRepository"
+                    onClick={openRepo}
+                    className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2 py-2 text-left text-sm text-foreground transition-colors hover:border-ring hover:bg-white/5"
+                  >
+                    <FolderGit2 className="h-4 w-4 text-accent" />
+                    ai-training-demo
+                  </button>
+                </div>
+              ) : (
+                <div data-highlight="vscode.explorer.tree" className="py-1">
+                  {workspaceMode === "workspace" ? (
+                    <button
+                      type="button"
+                      data-highlight="vscode.workspace.context"
+                      onClick={() => inspect("vscode.workspace.context")}
+                      className="mx-2 mb-2 block w-[calc(100%-1rem)] rounded-md border border-border bg-card p-2 text-left text-[11px] leading-relaxed"
+                    >
+                      <span className="block font-medium text-foreground">
+                        ai-training-lab.code-workspace
+                      </span>
+                      <span className="block text-muted-foreground">2 Ordner im Arbeitskontext</span>
+                      <span className="mt-1 flex items-center gap-1 text-muted-foreground">
+                        <Settings className="h-3 w-3" /> Workspace-Einstellung: formatOnSave = true
+                      </span>
+                    </button>
+                  ) : null}
 
-                {workspaceMode === "workspace" ? (
-                  <div className="mt-1 flex items-center gap-2 px-5 py-1 text-[13px] text-muted-foreground">
-                    <Folder className="h-4 w-4 text-accent" /> shared-tools
-                  </div>
-                ) : null}
-              </div>
-            )}
+                  <button
+                    onClick={() => setTreeExpanded((expanded) => !expanded)}
+                    className="flex w-full items-center gap-1 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground"
+                  >
+                    {treeExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    )}
+                    ai-training-demo
+                  </button>
+                  {treeExpanded ? (
+                    <ul>
+                      {files.map((file) => (
+                        <li key={file.name}>
+                          <button
+                            onClick={() => file.kind === "file" && openFile(file.name)}
+                            className={`flex w-full items-center gap-2 py-1 pl-6 pr-2 text-left text-[13px] transition-colors hover:bg-white/5 ${
+                              activeFile === file.name
+                                ? "bg-white/10 text-foreground"
+                                : "text-muted-foreground"
+                            } ${wrongFile === file.name ? "text-destructive ring-1 ring-destructive/60" : ""}`}
+                          >
+                            {file.kind === "folder" ? (
+                              <Folder className="h-4 w-4 text-accent" />
+                            ) : file.name.endsWith(".py") ? (
+                              <FileCode2 className="h-4 w-4 text-accent" />
+                            ) : (
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            {file.name}
+                          </button>
+                        </li>
+                      ))}
+                      {newFileName !== null ? (
+                        <li className="py-1 pl-6 pr-2">
+                          <input
+                            ref={newFileRef}
+                            value={newFileName}
+                            onChange={(event) => setNewFileName(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") createFile(newFileName);
+                              if (event.key === "Escape") setNewFileName(null);
+                            }}
+                            placeholder="dateiname.ext"
+                            className="w-full rounded border border-ring bg-editor px-1.5 py-1 font-mono text-[13px] text-foreground outline-none"
+                          />
+                        </li>
+                      ) : null}
+                    </ul>
+                  ) : null}
+
+                  {workspaceMode === "workspace" ? (
+                    <div className="mt-1 flex items-center gap-2 px-5 py-1 text-[13px] text-muted-foreground">
+                      <Folder className="h-4 w-4 text-accent" /> shared-tools
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
         </aside>
 
@@ -471,11 +477,6 @@ export function Workspace() {
                 ))
               )}
             </div>
-            {copilotIntegrated ? (
-              <div className="flex shrink-0 items-center pr-2">
-                <CopilotPanel activeFile={activeFile} onApplySuggestion={applyCopilotSuggestion} />
-              </div>
-            ) : null}
           </div>
 
           <div className="flex min-h-0 flex-1">
@@ -599,6 +600,30 @@ export function Workspace() {
             </div>
           ) : null}
         </div>
+
+        <aside
+          data-highlight="vscode.secondarySideBar"
+          onClickCapture={() => inspect("vscode.secondarySideBar")}
+          aria-label="Secondary Side Bar"
+          className={`flex shrink-0 flex-col overflow-hidden border-l border-border bg-panel transition-all ${
+            copilotIntegrated && copilotChatOpen ? "w-40 sm:w-72 md:w-80" : "w-10 sm:w-12"
+          }`}
+        >
+          {copilotIntegrated ? (
+            <CopilotPanel
+              activeFile={activeFile}
+              onApplySuggestion={applyCopilotSuggestion}
+              onChatOpenChange={setCopilotChatOpen}
+            />
+          ) : (
+            <div className="flex h-full items-start justify-center pt-3 text-muted-foreground" title="Secondary Side Bar">
+              <span aria-hidden="true" className="text-sm leading-none">
+                ···
+              </span>
+              <span className="sr-only">Secondary Side Bar</span>
+            </div>
+          )}
+        </aside>
       </div>
 
       <div
