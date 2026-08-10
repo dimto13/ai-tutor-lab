@@ -152,7 +152,73 @@ const workflowTrainings: TrainingCardModel[] = [
     steps: 8,
     icon: GitBranch,
     available: true,
-    label: "Workflow",
+    label: "Workflow · Guided",
+  },
+  {
+    id: "research-workflow",
+    scenarioId: null,
+    title: "Mit KI recherchieren und Quellen prüfen",
+    description:
+      "Eine Recherche als eigenen KI-Workflow üben: Auftrag formulieren, Ergebnis erzeugen, Quellen prüfen und das Resultat fachlich bewerten.",
+    icon: Search,
+    available: true,
+    label: "AI Workflow · 3 Modi",
+    modes: [
+      {
+        scenarioId: "research-workflow.explore",
+        label: "Explore",
+        description: "Recherche-Werkzeuge frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "research-workflow.guided",
+        label: "Guided",
+        description: "Recherche Schritt für Schritt durchführen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "research-workflow.challenge",
+        label: "Challenge",
+        description: "Recherche-Ergebnis selbstständig absichern",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
+  },
+  {
+    id: "html-page-workflow",
+    scenarioId: null,
+    title: "HTML-Seite mit KI erstellen und iterativ verbessern",
+    description:
+      "Eine Seite als eigenen Workflow erzeugen, sichtbar weiterentwickeln, zwischen Vorschau und Quelltext wechseln und unbeabsichtigte Änderungen erkennen.",
+    icon: Code2,
+    available: true,
+    label: "AI Workflow · 3 Modi",
+    modes: [
+      {
+        scenarioId: "html-page-workflow.explore",
+        label: "Explore",
+        description: "Seite und Ergebnisansicht frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "html-page-workflow.guided",
+        label: "Guided",
+        description: "HTML-Seite Schritt für Schritt entwickeln",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "html-page-workflow.challenge",
+        label: "Challenge",
+        description: "Änderungen selbstständig prüfen und korrigieren",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
   },
 ];
 
@@ -208,7 +274,7 @@ function Dashboard() {
 
         <TrainingSection
           title="Werkzeuge im Zusammenspiel"
-          description="Diese Trainings setzen die Einzelgrundlagen voraus und üben einen durchgängigen Arbeitsablauf über mehrere Werkzeuge hinweg."
+          description="Jeder reale Arbeitsablauf wird als eigenes Training aufgedröselt. So kann jeder Workflow einzeln verstanden, geübt und später gezielt wiederholt werden."
           trainings={workflowTrainings}
         />
 
