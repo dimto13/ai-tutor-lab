@@ -84,7 +84,7 @@
           "details": "Der Simulator erzeugt Inline-Vorschläge über einen expliziten Button im Copilot-Popup und zeigt sie dort als Codekarte mit Annehmen-/Ablehnen-Buttons. Aktuelles VS Code zeigt Copilot-Inline-Vorschläge als Ghost Text beziehungsweise Next Edit Suggestions direkt im Editor; Vorschläge werden unter anderem mit Tab navigiert und angenommen.",
           "observedVersion": "2026-08 / VS Code 1.131",
           "scenarioIds": ["copilot-basics.guided"],
-          "status": "open"
+          "status": "resolved"
         },
         {
           "id": "copilot-plan-preview-label-2026-08",
@@ -100,7 +100,7 @@
           "details": "Der Simulator bietet einen Kontext-Select mit Aktive Datei oder Keine Datei. Die aktuelle VS-Code-Chat-Oberfläche erlaubt das Anhängen konkreter Dateien und Ordner über die Plus-Aktion sowie Kontextreferenzen über #; Agenten können zusätzlich Workspace-Kontext selbst ermitteln. Der derzeitige Select ist daher keine produktgetreue Interaktion.",
           "observedVersion": "2026-08 / VS Code 1.131",
           "scenarioIds": ["copilot-basics.guided"],
-          "status": "open"
+          "status": "resolved"
         }
       ]
     }
