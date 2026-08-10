@@ -16,7 +16,9 @@ test("every canonical event reaches subscribers and the telemetry sink", async (
   const telemetry = new MemoryTelemetrySink();
   const bus = new InProcessTrainingEventBus([telemetry]);
   const seen: TrainingEvent[] = [];
-  const unsubscribe = bus.subscribe((event) => seen.push(event));
+  const unsubscribe = bus.subscribe((event) => {
+    seen.push(event);
+  });
   const event = createTrainingEvent({
     id: "event-1",
     source: "vscode-simulator",
