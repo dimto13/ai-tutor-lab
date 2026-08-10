@@ -203,7 +203,7 @@
       "helpLevels": [
         "Öffne zuerst Copilot Chat.",
         "Nenne drei Optionen, 12 Monate und Quellen.",
-        "Verwende das gewünschte Format „Vergleichstabelle“."
+        "Formuliere im Prompt drei Optionen, einen Zeitraum von höchstens 12 Monaten, Quellen und das Ausgabeformat „Vergleichstabelle“ und sende die Anfrage."
       ],
       "successMessage": "Der Rechercheauftrag wurde gesendet.",
       "validation": {
@@ -224,7 +224,7 @@
       "helpLevels": [
         "Wähle Rechercheprotokoll.",
         "Wende die angebotenen Revisionen nacheinander an.",
-        "Der Schritt endet nach „Suche 3 · Quellen abgleichen“."
+        "Wähle das Rechercheprotokoll und klicke nacheinander auf „Suche 1 · Marktüberblick“, „Suche 2 · Zeitraum eingrenzen“ und „Suche 3 · Quellen abgleichen“."
       ],
       "successMessage": "Alle drei Suchläufe sind sichtbar erfolgt.",
       "validation": {
@@ -246,7 +246,7 @@
       "helpLevels": [
         "Wähle Vergleichstabelle.",
         "Suche die Revision am unteren Rand.",
-        "Wende Kosten ergänzen an."
+        "Wähle die Vergleichstabelle, suche unten die Revisionsaktion und klicke auf „Kosten ergänzen“."
       ],
       "successMessage": "Die Kostenspalte ist sichtbar.",
       "validation": {
@@ -268,7 +268,7 @@
       "helpLevels": [
         "Öffne Quelle A.",
         "Vergleiche Wortlaut und Tabellenbehauptung.",
-        "Markiere den gefundenen Mangel über Ergebnis geprüft."
+        "Öffne Quelle A, vergleiche den Wortlaut mit der Tabellenbehauptung und klicke anschließend auf Ergebnis geprüft."
       ],
       "successMessage": "Die unbelegte Aussage ist markiert.",
       "validation": {
@@ -289,7 +289,7 @@
       "helpLevels": [
         "Öffne Quelle B.",
         "Vergleiche Datum und 12-Monats-Vorgabe.",
-        "Markiere den Mangel über Ergebnis geprüft."
+        "Öffne Quelle B, vergleiche das Datum mit der 12-Monats-Vorgabe und klicke anschließend auf Ergebnis geprüft."
       ],
       "successMessage": "Die veraltete Quelle ist markiert.",
       "validation": {
@@ -310,7 +310,7 @@
       "helpLevels": [
         "Öffne Quelle C.",
         "Prüfe Datum und Aussage.",
-        "Lass die Prüfmarkierung aus, weil kein Mangel vorliegt."
+        "Öffne Quelle C, prüfe Datum und Aussage und lass die Prüfmarkierung aus, weil kein Mangel vorliegt."
       ],
       "successMessage": "Auch die dritte Quelle wurde kontrolliert.",
       "validation": {
