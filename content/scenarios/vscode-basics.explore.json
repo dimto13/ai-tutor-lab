@@ -74,7 +74,7 @@
       "helpLevels": [
         "Klicke auf einen Bereich oder ein Menü, das du noch nicht kennst.",
         "Öffne auch die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help sowie das untere Panel.",
-        "Der Fortschritt zeigt dir, welche erklärbaren Oberflächen noch fehlen."
+        "Öffne nacheinander die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help; klicke außerdem auf die Bereiche der Activity Bar, die Side Bar, den Editor, die Panel-Tabs und die Status Bar. Der Fortschritt zeigt dir, was noch fehlt."
       ],
       "successMessage": "Oberfläche vollständig erkundet."
     }
