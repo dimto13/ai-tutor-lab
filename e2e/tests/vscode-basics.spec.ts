@@ -76,10 +76,10 @@ test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das 
 
   await expect(page.getByText("1 von 14 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(
-    page.getByText(
-      "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts und bietet Dateiaktionen wie Neue Datei.",
-      { exact: true },
-    ),
+    page.getByText(/Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts\./),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Windows-Datei-Explorer oder der Dialog Öffnen in Office/),
   ).toBeVisible();
 });
 
