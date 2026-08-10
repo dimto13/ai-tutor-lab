@@ -4,6 +4,7 @@ export type HelpEscalationViolationCode =
   | "empty-action-help"
   | "level-three-shorter"
   | "level-three-duplicate"
+  | "level-three-no-action"
   | "level-three-highlight-only";
 
 export interface HelpEscalationViolation {
@@ -12,45 +13,8 @@ export interface HelpEscalationViolation {
   message: string;
 }
 
-const ACTION_MARKERS = [
-  "klick",
-  "öffn",
-  "wähl",
-  "tippe",
-  "gib ",
-  "drück",
-  "wechs",
-  "nutze",
-  "prüf",
-  "markier",
-  "erstelle",
-  "schreib",
-  "starte",
-  "führ",
-  "bestätig",
-  "lade",
-  "speicher",
-  "sende",
-  "füge",
-  "setze",
-  "such",
-  "find",
-  "aktivier",
-  "deaktivier",
-  "lege",
-  "geh ",
-  "navigier",
-  "antworte",
-  "formulier",
-  "vergleich",
-  "identifizier",
-  "übernimm",
-  "akzeptier",
-  "verwerf",
-  "ziehe",
-  "halte",
-  "öffne",
-];
+const ACTION_PATTERN =
+  /\b(klicke|öffne|wähle|tippe|gib|drücke|wechsle|nutze|prüfe|markiere|erstelle|schreibe|starte|führe|bestätige|lade|speichere|sende|füge|setze|suche|finde|aktiviere|deaktiviere|lege|gehe|navigiere|antworte|formuliere|vergleiche|identifiziere|übernimm|akzeptiere|verwirf|ziehe|halte|lass|wende|trage|achte|bleibe|sieh|lies|beantworte|bringe)\b/u;
 
 const HIGHLIGHT_MARKERS = ["hervorgehoben", "markiert", "highlight", "rahmen"];
 
@@ -102,10 +66,15 @@ export function validateHelpEscalation(
     });
   }
 
-  if (
-    containsMarker(levelThree, HIGHLIGHT_MARKERS) &&
-    !containsMarker(levelThree, ACTION_MARKERS)
-  ) {
+  if (!ACTION_PATTERN.test(levelThree)) {
+    violations.push({
+      code: "level-three-no-action",
+      level: 3,
+      message: "Hilfe 3 muss eine eindeutige ausführbare Handlungsanweisung enthalten.",
+    });
+  }
+
+  if (containsMarker(levelThree, HIGHLIGHT_MARKERS) && !ACTION_PATTERN.test(levelThree)) {
     violations.push({
       code: "level-three-highlight-only",
       level: 3,
