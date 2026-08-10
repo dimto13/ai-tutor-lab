@@ -107,7 +107,9 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
 
   const prompt = page.getByPlaceholder("Ask Copilot...");
-  await expect(page.getByText("Kontext: calculator.py")).toBeVisible();
+  const contextSelect = page.getByLabel("Kontext");
+  await expect(contextSelect).toHaveValue("active");
+  await expect(contextSelect.locator("option:checked")).toHaveText("Aktive Datei: calculator.py");
   await prompt.fill("test");
   await prompt.press("Enter");
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst nutzen")).toBeVisible();
