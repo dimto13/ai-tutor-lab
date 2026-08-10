@@ -166,7 +166,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
         if (mode === "explore") vscodeRuntime.inspect("vscode.secondarySideBar");
       }}
       aria-label="Secondary Side Bar"
-      className={`flex min-w-0 shrink-0 flex-col overflow-x-hidden border-l border-border bg-panel transition-[width] duration-150 ${
+      className={`flex min-w-0 shrink-0 flex-col overflow-x-hidden border-l border-border bg-panel ${
         chatVisible ? "w-32 sm:w-72 lg:w-80" : "w-10 sm:w-12"
       }`}
     >
