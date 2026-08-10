@@ -1,0 +1,41 @@
+name: Prettier Full Probe
+
+on:
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format repository
+        run: npx prettier --write .
+
+      - name: Collect formatted changes
+        shell: bash
+        run: |
+          mkdir -p formatted
+          git diff --name-only -z | while IFS= read -r -d '' file; do
+            mkdir -p "formatted/$(dirname "$file")"
+            cp "$file" "formatted/$file"
+          done
+          git diff --name-only > formatted-files.txt
+
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: prettier-full-output
+          path: |
+            formatted
+            formatted-files.txt
