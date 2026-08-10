@@ -1,14 +1,14 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { z, ZodError } from "zod";
-import { technologyCatalog } from "../src/catalog/index.ts";
+import { technologyCatalog } from "../apps/web/src/catalog/index.ts";
 import {
   RUNTIME_REFERENCE_CATALOG,
   getRuntimeReferenceDefinition,
-} from "../src/runtime/referenceCatalog.ts";
-import { parseScenario } from "../src/scenarios/contentLoader.ts";
-import type { RuntimeReferenceDefinition } from "../src/runtime/vscodeDefinition.ts";
-import type { Scenario, Validation } from "../src/types/training.ts";
+} from "../apps/web/src/runtime/referenceCatalog.ts";
+import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
+import type { RuntimeReferenceDefinition } from "../apps/web/src/runtime/vscodeDefinition.ts";
+import type { Scenario, Validation } from "../apps/web/src/types/training.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
 const glossaryDir = resolve(process.cwd(), "content/glossary");

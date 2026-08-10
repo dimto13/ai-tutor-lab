@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createCopilotRuntime } from "../../src/runtime/copilotRuntime.ts";
+import { createCopilotRuntime } from "../../apps/web/src/runtime/copilotRuntime.ts";
 
 function createContainer(): HTMLElement {
   return {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseScenario } from "../../src/scenarios/contentLoader.ts";
+import { parseScenario } from "../../apps/web/src/scenarios/contentLoader.ts";
 
 function scenarioWithSeed(seed: Record<string, unknown>) {
   return {

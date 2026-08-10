@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { loadLlmProviderConfig } from "../../src/tutor/llm/config.ts";
-import { OllamaProvider } from "../../src/tutor/llm/ollamaProvider.ts";
-import { getVscodeSurfaceTarget } from "../../src/runtime/vscodeDefinition.ts";
+import { loadLlmProviderConfig } from "../../apps/web/src/tutor/llm/config.ts";
+import { OllamaProvider } from "../../apps/web/src/tutor/llm/ollamaProvider.ts";
+import { getVscodeSurfaceTarget } from "../../apps/web/src/runtime/vscodeDefinition.ts";
 
 test("uses local Ollama defaults without cloud configuration", () => {
   const config = loadLlmProviderConfig({});
@@ -58,19 +58,21 @@ test("Ollama provider uses the OpenAI-compatible chat completions API", async ()
 });
 
 test("provider-specific configuration does not leak outside the provider layer", async () => {
-  const srcRoot = path.resolve("src");
-  const allowedRoot = path.resolve("src/tutor/llm");
+  const sourceRoots = [path.resolve("apps/web/src"), path.resolve("packages")];
+  const allowedRoot = path.resolve("apps/web/src/tutor/llm");
   const forbidden = ["LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL", "localhost:11434"];
 
-  for (const file of await collectTypeScriptFiles(srcRoot)) {
-    if (file.startsWith(allowedRoot)) continue;
-    const content = await readFile(file, "utf8");
-    for (const token of forbidden) {
-      assert.equal(
-        content.includes(token),
-        false,
-        `${token} leaked into ${path.relative(srcRoot, file)}`,
-      );
+  for (const sourceRoot of sourceRoots) {
+    for (const file of await collectTypeScriptFiles(sourceRoot)) {
+      if (file.startsWith(allowedRoot)) continue;
+      const content = await readFile(file, "utf8");
+      for (const token of forbidden) {
+        assert.equal(
+          content.includes(token),
+          false,
+          `${token} leaked into ${path.relative(process.cwd(), file)}`,
+        );
+      }
     }
   }
 });

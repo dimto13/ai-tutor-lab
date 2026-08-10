@@ -3,7 +3,7 @@ import { test } from "node:test";
 import {
   sourceControlPlatformRuntime,
   type SourceControlPlatformState,
-} from "../../src/runtime/sourceControlPlatformRuntime.ts";
+} from "../../apps/web/src/runtime/sourceControlPlatformRuntime.ts";
 import { defineRuntimeAdapterContractTests } from "./runtimeAdapter.contract.ts";
 
 const targetRef = "platform.navigation.code";

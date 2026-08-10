@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { workspaceBus } from "../../src/state/eventBus.ts";
-import { vscodeRuntime, type VscodeRuntimeState } from "../../src/runtime/vscodeRuntime.ts";
+import { workspaceBus } from "../../apps/web/src/state/eventBus.ts";
+import {
+  vscodeRuntime,
+  type VscodeRuntimeState,
+} from "../../apps/web/src/runtime/vscodeRuntime.ts";
 import { defineRuntimeAdapterContractTests } from "./runtimeAdapter.contract.ts";
 
 const targetRef = "vscode.activityBar.explorer";

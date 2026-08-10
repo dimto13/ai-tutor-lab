@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import {
   validateCompletionFreeTextPolicy,
   validateStepFreeTextPolicy,
-} from "../src/scenarios/freeTextValidationPolicy.ts";
+} from "../apps/web/src/scenarios/freeTextValidationPolicy.ts";
 
 interface ScenarioLike {
   id?: string;

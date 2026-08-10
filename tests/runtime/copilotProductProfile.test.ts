@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createCopilotRuntime } from "../../src/runtime/copilotRuntime.ts";
-import { resolveCopilotProductProfile } from "../../src/runtime/copilotProductProfile.ts";
+import { createCopilotRuntime } from "../../apps/web/src/runtime/copilotRuntime.ts";
+import { resolveCopilotProductProfile } from "../../apps/web/src/runtime/copilotProductProfile.ts";
 
 test("Copilot runtime can be configured from the version-pinned integration profile", () => {
   const runtime = createCopilotRuntime();

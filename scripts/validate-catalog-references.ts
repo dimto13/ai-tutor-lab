@@ -1,8 +1,11 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { technologyCatalog, validateCatalogEnvironmentReference } from "../src/catalog/index.ts";
-import { resolveCopilotProductProfile } from "../src/runtime/copilotProductProfile.ts";
-import { parseScenario } from "../src/scenarios/contentLoader.ts";
+import {
+  technologyCatalog,
+  validateCatalogEnvironmentReference,
+} from "../apps/web/src/catalog/index.ts";
+import { resolveCopilotProductProfile } from "../apps/web/src/runtime/copilotProductProfile.ts";
+import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
 const files = (await readdir(scenariosDir)).filter((name) => name.endsWith(".json")).sort();

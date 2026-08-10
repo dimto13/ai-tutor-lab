@@ -4,8 +4,8 @@ import {
   copilotRuntime,
   createCopilotRuntime,
   type CopilotRuntimeState,
-} from "../../src/runtime/copilotRuntime.ts";
-import { DEFAULT_COPILOT_PRODUCT_PROFILE } from "../../src/runtime/copilotProductProfile.ts";
+} from "../../apps/web/src/runtime/copilotRuntime.ts";
+import { DEFAULT_COPILOT_PRODUCT_PROFILE } from "../../apps/web/src/runtime/copilotProductProfile.ts";
 import { defineRuntimeAdapterContractTests } from "./runtimeAdapter.contract.ts";
 
 const targetRef = "copilot.chat.modelSelector";

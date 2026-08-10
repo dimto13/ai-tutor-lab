@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateHelpEscalation } from "../../src/scenarios/helpEscalation.ts";
-import type { TrainingStep } from "../../src/types/training.ts";
+import { validateHelpEscalation } from "../../apps/web/src/scenarios/helpEscalation.ts";
+import type { TrainingStep } from "../../apps/web/src/types/training.ts";
 
 function step(
   helpLevels: [string, string, string],

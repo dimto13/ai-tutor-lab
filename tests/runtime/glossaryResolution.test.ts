@@ -6,9 +6,9 @@ import {
   getGlossaryConceptForTarget,
   getGlossaryConceptsForTechnology,
   segmentGlossaryText,
-} from "../../src/lib/glossary.ts";
-import { answerDeterministically } from "../../src/tutor/deterministicTutor.ts";
-import type { TutorContext } from "../../src/tutor/tutorContext.ts";
+} from "../../apps/web/src/lib/glossary.ts";
+import { answerDeterministically } from "../../apps/web/src/tutor/deterministicTutor.ts";
+import type { TutorContext } from "../../apps/web/src/tutor/tutorContext.ts";
 
 const tutorContext: TutorContext = {
   scenario: {

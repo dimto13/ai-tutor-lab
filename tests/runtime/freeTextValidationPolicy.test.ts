@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   validateCompletionFreeTextPolicy,
   validateStepFreeTextPolicy,
-} from "../../src/scenarios/freeTextValidationPolicy.ts";
+} from "../../apps/web/src/scenarios/freeTextValidationPolicy.ts";
 
 test("non-exact prompt substrings are rejected", () => {
   const violations = validateStepFreeTextPolicy({

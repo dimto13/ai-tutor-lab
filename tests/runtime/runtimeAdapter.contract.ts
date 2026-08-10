@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { RuntimeAdapter, RuntimeSeed } from "../../src/runtime/runtimeAdapter.ts";
-import type { TrainingEvent, UiTargetRef, WorkspaceEventName } from "../../src/types/training.ts";
+import type { RuntimeAdapter, RuntimeSeed } from "../../apps/web/src/runtime/runtimeAdapter.ts";
+import type {
+  TrainingEvent,
+  UiTargetRef,
+  WorkspaceEventName,
+} from "../../apps/web/src/types/training.ts";
 
 interface TargetFixture {
   ref: UiTargetRef;
