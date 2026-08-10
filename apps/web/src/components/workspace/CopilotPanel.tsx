@@ -191,11 +191,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
           title={chatVisible ? "Copilot Chat schließen" : "Copilot Chat öffnen"}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {chatVisible ? (
-            <X className="h-4 w-4" />
-          ) : (
-            <Sparkles className="h-4 w-4 text-accent" />
-          )}
+          {chatVisible ? <X className="h-4 w-4" /> : <Sparkles className="h-4 w-4 text-accent" />}
         </button>
       </div>
 
