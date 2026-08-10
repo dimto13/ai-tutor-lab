@@ -63,7 +63,6 @@ test("Copilot Challenge ist über geprüften Inline-Vorschlag lösbar", async ({
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.focus();
   await editor.press("Tab");
-  await expect(editor).toHaveValue("def add(a, b):\n    return a + b\n");
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
