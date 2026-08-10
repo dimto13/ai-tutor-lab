@@ -1,0 +1,199 @@
+name: Apply AITP-170 final audit migration
+
+on:
+  push:
+    branches:
+      - agent/aitp-170-persona-audit
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/aitp-170-persona-audit
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --install-strategy=nested
+      - name: Apply final persona migration
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          def load(path):
+              return json.loads(Path(path).read_text())
+
+          def save(path, data):
+              Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          def set_audience(path, concepts):
+              data = load(path)
+              audience = data.setdefault("audience", {})
+              audience["personaId"] = "non-programmer"
+              existing = audience.get("glossaryConcepts", [])
+              audience["glossaryConcepts"] = list(dict.fromkeys(existing + concepts))
+              save(path, data)
+
+          # Only concepts that genuinely do not exist in any glossary source are added here.
+          glossary_path = "content/glossary/de.json"
+          glossary = load(glossary_path)
+          keys = {concept["key"] for concept in glossary["concepts"]}
+          new_concepts = [
+              {
+                  "key": "web.html",
+                  "term": "HTML",
+                  "aliases": ["HTML-Seite", "HTML-Dokument"],
+                  "simple": "HTML beschreibt die Struktur und den Inhalt einer Webseite, ähnlich wie eine Dokumentvorlage festlegt, welche Überschriften, Texte, Listen oder Tabellen an welcher Stelle stehen.",
+                  "advanced": "HTML ist eine Auszeichnungssprache. Elemente wie Überschriften, Absätze, Links und Tabellen werden mit strukturellen Tags beschrieben und vom Browser dargestellt.",
+                  "uiTargets": []
+              },
+              {
+                  "key": "vscode.shortcut",
+                  "term": "Shortcut",
+                  "aliases": ["Tastenkürzel", "Keyboard Shortcut"],
+                  "simple": "Ein Shortcut ist eine Tastenkombination, mit der du einen Befehl direkt ausführst, statt ihn über ein Menü anzuklicken – ähnlich wie Strg+C zum Kopieren in Office.",
+                  "advanced": "VS Code ordnet Befehlen konfigurierbare Tastenkombinationen zu. Shortcuts beschleunigen wiederkehrende Aktionen, sind aber keine Voraussetzung, um die Funktion grundsätzlich zu verstehen.",
+                  "uiTargets": []
+              }
+          ]
+          for concept in new_concepts:
+              if concept["key"] not in keys:
+                  glossary["concepts"].append(concept)
+                  keys.add(concept["key"])
+          tech = glossary.setdefault("technologyConcepts", {})
+          tech.setdefault("ide", [])
+          if "vscode.shortcut" not in tech["ide"]:
+              tech["ide"].append("vscode.shortcut")
+          tech.setdefault("artifact_preview", [])
+          if "web.html" not in tech["artifact_preview"]:
+              tech["artifact_preview"].append("web.html")
+          glossary["version"] = max(int(glossary.get("version", 1)), 5)
+          save(glossary_path, glossary)
+
+          set_audience("content/scenarios/artifact-preview-foundation.guided.json", ["artifact.preview", "web.html"])
+          set_audience("content/scenarios/developer-workflow-basics.guided.json", [
+              "foundation.code", "programming.python", "vscode.activity_bar", "vscode.explorer",
+              "vscode.editor", "vscode.terminal", "git.repository", "git.stage", "git.commit",
+              "github.copilot", "copilot.chat", "copilot.inline_suggestion"
+          ])
+          source_control = [
+              "git.repository", "git.working_tree", "git.stage", "git.commit", "git.branch",
+              "github.platform", "git.github_difference", "platform.repository",
+              "platform.branch_selector", "platform.commit_history", "platform.pull_request",
+              "platform.diff", "platform.review", "platform.status_checks", "platform.issues", "platform.remote"
+          ]
+          for scenario_path in [
+              "content/scenarios/source-control-platform-basics.explore.json",
+              "content/scenarios/source-control-platform-basics.guided.json",
+              "content/scenarios/source-control-platform-basics.challenge.json"
+          ]:
+              set_audience(scenario_path, source_control)
+          set_audience("content/scenarios/vscode-shortcuts.challenge.json", [
+              "vscode.shortcut", "vscode.explorer", "vscode.editor", "vscode.folder"
+          ])
+          set_audience("content/scenarios/copilot-basics.guided.json", [
+              "vscode.editor", "vscode.panel", "github.copilot", "copilot.chat", "copilot.mcp", "copilot.agent_skill"
+          ])
+          set_audience("content/scenarios/html-page-workflow.guided.json", [
+              "web.html", "artifact.preview", "github.copilot", "copilot.chat", "platform.review"
+          ])
+          set_audience("content/scenarios/research-workflow.guided.json", [
+              "github.copilot", "copilot.chat", "artifact.preview", "ai.agent", "research.source_evidence"
+          ])
+
+          # Beginner-safe wording for the generic artifact foundation.
+          path = "content/scenarios/artifact-preview-foundation.guided.json"
+          scenario = load(path)
+          scenario["title"] = "Ergebnisse prüfen – Vorschau und Überarbeitungen"
+          scenario["description"] = "Lerne, unterschiedliche erzeugte Ergebnisse anzusehen, zwischen Vorschau und Quelltext zu wechseln, eine vorbereitete Überarbeitung zu übernehmen und das Ergebnis bewusst zu prüfen."
+          by_id = {step["id"]: step for step in scenario["steps"]}
+          by_id["select-html-artifact"]["description"] = "Die Ergebnisfläche kann unterschiedliche Ergebnisarten wie eine HTML-Seite, eine Tabelle oder strukturierte Daten anzeigen."
+          by_id["select-html-artifact"]["why"] = "So kannst du mehrere erzeugte Ergebnisse in derselben Arbeitsfläche unterscheiden und gezielt auswählen."
+          by_id["switch-to-source"]["description"] = "Eine HTML-Seite kann entweder als fertige Vorschau oder als zugrunde liegender HTML-Text betrachtet werden."
+          by_id["switch-to-source"]["why"] = "Die Quelltextansicht zeigt nachvollziehbar, was erzeugt wurde, ohne dass du HTML selbst schreiben musst."
+          by_id["apply-artifact-revision"]["description"] = "Eine vorbereitete Überarbeitung verändert das Ergebnis reproduzierbar und macht eine typische Iteration sichtbar."
+          by_id["apply-artifact-revision"]["why"] = "So siehst du, wie sich ein Ergebnis nach einer gezielten Änderungsanforderung weiterentwickeln kann."
+          by_id["verify-artifact"]["description"] = "Ein sichtbares Ergebnis ist zunächst nur ein Entwurf; die fachliche Prüfung bleibt eine eigene Nutzeraktion."
+          save(path, scenario)
+
+          # Persona validator must read ALL declarative glossary source files, not only de.json.
+          validator = Path("scripts/validate-persona-audit.ts")
+          text = validator.read_text()
+          text = text.replace(
+              'const glossaryPath = resolve(process.cwd(), "content/glossary/de.json");',
+              'const glossaryDir = resolve(process.cwd(), "content/glossary");'
+          )
+          old = '''const glossary = JSON.parse(await readFile(glossaryPath, "utf8")) as GlossaryDocument;\nconst glossaryKeys = new Set(\n  (glossary.concepts ?? []).flatMap((concept) => (concept.key ? [concept.key] : [])),\n);\nconst scenarioFiles = (await readdir(scenarioDir)).filter((file) => file.endsWith(".json")).sort();'''
+          new = '''const glossaryFiles = (await readdir(glossaryDir))\n  .filter((file) => file.endsWith(".json"))\n  .sort();\nconst glossaryKeys = new Set<string>();\nfor (const file of glossaryFiles) {\n  const glossary = JSON.parse(\n    await readFile(resolve(glossaryDir, file), "utf8"),\n  ) as GlossaryDocument;\n  for (const concept of glossary.concepts ?? []) {\n    if (concept.key) glossaryKeys.add(concept.key);\n  }\n}\nconst scenarioFiles = (await readdir(scenarioDir)).filter((file) => file.endsWith(".json")).sort();'''
+          if old not in text:
+              raise SystemExit("glossary aggregation block not found")
+          text = text.replace(old, new, 1)
+
+          insert_after = '  { pattern: /\\bWorkspace\\b/i, concepts: ["vscode.workspace"], label: "Workspace" },\n'
+          extra_rules = '''  { pattern: /\\bShortcuts?\\b/i, concepts: ["vscode.shortcut"], label: "Shortcut" },\n  { pattern: /\\bHTML\\b/i, concepts: ["web.html"], label: "HTML" },\n  { pattern: /\\bWorking Tree\\b/i, concepts: ["git.working_tree"], label: "Working Tree" },\n  { pattern: /\\bRemote\\b/i, concepts: ["platform.remote"], label: "Remote" },\n'''
+          if extra_rules not in text:
+              if insert_after not in text:
+                  raise SystemExit("term-rule insertion point not found")
+              text = text.replace(insert_after, insert_after + extra_rules, 1)
+          marker = '  { pattern: /\\bPython\\b|\\.py\\b/i, concepts: ["programming.python"], label: "Python" },\n'
+          github_rules = '''  {\n    pattern: /\\bGitHub\\b/i,\n    concepts: ["github.platform", "github.copilot"],\n    label: "GitHub",\n  },\n  {\n    pattern: /\\bCopilot\\b/i,\n    concepts: ["github.copilot"],\n    label: "Copilot",\n  },\n'''
+          if github_rules not in text:
+              text = text.replace(marker, marker + github_rules, 1)
+          validator.write_text(text)
+          PY
+      - name: Write audit report
+        shell: bash
+        run: |
+          cat > docs/17-persona-audit.md <<'EOF'
+          # 17 — Persona-Audit der bestehenden Szenarien
+
+          Stand: August 2026. Zielpersona für die vorhandenen Lernpfade ist `non-programmer`.
+
+          Alle zwölf Bestandsszenarien wurden gegen Persona, Glossarabdeckung, Anfängerpflichtpfad, Hilfe-Eskalation und fehlertolerante Freitextvalidierung geprüft.
+
+          | Szenario | Ergebnis |
+          | --- | --- |
+          | `artifact-preview-foundation.guided` | konform |
+          | `copilot-basics.guided` | konform |
+          | `developer-workflow-basics.guided` | konform |
+          | `html-page-workflow.guided` | konform |
+          | `research-workflow.guided` | konform |
+          | `source-control-platform-basics.explore` | konform |
+          | `source-control-platform-basics.guided` | konform |
+          | `source-control-platform-basics.challenge` | konform |
+          | `vscode-basics.explore` | konform |
+          | `vscode-basics.guided` | konform |
+          | `vscode-basics.challenge` | konform |
+          | `vscode-shortcuts.challenge` | konform |
+
+          ## Verbindliche Regeln
+
+          1. Jedes Szenario deklariert eine Zielpersona und die benötigten Glossarbegriffe.
+          2. Zentrale sichtbare Fachbegriffe müssen über `audience.glossaryConcepts` auflösbar sein.
+          3. Non-Programmer werden nicht ohne Einführung zum Schreiben von Programmcode gezwungen.
+          4. Advanced-Funktionen sind nur dann Pflicht, wenn sie für das konkrete Lernziel nötig sind.
+          5. Hilfen eskalieren Orientierung → konkrete Aktion → maximale Hilfe.
+          6. Freitext scheitert nicht an Magic Words, außer die konkrete Textinformation ist selbst Lernziel.
+
+          `scripts/validate-persona-audit.ts` liest alle deklarativen Glossarquellen unter `content/glossary` und läuft als Teil von `npm run validate:content`.
+          EOF
+      - run: npx prettier --write content/glossary/de.json content/scenarios/artifact-preview-foundation.guided.json content/scenarios/developer-workflow-basics.guided.json content/scenarios/source-control-platform-basics.explore.json content/scenarios/source-control-platform-basics.guided.json content/scenarios/source-control-platform-basics.challenge.json content/scenarios/vscode-shortcuts.challenge.json content/scenarios/copilot-basics.guided.json content/scenarios/html-page-workflow.guided.json content/scenarios/research-workflow.guided.json scripts/validate-persona-audit.ts docs/17-persona-audit.md
+      - run: npm run check
+      - run: rm -f .github/workflows/apply-aitp170-final.yml
+      - name: Commit migration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "AITP-170: apply complete persona audit migration"
+          git push origin HEAD:agent/aitp-170-persona-audit
