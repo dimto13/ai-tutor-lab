@@ -174,7 +174,7 @@ export function CopilotPanel({
     .find((message) => message.role === "assistant");
 
   return (
-    <div ref={rootRef} className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+    <div ref={rootRef} className="flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden">
       <style>{`
         [data-highlight="vscode.secondarySideBar"] {
           transition-property: width !important;
@@ -223,7 +223,7 @@ export function CopilotPanel({
         <div
           data-highlight="copilot.chat"
           onPointerDown={() => inspectTarget("copilot.chat")}
-          className="flex min-h-0 flex-1 flex-col overflow-hidden bg-panel"
+          className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden bg-panel"
         >
           <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border px-2 py-2">
             <div className="min-w-0 flex-1 basis-28">
