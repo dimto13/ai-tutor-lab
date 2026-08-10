@@ -1,22 +1,32 @@
 version: 1
 applications:
+  # appRoot muss identisch zur Env-Variable AMPLIFY_MONOREPO_APP_ROOT sein (apps/web).
+  #
+  # buildPath: / laesst alle Phasen im Repo-Root laufen. Das ist noetig, weil npm
+  # Workspaces nur vom Root aus installiert werden koennen -- und es ersetzt die
+  # frueheren "cd ../.."-Praefixe. Die waren der eigentliche Build-Killer: Amplify
+  # fuehrt preBuild und build in derselben Shell aus, das cd aus preBuild wirkte also
+  # in build fort, und das zweite cd landete oberhalb des Repos
+  # ("Cannot find module './apps/web/package.json'").
   - appRoot: apps/web
     frontend:
+      buildPath: /
       phases:
         preBuild:
           commands:
             - nvm install 22
             - nvm use 22
             - node -v && npm -v
-            - cd ../.. && npm install
+            - npm ci --cache .npm --prefer-offline
         build:
           commands:
-            - cd ../.. && VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
+            - VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
       artifacts:
-        baseDirectory: .amplify-hosting
+        # baseDirectory ist relativ zu buildPath (Repo-Root), nicht zu appRoot.
+        baseDirectory: apps/web/.amplify-hosting
         files:
           - "**/*"
       cache:
+        # npm-Cache statt node_modules: npm ci loescht node_modules ohnehin bei jedem Lauf.
         paths:
-          - ../../node_modules/**/*
-          - ../../.npm/**/*
+          - .npm/**/*
