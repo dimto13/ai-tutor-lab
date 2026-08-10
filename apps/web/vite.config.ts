@@ -7,6 +7,7 @@ import { defineConfig } from "vite";
 /**
  * Native TanStack Start/Vite setup without tooling from the original POC environment.
  * src/server.ts remains the custom server entry used by TanStack Start.
+ * Production builds target Amplify Hosting Compute through Nitro's deployment preset.
  */
 export default defineConfig(({ command }) => ({
   server: {
@@ -22,5 +23,17 @@ export default defineConfig(({ command }) => ({
   resolve: {
     tsconfigPaths: true,
   },
-  plugins: [tailwindcss(), tanstackStart(), viteReact(), ...(command === "build" ? [nitro()] : [])],
+  plugins: [
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+    ...(command === "build"
+      ? [
+          nitro({
+            preset: "aws_amplify",
+            awsAmplify: { runtime: "nodejs22.x" },
+          }),
+        ]
+      : []),
+  ],
 }));
