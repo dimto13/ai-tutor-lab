@@ -4,16 +4,19 @@ async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
-test("VS Code Explore exposes the Primary Side Bar as its own semantic surface", async ({ page }) => {
-  await page.goto("/training/vscode-basics.explore");
-  await waitForTrainingReady(page);
+test(
+  "VS Code Explore exposes the Primary Side Bar as its own semantic surface",
+  async ({ page }) => {
+    await page.goto("/training/vscode-basics.explore");
+    await waitForTrainingReady(page);
 
-  const primarySideBar = page.locator('[data-highlight="vscode.primarySideBar"]');
-  await expect(primarySideBar).toBeVisible();
-  await primarySideBar.click({ position: { x: 8, y: 48 } });
+    const primarySideBar = page.locator('[data-highlight="vscode.primarySideBar"]');
+    await expect(primarySideBar).toBeVisible();
+    await primarySideBar.click({ position: { x: 8, y: 48 } });
 
-  await expect(page.getByText("1 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
-});
+    await expect(page.getByText("1 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  },
+);
 
 test("Copilot Chat is a View in the Secondary Side Bar instead of an editor popup", async ({
   page,
