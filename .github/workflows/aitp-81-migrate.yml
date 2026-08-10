@@ -1,0 +1,598 @@
+name: AITP-81 Monorepo Migration
+
+on:
+  push:
+    branches:
+      - agent/aitp-81-monorepo
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aitp-81-monorepo
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Move application and extract package boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p apps/web packages/training-engine/src packages/runtime-core/src packages/runtime-vscode-sim/src packages/runtime-terminal-sim/src packages/catalog
+
+          git mv src apps/web/src
+          git mv e2e apps/web/e2e
+          git mv vite.config.ts apps/web/vite.config.ts
+          git mv components.json apps/web/components.json
+          git mv tsconfig.json apps/web/tsconfig.json
+          if [ -d public ]; then git mv public apps/web/public; fi
+
+          git mv apps/web/src/types/training.ts packages/training-engine/src/types.ts
+          git mv apps/web/src/state/trainingProgress.ts packages/training-engine/src/trainingProgress.ts
+
+          git mv apps/web/src/runtime/runtimeAdapter.ts packages/runtime-core/src/runtimeAdapter.ts
+          git mv apps/web/src/state/eventBus.ts packages/runtime-core/src/eventBus.ts
+
+          git mv apps/web/src/runtime/terminalCommandEngine.ts packages/runtime-terminal-sim/src/terminalCommandEngine.ts
+
+          git mv apps/web/src/runtime/vscodeDefinition.ts packages/runtime-vscode-sim/src/vscodeDefinition.ts
+          git mv apps/web/src/runtime/vscodeRuntime.ts packages/runtime-vscode-sim/src/vscodeRuntime.ts
+
+          git mv apps/web/src/catalog packages/catalog/src
+
+          mkdir -p apps/web/src/types apps/web/src/state apps/web/src/runtime apps/web/src/catalog
+
+          cat > apps/web/src/types/training.ts <<'EOF'
+          export * from "@ai-train-lab/training-engine";
+          EOF
+          cat > apps/web/src/state/trainingProgress.ts <<'EOF'
+          export * from "@ai-train-lab/training-engine/trainingProgress";
+          EOF
+          cat > apps/web/src/state/eventBus.ts <<'EOF'
+          export * from "@ai-train-lab/runtime-core/eventBus";
+          EOF
+          cat > apps/web/src/runtime/runtimeAdapter.ts <<'EOF'
+          export * from "@ai-train-lab/runtime-core";
+          EOF
+          cat > apps/web/src/runtime/terminalCommandEngine.ts <<'EOF'
+          export * from "@ai-train-lab/runtime-terminal-sim";
+          EOF
+          cat > apps/web/src/runtime/vscodeDefinition.ts <<'EOF'
+          export * from "@ai-train-lab/runtime-vscode-sim/vscodeDefinition";
+          EOF
+          cat > apps/web/src/runtime/vscodeRuntime.ts <<'EOF'
+          export * from "@ai-train-lab/runtime-vscode-sim/vscodeRuntime";
+          EOF
+          cat > apps/web/src/catalog/index.ts <<'EOF'
+          export * from "@ai-train-lab/catalog";
+          EOF
+          cat > apps/web/src/catalog/environment.ts <<'EOF'
+          export * from "@ai-train-lab/catalog/environment";
+          EOF
+          cat > apps/web/src/catalog/schema.ts <<'EOF'
+          export * from "@ai-train-lab/catalog/schema";
+          EOF
+          cat > apps/web/src/catalog/types.ts <<'EOF'
+          export * from "@ai-train-lab/catalog/types";
+          EOF
+
+          # Package-internal imports after the physical moves.
+          sed -i 's#../types/training\.ts#./types.ts#g' packages/training-engine/src/trainingProgress.ts
+          sed -i 's#../types/training\.ts#@ai-train-lab/training-engine#g' packages/runtime-core/src/runtimeAdapter.ts
+          sed -i 's#../types/training\.ts#@ai-train-lab/training-engine#g' packages/runtime-core/src/eventBus.ts
+          sed -i 's#../types/training\.ts#@ai-train-lab/training-engine#g' packages/runtime-vscode-sim/src/vscodeDefinition.ts
+          sed -i 's#./runtimeAdapter\.ts#@ai-train-lab/runtime-core#g' packages/runtime-vscode-sim/src/vscodeDefinition.ts
+          sed -i 's#../state/eventBus\.ts#@ai-train-lab/runtime-core/eventBus#g' packages/runtime-vscode-sim/src/vscodeRuntime.ts
+          sed -i 's#../types/training\.ts#@ai-train-lab/training-engine#g' packages/runtime-vscode-sim/src/vscodeRuntime.ts
+          sed -i 's#./runtimeAdapter\.ts#@ai-train-lab/runtime-core#g' packages/runtime-vscode-sim/src/vscodeRuntime.ts
+          sed -i 's#./terminalCommandEngine\.ts#@ai-train-lab/runtime-terminal-sim#g' packages/runtime-vscode-sim/src/vscodeRuntime.ts
+
+          cat > packages/training-engine/src/index.ts <<'EOF'
+          export * from "./types.ts";
+          export * from "./trainingProgress.ts";
+          EOF
+          cat > packages/runtime-core/src/index.ts <<'EOF'
+          export * from "./runtimeAdapter.ts";
+          export * from "./eventBus.ts";
+          EOF
+          cat > packages/runtime-terminal-sim/src/index.ts <<'EOF'
+          export * from "./terminalCommandEngine.ts";
+          EOF
+          cat > packages/runtime-vscode-sim/src/index.ts <<'EOF'
+          export * from "./vscodeDefinition.ts";
+          export * from "./vscodeRuntime.ts";
+          EOF
+
+      - name: Write workspace manifests and TypeScript configs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > package.json <<'EOF'
+          {
+            "name": "ai-train-lab",
+            "private": true,
+            "type": "module",
+            "engines": {
+              "node": ">=22.0.0"
+            },
+            "packageManager": "npm@10.9.2",
+            "workspaces": [
+              "apps/*",
+              "packages/*"
+            ],
+            "scripts": {
+              "prepare": "node scripts/setup-git-hooks.mjs",
+              "dev": "npm run dev -w @ai-train-lab/web",
+              "dev:local": "npm run dev:local -w @ai-train-lab/web",
+              "build": "npm run build:packages && npm run build -w @ai-train-lab/web",
+              "build:dev": "npm run build:dev -w @ai-train-lab/web",
+              "build:packages": "npm run build -w @ai-train-lab/training-engine && npm run build -w @ai-train-lab/runtime-core && npm run build -w @ai-train-lab/runtime-terminal-sim && npm run build -w @ai-train-lab/runtime-vscode-sim && npm run build -w @ai-train-lab/catalog",
+              "preview": "npm run preview -w @ai-train-lab/web",
+              "typecheck": "npm run typecheck --workspaces --if-present",
+              "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
+              "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
+              "test:catalog": "node --experimental-strip-types --test tests/catalog/*.test.ts",
+              "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
+              "test:packages": "npm run test --workspaces --if-present",
+              "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
+              "lint": "eslint apps packages scripts tests",
+              "format": "prettier --write .",
+              "format:check": "prettier --check ."
+            },
+            "dependencies": {
+              "zod": "^3.24.2"
+            },
+            "devDependencies": {
+              "@eslint/js": "^9.32.0",
+              "@types/node": "^22.16.5",
+              "eslint": "^9.32.0",
+              "eslint-config-prettier": "^10.1.1",
+              "eslint-plugin-prettier": "^5.2.6",
+              "eslint-plugin-react-hooks": "^5.2.0",
+              "eslint-plugin-react-refresh": "^0.4.20",
+              "globals": "^15.15.0",
+              "prettier": "^3.7.3",
+              "typescript": "^5.8.3",
+              "typescript-eslint": "^8.56.1"
+            }
+          }
+          EOF
+
+          cat > apps/web/package.json <<'EOF'
+          {
+            "name": "@ai-train-lab/web",
+            "version": "0.0.0",
+            "private": true,
+            "type": "module",
+            "scripts": {
+              "dev": "vite dev",
+              "dev:local": "vite dev --host 0.0.0.0",
+              "build": "vite build",
+              "build:dev": "vite build --mode development",
+              "preview": "vite preview",
+              "typecheck": "tsc --noEmit -p tsconfig.json"
+            },
+            "dependencies": {
+              "@ai-train-lab/catalog": "0.0.0",
+              "@ai-train-lab/runtime-core": "0.0.0",
+              "@ai-train-lab/runtime-terminal-sim": "0.0.0",
+              "@ai-train-lab/runtime-vscode-sim": "0.0.0",
+              "@ai-train-lab/training-engine": "0.0.0",
+              "@hookform/resolvers": "^5.2.2",
+              "@radix-ui/react-accordion": "^1.2.12",
+              "@radix-ui/react-alert-dialog": "^1.1.15",
+              "@radix-ui/react-aspect-ratio": "^1.1.8",
+              "@radix-ui/react-avatar": "^1.1.11",
+              "@radix-ui/react-checkbox": "^1.3.3",
+              "@radix-ui/react-collapsible": "^1.1.12",
+              "@radix-ui/react-context-menu": "^2.2.16",
+              "@radix-ui/react-dialog": "^1.1.15",
+              "@radix-ui/react-dropdown-menu": "^2.1.16",
+              "@radix-ui/react-hover-card": "^1.1.15",
+              "@radix-ui/react-label": "^2.1.8",
+              "@radix-ui/react-menubar": "^1.1.16",
+              "@radix-ui/react-navigation-menu": "^1.2.14",
+              "@radix-ui/react-popover": "^1.1.15",
+              "@radix-ui/react-progress": "^1.1.8",
+              "@radix-ui/react-radio-group": "^1.3.8",
+              "@radix-ui/react-scroll-area": "^1.2.10",
+              "@radix-ui/react-select": "^2.2.6",
+              "@radix-ui/react-separator": "^1.1.8",
+              "@radix-ui/react-slider": "^1.3.6",
+              "@radix-ui/react-slot": "^1.2.4",
+              "@radix-ui/react-switch": "^1.2.6",
+              "@radix-ui/react-tabs": "^1.1.13",
+              "@radix-ui/react-toggle": "^1.1.10",
+              "@radix-ui/react-toggle-group": "^1.1.11",
+              "@radix-ui/react-tooltip": "^1.2.8",
+              "@tanstack/react-query": "^5.101.1",
+              "@tanstack/react-router": "^1.170.18",
+              "@tanstack/react-start": "^1.168.32",
+              "@tanstack/router-plugin": "^1.168.23",
+              "class-variance-authority": "^0.7.1",
+              "clsx": "^2.1.1",
+              "cmdk": "^1.1.1",
+              "date-fns": "^4.1.0",
+              "embla-carousel-react": "^8.6.0",
+              "input-otp": "^1.4.2",
+              "lucide-react": "^0.575.0",
+              "react": "^19.2.0",
+              "react-day-picker": "^9.14.0",
+              "react-dom": "^19.2.0",
+              "react-hook-form": "^7.71.2",
+              "react-resizable-panels": "^4.6.5",
+              "recharts": "^2.15.4",
+              "sonner": "^2.0.7",
+              "tailwind-merge": "^3.5.0",
+              "tailwindcss": "^4.2.1",
+              "tw-animate-css": "^1.3.4",
+              "vaul": "^1.1.2",
+              "zod": "^3.24.2"
+            },
+            "devDependencies": {
+              "@tailwindcss/vite": "^4.2.1",
+              "@types/react": "^19.2.0",
+              "@types/react-dom": "^19.2.0",
+              "@vitejs/plugin-react": "^5.2.0",
+              "nitro": "3.0.260603-beta",
+              "vite": "^8.2.0"
+            }
+          }
+          EOF
+
+          cat > tsconfig.base.json <<'EOF'
+          {
+            "compilerOptions": {
+              "target": "ES2022",
+              "module": "ESNext",
+              "moduleResolution": "Bundler",
+              "resolveJsonModule": true,
+              "allowImportingTsExtensions": true,
+              "verbatimModuleSyntax": false,
+              "noEmit": true,
+              "skipLibCheck": true,
+              "strict": true,
+              "noUnusedLocals": false,
+              "noUnusedParameters": false,
+              "noFallthroughCasesInSwitch": true,
+              "noImplicitOverride": true,
+              "noImplicitReturns": true,
+              "noPropertyAccessFromIndexSignature": true,
+              "noUncheckedIndexedAccess": true,
+              "exactOptionalPropertyTypes": true,
+              "noUncheckedSideEffectImports": true
+            }
+          }
+          EOF
+
+          cat > tsconfig.json <<'EOF'
+          {
+            "extends": "./tsconfig.base.json",
+            "files": []
+          }
+          EOF
+
+          cat > apps/web/tsconfig.json <<'EOF'
+          {
+            "extends": "../../tsconfig.base.json",
+            "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+            "compilerOptions": {
+              "jsx": "react-jsx",
+              "lib": ["ES2022", "DOM", "DOM.Iterable"],
+              "types": ["vite/client", "node"],
+              "paths": {
+                "@/*": ["./src/*"]
+              }
+            }
+          }
+          EOF
+
+          write_package() {
+            local dir="$1" name="$2" deps="$3" lib="$4"
+            mkdir -p "$dir/tests"
+            cat > "$dir/package.json" <<EOF
+          {
+            "name": "$name",
+            "version": "0.0.0",
+            "private": true,
+            "type": "module",
+            "exports": {
+              ".": "./src/index.ts",
+              "./*": "./src/*.ts"
+            },
+            "scripts": {
+              "build": "tsc --noEmit -p tsconfig.json",
+              "typecheck": "tsc --noEmit -p tsconfig.json",
+              "test": "node --experimental-strip-types --test tests/*.test.ts"
+            }$deps
+          }
+          EOF
+            cat > "$dir/tsconfig.json" <<EOF
+          {
+            "extends": "../../tsconfig.base.json",
+            "include": ["src/**/*.ts", "tests/**/*.ts"],
+            "compilerOptions": {
+              "lib": [$lib],
+              "types": ["node"]
+            }
+          }
+          EOF
+          }
+
+          write_package packages/training-engine @ai-train-lab/training-engine '' '"ES2022"'
+          write_package packages/runtime-core @ai-train-lab/runtime-core ',
+            "dependencies": {
+              "@ai-train-lab/training-engine": "0.0.0"
+            }' '"ES2022", "DOM"'
+          write_package packages/runtime-terminal-sim @ai-train-lab/runtime-terminal-sim '' '"ES2022"'
+          write_package packages/runtime-vscode-sim @ai-train-lab/runtime-vscode-sim ',
+            "dependencies": {
+              "@ai-train-lab/runtime-core": "0.0.0",
+              "@ai-train-lab/runtime-terminal-sim": "0.0.0",
+              "@ai-train-lab/training-engine": "0.0.0"
+            }' '"ES2022", "DOM"'
+          write_package packages/catalog @ai-train-lab/catalog ',
+            "dependencies": {
+              "zod": "^3.24.2"
+            }' '"ES2022"'
+
+      - name: Repair moved imports and add package contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          import path from "node:path";
+
+          const root = process.cwd();
+          const extensions = new Set([".ts", ".tsx", ".js", ".mjs"]);
+
+          function walk(directory) {
+            if (!fs.existsSync(directory)) return [];
+            return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+              const full = path.join(directory, entry.name);
+              return entry.isDirectory() ? walk(full) : [full];
+            });
+          }
+
+          function relativeSpecifier(fromFile, target) {
+            let value = path.relative(path.dirname(fromFile), target).replaceAll(path.sep, "/");
+            if (!value.startsWith(".")) value = `./${value}`;
+            return value;
+          }
+
+          for (const file of [...walk("apps/web/src"), ...walk("packages")]) {
+            if (!extensions.has(path.extname(file))) continue;
+            let text = fs.readFileSync(file, "utf8");
+            text = text.replace(/(["'])((?:\.\.\/)+)content\/([^"']+)\1/g, (_m, quote, _prefix, rest) => {
+              const target = path.join(root, "content", rest);
+              return `${quote}${relativeSpecifier(path.resolve(file), target)}${quote}`;
+            });
+            fs.writeFileSync(file, text);
+          }
+
+          for (const file of [...walk("tests"), ...walk("scripts")]) {
+            if (!extensions.has(path.extname(file))) continue;
+            let text = fs.readFileSync(file, "utf8");
+            text = text.replace(/(["'])((?:\.\.\/)+)src\//g, "$1$2apps/web/src/");
+            fs.writeFileSync(file, text);
+          }
+          EOF
+
+          cat > packages/training-engine/tests/trainingProgress.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import test from "node:test";
+          import { normalizeGuidedStepProgress } from "../src/trainingProgress.ts";
+          import type { Scenario } from "../src/types.ts";
+
+          const scenario = {
+            id: "engine.contract",
+            title: "Engine contract",
+            description: "",
+            steps: [
+              { id: "one", title: "one", description: "", instruction: "", why: "", helpLevels: ["a", "b", "c"], successMessage: "" },
+              { id: "two", title: "two", description: "", instruction: "", why: "", helpLevels: ["a", "b", "c"], successMessage: "" }
+            ]
+          } satisfies Scenario;
+
+          test("guided progress normalizes to exactly one active step", () => {
+            const progress = normalizeGuidedStepProgress(scenario, {
+              statuses: { one: "ACTIVE", two: "ACTIVE" },
+              activeStepId: "one",
+              finishedAt: null
+            });
+            assert.equal(Object.values(progress.statuses).filter((status) => status === "ACTIVE").length, 1);
+            assert.equal(progress.activeStepId, "one");
+          });
+          EOF
+
+          cat > packages/runtime-core/tests/eventBus.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import test from "node:test";
+          import { EventBus } from "../src/eventBus.ts";
+
+          test("in-process event bus delivers one event to subscribers", () => {
+            const bus = new EventBus();
+            const seen: string[] = [];
+            const unsubscribe = bus.subscribe((event) => seen.push(event.name));
+            bus.emit("explorer.opened");
+            unsubscribe();
+            bus.emit("terminal.opened");
+            assert.deepEqual(seen, ["explorer.opened"]);
+          });
+          EOF
+
+          cat > packages/runtime-terminal-sim/tests/terminalCommandEngine.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import test from "node:test";
+          import { executeTerminalCommand } from "../src/terminalCommandEngine.ts";
+
+          test("terminal simulator exposes deterministic command evaluation", () => {
+            assert.equal(typeof executeTerminalCommand, "function");
+          });
+          EOF
+
+          cat > packages/runtime-vscode-sim/tests/vscodeDefinition.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import test from "node:test";
+          import { VSCODE_RUNTIME_DEFINITION } from "../src/vscodeDefinition.ts";
+
+          test("VS Code simulator publishes a semantic runtime definition", () => {
+            assert.equal(VSCODE_RUNTIME_DEFINITION.id, "vscode-simulator");
+            assert.ok(VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.activityBar.explorer"));
+          });
+          EOF
+
+          cat > packages/catalog/tests/catalog.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import test from "node:test";
+          import { technologyCatalog } from "../src/index.ts";
+
+          test("catalog package loads the declarative technology catalog", () => {
+            assert.ok(technologyCatalog.products.some((product) => product.id === "vscode"));
+            assert.ok(technologyCatalog.runtimeAdapters.some((runtime) => runtime.id === "vscode-simulator"));
+          });
+          EOF
+
+      - name: Enforce package dependency direction in ESLint
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > eslint.config.js <<'EOF'
+          import js from "@eslint/js";
+          import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
+          import globals from "globals";
+          import reactHooks from "eslint-plugin-react-hooks";
+          import reactRefresh from "eslint-plugin-react-refresh";
+          import tseslint from "typescript-eslint";
+
+          export default tseslint.config(
+            { ignores: ["**/dist", "**/.output", "**/.vinxi", "**/.tanstack"] },
+            {
+              extends: [js.configs.recommended, ...tseslint.configs.recommended],
+              files: ["**/*.{ts,tsx}"],
+              languageOptions: {
+                ecmaVersion: 2020,
+                globals: globals.browser,
+              },
+              plugins: {
+                "react-hooks": reactHooks,
+                "react-refresh": reactRefresh,
+              },
+              rules: {
+                ...reactHooks.configs.recommended.rules,
+                "no-restricted-imports": [
+                  "error",
+                  {
+                    paths: [
+                      {
+                        name: "server-only",
+                        message: "TanStack Start does not use the Next.js `server-only` package. Rename the module to `*.server.ts` or mark it with `@tanstack/react-start/server-only`.",
+                      },
+                    ],
+                  },
+                ],
+                "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+                "@typescript-eslint/no-unused-vars": "off",
+              },
+            },
+            {
+              files: ["packages/**/*.{ts,tsx}"],
+              rules: {
+                "no-restricted-imports": [
+                  "error",
+                  {
+                    patterns: [
+                      {
+                        group: ["@/*", "**/apps/web/**", "../../apps/web/**", "../../../apps/web/**"],
+                        message: "Packages must not depend on apps/web. Dependency direction is apps -> packages.",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              files: ["packages/training-engine/**/*.{ts,tsx}"],
+              rules: {
+                "no-restricted-imports": [
+                  "error",
+                  {
+                    paths: [
+                      { name: "react", message: "training-engine must stay framework-free." },
+                      { name: "react-dom", message: "training-engine must stay framework-free." },
+                    ],
+                    patterns: [
+                      {
+                        group: ["@/*", "**/apps/web/**", "../../apps/web/**", "../../../apps/web/**"],
+                        message: "training-engine must not import the web application.",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            eslintPluginPrettier,
+          );
+          EOF
+
+      - name: Update Vite and CI paths for the workspace layout
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          vite = Path("apps/web/vite.config.ts")
+          text = vite.read_text()
+          text = text.replace(
+              '  server: {\n',
+              '  server: {\n    fs: { allow: ["../.."] },\n',
+              1,
+          )
+          vite.write_text(text)
+
+          ci = Path(".github/workflows/code-ci.yml")
+          text = ci.read_text()
+          text = text.replace('package.json package-lock.json vite.config.ts', 'package.json package-lock.json apps/web/package.json apps/web/vite.config.ts')
+          text = text.replace('npm install --prefix e2e', 'npm install --prefix apps/web/e2e')
+          text = text.replace('./e2e/node_modules/.bin/playwright', './apps/web/e2e/node_modules/.bin/playwright')
+          text = text.replace('npm test --prefix e2e', 'npm test --prefix apps/web/e2e')
+          text = text.replace('e2e/playwright-report', 'apps/web/e2e/playwright-report')
+          text = text.replace('e2e/test-results', 'apps/web/e2e/test-results')
+          ci.write_text(text)
+          PY
+
+      - name: Install workspace graph and verify complete repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --install-strategy=nested --no-audit --no-fund
+          npm run format
+          npm run check
+
+      - name: Commit successful migration and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/aitp-81-migrate.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "AITP-81: establish monorepo package boundaries"
+          git push origin HEAD:agent/aitp-81-monorepo
