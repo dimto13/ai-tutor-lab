@@ -121,7 +121,7 @@
       "helpLevels": [
         "Öffne Copilot Chat.",
         "Beschreibe Inhalt und Zweck der Übersicht.",
-        "Verwende in deinem Auftrag das Wort „Teamübersicht“."
+        "Formuliere einen Auftrag für eine Teamübersicht mit Name, Rolle und Status und sende ihn in Copilot Chat; verwende dabei ausdrücklich das Wort „Teamübersicht“."
       ],
       "successMessage": "Der fachliche Auftrag wurde formuliert.",
       "validation": {
@@ -142,7 +142,7 @@
       "helpLevels": [
         "Die Ergebnisfläche steht rechts neben dem Arbeitsbereich.",
         "Wähle den Reiter „Projekt Atlas · Teamübersicht“.",
-        "Die Artefakt-Auswahl wird hervorgehoben."
+        "Die Artefakt-Auswahl wird hervorgehoben. Klicke dort auf den Reiter „Projekt Atlas · Teamübersicht“."
       ],
       "successMessage": "Die erste HTML-Seite ist sichtbar.",
       "validation": {
@@ -164,7 +164,7 @@
       "helpLevels": [
         "Die nächste Revision steht unten in der Ergebnisfläche.",
         "Klicke auf „Mika Scholz ergänzen“.",
-        "Achte danach auf den zusätzlichen Eintrag."
+        "Die Revisionsaktion wird hervorgehoben. Klicke auf „Mika Scholz ergänzen“ und prüfe danach, ob der zusätzliche Eintrag sichtbar ist."
       ],
       "successMessage": "Der Inhalt wurde gezielt erweitert.",
       "validation": {
@@ -186,7 +186,7 @@
       "helpLevels": [
         "Nutze erneut die nächste Revision.",
         "Klicke auf „Als Tabelle darstellen“.",
-        "Kontrolliere, ob weiterhin alle vier Personen enthalten sind."
+        "Die Revisionsaktion wird hervorgehoben. Klicke auf „Als Tabelle darstellen“ und kontrolliere anschließend, ob weiterhin alle vier Personen enthalten sind."
       ],
       "successMessage": "Die Teamübersicht ist jetzt als Tabelle dargestellt.",
       "validation": {
@@ -208,7 +208,7 @@
       "helpLevels": [
         "Die Umschaltung steht oben rechts im Artefakt.",
         "Klicke auf „Quelltext“.",
-        "Der Umschalter Vorschau/Quelltext wird hervorgehoben."
+        "Der Umschalter Vorschau/Quelltext wird hervorgehoben. Klicke dort auf „Quelltext“."
       ],
       "successMessage": "Der erzeugte HTML-Quelltext ist sichtbar.",
       "validation": {
@@ -230,7 +230,7 @@
       "helpLevels": [
         "Nutze denselben Umschalter.",
         "Klicke auf „Vorschau“.",
-        "Die gerenderte Seite erscheint wieder."
+        "Der Umschalter Vorschau/Quelltext wird hervorgehoben. Klicke dort auf „Vorschau“ und prüfe, dass die gerenderte Seite wieder erscheint."
       ],
       "successMessage": "Die gerenderte Vorschau ist wieder aktiv.",
       "validation": {
@@ -252,7 +252,7 @@
       "helpLevels": [
         "Wende die nächste Revision an.",
         "Klicke auf „Sprunglink ergänzen“.",
-        "Prüfe danach den Link und kontrolliere anschließend erneut die Tabelle."
+        "Die Revisionsaktion wird hervorgehoben. Klicke auf „Sprunglink ergänzen“, prüfe danach den Link und kontrolliere anschließend erneut die Tabelle."
       ],
       "successMessage": "Die Seite enthält jetzt eine native Navigation.",
       "validation": {
@@ -274,7 +274,7 @@
       "helpLevels": [
         "Vergleiche die vier Personen aus der Tabellenrevision mit dem aktuellen Stand.",
         "Es fehlt genau eine Person.",
-        "Die fehlende Person heißt Nora Berger; sende diesen Namen an Copilot."
+        "Die fehlende Person heißt Nora Berger; tippe den vollständigen Namen in Copilot ein und sende die Nachricht."
       ],
       "successMessage": "Der stille Verlust wurde korrekt identifiziert.",
       "validation": {
@@ -317,7 +317,7 @@
       "helpLevels": [
         "Prüfe nochmals Namen, Rollen und Status.",
         "Achte auf Nora Berger und Mika Scholz.",
-        "Klicke danach auf „Ergebnis geprüft“."
+        "Prüfe Nora Berger und Mika Scholz im Endstand und klicke danach auf „Ergebnis geprüft“."
       ],
       "successMessage": "Der korrigierte Endstand ist fachlich geprüft.",
       "validation": {
