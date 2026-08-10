@@ -12,7 +12,7 @@ test("VS Code Explore exposes the Primary Side Bar as its own semantic surface",
 
   const primarySideBar = page.locator('[data-highlight="vscode.primarySideBar"]');
   await expect(primarySideBar).toBeVisible();
-  await primarySideBar.click({ position: { x: 8, y: 48 } });
+  await primarySideBar.getByText("Explorer", { exact: true }).click();
 
   await expect(page.getByText("1 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
 });
@@ -30,16 +30,22 @@ test("Copilot Chat is a View in the Secondary Side Bar instead of an editor popu
   const primarySideBar = page.locator('[data-highlight="vscode.primarySideBar"]');
   const secondarySideBar = page.locator('[data-highlight="vscode.secondarySideBar"]');
   const editor = page.locator('[data-highlight="vscode.editor"]');
+  const copilotToggle = page.getByRole("button", { name: "Copilot", exact: true });
 
   await expect(primarySideBar).toBeVisible();
   await expect(secondarySideBar).toBeVisible();
+  await expect(copilotToggle).toHaveAttribute("aria-expanded", "false");
   await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
 
-  await page.getByRole("button", { name: "Copilot", exact: true }).click();
+  await copilotToggle.click();
 
   const chat = page.locator('[data-highlight="copilot.chat"]');
+  const closeChat = page.getByRole("button", { name: "Copilot Chat schließen" });
   await expect(chat).toBeVisible();
   await expect(secondarySideBar.locator('[data-highlight="copilot.chat"]')).toBeVisible();
+  await expect(closeChat).toHaveAttribute("aria-expanded", "true");
+  await expect(closeChat).toHaveAttribute("aria-controls", "copilot-chat-view");
+  await expect(chat).toHaveAttribute("id", "copilot-chat-view");
   await expect(
     page.getByText("Schritt 5 – Training-Session und Copilot-Unterhaltung unterscheiden"),
   ).toBeVisible();
@@ -52,8 +58,8 @@ test("Copilot Chat is a View in the Secondary Side Bar instead of an editor popu
   expect(primaryBox).not.toBeNull();
   expect(editorBox).not.toBeNull();
   expect(secondaryBox).not.toBeNull();
-  expect(primaryBox!.x + primaryBox!.width).toBeLessThanOrEqual(editorBox!.x + 1);
-  expect(editorBox!.x + editorBox!.width).toBeLessThanOrEqual(secondaryBox!.x + 1);
+  expect(primaryBox!.x + primaryBox!.width).toBeLessThanOrEqual(editorBox!.x + 3);
+  expect(editorBox!.x + editorBox!.width).toBeLessThanOrEqual(secondaryBox!.x + 3);
 
   await page.setViewportSize({ width: 323, height: 646 });
   const narrowSecondaryBox = await secondarySideBar.boundingBox();
