@@ -6,9 +6,9 @@ test("Copilot-Kachel bietet Explore, Guided und Challenge", async ({ page }) => 
   await expect(heading).toBeVisible();
   const card = heading.locator("xpath=ancestor::article");
   await expect(card.getByText("AI Coding Assistant · 3 Modi")).toBeVisible();
-  await expect(card.getByText("Explore", { exact: true })).toBeVisible();
-  await expect(card.getByText("Guided", { exact: true })).toBeVisible();
-  await expect(card.getByText("Challenge", { exact: true })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Explore/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Guided/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Challenge/ })).toBeVisible();
 });
 
 test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", async ({ page }) => {
