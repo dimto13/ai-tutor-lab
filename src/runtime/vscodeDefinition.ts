@@ -20,6 +20,21 @@ export const VSCODE_RUNTIME_DEFINITION = {
   productId: "vscode",
   surface: [
     { ref: "vscode.menu.file", label: "File-Menü", conceptKey: "vscode.file_menu" },
+    { ref: "vscode.menu.edit", label: "Edit-Menü", conceptKey: "vscode.edit_menu" },
+    {
+      ref: "vscode.menu.selection",
+      label: "Selection-Menü",
+      conceptKey: "vscode.selection_menu",
+    },
+    { ref: "vscode.menu.view", label: "View-Menü", conceptKey: "vscode.view_menu" },
+    { ref: "vscode.menu.go", label: "Go-Menü", conceptKey: "vscode.go_menu" },
+    { ref: "vscode.menu.run", label: "Run-Menü", conceptKey: "vscode.run_menu" },
+    {
+      ref: "vscode.menu.terminal",
+      label: "Terminal-Menü",
+      conceptKey: "vscode.terminal_menu",
+    },
+    { ref: "vscode.menu.help", label: "Help-Menü", conceptKey: "vscode.help_menu" },
     {
       ref: "vscode.activityBar.explorer",
       label: "Explorer",
