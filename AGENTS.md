@@ -21,7 +21,9 @@
    als Issue angelegt — mit Epic-Label, Prio-Label, Typ-Label und Milestone, und als Sub-Issue
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
    `backlog/backlog.yaml`, `backlog/tickets.csv` und `docs/06-backlog.md` sind eingefrorenes
-   Archiv des ursprünglichen Planungsstands und dürfen nicht mehr gepflegt werden.
+   Archiv des ursprünglichen Planungsstands und dürfen nicht mehr gepflegt werden. Das dauerhafte
+   Implementation-Control-Issue #201 ist davon bewusst ausgenommen: Es ist kein Backlog-Task,
+   sondern ein operatives Status- und Handoff-Artefakt und bleibt deshalb ohne Milestone offen.
 3. **Keine History-Rewrites und keine Force-Pushes**, sofern dies nicht ausdrücklich und bewusst
    für einen konkreten Git-Vorgang entschieden wurde.
 4. Szenarien sind Daten (YAML/JSON), kein Code. Keine CSS-Selektoren, keine
@@ -33,3 +35,18 @@
    Commit ab; er wird durch `npm ci` automatisch aktiviert.
 6. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
    Synchronisation oder Fehlersuche.
+7. **Keine temporären GitHub-Actions-Workflows für Implementierungsarbeit.** Dateien unter
+   `.github/workflows/` dürfen nicht als einmalige Implementierungs-, Patch-, Formatter- oder
+   Migrations-Runner angelegt werden. Solche Arbeiten erfolgen lokal auf dem Feature-Branch mit den
+   dafür vorgesehenen Projektwerkzeugen. Neue oder geänderte Workflows müssen eine dauerhafte
+   Repository-Funktion haben und Bestandteil des eigentlichen Review-Scopes sein.
+8. **Session- und Kontextmanagement über #201.** Bei längeren Implementierungsläufen wird der
+   operative Stand im Implementation-Control-Issue #201 gepflegt. Eine neue Session darf sich nicht
+   ausschließlich auf Chat-Historie oder Modellgedächtnis verlassen, sondern prüft mindestens den
+   aktuellen `main`-SHA, #201 inklusive letztem Handoff, die Issues des nächsten Arbeitsblocks sowie
+   relevante offene PRs/CI-Läufe. Ein Session-Cut erfolgt bevorzugt an natürlichen Grenzen
+   (abgeschlossener Architekturblock, ungefähr 2–4 Issues/PRs, grüner Merge vor Themenwechsel oder
+   früher bei hoher Kontextlast). Vor dem Cut wird in #201 ein Handoff mit Start-/End-SHA,
+   abgeschlossenen Arbeiten, Architekturentscheidungen, offenen Risiken und dem exakten nächsten
+   Arbeitsschritt hinterlegt. Die Session-Health-Werte `FRESH`, `ACTIVE`, `CUT-SOON` und `CUT` sind
+   qualitative Arbeitsmetriken und keine behauptete exakte Tokenmessung.
