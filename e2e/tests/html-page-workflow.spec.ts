@@ -16,16 +16,12 @@ test("Dashboard führt Recherche- und HTML-Seiten-Workflow als eigene Trainings 
 }) => {
   await page.goto("/");
 
-  const researchCard = page
-    .getByRole("article")
-    .filter({ has: page.getByRole("heading", { name: "Mit KI recherchieren und Quellen prüfen" }) });
-  const htmlCard = page
-    .getByRole("article")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "HTML-Seite mit KI erstellen und iterativ verbessern",
-      }),
-    });
+  const researchCard = page.getByRole("article").filter({
+    hasText: "Mit KI recherchieren und Quellen prüfen",
+  });
+  const htmlCard = page.getByRole("article").filter({
+    hasText: "HTML-Seite mit KI erstellen und iterativ verbessern",
+  });
 
   await expect(researchCard).toBeVisible();
   await expect(htmlCard).toBeVisible();
