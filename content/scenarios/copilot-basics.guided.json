@@ -54,12 +54,6 @@
           "whenContentEquals": "def add(a, b):\n",
           "text": "    return a + b\n"
         }
-      ],
-      "chatResponses": [
-        {
-          "file": "calculator.py",
-          "response": "calculator.py enthält eine kleine Python-Funktion namens add. Sie erhält zwei Eingaben und soll diese addieren; der aktuelle Dateikontext hilft Copilot, deine Frage auf genau diese Datei zu beziehen."
-        }
       ]
     }
   },
@@ -208,6 +202,9 @@
         "type": "copilot.prompt.submitted",
         "match": {
           "activeFile": "calculator.py"
+        },
+        "containsAny": {
+          "prompt": ["Datei", "macht", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
         }
       },
       "highlightTarget": "copilot.chat.prompt",

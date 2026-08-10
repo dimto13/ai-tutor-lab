@@ -21,7 +21,8 @@
       "chatResponses": [
         {
           "file": "hello.py",
-          "response": "Hier ist eine einfache Python-Funktion zum Addieren zweier Zahlen:\n\ndef add(a, b):\n    return a + b"
+          "response": "Hier ist eine einfache Python-Funktion zum Addieren zweier Zahlen:\n\ndef add(a, b):\n    return a + b",
+          "promptContainsAny": ["addier", "addition", "summe", "zwei zahlen"]
         }
       ],
       "inlineSuggestions": [

@@ -18,7 +18,7 @@ Nicht geeignet:
 
 Ein Nutzer kann denselben Auftrag korrekt als „Stelle die drei Optionen tabellarisch gegenüber“ formulieren. Das Wort `Vergleichstabelle` ist dann kein sinnvoller Erfolgsindikator.
 
-Geeignet:
+Geeignet, wenn bereits das Ereignis den fachlichen Erfolg eindeutig beschreibt:
 
 ```json
 "validation": {
@@ -27,7 +27,22 @@ Geeignet:
 }
 ```
 
-Der Schritt beschreibt weiterhin klar, welche fachlichen Bestandteile der Nutzer formulieren soll. Der Simulator blockiert aber keine sinngleiche Formulierung.
+Wenn dagegen nicht jeder beliebige Text genügen darf, verwendet die Runtime eine **Synonymliste statt eines Magic Words**. `containsAny` prüft Groß-/Kleinschreibung und deutsche Sonderzeichen tolerant; mindestens eine der fachlich gleichwertigen Varianten muss vorkommen:
+
+```json
+"validation": {
+  "kind": "event",
+  "type": "copilot.prompt.submitted",
+  "match": { "activeFile": "calculator.py" },
+  "containsAny": {
+    "prompt": ["Datei", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
+  }
+}
+```
+
+Damit wird beispielsweise ein inhaltsloses `test` abgewiesen, während „Was macht diese Datei?“, „Welchen Zweck hat sie?“ oder „Erkläre den aktuellen Kontext“ akzeptiert werden können.
+
+Für Challenge-Endzustände gibt es analog `includesAny`. So kann etwa eine Pull-Request-Beschreibung nach mehreren gleichwertigen Nachweisen wie `geprüft`, `kontrolliert`, `getestet` oder `verifiziert` bewertet werden, ohne ein einzelnes Pflichtwort festzuschreiben.
 
 ## Wann exakter Freitext sinnvoll ist
 
@@ -48,7 +63,7 @@ Solche Schritte werden explizit markiert:
 
 ## Simulatorantworten
 
-Auch deterministische Simulatorantworten dürfen bei einer Freitextaufgabe nicht von einem Magic Word abhängen. Wenn ein Szenario bewusst eigene Formulierungen zulässt, soll die passende Seed-Antwort ohne `promptContains` auf den relevanten Kontext reagieren.
+Auch deterministische Simulatorantworten dürfen bei einer Freitextaufgabe nicht von einem einzelnen Magic Word abhängen. Wenn unterschiedliche Antwortarten im selben Dateikontext nötig sind, kann ein Seed `promptContainsAny` mit mehreren fachlich gleichwertigen Formulierungsfragmenten verwenden. Ohne solche Inhaltsbedingung reagiert die Runtime auf den aktiven Dateikontext und ihre generischen Kontextregeln.
 
 ## CI-Regel
 
@@ -60,5 +75,7 @@ Auch deterministische Simulatorantworten dürfen bei einer Freitextaufgabe nicht
 - `completionValidation` mit `includes` auf Freitext-Zuständen wie einer Pull-Request-Beschreibung
 
 Ausnahme sind Schritte mit `exactTextValidation: true`.
+
+Tolerante Synonymlisten über `containsAny` beziehungsweise `includesAny` sind ausdrücklich für Fälle vorgesehen, in denen eine fachliche Mindestabsicht geprüft werden muss, aber mehrere natürliche Formulierungen korrekt sind. Die zugehörigen E2E-Tests prüfen sowohl sinnvolle Varianten als auch bewusst zu schwache Eingaben, damit die Toleranz nicht zu einer beliebigen Freigabe wird.
 
 Exakte Prüfungen auf nicht-freie Werte bleiben unverändert zulässig, zum Beispiel Dateinamen, Code-/Dateiinhalte, Branch-Namen oder strukturierte Runtime-Zustände.

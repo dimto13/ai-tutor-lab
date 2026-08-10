@@ -279,7 +279,7 @@ test("Reload: geführter Fortschritt und übersprungene Grundbegriffe bleiben er
   await waitForTrainingReady(page);
 
   await expectGuidedStep(page, 8, "Einen Ordner als Arbeitskontext öffnen");
-  await expect(page.getByText("Schritt 8 von 14", { exact: true })).toBeVisible();
+  await expect(page.getByText("Schritt 8 von 13", { exact: true })).toBeVisible();
 });
 
 test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", async ({ page }) => {

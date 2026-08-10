@@ -60,6 +60,11 @@
       },
       {
         "kind": "state",
+        "selector": "platform.pullRequest.description",
+        "includesAny": ["geprüft", "kontrolliert", "getestet", "verifiziert", "keine Zugangsdaten"]
+      },
+      {
+        "kind": "state",
         "selector": "platform.pullRequest.diffViewed",
         "equals": true
       },

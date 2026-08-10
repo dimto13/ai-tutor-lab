@@ -142,6 +142,15 @@
         "match": {
           "headBranch": "feature/readme-guide",
           "title": "README um Einstieg ergänzen"
+        },
+        "containsAny": {
+          "description": [
+            "geprüft",
+            "kontrolliert",
+            "getestet",
+            "verifiziert",
+            "keine Zugangsdaten"
+          ]
         }
       },
       "highlightTarget": "platform.pullRequests",
@@ -180,7 +189,10 @@
       ],
       "validation": {
         "kind": "event",
-        "type": "platform.pull_request.review.replied"
+        "type": "platform.pull_request.review.replied",
+        "containsAny": {
+          "reply": ["Zugangsdaten", "Link", "geprüft", "kontrolliert", "verifiziert"]
+        }
       },
       "highlightTarget": "platform.pullRequest.review",
       "highlightTooltip": "Antworte fachlich auf den angefragten Änderungsbedarf.",
