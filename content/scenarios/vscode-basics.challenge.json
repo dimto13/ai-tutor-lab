@@ -51,7 +51,7 @@
       "helpLevels": [
         "Überlege zuerst, wie VS Code einen bestehenden Ordner oder Workspace als Arbeitskontext öffnet.",
         "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.",
-        "Erfolgskriterien: Arbeitskontext geöffnet und challenge.py vorhanden."
+        "Öffne über das File-Menü einen bestehenden Ordner oder Workspace, wechsle danach in den Explorer und lege im geöffneten Projekt die Datei challenge.py an."
       ],
       "successMessage": "Challenge erfüllt. Der Endzustand entspricht den Erfolgskriterien."
     }
