@@ -113,7 +113,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
   await expect(page.getByText(/Dateikontext fügst du jetzt gezielt hinzu/)).toBeVisible();
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst hinzufügen")).toBeVisible();
-  await expect(page.getByLabel("Kontext")).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Kontext", exact: true })).toHaveCount(0);
 
   const prompt = page.getByPlaceholder(/Ask Copilot/);
   await attachCalculatorContext(page);
