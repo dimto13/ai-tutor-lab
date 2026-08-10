@@ -48,7 +48,9 @@ test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schrit
   await openCopilotScenario(page);
   await expect(page.getByText("Training abgeschlossen")).toBeVisible();
   await expect(page.getByText("140 Punkte")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Bekannte Grundlagen überspringen" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Bekannte Grundlagen überspringen" })).toHaveCount(
+    0,
+  );
 });
 
 test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel durchlaufbar", async ({
@@ -153,7 +155,9 @@ test("Einsteiger können Grundbegriffe lesen und direkt im Guide nachschlagen", 
   await expect(page.getByText("Inline-Vorschlag", { exact: true })).toBeVisible();
 });
 
-test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({ page }) => {
+test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({
+  page,
+}) => {
   await openCopilotScenario(page);
   await completeIntroSteps(page);
 
@@ -173,7 +177,9 @@ test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel",
   await expect(page.getByRole("button", { name: "Inline-Vorschlag annehmen" })).toHaveCount(0);
 });
 
-test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktprofil", async ({ page }) => {
+test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktprofil", async ({
+  page,
+}) => {
   await openCopilotScenario(page);
   await completeIntroSteps(page);
 
