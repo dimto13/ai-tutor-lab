@@ -4,7 +4,7 @@
   "mode": "explore",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Explorer-Modus",
-  "description": "Erkunde die Oberfläche frei. Klicke auf Bereiche, Menüs und Bedienelemente; das Training erklärt ihre Aufgabe in einfacher Sprache und mit vertrauten Vergleichen, ohne Fehlermeldungen oder vorgegebene Reihenfolge.",
+  "description": "Erkunde die Oberfläche frei. Klicke auf Bereiche, Menüs und Bedienelemente; das Training erklärt ihre Aufgabe in einfacher Sprache und mit vertrauten Vergleichen, ohne Fehlermeldungen oder vorgegebene Reihenfolge. Achte dabei auf die Primary Side Bar links vom Editor; zusätzliche Views wie Chat können getrennt davon in der Secondary Side Bar rechts erscheinen.",
   "learningObjectives": ["understand_vscode_ui", "understand_workspace"],
   "audience": {
     "personaId": "non-programmer",
@@ -54,7 +54,7 @@
     "vscode.activityBar.search",
     "vscode.activityBar.scm",
     "vscode.activityBar.extensions",
-    "vscode.sideBar",
+    "vscode.primarySideBar",
     "vscode.editor",
     "vscode.panel.terminal",
     "vscode.panel.problems",
@@ -74,7 +74,7 @@
       "helpLevels": [
         "Klicke auf einen Bereich oder ein Menü, das du noch nicht kennst.",
         "Öffne auch die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help sowie das untere Panel.",
-        "Öffne nacheinander die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help; klicke außerdem auf die Bereiche der Activity Bar, die Side Bar, den Editor, die Panel-Tabs und die Status Bar. Der Fortschritt zeigt dir, was noch fehlt."
+        "Öffne nacheinander die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help; klicke außerdem auf die Bereiche der Activity Bar, die Primary Side Bar links vom Editor, den Editor, die Panel-Tabs und die Status Bar. Die Secondary Side Bar rechts wird in Szenarien mit zusätzlichen Views wie Chat sichtbar. Der Fortschritt zeigt dir, was noch fehlt."
       ],
       "successMessage": "Oberfläche vollständig erkundet."
     }
