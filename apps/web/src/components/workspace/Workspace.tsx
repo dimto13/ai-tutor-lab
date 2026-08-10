@@ -14,7 +14,6 @@ import {
   ScrollText,
   Search,
   Settings,
-  Terminal as TerminalIcon,
   X,
 } from "lucide-react";
 import { CopilotPanel } from "./CopilotPanel";
@@ -651,13 +650,6 @@ export function Workspace() {
             ? `${activeFile} · ${activeFile.endsWith(".py") ? "Python" : "Text"}`
             : "UTF-8"}
         </span>
-        <button
-          data-highlight="vscode.statusBar.terminal"
-          onClick={openTerminal}
-          className="ml-auto flex shrink-0 items-center gap-1.5 rounded px-2 py-0.5 transition-colors hover:bg-white/10"
-        >
-          <TerminalIcon className="h-3.5 w-3.5" /> Terminal
-        </button>
       </div>
     </div>
   );
