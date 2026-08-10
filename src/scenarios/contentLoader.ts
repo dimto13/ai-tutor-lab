@@ -85,6 +85,7 @@ const stepSchema = z.object({
   highlightTooltip: z.string().optional(),
   successMessage: z.string(),
   optional: z.boolean().optional(),
+  exactTextValidation: z.boolean().optional(),
 });
 
 const introductionLibrarySchema = z

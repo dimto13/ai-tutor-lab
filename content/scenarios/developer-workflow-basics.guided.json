@@ -21,7 +21,6 @@
       "chatResponses": [
         {
           "file": "hello.py",
-          "promptContains": "addier",
           "response": "Hier ist eine einfache Python-Funktion zum Addieren zweier Zahlen:\n\ndef add(a, b):\n    return a + b"
         }
       ],
@@ -206,12 +205,12 @@
       "id": "step_8",
       "title": "GitHub Copilot einsetzen",
       "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor.",
-      "instruction": "Öffne Copilot Chat und frage genau: Erstelle eine Python-Funktion zum Addieren zweier Zahlen.",
+      "instruction": "Öffne Copilot Chat und bitte in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert.",
       "why": "Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Der Chat übernimmt den geöffneten Dateikontext, während VS Code selbst unabhängig davon weiter funktioniert.",
       "helpLevels": [
         "Der Copilot-Chat ist im Editorbereich erreichbar.",
-        "Klicke auf Copilot, tippe genau 'Erstelle eine Python-Funktion zum Addieren zweier Zahlen.' in Ask Copilot... und drücke Enter.",
-        "Der Copilot-Button wird hervorgehoben. Klicke darauf, tippe in Ask Copilot... genau 'Erstelle eine Python-Funktion zum Addieren zweier Zahlen.' und drücke Enter."
+        "Klicke auf Copilot und beschreibe die gewünschte Addition zweier Zahlen in eigenen Worten.",
+        "Der Copilot-Button wird hervorgehoben. Öffne ihn, bitte im Prompt-Feld um eine Python-Funktion für die Addition zweier Zahlen und drücke Enter. Die genaue Formulierung ist frei."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
@@ -219,14 +218,11 @@
         "type": "copilot.prompt.submitted",
         "match": {
           "activeFile": "hello.py"
-        },
-        "contains": {
-          "prompt": "Addieren zweier Zahlen"
         }
       },
       "highlightTarget": "copilot.chat.toggle",
       "highlightTooltip": "GitHub Copilot als integriertes, aber eigenständiges Produkt öffnen.",
-      "successMessage": "Copilot hat die vorgegebene Anfrage im aktuellen Dateikontext verarbeitet. Du hast VS Code, Git und Copilot in einem Ablauf verwendet."
+      "successMessage": "Copilot hat deine frei formulierte Anfrage im aktuellen Dateikontext verarbeitet."
     }
   ]
 }

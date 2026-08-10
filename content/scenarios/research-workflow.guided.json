@@ -36,7 +36,6 @@
       "activeFile": "research-brief.md",
       "chatResponses": [
         {
-          "promptContains": "vergleichstabelle",
           "response": "Auftrag verstanden. Die Recherche wird in Marktüberblick, Aktualitätsfilter und Quellenabgleich zerlegt. Führe die drei sichtbaren Suchschritte im Rechercheprotokoll aus."
         }
       ],
@@ -198,20 +197,17 @@
       "id": "prompt",
       "title": "Rechercheauftrag selbst formulieren",
       "description": "Für eine Team-Entscheidung sollen drei aktuelle, belegte Optionen verglichen werden. Formuliere dafür Ziel, Umfang, Zeitraum und Ausgabeformat selbst.",
-      "instruction": "Öffne Copilot und sende einen selbst formulierten Auftrag für drei Optionen, Stand höchstens 12 Monate, Quellen und eine Vergleichstabelle.",
+      "instruction": "Öffne Copilot und formuliere in eigenen Worten einen Auftrag für drei aktuelle Optionen, einen Zeitraum von höchstens 12 Monaten, nachvollziehbare Quellen und eine tabellarische Gegenüberstellung.",
       "why": "Eigene Formulierung trainiert übertragbare Prompt-Kompetenz statt Abschreiben.",
       "helpLevels": [
         "Öffne zuerst Copilot Chat.",
-        "Nenne drei Optionen, 12 Monate und Quellen.",
-        "Formuliere im Prompt drei Optionen, einen Zeitraum von höchstens 12 Monaten, Quellen und das Ausgabeformat „Vergleichstabelle“ und sende die Anfrage."
+        "Nenne drei Optionen, einen Zeitraum von höchstens 12 Monaten und nachvollziehbare Quellen.",
+        "Formuliere einen eigenen Prompt mit drei Optionen, höchstens 12 Monaten Aktualität, Quellen und einer tabellarischen Gegenüberstellung und sende ihn ab. Die genaue Wortwahl ist frei."
       ],
-      "successMessage": "Der Rechercheauftrag wurde gesendet.",
+      "successMessage": "Der frei formulierte Rechercheauftrag wurde gesendet.",
       "validation": {
         "kind": "event",
-        "type": "copilot.prompt.submitted",
-        "contains": {
-          "prompt": "Vergleichstabelle"
-        }
+        "type": "copilot.prompt.submitted"
       },
       "highlightTarget": "copilot.chat.prompt"
     },

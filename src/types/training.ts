@@ -119,6 +119,7 @@ export interface TrainingStep {
   successMessage: string;
   /** Optional content can be skipped through an explicit learner choice. */
   optional?: boolean;
+  exactTextValidation?: boolean;
   /** Transitional compatibility for the older Git/Copilot POC scenario. */
   validate?: (payload: Record<string, unknown>) => ValidationResult;
 }

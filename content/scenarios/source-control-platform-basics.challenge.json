@@ -60,11 +60,6 @@
       },
       {
         "kind": "state",
-        "selector": "platform.pullRequest.description",
-        "includes": "geprüft"
-      },
-      {
-        "kind": "state",
         "selector": "platform.pullRequest.diffViewed",
         "equals": true
       },
@@ -87,7 +82,7 @@
   },
   "solutionComparison": [
     "Branch feature/readme-guide als getrennte Entwicklungslinie erstellt",
-    "Pull Request mit nachvollziehbarer Beschreibung und Prüfnachweis geöffnet",
+    "Pull Request mit einer nachvollziehbaren eigenen Beschreibung geöffnet",
     "Diff aktiv angesehen und Review-Feedback beantwortet",
     "Status Check erfolgreich; gemeinsamer Endzustand ist merge-bereit"
   ],
@@ -96,12 +91,12 @@
       "id": "prepare-reviewable-pull-request",
       "title": "Reviewbaren Pull Request herstellen",
       "description": "Du entscheidest selbst über Reihenfolge und Navigation. Es gibt keine automatische Klickführung.",
-      "instruction": "Erstelle den Branch „feature/readme-guide“, öffne daraus einen Pull Request mit einer Beschreibung, die „geprüft“ enthält, sieh den Diff an, beantworte das Review-Feedback und bringe die Checks auf erfolgreich.",
+      "instruction": "Erstelle den Branch „feature/readme-guide“, öffne daraus einen Pull Request mit einer eigenen nachvollziehbaren Beschreibung, sieh den Diff an, beantworte das Review-Feedback und bringe die Checks auf erfolgreich.",
       "why": "Die Challenge prüft, ob du Branch, Pull Request, Diff, Review und Status Checks als zusammenhängenden Kollaborationsablauf selbstständig einsetzen kannst.",
       "helpLevels": [
-        "Bewertet wird nur der Endzustand, nicht die Reihenfolge deiner Klicks.",
-        "Der Pull Request muss vom Branch feature/readme-guide nach main zeigen und einen Prüfnachweis enthalten.",
-        "Erstelle feature/readme-guide, öffne daraus den Pull Request nach main, schreibe „geprüft“ in die Beschreibung, öffne den Diff, beantworte das Review und führe den Status Check aus, bis er erfolgreich und der Pull Request merge-bereit ist."
+        "Bewertet wird nur der fachliche Endzustand, nicht die Reihenfolge deiner Klicks oder ein bestimmtes Schlüsselwort.",
+        "Der Pull Request muss vom Branch feature/readme-guide nach main zeigen und eine eigene Beschreibung besitzen.",
+        "Erstelle feature/readme-guide, öffne daraus den Pull Request nach main, beschreibe Zweck und Prüfung in eigenen Worten, öffne den Diff, beantworte das Review und führe den Status Check aus, bis er erfolgreich und der Pull Request merge-bereit ist."
       ],
       "successMessage": "Der Pull Request ist vollständig reviewbar und merge-bereit."
     }
