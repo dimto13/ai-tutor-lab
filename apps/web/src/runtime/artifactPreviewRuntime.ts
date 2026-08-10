@@ -1,5 +1,5 @@
 import type { RuntimeAdapter, RuntimeSeed, RuntimeSurfaceDescription } from "./runtimeAdapter.ts";
-import type { TrainingEvent, UiTargetRef, WorkspaceEventName } from "../types/training.ts";
+import type { TrainingEvent, UiTargetRef } from "../types/training.ts";
 import {
   artifactPreviewSeedSchema,
   parseArtifactPreviewSeed,
@@ -33,86 +33,97 @@ export interface ArtifactPreviewRuntimeAdapter extends RuntimeAdapter {
   readonly hostProductId: "vscode";
   subscribeState(handler: StateListener): () => void;
   inspect(ref: UiTargetRef): void;
-  selectArtifact(artifactId: string): boolean;
-  applyRevision(revisionId: string): boolean;
-  switchView(viewMode: ArtifactPreviewViewMode): void;
-  verifyArtifact(artifactId?: string): boolean;
-  getState(): ArtifactPreviewState;
+  createArtifact(artifact: PreviewArtifact): void;
+  selectArtifact(artifactId: string): void;
+  setViewMode(viewMode: ArtifactPreviewViewMode): void;
+  applyRevision(revisionId: string): void;
+  verifyActiveArtifact(): void;
   reset(): void;
 }
 
+let identifierSequence = 0;
+
 function createIdentifier(prefix: string): string {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
+  identifierSequence += 1;
+  return `${prefix}-${Date.now()}-${identifierSequence}`;
+}
+
+function cloneArtifact(artifact: PreviewArtifact): PreviewArtifact {
+  if (artifact.type === "html") return { ...artifact };
+  if (artifact.type === "data") {
+    return { ...artifact, value: structuredClone(artifact.value) };
+  }
+  return {
+    ...artifact,
+    columns: artifact.columns.map((column) => ({ ...column })),
+    rows: artifact.rows.map((row) => ({ ...row })),
+    ...(artifact.formulas ? { formulas: { ...artifact.formulas } } : {}),
+  };
+}
+
+function cloneRevision(revision: ArtifactRevision): ArtifactRevision {
+  return { ...revision, next: cloneArtifact(revision.next) };
 }
 
 function cloneState(state: ArtifactPreviewState): ArtifactPreviewState {
-  return structuredClone(state);
+  return {
+    ...state,
+    artifacts: state.artifacts.map(cloneArtifact),
+    revisions: state.revisions.map(cloneRevision),
+    appliedRevisionIds: [...state.appliedRevisionIds],
+    verifiedIds: [...state.verifiedIds],
+  };
 }
 
 function initialState(seed?: RuntimeSeed): ArtifactPreviewState {
   const parsed = parseArtifactPreviewSeed(seed);
+  if (!parsed) {
+    return {
+      artifacts: [],
+      activeArtifactId: null,
+      viewMode: "preview",
+      revisions: [],
+      appliedRevisionIds: [],
+      verifiedIds: [],
+    };
+  }
   return {
-    artifacts: parsed.artifacts,
+    artifacts: parsed.artifacts.map(cloneArtifact),
     activeArtifactId: parsed.activeArtifactId,
     viewMode: parsed.viewMode,
-    revisions: parsed.revisions,
+    revisions: parsed.revisions.map(cloneRevision),
     appliedRevisionIds: [],
     verifiedIds: [],
   };
 }
 
-function artifactById(state: ArtifactPreviewState, artifactId: string): PreviewArtifact | null {
-  return state.artifacts.find((artifact) => artifact.id === artifactId) ?? null;
-}
-
-function applyRevisionToState(
-  state: ArtifactPreviewState,
-  revision: ArtifactRevision,
-): ArtifactPreviewState {
-  const currentArtifact = artifactById(state, revision.artifactId);
-  if (!currentArtifact) return state;
-
-  const nextArtifact = previewArtifactSchema.parse({
-    ...currentArtifact,
-    ...revision.patch,
-    id: currentArtifact.id,
-    kind: currentArtifact.kind,
-  });
-  return {
-    ...state,
-    artifacts: state.artifacts.map((artifact) =>
-      artifact.id === nextArtifact.id ? nextArtifact : artifact,
-    ),
-    activeArtifactId: nextArtifact.id,
-    appliedRevisionIds: [...state.appliedRevisionIds, revision.id],
-  };
-}
-
-function resolveMountedTarget(container: ParentNode | null, ref: UiTargetRef): DOMRect | null {
-  if (!container || !(container instanceof Element || container instanceof Document)) return null;
-  const element = container.querySelector<HTMLElement>(`[data-ui-target="${CSS.escape(ref)}"]`);
-  return element?.getBoundingClientRect() ?? null;
-}
-
-function stringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
-}
-
-function validSnapshot(value: unknown): value is ArtifactPreviewState {
+function isRuntimeState(value: unknown): value is ArtifactPreviewState {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const candidate = value as Record<string, unknown>;
-  if (!Array.isArray(candidate.artifacts) || !Array.isArray(candidate.revisions)) return false;
+  const state = value as Partial<ArtifactPreviewState>;
+  const stringArray = (candidate: unknown): candidate is string[] =>
+    Array.isArray(candidate) && candidate.every((id) => typeof id === "string");
+  if (Array.isArray(state.artifacts) && state.artifacts.length === 0) {
+    return (
+      state.activeArtifactId === null &&
+      (state.viewMode === "preview" || state.viewMode === "source") &&
+      Array.isArray(state.revisions) &&
+      state.revisions.length === 0 &&
+      stringArray(state.appliedRevisionIds) &&
+      stringArray(state.verifiedIds)
+    );
+  }
   const seedResult = artifactPreviewSeedSchema.safeParse({
-    artifacts: candidate.artifacts,
-    revisions: candidate.revisions,
-    activeArtifactId: candidate.activeArtifactId,
-    viewMode: candidate.viewMode,
+    artifacts: state.artifacts,
+    revisions: state.revisions,
+    activeArtifactId: state.activeArtifactId ?? undefined,
+    viewMode: state.viewMode,
   });
   return (
     seedResult.success &&
-    (candidate.activeArtifactId === null || typeof candidate.activeArtifactId === "string") &&
-    stringArray(candidate.appliedRevisionIds) &&
-    stringArray(candidate.verifiedIds)
+    (state.activeArtifactId === null || typeof state.activeArtifactId === "string") &&
+    stringArray(state.appliedRevisionIds) &&
+    stringArray(state.verifiedIds)
   );
 }
 
@@ -133,7 +144,7 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
     for (const listener of stateListeners) listener(snapshot, reason);
   };
 
-  const emit = (type: WorkspaceEventName, payload: Record<string, unknown>): void => {
+  const emit = (type: string, payload: Record<string, unknown>): void => {
     const event: TrainingEvent = {
       id: createIdentifier("artifact-event"),
       source: ARTIFACT_PREVIEW_DEFINITION.id,
@@ -158,14 +169,13 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
       const nextInitialState = initialState(seed);
       mountedContainer = container;
       activeSessionId = createIdentifier("artifact-session");
-      mountedInitialState = cloneState(nextInitialState);
+      mountedInitialState = nextInitialState;
       replaceState(nextInitialState, "mount");
     },
 
     async unmount() {
       mountedContainer = null;
-      eventListeners.clear();
-      stateListeners.clear();
+      mountedInitialState = null;
     },
 
     subscribe(handler) {
@@ -178,86 +188,134 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
       return () => stateListeners.delete(handler);
     },
 
-    async query<T = unknown>(selector: string): Promise<T> {
-      const artifact = activeArtifact();
-      let value: unknown;
-      if (selector === "artifact.active.id") value = state.activeArtifactId;
-      else if (selector === "artifact.active.kind") value = artifact?.kind ?? null;
-      else if (selector === "artifact.viewMode") value = state.viewMode;
-      else if (selector === "artifact.ids") value = state.artifacts.map((item) => item.id);
-      else if (selector === "artifact.appliedRevisionIds") value = [...state.appliedRevisionIds];
-      else if (selector === "artifact.verifiedIds") value = [...state.verifiedIds];
-      else if (selector === "artifact.active") value = artifact ? structuredClone(artifact) : null;
-      else throw new Error(`Unsupported artifact preview selector: ${selector}`);
-      return value as T;
+    query<T = unknown>(selector: string): Promise<T> {
+      const current = activeArtifact();
+      const currentRevision = [...state.appliedRevisionIds]
+        .reverse()
+        .map((id) => state.revisions.find((revision) => revision.id === id))
+        .find((revision) => revision?.artifactId === current?.id)?.id;
+      const values: Record<string, unknown> = {
+        "artifact.active.id": state.activeArtifactId,
+        "artifact.active.type": current?.type ?? null,
+        "artifact.viewMode": state.viewMode,
+        "artifact.items": state.artifacts.map((artifact) => artifact.id),
+        "artifact.current": current ? cloneArtifact(current) : null,
+        "artifact.current.revision": currentRevision ?? null,
+        "artifact.appliedRevisionIds": [...state.appliedRevisionIds],
+        "artifact.verified": current ? state.verifiedIds.includes(current.id) : false,
+        "artifact.verifiedIds": [...state.verifiedIds],
+      };
+      return Promise.resolve(values[selector] as T);
     },
 
     resolveTarget(ref) {
-      if (!getArtifactPreviewTarget(ref)) return null;
-      return resolveMountedTarget(mountedContainer, ref);
+      if (!mountedContainer || !getArtifactPreviewTarget(ref)) return null;
+      return (
+        mountedContainer
+          .querySelector<HTMLElement>(`[data-highlight="${ref}"]`)
+          ?.getBoundingClientRect() ?? null
+      );
     },
 
     describeSurface(): RuntimeSurfaceDescription[] {
-      return ARTIFACT_PREVIEW_DEFINITION.surface.map((item) => ({ ...item }));
+      return ARTIFACT_PREVIEW_DEFINITION.surface.map((entry) => ({ ...entry }));
     },
 
-    async snapshot() {
-      return cloneState(state);
+    snapshot() {
+      return Promise.resolve(cloneState(state));
     },
 
     async restore(snapshot) {
-      if (!validSnapshot(snapshot)) throw new Error("Invalid artifact preview snapshot");
+      if (!isRuntimeState(snapshot)) throw new TypeError("Invalid artifact preview snapshot");
       replaceState(snapshot, "restore");
     },
 
     inspect(ref) {
-      if (!getArtifactPreviewTarget(ref)) return;
-      emit("ui.element.inspected", { ref });
+      const target = getArtifactPreviewTarget(ref);
+      if (!target) return;
+      emit("ui.element.inspected", {
+        ref,
+        label: target.label,
+        conceptKey: target.conceptKey,
+      });
+    },
+
+    createArtifact(value) {
+      const artifact = previewArtifactSchema.parse(value);
+      const nextArtifacts = [
+        ...state.artifacts.filter((candidate) => candidate.id !== artifact.id),
+        cloneArtifact(artifact),
+      ];
+      replaceState(
+        {
+          ...state,
+          artifacts: nextArtifacts,
+          activeArtifactId: artifact.id,
+          verifiedIds: state.verifiedIds.filter((id) => id !== artifact.id),
+        },
+        "mutation",
+      );
+      emit("artifact.created", { artifactId: artifact.id, artifactType: artifact.type });
     },
 
     selectArtifact(artifactId) {
-      if (!artifactById(state, artifactId)) return false;
+      const artifact = state.artifacts.find((candidate) => candidate.id === artifactId);
+      if (!artifact) return;
       replaceState({ ...state, activeArtifactId: artifactId }, "mutation");
-      emit("artifact.selected", { artifactId });
-      return true;
+      emit("artifact.selected", { artifactId, artifactType: artifact.type });
     },
 
-    applyRevision(revisionId) {
-      const revision = state.revisions.find((item) => item.id === revisionId);
-      if (!revision || state.appliedRevisionIds.includes(revisionId)) return false;
-      const existedBefore = Boolean(artifactById(state, revision.artifactId));
-      const next = applyRevisionToState(state, revision);
-      if (next === state) return false;
-      replaceState(next, "mutation");
-      emit(existedBefore ? "artifact.updated" : "artifact.created", {
-        artifactId: revision.artifactId,
-        revisionId,
-      });
-      return true;
-    },
-
-    switchView(viewMode) {
+    setViewMode(viewMode) {
       if (state.viewMode === viewMode) return;
       replaceState({ ...state, viewMode }, "mutation");
       emit("artifact.viewSwitched", { viewMode, artifactId: state.activeArtifactId });
     },
 
-    verifyArtifact(artifactId = state.activeArtifactId ?? undefined) {
-      if (!artifactId || !artifactById(state, artifactId)) return false;
-      if (!state.verifiedIds.includes(artifactId)) {
-        replaceState({ ...state, verifiedIds: [...state.verifiedIds, artifactId] }, "mutation");
-      }
-      emit("artifact.verified", { artifactId });
-      return true;
+    applyRevision(revisionId) {
+      const revision = state.revisions.find((candidate) => candidate.id === revisionId);
+      if (!revision || state.appliedRevisionIds.includes(revisionId)) return;
+      const artifacts = state.artifacts.map((artifact) =>
+        artifact.id === revision.artifactId ? cloneArtifact(revision.next) : artifact,
+      );
+      replaceState(
+        {
+          ...state,
+          artifacts,
+          activeArtifactId: revision.artifactId,
+          appliedRevisionIds: [...state.appliedRevisionIds, revisionId],
+          verifiedIds: state.verifiedIds.filter((id) => id !== revision.artifactId),
+        },
+        "mutation",
+      );
+      emit("artifact.updated", {
+        artifactId: revision.artifactId,
+        artifactType: revision.next.type,
+        revisionId,
+      });
     },
 
-    getState() {
-      return cloneState(state);
+    verifyActiveArtifact() {
+      const artifact = activeArtifact();
+      if (!artifact) return;
+      const revisionId = [...state.appliedRevisionIds]
+        .reverse()
+        .map((id) => state.revisions.find((revision) => revision.id === id))
+        .find((revision) => revision?.artifactId === artifact.id)?.id;
+      const verifiedIds = state.verifiedIds.includes(artifact.id)
+        ? state.verifiedIds
+        : [...state.verifiedIds, artifact.id];
+      replaceState({ ...state, verifiedIds }, "mutation");
+      emit("artifact.verified", {
+        artifactId: artifact.id,
+        artifactType: artifact.type,
+        revisionId: revisionId ?? null,
+      });
     },
 
     reset() {
-      const next = mountedInitialState ? cloneState(mountedInitialState) : initialState();
-      replaceState(next, "reset");
+      replaceState(mountedInitialState ?? initialState(), "reset");
     },
   };
 }
+
+export const artifactPreviewRuntime = createArtifactPreviewRuntime();
