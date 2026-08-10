@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Award, RotateCcw, ArrowRight, LayoutGrid, CheckCircle2, ExternalLink } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
+import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
 
 export function CompletionScreen() {
   const { scenario, mode, progress, restart, earnedPoints, scoreMultiplier } = useTraining();
@@ -108,6 +109,17 @@ export function CompletionScreen() {
             </ul>
           </div>
         ) : null}
+
+        <div className="mt-6 rounded-xl border border-accent/30 bg-accent/10 p-4">
+          <p className="text-sm font-medium text-foreground">War dieses Training verständlich?</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            Dein Feedback wird mit dem Trainingskontext gespeichert, ohne deinen Abschluss zu
+            verändern.
+          </p>
+          <div className="mt-3 flex justify-center">
+            <FeedbackCapture source="completion" triggerLabel="Feedback zum Training geben" />
+          </div>
+        </div>
 
         <div className="mt-7 flex flex-wrap justify-center gap-2">
           <button

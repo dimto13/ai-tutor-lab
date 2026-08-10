@@ -3,6 +3,7 @@ import { Bot, Send, User } from "lucide-react";
 import { findGlossaryConcept } from "@/lib/glossary";
 import { answerDeterministically } from "@/tutor/deterministicTutor";
 import { useTutorContext } from "@/tutor/tutorContext";
+import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
 
 interface Message {
   role: "tutor" | "user";
@@ -52,9 +53,12 @@ export function TutorChat() {
     <div className="flex max-h-[46%] min-h-[250px] flex-col border-t border-border">
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Bot className="h-4 w-4 text-accent" /> KI-Tutor
-        {mode === "challenge" ? (
-          <span className="ml-auto normal-case font-normal">nur auf Anfrage</span>
-        ) : null}
+        <div className="ml-auto flex items-center gap-2">
+          {mode === "challenge" ? (
+            <span className="normal-case font-normal tracking-normal">nur auf Anfrage</span>
+          ) : null}
+          <FeedbackCapture source="tutor" compact />
+        </div>
       </div>
       <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3">
         {messages.length === 0 ? (

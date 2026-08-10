@@ -10,7 +10,7 @@ applications:
             - npm ci --install-strategy=nested
         build:
           commands:
-            - npm run build
+            - VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
       artifacts:
         baseDirectory: apps/web/.amplify-hosting
         files:
