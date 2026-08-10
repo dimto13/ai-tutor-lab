@@ -13,3 +13,12 @@ test("VS Code simulator publishes a semantic runtime definition", () => {
   );
   assert.ok(VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.sideBar"));
 });
+
+test("VS Code simulator exposes Terminal through the menu, not a Status Bar launcher", () => {
+  assert.ok(VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.menu.terminal"));
+  assert.ok(VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.statusBar"));
+  assert.equal(
+    VSCODE_RUNTIME_DEFINITION.surface.some((item) => item.ref === "vscode.statusBar.terminal"),
+    false,
+  );
+});
