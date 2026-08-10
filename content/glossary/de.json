@@ -9,6 +9,7 @@
       "vscode.activity_bar",
       "vscode.file_menu",
       "vscode.side_bar",
+      "vscode.view",
       "vscode.explorer",
       "vscode.search",
       "vscode.source_control",
@@ -89,7 +90,7 @@
       "key": "vscode.activity_bar",
       "term": "Activity Bar",
       "aliases": ["Aktivitätsleiste"],
-      "simple": "Die schmale Leiste ganz links in VS Code. Mit ihren Symbolen wechselst du zwischen Explorer, Suche, Source Control und Extensions.",
+      "simple": "Die Activity Bar ist die schmale Leiste ganz links in VS Code. Ähnlich wie die Navigationsleiste in Outlook wählst du dort über Symbole den Hauptbereich aus, mit dem du gerade arbeiten möchtest, zum Beispiel Explorer, Search, Source Control oder Extensions.",
       "advanced": "Die Activity Bar wählt einen primären Arbeitsbereich aus. Der Inhalt dieses Bereichs erscheint daneben in der Side Bar.",
       "uiTargets": [
         "vscode.activityBar.explorer",
@@ -110,15 +111,23 @@
       "key": "vscode.side_bar",
       "term": "Side Bar",
       "aliases": ["Seitenleiste"],
-      "simple": "Der Bereich neben der Activity Bar. Hier zeigt VS Code den Inhalt des ausgewählten Werkzeugs, zum Beispiel den Dateibaum des Explorers.",
+      "simple": "Die Side Bar ist der größere Bereich direkt neben der Activity Bar. Wie der Navigationsbereich in Word zeigt sie den Inhalt der Funktion, die du in der Activity Bar ausgewählt hast, zum Beispiel den Dateibaum des Explorers.",
       "advanced": "Die Side Bar ist ein Container für Views. Ihr Inhalt hängt von der Auswahl in der Activity Bar ab.",
       "uiTargets": ["vscode.sideBar"]
+    },
+    {
+      "key": "vscode.view",
+      "term": "View",
+      "aliases": ["Ansicht", "VS Code View"],
+      "simple": "Eine View ist eine spezialisierte Ansicht innerhalb eines größeren Bereichs wie Side Bar oder Panel. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
+      "advanced": "Views sind konkrete Oberflächeninhalte innerhalb von Containern. Explorer ist beispielsweise eine View in der Side Bar; Terminal, Problems und Output sind Views im Panel.",
+      "uiTargets": []
     },
     {
       "key": "vscode.explorer",
       "term": "Explorer",
       "aliases": ["Datei-Explorer", "Dateibaum"],
-      "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts und bietet Dateiaktionen wie Neue Datei.",
+      "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts. Er funktioniert ähnlich wie der Windows-Datei-Explorer oder der Dialog Öffnen in Office, bleibt aber direkt in VS Code sichtbar und bietet Dateiaktionen wie Neue Datei.",
       "advanced": "Der Explorer ist eine View in der Side Bar. Bei einem Multi-Root-Workspace kann er mehrere Stammordner gleichzeitig darstellen.",
       "uiTargets": [
         "vscode.activityBar.explorer",
@@ -154,7 +163,7 @@
       "key": "vscode.editor",
       "term": "Editor",
       "aliases": ["Editorbereich"],
-      "simple": "Im Editor öffnest und bearbeitest du den Inhalt von Dateien.",
+      "simple": "Der Editor ist die große Arbeitsfläche in der Mitte. Er entspricht am ehesten dem Dokumentbereich in Word oder dem Arbeitsblatt in Excel: Hier öffnest, liest und bearbeitest du den Inhalt von Dateien.",
       "advanced": "Editoren erscheinen in Editor Groups und besitzen Tabs. Der Editor ist vom Explorer und vom unteren Panel getrennt.",
       "uiTargets": ["vscode.editor"]
     },
@@ -162,7 +171,7 @@
       "key": "vscode.panel",
       "term": "Panel",
       "aliases": ["Unteres Panel"],
-      "simple": "Das Panel ist der Bereich unter dem Editor. Dort findest du unter anderem Terminal, Problems und Output.",
+      "simple": "Das Panel ist ein zusätzlicher Bereich, meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt es Werkzeuge und Informationen, die du neben dem eigentlichen Dokument brauchst, zum Beispiel Terminal, Problems oder Output.",
       "advanced": "Terminal, Problems und Output sind unterschiedliche Views innerhalb des Panels; das Terminal ist nicht das Panel selbst.",
       "uiTargets": ["vscode.panel.terminal", "vscode.panel.problems", "vscode.panel.output"]
     },
@@ -170,7 +179,7 @@
       "key": "vscode.terminal",
       "term": "Terminal",
       "aliases": ["Integrated Terminal", "Shell"],
-      "simple": "Das integrierte Terminal führt Textbefehle direkt im Kontext deines geöffneten Projekts aus.",
+      "simple": "Das integrierte Terminal hat keinen direkten Office-Gegenpart. Statt eine Funktion über Schaltflächen aufzurufen, gibst du Textbefehle ein. Der Grundgedanke ähnelt einer Excel-Formel: Du formulierst eine eindeutige Anweisung, die der Computer ausführt.",
       "advanced": "Das Terminal ist eine View im Panel. Es startet eine Shell und übernimmt typischerweise den aktuellen Workspace-Ordner als Arbeitsverzeichnis.",
       "uiTargets": ["vscode.panel.terminal"]
     },
@@ -194,7 +203,7 @@
       "key": "vscode.status_bar",
       "term": "Status Bar",
       "aliases": ["Statusleiste"],
-      "simple": "Die Statusleiste ganz unten zeigt Informationen über deinen aktuellen Arbeitskontext, zum Beispiel Git-Branch oder Sprachumgebung.",
+      "simple": "Die Status Bar ist die schmale Leiste ganz unten. Wie die Statusleiste in Word oder Excel zeigt sie kompakt Informationen über deinen aktuellen Arbeitskontext, zum Beispiel Git-Branch oder Sprachumgebung.",
       "advanced": "Extensions können eigene Statusinformationen und Aktionen in der Status Bar bereitstellen.",
       "uiTargets": ["vscode.statusBar"]
     },
