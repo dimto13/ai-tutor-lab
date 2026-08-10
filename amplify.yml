@@ -6,14 +6,14 @@ applications:
         build:
           commands:
             - nvm use 22
-            - cd ../.. && npm ci --install-strategy=nested
+            - cd ../.. && npm install
             - cd ../.. && npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
     frontend:
       phases:
         preBuild:
           commands:
             - nvm use 22
-            - cd ../.. && npm ci --install-strategy=nested
+            - cd ../.. && npm install
         build:
           commands:
             - cd ../.. && VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
