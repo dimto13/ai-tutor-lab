@@ -37,15 +37,11 @@ async function validateFile(path: string, displayPath: string): Promise<string[]
   return issues;
 }
 
-const scenarioFiles = (await readdir(scenarioDir))
-  .filter((file) => file.endsWith(".json"))
-  .sort();
+const scenarioFiles = (await readdir(scenarioDir)).filter((file) => file.endsWith(".json")).sort();
 
 const issues: string[] = [];
 for (const file of scenarioFiles) {
-  issues.push(
-    ...(await validateFile(resolve(scenarioDir, file), `content/scenarios/${file}`)),
-  );
+  issues.push(...(await validateFile(resolve(scenarioDir, file), `content/scenarios/${file}`)));
 }
 for (const path of introductionFiles) {
   issues.push(...(await validateFile(path, "content/introductions/de.json")));
