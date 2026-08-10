@@ -1,0 +1,193 @@
+name: Apply AITP-166
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aitp-166-explain-code-first
+          fetch-depth: 0
+
+      - name: Apply content and simulator migration
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          def load(path):
+              return json.loads(Path(path).read_text())
+
+          def save(path, data):
+              Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+          # VS Code basics: teach the editor without requiring programming.
+          path = "content/scenarios/vscode-basics.guided.json"
+          scenario = load(path)
+          audience = scenario["audience"]
+          audience["glossaryConcepts"] = [
+              key for key in audience["glossaryConcepts"]
+              if key not in {"foundation.code", "programming.python"}
+          ]
+          steps = {step["id"]: step for step in scenario["steps"]}
+          create_file = steps["create_file"]
+          create_file["description"] = "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an. Für diesen Grundlagenkurs verwenden wir bewusst eine normale Textdatei statt Programmcode."
+          create_file["instruction"] = "Erstelle im Projektordner ai-training-demo eine Datei notiz.txt."
+          create_file["why"] = "So übst du die Dateioperation im Explorer, ohne gleichzeitig eine Programmiersprache lernen zu müssen."
+          create_file["helpLevels"] = [
+              "Im Kopf des Explorers gibt es die Aktion Neue Datei.",
+              "Klicke auf Neue Datei und tippe notiz.txt ein.",
+              "Der Neue-Datei-Button wird hervorgehoben. Klicke darauf, gib notiz.txt ein und bestätige mit Enter."
+          ]
+          create_file["validation"]["match"]["filename"] = "notiz.txt"
+          create_file["successMessage"] = "notiz.txt wurde erstellt und im Editor geöffnet."
+
+          edit_file = steps["edit_file"]
+          edit_file["title"] = "Editor mit einfachem Text verwenden"
+          edit_file["description"] = "Der Editor ist die große Arbeitsfläche für den Inhalt einer Datei. In diesem VS-Code-Grundkurs musst du keinen Code schreiben: Du bearbeitest nur einen normalen Text."
+          edit_file["instruction"] = "Tippe den Text Hello AI Training in notiz.txt."
+          edit_file["why"] = "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt. Programmierung ist dafür nicht erforderlich."
+          edit_file["helpLevels"] = [
+              "Klicke in die große Arbeitsfläche des Editors.",
+              "Tippe genau den Text Hello AI Training ein.",
+              "Der Editorbereich wird hervorgehoben. Klicke hinein und tippe genau Hello AI Training."
+          ]
+          edit_file["validation"]["match"]["filename"] = "notiz.txt"
+          edit_file["validation"]["contains"]["content"] = "Hello AI Training"
+          edit_file["successMessage"] = "Text erkannt. Du hast den Editor verwendet, ohne Programmcode schreiben zu müssen."
+          save(path, scenario)
+
+          # The free VS Code challenge also tests file handling rather than Python knowledge.
+          path = "content/scenarios/vscode-basics.challenge.json"
+          scenario = load(path)
+          scenario["completionValidation"]["of"][1]["includes"] = "challenge.txt"
+          scenario["solutionComparison"] = [
+              item.replace("challenge.py", "challenge.txt") for item in scenario["solutionComparison"]
+          ]
+          step = scenario["steps"][0]
+          step["title"] = "Bestehendes Projekt öffnen und Textdatei anlegen"
+          step["instruction"] = "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.txt an."
+          step["helpLevels"] = [
+              level.replace("challenge.py", "challenge.txt") for level in step["helpLevels"]
+          ]
+          save(path, scenario)
+
+          # Shortcut challenge: plain text, no unexplained Python comment syntax.
+          path = "content/scenarios/vscode-shortcuts.challenge.json"
+          scenario = load(path)
+          scenario["completionValidation"]["of"][0]["includes"] = "challenge.txt"
+          scenario["completionValidation"]["of"][1]["match"] = {
+              "challenge.txt": "Status für Marco: Review abgeschlossen."
+          }
+          scenario["completionValidation"]["of"][2]["excludes"] = "challenge.txt"
+          scenario["solutionComparison"] = [
+              "Mit Ctrl+Shift+E den Explorer öffnen und dort eine neue Datei challenge.txt anlegen.",
+              "Den vorgegebenen Text exakt eintragen: Status für Marco: Review abgeschlossen.",
+              "Mit Ctrl+S speichern. Entscheidend sind korrekter Inhalt und gespeicherter Endzustand vor Ablauf der Zeit."
+          ]
+          step = scenario["steps"][0]
+          step["title"] = "Textdatei in 30 Sekunden erstellen, befüllen und speichern"
+          step["instruction"] = "Lege challenge.txt an, trage exakt „Status für Marco: Review abgeschlossen.“ ein und speichere die Datei innerhalb von 30 Sekunden. Nutze dafür möglichst die Tastatur."
+          step["helpLevels"] = [
+              "Nutze bekannte VS-Code-Shortcuts, um den Explorer zu öffnen und die Datei zu speichern.",
+              "Windows/Linux: Ctrl+Shift+E öffnet den Explorer; Ctrl+S speichert die aktive Datei.",
+              "Drücke Ctrl+Shift+E, lege im Explorer challenge.txt an, trage exakt „Status für Marco: Review abgeschlossen.“ ein und drücke anschließend Ctrl+S, damit die Datei gespeichert ist."
+          ]
+          save(path, scenario)
+
+          # Developer workflow: code is generated by Copilot first, then inspected/accepted.
+          path = "content/scenarios/developer-workflow-basics.guided.json"
+          scenario = load(path)
+          steps = {step["id"]: step for step in scenario["steps"]}
+          step = steps["step_4"]
+          step["title"] = "Ersten Code von Copilot erzeugen und prüfen"
+          step["description"] = "hello.py ist eine Python-Datei, aber du musst den ersten Code nicht selbst erfinden oder abtippen. Copilot erzeugt einen vorbereiteten Inline-Vorschlag, den du vor dem Übernehmen prüfst."
+          step["instruction"] = "Öffne Copilot, erzeuge den Inline-Vorschlag für hello.py und nimm ihn nach der Sichtprüfung an."
+          step["why"] = "So lernst du einen realistischen KI-Workflow: Ziel und Kontext festlegen, Vorschlag erzeugen lassen, Ergebnis prüfen und erst danach übernehmen."
+          step["helpLevels"] = [
+              "Öffne Copilot über den Button rechts oberhalb des Editors.",
+              "Klicke im Bereich Inline-Vorschlag zuerst auf Vorschlag erzeugen und prüfe den angezeigten Text.",
+              "Der Copilot-Button wird hervorgehoben. Öffne Copilot, klicke auf Vorschlag erzeugen, prüfe print(\"Hello from Copilot\") und klicke anschließend auf Annehmen."
+          ]
+          step["expectedEvent"] = "ai.suggestion.accepted"
+          step["validation"] = {
+              "kind": "event",
+              "type": "ai.suggestion.accepted",
+              "match": {"file": "hello.py"},
+              "contains": {"text": "Hello from Copilot"}
+          }
+          step["highlightTarget"] = "copilot.chat.toggle"
+          step["highlightTooltip"] = "Öffne Copilot und erzeuge den vorbereiteten Inline-Vorschlag."
+          step["successMessage"] = "Der erste Code wurde von Copilot erzeugt, geprüft und bewusst übernommen."
+          save(path, scenario)
+
+          # Generic editor chrome must not teach Python implicitly.
+          path = Path("src/components/workspace/Workspace.tsx")
+          text = path.read_text()
+          text = text.replace(
+              'const nextWrongFile = name === "hello.py" || name === "challenge.py" ? null : name;',
+              'const acceptedTrainingFiles = new Set(["hello.py", "notiz.txt", "challenge.txt"]);\n    const nextWrongFile = acceptedTrainingFiles.has(name) ? null : name;'
+          )
+          text = text.replace('placeholder="dateiname.py"', 'placeholder="dateiname.ext"')
+          text = text.replace(
+              "placeholder='print(\"Hello AI Training\")'",
+              'placeholder="Dateiinhalt bearbeiten..."\n                    aria-label="Editor-Inhalt"'
+          )
+          text = text.replace(
+              '{activeFile ? `${activeFile} · Python` : "Python 3.12"}',
+              '{activeFile\n            ? `${activeFile} · ${activeFile.endsWith(".py") ? "Python" : "Text"}`\n            : "UTF-8"}'
+          )
+          path.write_text(text)
+
+          # Keep Playwright locators neutral and align the pure VS Code scenarios.
+          for path in Path("e2e/tests").glob("*.ts"):
+              text = path.read_text()
+              text = text.replace('getByPlaceholder("dateiname.py")', 'getByPlaceholder("dateiname.ext")')
+              text = text.replace("getByPlaceholder('dateiname.py')", "getByPlaceholder('dateiname.ext')")
+              text = text.replace("getByPlaceholder('print(\"Hello AI Training\")')", 'getByRole("textbox", { name: "Editor-Inhalt" })')
+              text = text.replace('getByPlaceholder("print(\\\"Hello AI Training\\\")")', 'getByRole("textbox", { name: "Editor-Inhalt" })')
+              path.write_text(text)
+
+          path = Path("e2e/tests/vscode-basics.spec.ts")
+          text = path.read_text()
+          text = text.replace("hello.py", "notiz.txt")
+          text = text.replace("challenge.py", "challenge.txt")
+          text = text.replace(".fill('print(\"Hello AI Training\")')", '.fill("Hello AI Training")')
+          text = text.replace(".fill(\"print(\\\"Hello AI Training\\\")\")", '.fill("Hello AI Training")')
+          path.write_text(text)
+
+          path = Path("e2e/tests/vscode-shortcuts.spec.ts")
+          text = path.read_text()
+          text = text.replace("challenge.py", "challenge.txt")
+          text = text.replace("# Status für Marco: Review abgeschlossen.", "Status für Marco: Review abgeschlossen.")
+          path.write_text(text)
+          PY
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format repository
+        run: npx prettier --write .
+
+      - name: Commit migration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "AITP-166: remove unexplained code requirements for beginners"
+          git push origin HEAD:agent/aitp-166-explain-code-first
