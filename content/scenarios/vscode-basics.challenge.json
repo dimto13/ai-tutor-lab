@@ -4,7 +4,7 @@
   "mode": "challenge",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Challenge",
-  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Die Challenge baut auf den zuvor erklärten VS-Code-Grundbegriffen auf. Entscheidend ist der Endzustand, nicht dein Klickweg.",
+  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Die Challenge baut auf den zuvor erklärten VS-Code-Grundbegriffen auf, einschließlich der Trennung von Primary und Secondary Side Bar. Entscheidend ist der Endzustand, nicht dein Klickweg.",
   "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
   "audience": {
     "personaId": "non-programmer",
@@ -46,20 +46,20 @@
   },
   "solutionComparison": [
     "Einen bestehenden Ordner oder Workspace als Arbeitskontext öffnen.",
-    "Im Explorer innerhalb des Projektordners eine neue Datei challenge.txt anlegen.",
+    "Im Explorer in der Primary Side Bar innerhalb des Projektordners eine neue Datei challenge.txt anlegen.",
     "Der konkrete Klickweg darf abweichen; bewertet wird nur, ob Arbeitskontext und Zieldatei vorhanden sind."
   ],
   "steps": [
     {
       "id": "challenge_goal",
       "title": "Bestehendes Projekt öffnen und Textdatei anlegen",
-      "description": "Du bekommst nur Ziel und Erfolgskriterien. Die Begriffe Ordner, Workspace und Explorer wurden in den Grundlagen bereits eingeführt. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
+      "description": "Du bekommst nur Ziel und Erfolgskriterien. Die Begriffe Ordner, Workspace, Primary Side Bar und Explorer wurden in den Grundlagen bereits eingeführt. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
       "instruction": "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.txt an.",
       "why": "Die Challenge prüft, ob du die bereits erklärte Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
       "helpLevels": [
         "Überlege zuerst, wie VS Code einen bestehenden Ordner oder Workspace als Arbeitskontext öffnet.",
-        "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.",
-        "Öffne über das File-Menü einen bestehenden Ordner oder Workspace, wechsle danach in den Explorer und lege im geöffneten Projekt die Datei challenge.txt an."
+        "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer in der Primary Side Bar.",
+        "Öffne über das File-Menü einen bestehenden Ordner oder Workspace, wechsle danach in den Explorer der Primary Side Bar und lege im geöffneten Projekt die Datei challenge.txt an."
       ],
       "successMessage": "Challenge erfüllt. Der Endzustand entspricht den Erfolgskriterien."
     }
