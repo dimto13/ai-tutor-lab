@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export type VscodeWorkspaceView = "explorer" | "search" | "scm" | "extensions";
 export type VscodePanelView = "terminal" | "problems" | "output";
@@ -310,11 +310,18 @@ export function VscodeMenuBar({
   openPanel,
   openTerminal,
 }: VscodeMenuBarProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [menuLeft, setMenuLeft] = useState(0);
+  const activeMenu = MENU_DEFINITIONS.find((menu) => menu.id === openMenu) ?? null;
+
+  const closeMenus = () => {
+    setOpenMenu(null);
+    setOpenSubmenu(null);
+  };
 
   const runAction = (action: MenuAction | undefined) => {
-    if (!action) return;
     if (action === "open-folder") openWorkingContext("folder");
     if (action === "open-workspace") openWorkingContext("workspace");
     if (action === "view-explorer") openView("explorer", "vscode.activityBar.explorer");
@@ -324,116 +331,116 @@ export function VscodeMenuBar({
     if (action === "view-problems") openPanel("problems");
     if (action === "view-output") openPanel("output");
     if (action === "view-terminal" || action === "new-terminal") openTerminal();
-    setOpenMenu(null);
-    setOpenSubmenu(null);
+    closeMenus();
   };
 
   return (
-    <div className="flex min-w-0 items-center">
-      {MENU_DEFINITIONS.map((menu) => (
-        <div key={menu.id} className="relative shrink-0">
+    <div ref={rootRef} className="relative min-w-0">
+      <div className="flex min-w-0 items-center overflow-x-auto overflow-y-hidden">
+        {MENU_DEFINITIONS.map((menu) => (
           <button
+            key={menu.id}
             type="button"
             data-highlight={menu.target}
             aria-haspopup="menu"
             aria-expanded={openMenu === menu.id}
-            onClick={() => {
+            onClick={(event) => {
               inspect(menu.target);
+              const rootRect = rootRef.current?.getBoundingClientRect();
+              const buttonRect = event.currentTarget.getBoundingClientRect();
+              const rootWidth = rootRect?.width ?? buttonRect.width;
+              const desiredLeft = rootRect ? buttonRect.left - rootRect.left : 0;
+              setMenuLeft(Math.max(0, Math.min(desiredLeft, Math.max(0, rootWidth - 288))));
               setOpenSubmenu(null);
               setOpenMenu((current) => (current === menu.id ? null : menu.id));
             }}
-            className={`rounded px-2 py-1 hover:bg-white/10 ${
+            className={`shrink-0 rounded px-2 py-1 hover:bg-white/10 ${
               openMenu === menu.id ? "bg-white/10 text-foreground" : ""
             }`}
           >
             {menu.label}
           </button>
+        ))}
+      </div>
 
-          {openMenu === menu.id ? (
-            <div
-              role="menu"
-              aria-label={`${menu.label} menu`}
-              className="absolute left-0 top-full z-40 mt-0.5 max-h-[calc(100vh-3rem)] min-w-72 overflow-y-auto rounded-md border border-border bg-panel py-1 shadow-2xl"
-            >
-              {menu.entries.map((entry) => {
-                const submenuKey = `${menu.id}:${entry.label}`;
-                return (
-                  <div key={entry.label} className="relative">
-                    {entry.separatorBefore ? <div className="my-1 border-t border-border" /> : null}
-                    <button
-                      type="button"
-                      role="menuitem"
-                      data-highlight={
-                        menu.id === "file" && entry.action === "open-folder"
-                          ? "vscode.menu.file.openFolder"
-                          : menu.id === "file" && entry.action === "open-workspace"
-                            ? "vscode.menu.file.openWorkspace"
-                            : undefined
-                      }
-                      onMouseEnter={() => setOpenSubmenu(entry.children ? submenuKey : null)}
-                      onClick={() => {
-                        if (entry.children) {
-                          setOpenSubmenu((current) => (current === submenuKey ? null : submenuKey));
-                          return;
-                        }
-                        if (menu.id === "file" && entry.action === "open-folder") {
-                          inspect("vscode.menu.file.openFolder");
-                        }
-                        if (menu.id === "file" && entry.action === "open-workspace") {
-                          inspect("vscode.menu.file.openWorkspace");
-                        }
-                        runAction(entry.action);
-                      }}
-                      className="flex w-full items-center gap-6 px-3 py-1.5 text-left text-[12px] text-foreground/90 hover:bg-white/10"
-                    >
-                      <span className="min-w-0 flex-1 whitespace-nowrap">{entry.label}</span>
-                      {entry.shortcut ? (
-                        <span className="shrink-0 text-[11px] text-muted-foreground">
-                          {entry.shortcut}
-                        </span>
-                      ) : null}
-                      {entry.children ? (
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      ) : null}
-                    </button>
+      {activeMenu ? (
+        <div
+          role="menu"
+          aria-label={`${activeMenu.label} menu`}
+          style={{ left: menuLeft }}
+          className="absolute top-full z-40 mt-0.5 max-h-[calc(100vh-3rem)] w-72 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-md border border-border bg-panel py-1 shadow-2xl"
+        >
+          {activeMenu.entries.map((entry) => {
+            const submenuKey = `${activeMenu.id}:${entry.label}`;
+            return (
+              <div key={entry.label} className="relative">
+                {entry.separatorBefore ? <div className="my-1 border-t border-border" /> : null}
+                <button
+                  type="button"
+                  role="menuitem"
+                  data-highlight={
+                    activeMenu.id === "file" && entry.action === "open-folder"
+                      ? "vscode.menu.file.openFolder"
+                      : activeMenu.id === "file" && entry.action === "open-workspace"
+                        ? "vscode.menu.file.openWorkspace"
+                        : undefined
+                  }
+                  onMouseEnter={() => setOpenSubmenu(entry.children ? submenuKey : null)}
+                  onClick={() => {
+                    if (entry.children) {
+                      setOpenSubmenu((current) => (current === submenuKey ? null : submenuKey));
+                      return;
+                    }
+                    if (activeMenu.id === "file" && entry.action === "open-folder") {
+                      inspect("vscode.menu.file.openFolder");
+                    }
+                    if (activeMenu.id === "file" && entry.action === "open-workspace") {
+                      inspect("vscode.menu.file.openWorkspace");
+                    }
+                    runAction(entry.action);
+                  }}
+                  className="flex w-full items-center gap-6 px-3 py-1.5 text-left text-[12px] text-foreground/90 hover:bg-white/10"
+                >
+                  <span className="min-w-0 flex-1 whitespace-nowrap">{entry.label}</span>
+                  {entry.shortcut ? (
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
+                      {entry.shortcut}
+                    </span>
+                  ) : null}
+                  {entry.children ? (
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  ) : null}
+                </button>
 
-                    {entry.children && openSubmenu === submenuKey ? (
-                      <div
-                        role="menu"
-                        aria-label={`${entry.label} submenu`}
-                        className="sticky left-0 z-50 mx-2 mb-1 rounded-md border border-border bg-card py-1 shadow-xl"
+                {entry.children && openSubmenu === submenuKey ? (
+                  <div
+                    role="menu"
+                    aria-label={`${entry.label} submenu`}
+                    className="sticky left-0 z-50 mx-2 mb-1 rounded-md border border-border bg-card py-1 shadow-xl"
+                  >
+                    {entry.children.map((child) => (
+                      <button
+                        key={child.label}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => runAction(child.action)}
+                        className="flex w-full items-center gap-4 px-3 py-1.5 text-left text-[12px] text-foreground/90 hover:bg-white/10"
                       >
-                        {entry.children.map((child) => (
-                          <button
-                            key={child.label}
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              runAction(child.action);
-                              if (!child.action) {
-                                setOpenMenu(null);
-                                setOpenSubmenu(null);
-                              }
-                            }}
-                            className="flex w-full items-center gap-4 px-3 py-1.5 text-left text-[12px] text-foreground/90 hover:bg-white/10"
-                          >
-                            <span className="min-w-0 flex-1 whitespace-nowrap">{child.label}</span>
-                            {child.shortcut ? (
-                              <span className="shrink-0 text-[11px] text-muted-foreground">
-                                {child.shortcut}
-                              </span>
-                            ) : null}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
+                        <span className="min-w-0 flex-1 whitespace-nowrap">{child.label}</span>
+                        {child.shortcut ? (
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {child.shortcut}
+                          </span>
+                        ) : null}
+                      </button>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          ) : null}
+                ) : null}
+              </div>
+            );
+          })}
         </div>
-      ))}
+      ) : null}
     </div>
   );
 }
