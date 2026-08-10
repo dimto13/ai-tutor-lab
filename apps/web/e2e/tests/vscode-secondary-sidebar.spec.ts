@@ -1,10 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function waitForTrainingReady(page: import("@playwright/test").Page): Promise<void> {
+async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
-async function completeCopilotIntroductions(page: import("@playwright/test").Page): Promise<void> {
+async function completeCopilotIntroductions(page: Page): Promise<void> {
   for (let index = 0; index < 3; index += 1) {
     await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
   }
@@ -43,7 +43,9 @@ test("Copilot Chat öffnet als View innerhalb der Secondary Side Bar", async ({ 
   await expect(chat).toBeVisible();
   await expect(secondarySideBar).toContainText("GitHub Copilot Chat");
   expect(
-    await secondarySideBar.evaluate((host, chatElement) => host.contains(chatElement), await chat.elementHandle()),
+    await chat.evaluate(
+      (element) => element.closest('[data-highlight="vscode.secondarySideBar"]') !== null,
+    ),
   ).toBe(true);
   expect(await chat.evaluate((element) => getComputedStyle(element).position)).not.toBe("absolute");
 });
