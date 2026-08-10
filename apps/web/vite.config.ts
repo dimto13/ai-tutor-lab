@@ -30,10 +30,8 @@ export default defineConfig(({ command }) => ({
     ...(command === "build"
       ? [
           nitro({
-            config: {
-              preset: "aws_amplify",
-              awsAmplify: { runtime: "nodejs22.x" },
-            },
+            preset: "aws_amplify",
+            awsAmplify: { runtime: "nodejs22.x" },
           }),
         ]
       : []),
