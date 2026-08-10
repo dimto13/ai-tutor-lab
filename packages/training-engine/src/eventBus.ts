@@ -13,8 +13,11 @@ export interface TrainingEventBus {
 
 export class InProcessTrainingEventBus implements TrainingEventBus {
   private readonly handlers = new Set<TrainingEventHandler>();
+  private readonly telemetrySinks: readonly TelemetrySink[];
 
-  constructor(private readonly telemetrySinks: readonly TelemetrySink[] = []) {}
+  constructor(telemetrySinks: readonly TelemetrySink[] = []) {
+    this.telemetrySinks = telemetrySinks;
+  }
 
   async publish(event: TrainingEvent): Promise<void> {
     await Promise.all(this.telemetrySinks.map((sink) => sink.record(event)));
