@@ -187,7 +187,7 @@ export function CopilotPanel({
           }
 
           [data-highlight="vscode.secondarySideBar"]:has([data-highlight="copilot.chat"]) {
-            width: 9rem !important;
+            width: 6rem !important;
           }
         }
       `}</style>
