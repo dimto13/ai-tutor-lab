@@ -76,6 +76,6 @@ Auch deterministische Simulatorantworten dürfen bei einer Freitextaufgabe nicht
 
 Ausnahme sind Schritte mit `exactTextValidation: true`.
 
-Tolerante Synonymlisten über `containsAny` beziehungsweise `includesAny` sind ausdrücklich für Fälle vorgesehen, in denen eine fachliche Mindestabsicht geprüft werden muss, aber mehrere natürliche Formulierungen korrekt sind.
+Tolerante Synonymlisten über `containsAny` beziehungsweise `includesAny` sind ausdrücklich für Fälle vorgesehen, in denen eine fachliche Mindestabsicht geprüft werden muss, aber mehrere natürliche Formulierungen korrekt sind. Die zugehörigen E2E-Tests prüfen sowohl sinnvolle Varianten als auch bewusst zu schwache Eingaben, damit die Toleranz nicht zu einer beliebigen Freigabe wird.
 
 Exakte Prüfungen auf nicht-freie Werte bleiben unverändert zulässig, zum Beispiel Dateinamen, Code-/Dateiinhalte, Branch-Namen oder strukturierte Runtime-Zustände.
