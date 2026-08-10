@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   findGlossaryConcept,
   getGlossaryConceptByKey,
+  getGlossaryConceptForTarget,
   getGlossaryConceptsForTechnology,
   segmentGlossaryText,
 } from "../../src/lib/glossary.ts";
@@ -90,5 +91,24 @@ test("VS Code UI foundations provide non-programmer analogies", () => {
     const concept = getGlossaryConceptByKey(conceptKey);
     assert.ok(concept, `missing glossary concept ${conceptKey}`);
     assert.match(concept.simple, new RegExp(analogyMarker, "i"), `${conceptKey} lacks its analogy`);
+  }
+});
+
+test("every VS Code top-level menu resolves to its own beginner explanation", () => {
+  const expectedMenus = new Map([
+    ["vscode.menu.file", "vscode.file_menu"],
+    ["vscode.menu.edit", "vscode.edit_menu"],
+    ["vscode.menu.selection", "vscode.selection_menu"],
+    ["vscode.menu.view", "vscode.view_menu"],
+    ["vscode.menu.go", "vscode.go_menu"],
+    ["vscode.menu.run", "vscode.run_menu"],
+    ["vscode.menu.terminal", "vscode.terminal_menu"],
+    ["vscode.menu.help", "vscode.help_menu"],
+  ]);
+
+  for (const [target, conceptKey] of expectedMenus) {
+    const concept = getGlossaryConceptForTarget(target);
+    assert.equal(concept?.key, conceptKey, `${target} resolves to the wrong menu concept`);
+    assert.ok(concept?.simple.length, `${conceptKey} has no beginner explanation`);
   }
 });

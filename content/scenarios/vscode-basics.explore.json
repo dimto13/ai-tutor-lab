@@ -4,8 +4,36 @@
   "mode": "explore",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Explorer-Modus",
-  "description": "Erkunde die Oberfläche frei. Klicke auf Bereiche und Bedienelemente; das Training erklärt ihre Aufgabe ohne Fehlermeldungen oder vorgegebene Reihenfolge.",
+  "description": "Erkunde die Oberfläche frei. Klicke auf Bereiche, Menüs und Bedienelemente; das Training erklärt ihre Aufgabe in einfacher Sprache und mit vertrauten Vergleichen, ohne Fehlermeldungen oder vorgegebene Reihenfolge.",
   "learningObjectives": ["understand_vscode_ui", "understand_workspace"],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "vscode.activity_bar",
+      "vscode.file_menu",
+      "vscode.edit_menu",
+      "vscode.selection_menu",
+      "vscode.view_menu",
+      "vscode.go_menu",
+      "vscode.run_menu",
+      "vscode.terminal_menu",
+      "vscode.help_menu",
+      "vscode.side_bar",
+      "vscode.view",
+      "vscode.explorer",
+      "vscode.search",
+      "vscode.source_control",
+      "vscode.extensions",
+      "vscode.editor",
+      "vscode.panel",
+      "vscode.terminal",
+      "vscode.problems",
+      "vscode.output",
+      "vscode.status_bar",
+      "vscode.folder",
+      "vscode.workspace"
+    ]
+  },
   "environment": {
     "productId": "vscode",
     "version": "1.x",
@@ -15,6 +43,13 @@
   "points": 100,
   "exploreTargets": [
     "vscode.menu.file",
+    "vscode.menu.edit",
+    "vscode.menu.selection",
+    "vscode.menu.view",
+    "vscode.menu.go",
+    "vscode.menu.run",
+    "vscode.menu.terminal",
+    "vscode.menu.help",
     "vscode.activityBar.explorer",
     "vscode.activityBar.search",
     "vscode.activityBar.scm",
@@ -33,13 +68,13 @@
     {
       "id": "explore_surface",
       "title": "Oberfläche frei erkunden",
-      "description": "Es gibt keine richtige Reihenfolge. Untersuche die sichtbaren Bereiche und öffne bei Bedarf File-Menü, Workspace und Panel.",
+      "description": "Es gibt keine richtige Reihenfolge. Untersuche die sichtbaren Bereiche und öffne auch die Menüs oben. Wenn du ein Element anklickst, erklärt das Training, wofür es gedacht ist.",
       "instruction": "Klicke auf Elemente der VS-Code-Oberfläche, die du kennenlernen möchtest.",
       "why": "Im Explorer-Modus baust du zunächst ein mentales Modell der Oberfläche auf, bevor du konkrete Abläufe übst.",
       "helpLevels": [
-        "Klicke auf einen Bereich, den du noch nicht kennst.",
-        "Öffne auch File-Menü und Panel, damit weitere Bereiche sichtbar werden.",
-        "Der Fortschritt zeigt dir, welche Oberflächen noch fehlen."
+        "Klicke auf einen Bereich oder ein Menü, das du noch nicht kennst.",
+        "Öffne auch die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help sowie das untere Panel.",
+        "Der Fortschritt zeigt dir, welche erklärbaren Oberflächen noch fehlen."
       ],
       "successMessage": "Oberfläche vollständig erkundet."
     }
