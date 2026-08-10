@@ -257,7 +257,7 @@ export const scenarioSchema = z
       }
     });
 
-    if (sharedRefs.length > 0 && scenario.mode !== "guided") {
+    if (sharedRefs.length > 0 && (scenario.mode ?? "guided") !== "guided") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "shared introduction steps are only valid for guided scenarios",
@@ -309,8 +309,8 @@ export const scenarioSchema = z
 export function parseScenario(raw: unknown): Scenario {
   const authoredScenario = scenarioSchema.parse(raw);
   const resolvedIntroductionSteps =
-    authoredScenario.audience?.introductionStepRefs?.map(
-      (ref) => sharedIntroductionSteps.get(ref)!,
+    authoredScenario.audience?.introductionStepRefs?.map((ref) =>
+      sharedIntroductionSteps.get(ref)!,
     ) ?? [];
   const authoredIntroductionStepIds = authoredScenario.audience?.introductionStepIds ?? [];
   const introductionStepIds = [
