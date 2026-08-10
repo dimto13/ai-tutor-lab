@@ -177,3 +177,57 @@ test("content loader accepts safe artifact preview data and rejects executable H
     ),
   );
 });
+
+test("content loader resolves reusable introduction steps before authored guided steps", () => {
+  const parsed = parseScenario({
+    ...scenarioWithSeed({}),
+    audience: {
+      personaId: "non-programmer",
+      glossaryConcepts: ["vscode.activity_bar", "vscode.side_bar"],
+      introductionStepRefs: ["vscode.ui.activity-bar", "vscode.ui.side-bar"],
+    },
+  });
+
+  assert.deepEqual(
+    parsed.steps.slice(0, 3).map((step) => step.id),
+    ["vscode.ui.activity-bar", "vscode.ui.side-bar", "step-1"],
+  );
+  assert.deepEqual(parsed.audience?.introductionStepIds, [
+    "vscode.ui.activity-bar",
+    "vscode.ui.side-bar",
+  ]);
+  assert.equal(parsed.steps[0]?.stepType, "explanation");
+  assert.equal(parsed.steps[0]?.optional, true);
+});
+
+test("content loader rejects unknown shared introduction references", () => {
+  assert.throws(() =>
+    parseScenario({
+      ...scenarioWithSeed({}),
+      audience: {
+        personaId: "non-programmer",
+        glossaryConcepts: ["vscode.activity_bar"],
+        introductionStepRefs: ["vscode.ui.does-not-exist"],
+      },
+    }),
+  );
+});
+
+test("content loader keeps shared introductions out of challenge semantics", () => {
+  assert.throws(() =>
+    parseScenario({
+      ...scenarioWithSeed({}),
+      mode: "challenge",
+      audience: {
+        personaId: "non-programmer",
+        glossaryConcepts: ["vscode.activity_bar"],
+        introductionStepRefs: ["vscode.ui.activity-bar"],
+      },
+      completionValidation: {
+        kind: "state",
+        selector: "workspace.mode",
+        equals: "folder",
+      },
+    }),
+  );
+});
