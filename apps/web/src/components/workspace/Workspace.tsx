@@ -294,10 +294,7 @@ export function Workspace() {
           className="flex w-28 shrink-0 flex-col border-r border-border bg-panel sm:w-44 md:w-60"
           aria-label="Primary Side Bar"
         >
-          <div
-            data-highlight="vscode.sideBar"
-            className="flex min-h-0 flex-1 flex-col"
-          >
+          <div data-highlight="vscode.sideBar" className="flex min-h-0 flex-1 flex-col">
             <div className="flex h-9 items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span>
                 {view === "explorer" || view === null
