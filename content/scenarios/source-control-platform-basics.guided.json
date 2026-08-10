@@ -129,12 +129,12 @@
       "id": "create-pull-request",
       "title": "Pull Request nachvollziehbar beschreiben",
       "description": "Titel und Beschreibung geben Reviewenden Ziel, Kontext und Prüfnachweis der Änderung.",
-      "instruction": "Öffne „Pull Requests“. Erstelle einen Pull Request mit dem vorgegebenen Titel und einer Beschreibung, die den Satz „Einrichtung geprüft“ enthält.",
+      "instruction": "Öffne „Pull Requests“. Erstelle den Pull Request mit dem vorgegebenen Titel und beschreibe in eigenen Worten Zweck und durchgeführte Prüfung der Änderung.",
       "why": "Der Diff zeigt das Was; eine gute Beschreibung erklärt zusätzlich Warum, Wirkung und Prüfung.",
       "helpLevels": [
         "Öffne zunächst den Reiter Pull Requests.",
-        "Trage in der Beschreibung beispielsweise „Einrichtung geprüft; keine Zugangsdaten enthalten.“ ein.",
-        "Der Bereich Pull Requests wird hervorgehoben. Öffne ihn, prüfe Head feature/readme-guide und Base main, trage „Einrichtung geprüft; keine Zugangsdaten enthalten.“ in die Beschreibung ein und erstelle dann den Pull Request."
+        "Beschreibe kurz, was geändert wurde und wie du die Änderung kontrolliert hast.",
+        "Der Bereich Pull Requests wird hervorgehoben. Öffne ihn, prüfe Head feature/readme-guide und Base main, schreibe eine eigene nachvollziehbare Beschreibung mit Änderungszweck und Prüfnachweis und erstelle den Pull Request."
       ],
       "validation": {
         "kind": "event",
@@ -142,14 +142,11 @@
         "match": {
           "headBranch": "feature/readme-guide",
           "title": "README um Einstieg ergänzen"
-        },
-        "contains": {
-          "description": "Einrichtung geprüft"
         }
       },
       "highlightTarget": "platform.pullRequests",
       "highlightTooltip": "Hier entsteht der prüfbare Änderungsvorschlag aus deinem Branch.",
-      "successMessage": "Der Pull Request verbindet Branch, Zweck und Prüfnachweis."
+      "successMessage": "Der Pull Request verbindet Branch und Zweck mit einer frei formulierten Beschreibung."
     },
     {
       "id": "inspect-pull-request-diff",
@@ -174,23 +171,20 @@
       "id": "reply-to-review",
       "title": "Review-Feedback beantworten",
       "description": "Requested Changes blockiert je nach Regel den Merge, bis die Rückfrage geklärt oder die Änderung korrigiert ist.",
-      "instruction": "Wechsle zur Unterhaltung und beantworte den Review-Kommentar mit einer Nachricht, die „geprüft“ enthält.",
+      "instruction": "Wechsle zur Unterhaltung und beantworte den Review-Kommentar in eigenen Worten mit dem Ergebnis deiner Prüfung.",
       "why": "Eine nachvollziehbare Antwort dokumentiert, wie mit Feedback umgegangen wurde, und hält den Review-Kontext für das Team fest.",
       "helpLevels": [
         "Öffne wieder den Reiter Unterhaltung.",
-        "Schreibe zum Beispiel „Links und Inhalte geprüft; keine Zugangsdaten enthalten.“.",
-        "Der gelb markierte Review-Bereich mit dem Antwortfeld wird hervorgehoben. Schreibe dort „Links und Inhalte geprüft; keine Zugangsdaten enthalten.“ und sende die Antwort."
+        "Antworte fachlich auf die Rückfrage zu Zugangsdaten und geprüftem Link.",
+        "Der gelb markierte Review-Bereich mit dem Antwortfeld wird hervorgehoben. Schreibe dort in eigenen Worten, was du zu Zugangsdaten und Link kontrolliert hast, und sende die Antwort."
       ],
       "validation": {
         "kind": "event",
-        "type": "platform.pull_request.review.replied",
-        "contains": {
-          "reply": "geprüft"
-        }
+        "type": "platform.pull_request.review.replied"
       },
       "highlightTarget": "platform.pullRequest.review",
       "highlightTooltip": "Antworte fachlich auf den angefragten Änderungsbedarf.",
-      "successMessage": "Das Review-Feedback ist beantwortet und nachvollziehbar erledigt."
+      "successMessage": "Das Review-Feedback ist mit einer frei formulierten Antwort nachvollziehbar bearbeitet."
     },
     {
       "id": "complete-status-checks",

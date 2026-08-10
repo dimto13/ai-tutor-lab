@@ -54,6 +54,12 @@
           "whenContentEquals": "def add(a, b):\n",
           "text": "    return a + b\n"
         }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "response": "calculator.py enthält eine kleine Python-Funktion namens add. Sie erhält zwei Eingaben und soll diese addieren; der aktuelle Dateikontext hilft Copilot, deine Frage auf genau diese Datei zu beziehen."
+        }
       ]
     }
   },
@@ -142,7 +148,10 @@
         "Der Copilot-Button wird hervorgehoben. Klicke genau auf Copilot, um den Chat zu öffnen."
       ],
       "expectedEvent": "copilot.chat.opened",
-      "validation": { "kind": "event", "type": "copilot.chat.opened" },
+      "validation": {
+        "kind": "event",
+        "type": "copilot.chat.opened"
+      },
       "highlightTarget": "copilot.chat.toggle",
       "highlightTooltip": "Öffne Copilot Chat.",
       "successMessage": "Copilot Chat ist geöffnet."
@@ -174,7 +183,9 @@
       "validation": {
         "kind": "event",
         "type": "copilot.conversation.started",
-        "match": { "activeFile": "calculator.py" }
+        "match": {
+          "activeFile": "calculator.py"
+        }
       },
       "highlightTarget": "copilot.chat.newConversation",
       "highlightTooltip": "Beginne einen neuen Chat-Verlauf.",
@@ -184,23 +195,24 @@
       "id": "use-file-context",
       "title": "Dateikontext bewusst nutzen",
       "description": "calculator.py ist im Editor geöffnet. Der simulierte Copilot erhält deshalb diese Python-Datei als aktuellen Kontext für deine Frage.",
-      "instruction": "Frage Copilot: Was macht die aktuell geöffnete Datei?",
+      "instruction": "Frage Copilot in eigenen Worten, was die aktuell geöffnete Datei macht.",
       "why": "Kontext hilft der KI, eine allgemeine Frage auf deinen konkreten Arbeitsstand zu beziehen. Prüfe trotzdem immer, welche Informationen tatsächlich in den Kontext gelangen dürfen.",
       "helpLevels": [
         "Nutze das Eingabefeld Ask Copilot... im geöffneten Chat.",
-        "Tippe die Frage in das Prompt-Feld und drücke Enter.",
-        "Das Prompt-Feld wird hervorgehoben. Tippe dort „Was macht die aktuell geöffnete Datei?“ ein und drücke Enter."
+        "Formuliere eine Frage zur Aufgabe oder zum Zweck der aktuell geöffneten Datei und drücke Enter.",
+        "Das Prompt-Feld wird hervorgehoben. Frage dort in eigenen Worten nach der Aufgabe der aktuell geöffneten Datei und drücke Enter."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
         "kind": "event",
         "type": "copilot.prompt.submitted",
-        "match": { "activeFile": "calculator.py" },
-        "contains": { "prompt": "aktuell geöffnete Datei" }
+        "match": {
+          "activeFile": "calculator.py"
+        }
       },
       "highlightTarget": "copilot.chat.prompt",
       "highlightTooltip": "Stelle die geforderte Frage im aktuellen Dateikontext.",
-      "successMessage": "Die konkrete Frage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
+      "successMessage": "Deine frei formulierte Frage wurde mit calculator.py als aktivem Dateikontext verarbeitet."
     },
     {
       "id": "select-plan-mode",
@@ -217,7 +229,9 @@
       "validation": {
         "kind": "event",
         "type": "copilot.mode.changed",
-        "match": { "mode": "plan" }
+        "match": {
+          "mode": "plan"
+        }
       },
       "highlightTarget": "copilot.chat.modeSelector",
       "highlightTooltip": "Wähle Plan als Arbeitsmodus.",
@@ -250,7 +264,9 @@
       "validation": {
         "kind": "event",
         "type": "copilot.model.changed",
-        "match": { "modelId": "gpt-5.3-codex" }
+        "match": {
+          "modelId": "gpt-5.3-codex"
+        }
       },
       "highlightTarget": "copilot.chat.modelSelector",
       "highlightTooltip": "Wähle bewusst ein konkretes Modell.",
@@ -271,7 +287,9 @@
       "validation": {
         "kind": "event",
         "type": "copilot.model.changed",
-        "match": { "modelId": "auto" }
+        "match": {
+          "modelId": "auto"
+        }
       },
       "highlightTarget": "copilot.chat.modelSelector",
       "highlightTooltip": "Wechsle zurück auf Auto.",
@@ -292,8 +310,12 @@
       "validation": {
         "kind": "event",
         "type": "ai.suggestion.accepted",
-        "match": { "file": "calculator.py" },
-        "contains": { "text": "return a + b" }
+        "match": {
+          "file": "calculator.py"
+        },
+        "contains": {
+          "text": "return a + b"
+        }
       },
       "highlightTarget": "copilot.inline.generate",
       "highlightTooltip": "Erzeuge zuerst den Inline-Vorschlag und übernimm ihn danach bewusst.",

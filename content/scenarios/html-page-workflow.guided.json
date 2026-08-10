@@ -36,7 +36,6 @@
       "activeFile": "auftrag.md",
       "chatResponses": [
         {
-          "promptContains": "teamübersicht",
           "response": "Der Auftrag ist klar. Ich habe eine erste Teamübersicht als HTML-Entwurf vorbereitet. Prüfe das Ergebnis in der Vorschau und verändere es anschließend schrittweise."
         },
         {
@@ -116,20 +115,17 @@
       "id": "prompt",
       "title": "Auftrag in eigenen Worten formulieren",
       "description": "Du brauchst eine kleine interne Seite für das Projektteam. Beschreibe das gewünschte Ergebnis fachlich, ohne HTML-Anweisungen zu schreiben.",
-      "instruction": "Öffne Copilot und sende einen eigenen Auftrag für eine Teamübersicht mit Name, Rolle und Status.",
+      "instruction": "Öffne Copilot und beschreibe in eigenen Worten eine interne Übersicht des Projektteams mit Name, Rolle und Status.",
       "why": "Der Lernpunkt ist Zielbeschreibung: Die KI soll aus dem fachlichen Bedarf einen ersten Entwurf erzeugen.",
       "helpLevels": [
         "Öffne Copilot Chat.",
-        "Beschreibe Inhalt und Zweck der Übersicht.",
-        "Formuliere einen Auftrag für eine Teamübersicht mit Name, Rolle und Status und sende ihn in Copilot Chat; verwende dabei ausdrücklich das Wort „Teamübersicht“."
+        "Beschreibe Inhalt und Zweck der gewünschten Übersicht.",
+        "Formuliere einen eigenen Auftrag für eine interne Übersicht mit Name, Rolle und Status und sende ihn ab. Du musst keinen vorgegebenen Begriff verwenden."
       ],
-      "successMessage": "Der fachliche Auftrag wurde formuliert.",
+      "successMessage": "Der frei formulierte fachliche Auftrag wurde gesendet.",
       "validation": {
         "kind": "event",
-        "type": "copilot.prompt.submitted",
-        "contains": {
-          "prompt": "Teamübersicht"
-        }
+        "type": "copilot.prompt.submitted"
       },
       "highlightTarget": "copilot.chat.prompt"
     },
@@ -284,7 +280,8 @@
           "prompt": "Nora Berger"
         }
       },
-      "highlightTarget": "copilot.chat.prompt"
+      "highlightTarget": "copilot.chat.prompt",
+      "exactTextValidation": true
     },
     {
       "id": "restore-loss",

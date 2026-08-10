@@ -21,9 +21,7 @@ const files = (await readdir(scenarioDir)).filter((file) => file.endsWith(".json
 const issues: string[] = [];
 
 for (const file of files) {
-  const scenario = JSON.parse(
-    await readFile(resolve(scenarioDir, file), "utf8"),
-  ) as ScenarioLike;
+  const scenario = JSON.parse(await readFile(resolve(scenarioDir, file), "utf8")) as ScenarioLike;
   if (scenario.audience?.personaId !== "non-programmer") continue;
 
   for (const step of scenario.steps ?? []) {
@@ -40,9 +38,7 @@ for (const file of files) {
   for (const violation of validateCompletionFreeTextPolicy(
     scenario.completionValidation as never,
   )) {
-    issues.push(
-      `content/scenarios/${file} · ${violation.path}: ${violation.message}`,
-    );
+    issues.push(`content/scenarios/${file} · ${violation.path}: ${violation.message}`);
   }
 }
 

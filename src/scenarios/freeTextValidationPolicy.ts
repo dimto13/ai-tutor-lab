@@ -64,12 +64,7 @@ export function validateStepFreeTextPolicy(step: {
   exactTextValidation?: boolean;
 }): FreeTextPolicyViolation[] {
   const violations: FreeTextPolicyViolation[] = [];
-  visitValidation(
-    step.validation,
-    step.exactTextValidation === true,
-    "validation",
-    violations,
-  );
+  visitValidation(step.validation, step.exactTextValidation === true, "validation", violations);
   return violations;
 }
 
