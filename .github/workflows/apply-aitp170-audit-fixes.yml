@@ -1,0 +1,223 @@
+name: Apply AITP-170 audit fixes
+
+on:
+  push:
+    branches:
+      - agent/aitp-170-persona-audit
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/aitp-170-persona-audit
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --install-strategy=nested
+
+      - name: Apply persona and glossary audit corrections
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const load = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
+          const save = (path, value) => fs.writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+          const unique = (items) => [...new Set(items)];
+          const audience = (data, concepts) => {
+            data.audience = {
+              personaId: 'non-programmer',
+              glossaryConcepts: unique(concepts),
+              ...(data.audience?.introductionStepRefs ? { introductionStepRefs: data.audience.introductionStepRefs } : {}),
+              ...(data.audience?.introductionStepIds ? { introductionStepIds: data.audience.introductionStepIds } : {}),
+            };
+          };
+
+          const artifactPath = 'content/scenarios/artifact-preview-foundation.guided.json';
+          const artifact = load(artifactPath);
+          audience(artifact, ['artifact.preview', 'web.html']);
+          artifact.title = 'Artefakt-Vorschau – Ergebnisse prüfen';
+          artifact.description = 'Prüfe eine gemeinsame Ergebnisfläche mit HTML-, Tabellen- und strukturierten Ergebnissen sowie einer nachvollziehbaren Überarbeitung.';
+          const artifactSteps = Object.fromEntries(artifact.steps.map((step) => [step.id, step]));
+          artifactSteps['select-html-artifact'].description = 'Die Ergebnisfläche kann unterschiedliche Arten von Ergebnissen an derselben Stelle anzeigen.';
+          artifactSteps['select-html-artifact'].why = 'So erkennst du, welches Ergebnis gerade aktiv ist, bevor du es prüfst oder weiterbearbeitest.';
+          artifactSteps['select-html-artifact'].highlightTooltip = 'Wähle die Team-Übersicht als aktives HTML-Ergebnis aus.';
+          artifactSteps['switch-to-source'].why = 'Die Quelltextansicht zeigt nachvollziehbar, was erzeugt wurde, ohne den HTML-Inhalt auszuführen.';
+          artifactSteps['apply-artifact-revision'].title = 'Vorbereitete Überarbeitung anwenden';
+          artifactSteps['apply-artifact-revision'].description = 'Eine vorbereitete Überarbeitung verändert das Ergebnis nachvollziehbar und wiederholbar.';
+          artifactSteps['apply-artifact-revision'].why = 'So kannst du eine sichtbare Änderung vergleichen, ohne selbst Code oder Formeln erzeugen zu müssen.';
+          artifactSteps['apply-artifact-revision'].highlightTooltip = 'Wende die vorbereitete Überarbeitung auf das aktuelle Ergebnis an.';
+          save(artifactPath, artifact);
+
+          const copilotPath = 'content/scenarios/copilot-basics.guided.json';
+          const copilot = load(copilotPath);
+          copilot.audience.glossaryConcepts = unique([
+            ...copilot.audience.glossaryConcepts,
+            'vscode.editor',
+            'vscode.panel',
+            'copilot.mcp',
+            'copilot.agent_skill',
+          ]);
+          save(copilotPath, copilot);
+
+          const developerPath = 'content/scenarios/developer-workflow-basics.guided.json';
+          const developer = load(developerPath);
+          audience(developer, [
+            'vscode.activity_bar',
+            'vscode.explorer',
+            'vscode.editor',
+            'vscode.terminal',
+            'programming.python',
+            'git.repository',
+            'github.copilot',
+            'copilot.inline_suggestion',
+          ]);
+          save(developerPath, developer);
+
+          const htmlPath = 'content/scenarios/html-page-workflow.guided.json';
+          const html = load(htmlPath);
+          audience(html, ['web.html', 'platform.review', 'artifact.preview']);
+          save(htmlPath, html);
+
+          const researchPath = 'content/scenarios/research-workflow.guided.json';
+          const research = load(researchPath);
+          audience(research, ['copilot.mcp', 'artifact.preview']);
+          save(researchPath, research);
+
+          const sourceControlConcepts = [
+            'git.repository',
+            'git.working_tree',
+            'git.branch',
+            'github.platform',
+            'git.github_difference',
+            'platform.repository',
+            'platform.branch_selector',
+            'platform.commit_history',
+            'platform.pull_request',
+            'platform.diff',
+            'platform.review',
+            'platform.status_checks',
+            'platform.issues',
+            'platform.remote',
+          ];
+          for (const path of [
+            'content/scenarios/source-control-platform-basics.challenge.json',
+            'content/scenarios/source-control-platform-basics.explore.json',
+            'content/scenarios/source-control-platform-basics.guided.json',
+          ]) {
+            const data = load(path);
+            audience(data, sourceControlConcepts);
+            save(path, data);
+          }
+
+          const vscodeExplorePath = 'content/scenarios/vscode-basics.explore.json';
+          const vscodeExplore = load(vscodeExplorePath);
+          const obsoleteMenuConcepts = new Set([
+            'vscode.edit_menu',
+            'vscode.selection_menu',
+            'vscode.view_menu',
+            'vscode.go_menu',
+            'vscode.run_menu',
+            'vscode.terminal_menu',
+            'vscode.help_menu',
+          ]);
+          vscodeExplore.audience.glossaryConcepts = vscodeExplore.audience.glossaryConcepts.filter(
+            (concept) => !obsoleteMenuConcepts.has(concept),
+          );
+          save(vscodeExplorePath, vscodeExplore);
+
+          const shortcutPath = 'content/scenarios/vscode-shortcuts.challenge.json';
+          const shortcut = load(shortcutPath);
+          audience(shortcut, ['vscode.shortcut', 'vscode.explorer', 'vscode.editor', 'platform.review']);
+          save(shortcutPath, shortcut);
+
+          const glossaryPath = 'content/glossary/de.json';
+          const glossary = load(glossaryPath);
+          glossary.technologyConcepts.ide = unique([...glossary.technologyConcepts.ide, 'vscode.shortcut']);
+          glossary.technologyConcepts.artifact_preview = unique([
+            ...glossary.technologyConcepts.artifact_preview,
+            'web.html',
+          ]);
+          if (!glossary.concepts.some((concept) => concept.key === 'vscode.shortcut')) {
+            glossary.concepts.push({
+              key: 'vscode.shortcut',
+              term: 'Shortcut',
+              aliases: ['Tastenkürzel', 'Tastatur-Shortcut', 'Shortcuts'],
+              simple: 'Ein Shortcut ist eine Tastenkombination, mit der du eine Funktion direkt aufrufst, ohne zuerst durch ein Menü zu gehen.',
+              advanced: 'VS Code ordnet Tastenkombinationen Befehlen zu. Die Belegung kann je nach Betriebssystem und eigener Konfiguration abweichen.',
+              uiTargets: [],
+            });
+          }
+          if (!glossary.concepts.some((concept) => concept.key === 'web.html')) {
+            glossary.concepts.push({
+              key: 'web.html',
+              term: 'HTML',
+              aliases: ['HTML-Seite', 'HTML-Dokument'],
+              simple: 'HTML beschreibt die Struktur einer Webseite, zum Beispiel Überschriften, Texte, Listen und Tabellen. Du kannst ein HTML-Ergebnis prüfen, ohne selbst HTML schreiben zu müssen.',
+              advanced: 'HTML ist eine Auszeichnungssprache. Browser interpretieren die Elemente als Dokumentstruktur; Darstellung und Verhalten können zusätzlich durch CSS und JavaScript ergänzt werden.',
+              uiTargets: [],
+            });
+          }
+          save(glossaryPath, glossary);
+
+          const validatorPath = 'scripts/validate-persona-audit.ts';
+          let validator = fs.readFileSync(validatorPath, 'utf8');
+          if (!validator.includes('label: "Shortcut"')) {
+            validator = validator.replace(
+              '  { pattern: /\\bWorkspace\\b/i, concepts: ["vscode.workspace"], label: "Workspace" },',
+              '  { pattern: /\\bWorkspace\\b/i, concepts: ["vscode.workspace"], label: "Workspace" },\n  { pattern: /\\bShortcut(?:s)?\\b/i, concepts: ["vscode.shortcut"], label: "Shortcut" },\n  { pattern: /\\bHTML\\b|\\bHTML-(?:Seite|Dokument|Artefakt)\\b/i, concepts: ["web.html"], label: "HTML" },',
+            );
+          }
+          fs.writeFileSync(validatorPath, validator);
+          NODE
+
+      - name: Format changed files
+        run: >-
+          npx prettier --write
+          content/glossary/de.json
+          content/scenarios/artifact-preview-foundation.guided.json
+          content/scenarios/copilot-basics.guided.json
+          content/scenarios/developer-workflow-basics.guided.json
+          content/scenarios/html-page-workflow.guided.json
+          content/scenarios/research-workflow.guided.json
+          content/scenarios/source-control-platform-basics.challenge.json
+          content/scenarios/source-control-platform-basics.explore.json
+          content/scenarios/source-control-platform-basics.guided.json
+          content/scenarios/vscode-basics.explore.json
+          content/scenarios/vscode-shortcuts.challenge.json
+          scripts/validate-persona-audit.ts
+
+      - name: Run static repository checks
+        run: npm run check
+
+      - name: Remove temporary workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/apply-aitp170-audit-fixes.yml
+          git config user.name "dimto13"
+          git config user.email "93082815+dimto13@users.noreply.github.com"
+          git add \
+            content/glossary/de.json \
+            content/scenarios/artifact-preview-foundation.guided.json \
+            content/scenarios/copilot-basics.guided.json \
+            content/scenarios/developer-workflow-basics.guided.json \
+            content/scenarios/html-page-workflow.guided.json \
+            content/scenarios/research-workflow.guided.json \
+            content/scenarios/source-control-platform-basics.challenge.json \
+            content/scenarios/source-control-platform-basics.explore.json \
+            content/scenarios/source-control-platform-basics.guided.json \
+            content/scenarios/vscode-basics.explore.json \
+            content/scenarios/vscode-shortcuts.challenge.json \
+            scripts/validate-persona-audit.ts \
+            .github/workflows/apply-aitp170-audit-fixes.yml
+          git commit -m "AITP-170: complete non-programmer persona audit"
+          git push origin HEAD:agent/aitp-170-persona-audit
