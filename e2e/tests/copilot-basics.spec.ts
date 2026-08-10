@@ -8,7 +8,7 @@ async function openCopilotScenario(page: Page) {
 async function completeIntroSteps(page: Page) {
   for (let index = 1; index <= 3; index += 1) {
     await expect(page.getByText(new RegExp(`Schritt ${index} –`))).toBeVisible();
-    await page.getByRole("button", { name: "Konzept verstanden" }).click();
+    await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
   }
 }
 
@@ -24,16 +24,16 @@ test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schrit
       "ai-training-lab:copilot-basics.guided:v2",
       JSON.stringify({
         statuses: {
-          "open-copilot-chat": "DONE",
-          "new-conversation": "DONE",
-          "use-file-context": "DONE",
-          "select-plan-mode": "DONE",
-          "select-model": "DONE",
-          "select-auto-model": "DONE",
-          "accept-inline-suggestion": "DONE",
-          "open-copilot-menu": "DONE",
-          "inspect-mcp-entry": "DONE",
-          "inspect-agent-skills-entry": "DONE",
+          "open-copilot-chat": "COMPLETED",
+          "new-conversation": "COMPLETED",
+          "use-file-context": "COMPLETED",
+          "select-plan-mode": "COMPLETED",
+          "select-model": "COMPLETED",
+          "select-auto-model": "COMPLETED",
+          "accept-inline-suggestion": "COMPLETED",
+          "open-copilot-menu": "COMPLETED",
+          "inspect-mcp-entry": "COMPLETED",
+          "inspect-agent-skills-entry": "COMPLETED",
         },
         activeStepId: null,
         startedAt: Date.now() - 60_000,
@@ -48,9 +48,7 @@ test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schrit
   await openCopilotScenario(page);
   await expect(page.getByText("Training abgeschlossen")).toBeVisible();
   await expect(page.getByText("140 Punkte")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Bekannte Grundlagen überspringen" })).toHaveCount(
-    0,
-  );
+  await expect(page.getByRole("button", { name: "Grundbegriffe überspringen" })).toHaveCount(0);
 });
 
 test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel durchlaufbar", async ({
