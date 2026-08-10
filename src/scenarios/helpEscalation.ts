@@ -14,7 +14,7 @@ export interface HelpEscalationViolation {
 }
 
 const ACTION_PATTERN =
-  /\b(klicke|öffne|wähle|tippe|gib|drücke|wechsle|nutze|prüfe|markiere|erstelle|schreibe|starte|führe|bestätige|lade|speichere|sende|füge|setze|suche|finde|aktiviere|deaktiviere|lege|gehe|navigiere|antworte|formuliere|vergleiche|identifiziere|übernimm|akzeptiere|verwirf|ziehe|halte|lass|wende|trage|achte|bleibe|sieh|lies|beantworte|bringe)\b/u;
+  /(?<![\p{L}\p{N}])(klicke|öffne|wähle|tippe|gib|drücke|wechsle|nutze|prüfe|markiere|erstelle|schreibe|starte|führe|bestätige|lade|speichere|sende|füge|setze|suche|finde|aktiviere|deaktiviere|lege|gehe|navigiere|antworte|formuliere|vergleiche|identifiziere|übernimm|akzeptiere|verwirf|ziehe|halte|lass|wende|trage|achte|bleibe|sieh|lies|beantworte|bringe)(?![\p{L}\p{N}])/u;
 
 const HIGHLIGHT_MARKERS = ["hervorgehoben", "markiert", "highlight", "rahmen"];
 
