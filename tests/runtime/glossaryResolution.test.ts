@@ -73,3 +73,22 @@ test("standalone Code remains available as the generic glossary concept", () => 
 test("specific product aliases deterministically outrank overlapping shorter terms", () => {
   assert.equal(findGlossaryConcept("Was ist Visual Studio Code?")?.key, "vscode.product");
 });
+
+test("VS Code UI foundations provide non-programmer analogies", () => {
+  const expectedAnalogies = new Map([
+    ["vscode.activity_bar", "Outlook"],
+    ["vscode.side_bar", "Word"],
+    ["vscode.view", "Office"],
+    ["vscode.explorer", "Office"],
+    ["vscode.editor", "Word"],
+    ["vscode.panel", "Office"],
+    ["vscode.terminal", "Excel"],
+    ["vscode.status_bar", "Word"],
+  ]);
+
+  for (const [conceptKey, analogyMarker] of expectedAnalogies) {
+    const concept = getGlossaryConceptByKey(conceptKey);
+    assert.ok(concept, `missing glossary concept ${conceptKey}`);
+    assert.match(concept.simple, new RegExp(analogyMarker, "i"), `${conceptKey} lacks its analogy`);
+  }
+});

@@ -127,7 +127,8 @@ export interface Scenario {
   audience?: {
     personaId: string; // Referenz auf content/personas/*.json
     glossaryConcepts: string[]; // im Guide kontextuell erklärte Mindestbegriffe
-    introductionStepIds?: string[]; // zusammenhängender, optionaler Einstiegsblock
+    introductionStepRefs?: string[]; // wiederverwendbare Einstiege aus content/introductions/*.json
+    introductionStepIds?: string[]; // lokale bzw. vom Loader effektiv aufgelöste Einstiegs-IDs
   };
   environment: {
     productId: string;
@@ -165,6 +166,13 @@ export interface TrainingEvent<P = unknown> {
   payload: P;
 }
 ```
+
+Wiederverwendbare Einführungen bleiben Content-Daten. Ein Guided-Szenario kann unter
+`audience.introductionStepRefs` IDs aus `content/introductions/*.json` referenzieren. Der
+Content-Loader löst diese Referenzen auf, stellt die optionalen `explanation`-Schritte vor die
+szenariospezifischen Schritte und ergänzt die effektiven `introductionStepIds`. Explore erklärt
+Oberflächenbegriffe über `describeSurface()` und das Glossar; Challenge behält ausschließlich seine
+Ziel-/Endzustandssemantik und akzeptiert deshalb keine gemeinsamen Einführungsschritte.
 
 Kanonische Event-Typen (erweiterbar, aber nicht umbenennen):
 
