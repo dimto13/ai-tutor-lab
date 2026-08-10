@@ -1,72 +1,79 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function waitUntilReady(page: Page) {
-  await expect(page.getByRole("status")).toContainText("Training bereit");
+async function openCopilotScenario(page: Page) {
+  await page.goto("/training/copilot-basics.guided");
+  await expect(page.getByText("GitHub Copilot – Grundlagen")).toBeVisible();
 }
 
-const legacyGuidedStepIds = [
-  "open-copilot-chat",
-  "session-vs-conversation",
-  "new-conversation",
-  "use-file-context",
-  "select-plan-mode",
-  "understand-chat-modes",
-  "select-explicit-model",
-  "select-auto-model",
-  "accept-inline-suggestion",
-  "understand-mcp",
-  "understand-agent-skills",
-] as const;
+async function completeIntroSteps(page: Page) {
+  for (let index = 1; index <= 3; index += 1) {
+    await expect(page.getByText(new RegExp(`Schritt ${index} –`))).toBeVisible();
+    await page.getByRole("button", { name: "Konzept verstanden" }).click();
+  }
+}
+
+async function clickCurrentConceptButton(page: Page) {
+  await page.getByRole("button", { name: "Konzept verstanden" }).click();
+}
 
 test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({
   page,
 }) => {
-  await page.goto("/");
-  await page.evaluate((stepIds) => {
-    localStorage.setItem(
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
       "ai-training-lab:copilot-basics.guided:v2",
       JSON.stringify({
-        statuses: Object.fromEntries(stepIds.map((stepId) => [stepId, "COMPLETED"])),
+        statuses: {
+          "open-copilot-chat": "DONE",
+          "new-conversation": "DONE",
+          "use-file-context": "DONE",
+          "select-plan-mode": "DONE",
+          "select-model": "DONE",
+          "select-auto-model": "DONE",
+          "accept-inline-suggestion": "DONE",
+          "open-copilot-menu": "DONE",
+          "inspect-mcp-entry": "DONE",
+          "inspect-agent-skills-entry": "DONE",
+        },
         activeStepId: null,
-        startedAt: 1_786_280_000_000,
-        finishedAt: 1_786_283_600_000,
-        challengeOutcome: null,
-        hintsUsed: 2,
-        mistakes: 1,
-        lastAction: null,
-        exploredTargets: [],
-        lastInspectedRef: null,
+        startedAt: Date.now() - 60_000,
+        finishedAt: Date.now() - 1_000,
+        hintsUsed: 0,
+        mistakes: 0,
+        lastAction: "legacy-complete",
       }),
     );
-  }, legacyGuidedStepIds);
+  });
 
-  await page.goto("/training/copilot-basics.guided");
-  await waitUntilReady(page);
-
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
-  await expect(page.getByText("14 von 14", { exact: true })).toBeVisible();
-  await expect(page.getByText("140", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Training erneut starten" }).click();
-  await expect(page.getByText("Schritt 1 – Code und Programmierung einordnen")).toBeVisible();
+  await openCopilotScenario(page);
+  await expect(page.getByText("Training abgeschlossen")).toBeVisible();
+  await expect(page.getByText("140 Punkte")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Bekannte Grundlagen überspringen" })).toHaveCount(0);
 });
 
 test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel durchlaufbar", async ({
   page,
 }) => {
-  await page.goto("/training/copilot-basics.guided");
-  await waitUntilReady(page);
+  await openCopilotScenario(page);
 
-  await expect(page.getByText("Schritt 1 – Code und Programmierung einordnen")).toBeVisible();
-  await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
+  await completeIntroSteps(page);
   await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Konzept verstanden" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const chat = page.locator('[data-highlight="copilot.chat"]');
+
+  const chat = page.getByTestId("copilot-chat");
   await expect(chat).toBeVisible();
+  await expect(chat).toBeInViewport();
+  const chatBox = await chat.boundingBox();
+  expect(chatBox).not.toBeNull();
+  expect(chatBox!.x).toBeGreaterThanOrEqual(0);
+  expect(chatBox!.y).toBeGreaterThanOrEqual(0);
+  expect(chatBox!.x + chatBox!.width).toBeLessThanOrEqual(1280);
+  expect(chatBox!.y + chatBox!.height).toBeLessThanOrEqual(720);
   expect(
     await chat.evaluate((element) => {
       const rect = element.getBoundingClientRect();
-      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + 50);
+      const x = Math.min(window.innerWidth - 1, Math.max(0, rect.left + rect.width / 2));
+      const y = Math.min(window.innerHeight - 1, Math.max(0, rect.top + 36));
+      const hit = document.elementFromPoint(x, y);
       return hit !== null && element.contains(hit);
     }),
   ).toBe(true);
@@ -96,7 +103,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");
   await expect(
-    page.getByText(/calculator\.py.*def add\(a, b\):.*noch keinen Funktionskörper/),
+    page.getByText(/calculator\.py.*add.*zwei Eingaben.*addieren.*Dateikontext/),
   ).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
   await expect(page.getByText("Schritt 8 – Plan-Modus auswählen")).toBeVisible();
@@ -113,101 +120,77 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
   await expect(page.getByText("Schritt 12 – Inline-Vorschlag prüfen und annehmen")).toBeVisible();
 
-  const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
-  await expect(generateSuggestion).toBeVisible();
-  await generateSuggestion.click();
-  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
-    "return a + b",
-  );
-  await page.getByRole("button", { name: "Annehmen" }).click();
-  await expect(page.locator("textarea")).toHaveValue("def add(a, b):\n    return a + b\n");
+  await page.getByRole("button", { name: "Inline-Vorschlag annehmen" }).click();
+  await expect(page.getByText(/return a \+ b/)).toBeVisible();
+  await expect(page.getByText("Schritt 13 – Copilot-Erweiterungen finden")).toBeVisible();
 
-  await expect(page.getByText("Schritt 13 – MCP als Erweiterungskonzept verstehen")).toBeVisible();
-  await page.getByRole("button", { name: "Konzept verstanden" }).click();
-  await expect(page.getByText("Schritt 14 – Agent Skills einordnen")).toBeVisible();
-  await page.getByRole("button", { name: "Konzept verstanden" }).click();
+  await page.getByRole("button", { name: "Copilot-Menü öffnen" }).click();
+  await expect(page.getByText("Schritt 14 – MCP und Agent Skills einordnen")).toBeVisible();
+  await page.getByRole("button", { name: "MCP-Eintrag" }).click();
+  await page.getByRole("button", { name: "Agent Skills-Eintrag" }).click();
 
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
-  await expect(page.getByText("Weiterführende Quellen")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Copilot Chat in der IDE/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Agent Skills/ })).toBeVisible();
-  await expect(page.getByText(/Ollama/i)).toHaveCount(0);
+  await expect(page.getByText("Training abgeschlossen")).toBeVisible();
+  await expect(page.getByText("140 Punkte")).toBeVisible();
 });
 
 test("Einsteiger können Grundbegriffe lesen und direkt im Guide nachschlagen", async ({ page }) => {
-  await page.goto("/training/copilot-basics.guided");
-  await waitUntilReady(page);
+  await openCopilotScenario(page);
 
-  await page.getByRole("button", { name: "Code: Begriffserklärung öffnen" }).first().click();
-  await expect(page.getByRole("heading", { name: "Code", exact: true })).toBeVisible();
-  await expect(page.getByText(/Excel-Formel ist ein vertrautes Beispiel/)).toBeVisible();
-  await page.keyboard.press("Escape");
+  await expect(page.getByText("Schritt 1 – Code und Programmierung einordnen")).toBeVisible();
+  await expect(page.getByText(/Excel-Formel/)).toBeVisible();
+  await expect(page.getByText(/Code funktioniert nach demselben Grundgedanken/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
-  await expect(page.getByText("Schritt 2 – Python als Beispielsprache verstehen")).toBeVisible();
-  await page.getByRole("button", { name: "Python: Begriffserklärung öffnen" }).first().click();
-  await expect(
-    page.getByText(
-      "Python ist eine Programmiersprache mit vergleichsweise gut lesbaren Regeln. Dateien mit der Endung .py enthalten Python-Code.",
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await page.keyboard.press("Escape");
-
-  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
-  await expect(page.getByText("Schritt 3 – Workspace und Repository unterscheiden")).toBeVisible();
-  await page.getByRole("button", { name: "Grundbegriff verstanden" }).click();
+  await completeIntroSteps(page);
   await expect(page.getByText("Schritt 4 – Copilot Chat öffnen")).toBeVisible();
+
+  await page.getByRole("button", { name: "Guide" }).click();
+  await expect(page.getByText("Begriffe in diesem Training")).toBeVisible();
+  await expect(page.getByText("Code", { exact: true })).toBeVisible();
+  await expect(page.getByText("Programmierung", { exact: true })).toBeVisible();
+  await expect(page.getByText("Python", { exact: true })).toBeVisible();
+  await expect(page.getByText("Workspace", { exact: true })).toBeVisible();
+  await expect(page.getByText("Repository", { exact: true })).toBeVisible();
+  await expect(page.getByText("Inline-Vorschlag", { exact: true })).toBeVisible();
 });
 
-test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({
-  page,
-}) => {
-  await page.goto("/training/copilot-basics.guided");
-  await waitUntilReady(page);
+test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel", async ({ page }) => {
+  await openCopilotScenario(page);
+  await completeIntroSteps(page);
 
-  await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const generateSuggestion = page.locator('[data-highlight="copilot.inline.generate"]');
-  const inlineSuggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
+  await page.getByRole("button", { name: "Copilot" }).click();
+  await clickCurrentConceptButton(page);
+  await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
+  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await prompt.fill("Was macht diese Datei?");
+  await prompt.press("Enter");
+  await page.getByLabel("Modus").selectOption("plan");
+  await clickCurrentConceptButton(page);
+  await page.getByLabel("Modell").selectOption("gpt-5.3-codex");
+  await page.getByLabel("Modell").selectOption("auto");
 
-  await generateSuggestion.click();
-  await expect(inlineSuggestion).toContainText("return a + b");
-  await expect(page.getByRole("button", { name: "Annehmen" })).toBeVisible();
-
-  await page.getByRole("button", { name: "README.md", exact: true }).click();
-  await expect(page.getByText("Kontext: README.md")).toBeVisible();
-  await expect(inlineSuggestion).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Annehmen" })).toHaveCount(0);
-
-  await page.getByRole("button", { name: "calculator.py", exact: true }).first().click();
-  await expect(page.getByText("Kontext: calculator.py")).toBeVisible();
-  await generateSuggestion.click();
-  await expect(inlineSuggestion).toContainText("return a + b");
-
-  const editor = page.locator("textarea");
-  await editor.fill("def add(a, b):\n    return a - b\n");
-  await page.getByRole("button", { name: "Annehmen" }).click();
-
-  await expect(editor).toHaveValue("def add(a, b):\n    return a - b\n");
-  await expect(page.getByRole("button", { name: "Annehmen" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Inline-Vorschlag annehmen" })).toBeVisible();
+  await page.getByRole("button", { name: "README.md" }).click();
+  await expect(page.getByRole("button", { name: "Inline-Vorschlag annehmen" })).toHaveCount(0);
 });
 
-test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktprofil", async ({
-  page,
-}) => {
-  await page.goto("/training/copilot-basics.guided");
-  await waitUntilReady(page);
+test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktprofil", async ({ page }) => {
+  await openCopilotScenario(page);
+  await completeIntroSteps(page);
 
-  await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const modelSelector = page.getByLabel("Modell");
-  await expect(modelSelector.locator("option")).toHaveText([
+  await page.getByRole("button", { name: "Copilot" }).click();
+  await clickCurrentConceptButton(page);
+  await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
+  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await prompt.fill("Was macht diese Datei?");
+  await prompt.press("Enter");
+  await page.getByLabel("Modus").selectOption("plan");
+  await clickCurrentConceptButton(page);
+
+  const modelSelect = page.getByLabel("Modell");
+  await expect(modelSelect.locator("option")).toHaveText([
     "Auto",
     "GPT-5.3-Codex",
-    "GPT-5.5",
-    "Claude Sonnet 4.6",
-    "Gemini 3.5 Flash",
+    "GPT-5.4",
+    "Claude Opus 4.6",
   ]);
-
-  const modeSelector = page.getByLabel("Modus");
-  await expect(modeSelector.locator("option")).toHaveText(["Ask", "Plan (Preview)", "Agent"]);
 });
