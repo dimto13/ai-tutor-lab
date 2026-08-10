@@ -15,22 +15,41 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   await page.goto("/training/copilot-basics.explore");
   await expect(page.getByRole("status")).toContainText("Training bereit");
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
+
   const chat = page.locator('[data-highlight="copilot.chat"]');
   await chat.click({ position: { x: 10, y: 10 } });
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
-  await page.locator('[data-highlight="copilot.chat.contextSelector"]').selectOption("none");
-  await page.locator('[data-highlight="copilot.chat.contextSelector"]').selectOption("active");
-  await page.getByPlaceholder("Ask Copilot...").focus();
-  await page.getByLabel("Modus").selectOption("plan");
-  await page.getByLabel("Modell").selectOption("gpt-5.3-codex");
-  await page.getByRole("button", { name: "Copilot-Aufgabe stoppen" }).click();
-  const generate = page.locator('[data-highlight="copilot.inline.generate"]');
-  await generate.click();
+
+  await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
+  await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
+  await page.locator('[data-highlight="copilot.chat.contextAttachment"]').click();
+
+  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  await prompt.focus();
+  const mode = page.getByLabel("Modus");
+  await mode.focus();
+  await mode.selectOption("agent");
+  const model = page.getByLabel("Modell");
+  await model.focus();
+  await model.selectOption("gpt-5.3-codex");
+  await page.getByRole("button", { name: "Aufgabe stoppen" }).click();
+
   const suggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
-  await suggestion.click({ position: { x: 8, y: 8 } });
-  await page.getByRole("button", { name: "Ablehnen" }).click();
-  await generate.click();
-  await page.getByRole("button", { name: "Annehmen" }).click();
+  await expect(suggestion).toContainText("return a + b");
+  await suggestion.dispatchEvent("click");
+
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Escape");
+
+  await prompt.fill("Bitte korrigiere den Vorschlag auf Addition mit a + b.");
+  await prompt.press("Enter");
+  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
+    "return a + b",
+  );
+  await editor.focus();
+  await editor.press("Tab");
+
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
@@ -38,11 +57,13 @@ test("Copilot Challenge ist über geprüften Inline-Vorschlag lösbar", async ({
   await page.goto("/training/copilot-basics.challenge");
   await expect(page.getByRole("status")).toContainText("Training bereit");
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  await page.locator('[data-highlight="copilot.inline.generate"]').click();
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
     "return a + b",
   );
-  await page.getByRole("button", { name: "Annehmen" }).click();
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+  await expect(editor).toHaveValue("def add(a, b):\n    return a + b\n");
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
@@ -52,10 +73,14 @@ test("Copilot Challenge ist alternativ über Chat plus eigene geprüfte Änderun
   await page.goto("/training/copilot-basics.challenge");
   await expect(page.getByRole("status")).toContainText("Training bereit");
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
+  await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
+  const prompt = page.getByPlaceholder(/Ask Copilot/);
   await prompt.fill("Bitte addiere a und b; nutze nur calculator.py als Kontext.");
   await prompt.press("Enter");
-  await page.locator("textarea").fill("def add(a, b):\n    return a + b\n");
+  await page
+    .getByRole("textbox", { name: "Editor-Inhalt" })
+    .fill("def add(a, b):\n    return a + b\n");
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
@@ -65,10 +90,14 @@ test("Copilot Challenge akzeptiert keinen Chat-Pfad mit synthetischem Geheimnis 
   await page.goto("/training/copilot-basics.challenge");
   await expect(page.getByRole("status")).toContainText("Training bereit");
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
+  await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
+  const prompt = page.getByPlaceholder(/Ask Copilot/);
   await prompt.fill("SYNTHETIC_SECRET=DEMO-ONLY-DO-NOT-SEND; addiere bitte a und b.");
   await prompt.press("Enter");
-  await page.locator("textarea").fill("def add(a, b):\n    return a + b\n");
+  await page
+    .getByRole("textbox", { name: "Editor-Inhalt" })
+    .fill("def add(a, b):\n    return a + b\n");
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
   await expect(page.getByText("Endzustand offen")).toBeVisible();
 });
