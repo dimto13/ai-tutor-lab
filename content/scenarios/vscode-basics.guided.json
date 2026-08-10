@@ -141,21 +141,21 @@
       "id": "open_terminal",
       "title": "Panel und seine Views unterscheiden",
       "description": "Im Panel können mehrere spezialisierte Ansichten liegen; VS Code nennt eine solche Ansicht View. Das Terminal ist die View für Textbefehle, Problems sammelt Fehler und Warnungen, und Output zeigt Protokoll- und Statusausgaben.",
-      "instruction": "Öffne jetzt das integrierte Terminal.",
-      "why": "Wenn du Panel und View unterscheidest, erkennst du, dass Terminal, Problems und Output unterschiedliche Werkzeuge im selben unteren Bereich sind.",
+      "instruction": "Öffne über Terminal → New Terminal ein integriertes Terminal.",
+      "why": "Wenn du Panel und View unterscheidest, erkennst du, dass Terminal, Problems und Output unterschiedliche Werkzeuge im selben unteren Bereich sind. Das Terminal-Menü ist ein regulärer Einstieg in diese View.",
       "helpLevels": [
-        "Nutze den Terminal-Einstieg in der bereits erklärten Status Bar ganz unten.",
-        "Klicke unten rechts in der Status Bar auf Terminal.",
-        "Der Terminal-Button in der Status Bar wird hervorgehoben. Klicke genau darauf."
+        "Öffne oben in der Menüleiste das Menü Terminal.",
+        "Wähle im geöffneten Terminal-Menü New Terminal.",
+        "Das Terminal-Menü wird hervorgehoben. Öffne es und klicke auf New Terminal."
       ],
       "expectedEvent": "terminal.opened",
       "validation": {
         "kind": "event",
         "type": "terminal.opened"
       },
-      "highlightTarget": "vscode.statusBar",
-      "highlightTooltip": "Die Status Bar bietet unter anderem den Einstieg ins Terminal.",
-      "successMessage": "Panel geöffnet. Das Terminal ist eine View innerhalb des Panels."
+      "highlightTarget": "vscode.menu.terminal",
+      "highlightTooltip": "Terminal → New Terminal öffnet ein integriertes Terminal im Panel.",
+      "successMessage": "Terminal über den regulären Terminal-Menüpfad geöffnet. Das Terminal ist eine View innerhalb des Panels."
     },
     {
       "id": "open_problems",
