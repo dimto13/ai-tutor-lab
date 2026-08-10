@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { validateHelpEscalation } from "../src/scenarios/helpEscalation.ts";
-import type { TrainingStep } from "../src/types/training.ts";
+import { validateHelpEscalation } from "../apps/web/src/scenarios/helpEscalation.ts";
+import type { TrainingStep } from "../apps/web/src/types/training.ts";
 
 interface StepContainer {
   steps?: unknown;

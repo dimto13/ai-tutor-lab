@@ -6,7 +6,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  { ignores: ["**/dist", "**/.output", "**/.vinxi", "**/.tanstack"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -34,6 +34,43 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
+    files: ["packages/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/*", "**/apps/web/**", "../../apps/web/**", "../../../apps/web/**"],
+              message:
+                "Packages must not depend on apps/web. Dependency direction is apps -> packages.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/training-engine/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "react", message: "training-engine must stay framework-free." },
+            { name: "react-dom", message: "training-engine must stay framework-free." },
+          ],
+          patterns: [
+            {
+              group: ["@/*", "**/apps/web/**", "../../apps/web/**", "../../../apps/web/**"],
+              message: "training-engine must not import the web application.",
+            },
+          ],
+        },
+      ],
     },
   },
   eslintPluginPrettier,

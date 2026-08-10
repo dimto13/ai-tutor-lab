@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { answerDeterministically } from "../../src/tutor/deterministicTutor.ts";
-import type { TutorContext } from "../../src/tutor/tutorContext.ts";
+import { answerDeterministically } from "../../apps/web/src/tutor/deterministicTutor.ts";
+import type { TutorContext } from "../../apps/web/src/tutor/tutorContext.ts";
 
 const context: TutorContext = {
   scenario: {

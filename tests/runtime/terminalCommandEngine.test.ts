@@ -5,7 +5,7 @@ import {
   formatTerminalPrompt,
   type TerminalCommandContext,
   type TerminalCommandResult,
-} from "../../src/runtime/terminalCommandEngine.ts";
+} from "../../apps/web/src/runtime/terminalCommandEngine.ts";
 
 function baseContext(): TerminalCommandContext {
   return {

@@ -3,8 +3,8 @@ import { test } from "node:test";
 import {
   findNextIncompleteStepId,
   normalizeGuidedStepProgress,
-} from "../../src/state/trainingProgress.ts";
-import type { Scenario, StepStatus } from "../../src/types/training.ts";
+} from "../../apps/web/src/state/trainingProgress.ts";
+import type { Scenario, StepStatus } from "../../apps/web/src/types/training.ts";
 
 const scenario = {
   id: "migration.guided",

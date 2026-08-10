@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createArtifactPreviewRuntime } from "../../src/runtime/artifactPreviewRuntime.ts";
+import { createArtifactPreviewRuntime } from "../../apps/web/src/runtime/artifactPreviewRuntime.ts";
 
 function createContainer(): HTMLElement {
   return {

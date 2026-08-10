@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseScenario } from "../../src/scenarios/contentLoader.ts";
+import { parseScenario } from "../../apps/web/src/scenarios/contentLoader.ts";
 
 function scenarioWithSeed(seed: Record<string, unknown>) {
   return {
@@ -176,6 +176,47 @@ test("content loader accepts safe artifact preview data and rejects executable H
       }),
     ),
   );
+});
+
+test("content loader accepts sequence and any validators from declarative content", () => {
+  const baseScenario = scenarioWithSeed({});
+  const parsed = parseScenario({
+    ...baseScenario,
+    steps: [
+      {
+        ...baseScenario.steps[0],
+        validation: {
+          kind: "sequence",
+          ordered: true,
+          of: [
+            { kind: "event", type: "file.opened" },
+            {
+              kind: "any",
+              of: [
+                { kind: "event", type: "editor.selection.changed" },
+                { kind: "event", type: "file.updated" },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  });
+
+  assert.deepEqual(parsed.steps[0]?.validation, {
+    kind: "sequence",
+    ordered: true,
+    of: [
+      { kind: "event", type: "file.opened" },
+      {
+        kind: "any",
+        of: [
+          { kind: "event", type: "editor.selection.changed" },
+          { kind: "event", type: "file.updated" },
+        ],
+      },
+    ],
+  });
 });
 
 test("content loader resolves reusable introduction steps before authored guided steps", () => {

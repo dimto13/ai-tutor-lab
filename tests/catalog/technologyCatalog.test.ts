@@ -4,7 +4,7 @@ import {
   parseTechnologyCatalog,
   technologyCatalog,
   validateCatalogEnvironmentReference,
-} from "../../src/catalog/index.ts";
+} from "../../apps/web/src/catalog/index.ts";
 
 test("technology catalog loads in Node without the frontend build", () => {
   assert.ok(technologyCatalog.providers.some(({ id }) => id === "ai-train-lab"));

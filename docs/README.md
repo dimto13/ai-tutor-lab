@@ -1,12 +1,13 @@
 # AI Training Lab — Produkt- und Anforderungsdokumentation
 
-> Einstiegspunkt der Dokumentation. Der Anwendungs-Quellcode liegt im Repository-Root
-> (`src/`), die alte POC-Spezifikation im [Archiv](archiv/poc-spezifikation.md).
+> Einstiegspunkt der Dokumentation. Der Anwendungs-Quellcode liegt unter `apps/web/src/`,
+> die wiederverwendbaren Bausteine unter `packages/` und die alte POC-Spezifikation im
+> [Archiv](archiv/poc-spezifikation.md).
 
 Konsolidierte Arbeitsgrundlage für die Weiterentwicklung der interaktiven KI-Schulungsplattform
 vom POC zur produktreifen Plattform.
 
-**Stand:** 2026-08-08 · **Version:** 1.1 · **Status:** Arbeitsgrundlage, noch nicht abgenommen
+**Stand:** 2026-08-10 · **Version:** 1.2 · **Status:** Arbeitsgrundlage, noch nicht abgenommen
 
 ---
 
@@ -36,6 +37,7 @@ vom POC zur produktreifen Plattform.
 | `09-glossar.md`                      | Begriffe, damit Modelle konsistent bleiben                                                      | alle                     |
 | `10-dokumenten-check.md`             | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary                            | Product, Security        |
 | `12-simulator-aktualitaet.md`        | Halbjährliche Produktprüfung, Verantwortlichkeit und automatische Drift-Tickets                 | Product, QA, Entwicklung |
+| `18-monorepo-architektur.md`         | Workspace-Struktur, Package-Grenzen, Training Engine und Deployment-Basis                       | Entwicklung              |
 | `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich                     |
 | `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
 

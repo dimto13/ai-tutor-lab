@@ -4,7 +4,7 @@ import {
   artifactPreviewSeedSchema,
   buildSandboxedArtifactDocument,
   validateArtifactHtml,
-} from "../../src/runtime/artifactPreviewContent.ts";
+} from "../../apps/web/src/runtime/artifactPreviewContent.ts";
 
 test("artifact preview content: accepts the conservative HTML allow-list", () => {
   const html =

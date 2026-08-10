@@ -4,7 +4,7 @@ import {
   artifactPreviewRuntime,
   createArtifactPreviewRuntime,
   type ArtifactPreviewState,
-} from "../../src/runtime/artifactPreviewRuntime.ts";
+} from "../../apps/web/src/runtime/artifactPreviewRuntime.ts";
 import { defineRuntimeAdapterContractTests } from "./runtimeAdapter.contract.ts";
 
 const targetRef = "artifact.preview.rendered";
