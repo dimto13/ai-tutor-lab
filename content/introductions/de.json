@@ -8,7 +8,7 @@
       "optional": true,
       "title": "Activity Bar einordnen",
       "description": "Die Activity Bar ist die schmale Symbolleiste ganz links in VS Code. Ähnlich wie die Navigationsleiste in Outlook wählst du dort aus, mit welchem Hauptbereich du gerade arbeiten möchtest.",
-      "instruction": "Merke dir: Die Activity Bar wählt den Arbeitsbereich aus. Ein Klick auf Explorer, Search, Source Control oder Extensions zeigt den zugehörigen Inhalt daneben an.",
+      "instruction": "Merke dir: Die Activity Bar wählt einen Hauptbereich aus. Ein Klick auf eines ihrer Symbole zeigt rechts daneben den zugehörigen Inhalt an.",
       "why": "Wenn du die Activity Bar als Navigation verstehst, kannst du die linke Seite von VS Code schneller einordnen, statt einzelne Symbole auswendig zu lernen.",
       "helpLevels": ["", "", ""],
       "successMessage": "Die Activity Bar ist als Navigation zwischen den Hauptbereichen eingeordnet."
@@ -18,8 +18,8 @@
       "stepType": "explanation",
       "optional": true,
       "title": "Side Bar einordnen",
-      "description": "Die Side Bar ist der größere Bereich direkt neben der Activity Bar. Sie funktioniert ähnlich wie der Navigationsbereich in Word: Dort siehst du den Inhalt der Funktion, die du links ausgewählt hast.",
-      "instruction": "Merke dir: Activity Bar wählt aus, Side Bar zeigt den Inhalt dazu. Beim Explorer erscheint dort zum Beispiel der Dateibaum.",
+      "description": "Die Side Bar ist der größere Inhaltsbereich direkt rechts neben der Activity Bar (der schmalen Symbolleiste ganz links). Sie funktioniert ähnlich wie der Navigationsbereich in Word: Dort siehst du den Inhalt der Funktion, die du links ausgewählt hast.",
+      "instruction": "Merke dir: Die Activity Bar wählt aus, die Side Bar zeigt den Inhalt dazu.",
       "why": "So kannst du Navigation und Inhalt auseinanderhalten und verstehst, warum sich die Side Bar verändert, wenn du links ein anderes Symbol auswählst.",
       "helpLevels": ["", "", ""],
       "successMessage": "Die Side Bar ist als Inhaltsbereich der ausgewählten Funktion eingeordnet."
@@ -30,7 +30,7 @@
       "optional": true,
       "title": "Editor einordnen",
       "description": "Der Editor ist die große Arbeitsfläche in der Mitte. Er entspricht am ehesten dem Dokumentbereich in Word oder dem Arbeitsblatt in Excel: Hier öffnest, liest und bearbeitest du den eigentlichen Dateiinhalt.",
-      "instruction": "Merke dir: Links navigierst du durch das Projekt, im Editor arbeitest du am Inhalt einer geöffneten Datei.",
+      "instruction": "Merke dir: In der Navigation suchst du eine Datei aus; im Editor arbeitest du anschließend an ihrem Inhalt.",
       "why": "Die Trennung hilft dir zu erkennen, ob du gerade eine Datei auswählst oder ihren Inhalt bearbeitest.",
       "helpLevels": ["", "", ""],
       "successMessage": "Der Editor ist als zentrale Arbeitsfläche für Dateiinhalt eingeordnet."
@@ -40,9 +40,9 @@
       "stepType": "explanation",
       "optional": true,
       "title": "Panel einordnen",
-      "description": "Das Panel ist ein zusätzlicher Bereich, meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt es Werkzeuge und Informationen, die du neben dem eigentlichen Dokument brauchst, zum Beispiel Terminal, Problems oder Output.",
-      "instruction": "Merke dir: Der Editor enthält den Dateiinhalt; das Panel ergänzt ihn um Werkzeuge und Ausgaben.",
-      "why": "Damit verwechselst du später das Terminal nicht mit dem gesamten unteren Bereich und kannst weitere Panel-Ansichten leichter einordnen.",
+      "description": "Das Panel ist ein zusätzlicher Bereich, meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt es Werkzeuge und Informationen, die du neben dem eigentlichen Dateiinhalt brauchst.",
+      "instruction": "Merke dir: Der Editor enthält den Dateiinhalt; das Panel ergänzt ihn um zusätzliche Werkzeuge und Ausgaben.",
+      "why": "Wenn du das Panel als Container verstehst, kannst du die unterschiedlichen Ansichten darin später leichter einordnen.",
       "helpLevels": ["", "", ""],
       "successMessage": "Das Panel ist als zusätzlicher Werkzeug- und Informationsbereich eingeordnet."
     },
@@ -52,7 +52,7 @@
       "optional": true,
       "title": "Status Bar einordnen",
       "description": "Die Status Bar ist die schmale Leiste ganz unten. Wie die Statusleiste in Word oder Excel zeigt sie Informationen zum aktuellen Arbeitskontext, ohne den eigentlichen Inhalt zu überdecken.",
-      "instruction": "Merke dir: Die Status Bar informiert dich über den aktuellen Zustand, zum Beispiel über Branch oder Sprachumgebung, und enthält teilweise direkt anklickbare Aktionen.",
+      "instruction": "Merke dir: Die Status Bar informiert dich über den aktuellen Zustand, zum Beispiel über Zeile und Spalte oder den Typ einer geöffneten Datei, und enthält teilweise direkt anklickbare Aktionen.",
       "why": "Statusinformationen sind dort dauerhaft sichtbar, ohne dass du dafür ein eigenes Fenster öffnen musst.",
       "helpLevels": ["", "", ""],
       "successMessage": "Die Status Bar ist als kompakte Zustandsanzeige eingeordnet."
@@ -62,8 +62,8 @@
       "stepType": "explanation",
       "optional": true,
       "title": "View einordnen",
-      "description": "Eine View ist eine spezialisierte Ansicht innerhalb eines größeren Bereichs wie Side Bar oder Panel. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
-      "instruction": "Merke dir: Side Bar und Panel sind Container; eine View ist ein konkreter Inhalt darin, zum Beispiel Explorer, Problems oder Terminal.",
+      "description": "Eine View ist eine spezialisierte Ansicht innerhalb eines größeren Bereichs. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
+      "instruction": "Merke dir: Größere Bereiche wie die Side Bar (linker Inhaltsbereich) oder das Panel (Zusatzbereich unter der Arbeitsfläche) können mehrere Views enthalten.",
       "why": "Der Begriff View taucht in VS Code häufig auf. Wenn du Container und konkrete Ansicht unterscheidest, werden Beschreibungen der Oberfläche deutlich verständlicher.",
       "helpLevels": ["", "", ""],
       "successMessage": "Eine View ist als konkrete Ansicht innerhalb eines größeren Bereichs eingeordnet."
@@ -74,7 +74,7 @@
       "optional": true,
       "title": "Explorer einordnen",
       "description": "Der Explorer zeigt die Dateien und Ordner deines aktuellen Arbeitskontexts. Er funktioniert ähnlich wie der Windows-Datei-Explorer oder der Dialog Öffnen in Office, bleibt aber direkt in VS Code sichtbar.",
-      "instruction": "Merke dir: Im Explorer findest und organisierst du Dateien und Ordner; den Inhalt einer geöffneten Datei bearbeitest du anschließend im Editor.",
+      "instruction": "Merke dir: Im Explorer findest und organisierst du Dateien und Ordner; den Inhalt einer geöffneten Datei bearbeitest du anschließend im Editor (der zentralen Arbeitsfläche).",
       "why": "Diese Trennung zwischen Dateistruktur und Dateiinhalt ist die Grundlage für fast alle weiteren Schritte in VS Code.",
       "helpLevels": ["", "", ""],
       "successMessage": "Der Explorer ist als Datei- und Ordnerübersicht eingeordnet."
@@ -85,7 +85,7 @@
       "optional": true,
       "title": "Terminal einordnen",
       "description": "Das Terminal hat keinen direkten Office-Gegenpart. Statt eine Funktion über Schaltflächen aufzurufen, gibst du dort Textbefehle ein. Der Grundgedanke ist ähnlich wie bei einer Excel-Formel: Du formulierst eine eindeutige Anweisung, die der Computer ausführt.",
-      "instruction": "Merke dir: Das Terminal ist eine View im Panel. Du musst Befehle nicht auswendig lernen; wichtig ist zunächst, dass du erkennst, wo Befehle eingegeben und ihre Ausgaben angezeigt werden.",
+      "instruction": "Merke dir: Das Terminal ist eine eigene View (Ansicht) im Panel (Zusatzbereich unter der Arbeitsfläche). Du musst Befehle nicht auswendig lernen; wichtig ist zunächst, dass du erkennst, wo Befehle eingegeben und ihre Ausgaben angezeigt werden.",
       "why": "Spätere KI-Workflows können Befehle vorschlagen oder ausführen. Du solltest deshalb erkennen können, was im Terminal passiert, auch wenn du selbst nicht programmierst.",
       "helpLevels": ["", "", ""],
       "successMessage": "Das Terminal ist als textbasierte Befehlsansicht im Panel eingeordnet."
