@@ -1,18 +1,13 @@
 version: 1
 applications:
   - appRoot: apps/web
-    backend:
-      phases:
-        build:
-          commands:
-            - nvm use 22
-            - cd ../.. && npm install
-            - cd ../.. && npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
     frontend:
       phases:
         preBuild:
           commands:
+            - nvm install 22
             - nvm use 22
+            - node -v && npm -v
             - cd ../.. && npm install
         build:
           commands:
@@ -23,4 +18,5 @@ applications:
           - "**/*"
       cache:
         paths:
+          - ../../node_modules/**/*
           - ../../.npm/**/*
