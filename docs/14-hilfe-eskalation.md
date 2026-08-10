@@ -62,7 +62,10 @@ Szenarien bleiben dabei DOM-unabhängig: `highlightTarget` ist eine semantische 
 - keine der drei Hilfestufen ist leer,
 - Hilfe 3 ist nicht kürzer als Hilfe 2,
 - Hilfe 3 ist keine bloße Wiederholung von Hilfe 2,
+- Hilfe 3 enthält eine eindeutige ausführbare Handlungsanweisung,
 - Hilfe 3 besteht nicht nur aus einem Hinweis auf Markierung, Highlight oder Rahmen ohne konkrete Handlungsanweisung.
+
+Die Handlungsprüfung sucht bewusst nach imperativen Aktionswörtern wie `Klicke`, `Öffne`, `Wähle`, `Tippe`, `Prüfe` oder `Erstelle`. Substantive wie „Prüfaktion“ gelten nicht als Anweisung.
 
 Erklärungsschritte sind von diesen Aktionsregeln ausgenommen. Ein Verstoß lässt die Content-Validierung und damit `npm run check` fehlschlagen.
 
