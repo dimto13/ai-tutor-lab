@@ -22,6 +22,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --install-strategy=nested
+      - run: python scripts/fix-aitp-140-patch.py
       - run: python scripts/aitp-140-patch.py
       - run: |
           npx prettier --write \
