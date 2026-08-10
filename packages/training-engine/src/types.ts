@@ -21,28 +21,18 @@ export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
 export type RuntimeSeed = Record<string, unknown>;
 
-export type CanonicalTrainingEventType =
+export type WorkspaceEventName =
+  | "explorer.opened"
+  | "folder.opened"
   | "workspace.opened"
   | "repository.opened"
-  | "explorer.opened"
   | "file.created"
   | "file.updated"
-  | "file.deleted"
-  | "file.opened"
-  | "editor.selection.changed"
+  | "file.saved"
   | "terminal.opened"
   | "terminal.command.executed"
   | "scm.staged"
   | "scm.committed"
-  | "ai.prompt.submitted"
-  | "ai.suggestion.accepted"
-  | "ai.suggestion.rejected"
-  | "ui.element.inspected";
-
-export type WorkspaceEventName =
-  | CanonicalTrainingEventType
-  | "folder.opened"
-  | "file.saved"
   | "panel.opened"
   | "copilot.enabled.changed"
   | "copilot.chat.opened"
@@ -52,6 +42,8 @@ export type WorkspaceEventName =
   | "copilot.model.changed"
   | "copilot.context.changed"
   | "ai.suggestion.shown"
+  | "ai.suggestion.accepted"
+  | "ai.suggestion.rejected"
   | "artifact.created"
   | "artifact.selected"
   | "artifact.updated"
@@ -68,7 +60,8 @@ export type WorkspaceEventName =
   | "platform.pull_request.checks.opened"
   | "platform.pull_request.merge_readiness.opened"
   | "platform.issues.opened"
-  | "platform.issue.opened";
+  | "platform.issue.opened"
+  | "ui.element.inspected";
 
 /** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
 export interface WorkspaceEvent {
@@ -80,53 +73,65 @@ export interface WorkspaceEvent {
 export interface TrainingEvent<P = unknown> {
   id: string;
   source: string;
-  type: WorkspaceEventName;
+  type: string;
   timestamp: string;
   sessionId: string;
   payload: P;
 }
 
-/** Transitional callback result used by legacy authored validators. */
+export type ValidationStatus = "pass" | "near-miss" | "ignore";
+
+/**
+ * Three-valued result used by the framework-free validator registry.
+ * `ignore` means that an interaction is unrelated to the active validation and
+ * must not generate learner feedback. `near-miss` is a relevant but incorrect
+ * interaction. `pass` completes the validation.
+ */
+export interface ValidationOutcome {
+  status: ValidationStatus;
+  message?: string;
+}
+
+/** Transitional compatibility for legacy authored validators. */
 export interface ValidationResult {
   ok: boolean;
   /** Message shown in the guide panel when the action was close but wrong. */
   message?: string;
 }
 
-export type ValidationOutcome = "pass" | "near-miss" | "ignore";
+export type EventValidation = {
+  kind: "event";
+  type: WorkspaceEventName;
+  match?: Record<string, unknown>;
+  contains?: Record<string, string>;
+  /** Case-insensitive synonym fragments; at least one fragment per field must match. */
+  containsAny?: Record<string, string[]>;
+};
 
-export interface EngineValidationResult {
-  outcome: ValidationOutcome;
-  message?: string;
-  details?: Record<string, unknown>;
-}
+export type StateValidation = {
+  kind: "state";
+  selector: string;
+  equals?: unknown;
+  includes?: unknown;
+  /** Tolerant alternative values/fragments; at least one must match. */
+  includesAny?: unknown[];
+  excludes?: unknown;
+  match?: Record<string, unknown>;
+};
 
 export type Validation =
-  | {
-      kind: "event";
-      type: WorkspaceEventName;
-      match?: Record<string, unknown>;
-      contains?: Record<string, string>;
-      /** Case-insensitive synonym fragments; at least one fragment per field must match. */
-      containsAny?: Record<string, string[]>;
-    }
-  | {
-      kind: "state";
-      selector: string;
-      equals?: unknown;
-      includes?: unknown;
-      /** Tolerant alternative values/fragments; at least one must match. */
-      includesAny?: unknown[];
-      excludes?: unknown;
-      match?: Record<string, unknown>;
-    }
+  | EventValidation
+  | StateValidation
   | {
       kind: "sequence";
       of: Validation[];
-      ordered: boolean;
     }
   | {
-      kind: "all" | "any";
+      kind: "all";
+      of: Validation[];
+    }
+  | {
+      kind: "any";
       of: Validation[];
     };
 
@@ -214,4 +219,60 @@ export interface Scenario {
   /** Shown after a successful challenge as a reference solution. */
   solutionComparison?: string[];
   steps: TrainingStep[];
+}
+
+/** Top level of the declarative learning-content hierarchy. */
+export interface Curriculum {
+  id: string;
+  title: string;
+  courseIds: string[];
+}
+
+/** A coherent learning path inside a curriculum. */
+export interface Course {
+  id: string;
+  curriculumId: string;
+  title: string;
+  moduleIds: string[];
+}
+
+/** A module belongs to exactly one learning layer and references scenarios by id. */
+export interface TrainingModule {
+  id: string;
+  courseId: string;
+  title: string;
+  learningLayer: LearningLayer;
+  scenarioIds: string[];
+}
+
+export interface LearningContentCatalog {
+  curricula: Curriculum[];
+  courses: Course[];
+  modules: TrainingModule[];
+  scenarios: Scenario[];
+}
+
+export interface HintUsageRecord {
+  stepId: string;
+  level: 1 | 2 | 3;
+  usedAt: number;
+}
+
+export interface AttemptRecord {
+  stepId: string;
+  outcome: Exclude<ValidationStatus, "ignore">;
+  occurredAt: number;
+}
+
+/** Serializable engine session; persistence is provided by an external repository/port. */
+export interface TrainingSessionState {
+  scenarioId: string;
+  mode: TrainingMode;
+  statuses: Record<string, StepStatus>;
+  activeStepId: string | null;
+  startedAt: number;
+  finishedAt: number | null;
+  challengeOutcome: ChallengeOutcome | null;
+  hintUsage: HintUsageRecord[];
+  attempts: AttemptRecord[];
 }
