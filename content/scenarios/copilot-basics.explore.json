@@ -4,7 +4,7 @@
   "mode": "explore",
   "learningLayer": "tool",
   "title": "GitHub Copilot – Grundlagen erkunden",
-  "description": "Erkunde Copilot in einer vollständig synthetischen VS-Code-Umgebung. Vergleiche Chat und Inline-Vorschläge, Kontext, Unterhaltungen, Arbeitsmodi, Modellauswahl sowie die Möglichkeiten zum Ablehnen und Stoppen.",
+  "description": "Erkunde Copilot in einer vollständig synthetischen VS-Code-Umgebung. Vergleiche Chat und Inline-Vorschläge direkt im Editor, bewusst angehängten Kontext, Unterhaltungen, Arbeitsmodi, Modellauswahl sowie die Möglichkeiten zum Verwerfen und Stoppen.",
   "learningObjectives": [
     "operate_copilot_basics",
     "choose_copilot_interaction",
@@ -75,12 +75,12 @@
     "copilot.chat.toggle",
     "copilot.chat",
     "copilot.chat.newConversation",
-    "copilot.chat.contextSelector",
+    "copilot.chat.addContext",
+    "copilot.chat.contextAttachment",
     "copilot.chat.prompt",
     "copilot.chat.modeSelector",
     "copilot.chat.modelSelector",
     "copilot.chat.stopTask",
-    "copilot.inline.generate",
     "copilot.inline.suggestion",
     "copilot.inline.accept",
     "copilot.inline.reject"
@@ -90,12 +90,12 @@
       "id": "explore-copilot-surface",
       "title": "Copilot-Arbeitsformen frei erkunden",
       "description": "Du darfst die Bereiche in beliebiger Reihenfolge untersuchen. Die Dateien und der Geheimnis-Marker sind ausschließlich synthetische Trainingsdaten.",
-      "instruction": "Öffne Copilot Chat und untersuche neue Unterhaltung, Kontextwahl, Prompt-Feld, Ask/Plan/Agent, Modellauswahl und Aufgabe stoppen. Erzeuge außerdem einen Inline-Vorschlag, prüfe ihn und untersuche die Möglichkeiten Annehmen und Ablehnen.",
-      "why": "Bevor du Copilot für reale Aufgaben nutzt, solltest du erkennen, welche Funktion nur erklärt, welche direkt Änderungen anbietet, welcher Kontext einfließt und wo du die Kontrolle behältst.",
+      "instruction": "Öffne Copilot Chat und untersuche neue Unterhaltung, Kontext hinzufügen, angehängten Dateikontext, Prompt-Feld, Ask/Plan/Agent, Modellauswahl und Aufgabe stoppen. Prüfe außerdem den Inline-Vorschlag als Ghost Text direkt in calculator.py sowie die Tastaturaktionen Tab zum Annehmen und Esc zum Verwerfen.",
+      "why": "Bevor du Copilot für reale Aufgaben nutzt, solltest du erkennen, welche Funktion nur erklärt, welche direkt Änderungen im Editor anbietet, welcher Kontext tatsächlich angehängt ist und wo du die Kontrolle behältst.",
       "helpLevels": [
         "Beginne mit dem Copilot-Button und öffne den Chat.",
-        "Untersuche im Chat zuerst Kontext, Modus und Modell. Erzeuge danach unten einen Inline-Vorschlag.",
-        "Öffne den Chat, untersuche Neue Unterhaltung, Kontext, Prompt, Modus, Modell und Stoppen; erzeuge anschließend einen Inline-Vorschlag und untersuche Vorschlag, Annehmen und Ablehnen."
+        "Untersuche im Chat zuerst Kontext hinzufügen, den Kontext-Chip, Modus und Modell. Wechsle danach zum Editor und prüfe den Ghost Text.",
+        "Öffne den Chat, untersuche Neue Unterhaltung, Kontext hinzufügen, Kontext-Chip, Prompt, Modus, Modell und Stoppen; untersuche anschließend im Editor Inline-Vorschlag, Tab-Annahme und Esc-Verwerfen."
       ],
       "successMessage": "Du hast die zentralen Copilot-Arbeitsformen und Kontrollpunkte untersucht."
     }
