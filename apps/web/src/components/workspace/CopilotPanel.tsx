@@ -37,7 +37,7 @@ function emptyState(): CopilotRuntimeState {
 }
 
 export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProps) {
-  const { scenario } = useTraining();
+  const { mode, scenario } = useTraining();
   const runtimeSeed = scenario.environment?.seed;
   const hostProductId = scenario.environment?.productId;
   const integration = scenario.environment?.integrations?.find(
@@ -50,6 +50,10 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   const [runtimeState, setRuntimeState] = useState<CopilotRuntimeState>(() => emptyState());
   const [prompt, setPrompt] = useState("");
   const profile = copilotRuntime.getProductProfile();
+
+  const inspectTarget = (ref: string) => {
+    if (mode === "explore") copilotRuntime.inspect(ref);
+  };
 
   useEffect(() => {
     const container = rootRef.current;
@@ -88,6 +92,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   };
 
   const toggleChat = () => {
+    inspectTarget("copilot.chat.toggle");
     copilotRuntime.setChatOpen(!runtimeState.chatOpen);
   };
 
@@ -99,6 +104,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   };
 
   const offerSuggestion = async () => {
+    inspectTarget("copilot.inline.generate");
     if (!activeFile || !runtimeState.enabled) return;
     const content = (await activeContent()) ?? "";
     const suggestion = copilotRuntime.offerConfiguredInlineSuggestion(activeFile, content);
@@ -115,6 +121,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   };
 
   const acceptSuggestion = async () => {
+    inspectTarget("copilot.inline.accept");
     const pendingSuggestion = runtimeState.inlineSuggestion;
     const sourceState = suggestionSourceRef.current;
     if (!activeFile || !pendingSuggestion || pendingSuggestion.status !== "pending") return;
@@ -138,6 +145,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
   };
 
   const rejectSuggestion = () => {
+    inspectTarget("copilot.inline.reject");
     suggestionSourceRef.current = null;
     copilotRuntime.rejectInlineSuggestion();
   };
@@ -175,6 +183,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
       {runtimeState.chatOpen && runtimeState.enabled ? (
         <div
           data-highlight="copilot.chat"
+          onPointerDown={() => inspectTarget("copilot.chat")}
           className="absolute right-0 top-9 z-30 w-[calc(100vw-1.5rem)] max-w-[28rem] rounded-md border border-border bg-panel p-3 shadow-2xl"
         >
           <div className="mb-3 flex items-center gap-2">
@@ -187,12 +196,28 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             <button
               type="button"
               data-highlight="copilot.chat.newConversation"
-              onClick={() => copilotRuntime.startConversation()}
+              onClick={() => {
+                inspectTarget("copilot.chat.newConversation");
+                copilotRuntime.startConversation();
+              }}
               className="rounded p-1.5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
               title="Neue Unterhaltung"
               aria-label="Neue Copilot-Unterhaltung"
             >
               <Plus className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-highlight="copilot.chat.stopTask"
+              onClick={() => {
+                inspectTarget("copilot.chat.stopTask");
+                copilotRuntime.stopTask();
+              }}
+              className="rounded border border-border px-2 py-1 text-[10px] text-muted-foreground hover:border-ring hover:text-foreground"
+              title="Eine Copilot-Aufgabe stoppen"
+              aria-label="Copilot-Aufgabe stoppen"
+            >
+              Stoppen
             </button>
             <button
               type="button"
@@ -210,9 +235,11 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
               <select
                 data-highlight="copilot.chat.modeSelector"
                 value={runtimeState.mode}
-                onChange={(event) =>
-                  copilotRuntime.setMode(event.target.value as CopilotRuntimeState["mode"])
-                }
+                onFocus={() => inspectTarget("copilot.chat.modeSelector")}
+                onChange={(event) => {
+                  inspectTarget("copilot.chat.modeSelector");
+                  copilotRuntime.setMode(event.target.value as CopilotRuntimeState["mode"]);
+                }}
                 className="mt-1 w-full appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-xs text-foreground outline-none focus:border-ring"
               >
                 {profile.chatModes.map((mode) => (
@@ -230,7 +257,11 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
               <select
                 data-highlight="copilot.chat.modelSelector"
                 value={runtimeState.modelId}
-                onChange={(event) => copilotRuntime.setModel(event.target.value)}
+                onFocus={() => inspectTarget("copilot.chat.modelSelector")}
+                onChange={(event) => {
+                  inspectTarget("copilot.chat.modelSelector");
+                  copilotRuntime.setModel(event.target.value);
+                }}
                 className="mt-1 w-full appearance-none rounded border border-border bg-editor px-2 py-1.5 pr-6 text-xs text-foreground outline-none focus:border-ring"
               >
                 {profile.models.map((model) => (
@@ -243,9 +274,28 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             </label>
           </div>
 
-          <p className="mb-2 text-[10px] text-muted-foreground">
-            Kontext: {runtimeState.contextActiveFile ?? "keine aktive Datei"}
-          </p>
+          <label className="mb-2 block text-[10px] text-muted-foreground">
+            Kontext
+            <select
+              data-highlight="copilot.chat.contextSelector"
+              value={
+                runtimeState.contextActiveFile === activeFile && activeFile ? "active" : "none"
+              }
+              onFocus={() => inspectTarget("copilot.chat.contextSelector")}
+              onChange={(event) => {
+                inspectTarget("copilot.chat.contextSelector");
+                copilotRuntime.setContextActiveFile(
+                  event.target.value === "active" ? activeFile : null,
+                );
+              }}
+              className="mt-1 w-full rounded border border-border bg-editor px-2 py-1.5 text-xs text-foreground outline-none focus:border-ring"
+            >
+              <option value="active" disabled={!activeFile}>
+                {activeFile ? `Aktive Datei: ${activeFile}` : "Keine aktive Datei verfügbar"}
+              </option>
+              <option value="none">Keine Datei an Copilot übergeben</option>
+            </select>
+          </label>
 
           {lastAssistantMessage ? (
             <div className="mb-2 max-h-32 overflow-y-auto rounded border border-border bg-editor p-2 text-xs leading-relaxed text-foreground/90">
@@ -257,6 +307,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             <input
               data-highlight="copilot.chat.prompt"
               value={prompt}
+              onFocus={() => inspectTarget("copilot.chat.prompt")}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") void submitPrompt();
@@ -295,6 +346,7 @@ export function CopilotPanel({ activeFile, onApplySuggestion }: CopilotPanelProp
             {visibleSuggestion ? (
               <div
                 data-highlight="copilot.inline.suggestion"
+                onClick={() => inspectTarget("copilot.inline.suggestion")}
                 className="mt-2 rounded border border-border bg-editor p-2"
               >
                 <pre className="whitespace-pre-wrap font-mono text-[11px] text-success">

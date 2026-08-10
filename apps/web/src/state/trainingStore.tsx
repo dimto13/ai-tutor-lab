@@ -190,6 +190,10 @@ async function validateState(
     const results = await Promise.all(validation.of.map((item) => validateState(item, scenario)));
     return results.every(Boolean);
   }
+  if (validation.kind === "any") {
+    const results = await Promise.all(validation.of.map((item) => validateState(item, scenario)));
+    return results.some(Boolean);
+  }
   if (validation.kind !== "state") return false;
 
   const adapter = getRuntimeAdapterForSelector(

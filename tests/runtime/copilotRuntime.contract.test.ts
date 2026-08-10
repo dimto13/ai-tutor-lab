@@ -236,3 +236,59 @@ test("copilotRuntime: customer product profiles can replace version and model op
     await runtime.unmount();
   }
 });
+
+test("copilotRuntime: Explore inspection emits semantic inspection events", async () => {
+  const runtime = createCopilotRuntime();
+  const inspected: string[] = [];
+  const unsubscribe = runtime.subscribe((event) => {
+    if (event.type === "ui.element.inspected") {
+      inspected.push((event.payload as Record<string, string>)["ref"] ?? "");
+    }
+  });
+  await runtime.mount(createContainer());
+
+  try {
+    runtime.inspect("copilot.chat.modelSelector");
+    assert.deepEqual(inspected, ["copilot.chat.modelSelector"]);
+  } finally {
+    unsubscribe();
+    await runtime.unmount();
+  }
+});
+
+test("copilotRuntime: rejected configured suggestion can advance to a corrected alternative", async () => {
+  const runtime = createCopilotRuntime();
+  await runtime.mount(createContainer(), {
+    inlineSuggestions: [
+      { file: "calculator.py", whenContentEquals: "def add(a, b):\n", text: "    return a - b\n" },
+      { file: "calculator.py", whenContentEquals: "def add(a, b):\n", text: "    return a + b\n" },
+    ],
+  });
+
+  try {
+    const first = runtime.offerConfiguredInlineSuggestion("calculator.py", "def add(a, b):\n");
+    assert.equal(first?.text, "    return a - b\n");
+    runtime.rejectInlineSuggestion();
+    const second = runtime.offerConfiguredInlineSuggestion("calculator.py", "def add(a, b):\n");
+    assert.equal(second?.text, "    return a + b\n");
+  } finally {
+    await runtime.unmount();
+  }
+});
+
+test("copilotRuntime: exposes the last prompt and a stoppable task control", async () => {
+  const runtime = createCopilotRuntime();
+  const events: string[] = [];
+  const unsubscribe = runtime.subscribe((event) => events.push(event.type));
+  await runtime.mount(createContainer());
+
+  try {
+    runtime.submitPrompt("Addiere a und b.");
+    assert.equal(await runtime.query("copilot.prompt.last"), "Addiere a und b.");
+    runtime.stopTask();
+    assert.ok(events.includes("copilot.task.stopped"));
+  } finally {
+    unsubscribe();
+    await runtime.unmount();
+  }
+});

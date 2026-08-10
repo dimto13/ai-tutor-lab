@@ -52,6 +52,7 @@ export type WorkspaceEventName =
   | "copilot.mode.changed"
   | "copilot.model.changed"
   | "copilot.context.changed"
+  | "copilot.task.stopped"
   | "ai.suggestion.shown"
   | "artifact.created"
   | "artifact.selected"
