@@ -22,9 +22,23 @@ test("simulator currency policy maps every product review to real scenarios and 
 
 test("due product reviews become fully classified Epic sub-issue plans", async () => {
   const context = await loadSimulatorCurrencyContext();
+  const input = structuredClone(context.policy);
+  for (const product of input.products) {
+    product.lastReviewedAt = null;
+    product.nextReviewAt = "2026-08-09";
+    product.deviations = [];
+  }
+  const policy = parseSimulatorCurrencyPolicy(input);
 
-  assert.equal(buildSimulatorCurrencyIssuePlan(context, "2026-08-08").length, 0);
-  const plan = buildSimulatorCurrencyIssuePlan(context, "2026-08-09");
+  assert.equal(
+    buildSimulatorCurrencyIssuePlan({ policy, scenarios: context.scenarios }, "2026-08-08")
+      .length,
+    0,
+  );
+  const plan = buildSimulatorCurrencyIssuePlan(
+    { policy, scenarios: context.scenarios },
+    "2026-08-09",
+  );
 
   assert.equal(plan.length, 2);
   for (const issue of plan) {
@@ -43,6 +57,7 @@ test("due product reviews become fully classified Epic sub-issue plans", async (
 test("open deviations mark assigned scenarios and create bug issue plans", async () => {
   const context = await loadSimulatorCurrencyContext();
   const input = structuredClone(context.policy);
+  for (const product of input.products) product.deviations = [];
   input.products[1]?.deviations.push({
     id: "chat-mode-label-2026-10",
     summary: "Chat-Modus ist veraltet",
@@ -80,7 +95,16 @@ test("unknown or wrongly assigned scenarios fail policy validation", async () =>
 
 test("GitHub synchronization deduplicates markers and attaches new issues below the Epic", async () => {
   const context = await loadSimulatorCurrencyContext();
-  const planned = buildSimulatorCurrencyIssuePlan(context, "2026-08-09")[0];
+  const input = structuredClone(context.policy);
+  for (const product of input.products) product.deviations = [];
+  input.products[0]!.lastReviewedAt = null;
+  input.products[0]!.nextReviewAt = "2026-08-09";
+  input.products[1]!.nextReviewAt = "2027-02-10";
+  const policy = parseSimulatorCurrencyPolicy(input);
+  const planned = buildSimulatorCurrencyIssuePlan(
+    { policy, scenarios: context.scenarios },
+    "2026-08-09",
+  )[0];
   assert.ok(planned);
 
   const requests: Array<{ url: string; method: string; body: unknown }> = [];
