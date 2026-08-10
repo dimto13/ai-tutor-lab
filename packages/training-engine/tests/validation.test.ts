@@ -27,8 +27,11 @@ test("event validator distinguishes pass, near-miss and irrelevant events", asyn
   };
 
   assert.equal(
-    (await registry.validate(validation, { event: event("file.created", { filename: "hello.py" }) }))
-      .outcome,
+    (
+      await registry.validate(validation, {
+        event: event("file.created", { filename: "hello.py" }),
+      })
+    ).outcome,
     "pass",
   );
   assert.equal(

@@ -144,7 +144,9 @@ export function recordHintUsage(
 }
 
 export function assertSessionInvariant(session: TrainingSession): void {
-  const activeStatuses = Object.entries(session.statuses).filter(([, status]) => status === "ACTIVE");
+  const activeStatuses = Object.entries(session.statuses).filter(
+    ([, status]) => status === "ACTIVE",
+  );
   if (activeStatuses.length > 1) {
     throw new Error(`Training session ${session.id} has more than one ACTIVE step`);
   }

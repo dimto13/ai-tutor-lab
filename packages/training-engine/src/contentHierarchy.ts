@@ -37,10 +37,22 @@ export function validateLearningContentGraph(graph: LearningContentGraph): void 
   const modules = new Map(graph.modules.map((item) => [item.id, item]));
   const scenarios = new Map(graph.scenarios.map((item) => [item.id, item]));
 
-  assertUnique("curriculum", graph.curricula.map((item) => item.id));
-  assertUnique("course", graph.courses.map((item) => item.id));
-  assertUnique("module", graph.modules.map((item) => item.id));
-  assertUnique("scenario", graph.scenarios.map((item) => item.id));
+  assertUnique(
+    "curriculum",
+    graph.curricula.map((item) => item.id),
+  );
+  assertUnique(
+    "course",
+    graph.courses.map((item) => item.id),
+  );
+  assertUnique(
+    "module",
+    graph.modules.map((item) => item.id),
+  );
+  assertUnique(
+    "scenario",
+    graph.scenarios.map((item) => item.id),
+  );
 
   for (const course of graph.courses) {
     if (!curricula.has(course.curriculumId)) {
@@ -56,7 +68,9 @@ export function validateLearningContentGraph(graph: LearningContentGraph): void 
 
   for (const scenario of graph.scenarios) {
     if (!scenario.moduleId || !modules.has(scenario.moduleId)) {
-      throw new Error(`Scenario ${scenario.id} references unknown module ${scenario.moduleId ?? ""}`);
+      throw new Error(
+        `Scenario ${scenario.id} references unknown module ${scenario.moduleId ?? ""}`,
+      );
     }
   }
 
