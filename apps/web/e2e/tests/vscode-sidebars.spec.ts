@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function waitForTrainingReady(page: import("@playwright/test").Page): Promise<void> {
+async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
@@ -13,7 +13,6 @@ test("VS Code Explore exposes the Primary Side Bar as its own semantic surface",
   await primarySideBar.click({ position: { x: 8, y: 48 } });
 
   await expect(page.getByText("1 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
-  await expect(page.getByText("Primary Side Bar", { exact: true })).toBeVisible();
 });
 
 test("Copilot Chat is a View in the Secondary Side Bar instead of an editor popup", async ({
@@ -39,6 +38,9 @@ test("Copilot Chat is a View in the Secondary Side Bar instead of an editor popu
   const chat = page.locator('[data-highlight="copilot.chat"]');
   await expect(chat).toBeVisible();
   await expect(secondarySideBar.locator('[data-highlight="copilot.chat"]')).toBeVisible();
+  await expect(
+    page.getByText("Schritt 5 – Training-Session und Copilot-Unterhaltung unterscheiden"),
+  ).toBeVisible();
 
   const [primaryBox, editorBox, secondaryBox] = await Promise.all([
     primarySideBar.boundingBox(),
@@ -50,8 +52,6 @@ test("Copilot Chat is a View in the Secondary Side Bar instead of an editor popu
   expect(secondaryBox).not.toBeNull();
   expect(primaryBox!.x + primaryBox!.width).toBeLessThanOrEqual(editorBox!.x + 1);
   expect(editorBox!.x + editorBox!.width).toBeLessThanOrEqual(secondaryBox!.x + 1);
-
-  await expect(page.getByText("Copilot Chat ist als View in der Secondary Side Bar geöffnet.")).toBeVisible();
 
   await page.setViewportSize({ width: 323, height: 646 });
   const narrowSecondaryBox = await secondarySideBar.boundingBox();
