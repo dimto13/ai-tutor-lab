@@ -5,6 +5,10 @@ import type {
   ValidationOutcome,
 } from "./types.ts";
 
+export interface ValidatorSpec {
+  kind: string;
+}
+
 export interface ValidationContext {
   event?: TrainingEvent;
   events?: readonly TrainingEvent[];
@@ -12,7 +16,7 @@ export interface ValidationContext {
 }
 
 export type ValidationHandler = (
-  validation: Validation,
+  validation: ValidatorSpec,
   context: ValidationContext,
   registry: ValidatorRegistry,
 ) => Promise<EngineValidationResult>;
@@ -21,15 +25,15 @@ const PASS: EngineValidationResult = { outcome: "pass" };
 const IGNORE: EngineValidationResult = { outcome: "ignore" };
 
 export class ValidatorRegistry {
-  private readonly handlers = new Map<Validation["kind"], ValidationHandler>();
+  private readonly handlers = new Map<string, ValidationHandler>();
 
-  register(kind: Validation["kind"], handler: ValidationHandler): this {
+  register(kind: string, handler: ValidationHandler): this {
     this.handlers.set(kind, handler);
     return this;
   }
 
   async validate(
-    validation: Validation,
+    validation: ValidatorSpec,
     context: ValidationContext = {},
   ): Promise<EngineValidationResult> {
     const handler = this.handlers.get(validation.kind);
@@ -48,10 +52,10 @@ export function createDefaultValidatorRegistry(): ValidatorRegistry {
 }
 
 async function validateEvent(
-  validation: Validation,
+  spec: ValidatorSpec,
   context: ValidationContext,
 ): Promise<EngineValidationResult> {
-  if (validation.kind !== "event") throw new TypeError("Expected event validation");
+  const validation = asValidation(spec, "event");
   const event = context.event;
   if (!event || event.type !== validation.type) return IGNORE;
 
@@ -78,10 +82,10 @@ async function validateEvent(
 }
 
 async function validateState(
-  validation: Validation,
+  spec: ValidatorSpec,
   context: ValidationContext,
 ): Promise<EngineValidationResult> {
-  if (validation.kind !== "state") throw new TypeError("Expected state validation");
+  const validation = asValidation(spec, "state");
   if (!context.query) return IGNORE;
 
   const value = await context.query(validation.selector);
@@ -110,11 +114,11 @@ async function validateState(
 }
 
 async function validateSequence(
-  validation: Validation,
+  spec: ValidatorSpec,
   context: ValidationContext,
   registry: ValidatorRegistry,
 ): Promise<EngineValidationResult> {
-  if (validation.kind !== "sequence") throw new TypeError("Expected sequence validation");
+  const validation = asValidation(spec, "sequence");
   const events = context.events ?? (context.event ? [context.event] : []);
   if (events.length === 0) return IGNORE;
 
@@ -130,10 +134,11 @@ async function validateSequence(
     let matched = false;
     let nearMissResult: EngineValidationResult | null = null;
     for (; cursor < events.length; cursor += 1) {
+      const event = events[cursor]!;
       const result = await registry.validate(item, {
         ...context,
-        event: events[cursor],
-        events: [events[cursor]!],
+        event,
+        events: [event],
       });
       if (result.outcome === "pass") {
         matched = true;
@@ -148,21 +153,21 @@ async function validateSequence(
 }
 
 async function validateAll(
-  validation: Validation,
+  spec: ValidatorSpec,
   context: ValidationContext,
   registry: ValidatorRegistry,
 ): Promise<EngineValidationResult> {
-  if (validation.kind !== "all") throw new TypeError("Expected all validation");
+  const validation = asValidation(spec, "all");
   const results = await Promise.all(validation.of.map((item) => registry.validate(item, context)));
   return combineAll(results);
 }
 
 async function validateAny(
-  validation: Validation,
+  spec: ValidatorSpec,
   context: ValidationContext,
   registry: ValidatorRegistry,
 ): Promise<EngineValidationResult> {
-  if (validation.kind !== "any") throw new TypeError("Expected any validation");
+  const validation = asValidation(spec, "any");
   const results = await Promise.all(validation.of.map((item) => registry.validate(item, context)));
   if (results.some((result) => result.outcome === "pass")) return PASS;
   return results.find((result) => result.outcome === "near-miss") ?? IGNORE;
@@ -182,6 +187,24 @@ async function bestResultForEvents(
   }
   return nearMissResult ?? IGNORE;
 }
+
+function asValidation<K extends Validation["kind"]>(
+  spec: ValidatorSpec,
+  kind: K,
+): ExtractValidation<K> {
+  if (spec.kind !== kind) throw new TypeError(`Expected ${kind} validation`);
+  return spec as ExtractValidation<K>;
+}
+
+type ExtractValidation<K extends Validation["kind"]> = K extends "event"
+  ? Extract<Validation, { kind: "event" }>
+  : K extends "state"
+    ? Extract<Validation, { kind: "state" }>
+    : K extends "sequence"
+      ? Extract<Validation, { kind: "sequence" }>
+      : K extends "all"
+        ? { kind: "all"; of: Validation[] }
+        : { kind: "any"; of: Validation[] };
 
 function combineAll(results: EngineValidationResult[]): EngineValidationResult {
   if (results.every((result) => result.outcome === "pass")) return PASS;
