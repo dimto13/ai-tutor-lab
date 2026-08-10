@@ -161,7 +161,12 @@ test("Guided: Explorer, Folder, Editor und Panel laufen als Anfängerpfad", asyn
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Hello AI Training");
   await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).last().click();
+  await expect(page.locator('[data-highlight="vscode.statusBar.terminal"]')).toBeHidden();
+  await page.locator('[data-highlight="vscode.menu.terminal"]').click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
   await expectGuidedStep(page, 12, "Problems-View verwenden");
 
   await page.getByRole("button", { name: "Problems", exact: true }).click();
