@@ -323,8 +323,7 @@ export function parseScenario(raw: unknown): Scenario {
     audience: authoredScenario.audience
       ? {
           ...authoredScenario.audience,
-          introductionStepIds:
-            introductionStepIds.length > 0 ? introductionStepIds : undefined,
+          introductionStepIds: introductionStepIds.length > 0 ? introductionStepIds : undefined,
         }
       : undefined,
     steps: [...resolvedIntroductionSteps, ...authoredScenario.steps],
