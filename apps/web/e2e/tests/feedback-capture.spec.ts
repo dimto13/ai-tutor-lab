@@ -79,8 +79,12 @@ test("Abschlussansicht bietet optionales Feedback ohne den Abschlusszustand zu v
   await page.goto("/training/copilot-basics.challenge");
   await expect(page.getByRole("status")).toContainText("Training bereit");
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  await page.locator('[data-highlight="copilot.inline.generate"]').click();
-  await page.getByRole("button", { name: "Annehmen" }).click();
+  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
+    "return a + b",
+  );
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(page.getByText("War dieses Training verständlich?")).toBeVisible();
