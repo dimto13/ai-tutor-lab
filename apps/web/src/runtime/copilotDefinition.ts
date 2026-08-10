@@ -18,6 +18,11 @@ export const COPILOT_RUNTIME_DEFINITION = {
       label: "Neue Copilot-Unterhaltung",
       conceptKey: "copilot.session",
     },
+    {
+      ref: "copilot.chat.contextSelector",
+      label: "Copilot-Kontext auswählen",
+      conceptKey: "ai.context",
+    },
     { ref: "copilot.chat.prompt", label: "Copilot Prompt", conceptKey: "ai.context" },
     {
       ref: "copilot.chat.modeSelector",
@@ -28,6 +33,11 @@ export const COPILOT_RUNTIME_DEFINITION = {
       ref: "copilot.chat.modelSelector",
       label: "Copilot-Modellauswahl",
       conceptKey: "copilot.model_selection",
+    },
+    {
+      ref: "copilot.chat.stopTask",
+      label: "Copilot-Aufgabe stoppen",
+      conceptKey: "copilot.chat_mode",
     },
     {
       ref: "copilot.inline.generate",
@@ -57,6 +67,7 @@ export const COPILOT_RUNTIME_DEFINITION = {
     "copilot.product.version",
     "copilot.conversation.id",
     "copilot.conversation.messageCount",
+    "copilot.prompt.last",
     "copilot.mode",
     "copilot.model",
     "copilot.context.activeFile",
