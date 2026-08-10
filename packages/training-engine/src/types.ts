@@ -1,4 +1,9 @@
-export type StepStatus = "NOT_STARTED" | "ACTIVE" | "COMPLETED" | "SKIPPED" | "VALIDATION_FAILED";
+export type StepStatus =
+  | "NOT_STARTED"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "SKIPPED"
+  | "VALIDATION_FAILED";
 
 export type TrainingMode = "explore" | "guided" | "challenge";
 export type LearningLayer = "tool" | "concept" | "ai_workflow";
@@ -16,18 +21,28 @@ export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
 export type RuntimeSeed = Record<string, unknown>;
 
-export type WorkspaceEventName =
-  | "explorer.opened"
-  | "folder.opened"
+export type CanonicalTrainingEventType =
   | "workspace.opened"
   | "repository.opened"
+  | "explorer.opened"
   | "file.created"
   | "file.updated"
-  | "file.saved"
+  | "file.deleted"
+  | "file.opened"
+  | "editor.selection.changed"
   | "terminal.opened"
   | "terminal.command.executed"
   | "scm.staged"
   | "scm.committed"
+  | "ai.prompt.submitted"
+  | "ai.suggestion.accepted"
+  | "ai.suggestion.rejected"
+  | "ui.element.inspected";
+
+export type WorkspaceEventName =
+  | CanonicalTrainingEventType
+  | "folder.opened"
+  | "file.saved"
   | "panel.opened"
   | "copilot.enabled.changed"
   | "copilot.chat.opened"
@@ -37,8 +52,6 @@ export type WorkspaceEventName =
   | "copilot.model.changed"
   | "copilot.context.changed"
   | "ai.suggestion.shown"
-  | "ai.suggestion.accepted"
-  | "ai.suggestion.rejected"
   | "artifact.created"
   | "artifact.selected"
   | "artifact.updated"
@@ -55,8 +68,7 @@ export type WorkspaceEventName =
   | "platform.pull_request.checks.opened"
   | "platform.pull_request.merge_readiness.opened"
   | "platform.issues.opened"
-  | "platform.issue.opened"
-  | "ui.element.inspected";
+  | "platform.issue.opened";
 
 /** Transitional simulator-internal event shape. Runtime adapters expose TrainingEvent instead. */
 export interface WorkspaceEvent {
@@ -68,16 +80,25 @@ export interface WorkspaceEvent {
 export interface TrainingEvent<P = unknown> {
   id: string;
   source: string;
-  type: string;
+  type: WorkspaceEventName;
   timestamp: string;
   sessionId: string;
   payload: P;
 }
 
+/** Transitional callback result used by legacy authored validators. */
 export interface ValidationResult {
   ok: boolean;
   /** Message shown in the guide panel when the action was close but wrong. */
   message?: string;
+}
+
+export type ValidationOutcome = "pass" | "near-miss" | "ignore";
+
+export interface EngineValidationResult {
+  outcome: ValidationOutcome;
+  message?: string;
+  details?: Record<string, unknown>;
 }
 
 export type Validation =
@@ -100,7 +121,12 @@ export type Validation =
       match?: Record<string, unknown>;
     }
   | {
-      kind: "all";
+      kind: "sequence";
+      of: Validation[];
+      ordered: boolean;
+    }
+  | {
+      kind: "all" | "any";
       of: Validation[];
     };
 
