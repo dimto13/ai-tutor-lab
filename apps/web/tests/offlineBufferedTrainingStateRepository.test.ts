@@ -31,8 +31,11 @@ class MemoryStorage implements StorageLike {
 
 class ToggleRemoteRepository implements TrainingStateRepository {
   online = true;
+  private readonly delegate: TrainingStateRepository;
 
-  constructor(private readonly delegate: TrainingStateRepository) {}
+  constructor(delegate: TrainingStateRepository) {
+    this.delegate = delegate;
+  }
 
   private assertOnline() {
     if (!this.online) throw new Error("remote unavailable");
