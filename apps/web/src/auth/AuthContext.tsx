@@ -27,13 +27,7 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "Die Authentifizierung ist fehlgeschlagen.";
 }
 
-export function AuthProvider({
-  service,
-  children,
-}: {
-  service: AuthService;
-  children: ReactNode;
-}) {
+export function AuthProvider({ service, children }: { service: AuthService; children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [session, setSession] = useState<AuthSession | null>(null);
   const [error, setError] = useState<string | null>(null);
