@@ -5,7 +5,9 @@ import {
   type CognitoAuthClient,
 } from "./awsCognitoClient";
 
-function toAuthSession(snapshot: Awaited<ReturnType<CognitoAuthClient["getSession"]>>): AuthSession | null {
+function toAuthSession(
+  snapshot: Awaited<ReturnType<CognitoAuthClient["getSession"]>>,
+): AuthSession | null {
   if (!snapshot) return null;
 
   return {
