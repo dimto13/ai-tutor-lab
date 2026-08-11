@@ -16,8 +16,7 @@ function localIdentity(): UserIdentity {
     userId: import.meta.env["VITE_LOCAL_AUTH_USER_ID"]?.trim() || "local-learner",
     tenantId: import.meta.env["VITE_LOCAL_AUTH_TENANT_ID"]?.trim() || "local-tenant",
     email: import.meta.env["VITE_LOCAL_AUTH_EMAIL"]?.trim() || "learner@local.test",
-    displayName:
-      import.meta.env["VITE_LOCAL_AUTH_DISPLAY_NAME"]?.trim() || "Lokaler Lernender",
+    displayName: import.meta.env["VITE_LOCAL_AUTH_DISPLAY_NAME"]?.trim() || "Lokaler Lernender",
     roles: ["learner"],
   };
 }
@@ -35,7 +34,6 @@ export function createApplicationAuthService(): AuthService {
   }
 
   return createDefaultCognitoAuthService({
-    outputsUrl:
-      import.meta.env["VITE_AMPLIFY_OUTPUTS_URL"]?.trim() || "/amplify_outputs.json",
+    outputsUrl: import.meta.env["VITE_AMPLIFY_OUTPUTS_URL"]?.trim() || "/amplify_outputs.json",
   });
 }
