@@ -9,7 +9,7 @@ const schema = a.schema({
     "COMPLETED",
     "SKIPPED",
   ]),
-  AttemptOutcome: a.enum(["pass", "fail", "near-miss"]),
+  AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
 
   UserProfile: a.model({
     tenantId: a.string().required(),
