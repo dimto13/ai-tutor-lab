@@ -295,7 +295,7 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
 
   await expectGuidedStep(page, 9, "Datei erstellen");
   await expect(
-    page.getByText("Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.", {
+    page.getByText("Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", {
       exact: true,
     }),
   ).toBeVisible();
