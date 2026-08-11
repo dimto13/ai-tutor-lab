@@ -89,8 +89,7 @@ export function createAmplifyCognitoClient(
 
       return {
         userId: user.userId,
-        tenantId:
-          attributes["custom:tenant_id"] ?? stringClaim(idTokenPayload["custom:tenant_id"]),
+        tenantId: attributes["custom:tenant_id"] ?? stringClaim(idTokenPayload["custom:tenant_id"]),
         email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
         displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
         roles: stringArrayClaim(idTokenPayload["cognito:groups"]),
@@ -102,7 +101,9 @@ export function createAmplifyCognitoClient(
     async signInWithPassword(identifier, password) {
       await ensureConfigured();
       const result = await signIn({ username: identifier, password });
-      return result.isSignedIn || result.nextStep.signInStep === "DONE" ? "done" : "requires_action";
+      return result.isSignedIn || result.nextStep.signInStep === "DONE"
+        ? "done"
+        : "requires_action";
     },
 
     async signInWithOidc(providerId) {
