@@ -11,6 +11,7 @@ import type {
   TrainingStateRecord,
   TrainingStateRepository,
   TrainingStateWriteOptions,
+  TrainingSubjectRef,
 } from "@ai-train-lab/training-engine";
 
 export interface StorageLike {
@@ -96,6 +97,23 @@ function legacySessionUpdatedAt(value: StoredTrainingSession): number {
   return 0;
 }
 
+function storedSubject(value: StoredTrainingSession): TrainingSubjectRef | null {
+  if (!isObject(value.subject) || typeof value.subject["userId"] !== "string") return null;
+  const tenantId = value.subject["tenantId"];
+  if (tenantId !== null && typeof tenantId !== "string") return null;
+  return { userId: value.subject["userId"], tenantId };
+}
+
+function assertStoredSessionMatchesKey(key: TrainingStateKey, session: StoredTrainingSession): void {
+  if (
+    session.scenarioId !== key.scenarioId ||
+    session.mode !== key.mode ||
+    !sameTrainingSubject(storedSubject(session), key.subject)
+  ) {
+    throw new Error("Stored training session does not match persistence key");
+  }
+}
+
 function assertSessionMatchesKey(key: TrainingStateKey, session: TrainingSession): void {
   if (
     session.scenarioId !== key.scenarioId ||
@@ -172,8 +190,25 @@ export class LocalStorageTrainingStateRepository implements TrainingStateReposit
       current?.revision ?? null,
       options,
     );
-    this.storage.setItem(trainingSessionStorageKey(key), JSON.stringify(record));
-    this.storage.removeItem(legacyTrainingSessionStorageKey(key));
+    this.persistSessionRecord(key, record);
+    return record;
+  }
+
+  async replaceSession(
+    key: TrainingStateKey,
+    session: StoredTrainingSession,
+    updatedAt = Date.now(),
+  ): Promise<TrainingStateRecord<StoredTrainingSession>> {
+    assertStoredSessionMatchesKey(key, session);
+    const current = await this.loadSession(key);
+    const record: TrainingStateRecord<StoredTrainingSession> = {
+      schemaVersion: TRAINING_STATE_SCHEMA_VERSION,
+      key,
+      revision: (current?.revision ?? 0) + 1,
+      updatedAt,
+      value: session,
+    };
+    this.persistSessionRecord(key, record);
     return record;
   }
 
@@ -214,8 +249,26 @@ export class LocalStorageTrainingStateRepository implements TrainingStateReposit
     if (!runtimeId.trim()) throw new Error("Runtime id must not be blank");
     const current = await this.loadRuntimeSnapshot(key, runtimeId);
     const record = nextRecord(key, snapshot, current?.revision ?? null, options);
-    this.storage.setItem(runtimeSnapshotStorageKey(key, runtimeId), JSON.stringify(record));
-    this.storage.removeItem(legacyRuntimeSnapshotStorageKey(key, runtimeId));
+    this.persistRuntimeRecord(key, runtimeId, record);
+    return record;
+  }
+
+  async replaceRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+    snapshot: unknown,
+    updatedAt = Date.now(),
+  ): Promise<TrainingStateRecord<unknown>> {
+    if (!runtimeId.trim()) throw new Error("Runtime id must not be blank");
+    const current = await this.loadRuntimeSnapshot(key, runtimeId);
+    const record: TrainingStateRecord<unknown> = {
+      schemaVersion: TRAINING_STATE_SCHEMA_VERSION,
+      key,
+      revision: (current?.revision ?? 0) + 1,
+      updatedAt,
+      value: snapshot,
+    };
+    this.persistRuntimeRecord(key, runtimeId, record);
     return record;
   }
 
@@ -223,9 +276,26 @@ export class LocalStorageTrainingStateRepository implements TrainingStateReposit
     this.storage.removeItem(runtimeSnapshotStorageKey(key, runtimeId));
     this.storage.removeItem(legacyRuntimeSnapshotStorageKey(key, runtimeId));
   }
+
+  private persistSessionRecord(
+    key: TrainingStateKey,
+    record: TrainingStateRecord<StoredTrainingSession>,
+  ): void {
+    this.storage.setItem(trainingSessionStorageKey(key), JSON.stringify(record));
+    this.storage.removeItem(legacyTrainingSessionStorageKey(key));
+  }
+
+  private persistRuntimeRecord(
+    key: TrainingStateKey,
+    runtimeId: string,
+    record: TrainingStateRecord<unknown>,
+  ): void {
+    this.storage.setItem(runtimeSnapshotStorageKey(key, runtimeId), JSON.stringify(record));
+    this.storage.removeItem(legacyRuntimeSnapshotStorageKey(key, runtimeId));
+  }
 }
 
-export function createBrowserTrainingStateRepository(): TrainingStateRepository {
+export function createBrowserTrainingStateRepository(): LocalStorageTrainingStateRepository {
   if (typeof window === "undefined") {
     throw new Error("Browser training state repository requires window.localStorage");
   }
