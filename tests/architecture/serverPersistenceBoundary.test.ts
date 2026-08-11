@@ -33,22 +33,34 @@ const clientOperations = [
   "deleteRuntimeSnapshot",
 ] as const;
 
-function definitionBlock(source: string, name: string, nextNames: readonly string[]): string {
+const schemaMembers = [
+  "TrainingMode",
+  "StepStatus",
+  "AttemptOutcome",
+  ...serverOwnedModels,
+  "TrainingStateEnvelope",
+  "RuntimeSnapshotEnvelope",
+  ...clientOperations,
+] as const;
+
+function definitionBlock(source: string, name: string): string {
   const start = source.indexOf(`  ${name}:`);
   assert.notEqual(start, -1, `${name} must exist in Amplify Data schema`);
 
-  const laterStarts = nextNames
+  const currentIndex = schemaMembers.indexOf(name as (typeof schemaMembers)[number]);
+  const laterStarts = schemaMembers
+    .slice(currentIndex + 1)
     .map((candidate) => source.indexOf(`  ${candidate}:`, start + name.length + 3))
     .filter((position) => position > start);
-  const end = laterStarts.length > 0 ? Math.min(...laterStarts) : source.length;
-  return source.slice(start, end);
+  const end = laterStarts.length > 0 ? Math.min(...laterStarts) : source.indexOf("\n});", start);
+  return source.slice(start, end >= 0 ? end : source.length);
 }
 
 test("all durable user data models carry explicit tenant and user ownership", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
 
-  for (const [index, model] of serverOwnedModels.entries()) {
-    const block = definitionBlock(source, model, serverOwnedModels.slice(index + 1));
+  for (const model of serverOwnedModels) {
+    const block = definitionBlock(source, model);
     assert.match(block, /tenantId:\s*a\.string\(\)\.required\(\)/, `${model} needs tenantId`);
     assert.match(block, /userId:\s*a\.string\(\)\.required\(\)/, `${model} needs userId`);
     assert.doesNotMatch(
@@ -62,8 +74,8 @@ test("all durable user data models carry explicit tenant and user ownership", as
 test("client persistence operations never accept authoritative owner fields", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
 
-  for (const [index, operation] of clientOperations.entries()) {
-    const block = definitionBlock(source, operation, clientOperations.slice(index + 1));
+  for (const operation of clientOperations) {
+    const block = definitionBlock(source, operation);
     const argumentStart = block.indexOf(".arguments({");
     const returnStart = block.indexOf(".returns(");
     assert.ok(argumentStart >= 0 && returnStart > argumentStart, `${operation} must define arguments`);
