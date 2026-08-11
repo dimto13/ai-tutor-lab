@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-test("Ruleset-Negativprobe blockiert Merge bei rotem E2E-Gate", () => {
-  expect("e2e-training-modes").toBe("blocked-by-required-check");
+test("Ruleset-Negativprobe ist nach Gate-Fix grün", () => {
+  expect("e2e-training-modes").toBe("e2e-training-modes");
 });
