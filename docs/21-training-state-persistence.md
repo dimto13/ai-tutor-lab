@@ -70,10 +70,13 @@ Format uebernommen. Beim Wechsel auf Remote-Persistenz gilt zusaetzlich eine one
 5. Existiert inzwischen ein Serverdatensatz, gewinnt der Serverstand.
 6. Ein fehlgeschlagener Server-Read wird niemals durch einen moeglicherweise veralteten Browserstand
    kaschiert.
+7. Historische Eintraege mit `tenantId=null` duerfen nur in den deterministischen persoenlichen
+   Kontext `personal:<sub>` desselben Nutzers uebernommen werden. Sie werden niemals automatisch in
+   einen spaeter zugewiesenen benannten Tenant migriert.
 
 Damit koennen bereits erreichte nutzergebundene Ergebnisse uebernommen werden, ohne die
-Serverautoritaet aufzuweichen. Eine vollstaendige Offline-Synchronisation mit bidirektionalem Cache
-bleibt eine separate Ausbaustufe von AITP-14/#8.
+Serverautoritaet oder Mandantentrennung aufzuweichen. Eine vollstaendige Offline-Synchronisation mit
+bidirektionalem Cache bleibt eine separate Ausbaustufe von AITP-14/#8.
 
 ## Serverseitiges Datenmodell
 
@@ -112,8 +115,10 @@ Die AppSync-Resolver bestimmen:
 4. Mehr als eine unterschiedliche `tenant:*`-Mitgliedschaft wird abgelehnt, bis eine explizite
    serverseitige Tenant-Auswahl eingefuehrt wird.
 
-Auch der Web-Auth-Adapter verwendet den signierten Cognito-`sub` als kanonische `userId`. Damit
-verwenden Client-Port und serverseitiger AppSync-Kontext denselben stabilen Benutzerbezeichner.
+Der Web-Auth-Adapter verwendet dieselbe Normalisierung aus dem signierten Cognito-Token: `sub` ist
+die kanonische `userId`, genau eine `tenant:*`-Gruppe die `tenantId`, andernfalls gilt
+`personal:<sub>`. Damit stimmen der lokale `TrainingSubjectRef` und der serverseitige AppSync-Kontext
+ueberein, ohne ein selbst aenderbares Profilattribut zu vertrauen.
 
 Damit kann ein Browser weder fremde `userId`- noch fremde `tenantId`-Werte einschleusen.
 Die spaetere Ablage der Membership in einer eigenen Tabelle kann diese Ableitung ersetzen, ohne den
