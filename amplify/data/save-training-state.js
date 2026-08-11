@@ -42,7 +42,8 @@ function itemId(subject, scenarioId, mode) {
 export function request(ctx) {
   const subject = caller(ctx);
   const expectedRevision = ctx.args.expectedRevision;
-  const revision = expectedRevision === null || expectedRevision === undefined ? 1 : expectedRevision + 1;
+  const revision =
+    expectedRevision === null || expectedRevision === undefined ? 1 : expectedRevision + 1;
   const values = {
     tenantId: subject.tenantId,
     userId: subject.userId,
