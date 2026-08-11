@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -54,19 +55,18 @@ function GuidedGuide() {
   const stepNumber = step ? stepIndex + 1 : scenario.steps.length;
   const nextStep =
     stepIndex >= 0
-      ? (scenario.steps
-          .slice(stepIndex + 1)
-          .find((candidate) => {
-            const status = progress.statuses[candidate.id] ?? "NOT_STARTED";
-            return status !== "COMPLETED" && status !== "SKIPPED";
-          }) ?? null)
+      ? (scenario.steps.slice(stepIndex + 1).find((candidate) => {
+          const status = progress.statuses[candidate.id] ?? "NOT_STARTED";
+          return status !== "COMPLETED" && status !== "SKIPPED";
+        }) ?? null)
       : null;
   const isExplanation = step?.stepType === "explanation";
   const isIntroduction = step
     ? (scenario.audience?.introductionStepIds?.includes(step.id) ?? false)
     : false;
   const glossaryConceptKeys = scenario.audience?.glossaryConcepts ?? [];
-  const rationale = step?.rationale ?? step?.why ?? "Für diesen Schritt ist keine Begründung hinterlegt.";
+  const rationale =
+    step?.rationale ?? step?.why ?? "Für diesen Schritt ist keine Begründung hinterlegt.";
   const nextHelpLevel = Math.min(helpLevel + 1, 3) as 1 | 2 | 3;
   const nextHelpDeduction = getHelpBonusDeductionPercent(nextHelpLevel);
   const shouldOfferHelp =
@@ -289,7 +289,7 @@ function OrientationItem({
 }: {
   label: string;
   wide?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className={`rounded-md border border-border bg-card/60 p-2 ${wide ? "col-span-2" : ""}`}>
