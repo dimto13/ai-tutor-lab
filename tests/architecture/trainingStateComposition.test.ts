@@ -19,13 +19,13 @@ test("training state composition keeps Amplify lazy and local mode cloud-free", 
     readFile(localAdapterUrl, "utf8"),
   ]);
 
-  assert.match(
-    compositionSource,
-    /import\(["']\.\/adapters\/amplifyTrainingStateRepository["']\)/,
-  );
+  assert.match(compositionSource, /import\(["']\.\/adapters\/amplifyTrainingStateRepository["']\)/);
   assert.doesNotMatch(compositionSource, /from\s+["']aws-amplify\/data["']/);
   assert.match(compositionSource, /createBrowserTrainingStateRepository\(\)/);
-  assert.match(compositionSource, /import\.meta\.env\.PROD\s*\?\s*["']remote["']\s*:\s*["']local["']/);
+  assert.match(
+    compositionSource,
+    /import\.meta\.env\.PROD\s*\?\s*["']remote["']\s*:\s*["']local["']/,
+  );
 
   assert.match(storeSource, /createApplicationTrainingStateRepository\(\)/);
   assert.doesNotMatch(storeSource, /createBrowserTrainingStateRepository/);
