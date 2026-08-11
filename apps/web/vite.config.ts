@@ -32,6 +32,10 @@ export default defineConfig(({ command }) => ({
           nitro({
             preset: "aws_amplify",
             awsAmplify: { runtime: "nodejs22.x" },
+            // #225: Keep the server graph in one chunk while the generated
+            // split helper binding is invalid at runtime. The production
+            // artifact smoke test guards this workaround directly.
+            inlineDynamicImports: true,
           }),
         ]
       : []),

@@ -62,6 +62,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Amplify compute runtime smoke
+        run: npm run validate:amplify-runtime
+
   e2e-training-modes:
     needs: validate
     runs-on: ubuntu-latest

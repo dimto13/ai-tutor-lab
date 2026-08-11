@@ -64,6 +64,35 @@ Der Build muss `apps/web/.amplify-hosting/` mit mindestens diesen Artefakten erz
 `scripts/validate-amplify-output.mjs` ist der Repo-seitige Guard fuer Manifest, Catch-all-Route,
 Compute-Resource und Runtime.
 
+### Das Compute-Artefakt muss wirklich gestartet werden
+
+Ein erfolgreicher Build und ein gueltiges `deploy-manifest.json` reichen nicht als Nachweis fuer
+einen funktionsfaehigen SSR-Deploy. Bei der ersten realen #43-Abnahme wurde ein formal gueltiges
+Bundle erfolgreich von Amplify deployed, lieferte aber auf jeder SSR-Route HTTP 500. Ursache war
+ein beim Bundling erzeugter Cross-Chunk-Helper (`__exportAll`), dessen importierte Bindung beim
+Laden des SSR-Moduls nicht aufrufbar war.
+
+Darum startet Code CI nach jedem Production-Build exakt
+`apps/web/.amplify-hosting/compute/default/server.js` unter Node.js 22 und prueft per HTTP:
+
+- `/` -> `200 text/html`
+- `/training/vscode-basics.guided` -> `200 text/html`
+
+Der Guard ist `npm run validate:amplify-runtime`. Ein Build darf nicht als deployment-ready
+gelten, wenn dieser Test fehlschlaegt.
+
+### SSR-Chunking fuer das aktuelle Nitro-Bundle
+
+Die aktuell verwendete Nitro-/Rolldown-Kombination erzeugte bei aktiviertem Server-Code-Splitting
+den oben beschriebenen defekten Cross-Chunk-Helper. Deshalb setzt die Production-Konfiguration
+vorerst `inlineDynamicImports: true`. Dadurch bleibt der Nitro-Servergraph in einem Bundle und
+der fehlerhafte Cross-Chunk-Pfad wird vermieden.
+
+Diese Option ist kein beliebig entfernbares Performance-Tuning, sondern ein durch den echten
+Compute-Runtime-Smoke abgesicherter Kompatibilitaets-Workaround fuer #225. Bei einem spaeteren
+Nitro-/Vite-/Rolldown-Upgrade darf sie erst entfernt werden, wenn der unveraenderte Runtime-Smoke
+mit wieder aktiviertem Code-Splitting gruen bleibt.
+
 ## 3. Monorepo-Build
 
 Amplify verwendet `appRoot: apps/web`, aber die npm-Workspaces werden vom Repo-Root gebaut.
