@@ -40,6 +40,7 @@ export type SignInResult =
  */
 export interface AuthService {
   getSession(): Promise<AuthSession | null>;
+  refreshSession(): Promise<AuthSession | null>;
   signIn(request: SignInRequest): Promise<SignInResult>;
   signOut(): Promise<void>;
 }
