@@ -42,6 +42,30 @@ test("Cognito adapter normalizes the provider session to AuthSession", async () 
   });
 });
 
+test("Cognito adapter forces a provider session refresh", async () => {
+  const refreshFlags: boolean[] = [];
+  const client = createFakeClient({
+    async getSession(forceRefresh = false) {
+      refreshFlags.push(forceRefresh);
+      return {
+        userId: "cognito-user-1",
+        tenantId: "tenant-1",
+        email: "learner@example.test",
+        displayName: "Learner One",
+        roles: ["learner"],
+        accessToken: forceRefresh ? "refreshed-token" : "access-token",
+        expiresAt: "2026-08-11T19:00:00.000Z",
+      };
+    },
+  });
+  const auth = createCognitoAuthService(client);
+
+  const refreshed = await auth.refreshSession();
+
+  assert.deepEqual(refreshFlags, [true]);
+  assert.equal(refreshed?.accessToken, "refreshed-token");
+});
+
 test("Cognito password sign-in returns the normalized authenticated session", async () => {
   let credentials: [string, string] | null = null;
   const client = createFakeClient({
