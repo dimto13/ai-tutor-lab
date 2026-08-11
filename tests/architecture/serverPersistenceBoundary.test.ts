@@ -78,10 +78,21 @@ test("client persistence operations never accept authoritative owner fields", as
     const block = definitionBlock(source, operation);
     const argumentStart = block.indexOf(".arguments({");
     const returnStart = block.indexOf(".returns(");
-    assert.ok(argumentStart >= 0 && returnStart > argumentStart, `${operation} must define arguments`);
+    assert.ok(
+      argumentStart >= 0 && returnStart > argumentStart,
+      `${operation} must define arguments`,
+    );
     const argumentsBlock = block.slice(argumentStart, returnStart);
-    assert.doesNotMatch(argumentsBlock, /\buserId\s*:/, `${operation} must derive userId server-side`);
-    assert.doesNotMatch(argumentsBlock, /\btenantId\s*:/, `${operation} must derive tenantId server-side`);
+    assert.doesNotMatch(
+      argumentsBlock,
+      /\buserId\s*:/,
+      `${operation} must derive userId server-side`,
+    );
+    assert.doesNotMatch(
+      argumentsBlock,
+      /\btenantId\s*:/,
+      `${operation} must derive tenantId server-side`,
+    );
     assert.match(block, /allow\.authenticated\(\)/, `${operation} must require authentication`);
     assert.match(block, /a\.handler\.custom\(/, `${operation} must use a server resolver`);
   }
