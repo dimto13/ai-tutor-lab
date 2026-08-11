@@ -35,6 +35,7 @@ export class TrainingStatePersistence {
   ) {}
 
   async loadSession(): Promise<TrainingStateLoadResult> {
+    await this.sessionWriteChain;
     const record = await this.repository.loadSession(this.key);
     this.sessionRevision = record?.revision ?? null;
     return {
@@ -79,6 +80,7 @@ export class TrainingStatePersistence {
   }
 
   async loadRuntimeSnapshot(runtimeId: string): Promise<unknown | null> {
+    await (this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve());
     const record = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
     this.runtimeRevisions.set(runtimeId, record?.revision ?? null);
     return record?.value ?? null;
