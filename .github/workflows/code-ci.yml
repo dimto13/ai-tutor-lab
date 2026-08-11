@@ -100,12 +100,7 @@ jobs:
         run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
 
       - name: Run training-mode smoke tests
-        shell: bash
-        env:
-          DEBUG: pw:webserver
-        run: |
-          set -o pipefail
-          npm test --prefix apps/web/e2e 2>&1 | tee apps/web/e2e/e2e-ci.log
+        run: npm test --prefix apps/web/e2e
 
       - name: Upload Playwright diagnostics on failure
         if: failure()
@@ -115,6 +110,5 @@ jobs:
           path: |
             apps/web/e2e/playwright-report
             apps/web/e2e/test-results
-            apps/web/e2e/e2e-ci.log
           if-no-files-found: ignore
           retention-days: 7
