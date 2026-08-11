@@ -3,6 +3,7 @@ import type {
   TrainingEvent,
   Validation,
   ValidationOutcome,
+  ValidationResult,
 } from "./types.ts";
 
 export interface ValidatorSpec {
@@ -49,6 +50,14 @@ export function createDefaultValidatorRegistry(): ValidatorRegistry {
     .register("sequence", validateSequence)
     .register("all", validateAll)
     .register("any", validateAny);
+}
+
+/** Transitional adapter until all authored scenarios use declarative validation. */
+export function normalizeLegacyValidationResult(result: ValidationResult): EngineValidationResult {
+  if (result.ok) return PASS;
+  return result.message
+    ? { outcome: "near-miss", message: result.message }
+    : { outcome: "near-miss" };
 }
 
 async function validateEvent(
