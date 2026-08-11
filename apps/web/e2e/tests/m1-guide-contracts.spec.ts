@@ -83,7 +83,11 @@ test("Guided: irrelevante Events bleiben still und onFailure markiert das konfig
   await reachCreateFileStep(page);
   const orientation = page.getByTestId("guided-orientation");
 
-  await page.getByRole("button", { name: "Problems", exact: true }).click();
+  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
   await expectGuidedStep(page, 9, "Datei erstellen");
   await expect(orientation.getByText("Noch keine Aktion geprüft.", { exact: true })).toBeVisible();
 
