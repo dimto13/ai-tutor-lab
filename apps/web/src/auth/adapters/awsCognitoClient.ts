@@ -30,6 +30,7 @@ export interface AmplifyCognitoClientOptions {
 }
 
 const OAUTH_CALLBACK_TIMEOUT_MS = 15_000;
+const TENANT_GROUP_PREFIX = "tenant:";
 
 function stringClaim(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
@@ -38,6 +39,22 @@ function stringClaim(value: unknown): string | null {
 function stringArrayClaim(value: unknown): readonly string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((entry): entry is string => typeof entry === "string");
+}
+
+function tenantIdFromGroups(groups: readonly string[], userId: string): string {
+  let tenantId: string | null = null;
+
+  for (const group of groups) {
+    if (!group.startsWith(TENANT_GROUP_PREFIX)) continue;
+    const candidate = group.slice(TENANT_GROUP_PREFIX.length);
+    if (!candidate) throw new Error("Authenticated Cognito session has invalid tenant membership.");
+    if (tenantId !== null && tenantId !== candidate) {
+      throw new Error("Authenticated Cognito session has multiple tenant memberships.");
+    }
+    tenantId = candidate;
+  }
+
+  return tenantId ?? `personal:${userId}`;
 }
 
 function expirationIso(expiration: unknown): string | null {
@@ -142,17 +159,18 @@ export function createAmplifyCognitoClient(
       const userId = stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
       if (!userId)
         throw new Error("Authenticated Cognito session has no stable subject identifier.");
+      const roles = stringArrayClaim(idTokenPayload["cognito:groups"]);
 
       return {
         // `sub` is Cognito's immutable subject identifier and is also what
         // AppSync exposes server-side for persistence authorization.
         userId,
-        // Tenant membership must come from a server-controlled membership source.
-        // Cognito profile attributes are deliberately not authoritative here.
-        tenantId: null,
+        // `tenant:*` groups are signed, server-managed Cognito membership. This
+        // mirrors the AppSync resolver policy without trusting profile attributes.
+        tenantId: tenantIdFromGroups(roles, userId),
         email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
         displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
-        roles: stringArrayClaim(idTokenPayload["cognito:groups"]),
+        roles,
         accessToken: session.tokens.accessToken.toString(),
         expiresAt: expirationIso(accessTokenPayload["exp"]),
       };
