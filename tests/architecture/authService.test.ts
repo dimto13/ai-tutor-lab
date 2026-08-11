@@ -16,6 +16,7 @@ test("local auth adapter follows the cloud-neutral AuthService lifecycle", async
   const auth = createLocalAuthService({ identity });
 
   assert.equal(await auth.getSession(), null);
+  assert.equal(await auth.refreshSession(), null);
 
   const result = await auth.signIn({
     method: "password",
@@ -28,6 +29,7 @@ test("local auth adapter follows the cloud-neutral AuthService lifecycle", async
 
   assert.deepEqual(result.session.identity, identity);
   assert.deepEqual(await auth.getSession(), result.session);
+  assert.deepEqual(await auth.refreshSession(), result.session);
 
   await auth.signOut();
   assert.equal(await auth.getSession(), null);
