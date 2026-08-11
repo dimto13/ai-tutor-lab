@@ -3,7 +3,7 @@ import {
   createAmplifyCognitoClient,
   type AmplifyCognitoClientOptions,
   type CognitoAuthClient,
-} from "./awsCognitoClient";
+} from "./awsCognitoClient.ts";
 
 function toAuthSession(
   snapshot: Awaited<ReturnType<CognitoAuthClient["getSession"]>>,
