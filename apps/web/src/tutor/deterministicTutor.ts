@@ -26,7 +26,9 @@ export function answerDeterministically(
   }
 
   if (/warum/i.test(question)) {
-    return step ? step.why : "Für dieses Modul ist aktuell keine weitere Aufgabe offen.";
+    return step
+      ? (step.rationale ?? step.why ?? step.instruction)
+      : "Für dieses Modul ist aktuell keine weitere Aufgabe offen.";
   }
 
   if (/wo bin ich|fortschritt|status/i.test(question)) {
