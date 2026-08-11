@@ -100,7 +100,8 @@ function initialProgress(scenario: Scenario): TrainingProgress {
 function helpLevelForProgress(progress: TrainingProgress): number {
   if (!progress.activeStepId) return 0;
   return progress.hintUsage.reduce(
-    (level, usage) => (usage.stepId === progress.activeStepId ? Math.max(level, usage.level) : level),
+    (level, usage) =>
+      usage.stepId === progress.activeStepId ? Math.max(level, usage.level) : level,
     0,
   );
 }
@@ -662,10 +663,7 @@ export function TrainingProvider({
           setProgress((current) => ({
             ...current,
             hintsUsed: current.hintsUsed + 1,
-            hintUsage: [
-              ...current.hintUsage,
-              { stepId, level: nextLevel, timestamp: Date.now() },
-            ],
+            hintUsage: [...current.hintUsage, { stepId, level: nextLevel, timestamp: Date.now() }],
           }));
           return nextLevel;
         });
