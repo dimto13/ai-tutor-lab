@@ -6,12 +6,13 @@ import test from "node:test";
 const cloudNeutralRoots = [resolve("apps/web/src"), resolve("packages")];
 const adapterRoot = resolve("apps/web/src/auth/adapters");
 const sourceExtensions = new Set([".ts", ".tsx"]);
+const importPrefix = String.raw`(?:\bfrom\s+|\bimport\s*(?:\(\s*)?)`;
 const cloudSdkPatterns = [
-  /(?:from\s+|import\s*\()\s*["']aws-amplify(?:\/[^"']*)?["']/,
-  /(?:from\s+|import\s*\()\s*["']@aws-amplify\/[^"']+["']/,
-  /(?:from\s+|import\s*\()\s*["']@aws-sdk\/[^"']+["']/,
-  /(?:from\s+|import\s*\()\s*["']firebase(?:\/[^"']*)?["']/,
-  /(?:from\s+|import\s*\()\s*["']@google-cloud\/[^"']+["']/,
+  new RegExp(`${importPrefix}["']aws-amplify(?:\\/[^"']*)?["']`),
+  new RegExp(`${importPrefix}["']@aws-amplify\\/[^"']+["']`),
+  new RegExp(`${importPrefix}["']@aws-sdk\\/[^"']+["']`),
+  new RegExp(`${importPrefix}["']firebase(?:\\/[^"']*)?["']`),
+  new RegExp(`${importPrefix}["']@google-cloud\\/[^"']+["']`),
 ];
 
 async function collectSourceFiles(directory: string): Promise<string[]> {
