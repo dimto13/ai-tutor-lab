@@ -44,6 +44,10 @@ const oidc = readOidcConfiguration();
  * Application code must not import this resource directly. The web application
  * consumes the cloud-neutral AuthService contract and reaches Cognito only via
  * the dedicated AWS auth adapter.
+ *
+ * Tenant membership is intentionally not stored as a self-service Cognito user
+ * attribute. A future server-side membership source must provide authoritative
+ * tenant assignments before tenantId is populated in the application identity.
  */
 export const auth = defineAuth({
   loginWith: {
@@ -70,12 +74,6 @@ export const auth = defineAuth({
     fullname: {
       required: false,
       mutable: true,
-    },
-    "custom:tenant_id": {
-      dataType: "String",
-      mutable: true,
-      minLen: 1,
-      maxLen: 128,
     },
   },
 });
