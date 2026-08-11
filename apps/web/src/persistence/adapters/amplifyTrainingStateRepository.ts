@@ -10,7 +10,6 @@ import type {
   TrainingStateKey,
   TrainingStateRecord,
   TrainingStateRepository,
-  TrainingStateWriteOptions,
 } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
 
@@ -66,7 +65,9 @@ function sessionRecord(
 ): TrainingStateRecord<StoredTrainingSession> {
   assertServerIdentity(key, data.userId, data.tenantId);
   if (data.schemaVersion !== TRAINING_STATE_SCHEMA_VERSION) {
-    throw new Error(`Unsupported remote training state schema version: ${String(data.schemaVersion)}`);
+    throw new Error(
+      `Unsupported remote training state schema version: ${String(data.schemaVersion)}`,
+    );
   }
   if (typeof data.revision !== "number" || !Number.isInteger(data.revision) || data.revision < 1) {
     throw new Error("Remote training state has an invalid revision");
@@ -149,10 +150,7 @@ export function createAmplifyTrainingStateRepository(): TrainingStateRepository 
       if (result.errors?.length) {
         if (isRevisionConflict(result.errors)) {
           const current = await repository.loadSession(key);
-          throw new TrainingStateConflictError(
-            options.expectedRevision,
-            current?.revision ?? null,
-          );
+          throw new TrainingStateConflictError(options.expectedRevision, current?.revision ?? null);
         }
         throw new Error(errorText(result.errors));
       }
@@ -186,10 +184,7 @@ export function createAmplifyTrainingStateRepository(): TrainingStateRepository 
       if (result.errors?.length) {
         if (isRevisionConflict(result.errors)) {
           const current = await repository.loadRuntimeSnapshot(key, runtimeId);
-          throw new TrainingStateConflictError(
-            options.expectedRevision,
-            current?.revision ?? null,
-          );
+          throw new TrainingStateConflictError(options.expectedRevision, current?.revision ?? null);
         }
         throw new Error(errorText(result.errors));
       }
@@ -210,5 +205,3 @@ export function createAmplifyTrainingStateRepository(): TrainingStateRepository 
 
   return repository;
 }
-
-export type { TrainingStateWriteOptions };
