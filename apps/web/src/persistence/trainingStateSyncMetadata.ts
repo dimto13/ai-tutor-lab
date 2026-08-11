@@ -3,7 +3,7 @@ import {
   runtimeSnapshotStorageKey,
   trainingSessionStorageKey,
   type StorageLike,
-} from "@/state/localStorageTrainingStateRepository";
+} from "../state/localStorageTrainingStateRepository.ts";
 
 export const TRAINING_SYNC_METADATA_VERSION = 1 as const;
 
