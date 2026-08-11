@@ -62,16 +62,16 @@ overlay.querySelector(".explorer-icon")  ❌  Szenario kennt DOM
 
 ### Laufzeit / Fortschritt
 
-| Entität             | Beschreibung                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `TrainingSubjectRef` | Cloud-neutrale Referenz auf Nutzer und optionalen Mandanten (`userId`, `tenantId`)                  |
-| `TrainingSession`   | Ein Durchlauf eines Szenarios; gehört über `subject` genau zu einem Nutzer/Mandanten                |
-| `StepState`         | `NOT_STARTED` → `ACTIVE` → (`VALIDATION_FAILED`) → `COMPLETED` / `SKIPPED`                           |
-| `TrainingEvent`     | Alles, was in der Laufzeit passiert (Grundlage für Validierung **und** Telemetrie)                   |
-| `Attempt`           | Fehlversuch mit Grund                                                                                |
-| `HintUsage`         | Genutzte Hilfestufe je Schritt                                                                       |
-| `SkillProfile`      | Aggregierte Punkte/Level je Technology (siehe `05-gamification.md`)                                  |
-| `Attestation`       | Kompetenznachweis mit Gültigkeitszeitraum                                                            |
+| Entität              | Beschreibung                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `TrainingSubjectRef` | Cloud-neutrale Referenz auf Nutzer und optionalen Mandanten (`userId`, `tenantId`)   |
+| `TrainingSession`    | Ein Durchlauf eines Szenarios; gehört über `subject` genau zu einem Nutzer/Mandanten |
+| `StepState`          | `NOT_STARTED` → `ACTIVE` → (`VALIDATION_FAILED`) → `COMPLETED` / `SKIPPED`           |
+| `TrainingEvent`      | Alles, was in der Laufzeit passiert (Grundlage für Validierung **und** Telemetrie)   |
+| `Attempt`            | Fehlversuch mit Grund                                                                |
+| `HintUsage`          | Genutzte Hilfestufe je Schritt                                                       |
+| `SkillProfile`       | Aggregierte Punkte/Level je Technology (siehe `05-gamification.md`)                  |
+| `Attestation`        | Kompetenznachweis mit Gültigkeitszeitraum                                            |
 
 `TrainingSubjectRef` ist bewusst **kein Cognito-, Google- oder anderer Provider-Typ**. Die
 Authentifizierung normalisiert die Identität an der Cloud-Boundary auf eigene Anwendungsmodelle;
