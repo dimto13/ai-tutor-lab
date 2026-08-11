@@ -139,9 +139,9 @@ export function createAmplifyCognitoClient(
       const attributes = rawAttributes as Record<string, string | undefined>;
       const idTokenPayload = session.tokens.idToken?.payload ?? {};
       const accessTokenPayload = session.tokens.accessToken.payload;
-      const userId =
-        stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
-      if (!userId) throw new Error("Authenticated Cognito session has no stable subject identifier.");
+      const userId = stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
+      if (!userId)
+        throw new Error("Authenticated Cognito session has no stable subject identifier.");
 
       return {
         // `sub` is Cognito's immutable subject identifier and is also what
