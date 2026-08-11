@@ -42,7 +42,11 @@ import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
 
 function subjectKey(subject: TrainingSubjectRef): string {
-  return `${encodeURIComponent(subject.tenantId ?? "personal")}:${encodeURIComponent(subject.userId)}`;
+  const tenantKey =
+    subject.tenantId === null
+      ? "tenant:none"
+      : `tenant:value:${encodeURIComponent(subject.tenantId)}`;
+  return `${tenantKey}:user:${encodeURIComponent(subject.userId)}`;
 }
 
 const storageKey = (scenarioId: string, subject: TrainingSubjectRef) =>
