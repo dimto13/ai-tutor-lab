@@ -1,5 +1,6 @@
 import type { TrainingStateRepository } from "@ai-train-lab/training-engine";
 import { createBrowserTrainingStateRepository } from "@/state/localStorageTrainingStateRepository";
+import { MigratingTrainingStateRepository } from "./migratingTrainingStateRepository";
 
 export type ApplicationTrainingStateMode = "local" | "remote";
 
@@ -45,10 +46,13 @@ function createLazyRemoteRepository(): TrainingStateRepository {
 
 /**
  * Composition root for durable training state. Local development/E2E use the
- * browser adapter; authenticated production uses the remote Amplify adapter.
+ * browser adapter. Authenticated production uses the remote Amplify adapter
+ * with the owned browser repository only as a one-way migration source when
+ * the server confirms that no authoritative record exists yet.
  */
 export function createApplicationTrainingStateRepository(): TrainingStateRepository {
-  return configuredMode() === "local"
-    ? createBrowserTrainingStateRepository()
-    : createLazyRemoteRepository();
+  const localRepository = createBrowserTrainingStateRepository();
+  if (configuredMode() === "local") return localRepository;
+
+  return new MigratingTrainingStateRepository(createLazyRemoteRepository(), localRepository);
 }
