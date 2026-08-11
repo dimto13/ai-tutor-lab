@@ -39,10 +39,7 @@ export class MigratingTrainingStateRepository implements TrainingStateRepository
   private readonly remote: TrainingStateRepository;
   private readonly localMigrationSource: TrainingStateRepository;
 
-  constructor(
-    remote: TrainingStateRepository,
-    localMigrationSource: TrainingStateRepository,
-  ) {
+  constructor(remote: TrainingStateRepository, localMigrationSource: TrainingStateRepository) {
     this.remote = remote;
     this.localMigrationSource = localMigrationSource;
   }
@@ -81,7 +78,9 @@ export class MigratingTrainingStateRepository implements TrainingStateRepository
       });
     } catch (error) {
       if (error instanceof TrainingStateConflictError) {
-        return (await this.remote.loadRuntimeSnapshot(key, runtimeId)) ?? migrationRecord(localRecord);
+        return (
+          (await this.remote.loadRuntimeSnapshot(key, runtimeId)) ?? migrationRecord(localRecord)
+        );
       }
       return migrationRecord(localRecord);
     }
