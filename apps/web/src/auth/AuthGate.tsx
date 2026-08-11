@@ -44,7 +44,7 @@ function SignInPanel() {
   const auth = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const oidcProviderId = import.meta.env.VITE_AUTH_OIDC_PROVIDER_ID?.trim();
+  const oidcProviderId = import.meta.env["VITE_AUTH_OIDC_PROVIDER_ID"]?.trim();
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
