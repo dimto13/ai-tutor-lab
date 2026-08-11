@@ -131,7 +131,9 @@ export class LocalStorageTrainingStateRepository implements TrainingStateReposit
     this.storage = storage;
   }
 
-  async loadSession(key: TrainingStateKey): Promise<TrainingStateRecord<StoredTrainingSession> | null> {
+  async loadSession(
+    key: TrainingStateKey,
+  ): Promise<TrainingStateRecord<StoredTrainingSession> | null> {
     const currentRaw = this.storage.getItem(trainingSessionStorageKey(key));
     if (currentRaw) {
       try {
@@ -164,7 +166,12 @@ export class LocalStorageTrainingStateRepository implements TrainingStateReposit
   ): Promise<TrainingStateRecord<StoredTrainingSession>> {
     assertSessionMatchesKey(key, session);
     const current = await this.loadSession(key);
-    const record = nextRecord<StoredTrainingSession>(key, session, current?.revision ?? null, options);
+    const record = nextRecord<StoredTrainingSession>(
+      key,
+      session,
+      current?.revision ?? null,
+      options,
+    );
     this.storage.setItem(trainingSessionStorageKey(key), JSON.stringify(record));
     this.storage.removeItem(legacyTrainingSessionStorageKey(key));
     return record;
