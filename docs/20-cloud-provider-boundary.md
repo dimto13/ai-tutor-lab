@@ -13,21 +13,23 @@ moeglich sein, ohne Komponenten, Trainingslogik oder fachliche Modelle umzubauen
 UI / Routes / State / Application Logic
                 |
                 v
-          AuthService
-          UserIdentity
-          AuthSession
+       AuthService / Persistence Ports
                 |
                 v
-       Cloud-spezifischer Adapter
+       Cloud-spezifische Adapter
                 |
                 v
-       AWS Amplify / Cognito heute
+   AWS Amplify / Cognito / Data heute
        weitere Provider spaeter
 ```
 
-Die Anwendung importiert keine Cloud-SDKs direkt. Cloud-spezifische Auth-SDK-Imports sind im Web
-nur unter `apps/web/src/auth/adapters/` erlaubt. `tests/architecture/cloudBoundary.test.ts`
-sichert diese Grenze in CI ab.
+Die Anwendung importiert keine Cloud-SDKs direkt. Cloud-spezifische SDK-Imports sind im Web nur
+unter den ausgewiesenen Adaptergrenzen erlaubt:
+
+- `apps/web/src/auth/adapters/`
+- `apps/web/src/persistence/adapters/`
+
+`tests/architecture/cloudBoundary.test.ts` sichert diese Grenze in CI ab.
 
 ## Auth-Vertrag
 
@@ -55,10 +57,17 @@ Mandant/Nutzer getrennt. Die Training Engine importiert weder Auth-Code noch Clo
 Routes und State verwenden ausschliesslich den cloud-neutralen Vertrag. Das Laden von
 `amplify_outputs.json` und alle Amplify-SDK-Aufrufe enden im AWS-Adapter.
 
-Die Mandantenzuordnung ist bewusst kein selbst aenderbares Cognito-Profilattribut. Der
-Cognito-Adapter liefert `tenantId` deshalb derzeit als `null`. Die serverautoritativ verwaltete
-Zuordnung von `userId` zu `tenantId` wird mit der Persistenz-/Membership-Schicht aus #45
-eingefuehrt und danach ueber den bestehenden cloud-neutralen `UserIdentity`-Vertrag bereitgestellt.
+Die Mandantenzuordnung ist bewusst kein selbst aenderbares Cognito-Profilattribut. Mit #45 wird die
+serververwaltete Membership ueber Cognito-Gruppen mit dem Namensvertrag `tenant:<tenantId>`
+eingefuehrt. Der signierte Token-`sub` ist die kanonische `userId`; genau eine `tenant:*`-Gruppe
+liefert die kanonische `tenantId`. Ohne Tenant-Gruppe gilt fuer den persoenlichen MVP-Kontext
+deterministisch `personal:<sub>`. Mehrere unterschiedliche `tenant:*`-Gruppen werden abgelehnt, bis
+eine explizite serverseitige Tenant-Auswahl existiert.
+
+Der Browser nutzt diese Gruppeninformation nur zur kanonischen fachlichen Identitaet und zur
+korrekten lokalen Speichertrennung. Autorisierung und Datenzugriff werden weiterhin serverseitig in
+AppSync aus `identity.sub` und `identity.groups` abgeleitet; Client-Werte entscheiden dort nicht ueber
+Eigentum oder Tenant-Zugriff.
 
 Die Backend-Ressourcen unter `amplify/` duerfen AWS-spezifisch sein. Cloud-Neutralitaet bedeutet
 nicht, Cloud-Ressourcen kuenstlich auf einen kleinsten gemeinsamen Nenner zu reduzieren. Neutral
@@ -82,6 +91,16 @@ Der lokale Adapter kann optional ueber folgende Build-Variablen angepasst werden
 - `VITE_LOCAL_AUTH_DISPLAY_NAME`
 
 Diese Werte sind reine Entwicklungsidentitaeten und keine Secrets.
+
+## Persistenz-Vertrag
+
+#45 fuehrt `TrainingStateRepository` als cloud-neutralen Persistenzport ein. Die lokale
+Implementierung lebt im Browser; die AWS-Implementierung liegt ausschliesslich unter
+`apps/web/src/persistence/adapters/` und verwendet Amplify Data hinter demselben Vertrag.
+
+Der Training Store kennt weder Amplify Data noch DynamoDB. Die Production-Composition laedt den
+AWS-Adapter dynamisch. Details zu Serverautoritaet, Revisionen und one-way Migration stehen in
+`docs/21-training-state-persistence.md`.
 
 ## OIDC
 
@@ -151,12 +170,14 @@ Erlaubt:
 ```text
 Component -> AuthService
 TrainingSession -> TrainingSubjectRef
+TrainingStore -> TrainingStateRepository
 AuthService <- CognitoAdapter
+TrainingStateRepository <- AmplifyDataAdapter
 AuthService <- LocalAdapter
-AuthService <- weiterer Adapter spaeter
+TrainingStateRepository <- LocalStorageAdapter
 ```
 
-## Umsetzung in #44
+## Umsetzung in #44 / #45
 
 1. Cloud-neutralen `AuthService` und `UserIdentity` etablieren.
 2. Architekturgrenze in CI absichern.
@@ -165,4 +186,8 @@ AuthService <- weiterer Adapter spaeter
 5. Web-UI ausschliesslich gegen `AuthService` verdrahten.
 6. OIDC konfigurierbar ergaenzen, ohne die UI an einen konkreten Identity Provider zu koppeln.
 7. `TrainingSubjectRef` in der Training Session verankern und Persistenz pro Nutzer/Mandant trennen.
-8. Reale AWS-Abnahme erst nach gruenem PR/Merge und manueller Freigabe `main:deploy` durch den Repository-Eigentuemer.
+8. `TrainingStateRepository` plus lokale und Amplify-Data-Adapter hinter derselben fachlichen Grenze
+   etablieren.
+9. Serverseitige User-/Tenant-Autoritaet und revisionssichere Writes in AppSync durchsetzen.
+10. Reale AWS-Abnahme erst nach gruenem PR/Merge und manueller Freigabe `main:deploy` durch den
+    Repository-Eigentuemer.
