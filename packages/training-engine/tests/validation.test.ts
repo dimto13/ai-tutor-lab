@@ -45,6 +45,22 @@ test("event validator distinguishes pass, near-miss and irrelevant events", asyn
   );
 });
 
+test("event content near-miss preserves guided feedback message", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const validation: Validation = {
+    kind: "event",
+    type: "copilot.prompt.submitted",
+    containsAny: { context: ["README.md", "src/app.ts"] },
+  };
+
+  const result = await registry.validate(validation, {
+    event: event("copilot.prompt.submitted", { context: "none" }),
+  });
+
+  assert.equal(result.outcome, "near-miss");
+  assert.equal(result.message, "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.");
+});
+
 test("state validator queries runtime state declaratively", async () => {
   const registry = createDefaultValidatorRegistry();
   const validation: Validation = {
