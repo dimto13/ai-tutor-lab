@@ -129,7 +129,6 @@ function GuidedGuide() {
           </OrientationItem>
           <OrientationItem label="War meine Aktion erfolgreich?" wide>
             <span
-              role="status"
               aria-live="polite"
               className={
                 feedback?.kind === "success"
