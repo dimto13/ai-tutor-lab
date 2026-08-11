@@ -33,7 +33,7 @@
     "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
     "lint": "eslint apps packages scripts tests",
     "format": "prettier --write .",
-    "format:check": "prettier --write scripts/validate-content.ts >/dev/null && DIFF=$(git diff --no-color -- scripts/validate-content.ts | awk '{gsub(\"%\",\"%25\"); gsub(\"\\r\",\"%0D\"); printf \"%s%%0A\",$0}'); if [ -n \"$DIFF\" ]; then echo \"::error::$DIFF\"; exit 1; fi"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "zod": "^3.24.2"
