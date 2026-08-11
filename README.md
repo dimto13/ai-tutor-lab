@@ -10,12 +10,18 @@ historischer Ursprung. **Verbindlicher Projektstand und einzige Source of Truth 
 Git-Repository.** Entwicklung, Tests und Builds erfolgen unabhängig davon; Zielplattform für
 Hosting und Deployment ist AWS Amplify.
 
+AWS ist dabei die erste Infrastrukturimplementierung, nicht der Anwendungsvertrag. UI und
+fachliche Logik bleiben cloud-neutral und greifen über eigene Ports auf Cloud-Adapter zu. Die
+verbindliche Architekturgrenze steht in
+[`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md).
+
 ## Orientierung im Repository
 
 | Bereich                                                         | Inhalt                                                                                                                                       |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues) | **Aufgabenverwaltung** — alle Tickets, Epics als Sub-Issue-Struktur                                                                          |
 | [`docs/`](docs/README.md)                                       | **Produkt- und Anforderungsdokumentation** — Vision, Domänenmodell, Architektur, Anforderungen, Gamification, Roadmap, offene Entscheidungen |
+| [`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md) | **Cloud-Boundary** — eigene Ports/Modelle, AWS-Adapter heute, weitere Provider später                                                        |
 | [`prompts/model-briefing.md`](prompts/model-briefing.md)        | Kontext-Briefing für jede LLM-Sitzung an diesem Projekt                                                                                      |
 | `src/`                                                          | POC-Quellcode (React/TypeScript/Vite) — wird gemäß Meilenstein M1 refaktoriert                                                               |
 | [`backlog/`](backlog/README.md)                                 | Archiv des ursprünglichen Planungsstands (nicht mehr gepflegt)                                                                               |
@@ -46,7 +52,7 @@ Node-Version über `.nvmrc` ausgewählt.
 git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
 nvm use
-npm ci --install-strategy=nested
+npm ci
 npm run dev:local
 ```
 
@@ -65,7 +71,7 @@ Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
 
 ```sh
 git pull
-npm ci --install-strategy=nested
+npm ci
 npm run dev:local
 ```
 
