@@ -37,7 +37,11 @@ import type {
   Validation,
 } from "@ai-train-lab/training-engine";
 import { getScenario } from "@/scenarios";
-import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import {
+  getRuntimeAdapter,
+  getRuntimeAdapterForSelector,
+  getRuntimeAdapters,
+} from "@/runtime";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
 const runtimeStorageKey = (scenarioId: string, runtimeId: string) =>
@@ -142,7 +146,8 @@ export function TrainingProvider({
   const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
   const [visibleHelpLevel, setVisibleHelpLevel] = useState(0);
-  const [challengeRemainingSeconds, setChallengeRemainingSeconds] = useState<number | null>(null);
+  const [challengeRemainingSeconds, setChallengeRemainingSeconds] =
+    useState<number | null>(null);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
