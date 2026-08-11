@@ -21,6 +21,7 @@ const schema = a.schema({
     weeklyGoalMinutes: a.integer(),
     accessibility: a.json(),
     preferencesVersion: a.integer().required(),
+    stateUpdatedAt: a.float().required(),
   }),
 
   TrainingSession: a.model({
@@ -132,6 +133,17 @@ const schema = a.schema({
     payload: a.json().required(),
   }),
 
+  UserPreferencesEnvelope: a.customType({
+    tenantId: a.string().required(),
+    userId: a.string().required(),
+    language: a.string(),
+    preferredTrainingMode: a.ref("TrainingMode"),
+    weeklyGoalMinutes: a.integer(),
+    accessibility: a.json(),
+    revision: a.integer().required(),
+    updatedAt: a.float().required(),
+  }),
+
   loadTrainingState: a
     .query()
     .arguments({
@@ -213,6 +225,35 @@ const schema = a.schema({
       a.handler.custom({
         dataSource: a.ref("RuntimeSnapshot"),
         entry: "./delete-runtime-snapshot.js",
+      }),
+    ),
+
+  loadUserPreferences: a
+    .query()
+    .returns(a.ref("UserPreferencesEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("UserPreferences"),
+        entry: "./load-user-preferences.js",
+      }),
+    ),
+
+  saveUserPreferences: a
+    .mutation()
+    .arguments({
+      language: a.string(),
+      preferredTrainingMode: a.ref("TrainingMode"),
+      weeklyGoalMinutes: a.integer(),
+      accessibility: a.json(),
+      expectedRevision: a.integer(),
+    })
+    .returns(a.ref("UserPreferencesEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("UserPreferences"),
+        entry: "./save-user-preferences.js",
       }),
     ),
 });
