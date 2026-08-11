@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from "react";
 
-import type { AuthService, AuthSession, SignInRequest, SignInResult } from "./authService";
+import type {
+  AuthService,
+  AuthSession,
+  SignInRequest,
+  SignInResult,
+} from "./authService";
 
 export type AuthStatus = "loading" | "anonymous" | "authenticated";
 
