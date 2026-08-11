@@ -9,8 +9,8 @@
 - Ziel für Hosting und Deployment ist **AWS Amplify**. AWS beobachtet den Release-Branch `deploy`;
   ein Merge nach `main` löst bewusst noch kein Deployment aus.
 - **AWS ist die aktuelle Infrastrukturimplementierung, nicht der Anwendungsvertrag.** Fachliche
-  Logik und UI bleiben cloud-neutral; Cloud-SDKs werden ausschließlich hinter definierten Ports/
-  Adaptern verwendet. Die verbindliche Boundary steht in
+  Logik und UI bleiben cloud-neutral. Cloud-SDKs werden ausschließlich hinter definierten Ports
+  und Adaptern verwendet. Die verbindliche Boundary steht in
   [`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md).
 - **Lovable war nur für den ersten POC/Bootstrap im Einsatz und ist ab jetzt kein Bestandteil des
   Entwicklungs-, Test-, Preview-, Publishing-, Deployment- oder Synchronisationsprozesses mehr.**
@@ -26,12 +26,11 @@
    [`docs/19-aws-amplify-konventionen.md`](docs/19-aws-amplify-konventionen.md) und
    [`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md).
 2. **Cloud-Neutralität ist eine harte Architekturgrenze.** UI, Routes, State, Training Engine und
-   fachliche Modelle dürfen keine Cognito-, Amplify-, Firebase- oder Google-Cloud-Typen als
-   Anwendungsvertrag verwenden. Sie hängen an eigenen Ports wie `AuthService` und eigenen Modellen
-   wie `UserIdentity`. Cloud-spezifische Web-SDK-Imports sind nur in den dafür vorgesehenen
-   Adapterverzeichnissen erlaubt; die CI-Architekturtests sichern diese Regel ab. AWS/Cognito ist
-   die erste Implementierung. Weitere Provider werden später durch zusätzliche Adapter ergänzt,
-   nicht durch Umbau der UI.
+   fachliche Modelle verwenden keine Cognito-, Amplify-, Firebase- oder Google-Cloud-Typen als
+   Anwendungsvertrag. Sie hängen an eigenen Ports wie `AuthService` und eigenen Modellen wie
+   `UserIdentity`. Cloud-spezifische Web-SDK-Imports sind nur in den vorgesehenen Adapterverzeichnissen
+   erlaubt; die CI-Architekturtests sichern diese Regel ab. AWS/Cognito ist die erste Implementierung.
+   Weitere Provider werden später durch zusätzliche Adapter ergänzt, nicht durch Umbau der UI.
 3. **Aufgabenverwaltung läuft ausschließlich über GitHub Issues.** Neue Aufgaben werden direkt
    als Issue angelegt — mit Epic-Label, Prio-Label, Typ-Label und Milestone, und als Sub-Issue
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
@@ -66,6 +65,6 @@
    Arbeitsschritt hinterlegt. Die Session-Health-Werte `FRESH`, `ACTIVE`, `CUT-SOON` und `CUT` sind
    qualitative Arbeitsmetriken und keine behauptete exakte Tokenmessung.
 10. **`deploy` ist ausschließlich Release-Zeiger.** KI-Agenten entwickeln nicht auf `deploy`, mergen
-   nicht nach `deploy` und verschieben diesen Ref nicht. Nach einem vollständig grünen Merge nach
-   `main` führt ausschließlich der Repository-Eigentümer die bewusste Deployment-Freigabe mit
-   `git push origin main:deploy` aus. Erst dieser Nutzer-Push darf AWS Amplify auslösen.
+    nicht nach `deploy` und verschieben diesen Ref nicht. Nach einem vollständig grünen Merge nach
+    `main` führt ausschließlich der Repository-Eigentümer die bewusste Deployment-Freigabe mit
+    `git push origin main:deploy` aus. Erst dieser Nutzer-Push darf AWS Amplify auslösen.
