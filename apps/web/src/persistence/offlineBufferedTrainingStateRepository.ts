@@ -107,7 +107,11 @@ export class OfflineBufferedTrainingStateRepository implements TrainingStateRepo
     }
 
     if (remoteRecord.revision === 0) {
-      const cached = await this.local.replaceSession(key, remoteRecord.value, remoteRecord.updatedAt);
+      const cached = await this.local.replaceSession(
+        key,
+        remoteRecord.value,
+        remoteRecord.updatedAt,
+      );
       const migrationSync: TrainingStateSyncMetadata = {
         ...cleanMetadata(0),
         dirty: true,
