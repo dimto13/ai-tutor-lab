@@ -444,7 +444,7 @@ function ChallengeGuide() {
 
       {feedback ? <Feedback feedback={feedback} /> : null}
 
-      {timOut ? (
+      {timedOut ? (
         <button
           type="button"
           onClick={restart}
