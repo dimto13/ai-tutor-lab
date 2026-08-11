@@ -108,10 +108,7 @@ function fixture() {
   return { local, remote, remoteDelegate, metadata, repository };
 }
 
-async function seedRemote(
-  remote: LocalStorageTrainingStateRepository,
-  action = "server-base",
-) {
+async function seedRemote(remote: LocalStorageTrainingStateRepository, action = "server-base") {
   const session = recordLastAction(
     createTrainingSession(scenario, scenario.id, 100, key.subject),
     action,
@@ -139,7 +136,10 @@ test("offline session changes sync when the remote base revision is unchanged", 
   assert.ok(cached);
 
   remote.online = false;
-  const offlineSession = recordLastAction(cached.value as ReturnType<typeof createTrainingSession>, "offline");
+  const offlineSession = recordLastAction(
+    cached.value as ReturnType<typeof createTrainingSession>,
+    "offline",
+  );
   const offline = await repository.saveSession(key, offlineSession, {
     expectedRevision: cached.revision,
   });
@@ -168,7 +168,10 @@ test("remote session wins when it changed while this device was offline", async 
   assert.ok(cached);
 
   remote.online = false;
-  const offlineSession = recordLastAction(cached.value as ReturnType<typeof createTrainingSession>, "offline");
+  const offlineSession = recordLastAction(
+    cached.value as ReturnType<typeof createTrainingSession>,
+    "offline",
+  );
   await repository.saveSession(key, offlineSession, { expectedRevision: cached.revision });
 
   await remoteDelegate.saveSession(
@@ -185,16 +188,26 @@ test("remote session wins when it changed while this device was offline", async 
 
 test("offline runtime snapshot changes sync against the last known remote revision", async () => {
   const { remote, remoteDelegate, repository } = fixture();
-  await remoteDelegate.saveRuntimeSnapshot(key, "vscode-sim", { files: ["base.txt"] }, {
-    expectedRevision: null,
-  });
+  await remoteDelegate.saveRuntimeSnapshot(
+    key,
+    "vscode-sim",
+    { files: ["base.txt"] },
+    {
+      expectedRevision: null,
+    },
+  );
   const cached = await repository.loadRuntimeSnapshot(key, "vscode-sim");
   assert.ok(cached);
 
   remote.online = false;
-  await repository.saveRuntimeSnapshot(key, "vscode-sim", { files: ["offline.txt"] }, {
-    expectedRevision: cached.revision,
-  });
+  await repository.saveRuntimeSnapshot(
+    key,
+    "vscode-sim",
+    { files: ["offline.txt"] },
+    {
+      expectedRevision: cached.revision,
+    },
+  );
 
   remote.online = true;
   const synchronized = await repository.loadRuntimeSnapshot(key, "vscode-sim");
