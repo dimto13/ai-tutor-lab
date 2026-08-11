@@ -26,6 +26,28 @@ werden dort keine eigenen Aenderungen entwickelt. KI-Agenten duerfen den Ref `de
 verschieben und insbesondere keinen Push `main:deploy` ausloesen. Die Freigabe bleibt eine
 bewusste Nutzeraktion.
 
+### Einmalige Historien-Konsolidierung
+
+Vor #43 waren `main` und `deploy` bereits divergiert: `deploy` enthielt wertvolle Amplify-
+Erfahrungen, aber auch Gen-2/Auth-Vorarbeit, die fachlich noch nicht nach `main` gehoert. Ein
+normaler Push `main:deploy` waere deshalb beim ersten Release kein Fast-Forward.
+
+Die einmalige Konsolidierung loest das ohne Force-Push und ohne blindes Uebernehmen der alten
+`deploy`-Dateien: Der Integrationsbranch fuer #43 wird von `main` aufgebaut und erhaelt am Ende
+einen Merge-Commit mit dem bisherigen `deploy`-Tip als zweitem Parent, waehrend sein Tree exakt
+den auditierten #43-Zielstand behaelt. Der PR muss deshalb mit **Merge Commit** nach `main`
+integriert werden; Squash oder Rebase wuerden diese Abstammung wieder entfernen.
+
+Danach ist der bisherige `deploy`-Tip ein Vorfahr von `main`. Der vom Repository-Eigentuemer
+ausgefuehrte Befehl
+
+```bash
+git push origin main:deploy
+```
+
+ist dann ein normaler Fast-Forward und setzt `deploy` auf den freigegebenen `main`-Stand. Fuer
+alle spaeteren Deployments ist keine Sonderbehandlung mehr erforderlich.
+
 ## 2. Hosting-Modus
 
 Die Web-App ist TanStack Start mit SSR ueber Nitro. Hosting erfolgt deshalb als Amplify
