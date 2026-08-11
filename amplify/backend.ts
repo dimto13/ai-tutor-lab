@@ -1,11 +1,16 @@
 import { defineBackend } from "@aws-amplify/backend";
 import { auth } from "./auth/resource";
-import { data } from "./data/resource";
 
 /**
- * @see https://docs.amplify.aws/react/build-a-backend/ to add storage, functions, and more
+ * Vorbereitung fuer AITP-83: Das Backend stellt ausschliesslich Auth bereit.
+ *
+ * Bewusst noch ohne `data`. Die Ablage von Lernfortschritt, Einstellungen und
+ * Punkten ist AITP-84 und braucht ein eigenes Datenmodell mit tenantId/userId.
+ * Bis dahin liefert Auth nur die Identitaet, unter der diese Daten spaeter haengen.
+ * @see https://docs.amplify.aws/react/build-a-backend/
  */
-defineBackend({
-  auth,
-  data,
-});
+const backend = defineBackend({ auth });
+
+// Keine Gast-Identitaeten ausgeben. AITP-82 verlangt, dass die Umgebung nicht
+// offen zugaenglich ist; ein Identity Pool mit unauthenticated role waere genau das.
+backend.auth.resources.cfnResources.cfnIdentityPool.allowUnauthenticatedIdentities = false;

@@ -1,8 +1,14 @@
 import { defineAuth } from "@aws-amplify/backend";
 
 /**
- * Define and configure your auth resource
- * @see https://docs.amplify.aws/gen2/build-a-backend/auth
+ * Cognito User Pool mit Selbstregistrierung per E-Mail.
+ *
+ * Bewusst minimal gehalten: Die OIDC-Foederation zum Firmen-IdP ist AITP-83 und
+ * wird hier als `loginWith.externalProviders.oidc` ergaenzt -- konfigurierbar ueber
+ * Umgebungsvariablen und `secret()`, damit der Provider ohne Codeaenderung
+ * austauschbar bleibt (Akzeptanzkriterium von AITP-83).
+ *
+ * @see https://docs.amplify.aws/react/build-a-backend/auth/
  */
 export const auth = defineAuth({
   loginWith: {
