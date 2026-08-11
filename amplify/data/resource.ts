@@ -2,13 +2,7 @@ import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 
 const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
-  StepStatus: a.enum([
-    "NOT_STARTED",
-    "ACTIVE",
-    "VALIDATION_FAILED",
-    "COMPLETED",
-    "SKIPPED",
-  ]),
+  StepStatus: a.enum(["NOT_STARTED", "ACTIVE", "VALIDATION_FAILED", "COMPLETED", "SKIPPED"]),
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
 
   UserProfile: a.model({
