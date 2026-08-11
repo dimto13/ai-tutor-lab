@@ -90,11 +90,7 @@ function load(scenario: Scenario): TrainingSession {
   try {
     const raw = window.localStorage.getItem(storageKey(scenario.id));
     if (!raw) return newSession(scenario);
-    return restoreTrainingSession(
-      scenario,
-      scenario.id,
-      JSON.parse(raw) as StoredTrainingSession,
-    );
+    return restoreTrainingSession(scenario, scenario.id, JSON.parse(raw) as StoredTrainingSession);
   } catch {
     return newSession(scenario);
   }
