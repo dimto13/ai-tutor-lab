@@ -128,9 +128,15 @@ test("Guided: nach drei Fehlversuchen wird Hilfe aktiv angeboten und je Schritt 
           hintsUsed?: number;
           hintUsage?: Array<{ stepId: string; level: number }>;
         };
+        const lastUsage = progress.hintUsage?.at(-1);
         return {
           hintsUsed: progress.hintsUsed,
-          usage: progress.hintUsage?.at(-1),
+          usage: lastUsage
+            ? {
+                stepId: lastUsage.stepId,
+                level: lastUsage.level,
+              }
+            : undefined,
         };
       }, storageKey),
     )
