@@ -35,7 +35,9 @@ function importedModuleSpecifiers(source: string): string[] {
 
 function isCloudSdkSpecifier(specifier: string): boolean {
   return cloudSdkPrefixes.some((prefix) =>
-    prefix.endsWith("/") ? specifier.startsWith(prefix) : specifier === prefix || specifier.startsWith(`${prefix}/`),
+    prefix.endsWith("/")
+      ? specifier.startsWith(prefix)
+      : specifier === prefix || specifier.startsWith(`${prefix}/`),
   );
 }
 
