@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTrainingSession, recordLastAction } from "@ai-train-lab/training-engine";
+import {
+  createTrainingSession,
+  recordLastAction,
+  restoreTrainingSession,
+} from "@ai-train-lab/training-engine";
 import type {
   Scenario,
   TrainingStateKey,
@@ -47,9 +51,14 @@ const scenario: Scenario = {
 };
 
 const key: TrainingStateKey = {
-  subject: { userId: "user-sub", tenantId: null },
+  subject: { userId: "user-sub", tenantId: "personal:user-sub" },
   scenarioId: scenario.id,
   mode: "guided",
+};
+
+const previousPersonalKey: TrainingStateKey = {
+  ...key,
+  subject: { userId: "user-sub", tenantId: null },
 };
 
 function repositories() {
@@ -59,28 +68,49 @@ function repositories() {
   return { local, remote, migrating };
 }
 
-test("local session is exposed as migration revision zero and created remotely on first write", async () => {
+test("previous null-tenant personal session migrates into the same user's personal tenant", async () => {
   const { local, remote, migrating } = repositories();
-  const localSession = recordLastAction(
-    createTrainingSession(scenario, scenario.id, 100, key.subject),
+  const legacySession = recordLastAction(
+    createTrainingSession(scenario, scenario.id, 100, previousPersonalKey.subject),
     "owned-local-state",
   );
-  await local.saveSession(key, localSession, { expectedRevision: null, updatedAt: 101 });
+  await local.saveSession(previousPersonalKey, legacySession, {
+    expectedRevision: null,
+    updatedAt: 101,
+  });
 
   const candidate = await migrating.loadSession(key);
   assert.equal(candidate?.revision, 0);
   assert.equal(candidate?.value.lastAction, "owned-local-state");
+  assert.deepEqual(candidate?.value.subject, key.subject);
 
-  const saved = await migrating.saveSession(key, localSession, { expectedRevision: 0 });
+  const migratedSession = restoreTrainingSession(
+    scenario,
+    scenario.id,
+    candidate?.value,
+    102,
+    key.subject,
+  );
+  const saved = await migrating.saveSession(key, migratedSession, { expectedRevision: 0 });
   assert.equal(saved.revision, 1);
   assert.equal((await remote.loadSession(key))?.value.lastAction, "owned-local-state");
 });
 
 test("existing remote session always wins over a different browser migration candidate", async () => {
   const { local, remote, migrating } = repositories();
-  const initial = createTrainingSession(scenario, scenario.id, 200, key.subject);
-  await local.saveSession(key, recordLastAction(initial, "local"), { expectedRevision: null });
-  await remote.saveSession(key, recordLastAction(initial, "remote"), { expectedRevision: null });
+  const legacyInitial = createTrainingSession(
+    scenario,
+    scenario.id,
+    200,
+    previousPersonalKey.subject,
+  );
+  const remoteInitial = createTrainingSession(scenario, scenario.id, 200, key.subject);
+  await local.saveSession(previousPersonalKey, recordLastAction(legacyInitial, "local"), {
+    expectedRevision: null,
+  });
+  await remote.saveSession(key, recordLastAction(remoteInitial, "remote"), {
+    expectedRevision: null,
+  });
 
   const loaded = await migrating.loadSession(key);
   assert.equal(loaded?.revision, 1);
@@ -89,8 +119,13 @@ test("existing remote session always wins over a different browser migration can
 
 test("remote read failures are not hidden by a stale local session", async () => {
   const local = new LocalStorageTrainingStateRepository(new MemoryStorage());
-  const localSession = createTrainingSession(scenario, scenario.id, 300, key.subject);
-  await local.saveSession(key, localSession, { expectedRevision: null });
+  const localSession = createTrainingSession(
+    scenario,
+    scenario.id,
+    300,
+    previousPersonalKey.subject,
+  );
+  await local.saveSession(previousPersonalKey, localSession, { expectedRevision: null });
 
   const unavailableRemote: TrainingStateRepository = {
     async loadSession() {
@@ -114,10 +149,10 @@ test("remote read failures are not hidden by a stale local session", async () =>
   await assert.rejects(migrating.loadSession(key), /remote unavailable/);
 });
 
-test("owned local runtime snapshot is copied to an empty remote repository on load", async () => {
+test("previous personal runtime snapshot is copied to an empty remote repository on load", async () => {
   const { local, remote, migrating } = repositories();
   await local.saveRuntimeSnapshot(
-    key,
+    previousPersonalKey,
     "vscode-sim",
     { files: ["notiz.txt"] },
     {
@@ -131,4 +166,22 @@ test("owned local runtime snapshot is copied to an empty remote repository on lo
   assert.deepEqual((await remote.loadRuntimeSnapshot(key, "vscode-sim"))?.value, {
     files: ["notiz.txt"],
   });
+});
+
+test("null-tenant personal history is never adopted into a named tenant", async () => {
+  const { local, migrating } = repositories();
+  const legacySession = createTrainingSession(
+    scenario,
+    scenario.id,
+    400,
+    previousPersonalKey.subject,
+  );
+  await local.saveSession(previousPersonalKey, legacySession, { expectedRevision: null });
+
+  const tenantKey: TrainingStateKey = {
+    ...key,
+    subject: { userId: key.subject.userId, tenantId: "tenant-a" },
+  };
+
+  assert.equal(await migrating.loadSession(tenantKey), null);
 });
