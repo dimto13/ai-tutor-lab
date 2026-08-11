@@ -52,11 +52,11 @@ test("stored progress is restored only for the same user and tenant", () => {
   const bobSession = restoreTrainingSession(scenario, "session-1", stored, 200, bob);
 
   assert.equal(aliceSession.finishedAt, 120);
-  assert.equal(aliceSession.statuses.one, "COMPLETED");
+  assert.equal(aliceSession.statuses["one"], "COMPLETED");
   assert.deepEqual(aliceSession.subject, alice);
 
   assert.equal(bobSession.finishedAt, null);
-  assert.equal(bobSession.statuses.one, "ACTIVE");
+  assert.equal(bobSession.statuses["one"], "ACTIVE");
   assert.deepEqual(bobSession.subject, bob);
 });
 
@@ -70,6 +70,6 @@ test("legacy progress without an owner is not adopted by an authenticated user",
   const restored = restoreTrainingSession(scenario, "session-1", legacy, 200, alice);
 
   assert.equal(restored.finishedAt, null);
-  assert.equal(restored.statuses.one, "ACTIVE");
+  assert.equal(restored.statuses["one"], "ACTIVE");
   assert.deepEqual(restored.subject, alice);
 });
