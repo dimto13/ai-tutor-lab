@@ -19,7 +19,11 @@ test("web TrainingProvider delegates domain state and validation to training-eng
     "recordHintUsage",
     "recordMistake",
   ]) {
-    assert.match(source, new RegExp(`\\b${engineApi}\\b`), `TrainingProvider must use ${engineApi}`);
+    assert.match(
+      source,
+      new RegExp(`\\b${engineApi}\\b`),
+      `TrainingProvider must use ${engineApi}`,
+    );
   }
 
   assert.doesNotMatch(source, /function\s+initialProgress\s*\(/);
