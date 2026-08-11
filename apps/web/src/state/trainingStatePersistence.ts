@@ -20,16 +20,19 @@ export interface TrainingStateLoadResult {
  * authority rule required once the remote repository becomes primary.
  */
 export class TrainingStatePersistence {
+  private readonly repository: TrainingStateRepository;
+  private readonly key: TrainingStateKey;
+  private readonly scenario: Scenario;
   private sessionRevision: number | null = null;
   private sessionWriteChain: Promise<void> = Promise.resolve();
   private readonly runtimeRevisions = new Map<string, number | null>();
   private readonly runtimeWriteChains = new Map<string, Promise<void>>();
 
-  constructor(
-    private readonly repository: TrainingStateRepository,
-    private readonly key: TrainingStateKey,
-    private readonly scenario: Scenario,
-  ) {}
+  constructor(repository: TrainingStateRepository, key: TrainingStateKey, scenario: Scenario) {
+    this.repository = repository;
+    this.key = key;
+    this.scenario = scenario;
+  }
 
   async loadSession(): Promise<TrainingStateLoadResult> {
     await this.sessionWriteChain;
