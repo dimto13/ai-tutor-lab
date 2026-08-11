@@ -48,8 +48,9 @@ export interface TrainingSession {
   lastInspectedRef: string | null;
 }
 
-export interface StoredTrainingSession
-  extends Partial<Omit<TrainingSession, "statuses" | "hintUsage" | "attempts">> {
+export interface StoredTrainingSession extends Partial<
+  Omit<TrainingSession, "statuses" | "hintUsage" | "attempts">
+> {
   statuses?: Record<string, unknown>;
   hintUsage?: unknown[];
   attempts?: unknown[];
@@ -166,9 +167,7 @@ export function restoreTrainingSession(
     );
     const targetCount = scenario.exploreTargets?.length ?? 0;
     finishedAt =
-      targetCount > 0 && exploredTargets.length >= targetCount
-        ? (storedFinishedAt ?? now)
-        : null;
+      targetCount > 0 && exploredTargets.length >= targetCount ? (storedFinishedAt ?? now) : null;
   }
 
   const exploredTargets = parseStringArray(stored.exploredTargets).filter((ref) =>
@@ -388,10 +387,7 @@ export function completeChallenge(
   return next;
 }
 
-export function timeoutChallenge(
-  session: TrainingSession,
-  scenario: Scenario,
-): TrainingSession {
+export function timeoutChallenge(session: TrainingSession, scenario: Scenario): TrainingSession {
   if (session.mode !== "challenge" || session.challengeOutcome !== "active") return session;
   const challengeStep = scenario.steps[0];
   const next: TrainingSession = {
