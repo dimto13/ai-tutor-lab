@@ -184,6 +184,7 @@ function TrainingLayout() {
     isFinished,
     isChallengeFailed,
     isReady,
+    feedback,
     helpLevel,
     scoreMultiplier,
     challengeRemainingSeconds,
@@ -191,6 +192,8 @@ function TrainingLayout() {
   const [highlightsOn, setHighlightsOn] = useState(true);
   const [mobileSurface, setMobileSurface] = useState<"workspace" | "guide">("workspace");
   const step = scenario.steps.find((s) => s.id === progress.activeStepId);
+  const failureTarget = feedback?.kind === "error" ? step?.onFailure?.markTarget : undefined;
+  const highlightTarget = failureTarget ?? step?.highlightTarget;
   const stepNumber = step
     ? scenario.steps.findIndex((s) => s.id === step.id) + 1
     : scenario.steps.length;
@@ -336,13 +339,13 @@ function TrainingLayout() {
       mode === "guided" &&
       highlightsOn &&
       mobileSurface === "workspace" &&
-      step?.highlightTarget ? (
+      highlightTarget ? (
         <HighlightOverlay
-          targetId={step.highlightTarget}
+          targetId={highlightTarget}
           runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
-          tooltip={step.highlightTooltip}
-          strong={helpLevel >= 3}
+          tooltip={failureTarget ? feedback?.message : step?.highlightTooltip}
+          strong={Boolean(failureTarget) || helpLevel >= 3}
         />
       ) : null}
 

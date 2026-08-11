@@ -50,7 +50,7 @@
       "title": "Explorer öffnen",
       "description": "Du kennst jetzt die Rollen von Activity Bar, Primary Side Bar, Secondary Side Bar und Explorer. Als Nächstes öffnest du die Datei- und Ordnerübersicht selbst.",
       "instruction": "Öffne den Explorer über sein Symbol in der Activity Bar.",
-      "why": "Die Activity Bar wählt den Hauptbereich aus; dessen Inhalt erscheint in der Primary Side Bar. Die Secondary Side Bar bleibt davon getrennt und kann zusätzliche Views aufnehmen.",
+      "rationale": "Die Activity Bar wählt den Hauptbereich aus; dessen Inhalt erscheint in der Primary Side Bar. Die Secondary Side Bar bleibt davon getrennt und kann zusätzliche Views aufnehmen.",
       "helpLevels": [
         "Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol.",
         "Klicke auf das oberste Symbol mit den zwei Dateien.",
@@ -70,7 +70,7 @@
       "title": "Einen Ordner als Arbeitskontext öffnen",
       "description": "Mit Open Folder öffnest du einen einzelnen Ordner als Arbeitskontext. Ein gespeicherter Workspace kann zusätzlich mehrere Ordner und eigene VS-Code-Einstellungen bündeln. Diese Multi-Root-Konfiguration musst du im Anfängerpfad noch nicht bedienen.",
       "instruction": "Öffne über File → Open Folder... den vorbereiteten Ordner ai-training-demo.",
-      "why": "Für viele einfache Aufgaben reicht ein einzelner geöffneter Ordner. Den Unterschied zum Workspace sollst du verstehen, ohne schon eine erweiterte Workspace-Konfiguration durchführen zu müssen.",
+      "rationale": "Für viele einfache Aufgaben reicht ein einzelner geöffneter Ordner. Den Unterschied zum Workspace sollst du verstehen, ohne schon eine erweiterte Workspace-Konfiguration durchführen zu müssen.",
       "helpLevels": [
         "Öffne oben das File-Menü.",
         "Wähle im File-Menü Open Folder... .",
@@ -93,7 +93,7 @@
       "title": "Datei erstellen",
       "description": "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an. Für diesen Grundlagenkurs verwenden wir bewusst eine normale Textdatei statt Programmcode.",
       "instruction": "Erstelle im Projektordner ai-training-demo eine Datei notiz.txt.",
-      "why": "So übst du die Dateioperation im Explorer, ohne gleichzeitig eine Programmiersprache lernen zu müssen.",
+      "rationale": "So übst du die Dateioperation im Explorer, ohne gleichzeitig eine Programmiersprache lernen zu müssen.",
       "helpLevels": [
         "Im Kopf des Explorers gibt es die Aktion Neue Datei.",
         "Klicke auf Neue Datei und tippe notiz.txt ein.",
@@ -109,6 +109,10 @@
       },
       "highlightTarget": "vscode.explorer.newFile",
       "highlightTooltip": "Neue Datei im aktuellen Projektordner anlegen.",
+      "onFailure": {
+        "message": "Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.",
+        "markTarget": "vscode.explorer.tree"
+      },
       "successMessage": "notiz.txt wurde erstellt und im Editor geöffnet."
     },
     {
@@ -116,7 +120,7 @@
       "title": "Editor mit einfachem Text verwenden",
       "description": "Der Editor ist die große Arbeitsfläche für den Inhalt einer Datei. In diesem VS-Code-Grundkurs musst du keinen Code schreiben: Du bearbeitest nur einen normalen Text.",
       "instruction": "Tippe den Text Hello AI Training in notiz.txt.",
-      "why": "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt. Programmierung ist dafür nicht erforderlich.",
+      "rationale": "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt. Programmierung ist dafür nicht erforderlich.",
       "helpLevels": [
         "Klicke in die große Arbeitsfläche des Editors.",
         "Tippe genau den Text Hello AI Training ein.",
@@ -142,7 +146,7 @@
       "title": "Panel und seine Views unterscheiden",
       "description": "Im Panel können mehrere spezialisierte Ansichten liegen; VS Code nennt eine solche Ansicht View. Das Terminal ist die View für Textbefehle, Problems sammelt Fehler und Warnungen, und Output zeigt Protokoll- und Statusausgaben.",
       "instruction": "Öffne über Terminal → New Terminal ein integriertes Terminal.",
-      "why": "Wenn du Panel und View unterscheidest, erkennst du, dass Terminal, Problems und Output unterschiedliche Werkzeuge im selben unteren Bereich sind. Das Terminal-Menü ist ein regulärer Einstieg in diese View.",
+      "rationale": "Wenn du Panel und View unterscheidest, erkennst du, dass Terminal, Problems und Output unterschiedliche Werkzeuge im selben unteren Bereich sind. Das Terminal-Menü ist ein regulärer Einstieg in diese View.",
       "helpLevels": [
         "Öffne oben in der Menüleiste das Menü Terminal.",
         "Wähle im geöffneten Terminal-Menü New Terminal.",
@@ -162,7 +166,7 @@
       "title": "Problems-View verwenden",
       "description": "Problems ist die View für erkannte Fehler, Warnungen und andere Diagnosen. Sie ist nicht dasselbe wie das Terminal.",
       "instruction": "Wechsle im Panel auf Problems.",
-      "why": "Je nach Aufgabe brauchst du Textbefehle, Diagnosen oder Protokolle. Die Views haben unterschiedliche Zwecke.",
+      "rationale": "Je nach Aufgabe brauchst du Textbefehle, Diagnosen oder Protokolle. Die Views haben unterschiedliche Zwecke.",
       "helpLevels": [
         "Die Views des Panels stehen als Tabs oberhalb der unteren Ausgabe.",
         "Klicke auf Problems.",
@@ -185,7 +189,7 @@
       "title": "Output-View verwenden",
       "description": "Output ist die View für Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
       "instruction": "Wechsle im Panel auf Output.",
-      "why": "Output eignet sich für technische Protokolle und Statusmeldungen, die du nur lesen und nicht wie im Terminal eingeben musst.",
+      "rationale": "Output eignet sich für technische Protokolle und Statusmeldungen, die du nur lesen und nicht wie im Terminal eingeben musst.",
       "helpLevels": [
         "Bleibe im unteren Panel und sieh dir die Tabs der Views an.",
         "Klicke auf Output.",

@@ -140,6 +140,13 @@ export type Validation =
       of: Validation[];
     };
 
+export interface StepFailureFeedback {
+  /** Learner-facing message for a relevant action that did not satisfy the step. */
+  message: string;
+  /** Optional semantic runtime target to emphasize while showing the failure feedback. */
+  markTarget?: UiTargetRef;
+}
+
 export interface TrainingStep {
   id: string;
   /** Only explicitly marked explanation steps may advance without a RuntimeEvent. */
@@ -147,7 +154,10 @@ export interface TrainingStep {
   title: string;
   description: string;
   instruction: string;
-  why: string;
+  /** Domain-contract answer to “Why am I doing this?”. */
+  rationale?: string;
+  /** Transitional authoring alias. New content should prefer `rationale`. */
+  why?: string;
   /** 3 escalating help levels: hint, concrete instruction, visual help. */
   helpLevels: [string, string, string];
   /** Transitional POC event contract; new content should prefer `validation`. */
@@ -156,6 +166,8 @@ export interface TrainingStep {
   /** Semantic UI reference, never a CSS selector. */
   highlightTarget?: UiTargetRef;
   highlightTooltip?: string;
+  /** Declarative feedback for a relevant, but incorrect, learner action. */
+  onFailure?: StepFailureFeedback;
   successMessage: string;
   /** Optional content can be skipped through an explicit learner choice. */
   optional?: boolean;

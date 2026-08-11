@@ -147,7 +147,7 @@ test("Guided: Grundbegriffe sind vor der ersten Aufgabe optional vorgeschaltet",
   await expect(page.getByRole("button", { name: "Grundbegriffe überspringen" })).toBeVisible();
 
   await skipGuidedIntroductions(page);
-  await expect(page.getByText("Schritt 7 von 13", { exact: true })).toBeVisible();
+  await expect(page.locator("header").getByText("Schritt 7 von 13", { exact: true })).toBeVisible();
 });
 
 test("Guided: Explorer, Folder, Editor und Panel laufen als Anfängerpfad", async ({ page }) => {
@@ -283,7 +283,7 @@ test("Reload: geführter Fortschritt und übersprungene Grundbegriffe bleiben er
   await waitForTrainingReady(page);
 
   await expectGuidedStep(page, 8, "Einen Ordner als Arbeitskontext öffnen");
-  await expect(page.getByText("Schritt 8 von 13", { exact: true })).toBeVisible();
+  await expect(page.locator("header").getByText("Schritt 8 von 13", { exact: true })).toBeVisible();
 });
 
 test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", async ({ page }) => {
@@ -295,9 +295,11 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
 
   await expectGuidedStep(page, 9, "Datei erstellen");
   await expect(
-    page.getByText("Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.", {
-      exact: true,
-    }),
+    page
+      .getByTestId("guided-orientation")
+      .getByText("Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", {
+        exact: true,
+      }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();

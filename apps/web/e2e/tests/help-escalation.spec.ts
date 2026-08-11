@@ -11,17 +11,17 @@ test("Guided eskaliert Orientierung zu exakter Aktion und starkem Highlight", as
   await expect(spotlight).toBeVisible();
   await expect(spotlight).not.toHaveClass(/animate-pulse/);
 
-  await page.getByRole("button", { name: "Hinweis anzeigen" }).click();
+  await page.getByRole("button", { name: "Hilfe 1 anzeigen" }).click();
   await expect(
     page.getByText("Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol."),
   ).toBeVisible();
   await expect(spotlight).not.toHaveClass(/animate-pulse/);
 
-  await page.getByRole("button", { name: "Mehr Hilfe" }).click();
+  await page.getByRole("button", { name: "Hilfe 2 anzeigen" }).click();
   await expect(page.getByText("Klicke auf das oberste Symbol mit den zwei Dateien.")).toBeVisible();
   await expect(spotlight).not.toHaveClass(/animate-pulse/);
 
-  await page.getByRole("button", { name: "Mehr Hilfe" }).click();
+  await page.getByRole("button", { name: "Hilfe 3 anzeigen" }).click();
   await expect(
     page.getByText("Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol."),
   ).toBeVisible();
