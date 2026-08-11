@@ -92,7 +92,7 @@
           "details": "Das gepflegte Produktprofil markiert Plan mit status=preview und die Simulator-Oberfläche zeigt deshalb Plan (Preview). Die aktuelle offizielle VS-Code-Dokumentation führt Ask, Plan und Agent gleichrangig als die drei Agent-Modi ohne Preview-Kennzeichnung.",
           "observedVersion": "2026-08 / VS Code 1.131",
           "scenarioIds": ["copilot-basics.guided"],
-          "status": "open"
+          "status": "resolved"
         },
         {
           "id": "copilot-context-selector-2026-08",
