@@ -53,27 +53,34 @@ function parseEnvelope<T>(raw: string, key: TrainingStateKey): TrainingStateReco
   if (parsed["schemaVersion"] !== TRAINING_STATE_SCHEMA_VERSION) return null;
   if (!Number.isInteger(parsed["revision"]) || (parsed["revision"] as number) < 1) return null;
   if (typeof parsed["updatedAt"] !== "number" || !Number.isFinite(parsed["updatedAt"])) return null;
+
   const storedKey = parsed["key"];
   if (!isObject(storedKey)) return null;
+  if (
+    typeof storedKey["scenarioId"] !== "string" ||
+    (storedKey["mode"] !== "explore" &&
+      storedKey["mode"] !== "guided" &&
+      storedKey["mode"] !== "challenge")
+  ) {
+    return null;
+  }
+
   const storedSubject = storedKey["subject"];
-  if (!isObject(storedSubject)) return null;
+  if (!isObject(storedSubject) || typeof storedSubject["userId"] !== "string") return null;
+  if (storedSubject["tenantId"] !== null && typeof storedSubject["tenantId"] !== "string") {
+    return null;
+  }
+
   const candidateKey: TrainingStateKey = {
-    scenarioId: typeof storedKey["scenarioId"] === "string" ? storedKey["scenarioId"] : "",
-    mode:
-      storedKey["mode"] === "explore" ||
-      storedKey["mode"] === "guided" ||
-      storedKey["mode"] === "challenge"
-        ? storedKey["mode"]
-        : "guided",
+    scenarioId: storedKey["scenarioId"],
+    mode: storedKey["mode"],
     subject: {
-      userId: typeof storedSubject["userId"] === "string" ? storedSubject["userId"] : "",
-      tenantId:
-        storedSubject["tenantId"] === null || typeof storedSubject["tenantId"] === "string"
-          ? storedSubject["tenantId"]
-          : null,
+      userId: storedSubject["userId"],
+      tenantId: storedSubject["tenantId"],
     },
   };
   if (!sameTrainingStateKey(candidateKey, key)) return null;
+
   return {
     schemaVersion: TRAINING_STATE_SCHEMA_VERSION,
     key,
@@ -118,7 +125,11 @@ function nextRecord<T>(
 }
 
 export class LocalStorageTrainingStateRepository implements TrainingStateRepository {
-  constructor(private readonly storage: StorageLike) {}
+  private readonly storage: StorageLike;
+
+  constructor(storage: StorageLike) {
+    this.storage = storage;
+  }
 
   async loadSession(key: TrainingStateKey): Promise<TrainingStateRecord<StoredTrainingSession> | null> {
     const currentRaw = this.storage.getItem(trainingSessionStorageKey(key));
