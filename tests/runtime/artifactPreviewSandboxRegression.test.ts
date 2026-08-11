@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  buildSandboxedArtifactDocument,
-  createArtifactPreviewRuntime,
-} from "../../apps/web/src/runtime/artifactPreviewRuntime.ts";
+import { buildSandboxedArtifactDocument } from "../../apps/web/src/runtime/artifactPreviewContent.ts";
+import { createArtifactPreviewRuntime } from "../../apps/web/src/runtime/artifactPreviewRuntime.ts";
 
 function createContainer(): HTMLElement {
   return {
