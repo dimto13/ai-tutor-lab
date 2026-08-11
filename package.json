@@ -33,7 +33,7 @@
     "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
     "lint": "eslint apps packages scripts tests",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check . || (echo __TRAINING_STORE_BEGIN__ && prettier apps/web/src/state/trainingStore.tsx && echo __TRAINING_STORE_END__ && echo __STATE_MACHINE_BEGIN__ && prettier packages/training-engine/src/stateMachine.ts && echo __STATE_MACHINE_END__ && false)"
   },
   "dependencies": {
     "zod": "^3.24.2"
