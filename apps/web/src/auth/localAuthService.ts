@@ -24,6 +24,10 @@ export function createLocalAuthService(options: LocalAuthServiceOptions): AuthSe
       return currentSession;
     },
 
+    async refreshSession() {
+      return currentSession;
+    },
+
     async signIn(): Promise<SignInResult> {
       currentSession = createSession();
 
