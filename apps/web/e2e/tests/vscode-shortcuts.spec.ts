@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 const scenarioUrl = "/training/vscode-shortcuts.challenge";
 const storageKey =
+  "ai-training-lab:tenant:value:local-tenant:user:local-learner:vscode-shortcuts.challenge:mode:challenge:state:v4";
+const legacyStorageKey =
   "ai-training-lab:tenant:value:local-tenant:user:local-learner:vscode-shortcuts.challenge:v3";
 const challengeText = "Status für Marco: Review abgeschlossen.";
 
@@ -38,9 +40,29 @@ async function createDirtyChallengeFile(page: Page): Promise<void> {
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill(challengeText);
 }
 
+async function persistedStartedAt(page: Page): Promise<number> {
+  const readStartedAt = () =>
+    page.evaluate((key) => {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return null;
+      const envelope = JSON.parse(raw) as { value?: { startedAt?: number } };
+      return typeof envelope.value?.startedAt === "number" ? envelope.value.startedAt : null;
+    }, storageKey);
+
+  await expect.poll(readStartedAt).toEqual(expect.any(Number));
+  const startedAt = await readStartedAt();
+  if (typeof startedAt !== "number") throw new Error("training start missing");
+  return startedAt;
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto(scenarioUrl);
-  await page.evaluate((key) => window.localStorage.removeItem(key), storageKey);
+  await page.evaluate(
+    (keys) => {
+      for (const key of keys) window.localStorage.removeItem(key);
+    },
+    [storageKey, legacyStorageKey],
+  );
   await page.reload();
   await waitForTrainingReady(page);
 });
@@ -81,34 +103,28 @@ test("Speed Challenge: Erfolgsereignis nach der Deadline wird vor dem nächsten 
 }) => {
   await startChallenge(page);
   await createDirtyChallengeFile(page);
+  const startedAt = await persistedStartedAt(page);
 
-  await page.evaluate(
-    ({ key }) => {
-      const raw = window.localStorage.getItem(key);
-      if (!raw) throw new Error("training progress missing");
-      const progress = JSON.parse(raw) as { startedAt?: number };
-      if (typeof progress.startedAt !== "number") throw new Error("training start missing");
-      const activeElement = document.activeElement;
-      if (!(activeElement instanceof HTMLElement)) throw new Error("active editor missing");
+  await page.evaluate((challengeStartedAt) => {
+    const activeElement = document.activeElement;
+    if (!(activeElement instanceof HTMLElement)) throw new Error("active editor missing");
 
-      const originalNow = Date.now;
-      Date.now = () => progress.startedAt! + 30_001;
-      try {
-        activeElement.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "s",
-            code: "KeyS",
-            ctrlKey: true,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      } finally {
-        Date.now = originalNow;
-      }
-    },
-    { key: storageKey },
-  );
+    const originalNow = Date.now;
+    Date.now = () => challengeStartedAt + 30_001;
+    try {
+      activeElement.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "s",
+          code: "KeyS",
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    } finally {
+      Date.now = originalNow;
+    }
+  }, startedAt);
 
   await expect(page.getByText("Neuer Versuch", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).not.toBeVisible();
@@ -153,19 +169,13 @@ test("Speed Challenge: Timeout führt zurück ins Briefing und ein neuer Versuch
   page,
 }) => {
   await startChallenge(page);
+  const startedAt = await persistedStartedAt(page);
 
-  await page.evaluate(
-    ({ key }) => {
-      const raw = window.localStorage.getItem(key);
-      if (!raw) throw new Error("training progress missing");
-      const progress = JSON.parse(raw) as { startedAt?: number };
-      if (typeof progress.startedAt !== "number") throw new Error("training start missing");
-      const globalWindow = window as typeof window & { __realDateNow?: typeof Date.now };
-      globalWindow.__realDateNow = Date.now;
-      Date.now = () => progress.startedAt! + 31_000;
-    },
-    { key: storageKey },
-  );
+  await page.evaluate((challengeStartedAt) => {
+    const globalWindow = window as typeof window & { __realDateNow?: typeof Date.now };
+    globalWindow.__realDateNow = Date.now;
+    Date.now = () => challengeStartedAt + 31_000;
+  }, startedAt);
 
   await expect(page.getByText("Neuer Versuch", { exact: true })).toBeVisible();
   await expect(page.getByText(/Die Zeit des letzten Versuchs ist abgelaufen\./)).toBeVisible();
