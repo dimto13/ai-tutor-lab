@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { createCognitoAuthService } from "../../apps/web/src/auth/adapters/cognitoAuthService.ts";
@@ -120,4 +121,16 @@ test("Cognito adapter rejects unsupported additional sign-in steps", async () =>
     }),
     /additional verification step/,
   );
+});
+
+test("AWS Cognito client uses the signed token subject as canonical user id", async () => {
+  const source = await readFile(
+    new URL("../../apps/web/src/auth/adapters/awsCognitoClient.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /idTokenPayload\["sub"\]/);
+  assert.match(source, /accessTokenPayload\["sub"\]/);
+  assert.doesNotMatch(source, /getCurrentUser/);
+  assert.doesNotMatch(source, /user\.userId/);
 });
