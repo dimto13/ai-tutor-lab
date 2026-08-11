@@ -33,7 +33,7 @@
     "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
     "lint": "eslint apps packages scripts tests",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "FILES=$(prettier --list-different .); if [ -n \"$FILES\" ]; then for f in $FILES; do echo \"::error file=$f::Prettier formatting required\"; done; exit 1; fi"
   },
   "dependencies": {
     "zod": "^3.24.2"
