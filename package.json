@@ -40,6 +40,8 @@
   },
   "dependencies": {
     "aws-amplify": "^6.20.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "zod": "^3.25.17"
   },
   "devDependencies": {
