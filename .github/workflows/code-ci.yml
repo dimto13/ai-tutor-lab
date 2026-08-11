@@ -40,17 +40,13 @@ jobs:
 
       - name: Check formatting
         run: |
-          set +e
-          files=$(npx prettier --list-different .)
-          status=$?
-          set -e
-          if [ "$status" -ne 0 ]; then
+          npx prettier --write . >/dev/null
+          if ! git diff --quiet; then
             while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                echo "::error file=$file::Prettier formatting required"
-              fi
-            done <<< "$files"
-            exit "$status"
+              patch=$(git diff -- "$file" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+              echo "::error file=$file::Prettier formatting required%0A$patch"
+            done < <(git diff --name-only)
+            exit 1
           fi
 
       - name: Validate scenario content
