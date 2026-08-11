@@ -13,12 +13,13 @@ import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } f
 import { findNextIncompleteStepId, normalizeGuidedStepProgress } from "@/state/trainingProgress";
 import type {
   ChallengeOutcome,
+  EngineValidationResult,
+  HintUsage,
   Scenario,
   StepStatus,
   TrainingEvent,
   TrainingMode,
   Validation,
-  ValidationResult,
 } from "@/types/training";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
@@ -38,7 +39,9 @@ export interface TrainingProgress {
   finishedAt: number | null;
   challengeOutcome: ChallengeOutcome | null;
   hintsUsed: number;
+  hintUsage: HintUsage[];
   mistakes: number;
+  activeStepMistakes: number;
   lastAction: string | null;
   exploredTargets: string[];
   lastInspectedRef: string | null;
@@ -85,11 +88,21 @@ function initialProgress(scenario: Scenario): TrainingProgress {
     finishedAt: null,
     challengeOutcome: mode === "challenge" ? "active" : null,
     hintsUsed: 0,
+    hintUsage: [],
     mistakes: 0,
+    activeStepMistakes: 0,
     lastAction: null,
     exploredTargets: [],
     lastInspectedRef: null,
   };
+}
+
+function helpLevelForProgress(progress: TrainingProgress): number {
+  if (!progress.activeStepId) return 0;
+  return progress.hintUsage.reduce(
+    (level, usage) => (usage.stepId === progress.activeStepId ? Math.max(level, usage.level) : level),
+    0,
+  );
 }
 
 function load(scenario: Scenario): TrainingProgress {
@@ -120,7 +133,9 @@ function load(scenario: Scenario): TrainingProgress {
           ? (parsed.challengeOutcome ?? (parsed.finishedAt ? "passed" : "active"))
           : null,
       hintsUsed: parsed.hintsUsed ?? 0,
+      hintUsage: Array.isArray(parsed.hintUsage) ? parsed.hintUsage : [],
       mistakes: parsed.mistakes ?? 0,
+      activeStepMistakes: parsed.activeStepMistakes ?? 0,
       lastAction: parsed.lastAction ?? null,
       exploredTargets: parsed.exploredTargets ?? [],
       lastInspectedRef: parsed.lastInspectedRef ?? null,
@@ -149,16 +164,18 @@ function containsNormalizedFragment(actual: string, expected: string): boolean {
   return normalizeComparableText(actual).includes(normalizeComparableText(expected));
 }
 
-function validateEvent(validation: Validation | undefined, event: TrainingEvent): ValidationResult {
-  if (!validation) return { ok: true };
-  if (validation.kind !== "event") return { ok: false };
-  if (validation.type !== event.type) return { ok: false };
+function validateEvent(
+  validation: Validation | undefined,
+  event: TrainingEvent,
+): EngineValidationResult {
+  if (!validation) return { outcome: "pass" };
+  if (validation.kind !== "event" || validation.type !== event.type) return { outcome: "ignore" };
 
   const payload = eventPayload(event);
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
     if (payload[key] !== expected) {
       return {
-        ok: false,
+        outcome: "near-miss",
         message: "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.",
       };
     }
@@ -166,7 +183,10 @@ function validateEvent(validation: Validation | undefined, event: TrainingEvent)
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
     if (typeof actual !== "string" || !actual.includes(expectedFragment)) {
-      return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };
+      return {
+        outcome: "near-miss",
+        message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.",
+      };
     }
   }
   for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {
@@ -175,10 +195,13 @@ function validateEvent(validation: Validation | undefined, event: TrainingEvent)
       typeof actual !== "string" ||
       !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))
     ) {
-      return { ok: false, message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch." };
+      return {
+        outcome: "near-miss",
+        message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.",
+      };
     }
   }
-  return { ok: true };
+  return { outcome: "pass" };
 }
 
 async function validateState(
@@ -341,8 +364,9 @@ export function TrainingProvider({
 
   useEffect(() => {
     setHydrated(false);
-    setProgress(load(scenario));
-    setHelpLevel(0);
+    const persistedProgress = load(scenario);
+    setProgress(persistedProgress);
+    setHelpLevel(helpLevelForProgress(persistedProgress));
     setFeedback(null);
     setChallengeRemainingSeconds(null);
     setHydrated(true);
@@ -425,6 +449,7 @@ export function TrainingProvider({
           ...current,
           statuses,
           activeStepId: nextStepId,
+          activeStepMistakes: 0,
           finishedAt: nextStepId ? null : Date.now(),
         };
       });
@@ -518,33 +543,41 @@ export function TrainingProvider({
       const step = scenario.steps.find((candidate) => candidate.id === stepId);
       if (!step || step.stepType === "explanation") return;
 
-      const expectedEvent =
-        step.validation?.kind === "event" ? step.validation.type : step.expectedEvent;
-      if (expectedEvent && expectedEvent !== event.type) return;
-
-      const result = step.validate
-        ? step.validate(payload)
-        : step.validation
-          ? validateEvent(step.validation, event)
-          : { ok: true };
-
-      if (result.ok) {
-        completeStep(stepId, step.successMessage);
-      } else if (result.message) {
-        const counts = event.type !== "file.updated";
-        if (counts) {
-          setProgress((currentProgress) => ({
-            ...currentProgress,
-            mistakes: currentProgress.mistakes + 1,
-            statuses: { ...currentProgress.statuses, [stepId]: "VALIDATION_FAILED" },
-          }));
-        }
-        setFeedback((currentFeedback) =>
-          currentFeedback?.kind === "error" && currentFeedback.message === result.message
-            ? currentFeedback
-            : { kind: "error", message: result.message! },
-        );
+      let result: EngineValidationResult;
+      if (step.validate) {
+        if (step.expectedEvent && step.expectedEvent !== event.type) return;
+        const legacyResult = step.validate(payload);
+        result = legacyResult.ok
+          ? { outcome: "pass" }
+          : { outcome: "near-miss", message: legacyResult.message };
+      } else {
+        result = step.validation ? validateEvent(step.validation, event) : { outcome: "pass" };
       }
+
+      if (result.outcome === "ignore") return;
+      if (result.outcome === "pass") {
+        completeStep(stepId, step.successMessage);
+        return;
+      }
+
+      const message =
+        step.onFailure?.message ??
+        result.message ??
+        "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
+      const counts = event.type !== "file.updated";
+      if (counts) {
+        setProgress((currentProgress) => ({
+          ...currentProgress,
+          mistakes: currentProgress.mistakes + 1,
+          activeStepMistakes: currentProgress.activeStepMistakes + 1,
+          statuses: { ...currentProgress.statuses, [stepId]: "VALIDATION_FAILED" },
+        }));
+      }
+      setFeedback((currentFeedback) =>
+        currentFeedback?.kind === "error" && currentFeedback.message === message
+          ? currentFeedback
+          : { kind: "error", message },
+      );
     };
 
     const subscriber = (event: TrainingEvent) => {
@@ -621,10 +654,20 @@ export function TrainingProvider({
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
         if (mode !== "guided") return;
+        const stepId = progressRef.current.activeStepId;
+        if (!stepId) return;
         setHelpLevel((level) => {
           if (level >= 3) return level;
-          setProgress((current) => ({ ...current, hintsUsed: current.hintsUsed + 1 }));
-          return level + 1;
+          const nextLevel = (level + 1) as 1 | 2 | 3;
+          setProgress((current) => ({
+            ...current,
+            hintsUsed: current.hintsUsed + 1,
+            hintUsage: [
+              ...current.hintUsage,
+              { stepId, level: nextLevel, timestamp: Date.now() },
+            ],
+          }));
+          return nextLevel;
         });
       },
       resetHelp: () => setHelpLevel(0),
@@ -658,6 +701,7 @@ export function TrainingProvider({
             ...current,
             statuses,
             activeStepId: next?.id ?? null,
+            activeStepMistakes: 0,
             finishedAt: next ? null : Date.now(),
           };
         });
@@ -678,7 +722,11 @@ export function TrainingProvider({
       },
       registerMistake: (message: string) => {
         if (mode === "explore") return;
-        setProgress((current) => ({ ...current, mistakes: current.mistakes + 1 }));
+        setProgress((current) => ({
+          ...current,
+          mistakes: current.mistakes + 1,
+          activeStepMistakes: current.activeStepMistakes + 1,
+        }));
         setFeedback({ kind: "error", message });
       },
       persistRuntimeSnapshot,
