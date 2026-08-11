@@ -7,6 +7,7 @@ import {
   signInWithRedirect,
   signOut,
 } from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
 
 export interface CognitoSessionSnapshot {
   userId: string;
@@ -29,6 +30,8 @@ export interface AmplifyCognitoClientOptions {
   outputsUrl?: string;
 }
 
+const OAUTH_CALLBACK_TIMEOUT_MS = 15_000;
+
 function stringClaim(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
@@ -41,6 +44,56 @@ function stringArrayClaim(value: unknown): readonly string[] {
 function expirationIso(expiration: unknown): string | null {
   if (typeof expiration !== "number" || !Number.isFinite(expiration)) return null;
   return new Date(expiration * 1000).toISOString();
+}
+
+function isOauthRedirectCallback(search: string): boolean {
+  const params = new URLSearchParams(search);
+  return params.has("state") && (params.has("code") || params.has("error"));
+}
+
+async function enableOauthListener(): Promise<void> {
+  if (!isOauthRedirectCallback(window.location.search)) {
+    await import("aws-amplify/auth/enable-oauth-listener");
+    return;
+  }
+
+  let cancelHubListener: () => void = () => undefined;
+  let timeoutId: number | null = null;
+
+  const redirectCompletion = new Promise<void>((resolve, reject) => {
+    const settle = (callback: () => void) => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      cancelHubListener();
+      callback();
+    };
+
+    cancelHubListener = Hub.listen("auth", ({ payload }) => {
+      if (payload.event === "signInWithRedirect") {
+        settle(resolve);
+        return;
+      }
+
+      if (payload.event === "signInWithRedirect_failure") {
+        const detail = payload.data instanceof Error ? payload.data.message : "Unknown OAuth error";
+        settle(() => reject(new Error(`OIDC sign-in failed: ${detail}`)));
+      }
+    });
+
+    timeoutId = window.setTimeout(() => {
+      settle(() => reject(new Error("Timed out while completing the OIDC sign-in redirect.")));
+    }, OAUTH_CALLBACK_TIMEOUT_MS);
+  });
+
+  try {
+    // Amplify documents this side-effect import for SSR/MPA callback pages. The
+    // Hub listener is registered first so getSession cannot race the token exchange.
+    await import("aws-amplify/auth/enable-oauth-listener");
+    await redirectCompletion;
+  } catch (error) {
+    if (timeoutId !== null) window.clearTimeout(timeoutId);
+    cancelHubListener();
+    throw error;
+  }
 }
 
 /**
@@ -67,11 +120,7 @@ export function createAmplifyCognitoClient(
 
       const outputs = (await response.json()) as Parameters<typeof Amplify.configure>[0];
       Amplify.configure(outputs);
-
-      // In an SSR/MPA application the OAuth return page is a fresh browser load.
-      // The explicit listener must therefore be installed during client setup,
-      // not only in the page instance that initiated the outgoing redirect.
-      await import("aws-amplify/auth/enable-oauth-listener");
+      await enableOauthListener();
     })().catch((error) => {
       configurationPromise = null;
       throw error;
@@ -94,7 +143,9 @@ export function createAmplifyCognitoClient(
 
       return {
         userId: user.userId,
-        tenantId: attributes["custom:tenant_id"] ?? stringClaim(idTokenPayload["custom:tenant_id"]),
+        // Tenant membership must come from a server-controlled membership source.
+        // Cognito profile attributes are deliberately not authoritative here.
+        tenantId: null,
         email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
         displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
         roles: stringArrayClaim(idTokenPayload["cognito:groups"]),
