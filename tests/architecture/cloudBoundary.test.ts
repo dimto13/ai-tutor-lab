@@ -10,6 +10,8 @@ const cloudSdkPrefixes = [
   "aws-amplify",
   "@aws-amplify/",
   "@aws-sdk/",
+  "aws-sdk",
+  "amazon-cognito-identity-js",
   "aws-cdk-lib",
   "@aws-cdk/",
   "firebase",
@@ -71,14 +73,18 @@ test("cloud import detector covers static, side-effect, dynamic and AWS SDK impo
     import { fetchAuthSession } from "aws-amplify/auth";
     import "aws-amplify/auth/enable-oauth-listener";
     const cognito = await import("@aws-sdk/client-cognito-identity-provider");
+    const legacyCognito = require("amazon-cognito-identity-js");
+    const legacyAwsSdk = require("aws-sdk/clients/cognitoidentityserviceprovider");
     const firebase = require("firebase/app");
     import { z } from "zod";
   `;
 
   assert.deepEqual(cloudSdkImports(source), [
     "@aws-sdk/client-cognito-identity-provider",
+    "amazon-cognito-identity-js",
     "aws-amplify/auth",
     "aws-amplify/auth/enable-oauth-listener",
+    "aws-sdk/clients/cognitoidentityserviceprovider",
     "firebase/app",
   ]);
 });
