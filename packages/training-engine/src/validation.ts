@@ -26,8 +26,7 @@ const PASS: EngineValidationResult = { outcome: "pass" };
 const IGNORE: EngineValidationResult = { outcome: "ignore" };
 const EVENT_MISMATCH_MESSAGE =
   "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
-const EVENT_CONTENT_MISSING_MESSAGE =
-  "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.";
+const EVENT_CONTENT_MISSING_MESSAGE = "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.";
 
 export class ValidatorRegistry {
   private readonly handlers = new Map<string, ValidationHandler>();
