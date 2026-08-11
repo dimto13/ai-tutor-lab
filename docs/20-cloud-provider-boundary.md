@@ -55,6 +55,11 @@ Mandant/Nutzer getrennt. Die Training Engine importiert weder Auth-Code noch Clo
 Routes und State verwenden ausschliesslich den cloud-neutralen Vertrag. Das Laden von
 `amplify_outputs.json` und alle Amplify-SDK-Aufrufe enden im AWS-Adapter.
 
+Die Mandantenzuordnung ist bewusst kein selbst aenderbares Cognito-Profilattribut. Der
+Cognito-Adapter liefert `tenantId` deshalb derzeit als `null`. Die serverautoritativ verwaltete
+Zuordnung von `userId` zu `tenantId` wird mit der Persistenz-/Membership-Schicht aus #45
+eingefuehrt und danach ueber den bestehenden cloud-neutralen `UserIdentity`-Vertrag bereitgestellt.
+
 Die Backend-Ressourcen unter `amplify/` duerfen AWS-spezifisch sein. Cloud-Neutralitaet bedeutet
 nicht, Cloud-Ressourcen kuenstlich auf einen kleinsten gemeinsamen Nenner zu reduzieren. Neutral
 bleiben die fachlichen Ports und die Richtung der Abhaengigkeiten.
@@ -102,6 +107,12 @@ Im Web wird nur die fachliche Provider-ID benoetigt:
 Sie muss dem fuer Cognito konfigurierten `AUTH_OIDC_PROVIDER_NAME` entsprechen. Die UI zeigt nur
 dann die Unternehmens-SSO-Aktion. Issuer, Client-ID, Secret und Cognito-spezifische Metadaten
 werden niemals in UI-Komponenten gereicht.
+
+Auf einer OIDC-Callback-Seite registriert der AWS-Adapter den Amplify-Auth-Hub-Listener, bevor der
+OAuth-Listener aktiviert wird. Erst nach `signInWithRedirect` wird die Session gelesen; ein
+`signInWithRedirect_failure` oder ein ausbleibender Callback fuehrt zu einem expliziten Fehler.
+Damit kann die Anwendung nicht vor Abschluss des Authorization-Code-Austauschs faelschlich in den
+anonymen Zustand wechseln.
 
 Damit kann spaeter beispielsweise ein anderer Unternehmens-IdP durch Deployment-Konfiguration
 ersetzt werden, ohne `AuthService` oder die UI umzubauen. Ein Google-Cloud-/Identity-Platform-
