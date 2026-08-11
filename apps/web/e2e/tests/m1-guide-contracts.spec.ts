@@ -1,7 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const guidedUrl = "/training/vscode-basics.guided";
-const storageKey = "ai-training-lab:vscode-basics.guided:v2";
+const storageKey =
+  "ai-training-lab:tenant:value:local-tenant:user:local-learner:vscode-basics.guided:v3";
 
 async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");

@@ -13,6 +13,9 @@ const legacyGuidedStepIds = [
   "understand-mcp",
   "understand-agent-skills",
 ] as const;
+const localSubject = { userId: "local-learner", tenantId: "local-tenant" } as const;
+const guidedStorageKey =
+  "ai-training-lab:tenant:value:local-tenant:user:local-learner:copilot-basics.guided:v3";
 
 async function openCopilotScenario(page: Page) {
   await page.goto("/training/copilot-basics.guided");
@@ -41,27 +44,31 @@ async function attachCalculatorContext(page: Page) {
   );
 }
 
-test("ein abgeschlossener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({
+test("ein abgeschlossener nutzergebundener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.evaluate((stepIds) => {
-    localStorage.setItem(
-      "ai-training-lab:copilot-basics.guided:v2",
-      JSON.stringify({
-        statuses: Object.fromEntries(stepIds.map((stepId) => [stepId, "COMPLETED"])),
-        activeStepId: null,
-        startedAt: 1_786_280_000_000,
-        finishedAt: 1_786_283_600_000,
-        challengeOutcome: null,
-        hintsUsed: 2,
-        mistakes: 1,
-        lastAction: null,
-        exploredTargets: [],
-        lastInspectedRef: null,
-      }),
-    );
-  }, legacyGuidedStepIds);
+  await page.evaluate(
+    ({ stepIds, key, subject }) => {
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          subject,
+          statuses: Object.fromEntries(stepIds.map((stepId) => [stepId, "COMPLETED"])),
+          activeStepId: null,
+          startedAt: 1_786_280_000_000,
+          finishedAt: 1_786_283_600_000,
+          challengeOutcome: null,
+          hintsUsed: 2,
+          mistakes: 1,
+          lastAction: null,
+          exploredTargets: [],
+          lastInspectedRef: null,
+        }),
+      );
+    },
+    { stepIds: legacyGuidedStepIds, key: guidedStorageKey, subject: localSubject },
+  );
 
   await openCopilotScenario(page);
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();

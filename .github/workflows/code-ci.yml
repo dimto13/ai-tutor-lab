@@ -29,7 +29,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies reproducibly
-        run: npm ci --install-strategy=nested
+        run: npm ci
 
       - name: Verify Lovable tooling is absent
         run: |
@@ -39,7 +39,15 @@ jobs:
           fi
 
       - name: Check formatting
-        run: npm run format:check
+        run: |
+          npx prettier --write . >/dev/null
+          if ! git diff --quiet; then
+            while IFS= read -r file; do
+              patch=$(git diff -- "$file" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+              echo "::error file=$file::Prettier formatting required%0A$patch"
+            done < <(git diff --name-only)
+            exit 1
+          fi
 
       - name: Validate scenario content
         run: npm run validate:content
@@ -58,6 +66,9 @@ jobs:
 
       - name: Runtime adapter contract tests
         run: npm run test:runtime-contracts
+
+      - name: Architecture boundary tests
+        run: npm run test:architecture
 
       - name: Build
         run: npm run build
@@ -80,7 +91,7 @@ jobs:
           cache: npm
 
       - name: Install application dependencies
-        run: npm ci --install-strategy=nested
+        run: npm ci
 
       - name: Install pinned Playwright test runner
         run: npm install --prefix apps/web/e2e --package-lock=false --ignore-scripts --no-audit --no-fund

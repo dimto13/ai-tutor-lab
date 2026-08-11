@@ -34,14 +34,25 @@ import type {
   TrainingEvent,
   TrainingMode,
   TrainingSession,
+  TrainingSubjectRef,
   Validation,
 } from "@ai-train-lab/training-engine";
+import { useAuth } from "@/auth/AuthContext";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
 
-const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
-const runtimeStorageKey = (scenarioId: string, runtimeId: string) =>
-  `ai-training-lab:${scenarioId}:runtime:${runtimeId}:v1`;
+function subjectKey(subject: TrainingSubjectRef): string {
+  const tenantKey =
+    subject.tenantId === null
+      ? "tenant:none"
+      : `tenant:value:${encodeURIComponent(subject.tenantId)}`;
+  return `${tenantKey}:user:${encodeURIComponent(subject.userId)}`;
+}
+
+const storageKey = (scenarioId: string, subject: TrainingSubjectRef) =>
+  `ai-training-lab:${subjectKey(subject)}:${scenarioId}:v3`;
+const runtimeStorageKey = (scenarioId: string, runtimeId: string, subject: TrainingSubjectRef) =>
+  `ai-training-lab:${subjectKey(subject)}:${scenarioId}:runtime:${runtimeId}:v2`;
 const CHALLENGE_TIMEOUT_MESSAGE =
   "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
 const validatorRegistry = createDefaultValidatorRegistry();
@@ -81,18 +92,24 @@ interface TrainingContextValue {
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
 
-function newSession(scenario: Scenario): TrainingSession {
-  return createTrainingSession(scenario, scenario.id);
+function newSession(scenario: Scenario, subject: TrainingSubjectRef): TrainingSession {
+  return createTrainingSession(scenario, scenario.id, Date.now(), subject);
 }
 
-function load(scenario: Scenario): TrainingSession {
-  if (typeof window === "undefined") return newSession(scenario);
+function load(scenario: Scenario, subject: TrainingSubjectRef): TrainingSession {
+  if (typeof window === "undefined") return newSession(scenario, subject);
   try {
-    const raw = window.localStorage.getItem(storageKey(scenario.id));
-    if (!raw) return newSession(scenario);
-    return restoreTrainingSession(scenario, scenario.id, JSON.parse(raw) as StoredTrainingSession);
+    const raw = window.localStorage.getItem(storageKey(scenario.id, subject));
+    if (!raw) return newSession(scenario, subject);
+    return restoreTrainingSession(
+      scenario,
+      scenario.id,
+      JSON.parse(raw) as StoredTrainingSession,
+      Date.now(),
+      subject,
+    );
   } catch {
-    return newSession(scenario);
+    return newSession(scenario, subject);
   }
 }
 
@@ -130,11 +147,21 @@ export function TrainingProvider({
   scenarioId: string;
   children: ReactNode;
 }) {
+  const auth = useAuth();
+  const subject = useMemo<TrainingSubjectRef | null>(() => {
+    if (!auth.session) return null;
+    return {
+      userId: auth.session.identity.userId,
+      tenantId: auth.session.identity.tenantId,
+    };
+  }, [auth.session]);
+  if (!subject) throw new Error("TrainingProvider requires an authenticated user identity");
+
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error(`Unknown training scenario: ${scenarioId}`);
 
   const mode = modeOf(scenario);
-  const [progress, setProgress] = useState<TrainingSession>(() => newSession(scenario));
+  const [progress, setProgress] = useState<TrainingSession>(() => newSession(scenario, subject));
   const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
   const [visibleHelpLevel, setVisibleHelpLevel] = useState(0);
@@ -156,14 +183,14 @@ export function TrainingProvider({
       if (!scenarioRuntimes.some((runtime) => runtime.id === runtimeId)) return;
       try {
         window.localStorage.setItem(
-          runtimeStorageKey(scenario.id, runtimeId),
+          runtimeStorageKey(scenario.id, runtimeId, subject),
           JSON.stringify(snapshot),
         );
       } catch {
         // Progress remains usable when a runtime snapshot cannot be serialized or stored.
       }
     },
-    [scenario.id, scenarioRuntimes],
+    [scenario.id, scenarioRuntimes, subject],
   );
 
   const restoreRuntimeSnapshot = useCallback(
@@ -172,7 +199,7 @@ export function TrainingProvider({
       if (!runtime || !scenarioRuntimes.includes(runtime)) return false;
 
       try {
-        const raw = window.localStorage.getItem(runtimeStorageKey(scenario.id, runtimeId));
+        const raw = window.localStorage.getItem(runtimeStorageKey(scenario.id, runtimeId, subject));
         if (raw) {
           await runtime.restore(JSON.parse(raw));
           return true;
@@ -181,7 +208,7 @@ export function TrainingProvider({
         // A missing or incompatible snapshot falls back to a consistent fresh session below.
       }
 
-      const persistedProgress = load(scenario);
+      const persistedProgress = load(scenario, subject);
       const hasStarted =
         persistedProgress.finishedAt === null &&
         (persistedProgress.lastAction !== null ||
@@ -189,31 +216,34 @@ export function TrainingProvider({
             (status) => status === "COMPLETED" || status === "VALIDATION_FAILED",
           ));
       if (mode !== "explore" && hasStarted) {
-        const freshProgress = newSession(scenario);
-        window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(freshProgress));
+        const freshProgress = newSession(scenario, subject);
+        window.localStorage.setItem(
+          storageKey(scenario.id, subject),
+          JSON.stringify(freshProgress),
+        );
         setProgress(freshProgress);
         setVisibleHelpLevel(0);
         setFeedback(null);
       }
       return false;
     },
-    [mode, scenario, scenarioRuntimes],
+    [mode, scenario, scenarioRuntimes, subject],
   );
 
   useEffect(() => {
     setHydrated(false);
-    const persistedProgress = load(scenario);
+    const persistedProgress = load(scenario, subject);
     setProgress(persistedProgress);
     setVisibleHelpLevel(activeHelpLevel(persistedProgress));
     setFeedback(null);
     setChallengeRemainingSeconds(null);
     setHydrated(true);
-  }, [scenario]);
+  }, [scenario, subject]);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(progress));
-  }, [progress, hydrated, scenario.id]);
+    window.localStorage.setItem(storageKey(scenario.id, subject), JSON.stringify(progress));
+  }, [progress, hydrated, scenario.id, subject]);
 
   const markChallengeTimedOut = useCallback(() => {
     setProgress((current) => timeoutChallenge(current, scenario));
@@ -468,10 +498,10 @@ export function TrainingProvider({
       },
       restart: () => {
         for (const runtime of scenarioRuntimes) {
-          window.localStorage.removeItem(runtimeStorageKey(scenario.id, runtime.id));
+          window.localStorage.removeItem(runtimeStorageKey(scenario.id, runtime.id, subject));
           runtime.reset?.();
         }
-        setProgress(newSession(scenario));
+        setProgress(newSession(scenario, subject));
         setVisibleHelpLevel(0);
         setFeedback(null);
       },
@@ -492,6 +522,7 @@ export function TrainingProvider({
     challengeRemainingSeconds,
     completeStep,
     scenarioRuntimes,
+    subject,
     persistRuntimeSnapshot,
     restoreRuntimeSnapshot,
   ]);
@@ -505,11 +536,20 @@ export function useTraining() {
   return ctx;
 }
 
-/** Read-only progress for one dashboard training (no provider needed). */
+/** Read-only progress for one dashboard training (no training provider needed). */
 export function useStoredProgressPercent(scenarioId: string | null) {
+  const auth = useAuth();
+  const subject = useMemo<TrainingSubjectRef | null>(() => {
+    if (!auth.session) return null;
+    return {
+      userId: auth.session.identity.userId,
+      tenantId: auth.session.identity.tenantId,
+    };
+  }, [auth.session]);
   const [percent, setPercent] = useState<number | null>(null);
+
   useEffect(() => {
-    if (!scenarioId) {
+    if (!scenarioId || !subject) {
       setPercent(0);
       return;
     }
@@ -519,12 +559,14 @@ export function useStoredProgressPercent(scenarioId: string | null) {
       return;
     }
     try {
-      const raw = window.localStorage.getItem(storageKey(scenario.id));
+      const raw = window.localStorage.getItem(storageKey(scenario.id, subject));
       if (!raw) return setPercent(0);
       const stored = restoreTrainingSession(
         scenario,
         scenario.id,
         JSON.parse(raw) as StoredTrainingSession,
+        Date.now(),
+        subject,
       );
       const storedMode = modeOf(scenario);
       if (storedMode === "explore") {
@@ -545,7 +587,7 @@ export function useStoredProgressPercent(scenarioId: string | null) {
     } catch {
       setPercent(0);
     }
-  }, [scenarioId]);
+  }, [scenarioId, subject]);
   return percent;
 }
 

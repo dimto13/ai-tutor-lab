@@ -304,7 +304,7 @@ export function parseArtifactPreviewSeed(seed?: RuntimeSeed): ArtifactPreviewSee
 }
 
 export function buildSandboxedArtifactDocument(html: string): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><base href="about:srcdoc"><style>
     :root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#172033;background:#fff}
     body{margin:0;padding:20px;line-height:1.5}h1,h2,h3,h4{line-height:1.2}table{width:100%;border-collapse:collapse}
     th,td{border:1px solid #d8dee9;padding:8px;text-align:left}th{background:#f4f7fb}code,pre{font-family:ui-monospace,monospace}

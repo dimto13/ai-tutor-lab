@@ -1,7 +1,9 @@
 # Kontext-Briefing für LLM-Sitzungen
 
 Dieses Dokument an den Anfang jeder Sitzung mit einem beliebigen Modell stellen.
-Bei Codeaufgaben zusätzlich `docs/02-domaenenmodell.md` mitgeben.
+Bei Codeaufgaben zusätzlich `docs/02-domaenenmodell.md` mitgeben. Bei Auth-, Persistenz-,
+Cloud-SDK-, Amplify-Backend- oder Deployment-Arbeit zusätzlich `docs/19-aws-amplify-konventionen.md`
+und `docs/20-cloud-provider-boundary.md` lesen.
 
 ---
 
@@ -21,6 +23,9 @@ Stack: React, TypeScript, Tailwind, Monorepo, AWS Amplify Hosting. Sprache DE.
   explizit ausgecheckten Git-Branches.
 - Zusammenarbeit und Integration erfolgen über Git/GitHub mit Branches, Commits und Pull Requests.
 - Ziel für Hosting und Deployment ist **AWS Amplify**; weitere AWS-Dienste können später ergänzt werden.
+- **AWS ist die erste Infrastrukturimplementierung, nicht die Architektur der Anwendung.**
+  Fachliche Logik und UI bleiben cloud-neutral und sprechen ausschließlich mit eigenen Ports und
+  kanonischen Modellen. Cloud-spezifische SDKs liegen hinter Adaptern.
 - **Lovable war ausschließlich für den ersten POC/Bootstrap im Einsatz und ist ab jetzt kein Bestandteil
   des Entwicklungs-, Test-, Preview-, Publishing-, Deployment- oder Synchronisationsprozesses mehr.**
 - Lovable-URLs, Lovable-Previews, Lovable-Publishing und eine etwaige GitHub↔Lovable-Synchronisierung
@@ -28,7 +33,7 @@ Stack: React, TypeScript, Tailwind, Monorepo, AWS Amplify Hosting. Sprache DE.
 - Verbliebene Lovable-Artefakte oder historische Hinweise im Repository sind Legacy und nicht autoritativ;
   sie dürfen entfernt werden, sobald sie nicht mehr für die Nachvollziehbarkeit des POC benötigt werden.
 
-## Die sieben Regeln, gegen die nicht verstoßen werden darf
+## Die acht Regeln, gegen die nicht verstoßen werden darf
 
 1. **Trainingslogik kennt keine React-Komponente.** `packages/training-engine` hat keine
    UI-Abhängigkeit und läuft in Node.
@@ -37,13 +42,44 @@ Stack: React, TypeScript, Tailwind, Monorepo, AWS Amplify Hosting. Sprache DE.
 3. **Simulatoren kennen keine Trainingslogik.** Sie emittieren Events und beantworten Queries.
 4. **Content ist Daten, kein Code.** Szenarien sind YAML/JSON, schema-validiert, außerhalb
    der Komponenten.
-5. **Keine Hersteller in der Codestruktur.** Nicht `MicrosoftTraining.ts`, sondern
+5. **Keine Hersteller in der fachlichen Codestruktur.** Nicht `MicrosoftTraining.ts`, sondern
    Technology → Provider → Product → Runtime → Capability.
 6. **Fortschritt entsteht durch Nutzeraktionen**, nicht durch einen Weiter-Button.
 7. **Echte Firmendokumente nur in der Mandanten-Boundary.** Das Klassifizierungs-Lernmodul
    arbeitet ausschließlich mit synthetischen Dokumenten; der Dokumenten-Check läuft in einer
    dedizierten, mandantenverwalteten Umgebung. Dokumentinhalte erscheinen nie in Events,
    Logs oder Telemetrie. Bei Unsicherheit stuft das System höher ein, nie niedriger.
+8. **Cloud-SDKs sind Infrastruktur, keine Anwendungs-API.** UI, Routes, State, Trainingslogik und
+   fachliche Modelle importieren keine Cognito-, Amplify-, Firebase- oder Google-Cloud-Typen als
+   Vertrag. Sie hängen an eigenen Ports wie `AuthService` und eigenen Modellen wie `UserIdentity`.
+   AWS/Cognito wird zuerst implementiert; weitere Clouds werden später durch zusätzliche Adapter
+   ergänzt. Verbindliche Details: `docs/20-cloud-provider-boundary.md`.
+
+## Cloud-Provider-Boundary (verbindlich)
+
+```text
+UI / Routes / State / Application Logic
+                |
+                v
+        eigene Ports/Modelle
+      z. B. AuthService, UserIdentity
+                |
+                v
+        Cloud-spezifische Adapter
+                |
+                v
+        AWS/Cognito heute
+        weitere Provider später
+```
+
+- `AuthService`, `UserIdentity` und andere fachliche Ports sind cloud-neutral.
+- AWS-/Amplify-SDK-Imports im Web gehören ausschließlich in die vorgesehenen Adapterverzeichnisse.
+- `amplify/` darf AWS-spezifische Infrastruktur enthalten; diese Typen dürfen nicht nach oben leaken.
+- Kein generischer Mega-Wrapper `CloudProvider` über Auth, Storage, Datenbank und Functions. Stattdessen
+  getrennte fachliche Capabilities/Ports.
+- Ein späterer GCP-Wechsel oder Parallelbetrieb wird durch neue Adapter realisiert, nicht durch
+  einen Umbau von Komponenten oder Trainingslogik.
+- Die CI-Architekturtests sichern diese Abhängigkeitsrichtung ab.
 
 ## Begriffe (verbindlich)
 
@@ -76,10 +112,10 @@ Was kommt als Nächstes?
 
 ## Was ich normalerweise von dir brauche
 
-- Konkreten, lauffähigen Code, der die sieben Regeln einhält
+- Konkreten, lauffähigen Code, der die Architekturregeln einhält
 - Bei Architekturvorschlägen: die Abhängigkeitsrichtung explizit benennen
 - Bei Content: gültiges YAML gegen das Szenario-Schema
-- Widerspruch, wenn eine Anforderung die Architektur verletzt — lieber nachfragen als
+- Widerspruch, wenn eine Anforderung die Architektur verletzt — lieber die Verletzung benennen als
   eine Abkürzung nehmen
 
 ## Was du nicht tun sollst
@@ -88,5 +124,7 @@ Was kommt als Nächstes?
   danach gefragt wird
 - Keine Szenariodaten in Komponenten schreiben
 - Keine `localStorage`-Zugriffe außerhalb der dafür vorgesehenen Persistenzschicht
+- Keine Cloud-SDKs direkt aus UI, Routes, State oder fachlicher Logik importieren
+- Keine provider-spezifischen Identitätsobjekte als Domänenmodell verwenden
 - Keine neuen Begriffe erfinden, wenn es oben schon einen gibt
 - Lovable nicht für Entwicklung, Preview, Publishing, Deployment oder Synchronisation verwenden
