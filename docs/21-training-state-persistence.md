@@ -17,7 +17,7 @@ TrainingProvider / Application Logic
        |                |
        v                v
 LocalStorage        Remote Adapter
-Offline-Puffer      Amplify Data
+lokal/Migration     Amplify Data
                          |
                          v
                  AppSync Resolver
@@ -38,18 +38,42 @@ Offline-Puffer      Amplify Data
 
 Die Training Engine kennt weder `localStorage` noch Amplify, AppSync oder DynamoDB.
 
-`apps/web/src/state/trainingStatePersistence.ts` serialisiert lokale Schreibvorgaenge und kapselt
+`apps/web/src/state/trainingStatePersistence.ts` serialisiert Schreibvorgaenge und kapselt
 Revisionsverwaltung. Ein echter Revisionskonflikt wird nicht durch einen stillen Client-Overwrite
 aufgeloest: Die persistierte Autoritaet wird erneut geladen.
 
+## Adapterauswahl
+
+`apps/web/src/persistence/applicationTrainingStateRepository.ts` ist die Composition Root.
+
+- Lokale Entwicklung und E2E verwenden `LocalStorageTrainingStateRepository`.
+- Cognito-/Produktionsbetrieb verwendet den lazy geladenen Amplify-Data-Adapter.
+- `VITE_TRAINING_STATE_MODE=local|remote` kann die Auswahl explizit setzen.
+- Ohne explizite Angabe folgt die Persistenz dem Auth-Modus; Production faellt auf `remote` zurueck.
+
+Der Amplify-Adapter wird dynamisch geladen. Lokale Tests ziehen dadurch kein `aws-amplify/data` in
+den lokalen Modulgraphen.
+
 ## Browser-Persistenz und Migration
 
-`LocalStorageTrainingStateRepository` ist die lokale Implementierung und spaeter der Offline-Puffer.
-Sie verwendet versionierte Envelopes und trennt Daten nach Mandant, Nutzer, Szenario und Modus.
+`LocalStorageTrainingStateRepository` ist die lokale Implementierung und Migrationsquelle. Sie
+verwendet versionierte Envelopes und trennt Daten nach Mandant, Nutzer, Szenario und Modus.
 
-Bestehende nutzergebundene Session-v3- und Runtime-v2-Eintraege werden lesend als Revision `0`
-uebernommen. Der erste erfolgreiche Schreibvorgang migriert sie auf das neue Format. Dadurch gehen
-bereits erreichte Trainingsstaende nicht verloren.
+Bestehende nutzergebundene Session-v3- und Runtime-v2-Eintraege werden lesend in das neue lokale
+Format uebernommen. Beim Wechsel auf Remote-Persistenz gilt zusaetzlich eine one-way Migration:
+
+1. Der Remote-Adapter wird immer zuerst gelesen.
+2. Nur wenn der Server erfolgreich bestaetigt, dass noch kein Datensatz existiert, darf der
+   nutzereigene Browserstand als Migrationskandidat verwendet werden.
+3. Dieser Kandidat erhaelt intern Revision `0`; reale Serverrevisionen beginnen bei `1`.
+4. Der erste erfolgreiche Remote-Write legt den Serverdatensatz atomar an.
+5. Existiert inzwischen ein Serverdatensatz, gewinnt der Serverstand.
+6. Ein fehlgeschlagener Server-Read wird niemals durch einen moeglicherweise veralteten Browserstand
+   kaschiert.
+
+Damit koennen bereits erreichte nutzergebundene Ergebnisse uebernommen werden, ohne die
+Serverautoritaet aufzuweichen. Eine vollstaendige Offline-Synchronisation mit bidirektionalem Cache
+bleibt eine separate Ausbaustufe von AITP-14/#8.
 
 ## Serverseitiges Datenmodell
 
@@ -69,8 +93,12 @@ bereits erreichte Trainingsstaende nicht verloren.
 Jeder dauerhafte fachliche Datensatz traegt explizit `tenantId` und `userId`.
 
 Die generierten Model-CRUD-Operationen erhalten absichtlich keine Browser-Autorisierungsregel.
-Der Browser greift fuer TrainingSession und RuntimeSnapshot ausschliesslich ueber authentifizierte
-Custom Operations zu.
+Der Browser greift fuer TrainingSession, RuntimeSnapshot und UserPreferences ausschliesslich ueber
+authentifizierte Custom Operations zu.
+
+`UserPreferences` besitzt einen eigenen Persistenzpfad und ist nicht Teil des Session-Payloads.
+Sprache, bevorzugter Trainingsmodus, Wochenziel und Accessibility-Einstellungen koennen dadurch
+unabhaengig von einer konkreten Trainingssession erweitert und versioniert werden.
 
 ## Serverseitige Identitaet
 
@@ -84,13 +112,16 @@ Die AppSync-Resolver bestimmen:
 4. Mehr als eine unterschiedliche `tenant:*`-Mitgliedschaft wird abgelehnt, bis eine explizite
    serverseitige Tenant-Auswahl eingefuehrt wird.
 
+Auch der Web-Auth-Adapter verwendet den signierten Cognito-`sub` als kanonische `userId`. Damit
+verwenden Client-Port und serverseitiger AppSync-Kontext denselben stabilen Benutzerbezeichner.
+
 Damit kann ein Browser weder fremde `userId`- noch fremde `tenantId`-Werte einschleusen.
 Die spaetere Ablage der Membership in einer eigenen Tabelle kann diese Ableitung ersetzen, ohne den
 `TrainingStateRepository`-Vertrag zu aendern.
 
 ## Konflikte und Autoritaet
 
-Session- und Runtime-Schreibvorgaenge verwenden `expectedRevision`.
+Session-, Runtime- und Preference-Schreibvorgaenge verwenden `expectedRevision`.
 
 - Neuer Datensatz: Schreiben nur, wenn noch kein Eintrag mit dieser ID existiert.
 - Bestehender Datensatz: Schreiben nur, wenn die gespeicherte Revision dem erwarteten Wert entspricht.
@@ -98,8 +129,9 @@ Session- und Runtime-Schreibvorgaenge verwenden `expectedRevision`.
 - Konflikt: Der Client darf den Serverstand nicht blind ueberschreiben, sondern muss den aktuellen
   autoritativen Zustand laden.
 
-Der serverseitige Zustand ist nach Einfuehrung des Remote-Adapters die persistierte Autoritaet;
-LocalStorage bleibt Cache/Offline-Puffer.
+Im Cognito-/Produktionsmodus ist der serverseitige Zustand die persistierte Autoritaet. LocalStorage
+ist aktuell lokale Entwicklung plus one-way Migrationsquelle; echte Offline-Synchronisation folgt
+in AITP-14/#8.
 
 ## Punkte, Kompetenz und Nachweise
 
