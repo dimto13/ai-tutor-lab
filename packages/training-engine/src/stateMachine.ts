@@ -22,6 +22,12 @@ export interface HintUsage {
   timestamp: number;
 }
 
+/** Cloud-neutral reference to the person/tenant that owns a training session. */
+export interface TrainingSubjectRef {
+  userId: string;
+  tenantId: string | null;
+}
+
 /**
  * Framework-free session state used by every runtime mode.
  *
@@ -32,6 +38,7 @@ export interface HintUsage {
 export interface TrainingSession {
   id: string;
   scenarioId: string;
+  subject: TrainingSubjectRef | null;
   mode: TrainingMode;
   statuses: Record<string, StepStatus>;
   activeStepId: string | null;
@@ -49,8 +56,9 @@ export interface TrainingSession {
 }
 
 export interface StoredTrainingSession extends Partial<
-  Omit<TrainingSession, "statuses" | "hintUsage" | "attempts">
+  Omit<TrainingSession, "statuses" | "hintUsage" | "attempts" | "subject">
 > {
+  subject?: unknown;
   statuses?: Record<string, unknown>;
   hintUsage?: unknown[];
   attempts?: unknown[];
@@ -68,6 +76,7 @@ export function createTrainingSession(
   scenario: Scenario,
   sessionId: string,
   now = Date.now(),
+  subject: TrainingSubjectRef | null = null,
 ): TrainingSession {
   const mode = scenario.mode ?? "guided";
   const activeStepId = mode === "explore" ? null : (scenario.steps[0]?.id ?? null);
@@ -81,6 +90,7 @@ export function createTrainingSession(
   const session: TrainingSession = {
     id: sessionId,
     scenarioId: scenario.id,
+    subject,
     mode,
     statuses,
     activeStepId,
@@ -102,19 +112,21 @@ export function createTrainingSession(
 
 /**
  * Deterministically upgrades the pre-SSOT browser progress format into the
- * canonical engine session. Existing localStorage keys can therefore stay
- * stable while the domain state moves behind this package boundary.
+ * canonical engine session. A subject mismatch always starts a fresh session,
+ * preventing progress from one user/tenant being restored for another.
  */
 export function restoreTrainingSession(
   scenario: Scenario,
   sessionId: string,
   stored: StoredTrainingSession | null | undefined,
   now = Date.now(),
+  subject: TrainingSubjectRef | null = null,
 ): TrainingSession {
-  const fresh = createTrainingSession(scenario, sessionId, now);
+  const fresh = createTrainingSession(scenario, sessionId, now, subject);
   if (!stored?.statuses || typeof stored.statuses !== "object" || Array.isArray(stored.statuses)) {
     return fresh;
   }
+  if (!sameTrainingSubject(parseTrainingSubject(stored.subject), subject)) return fresh;
 
   const mode = scenario.mode ?? "guided";
   const startedAt = finiteNumber(stored.startedAt) ?? now;
@@ -181,6 +193,7 @@ export function restoreTrainingSession(
   const session: TrainingSession = {
     id: sessionId,
     scenarioId: scenario.id,
+    subject,
     mode,
     statuses,
     activeStepId,
@@ -492,6 +505,25 @@ function parseStringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function parseTrainingSubject(value: unknown): TrainingSubjectRef | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const subject = value as Partial<TrainingSubjectRef>;
+  if (typeof subject.userId !== "string" || subject.userId.length === 0) return null;
+  if (subject.tenantId !== null && typeof subject.tenantId !== "string") return null;
+  return {
+    userId: subject.userId,
+    tenantId: subject.tenantId ?? null,
+  };
+}
+
+function sameTrainingSubject(
+  left: TrainingSubjectRef | null,
+  right: TrainingSubjectRef | null,
+): boolean {
+  if (left === null || right === null) return left === right;
+  return left.userId === right.userId && left.tenantId === right.tenantId;
 }
 
 function parseChallengeOutcome(value: unknown): ChallengeOutcome | null {
