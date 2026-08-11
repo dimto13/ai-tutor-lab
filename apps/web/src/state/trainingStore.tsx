@@ -47,11 +47,8 @@ function subjectKey(subject: TrainingSubjectRef): string {
 
 const storageKey = (scenarioId: string, subject: TrainingSubjectRef) =>
   `ai-training-lab:${subjectKey(subject)}:${scenarioId}:v3`;
-const runtimeStorageKey = (
-  scenarioId: string,
-  runtimeId: string,
-  subject: TrainingSubjectRef,
-) => `ai-training-lab:${subjectKey(subject)}:${scenarioId}:runtime:${runtimeId}:v2`;
+const runtimeStorageKey = (scenarioId: string, runtimeId: string, subject: TrainingSubjectRef) =>
+  `ai-training-lab:${subjectKey(subject)}:${scenarioId}:runtime:${runtimeId}:v2`;
 const CHALLENGE_TIMEOUT_MESSAGE =
   "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
 const validatorRegistry = createDefaultValidatorRegistry();
