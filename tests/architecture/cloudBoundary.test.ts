@@ -9,6 +9,7 @@ const sourceExtensions = new Set([".ts", ".tsx"]);
 const cloudSdkPatterns = [
   /(?:from\s+|import\s*\()\s*["']aws-amplify(?:\/[^"']*)?["']/,
   /(?:from\s+|import\s*\()\s*["']@aws-amplify\/[^"']+["']/,
+  /(?:from\s+|import\s*\()\s*["']@aws-sdk\/[^"']+["']/,
   /(?:from\s+|import\s*\()\s*["']firebase(?:\/[^"']*)?["']/,
   /(?:from\s+|import\s*\()\s*["']@google-cloud\/[^"']+["']/,
 ];
