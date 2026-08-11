@@ -133,7 +133,8 @@ export class MigratingTrainingStateRepository implements TrainingStateRepository
     } catch (error) {
       if (error instanceof TrainingStateConflictError) {
         return (
-          (await this.remote.loadRuntimeSnapshot(key, runtimeId)) ?? migrationRecord(localRecord, key)
+          (await this.remote.loadRuntimeSnapshot(key, runtimeId)) ??
+          migrationRecord(localRecord, key)
         );
       }
       return migrationRecord(localRecord, key);
