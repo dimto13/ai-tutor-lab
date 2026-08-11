@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative, resolve, sep } from "node:path";
 import test from "node:test";
 
-const webSourceRoot = resolve("apps/web/src");
+const cloudNeutralRoots = [resolve("apps/web/src"), resolve("packages")];
 const adapterRoot = resolve("apps/web/src/auth/adapters");
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const cloudSdkPatterns = [
@@ -34,21 +34,23 @@ function isInside(path: string, directory: string): boolean {
   return path === directory || path.startsWith(`${directory}${sep}`);
 }
 
-test("cloud SDK imports stay behind the auth adapter boundary", async () => {
+test("cloud SDK imports stay behind designated adapter boundaries", async () => {
   const violations: string[] = [];
 
-  for (const file of await collectSourceFiles(webSourceRoot)) {
-    if (isInside(file, adapterRoot)) continue;
+  for (const root of cloudNeutralRoots) {
+    for (const file of await collectSourceFiles(root)) {
+      if (isInside(file, adapterRoot)) continue;
 
-    const source = await readFile(file, "utf8");
-    if (cloudSdkPatterns.some((pattern) => pattern.test(source))) {
-      violations.push(relative(process.cwd(), file));
+      const source = await readFile(file, "utf8");
+      if (cloudSdkPatterns.some((pattern) => pattern.test(source))) {
+        violations.push(relative(process.cwd(), file));
+      }
     }
   }
 
   assert.deepEqual(
     violations,
     [],
-    `Cloud SDK imports are only allowed below apps/web/src/auth/adapters/: ${violations.join(", ")}`,
+    `Cloud SDK imports are only allowed below designated adapter directories: ${violations.join(", ")}`,
   );
 });
