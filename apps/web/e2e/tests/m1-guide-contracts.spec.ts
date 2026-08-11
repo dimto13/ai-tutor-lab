@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const guidedUrl = "/training/vscode-basics.guided";
 const storageKey =
-  "ai-training-lab:tenant:value:local-tenant:user:local-learner:vscode-basics.guided:v3";
+  "ai-training-lab:tenant:value:local-tenant:user:local-learner:vscode-basics.guided:mode:guided:state:v4";
 
 async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
@@ -136,13 +136,15 @@ test("Guided: nach drei Fehlversuchen wird Hilfe aktiv angeboten und je Schritt 
       page.evaluate((key) => {
         const raw = window.localStorage.getItem(key);
         if (!raw) return null;
-        const progress = JSON.parse(raw) as {
-          hintsUsed?: number;
-          hintUsage?: Array<{ stepId: string; level: number }>;
+        const envelope = JSON.parse(raw) as {
+          value?: {
+            hintsUsed?: number;
+            hintUsage?: Array<{ stepId: string; level: number }>;
+          };
         };
-        const lastUsage = progress.hintUsage?.at(-1);
+        const lastUsage = envelope.value?.hintUsage?.at(-1);
         return {
-          hintsUsed: progress.hintsUsed,
+          hintsUsed: envelope.value?.hintsUsed,
           usage: lastUsage
             ? {
                 stepId: lastUsage.stepId,
