@@ -37,9 +37,9 @@ import type {
   Validation,
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
+import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
-import { createBrowserTrainingStateRepository } from "./localStorageTrainingStateRepository";
 import { TrainingStatePersistence } from "./trainingStatePersistence";
 
 const CHALLENGE_TIMEOUT_MESSAGE =
@@ -64,7 +64,7 @@ function createPersistence(
 ): TrainingStatePersistence | null {
   if (typeof window === "undefined") return null;
   return new TrainingStatePersistence(
-    createBrowserTrainingStateRepository(),
+    createApplicationTrainingStateRepository(),
     stateKey(scenario, subject),
     scenario,
   );
