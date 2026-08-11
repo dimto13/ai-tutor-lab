@@ -123,7 +123,7 @@ test("Cognito adapter rejects unsupported additional sign-in steps", async () =>
   );
 });
 
-test("AWS Cognito client uses the signed token subject as canonical user id", async () => {
+test("AWS Cognito client uses signed token identity for canonical user and tenant ids", async () => {
   const source = await readFile(
     new URL("../../apps/web/src/auth/adapters/awsCognitoClient.ts", import.meta.url),
     "utf8",
@@ -131,6 +131,10 @@ test("AWS Cognito client uses the signed token subject as canonical user id", as
 
   assert.match(source, /idTokenPayload\["sub"\]/);
   assert.match(source, /accessTokenPayload\["sub"\]/);
+  assert.match(source, /idTokenPayload\["cognito:groups"\]/);
+  assert.match(source, /TENANT_GROUP_PREFIX\s*=\s*"tenant:"/);
+  assert.match(source, /`personal:\$\{userId\}`/);
   assert.doesNotMatch(source, /getCurrentUser/);
   assert.doesNotMatch(source, /user\.userId/);
+  assert.doesNotMatch(source, /custom:tenant_id/);
 });
