@@ -30,15 +30,22 @@ function remoteWriteOptions(options: TrainingStateWriteOptions): TrainingStateWr
  * remote repository.
  *
  * Local data is considered only after the remote repository successfully
- * reports that no server record exists. Remote/network errors are never masked
- * by a stale browser fallback. Revision 0 is reserved as the migration token;
- * real remote records start at revision 1.
+ * reports that no server record exists. A failed initial remote read is never
+ * masked by browser state. If the migration write itself is temporarily
+ * unavailable, the owned local candidate is retained with revision 0 so a
+ * later write can retry the create. Real remote records start at revision 1.
  */
 export class MigratingTrainingStateRepository implements TrainingStateRepository {
+  private readonly remote: TrainingStateRepository;
+  private readonly localMigrationSource: TrainingStateRepository;
+
   constructor(
-    private readonly remote: TrainingStateRepository,
-    private readonly localMigrationSource: TrainingStateRepository,
-  ) {}
+    remote: TrainingStateRepository,
+    localMigrationSource: TrainingStateRepository,
+  ) {
+    this.remote = remote;
+    this.localMigrationSource = localMigrationSource;
+  }
 
   async loadSession(
     key: TrainingStateKey,
