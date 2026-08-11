@@ -7,12 +7,12 @@ import type {
   TrainingStateRepository,
   TrainingStateWriteOptions,
 } from "@ai-train-lab/training-engine";
-import type { LocalStorageTrainingStateRepository } from "@/state/localStorageTrainingStateRepository";
+import type { LocalStorageTrainingStateRepository } from "../state/localStorageTrainingStateRepository.ts";
 import {
   TRAINING_SYNC_METADATA_VERSION,
   type TrainingStateSyncMetadata,
   type TrainingStateSyncMetadataStore,
-} from "./trainingStateSyncMetadata";
+} from "./trainingStateSyncMetadata.ts";
 
 function cleanMetadata(remoteRevision: number | null): TrainingStateSyncMetadata {
   return {
