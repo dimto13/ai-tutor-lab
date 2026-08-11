@@ -17,6 +17,8 @@ permissions:
 
 jobs:
   regenerate-lockfile:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,12 +33,18 @@ jobs:
       - name: Regenerate lockfile deterministically
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
-      - name: Upload regenerated lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: regenerated-package-lock
-          path: package-lock.json
-          retention-days: 1
+      - name: Commit regenerated lockfile
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "Lockfile already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "fix: align React dependency graph"
+          git push origin "HEAD:${{ github.head_ref }}"
 
   validate:
     runs-on: ubuntu-latest
