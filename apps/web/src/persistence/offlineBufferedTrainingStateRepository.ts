@@ -319,19 +319,19 @@ export class OfflineBufferedTrainingStateRepository implements TrainingStateRepo
     runtimeId: string,
     sync: TrainingStateSyncMetadata,
     remoteRecord: TrainingStateRecord<unknown> | null,
-  ): Promise<null> {
+  ): Promise<TrainingStateRecord<unknown> | null> {
     if (!mayApplyOfflineWrite(sync, remoteRecord)) {
       if (remoteRecord) {
-        await this.local.replaceRuntimeSnapshot(
+        const cached = await this.local.replaceRuntimeSnapshot(
           key,
           runtimeId,
           remoteRecord.value,
           remoteRecord.updatedAt,
         );
         this.metadata.saveRuntime(key, runtimeId, cleanMetadata(remoteRecord.revision));
-      } else {
-        this.metadata.deleteRuntime(key, runtimeId);
+        return cached;
       }
+      this.metadata.deleteRuntime(key, runtimeId);
       return null;
     }
 
