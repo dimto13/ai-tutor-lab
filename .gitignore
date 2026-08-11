@@ -20,6 +20,13 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Amplify / generated deployment output
+.amplify
+apps/web/.amplify-hosting/
+amplify_outputs*
+amplifyconfiguration*
+.npm/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

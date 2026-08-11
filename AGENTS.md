@@ -6,7 +6,8 @@
 - Zusammenarbeit und Integration erfolgen über Git/GitHub mit Branches, Commits und Pull Requests.
 - **Keine direkten Pushes auf `main`.** Änderungen laufen über einen eigenen Branch und einen
   Pull Request.
-- Ziel für Hosting und Deployment ist **AWS Amplify**.
+- Ziel für Hosting und Deployment ist **AWS Amplify**. AWS beobachtet den Release-Branch `deploy`;
+  ein Merge nach `main` löst bewusst noch kein Deployment aus.
 - **Lovable war nur für den ersten POC/Bootstrap im Einsatz und ist ab jetzt kein Bestandteil des
   Entwicklungs-, Test-, Preview-, Publishing-, Deployment- oder Synchronisationsprozesses mehr.**
 - Lovable-Links, Lovable-Previews oder eine GitHub↔Lovable-Synchronisierung sind kein gültiger Nachweis
@@ -16,7 +17,9 @@
 
 1. **Vor jeder Aufgabe lesen:** [`prompts/model-briefing.md`](prompts/model-briefing.md)
    (die sieben Architekturregeln) und bei Codearbeit zusätzlich
-   [`docs/02-domaenenmodell.md`](docs/02-domaenenmodell.md).
+   [`docs/02-domaenenmodell.md`](docs/02-domaenenmodell.md). Bei Arbeit an `amplify.yml`,
+   Amplify-Backend-Code oder AWS-Deployment zusätzlich
+   [`docs/19-aws-amplify-konventionen.md`](docs/19-aws-amplify-konventionen.md).
 2. **Aufgabenverwaltung läuft ausschließlich über GitHub Issues.** Neue Aufgaben werden direkt
    als Issue angelegt — mit Epic-Label, Prio-Label, Typ-Label und Milestone, und als Sub-Issue
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
@@ -50,3 +53,7 @@
    abgeschlossenen Arbeiten, Architekturentscheidungen, offenen Risiken und dem exakten nächsten
    Arbeitsschritt hinterlegt. Die Session-Health-Werte `FRESH`, `ACTIVE`, `CUT-SOON` und `CUT` sind
    qualitative Arbeitsmetriken und keine behauptete exakte Tokenmessung.
+9. **`deploy` ist ausschließlich Release-Zeiger.** KI-Agenten entwickeln nicht auf `deploy`, mergen
+   nicht nach `deploy` und verschieben diesen Ref nicht. Nach einem vollständig grünen Merge nach
+   `main` führt ausschließlich der Repository-Eigentümer die bewusste Deployment-Freigabe mit
+   `git push origin main:deploy` aus. Erst dieser Nutzer-Push darf AWS Amplify auslösen.
