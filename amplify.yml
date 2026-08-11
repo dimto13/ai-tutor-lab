@@ -1,10 +1,22 @@
 version: 1
 applications:
   # appRoot muss identisch zur Amplify-Env-Variable AMPLIFY_MONOREPO_APP_ROOT sein.
-  # buildPath: / laesst die Frontend-Phasen im Repo-Root laufen, damit npm Workspaces
-  # reproduzierbar vom selben Ort wie in GitHub CI installiert und gebaut werden.
   - appRoot: apps/web
+    backend:
+      phases:
+        build:
+          commands:
+            # Backend-Phasen koennen im appRoot starten; nur bei Bedarf einmal zum Repo-Root wechseln.
+            - test -f amplify/backend.ts || cd ../..
+            - nvm install 22
+            - nvm use 22
+            - node -v && npm -v
+            - npm ci --install-strategy=nested --cache .npm --prefer-offline
+            # Gen-2-Backend deployen und die Client-Konfiguration direkt fuer den Frontend-Build erzeugen.
+            - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID --outputs-out-dir apps/web/public
     frontend:
+      # buildPath: / laesst die Frontend-Phasen im Repo-Root laufen, damit npm Workspaces
+      # reproduzierbar vom selben Ort wie in GitHub CI installiert und gebaut werden.
       buildPath: /
       phases:
         preBuild:
