@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const scenarioUrl = "/training/vscode-shortcuts.challenge";
-const storageKey = "ai-training-lab:vscode-shortcuts.challenge:v2";
+const storageKey =
+  "ai-training-lab:tenant:value:local-tenant:user:local-learner:vscode-shortcuts.challenge:v3";
 const challengeText = "Status für Marco: Review abgeschlossen.";
 
 async function waitForTrainingReady(page: Page): Promise<void> {
