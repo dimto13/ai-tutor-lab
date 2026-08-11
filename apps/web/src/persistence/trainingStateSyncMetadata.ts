@@ -12,6 +12,7 @@ export interface TrainingStateSyncMetadata {
   remoteKnown: boolean;
   remoteRevision: number | null;
   dirty: boolean;
+  pendingDelete: boolean;
   lastSyncedAt: number | null;
 }
 
@@ -44,6 +45,7 @@ function parseMetadata(raw: string | null): TrainingStateSyncMetadata | null {
     if (candidate["version"] !== TRAINING_SYNC_METADATA_VERSION) return null;
     if (typeof candidate["remoteKnown"] !== "boolean") return null;
     if (candidate["dirty"] !== true && candidate["dirty"] !== false) return null;
+    if (candidate["pendingDelete"] !== true && candidate["pendingDelete"] !== false) return null;
     if (
       candidate["remoteRevision"] !== null &&
       (typeof candidate["remoteRevision"] !== "number" ||
@@ -65,6 +67,7 @@ function parseMetadata(raw: string | null): TrainingStateSyncMetadata | null {
       remoteKnown: candidate["remoteKnown"],
       remoteRevision: candidate["remoteRevision"] as number | null,
       dirty: candidate["dirty"],
+      pendingDelete: candidate["pendingDelete"],
       lastSyncedAt: candidate["lastSyncedAt"] as number | null,
     };
   } catch {
