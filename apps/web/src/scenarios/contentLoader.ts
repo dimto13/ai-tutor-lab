@@ -90,12 +90,20 @@ const stepSchema = z.object({
   title: z.string().min(1),
   description: z.string(),
   instruction: z.string().min(1),
-  why: z.string(),
+  rationale: z.string().optional(),
+  why: z.string().optional(),
   helpLevels: z.tuple([z.string(), z.string(), z.string()]),
   expectedEvent: workspaceEventNameSchema.optional(),
   validation: validationSchema.optional(),
   highlightTarget: z.string().min(1).optional(),
   highlightTooltip: z.string().optional(),
+  onFailure: z
+    .object({
+      message: z.string().min(1),
+      markTarget: z.string().min(1).optional(),
+    })
+    .strict()
+    .optional(),
   successMessage: z.string(),
   optional: z.boolean().optional(),
   exactTextValidation: z.boolean().optional(),
