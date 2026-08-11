@@ -20,7 +20,10 @@ export interface CognitoSessionSnapshot {
 
 export interface CognitoAuthClient {
   getSession(): Promise<CognitoSessionSnapshot | null>;
-  signInWithPassword(identifier: string, password: string): Promise<"done" | "requires_action">;
+  signInWithPassword(
+    identifier: string,
+    password: string,
+  ): Promise<"done" | "requires_action">;
   signInWithOidc(providerId: string): Promise<void>;
   signOut(): Promise<void>;
 }
@@ -62,7 +65,9 @@ export function createAmplifyCognitoClient(
 
       const response = await fetch(outputsUrl, { cache: "no-store" });
       if (!response.ok) {
-        throw new Error(`Unable to load Amplify client configuration (HTTP ${response.status}).`);
+        throw new Error(
+          `Unable to load Amplify client configuration (HTTP ${response.status}).`,
+        );
       }
 
       const outputs = (await response.json()) as Parameters<typeof Amplify.configure>[0];
@@ -82,7 +87,10 @@ export function createAmplifyCognitoClient(
       const session = await fetchAuthSession();
       if (!session.tokens) return null;
 
-      const [user, rawAttributes] = await Promise.all([getCurrentUser(), fetchUserAttributes()]);
+      const [user, rawAttributes] = await Promise.all([
+        getCurrentUser(),
+        fetchUserAttributes(),
+      ]);
       const attributes = rawAttributes as Record<string, string | undefined>;
       const idTokenPayload = session.tokens.idToken?.payload ?? {};
       const accessTokenPayload = session.tokens.accessToken.payload;
@@ -102,7 +110,9 @@ export function createAmplifyCognitoClient(
     async signInWithPassword(identifier, password) {
       await ensureConfigured();
       const result = await signIn({ username: identifier, password });
-      return result.isSignedIn || result.nextStep.signInStep === "DONE" ? "done" : "requires_action";
+      return result.isSignedIn || result.nextStep.signInStep === "DONE"
+        ? "done"
+        : "requires_action";
     },
 
     async signInWithOidc(providerId) {
