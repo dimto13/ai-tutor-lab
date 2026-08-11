@@ -22,7 +22,6 @@ import {
   recordHintUsage,
   recordLastAction,
   recordMistake,
-  restoreTrainingSession,
   skipConsecutiveOptionalSteps,
   timeoutChallenge,
 } from "@ai-train-lab/training-engine";
@@ -30,29 +29,19 @@ import type {
   ChallengeOutcome,
   EngineValidationResult,
   Scenario,
-  StoredTrainingSession,
   TrainingEvent,
   TrainingMode,
   TrainingSession,
+  TrainingStateKey,
   TrainingSubjectRef,
   Validation,
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import { createBrowserTrainingStateRepository } from "./localStorageTrainingStateRepository";
+import { TrainingStatePersistence } from "./trainingStatePersistence";
 
-function subjectKey(subject: TrainingSubjectRef): string {
-  const tenantKey =
-    subject.tenantId === null
-      ? "tenant:none"
-      : `tenant:value:${encodeURIComponent(subject.tenantId)}`;
-  return `${tenantKey}:user:${encodeURIComponent(subject.userId)}`;
-}
-
-const storageKey = (scenarioId: string, subject: TrainingSubjectRef) =>
-  `ai-training-lab:${subjectKey(subject)}:${scenarioId}:v3`;
-const runtimeStorageKey = (scenarioId: string, runtimeId: string, subject: TrainingSubjectRef) =>
-  `ai-training-lab:${subjectKey(subject)}:${scenarioId}:runtime:${runtimeId}:v2`;
 const CHALLENGE_TIMEOUT_MESSAGE =
   "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
 const validatorRegistry = createDefaultValidatorRegistry();
@@ -60,6 +49,42 @@ const validatorRegistry = createDefaultValidatorRegistry();
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
 const modeMultiplier = (mode: TrainingMode) =>
   mode === "explore" ? 0.5 : mode === "challenge" ? 2 : 1;
+
+function stateKey(scenario: Scenario, subject: TrainingSubjectRef): TrainingStateKey {
+  return {
+    subject,
+    scenarioId: scenario.id,
+    mode: modeOf(scenario),
+  };
+}
+
+function createPersistence(
+  scenario: Scenario,
+  subject: TrainingSubjectRef,
+): TrainingStatePersistence | null {
+  if (typeof window === "undefined") return null;
+  return new TrainingStatePersistence(
+    createBrowserTrainingStateRepository(),
+    stateKey(scenario, subject),
+    scenario,
+  );
+}
+
+function progressPercent(scenario: Scenario, progress: TrainingSession): number {
+  const mode = modeOf(scenario);
+  if (mode === "explore") {
+    const targets = scenario.exploreTargets ?? [];
+    const done = progress.exploredTargets.filter((ref) => targets.includes(ref)).length;
+    return targets.length === 0 ? 0 : Math.round((done / targets.length) * 100);
+  }
+  if (mode === "challenge") return progress.challengeOutcome === "passed" ? 100 : 0;
+
+  const done = scenario.steps.filter((step) => {
+    const status = progress.statuses[step.id];
+    return status === "COMPLETED" || status === "SKIPPED";
+  }).length;
+  return Math.round((done / Math.max(scenario.steps.length, 1)) * 100);
+}
 
 /** Backwards-compatible UI name; the authoritative state lives in training-engine. */
 export type TrainingProgress = TrainingSession;
@@ -94,23 +119,6 @@ const TrainingContext = createContext<TrainingContextValue | null>(null);
 
 function newSession(scenario: Scenario, subject: TrainingSubjectRef): TrainingSession {
   return createTrainingSession(scenario, scenario.id, Date.now(), subject);
-}
-
-function load(scenario: Scenario, subject: TrainingSubjectRef): TrainingSession {
-  if (typeof window === "undefined") return newSession(scenario, subject);
-  try {
-    const raw = window.localStorage.getItem(storageKey(scenario.id, subject));
-    if (!raw) return newSession(scenario, subject);
-    return restoreTrainingSession(
-      scenario,
-      scenario.id,
-      JSON.parse(raw) as StoredTrainingSession,
-      Date.now(),
-      subject,
-    );
-  } catch {
-    return newSession(scenario, subject);
-  }
 }
 
 function eventPayload(event: TrainingEvent): Record<string, unknown> {
@@ -161,6 +169,7 @@ export function TrainingProvider({
   if (!scenario) throw new Error(`Unknown training scenario: ${scenarioId}`);
 
   const mode = modeOf(scenario);
+  const persistence = useMemo(() => createPersistence(scenario, subject), [scenario, subject]);
   const [progress, setProgress] = useState<TrainingSession>(() => newSession(scenario, subject));
   const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
@@ -180,35 +189,36 @@ export function TrainingProvider({
 
   const persistRuntimeSnapshot = useCallback(
     (runtimeId: string, snapshot: unknown) => {
-      if (!scenarioRuntimes.some((runtime) => runtime.id === runtimeId)) return;
-      try {
-        window.localStorage.setItem(
-          runtimeStorageKey(scenario.id, runtimeId, subject),
-          JSON.stringify(snapshot),
-        );
-      } catch {
+      if (!persistence || !scenarioRuntimes.some((runtime) => runtime.id === runtimeId)) return;
+      void persistence.saveRuntimeSnapshot(runtimeId, snapshot).catch(() => {
         // Progress remains usable when a runtime snapshot cannot be serialized or stored.
-      }
+      });
     },
-    [scenario.id, scenarioRuntimes, subject],
+    [persistence, scenarioRuntimes],
   );
 
   const restoreRuntimeSnapshot = useCallback(
     async (runtimeId: string) => {
       const runtime = getRuntimeAdapter(runtimeId);
-      if (!runtime || !scenarioRuntimes.includes(runtime)) return false;
+      if (!runtime || !persistence || !scenarioRuntimes.includes(runtime)) return false;
 
       try {
-        const raw = window.localStorage.getItem(runtimeStorageKey(scenario.id, runtimeId, subject));
-        if (raw) {
-          await runtime.restore(JSON.parse(raw));
+        const snapshot = await persistence.loadRuntimeSnapshot(runtimeId);
+        if (snapshot !== null) {
+          await runtime.restore(snapshot);
           return true;
         }
       } catch {
         // A missing or incompatible snapshot falls back to a consistent fresh session below.
       }
 
-      const persistedProgress = load(scenario, subject);
+      let persistedProgress = progressRef.current;
+      try {
+        persistedProgress = (await persistence.loadSession()).session;
+      } catch {
+        // The in-memory session remains the fallback when persistence is temporarily unavailable.
+      }
+
       const hasStarted =
         persistedProgress.finishedAt === null &&
         (persistedProgress.lastAction !== null ||
@@ -217,33 +227,69 @@ export function TrainingProvider({
           ));
       if (mode !== "explore" && hasStarted) {
         const freshProgress = newSession(scenario, subject);
-        window.localStorage.setItem(
-          storageKey(scenario.id, subject),
-          JSON.stringify(freshProgress),
-        );
         setProgress(freshProgress);
         setVisibleHelpLevel(0);
         setFeedback(null);
       }
       return false;
     },
-    [mode, scenario, scenarioRuntimes, subject],
+    [mode, persistence, scenario, scenarioRuntimes, subject],
   );
 
   useEffect(() => {
+    let cancelled = false;
     setHydrated(false);
-    const persistedProgress = load(scenario, subject);
-    setProgress(persistedProgress);
-    setVisibleHelpLevel(activeHelpLevel(persistedProgress));
-    setFeedback(null);
-    setChallengeRemainingSeconds(null);
-    setHydrated(true);
-  }, [scenario, subject]);
+
+    if (!persistence) return () => undefined;
+
+    void persistence
+      .loadSession()
+      .then(({ session }) => {
+        if (cancelled) return;
+        setProgress(session);
+        setVisibleHelpLevel(activeHelpLevel(session));
+        setFeedback(null);
+        setChallengeRemainingSeconds(null);
+        setHydrated(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const freshProgress = newSession(scenario, subject);
+        setProgress(freshProgress);
+        setVisibleHelpLevel(0);
+        setFeedback(null);
+        setChallengeRemainingSeconds(null);
+        setHydrated(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [persistence, scenario, subject]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    window.localStorage.setItem(storageKey(scenario.id, subject), JSON.stringify(progress));
-  }, [progress, hydrated, scenario.id, subject]);
+    if (!hydrated || !persistence) return;
+    let cancelled = false;
+
+    void persistence
+      .saveSession(progress)
+      .then((authoritativeSession) => {
+        if (cancelled || !authoritativeSession) return;
+        setProgress((current) => {
+          if (current !== progress) return current;
+          setVisibleHelpLevel(activeHelpLevel(authoritativeSession));
+          setFeedback(null);
+          return authoritativeSession;
+        });
+      })
+      .catch(() => {
+        // The current session stays usable when persistence is temporarily unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [progress, hydrated, persistence]);
 
   const markChallengeTimedOut = useCallback(() => {
     setProgress((current) => timeoutChallenge(current, scenario));
@@ -498,7 +544,9 @@ export function TrainingProvider({
       },
       restart: () => {
         for (const runtime of scenarioRuntimes) {
-          window.localStorage.removeItem(runtimeStorageKey(scenario.id, runtime.id, subject));
+          if (persistence) {
+            void persistence.deleteRuntimeSnapshot(runtime.id).catch(() => undefined);
+          }
           runtime.reset?.();
         }
         setProgress(newSession(scenario, subject));
@@ -523,6 +571,7 @@ export function TrainingProvider({
     completeStep,
     scenarioRuntimes,
     subject,
+    persistence,
     persistRuntimeSnapshot,
     restoreRuntimeSnapshot,
   ]);
@@ -546,48 +595,33 @@ export function useStoredProgressPercent(scenarioId: string | null) {
       tenantId: auth.session.identity.tenantId,
     };
   }, [auth.session]);
+  const scenario = scenarioId ? getScenario(scenarioId) : undefined;
+  const persistence = useMemo(
+    () => (scenario && subject ? createPersistence(scenario, subject) : null),
+    [scenario, subject],
+  );
   const [percent, setPercent] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!scenarioId || !subject) {
+    let cancelled = false;
+    if (!scenario || !persistence) {
       setPercent(0);
-      return;
+      return () => undefined;
     }
-    const scenario = getScenario(scenarioId);
-    if (!scenario) {
-      setPercent(0);
-      return;
-    }
-    try {
-      const raw = window.localStorage.getItem(storageKey(scenario.id, subject));
-      if (!raw) return setPercent(0);
-      const stored = restoreTrainingSession(
-        scenario,
-        scenario.id,
-        JSON.parse(raw) as StoredTrainingSession,
-        Date.now(),
-        subject,
-      );
-      const storedMode = modeOf(scenario);
-      if (storedMode === "explore") {
-        const targets = scenario.exploreTargets ?? [];
-        const done = stored.exploredTargets.filter((ref) => targets.includes(ref)).length;
-        setPercent(targets.length === 0 ? 0 : Math.round((done / targets.length) * 100));
-        return;
-      }
-      if (storedMode === "challenge") {
-        setPercent(stored.challengeOutcome === "passed" ? 100 : 0);
-        return;
-      }
-      const done = scenario.steps.filter((step) => {
-        const status = stored.statuses[step.id];
-        return status === "COMPLETED" || status === "SKIPPED";
-      }).length;
-      setPercent(Math.round((done / Math.max(scenario.steps.length, 1)) * 100));
-    } catch {
-      setPercent(0);
-    }
-  }, [scenarioId, subject]);
+
+    void persistence
+      .loadSession()
+      .then(({ session }) => {
+        if (!cancelled) setPercent(progressPercent(scenario, session));
+      })
+      .catch(() => {
+        if (!cancelled) setPercent(0);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scenario, persistence]);
   return percent;
 }
 
