@@ -20,11 +20,7 @@ export interface TrainingStateSyncMetadataStore {
   loadSession(key: TrainingStateKey): TrainingStateSyncMetadata | null;
   saveSession(key: TrainingStateKey, metadata: TrainingStateSyncMetadata): void;
   loadRuntime(key: TrainingStateKey, runtimeId: string): TrainingStateSyncMetadata | null;
-  saveRuntime(
-    key: TrainingStateKey,
-    runtimeId: string,
-    metadata: TrainingStateSyncMetadata,
-  ): void;
+  saveRuntime(key: TrainingStateKey, runtimeId: string, metadata: TrainingStateSyncMetadata): void;
   deleteRuntime(key: TrainingStateKey, runtimeId: string): void;
 }
 
@@ -56,8 +52,7 @@ function parseMetadata(raw: string | null): TrainingStateSyncMetadata | null {
     }
     if (
       candidate["lastSyncedAt"] !== null &&
-      (typeof candidate["lastSyncedAt"] !== "number" ||
-        !Number.isFinite(candidate["lastSyncedAt"]))
+      (typeof candidate["lastSyncedAt"] !== "number" || !Number.isFinite(candidate["lastSyncedAt"]))
     ) {
       return null;
     }
@@ -94,11 +89,7 @@ export class LocalStorageTrainingStateSyncMetadataStore implements TrainingState
     return parseMetadata(this.storage.getItem(runtimeMetadataKey(key, runtimeId)));
   }
 
-  saveRuntime(
-    key: TrainingStateKey,
-    runtimeId: string,
-    metadata: TrainingStateSyncMetadata,
-  ): void {
+  saveRuntime(key: TrainingStateKey, runtimeId: string, metadata: TrainingStateSyncMetadata): void {
     this.storage.setItem(runtimeMetadataKey(key, runtimeId), JSON.stringify(metadata));
   }
 
