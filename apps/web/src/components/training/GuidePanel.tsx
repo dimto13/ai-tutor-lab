@@ -181,7 +181,7 @@ function GuidedGuide() {
           <div className="mt-4 rounded-lg border border-border bg-card p-3">
             {shouldOfferHelp ? (
               <div
-                role="status"
+                aria-live="polite"
                 className="mb-3 rounded-md border border-warning/40 bg-warning/10 p-2.5 text-[12px] leading-relaxed text-foreground"
               >
                 Du hattest bei diesem Schritt {progress.activeStepMistakes} Fehlversuche. Die
@@ -444,7 +444,7 @@ function ChallengeGuide() {
 
       {feedback ? <Feedback feedback={feedback} /> : null}
 
-      {timedOut ? (
+      {timOut ? (
         <button
           type="button"
           onClick={restart}
