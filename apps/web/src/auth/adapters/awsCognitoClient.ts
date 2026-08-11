@@ -67,6 +67,11 @@ export function createAmplifyCognitoClient(
 
       const outputs = (await response.json()) as Parameters<typeof Amplify.configure>[0];
       Amplify.configure(outputs);
+
+      // In an SSR/MPA application the OAuth return page is a fresh browser load.
+      // The explicit listener must therefore be installed during client setup,
+      // not only in the page instance that initiated the outgoing redirect.
+      await import("aws-amplify/auth/enable-oauth-listener");
     })().catch((error) => {
       configurationPromise = null;
       throw error;
@@ -108,10 +113,6 @@ export function createAmplifyCognitoClient(
 
     async signInWithOidc(providerId) {
       await ensureConfigured();
-
-      // TanStack Start is an SSR/MPA-capable app. Amplify requires the OAuth
-      // listener on the client so the redirect response can complete there.
-      await import("aws-amplify/auth/enable-oauth-listener");
       await signInWithRedirect({ provider: { custom: providerId } });
     },
 
