@@ -116,9 +116,14 @@ test("remote read failures are not hidden by a stale local session", async () =>
 
 test("owned local runtime snapshot is copied to an empty remote repository on load", async () => {
   const { local, remote, migrating } = repositories();
-  await local.saveRuntimeSnapshot(key, "vscode-sim", { files: ["notiz.txt"] }, {
-    expectedRevision: null,
-  });
+  await local.saveRuntimeSnapshot(
+    key,
+    "vscode-sim",
+    { files: ["notiz.txt"] },
+    {
+      expectedRevision: null,
+    },
+  );
 
   const migrated = await migrating.loadRuntimeSnapshot(key, "vscode-sim");
   assert.equal(migrated?.revision, 1);
