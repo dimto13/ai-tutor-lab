@@ -3,6 +3,7 @@ import type {
   TrainingEvent,
   Validation,
   ValidationOutcome,
+  ValidationResult,
 } from "./types.ts";
 
 export interface ValidatorSpec {
@@ -23,6 +24,9 @@ export type ValidationHandler = (
 
 const PASS: EngineValidationResult = { outcome: "pass" };
 const IGNORE: EngineValidationResult = { outcome: "ignore" };
+const EVENT_MISMATCH_MESSAGE =
+  "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
+const EVENT_CONTENT_MISSING_MESSAGE = "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.";
 
 export class ValidatorRegistry {
   private readonly handlers = new Map<string, ValidationHandler>();
@@ -51,6 +55,14 @@ export function createDefaultValidatorRegistry(): ValidatorRegistry {
     .register("any", validateAny);
 }
 
+/** Transitional adapter until all authored scenarios use declarative validation. */
+export function normalizeLegacyValidationResult(result: ValidationResult): EngineValidationResult {
+  if (result.ok) return PASS;
+  return result.message
+    ? { outcome: "near-miss", message: result.message }
+    : { outcome: "near-miss" };
+}
+
 async function validateEvent(
   spec: ValidatorSpec,
   context: ValidationContext,
@@ -61,12 +73,14 @@ async function validateEvent(
 
   const payload = eventPayload(event);
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
-    if (payload[key] !== expected) return nearMiss("event.match", key);
+    if (payload[key] !== expected) {
+      return nearMiss("event.match", key, EVENT_MISMATCH_MESSAGE);
+    }
   }
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
     if (typeof actual !== "string" || !actual.includes(expectedFragment)) {
-      return nearMiss("event.contains", key);
+      return nearMiss("event.contains", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
   }
   for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {
@@ -75,7 +89,7 @@ async function validateEvent(
       typeof actual !== "string" ||
       !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))
     ) {
-      return nearMiss("event.containsAny", key);
+      return nearMiss("event.containsAny", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
   }
   return PASS;
@@ -211,9 +225,10 @@ function combineAll(results: EngineValidationResult[]): EngineValidationResult {
   return results.find((result) => result.outcome === "near-miss") ?? IGNORE;
 }
 
-function nearMiss(rule: string, field: string): EngineValidationResult {
+function nearMiss(rule: string, field: string, message?: string): EngineValidationResult {
   return {
     outcome: "near-miss",
+    ...(message ? { message } : {}),
     details: { rule, field },
   };
 }
