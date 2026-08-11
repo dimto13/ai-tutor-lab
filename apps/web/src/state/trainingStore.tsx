@@ -543,10 +543,10 @@ export function TrainingProvider({
       if (!stepId) return;
       const step = scenario.steps.find((candidate) => candidate.id === stepId);
       if (!step || step.stepType === "explanation") return;
+      if (step.expectedEvent && step.expectedEvent !== event.type) return;
 
       let result: EngineValidationResult;
       if (step.validate) {
-        if (step.expectedEvent && step.expectedEvent !== event.type) return;
         const legacyResult = step.validate(payload);
         result = legacyResult.ok
           ? { outcome: "pass" }
