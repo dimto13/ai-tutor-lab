@@ -10,6 +10,8 @@ const resolverUrls = [
   "load-runtime-snapshot.js",
   "save-runtime-snapshot.js",
   "delete-runtime-snapshot.js",
+  "load-user-preferences.js",
+  "save-user-preferences.js",
 ].map((file) => new URL(`../../amplify/data/${file}`, import.meta.url));
 
 const serverOwnedModels = [
@@ -31,6 +33,8 @@ const clientOperations = [
   "loadRuntimeSnapshot",
   "saveRuntimeSnapshot",
   "deleteRuntimeSnapshot",
+  "loadUserPreferences",
+  "saveUserPreferences",
 ] as const;
 
 const schemaMembers = [
@@ -40,6 +44,7 @@ const schemaMembers = [
   ...serverOwnedModels,
   "TrainingStateEnvelope",
   "RuntimeSnapshotEnvelope",
+  "UserPreferencesEnvelope",
   ...clientOperations,
 ] as const;
 
@@ -78,21 +83,23 @@ test("client persistence operations never accept authoritative owner fields", as
     const block = definitionBlock(source, operation);
     const argumentStart = block.indexOf(".arguments({");
     const returnStart = block.indexOf(".returns(");
-    assert.ok(
-      argumentStart >= 0 && returnStart > argumentStart,
-      `${operation} must define arguments`,
-    );
-    const argumentsBlock = block.slice(argumentStart, returnStart);
-    assert.doesNotMatch(
-      argumentsBlock,
-      /\buserId\s*:/,
-      `${operation} must derive userId server-side`,
-    );
-    assert.doesNotMatch(
-      argumentsBlock,
-      /\btenantId\s*:/,
-      `${operation} must derive tenantId server-side`,
-    );
+    assert.ok(returnStart >= 0, `${operation} must define a return type`);
+
+    if (argumentStart >= 0) {
+      assert.ok(returnStart > argumentStart, `${operation} arguments must precede its return type`);
+      const argumentsBlock = block.slice(argumentStart, returnStart);
+      assert.doesNotMatch(
+        argumentsBlock,
+        /\buserId\s*:/,
+        `${operation} must derive userId server-side`,
+      );
+      assert.doesNotMatch(
+        argumentsBlock,
+        /\btenantId\s*:/,
+        `${operation} must derive tenantId server-side`,
+      );
+    }
+
     assert.match(block, /allow\.authenticated\(\)/, `${operation} must require authentication`);
     assert.match(block, /a\.handler\.custom\(/, `${operation} must use a server resolver`);
   }
@@ -106,6 +113,16 @@ test("AppSync persistence resolvers derive subject identity from Cognito context
     assert.match(source, /tenant:/);
     assert.doesNotMatch(source, /ctx\.args\.userId/);
     assert.doesNotMatch(source, /ctx\.args\.tenantId/);
+  }
+});
+
+test("user preferences persist independently from training sessions", async () => {
+  const source = await readFile(dataResourceUrl, "utf8");
+  for (const operation of ["loadUserPreferences", "saveUserPreferences"]) {
+    const block = definitionBlock(source, operation);
+    assert.match(block, /dataSource:\s*a\.ref\(["']UserPreferences["']\)/);
+    assert.doesNotMatch(block, /dataSource:\s*a\.ref\(["']TrainingSession["']\)/);
+    assert.doesNotMatch(block, /scenarioId\s*:/);
   }
 });
 
