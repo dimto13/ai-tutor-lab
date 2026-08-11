@@ -111,11 +111,7 @@ export function restoreTrainingSession(
   now = Date.now(),
 ): TrainingSession {
   const fresh = createTrainingSession(scenario, sessionId, now);
-  if (
-    !stored?.statuses ||
-    typeof stored.statuses !== "object" ||
-    Array.isArray(stored.statuses)
-  ) {
+  if (!stored?.statuses || typeof stored.statuses !== "object" || Array.isArray(stored.statuses)) {
     return fresh;
   }
 
@@ -195,7 +191,8 @@ export function restoreTrainingSession(
     hintsUsed: finiteNumber(stored.hintsUsed) ?? hintUsage.length,
     hintUsage,
     mistakes:
-      finiteNumber(stored.mistakes) ?? attempts.filter((attempt) => attempt.outcome === "near-miss").length,
+      finiteNumber(stored.mistakes) ??
+      attempts.filter((attempt) => attempt.outcome === "near-miss").length,
     activeStepMistakes: finiteNumber(stored.activeStepMistakes) ?? 0,
     attempts,
     lastAction: typeof stored.lastAction === "string" ? stored.lastAction : null,
@@ -215,11 +212,7 @@ export function applyValidationResult(
   options: { countNearMiss?: boolean } = {},
 ): TrainingSession {
   if (result.outcome === "ignore") return session;
-  if (
-    session.mode !== "guided" ||
-    session.finishedAt !== null ||
-    session.activeStepId !== stepId
-  ) {
+  if (session.mode !== "guided" || session.finishedAt !== null || session.activeStepId !== stepId) {
     return session;
   }
 
@@ -255,11 +248,7 @@ export function completeTrainingStep(
   stepId: string,
   now = Date.now(),
 ): TrainingSession {
-  if (
-    session.mode !== "guided" ||
-    session.finishedAt !== null ||
-    session.activeStepId !== stepId
-  ) {
+  if (session.mode !== "guided" || session.finishedAt !== null || session.activeStepId !== stepId) {
     return session;
   }
   if (!scenario.steps.some((candidate) => candidate.id === stepId)) {
