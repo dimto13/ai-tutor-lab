@@ -4,6 +4,7 @@ export interface LocalAuthServiceOptions {
   identity: UserIdentity;
   accessToken?: string;
   expiresAt?: string;
+  initiallyAuthenticated?: boolean;
 }
 
 /**
@@ -11,7 +12,12 @@ export interface LocalAuthServiceOptions {
  * It deliberately implements the same AuthService contract as cloud adapters.
  */
 export function createLocalAuthService(options: LocalAuthServiceOptions): AuthService {
-  let currentSession: AuthSession | null = null;
+  const createSession = (): AuthSession => ({
+    identity: options.identity,
+    accessToken: options.accessToken ?? "local-development-token",
+    expiresAt: options.expiresAt ?? null,
+  });
+  let currentSession: AuthSession | null = options.initiallyAuthenticated ? createSession() : null;
 
   return {
     async getSession() {
@@ -19,11 +25,7 @@ export function createLocalAuthService(options: LocalAuthServiceOptions): AuthSe
     },
 
     async signIn(): Promise<SignInResult> {
-      currentSession = {
-        identity: options.identity,
-        accessToken: options.accessToken ?? "local-development-token",
-        expiresAt: options.expiresAt ?? null,
-      };
+      currentSession = createSession();
 
       return {
         status: "authenticated",

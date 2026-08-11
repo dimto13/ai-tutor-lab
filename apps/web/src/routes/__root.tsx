@@ -9,8 +9,13 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { AuthGate } from "../auth/AuthGate";
+import { AuthProvider } from "../auth/AuthContext";
+import { createApplicationAuthService } from "../auth/applicationAuthService";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+const authService = createApplicationAuthService();
 
 function NotFoundComponent() {
   return (
@@ -131,8 +136,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthProvider service={authService}>
+        <AuthGate>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AuthGate>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

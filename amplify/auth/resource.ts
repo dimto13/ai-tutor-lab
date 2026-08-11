@@ -1,4 +1,42 @@
-import { defineAuth } from "@aws-amplify/backend";
+import { defineAuth, secret } from "@aws-amplify/backend";
+
+interface OidcConfiguration {
+  providerName: string;
+  issuerUrl: string;
+  callbackUrls: string[];
+  logoutUrls: string[];
+}
+
+function parseUrls(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function readOidcConfiguration(): OidcConfiguration | null {
+  const providerName = process.env["AUTH_OIDC_PROVIDER_NAME"]?.trim() ?? "";
+  const issuerUrl = process.env["AUTH_OIDC_ISSUER_URL"]?.trim() ?? "";
+  const callbackUrls = parseUrls(process.env["AUTH_OIDC_CALLBACK_URLS"]);
+  const logoutUrls = parseUrls(process.env["AUTH_OIDC_LOGOUT_URLS"]);
+  const oidcConfigured =
+    providerName.length > 0 ||
+    issuerUrl.length > 0 ||
+    callbackUrls.length > 0 ||
+    logoutUrls.length > 0;
+
+  if (!oidcConfigured) return null;
+
+  if (!providerName || !issuerUrl || callbackUrls.length === 0 || logoutUrls.length === 0) {
+    throw new Error(
+      "OIDC configuration is incomplete. Set AUTH_OIDC_PROVIDER_NAME, AUTH_OIDC_ISSUER_URL, AUTH_OIDC_CALLBACK_URLS and AUTH_OIDC_LOGOUT_URLS together.",
+    );
+  }
+
+  return { providerName, issuerUrl, callbackUrls, logoutUrls };
+}
+
+const oidc = readOidcConfiguration();
 
 /**
  * AWS implementation of the platform authentication capability.
@@ -10,6 +48,22 @@ import { defineAuth } from "@aws-amplify/backend";
 export const auth = defineAuth({
   loginWith: {
     email: true,
+    ...(oidc
+      ? {
+          externalProviders: {
+            oidc: [
+              {
+                name: oidc.providerName,
+                issuerUrl: oidc.issuerUrl,
+                clientId: secret("AUTH_OIDC_CLIENT_ID"),
+                clientSecret: secret("AUTH_OIDC_CLIENT_SECRET"),
+              },
+            ],
+            callbackUrls: oidc.callbackUrls,
+            logoutUrls: oidc.logoutUrls,
+          },
+        }
+      : {}),
   },
   accountRecovery: "EMAIL_ONLY",
   userAttributes: {
