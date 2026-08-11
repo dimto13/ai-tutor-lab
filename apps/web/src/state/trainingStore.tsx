@@ -550,7 +550,9 @@ export function TrainingProvider({
         const legacyResult = step.validate(payload);
         result = legacyResult.ok
           ? { outcome: "pass" }
-          : { outcome: "near-miss", message: legacyResult.message };
+          : legacyResult.message
+            ? { outcome: "near-miss", message: legacyResult.message }
+            : { outcome: "near-miss" };
       } else {
         result = step.validation ? validateEvent(step.validation, event) : { outcome: "pass" };
       }
