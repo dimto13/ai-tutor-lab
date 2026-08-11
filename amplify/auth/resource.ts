@@ -17,5 +17,11 @@ export const auth = defineAuth({
       required: false,
       mutable: true,
     },
+    "custom:tenant_id": {
+      dataType: "String",
+      mutable: true,
+      minLen: 1,
+      maxLen: 128,
+    },
   },
 });
