@@ -1,20 +1,27 @@
 version: 1
 applications:
+  # appRoot muss identisch zur Amplify-Env-Variable AMPLIFY_MONOREPO_APP_ROOT sein.
+  # buildPath: / laesst die Frontend-Phasen im Repo-Root laufen, damit npm Workspaces
+  # reproduzierbar vom selben Ort wie in GitHub CI installiert und gebaut werden.
   - appRoot: apps/web
     frontend:
       buildPath: /
       phases:
         preBuild:
           commands:
+            - nvm install 22
             - nvm use 22
-            - npm ci --install-strategy=nested
+            - node -v && npm -v
+            - npm ci --install-strategy=nested --cache .npm --prefer-offline
         build:
           commands:
             - VITE_APP_VERSION=$(node -p "require('./apps/web/package.json').version") VITE_APP_COMMIT_SHA=${AWS_COMMIT_ID:-unknown} npm run build
       artifacts:
+        # baseDirectory ist relativ zu buildPath, daher vom Repo-Root aus angegeben.
         baseDirectory: apps/web/.amplify-hosting
         files:
           - "**/*"
       cache:
+        # npm ci verwirft node_modules; gecacht wird deshalb nur der npm-Download-Cache.
         paths:
           - .npm/**/*
