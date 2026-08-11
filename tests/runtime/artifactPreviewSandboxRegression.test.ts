@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createArtifactPreviewRuntime } from "../../apps/web/src/runtime/artifactPreviewRuntime.ts";
+import {
+  buildSandboxedArtifactDocument,
+  createArtifactPreviewRuntime,
+} from "../../apps/web/src/runtime/artifactPreviewRuntime.ts";
 
 function createContainer(): HTMLElement {
   return {
@@ -14,6 +17,13 @@ const safePage = {
   title: "Team page",
   html: '<main><h1>Team</h1><p><a href="#">Zum Seitenanfang</a></p></main>',
 };
+
+test("artifactPreview sandbox regression: keeps fragment links inside the srcdoc document", () => {
+  const document = buildSandboxedArtifactDocument(safePage.html);
+  assert.match(document, /<base href="about:srcdoc">/);
+  assert.match(document, /href="#"/);
+  assert.doesNotMatch(document, /<script/i);
+});
 
 test("artifactPreview sandbox regression: keeps native internal links but rejects script in revisions", async () => {
   const runtime = createArtifactPreviewRuntime();
