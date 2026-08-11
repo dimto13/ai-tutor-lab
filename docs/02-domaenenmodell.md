@@ -62,15 +62,21 @@ overlay.querySelector(".explorer-icon")  ❌  Szenario kennt DOM
 
 ### Laufzeit / Fortschritt
 
-| Entität           | Beschreibung                                                                       |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `TrainingSession` | Ein Durchlauf eines Szenarios durch eine Person                                    |
-| `StepState`       | `NOT_STARTED` → `ACTIVE` → (`VALIDATION_FAILED`) → `COMPLETED` / `SKIPPED`         |
-| `TrainingEvent`   | Alles, was in der Laufzeit passiert (Grundlage für Validierung **und** Telemetrie) |
-| `Attempt`         | Fehlversuch mit Grund                                                              |
-| `HintUsage`       | Genutzte Hilfestufe je Schritt                                                     |
-| `SkillProfile`    | Aggregierte Punkte/Level je Technology (siehe `05-gamification.md`)                |
-| `Attestation`     | Kompetenznachweis mit Gültigkeitszeitraum                                          |
+| Entität             | Beschreibung                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `TrainingSubjectRef` | Cloud-neutrale Referenz auf Nutzer und optionalen Mandanten (`userId`, `tenantId`)                  |
+| `TrainingSession`   | Ein Durchlauf eines Szenarios; gehört über `subject` genau zu einem Nutzer/Mandanten                |
+| `StepState`         | `NOT_STARTED` → `ACTIVE` → (`VALIDATION_FAILED`) → `COMPLETED` / `SKIPPED`                           |
+| `TrainingEvent`     | Alles, was in der Laufzeit passiert (Grundlage für Validierung **und** Telemetrie)                   |
+| `Attempt`           | Fehlversuch mit Grund                                                                                |
+| `HintUsage`         | Genutzte Hilfestufe je Schritt                                                                       |
+| `SkillProfile`      | Aggregierte Punkte/Level je Technology (siehe `05-gamification.md`)                                  |
+| `Attestation`       | Kompetenznachweis mit Gültigkeitszeitraum                                                            |
+
+`TrainingSubjectRef` ist bewusst **kein Cognito-, Google- oder anderer Provider-Typ**. Die
+Authentifizierung normalisiert die Identität an der Cloud-Boundary auf eigene Anwendungsmodelle;
+die Training Engine erhält davon ausschließlich `userId` und `tenantId`. Verbindliche Details:
+`docs/20-cloud-provider-boundary.md`.
 
 ### Datenklassifizierung (siehe `docs/10-dokumenten-check.md`)
 
@@ -155,6 +161,15 @@ export interface Step {
 
 /** Semantische UI-Referenz. Der RuntimeAdapter löst sie in Bildschirmkoordinaten auf. */
 export type UiTargetRef = string; // 'vscode.activityBar.explorer', 'vscode.panel.terminal'
+
+// ---------- Laufzeit / Identität ----------
+export interface TrainingSubjectRef {
+  userId: string;
+  tenantId: string | null;
+}
+
+// TrainingSession.subject ist TrainingSubjectRef | null.
+// Cloud-/Identity-Provider-Objekte dürfen hier niemals Teil des Vertrages werden.
 
 // ---------- Events ----------
 export interface TrainingEvent<P = unknown> {
@@ -287,12 +302,12 @@ steps:
 
 ## 2.5 Persistenzmodell (MVP)
 
-| Datenklasse                   | Speicher                                          | Begründung                                                                                |
-| ----------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Katalog + Szenarien           | Git-Repository, JSON-Schema-validiert             | Versionierbar, reviewbar, von LLMs erzeugbar, kein Datenbank-Deployment für Content nötig |
-| Fortschritt, Sessions, Punkte | Datenbank (Amplify Data / DynamoDB oder Postgres) | Nutzerbezogen, veränderlich                                                               |
-| Events / Telemetrie           | Append-only Log, getrennt, mit Aufbewahrungsfrist | Datenschutzrechtlich eigene Klasse (→ `docs/08` ADR-07)                                   |
-| Nachweise (`Attestation`)     | Datenbank + signierter Export                     | Prüffähigkeit                                                                             |
+| Datenklasse                   | Speicher                                          | Begründung                                                                                         |
+| ----------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Katalog + Szenarien           | Git-Repository, JSON-Schema-validiert             | Versionierbar, reviewbar, von LLMs erzeugbar, kein Datenbank-Deployment für Content nötig          |
+| Fortschritt, Sessions, Punkte | Datenbank (Amplify Data / DynamoDB oder Postgres) | Nutzerbezogen und mandantenfähig; Eigentümer über `TrainingSubjectRef` statt Cloud-Provider-Objekt |
+| Events / Telemetrie           | Append-only Log, getrennt, mit Aufbewahrungsfrist | Datenschutzrechtlich eigene Klasse (→ `docs/08` ADR-07)                                            |
+| Nachweise (`Attestation`)     | Datenbank + signierter Export                     | Prüffähigkeit                                                                                      |
 
 Szenarien referenzieren Produktversionen. Wird ein Simulator aktualisiert, entsteht eine neue
 Szenario-Version — bereits vergebene Punkte und Nachweise bleiben an die alte Version gebunden
