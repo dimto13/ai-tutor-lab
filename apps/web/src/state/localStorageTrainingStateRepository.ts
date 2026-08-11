@@ -104,7 +104,10 @@ function storedSubject(value: StoredTrainingSession): TrainingSubjectRef | null 
   return { userId: value.subject["userId"], tenantId };
 }
 
-function assertStoredSessionMatchesKey(key: TrainingStateKey, session: StoredTrainingSession): void {
+function assertStoredSessionMatchesKey(
+  key: TrainingStateKey,
+  session: StoredTrainingSession,
+): void {
   if (
     session.scenarioId !== key.scenarioId ||
     session.mode !== key.mode ||
