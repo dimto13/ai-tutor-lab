@@ -656,19 +656,17 @@ export function TrainingProvider({
       challengeOutcome: progress.challengeOutcome,
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
-        if (mode !== "guided") return;
+        if (mode !== "guided" || helpLevel >= 3) return;
         const stepId = progressRef.current.activeStepId;
         if (!stepId) return;
-        setHelpLevel((level) => {
-          if (level >= 3) return level;
-          const nextLevel = (level + 1) as 1 | 2 | 3;
-          setProgress((current) => ({
-            ...current,
-            hintsUsed: current.hintsUsed + 1,
-            hintUsage: [...current.hintUsage, { stepId, level: nextLevel, timestamp: Date.now() }],
-          }));
-          return nextLevel;
-        });
+        const nextLevel = (helpLevel + 1) as 1 | 2 | 3;
+        const usage: HintUsage = { stepId, level: nextLevel, timestamp: Date.now() };
+        setHelpLevel(nextLevel);
+        setProgress((current) => ({
+          ...current,
+          hintsUsed: current.hintsUsed + 1,
+          hintUsage: [...current.hintUsage, usage],
+        }));
       },
       resetHelp: () => setHelpLevel(0),
       completeExplanationStep: () => {
