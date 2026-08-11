@@ -16,42 +16,6 @@ permissions:
   contents: read
 
 jobs:
-  regenerate-lockfile:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Regenerate lockfile deterministically
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Commit regenerated lockfile through GitHub API
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if git diff --quiet -- package-lock.json; then
-            echo "Lockfile already current."
-            exit 0
-          fi
-
-          current_sha=$(gh api "repos/$GITHUB_REPOSITORY/contents/package-lock.json?ref=$GITHUB_HEAD_REF" --jq '.sha')
-          jq -Rs \
-            --arg message "fix: align React dependency graph" \
-            --arg sha "$current_sha" \
-            --arg branch "$GITHUB_HEAD_REF" \
-            '{message: $message, content: (@base64), sha: $sha, branch: $branch}' \
-            package-lock.json > /tmp/package-lock-update.json
-          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/package-lock.json" --input /tmp/package-lock-update.json
-
   validate:
     runs-on: ubuntu-latest
     steps:
