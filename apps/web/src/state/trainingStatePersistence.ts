@@ -1,0 +1,124 @@
+import { TrainingStateConflictError, restoreTrainingSession } from "@ai-train-lab/training-engine";
+import type {
+  Scenario,
+  TrainingSession,
+  TrainingStateKey,
+  TrainingStateRepository,
+} from "@ai-train-lab/training-engine";
+
+export interface TrainingStateLoadResult {
+  session: TrainingSession;
+  revision: number | null;
+}
+
+/**
+ * Application-level coordinator for one user/scenario/mode persistence scope.
+ *
+ * It serializes writes so React state updates cannot create self-conflicts and
+ * keeps repository revisions outside UI components. A real concurrent write
+ * resolves to the repository's latest persisted session, which is the same
+ * authority rule required once the remote repository becomes primary.
+ */
+export class TrainingStatePersistence {
+  private readonly repository: TrainingStateRepository;
+  private readonly key: TrainingStateKey;
+  private readonly scenario: Scenario;
+  private sessionRevision: number | null = null;
+  private sessionWriteChain: Promise<void> = Promise.resolve();
+  private readonly runtimeRevisions = new Map<string, number | null>();
+  private readonly runtimeWriteChains = new Map<string, Promise<void>>();
+
+  constructor(repository: TrainingStateRepository, key: TrainingStateKey, scenario: Scenario) {
+    this.repository = repository;
+    this.key = key;
+    this.scenario = scenario;
+  }
+
+  async loadSession(): Promise<TrainingStateLoadResult> {
+    await this.sessionWriteChain;
+    const record = await this.repository.loadSession(this.key);
+    this.sessionRevision = record?.revision ?? null;
+    return {
+      session: restoreTrainingSession(
+        this.scenario,
+        this.scenario.id,
+        record?.value,
+        Date.now(),
+        this.key.subject,
+      ),
+      revision: this.sessionRevision,
+    };
+  }
+
+  saveSession(session: TrainingSession): Promise<TrainingSession | null> {
+    const operation = this.sessionWriteChain.then(async () => {
+      try {
+        const saved = await this.repository.saveSession(this.key, session, {
+          expectedRevision: this.sessionRevision,
+        });
+        this.sessionRevision = saved.revision;
+        return null;
+      } catch (error) {
+        if (!(error instanceof TrainingStateConflictError)) throw error;
+        const latest = await this.repository.loadSession(this.key);
+        this.sessionRevision = latest?.revision ?? null;
+        return restoreTrainingSession(
+          this.scenario,
+          this.scenario.id,
+          latest?.value,
+          Date.now(),
+          this.key.subject,
+        );
+      }
+    });
+
+    this.sessionWriteChain = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return operation;
+  }
+
+  async loadRuntimeSnapshot(runtimeId: string): Promise<unknown | null> {
+    await (this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve());
+    const record = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
+    this.runtimeRevisions.set(runtimeId, record?.revision ?? null);
+    return record?.value ?? null;
+  }
+
+  saveRuntimeSnapshot(runtimeId: string, snapshot: unknown): Promise<void> {
+    const previous = this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve();
+    const operation = previous.then(async () => {
+      if (!this.runtimeRevisions.has(runtimeId)) {
+        const current = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
+        this.runtimeRevisions.set(runtimeId, current?.revision ?? null);
+      }
+
+      try {
+        const saved = await this.repository.saveRuntimeSnapshot(this.key, runtimeId, snapshot, {
+          expectedRevision: this.runtimeRevisions.get(runtimeId) ?? null,
+        });
+        this.runtimeRevisions.set(runtimeId, saved.revision);
+      } catch (error) {
+        if (!(error instanceof TrainingStateConflictError)) throw error;
+        const latest = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
+        this.runtimeRevisions.set(runtimeId, latest?.revision ?? null);
+      }
+    });
+
+    this.runtimeWriteChains.set(
+      runtimeId,
+      operation.then(
+        () => undefined,
+        () => undefined,
+      ),
+    );
+    return operation;
+  }
+
+  async deleteRuntimeSnapshot(runtimeId: string): Promise<void> {
+    await (this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve());
+    await this.repository.deleteRuntimeSnapshot(this.key, runtimeId);
+    this.runtimeRevisions.set(runtimeId, null);
+  }
+}

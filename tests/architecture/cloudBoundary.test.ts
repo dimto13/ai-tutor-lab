@@ -4,7 +4,10 @@ import { extname, join, relative, resolve, sep } from "node:path";
 import test from "node:test";
 
 const cloudNeutralRoots = [resolve("apps/web/src"), resolve("packages")];
-const adapterRoot = resolve("apps/web/src/auth/adapters");
+const adapterRoots = [
+  resolve("apps/web/src/auth/adapters"),
+  resolve("apps/web/src/persistence/adapters"),
+];
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const cloudSdkPrefixes = [
   "aws-amplify",
@@ -94,7 +97,7 @@ test("cloud SDK imports stay behind designated adapter boundaries", async () => 
 
   for (const root of cloudNeutralRoots) {
     for (const file of await collectSourceFiles(root)) {
-      if (isInside(file, adapterRoot)) continue;
+      if (adapterRoots.some((adapterRoot) => isInside(file, adapterRoot))) continue;
 
       const source = await readFile(file, "utf8");
       const imports = cloudSdkImports(source);

@@ -1,9 +1,11 @@
 import { defineBackend } from "@aws-amplify/backend";
 
 import { auth } from "./auth/resource";
+import { data } from "./data/resource";
 
 const backend = defineBackend({
   auth,
+  data,
 });
 
 // Amplify Gen 2 enables guest identities by default. The training platform is a
