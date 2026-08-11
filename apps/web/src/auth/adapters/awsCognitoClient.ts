@@ -91,11 +91,11 @@ export function createAmplifyCognitoClient(
         userId: user.userId,
         tenantId:
           attributes["custom:tenant_id"] ?? stringClaim(idTokenPayload["custom:tenant_id"]),
-        email: attributes.email ?? stringClaim(idTokenPayload.email),
-        displayName: attributes.name ?? stringClaim(idTokenPayload.name),
+        email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
+        displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
         roles: stringArrayClaim(idTokenPayload["cognito:groups"]),
         accessToken: session.tokens.accessToken.toString(),
-        expiresAt: expirationIso(accessTokenPayload.exp),
+        expiresAt: expirationIso(accessTokenPayload["exp"]),
       };
     },
 
