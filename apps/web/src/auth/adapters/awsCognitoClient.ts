@@ -2,7 +2,6 @@ import { Amplify } from "aws-amplify";
 import {
   fetchAuthSession,
   fetchUserAttributes,
-  getCurrentUser,
   signIn,
   signInWithRedirect,
   signOut,
@@ -136,13 +135,18 @@ export function createAmplifyCognitoClient(
       const session = await fetchAuthSession({ forceRefresh });
       if (!session.tokens) return null;
 
-      const [user, rawAttributes] = await Promise.all([getCurrentUser(), fetchUserAttributes()]);
+      const rawAttributes = await fetchUserAttributes();
       const attributes = rawAttributes as Record<string, string | undefined>;
       const idTokenPayload = session.tokens.idToken?.payload ?? {};
       const accessTokenPayload = session.tokens.accessToken.payload;
+      const userId =
+        stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
+      if (!userId) throw new Error("Authenticated Cognito session has no stable subject identifier.");
 
       return {
-        userId: user.userId,
+        // `sub` is Cognito's immutable subject identifier and is also what
+        // AppSync exposes server-side for persistence authorization.
+        userId,
         // Tenant membership must come from a server-controlled membership source.
         // Cognito profile attributes are deliberately not authoritative here.
         tenantId: null,
