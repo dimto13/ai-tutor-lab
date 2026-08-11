@@ -34,6 +34,10 @@ export function createCognitoAuthService(
       return toAuthSession(await client.getSession());
     },
 
+    async refreshSession() {
+      return toAuthSession(await client.getSession(true));
+    },
+
     async signIn(request): Promise<SignInResult> {
       if (request.method === "oidc") {
         await client.signInWithOidc(request.providerId);
