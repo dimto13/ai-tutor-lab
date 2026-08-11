@@ -111,7 +111,10 @@ test("Guided: nach drei Fehlversuchen wird Hilfe aktiv angeboten und je Schritt 
 }) => {
   await reachCreateFileStep(page);
   await expect(
-    page.getByText(/Vor Abruf: Hilfe 1 reduziert ausschließlich den Schrittbonus um 10 %\./),
+    page.getByText(/Vor Abruf: Für Hilfe 1 ist ein Abzug von 10 % auf den Schrittbonus vorgesehen\./),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Die angezeigten Gesamtpunkte berücksichtigen diesen Abzug derzeit noch nicht\./),
   ).toBeVisible();
 
   for (const filename of ["wrong-1.py", "wrong-2.py", "wrong-3.py"]) {
@@ -151,7 +154,7 @@ test("Guided: nach drei Fehlversuchen wird Hilfe aktiv angeboten und je Schritt 
   await expectGuidedStep(page, 9, "Datei erstellen");
   await expect(page.getByRole("button", { name: "Hilfe 2 anzeigen" })).toBeVisible();
   await expect(
-    page.getByText(/Vor Abruf: Hilfe 2 reduziert ausschließlich den Schrittbonus um 25 %\./),
+    page.getByText(/Vor Abruf: Für Hilfe 2 ist ein Abzug von 25 % auf den Schrittbonus vorgesehen\./),
   ).toBeVisible();
 });
 
