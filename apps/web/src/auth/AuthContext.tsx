@@ -38,24 +38,33 @@ export function AuthProvider({
   const [session, setSession] = useState<AuthSession | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setStatus("loading");
-    setError(null);
+  const loadSession = useCallback(
+    async (forceRefresh: boolean) => {
+      setStatus("loading");
+      setError(null);
 
-    try {
-      const currentSession = await service.getSession();
-      setSession(currentSession);
-      setStatus(currentSession ? "authenticated" : "anonymous");
-    } catch (cause) {
-      setSession(null);
-      setError(messageOf(cause));
-      setStatus("anonymous");
-    }
-  }, [service]);
+      try {
+        const currentSession = forceRefresh
+          ? await service.refreshSession()
+          : await service.getSession();
+        setSession(currentSession);
+        setStatus(currentSession ? "authenticated" : "anonymous");
+      } catch (cause) {
+        setSession(null);
+        setError(messageOf(cause));
+        setStatus("anonymous");
+      }
+    },
+    [service],
+  );
+
+  const refresh = useCallback(async () => {
+    await loadSession(true);
+  }, [loadSession]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void loadSession(false);
+  }, [loadSession]);
 
   const signIn = useCallback(
     async (request: SignInRequest) => {
