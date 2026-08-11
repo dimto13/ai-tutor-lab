@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  createTrainingSession,
-  recordLastAction,
-} from "@ai-train-lab/training-engine";
+import { createTrainingSession, recordLastAction } from "@ai-train-lab/training-engine";
 import type { Scenario, TrainingStateKey } from "@ai-train-lab/training-engine";
 import { LocalStorageTrainingStateRepository } from "../src/state/localStorageTrainingStateRepository.ts";
 import type { StorageLike } from "../src/state/localStorageTrainingStateRepository.ts";
