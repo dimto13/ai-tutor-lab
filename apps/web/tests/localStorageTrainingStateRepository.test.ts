@@ -1,9 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  TrainingStateConflictError,
-  createTrainingSession,
-} from "@ai-train-lab/training-engine";
+import { TrainingStateConflictError, createTrainingSession } from "@ai-train-lab/training-engine";
 import type { Scenario, TrainingStateKey } from "@ai-train-lab/training-engine";
 import {
   LocalStorageTrainingStateRepository,
