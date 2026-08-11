@@ -39,7 +39,19 @@ jobs:
           fi
 
       - name: Check formatting
-        run: npm run format:check
+        run: |
+          set +e
+          files=$(npx prettier --list-different .)
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            while IFS= read -r file; do
+              if [ -n "$file" ]; then
+                echo "::error file=$file::Prettier formatting required"
+              fi
+            done <<< "$files"
+            exit "$status"
+          fi
 
       - name: Validate scenario content
         run: npm run validate:content
