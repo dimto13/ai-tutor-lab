@@ -256,9 +256,7 @@ function validateScenarioReferences(
   if (!adapterId) {
     const hasRuntimeReferences =
       (scenario.exploreTargets?.length ?? 0) > 0 ||
-      scenario.steps.some((step) =>
-        Boolean(step.highlightTarget || step.onFailure?.markTarget),
-      ) ||
+      scenario.steps.some((step) => Boolean(step.highlightTarget || step.onFailure?.markTarget)) ||
       collectStateSelectors(scenario.completionValidation, "completionValidation").length > 0;
     if (hasRuntimeReferences) {
       issues.push({
