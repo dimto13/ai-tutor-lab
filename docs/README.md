@@ -38,6 +38,7 @@ vom POC zur produktreifen Plattform.
 | `10-dokumenten-check.md`             | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary                            | Product, Security        |
 | `12-simulator-aktualitaet.md`        | Halbjährliche Produktprüfung, Verantwortlichkeit und automatische Drift-Tickets                 | Product, QA, Entwicklung |
 | `18-monorepo-architektur.md`         | Workspace-Struktur, Package-Grenzen, Training Engine und Deployment-Basis                       | Entwicklung              |
+| `19-aws-amplify-konventionen.md`     | Verbindliche Regeln für `amplify/`: Zugriffsschnitt, Geheimnisse, Build-Konfiguration           | Entwicklung, Security    |
 | `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich                     |
 | `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
 

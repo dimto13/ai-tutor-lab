@@ -16,7 +16,9 @@
 
 1. **Vor jeder Aufgabe lesen:** [`prompts/model-briefing.md`](prompts/model-briefing.md)
    (die sieben Architekturregeln) und bei Codearbeit zusätzlich
-   [`docs/02-domaenenmodell.md`](docs/02-domaenenmodell.md).
+   [`docs/02-domaenenmodell.md`](docs/02-domaenenmodell.md). Bei Arbeit an `amplify/`,
+   an `amplify.yml` oder am AWS-Deployment zusätzlich
+   [`docs/19-aws-amplify-konventionen.md`](docs/19-aws-amplify-konventionen.md).
 2. **Aufgabenverwaltung läuft ausschließlich über GitHub Issues.** Neue Aufgaben werden direkt
    als Issue angelegt — mit Epic-Label, Prio-Label, Typ-Label und Milestone, und als Sub-Issue
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
