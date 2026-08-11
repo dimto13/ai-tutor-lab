@@ -8,44 +8,50 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import { getScenario } from "@/scenarios";
-import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
-import { findNextIncompleteStepId, normalizeGuidedStepProgress } from "@/state/trainingProgress";
+import {
+  activeHelpLevel,
+  applyValidationResult,
+  challengeDeadlineAt,
+  completeChallenge,
+  completeTrainingStep,
+  createDefaultValidatorRegistry,
+  createTrainingSession,
+  inspectExploreTarget,
+  isChallengeDeadlineExpired,
+  normalizeLegacyValidationResult,
+  recordHintUsage,
+  recordLastAction,
+  recordMistake,
+  restoreTrainingSession,
+  skipConsecutiveOptionalSteps,
+  timeoutChallenge,
+} from "@ai-train-lab/training-engine";
 import type {
   ChallengeOutcome,
   EngineValidationResult,
-  HintUsage,
   Scenario,
-  StepStatus,
+  StoredTrainingSession,
   TrainingEvent,
   TrainingMode,
+  TrainingSession,
   Validation,
-} from "@/types/training";
+} from "@ai-train-lab/training-engine";
+import { getScenario } from "@/scenarios";
+import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
 
 const storageKey = (scenarioId: string) => `ai-training-lab:${scenarioId}:v2`;
 const runtimeStorageKey = (scenarioId: string, runtimeId: string) =>
   `ai-training-lab:${scenarioId}:runtime:${runtimeId}:v1`;
 const CHALLENGE_TIMEOUT_MESSAGE =
   "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
+const validatorRegistry = createDefaultValidatorRegistry();
 
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
 const modeMultiplier = (mode: TrainingMode) =>
   mode === "explore" ? 0.5 : mode === "challenge" ? 2 : 1;
 
-export interface TrainingProgress {
-  statuses: Record<string, StepStatus>;
-  activeStepId: string | null;
-  startedAt: number;
-  finishedAt: number | null;
-  challengeOutcome: ChallengeOutcome | null;
-  hintsUsed: number;
-  hintUsage: HintUsage[];
-  mistakes: number;
-  activeStepMistakes: number;
-  lastAction: string | null;
-  exploredTargets: string[];
-  lastInspectedRef: string | null;
-}
+/** Backwards-compatible UI name; the authoritative state lives in training-engine. */
+export type TrainingProgress = TrainingSession;
 
 interface TrainingContextValue {
   scenario: Scenario;
@@ -75,74 +81,22 @@ interface TrainingContextValue {
 
 const TrainingContext = createContext<TrainingContextValue | null>(null);
 
-function initialProgress(scenario: Scenario): TrainingProgress {
-  const mode = modeOf(scenario);
-  const statuses: Record<string, StepStatus> = {};
-  scenario.steps.forEach((step, index) => {
-    statuses[step.id] = mode === "explore" ? "NOT_STARTED" : index === 0 ? "ACTIVE" : "NOT_STARTED";
-  });
-  return {
-    statuses,
-    activeStepId: mode === "explore" ? null : (scenario.steps[0]?.id ?? null),
-    startedAt: Date.now(),
-    finishedAt: null,
-    challengeOutcome: mode === "challenge" ? "active" : null,
-    hintsUsed: 0,
-    hintUsage: [],
-    mistakes: 0,
-    activeStepMistakes: 0,
-    lastAction: null,
-    exploredTargets: [],
-    lastInspectedRef: null,
-  };
+function newSession(scenario: Scenario): TrainingSession {
+  return createTrainingSession(scenario, scenario.id);
 }
 
-function helpLevelForProgress(progress: TrainingProgress): number {
-  if (!progress.activeStepId) return 0;
-  return progress.hintUsage.reduce(
-    (level, usage) =>
-      usage.stepId === progress.activeStepId ? Math.max(level, usage.level) : level,
-    0,
-  );
-}
-
-function load(scenario: Scenario): TrainingProgress {
-  if (typeof window === "undefined") return initialProgress(scenario);
+function load(scenario: Scenario): TrainingSession {
+  if (typeof window === "undefined") return newSession(scenario);
   try {
     const raw = window.localStorage.getItem(storageKey(scenario.id));
-    if (!raw) return initialProgress(scenario);
-    const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
-    if (!parsed.statuses || typeof parsed.statuses !== "object" || Array.isArray(parsed.statuses)) {
-      return initialProgress(scenario);
-    }
-    const mode = modeOf(scenario);
-    const guidedProgress =
-      mode === "guided"
-        ? normalizeGuidedStepProgress(scenario, {
-            statuses: parsed.statuses,
-            activeStepId: parsed.activeStepId,
-            finishedAt: parsed.finishedAt,
-          })
-        : null;
-    return {
-      statuses: guidedProgress?.statuses ?? parsed.statuses,
-      activeStepId: guidedProgress?.activeStepId ?? parsed.activeStepId ?? null,
-      startedAt: parsed.startedAt ?? Date.now(),
-      finishedAt: guidedProgress?.finishedAt ?? parsed.finishedAt ?? null,
-      challengeOutcome:
-        mode === "challenge"
-          ? (parsed.challengeOutcome ?? (parsed.finishedAt ? "passed" : "active"))
-          : null,
-      hintsUsed: parsed.hintsUsed ?? 0,
-      hintUsage: Array.isArray(parsed.hintUsage) ? parsed.hintUsage : [],
-      mistakes: parsed.mistakes ?? 0,
-      activeStepMistakes: parsed.activeStepMistakes ?? 0,
-      lastAction: parsed.lastAction ?? null,
-      exploredTargets: parsed.exploredTargets ?? [],
-      lastInspectedRef: parsed.lastInspectedRef ?? null,
-    };
+    if (!raw) return newSession(scenario);
+    return restoreTrainingSession(
+      scenario,
+      scenario.id,
+      JSON.parse(raw) as StoredTrainingSession,
+    );
   } catch {
-    return initialProgress(scenario);
+    return newSession(scenario);
   }
 }
 
@@ -153,137 +107,24 @@ function eventPayload(event: TrainingEvent): Record<string, unknown> {
   return event.payload as Record<string, unknown>;
 }
 
-function normalizeComparableText(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/\p{M}/gu, "")
-    .replace(/ß/g, "ss")
-    .toLocaleLowerCase("de-DE");
-}
-
-function containsNormalizedFragment(actual: string, expected: string): boolean {
-  return normalizeComparableText(actual).includes(normalizeComparableText(expected));
-}
-
-function validateEvent(
-  validation: Validation | undefined,
-  event: TrainingEvent,
-): EngineValidationResult {
-  if (!validation) return { outcome: "pass" };
-  if (validation.kind !== "event" || validation.type !== event.type) return { outcome: "ignore" };
-
-  const payload = eventPayload(event);
-  for (const [key, expected] of Object.entries(validation.match ?? {})) {
-    if (payload[key] !== expected) {
-      return {
-        outcome: "near-miss",
-        message: "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.",
-      };
-    }
-  }
-  for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
-    const actual = payload[key];
-    if (typeof actual !== "string" || !actual.includes(expectedFragment)) {
-      return {
-        outcome: "near-miss",
-        message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.",
-      };
-    }
-  }
-  for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {
-    const actual = payload[key];
-    if (
-      typeof actual !== "string" ||
-      !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))
-    ) {
-      return {
-        outcome: "near-miss",
-        message: "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.",
-      };
-    }
-  }
-  return { outcome: "pass" };
-}
-
-async function validateState(
-  validation: Validation | undefined,
-  scenario: Scenario,
-): Promise<boolean> {
-  if (!validation) return false;
-  if (validation.kind === "all") {
-    const results = await Promise.all(validation.of.map((item) => validateState(item, scenario)));
-    return results.every(Boolean);
-  }
-  if (validation.kind === "any") {
-    const results = await Promise.all(validation.of.map((item) => validateState(item, scenario)));
-    return results.some(Boolean);
-  }
-  if (validation.kind !== "state") return false;
-
+function queryScenarioState(scenario: Scenario, selector: string): Promise<unknown> {
   const adapter = getRuntimeAdapterForSelector(
-    validation.selector,
+    selector,
     scenario.environment?.runtimeAdapterId,
     scenario.environment?.integrationRuntimeAdapterIds,
   );
-  if (!adapter) return false;
-  const value = await adapter.query(validation.selector);
-
-  if (Object.prototype.hasOwnProperty.call(validation, "equals") && value !== validation.equals)
-    return false;
-  if (Object.prototype.hasOwnProperty.call(validation, "includes")) {
-    if (Array.isArray(value)) {
-      if (!value.includes(validation.includes)) return false;
-    } else if (typeof value === "string") {
-      if (!value.includes(String(validation.includes))) return false;
-    } else {
-      return false;
-    }
-  }
-  if (validation.includesAny) {
-    if (Array.isArray(value)) {
-      if (!validation.includesAny.some((candidate) => value.includes(candidate))) return false;
-    } else if (typeof value === "string") {
-      if (
-        !validation.includesAny.some((candidate) =>
-          containsNormalizedFragment(value, String(candidate)),
-        )
-      )
-        return false;
-    } else {
-      return false;
-    }
-  }
-  if (Object.prototype.hasOwnProperty.call(validation, "excludes")) {
-    if (Array.isArray(value)) {
-      if (value.includes(validation.excludes)) return false;
-    } else if (typeof value === "string") {
-      if (value.includes(String(validation.excludes))) return false;
-    } else {
-      return false;
-    }
-  }
-  if (validation.match) {
-    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-    const record = value as Record<string, unknown>;
-    for (const [key, expected] of Object.entries(validation.match)) {
-      if (record[key] !== expected) return false;
-    }
-  }
-  return true;
+  return adapter ? adapter.query(selector) : Promise.resolve(undefined);
 }
 
-function challengeDeadlineAt(scenario: Scenario, progress: TrainingProgress): number | null {
-  if (scenario.timeLimitSeconds === undefined) return null;
-  return progress.startedAt + scenario.timeLimitSeconds * 1000;
-}
-
-function isChallengeDeadlineExpired(
+function validateDeclarative(
+  validation: Validation,
   scenario: Scenario,
-  progress: TrainingProgress,
-  now = Date.now(),
-): boolean {
-  const deadline = challengeDeadlineAt(scenario, progress);
-  return deadline !== null && now >= deadline;
+  event?: TrainingEvent,
+): Promise<EngineValidationResult> {
+  return validatorRegistry.validate(validation, {
+    ...(event ? { event } : {}),
+    query: (selector) => queryScenarioState(scenario, selector),
+  });
 }
 
 export function TrainingProvider({
@@ -297,10 +138,10 @@ export function TrainingProvider({
   if (!scenario) throw new Error(`Unknown training scenario: ${scenarioId}`);
 
   const mode = modeOf(scenario);
-  const [progress, setProgress] = useState<TrainingProgress>(() => initialProgress(scenario));
+  const [progress, setProgress] = useState<TrainingSession>(() => newSession(scenario));
   const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
-  const [helpLevel, setHelpLevel] = useState(0);
+  const [visibleHelpLevel, setVisibleHelpLevel] = useState(0);
   const [challengeRemainingSeconds, setChallengeRemainingSeconds] = useState<number | null>(null);
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -352,10 +193,10 @@ export function TrainingProvider({
             (status) => status === "COMPLETED" || status === "VALIDATION_FAILED",
           ));
       if (mode !== "explore" && hasStarted) {
-        const freshProgress = initialProgress(scenario);
+        const freshProgress = newSession(scenario);
         window.localStorage.setItem(storageKey(scenario.id), JSON.stringify(freshProgress));
         setProgress(freshProgress);
-        setHelpLevel(0);
+        setVisibleHelpLevel(0);
         setFeedback(null);
       }
       return false;
@@ -367,7 +208,7 @@ export function TrainingProvider({
     setHydrated(false);
     const persistedProgress = load(scenario);
     setProgress(persistedProgress);
-    setHelpLevel(helpLevelForProgress(persistedProgress));
+    setVisibleHelpLevel(activeHelpLevel(persistedProgress));
     setFeedback(null);
     setChallengeRemainingSeconds(null);
     setHydrated(true);
@@ -379,20 +220,8 @@ export function TrainingProvider({
   }, [progress, hydrated, scenario.id]);
 
   const markChallengeTimedOut = useCallback(() => {
-    if (progressRef.current.challengeOutcome !== "active") return;
-    const challengeStep = scenario.steps[0];
-    setProgress((current) => {
-      if (current.challengeOutcome !== "active") return current;
-      return {
-        ...current,
-        statuses: challengeStep
-          ? { ...current.statuses, [challengeStep.id]: "VALIDATION_FAILED" }
-          : current.statuses,
-        activeStepId: null,
-        challengeOutcome: "timed_out",
-      };
-    });
-  }, [scenario.steps]);
+    setProgress((current) => timeoutChallenge(current, scenario));
+  }, [scenario]);
 
   useEffect(() => {
     if (!hydrated || mode !== "challenge" || scenario.timeLimitSeconds === undefined) {
@@ -437,59 +266,25 @@ export function TrainingProvider({
 
   const completeStep = useCallback(
     (stepId: string, successMessage: string) => {
-      const index = scenario.steps.findIndex((step) => step.id === stepId);
-      if (index < 0) return;
-      setProgress((current) => {
-        const statuses: Record<string, StepStatus> = {
-          ...current.statuses,
-          [stepId]: "COMPLETED",
-        };
-        const nextStepId = findNextIncompleteStepId(scenario, statuses, stepId);
-        if (nextStepId) statuses[nextStepId] = "ACTIVE";
-        return {
-          ...current,
-          statuses,
-          activeStepId: nextStepId,
-          activeStepMistakes: 0,
-          finishedAt: nextStepId ? null : Date.now(),
-        };
-      });
-      setHelpLevel(0);
+      setProgress((current) => completeTrainingStep(current, scenario, stepId));
+      setVisibleHelpLevel(0);
       setFeedback({ kind: "success", message: successMessage });
     },
     [scenario],
   );
 
   useEffect(() => {
-    const runtimes = getRuntimeAdapters(
-      scenario.environment?.runtimeAdapterId,
-      scenario.environment?.integrationRuntimeAdapterIds,
-    );
-    if (runtimes.length === 0) return;
+    if (scenarioRuntimes.length === 0) return;
 
     const handleEvent = async (event: TrainingEvent) => {
       const payload = eventPayload(event);
-      setProgress((current) => ({ ...current, lastAction: event.type }));
+      setProgress((current) => recordLastAction(current, event.type));
 
       if (mode === "explore") {
         if (event.type !== "ui.element.inspected") return;
         const ref = payload["ref"];
-        if (typeof ref !== "string" || !(scenario.exploreTargets ?? []).includes(ref)) return;
-        setProgress((current) => {
-          const exploredTargets = current.exploredTargets.includes(ref)
-            ? current.exploredTargets
-            : [...current.exploredTargets, ref];
-          const targetCount = scenario.exploreTargets?.length ?? 0;
-          return {
-            ...current,
-            exploredTargets,
-            lastInspectedRef: ref,
-            finishedAt:
-              targetCount > 0 && exploredTargets.length >= targetCount
-                ? (current.finishedAt ?? Date.now())
-                : current.finishedAt,
-          };
-        });
+        if (typeof ref !== "string") return;
+        setProgress((current) => inspectExploreTarget(current, scenario, ref));
         return;
       }
 
@@ -500,8 +295,11 @@ export function TrainingProvider({
           markChallengeTimedOut();
           return;
         }
+        if (!scenario.completionValidation) return;
+
         const challengeStartedAt = startedProgress.startedAt;
-        if (!(await validateState(scenario.completionValidation, scenario))) return;
+        const result = await validateDeclarative(scenario.completionValidation, scenario, event);
+        if (result.outcome !== "pass") return;
 
         const currentProgress = progressRef.current;
         if (
@@ -516,7 +314,6 @@ export function TrainingProvider({
           return;
         }
 
-        const challengeStep = scenario.steps[0];
         setProgress((current) => {
           if (
             current.challengeOutcome !== "active" ||
@@ -525,15 +322,7 @@ export function TrainingProvider({
           ) {
             return current;
           }
-          return {
-            ...current,
-            statuses: challengeStep
-              ? { ...current.statuses, [challengeStep.id]: "COMPLETED" }
-              : current.statuses,
-            activeStepId: null,
-            finishedAt: current.finishedAt ?? completedAt,
-            challengeOutcome: "passed",
-          };
+          return completeChallenge(current, scenario, completedAt);
         });
         return;
       }
@@ -547,19 +336,25 @@ export function TrainingProvider({
 
       let result: EngineValidationResult;
       if (step.validate) {
-        const legacyResult = step.validate(payload);
-        result = legacyResult.ok
-          ? { outcome: "pass" }
-          : legacyResult.message
-            ? { outcome: "near-miss", message: legacyResult.message }
-            : { outcome: "near-miss" };
+        result = normalizeLegacyValidationResult(step.validate(payload));
+      } else if (step.validation) {
+        result = await validateDeclarative(step.validation, scenario, event);
       } else {
-        result = step.validation ? validateEvent(step.validation, event) : { outcome: "pass" };
+        result = { outcome: "pass" };
       }
 
       if (result.outcome === "ignore") return;
+
+      const now = Date.now();
+      setProgress((currentProgress) =>
+        applyValidationResult(currentProgress, scenario, stepId, result, now, {
+          countNearMiss: event.type !== "file.updated",
+        }),
+      );
+
       if (result.outcome === "pass") {
-        completeStep(stepId, step.successMessage);
+        setVisibleHelpLevel(0);
+        setFeedback({ kind: "success", message: step.successMessage });
         return;
       }
 
@@ -567,15 +362,6 @@ export function TrainingProvider({
         step.onFailure?.message ??
         result.message ??
         "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
-      const counts = event.type !== "file.updated";
-      if (counts) {
-        setProgress((currentProgress) => ({
-          ...currentProgress,
-          mistakes: currentProgress.mistakes + 1,
-          activeStepMistakes: currentProgress.activeStepMistakes + 1,
-          statuses: { ...currentProgress.statuses, [stepId]: "VALIDATION_FAILED" },
-        }));
-      }
       setFeedback((currentFeedback) =>
         currentFeedback?.kind === "error" && currentFeedback.message === message
           ? currentFeedback
@@ -586,11 +372,11 @@ export function TrainingProvider({
     const subscriber = (event: TrainingEvent) => {
       void handleEvent(event);
     };
-    const unsubscribes = runtimes.map((runtime) => runtime.subscribe(subscriber));
+    const unsubscribes = scenarioRuntimes.map((runtime) => runtime.subscribe(subscriber));
     return () => {
       for (const unsubscribe of unsubscribes) unsubscribe();
     };
-  }, [scenario, mode, completeStep, markChallengeTimedOut]);
+  }, [scenario, scenarioRuntimes, mode, markChallengeTimedOut]);
 
   useEffect(() => {
     if (feedback?.kind !== "success") return;
@@ -650,25 +436,20 @@ export function TrainingProvider({
       isChallengeFailed,
       isReady: hydrated,
       feedback: effectiveFeedback,
-      helpLevel,
+      helpLevel: visibleHelpLevel,
       scoreMultiplier,
       earnedPoints: Math.round(basePoints * scoreMultiplier),
       challengeOutcome: progress.challengeOutcome,
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
-        if (mode !== "guided" || helpLevel >= 3) return;
+        if (mode !== "guided" || visibleHelpLevel >= 3) return;
         const stepId = progressRef.current.activeStepId;
         if (!stepId) return;
-        const nextLevel = (helpLevel + 1) as 1 | 2 | 3;
-        const usage: HintUsage = { stepId, level: nextLevel, timestamp: Date.now() };
-        setHelpLevel(nextLevel);
-        setProgress((current) => ({
-          ...current,
-          hintsUsed: current.hintsUsed + 1,
-          hintUsage: [...current.hintUsage, usage],
-        }));
+        const nextLevel = (visibleHelpLevel + 1) as 1 | 2 | 3;
+        setProgress((current) => recordHintUsage(current, stepId, nextLevel));
+        setVisibleHelpLevel(nextLevel);
       },
-      resetHelp: () => setHelpLevel(0),
+      resetHelp: () => setVisibleHelpLevel(0),
       completeExplanationStep: () => {
         if (mode !== "guided") return;
         const stepId = progressRef.current.activeStepId;
@@ -679,31 +460,11 @@ export function TrainingProvider({
       },
       skipOptionalSteps: () => {
         if (mode !== "guided") return;
-        const stepId = progressRef.current.activeStepId;
-        const startIndex = scenario.steps.findIndex((step) => step.id === stepId);
-        if (startIndex < 0 || !scenario.steps[startIndex]?.optional) return;
-
-        const skippedStepIds: string[] = [];
-        let nextIndex = startIndex;
-        while (scenario.steps[nextIndex]?.optional) {
-          skippedStepIds.push(scenario.steps[nextIndex]!.id);
-          nextIndex += 1;
-        }
-        const next = scenario.steps[nextIndex];
-
-        setProgress((current) => {
-          const statuses = { ...current.statuses };
-          for (const skippedStepId of skippedStepIds) statuses[skippedStepId] = "SKIPPED";
-          if (next) statuses[next.id] = "ACTIVE";
-          return {
-            ...current,
-            statuses,
-            activeStepId: next?.id ?? null,
-            activeStepMistakes: 0,
-            finishedAt: next ? null : Date.now(),
-          };
-        });
-        setHelpLevel(0);
+        const current = progressRef.current;
+        const step = scenario.steps.find((candidate) => candidate.id === current.activeStepId);
+        if (!step?.optional) return;
+        setProgress((session) => skipConsecutiveOptionalSteps(session, scenario));
+        setVisibleHelpLevel(0);
         setFeedback({
           kind: "success",
           message: "Grundbegriffe übersprungen. Du kannst sie jederzeit über das Glossar öffnen.",
@@ -714,18 +475,13 @@ export function TrainingProvider({
           window.localStorage.removeItem(runtimeStorageKey(scenario.id, runtime.id));
           runtime.reset?.();
         }
-        setProgress(initialProgress(scenario));
-        setHelpLevel(0);
+        setProgress(newSession(scenario));
+        setVisibleHelpLevel(0);
         setFeedback(null);
       },
       registerMistake: (message: string) => {
-        if (mode === "explore") return;
-        setProgress((current) => ({
-          ...current,
-          mistakes: current.mistakes + 1,
-          activeStepMistakes: current.activeStepMistakes + 1,
-        }));
-        setFeedback({ kind: "error", message });
+        setProgress((current) => recordMistake(current));
+        if (mode !== "explore") setFeedback({ kind: "error", message });
       },
       persistRuntimeSnapshot,
       restoreRuntimeSnapshot,
@@ -736,7 +492,7 @@ export function TrainingProvider({
     progress,
     hydrated,
     feedback,
-    helpLevel,
+    visibleHelpLevel,
     challengeRemainingSeconds,
     completeStep,
     scenarioRuntimes,
@@ -769,35 +525,24 @@ export function useStoredProgressPercent(scenarioId: string | null) {
     try {
       const raw = window.localStorage.getItem(storageKey(scenario.id));
       if (!raw) return setPercent(0);
-      const parsed = JSON.parse(raw) as Partial<TrainingProgress>;
+      const stored = restoreTrainingSession(
+        scenario,
+        scenario.id,
+        JSON.parse(raw) as StoredTrainingSession,
+      );
       const storedMode = modeOf(scenario);
       if (storedMode === "explore") {
         const targets = scenario.exploreTargets ?? [];
-        const done = (parsed.exploredTargets ?? []).filter((ref) => targets.includes(ref)).length;
+        const done = stored.exploredTargets.filter((ref) => targets.includes(ref)).length;
         setPercent(targets.length === 0 ? 0 : Math.round((done / targets.length) * 100));
         return;
       }
       if (storedMode === "challenge") {
-        const passed =
-          parsed.challengeOutcome === "passed" || (!parsed.challengeOutcome && parsed.finishedAt);
-        setPercent(passed ? 100 : 0);
+        setPercent(stored.challengeOutcome === "passed" ? 100 : 0);
         return;
       }
-      if (
-        !parsed.statuses ||
-        typeof parsed.statuses !== "object" ||
-        Array.isArray(parsed.statuses)
-      ) {
-        setPercent(0);
-        return;
-      }
-      const normalized = normalizeGuidedStepProgress(scenario, {
-        statuses: parsed.statuses,
-        activeStepId: parsed.activeStepId,
-        finishedAt: parsed.finishedAt,
-      });
       const done = scenario.steps.filter((step) => {
-        const status = normalized.statuses[step.id];
+        const status = stored.statuses[step.id];
         return status === "COMPLETED" || status === "SKIPPED";
       }).length;
       setPercent(Math.round((done / Math.max(scenario.steps.length, 1)) * 100));
