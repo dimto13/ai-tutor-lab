@@ -61,9 +61,7 @@ test("Guided: fünf Orientierungsfragen bleiben ohne Panel-Scroll sichtbar", asy
   ]) {
     await expect(orientation.getByText(label, { exact: true })).toBeVisible();
   }
-  await expect(
-    orientation.getByText(/Die Activity Bar wählt den Hauptbereich aus/),
-  ).toBeVisible();
+  await expect(orientation.getByText(/Die Activity Bar wählt den Hauptbereich aus/)).toBeVisible();
   await expect(
     orientation.getByText("Einen Ordner als Arbeitskontext öffnen", { exact: true }),
   ).toBeVisible();
@@ -91,9 +89,12 @@ test("Guided: irrelevante Events bleiben still und onFailure markiert das konfig
 
   await createFile(page, "wrong.py");
   await expect(
-    orientation.getByText("Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", {
-      exact: true,
-    }),
+    orientation.getByText(
+      "Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await expectSpotlightAround(
     page.getByTestId("highlight-frame"),
