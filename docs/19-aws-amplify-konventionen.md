@@ -98,13 +98,15 @@ mit wieder aktiviertem Code-Splitting gruen bleibt.
 Amplify verwendet `appRoot: apps/web`, aber die npm-Workspaces werden vom Repo-Root gebaut.
 Deshalb steht `buildPath: /` unter `frontend:`.
 
-Wichtig aus den realen Build-Versuchen auf `deploy`:
+Wichtig aus den realen Build-Versuchen auf `deploy` und der #44-CI:
 
 - `buildPath` gehoert unter `frontend`; eine Backend-Phase kennt diesen Schluessel nicht.
 - Amplify-Phasen koennen dieselbe Shell/CWD weiterverwenden. Keine blinden mehrfachen `cd ../..`.
 - Node.js 22 wird vor dem Build explizit installiert und aktiviert.
-- Die Installationsstrategie bleibt mit GitHub CI konsistent:
-  `npm ci --install-strategy=nested`.
+- Die Installationsstrategie bleibt mit GitHub CI konsistent: normales `npm ci` gegen den
+  eingecheckten Lockfile. Die erzwungene Strategie `--install-strategy=nested` darf mit dem
+  Amplify/CDK-Dependency-Graph nicht verwendet werden, weil sie mit gebuendelten Abhaengigkeiten
+  kollidiert.
 - Fuer schnellere Builds wird nur der npm-Download-Cache `.npm` verwendet. `node_modules` wird
   nicht gecacht, weil `npm ci` ihn ohnehin neu erzeugt.
 
