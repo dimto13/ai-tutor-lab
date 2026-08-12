@@ -567,13 +567,20 @@ export const landingStyles = `
 
 @media (prefers-reduced-motion: reduce) {
   .lp-deck { scroll-snap-type: none; }
+  .lp-glow,
   .lp-camera,
   .lp-rig,
+  .lp-rings,
   .lp-layer,
   .lp-mask > span,
   .lp-body,
   .lp-kicker,
-  .lp-cta { transition: none; }
+  .lp-meta,
+  .lp-cta,
+  .lp-beam,
+  .lp-signin,
+  .lp-dots button,
+  .lp-hint { transition: none; }
   .lp-ring,
   .lp-caret,
   .lp-cta::after,
