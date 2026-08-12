@@ -52,11 +52,16 @@
    ausdrücklich für das Jenkins-Review mit Marker `[agy-review]`, weitere Review-Bots und menschliche
    Reviewer. Findings werden in `actionable`, `advisory` oder `nicht zutreffend` eingeordnet.
    Actionable Findings werden vor dem Merge umgesetzt oder mit einer konkreten technischen Begründung
-   im PR bewusst verworfen; ein grüner CI-Lauf ersetzt diese Prüfung nicht. Review-Vorschläge werden
+   bewusst verworfen; die Einordnung und Entscheidung wird als PR-Kommentar oder direkt im zugehörigen
+   Review-Thread dokumentiert. Ein grüner CI-Lauf ersetzt diese Prüfung nicht. Review-Vorschläge werden
    nicht blind umgesetzt: Architekturgrenzen, Sicherheit, Tests und fachliche Anforderungen haben
-   Vorrang. Nach einem Review-Folgecommit müssen CI und — sofern Jenkins für den neuen Head erneut
-   reviewed — das aktuelle automatische Review wieder geprüft werden. Vor dem Merge darf kein
-   unbehandeltes actionable Finding und kein unresolved/requested-change-Review verbleiben.
+   Vorrang. Jenkins liefert pro PR höchstens zwei automatische Review-Runden. Nach einem
+   Review-Folgecommit werden CI und — sofern die zweite Runde noch verfügbar ist — das neue
+   `[agy-review]` geprüft; eine dritte automatische Review-Runde wird weder erwartet noch zum Merge-Gate.
+   Ist Jenkins nicht verfügbar oder quittiert nach seinem konfigurierten Timeout ohne weiteres Review,
+   darf nach dokumentierter manueller Prüfung weitergearbeitet werden; bereits vorhandene Findings
+   bleiben trotzdem vollständig zu behandeln. Vor dem Merge darf kein unbehandeltes actionable Finding
+   und kein unresolved/requested-change-Review verbleiben.
 8. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
    Synchronisation oder Fehlersuche.
 9. **Keine temporären GitHub-Actions-Workflows für Implementierungsarbeit.** Dateien unter
