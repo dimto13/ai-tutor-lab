@@ -61,18 +61,19 @@ function definitionBlock(source: string, name: string): string {
   return source.slice(start, end >= 0 ? end : source.length);
 }
 
-test("all durable user data models carry explicit tenant and user ownership", async () => {
+test("all durable user data models carry explicit ownership and expose no generated CRUD", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
 
   for (const model of serverOwnedModels) {
     const block = definitionBlock(source, model);
     assert.match(block, /tenantId:\s*a\.string\(\)\.required\(\)/, `${model} needs tenantId`);
     assert.match(block, /userId:\s*a\.string\(\)\.required\(\)/, `${model} needs userId`);
-    assert.doesNotMatch(
+    assert.match(
       block,
-      /\.authorization\(/,
-      `${model} must not expose generated browser CRUD authorization`,
+      /\.disableOperations\(\["queries", "mutations", "subscriptions"\]\)/,
+      `${model} must disable generated browser CRUD and subscriptions`,
     );
+    assert.match(block, /allow\.authenticated\(\)/, `${model} needs an explicit Amplify auth rule`);
   }
 });
 

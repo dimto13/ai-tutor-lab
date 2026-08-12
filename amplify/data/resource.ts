@@ -5,110 +5,140 @@ const schema = a.schema({
   StepStatus: a.enum(["NOT_STARTED", "ACTIVE", "VALIDATION_FAILED", "COMPLETED", "SKIPPED"]),
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
 
-  UserProfile: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    displayName: a.string(),
-    email: a.email(),
-    profileVersion: a.integer().required(),
-  }),
+  UserProfile: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      displayName: a.string(),
+      email: a.email(),
+      profileVersion: a.integer().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  UserPreferences: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    language: a.string(),
-    preferredTrainingMode: a.ref("TrainingMode"),
-    weeklyGoalMinutes: a.integer(),
-    accessibility: a.json(),
-    preferencesVersion: a.integer().required(),
-    stateUpdatedAt: a.float().required(),
-  }),
+  UserPreferences: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      language: a.string(),
+      preferredTrainingMode: a.ref("TrainingMode"),
+      weeklyGoalMinutes: a.integer(),
+      accessibility: a.json(),
+      preferencesVersion: a.integer().required(),
+      stateUpdatedAt: a.float().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  TrainingSession: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    schemaVersion: a.integer().required(),
-    revision: a.integer().required(),
-    stateUpdatedAt: a.float().required(),
-    payload: a.json().required(),
-  }),
+  TrainingSession: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      schemaVersion: a.integer().required(),
+      revision: a.integer().required(),
+      stateUpdatedAt: a.float().required(),
+      payload: a.json().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  StepState: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    stepId: a.string().required(),
-    status: a.ref("StepStatus").required(),
-    stateUpdatedAt: a.float().required(),
-  }),
+  StepState: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string().required(),
+      status: a.ref("StepStatus").required(),
+      stateUpdatedAt: a.float().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  RuntimeSnapshot: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    runtimeId: a.string().required(),
-    schemaVersion: a.integer().required(),
-    revision: a.integer().required(),
-    stateUpdatedAt: a.float().required(),
-    payload: a.json().required(),
-  }),
+  RuntimeSnapshot: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      runtimeId: a.string().required(),
+      schemaVersion: a.integer().required(),
+      revision: a.integer().required(),
+      stateUpdatedAt: a.float().required(),
+      payload: a.json().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  HintUsage: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    stepId: a.string().required(),
-    level: a.integer().required(),
-    occurredAt: a.float().required(),
-  }),
+  HintUsage: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string().required(),
+      level: a.integer().required(),
+      occurredAt: a.float().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  Attempt: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    stepId: a.string().required(),
-    outcome: a.ref("AttemptOutcome").required(),
-    occurredAt: a.float().required(),
-    message: a.string(),
-  }),
+  Attempt: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string().required(),
+      outcome: a.ref("AttemptOutcome").required(),
+      occurredAt: a.float().required(),
+      message: a.string(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  ScoreEvent: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    eventType: a.string().required(),
-    pointsDelta: a.integer().required(),
-    occurredAt: a.float().required(),
-    sourceRevision: a.integer(),
-    metadata: a.json(),
-  }),
+  ScoreEvent: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      eventType: a.string().required(),
+      pointsDelta: a.integer().required(),
+      occurredAt: a.float().required(),
+      sourceRevision: a.integer(),
+      metadata: a.json(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  SkillProfile: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    technologyId: a.string().required(),
-    points: a.integer().required(),
-    level: a.string(),
-    sourceRevision: a.integer().required(),
-    calculatedAt: a.float().required(),
-  }),
+  SkillProfile: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      technologyId: a.string().required(),
+      points: a.integer().required(),
+      level: a.string(),
+      sourceRevision: a.integer().required(),
+      calculatedAt: a.float().required(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
-  Attestation: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    learningObjectiveId: a.string().required(),
-    issuedAt: a.float().required(),
-    validUntil: a.float(),
-    sourceRevision: a.integer().required(),
-    evidence: a.json(),
-  }),
+  Attestation: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      learningObjectiveId: a.string().required(),
+      issuedAt: a.float().required(),
+      validUntil: a.float(),
+      sourceRevision: a.integer().required(),
+      evidence: a.json(),
+    })
+    .disableOperations(["queries", "mutations", "subscriptions"])
+    .authorization((allow) => [allow.authenticated()]),
 
   TrainingStateEnvelope: a.customType({
     tenantId: a.string().required(),
