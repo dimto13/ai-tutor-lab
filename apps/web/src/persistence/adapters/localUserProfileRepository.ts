@@ -2,8 +2,8 @@ import type {
   UserProfileRecord,
   UserProfileRepository,
   UserProfileSubject,
-} from "../../profile/userProfileRepository";
-import { UserProfileConflictError } from "../../profile/userProfileRepository";
+} from "../../profile/userProfileRepository.ts";
+import { UserProfileConflictError } from "../../profile/userProfileRepository.ts";
 
 const STORAGE_PREFIX = "ai-train-lab.user-profile.v1";
 
