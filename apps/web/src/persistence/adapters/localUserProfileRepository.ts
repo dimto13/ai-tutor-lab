@@ -17,7 +17,11 @@ export function userProfileStorageKey(subject: UserProfileSubject): string {
 }
 
 export class LocalUserProfileRepository implements UserProfileRepository {
-  constructor(private readonly storage: UserProfileStorageLike) {}
+  private readonly storage: UserProfileStorageLike;
+
+  constructor(storage: UserProfileStorageLike) {
+    this.storage = storage;
+  }
 
   private read(subject: UserProfileSubject): UserProfileRecord | null {
     const raw = this.storage.getItem(userProfileStorageKey(subject));
