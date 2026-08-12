@@ -5,7 +5,7 @@ import {
   type UserProfileRecord,
   type UserProfileRepository,
   type UserProfileSubject,
-} from "@/profile/userProfileRepository";
+} from "../../profile/userProfileRepository";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data error";
