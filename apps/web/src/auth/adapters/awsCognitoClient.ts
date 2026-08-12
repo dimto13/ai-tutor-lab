@@ -3,6 +3,7 @@ import {
   confirmSignUp as amplifyConfirmSignUp,
   fetchAuthSession,
   fetchUserAttributes,
+  resendSignUpCode as amplifyResendSignUpCode,
   signIn,
   signInWithRedirect,
   signOut,
@@ -20,6 +21,8 @@ export interface CognitoSessionSnapshot {
   expiresAt: string | null;
 }
 
+export type CognitoSignInOutcome = "done" | "confirm_sign_up" | "requires_action";
+
 export type CognitoSignUpOutcome =
   | {
       status: "complete";
@@ -34,10 +37,11 @@ export type CognitoSignUpOutcome =
 
 export interface CognitoAuthClient {
   getSession(forceRefresh?: boolean): Promise<CognitoSessionSnapshot | null>;
-  signInWithPassword(identifier: string, password: string): Promise<"done" | "requires_action">;
+  signInWithPassword(identifier: string, password: string): Promise<CognitoSignInOutcome>;
   signInWithOidc(providerId: string): Promise<void>;
   signUpWithPassword(email: string, password: string): Promise<CognitoSignUpOutcome>;
   confirmSignUp(email: string, confirmationCode: string): Promise<"done" | "requires_action">;
+  resendSignUpCode(email: string): Promise<string | null>;
   signOut(): Promise<void>;
 }
 
@@ -117,8 +121,6 @@ async function enableOauthListener(): Promise<void> {
   });
 
   try {
-    // Amplify documents this side-effect import for SSR/MPA callback pages. The
-    // Hub listener is registered first so getSession cannot race the token exchange.
     await import("aws-amplify/auth/enable-oauth-listener");
     await redirectCompletion;
   } catch (error) {
@@ -128,9 +130,6 @@ async function enableOauthListener(): Promise<void> {
   }
 }
 
-/**
- * Thin AWS SDK client. All Amplify/Cognito-specific types and claims terminate here.
- */
 export function createAmplifyCognitoClient(
   options: AmplifyCognitoClientOptions = {},
 ): CognitoAuthClient {
@@ -173,16 +172,11 @@ export function createAmplifyCognitoClient(
       const idTokenPayload = session.tokens.idToken?.payload ?? {};
       const accessTokenPayload = session.tokens.accessToken.payload;
       const userId = stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
-      if (!userId)
-        throw new Error("Authenticated Cognito session has no stable subject identifier.");
+      if (!userId) throw new Error("Authenticated Cognito session has no stable subject identifier.");
       const roles = stringArrayClaim(idTokenPayload["cognito:groups"]);
 
       return {
-        // `sub` is Cognito's immutable subject identifier and is also what
-        // AppSync exposes server-side for persistence authorization.
         userId,
-        // `tenant:*` groups are signed, server-managed Cognito membership. This
-        // mirrors the AppSync resolver policy without trusting profile attributes.
         tenantId: tenantIdFromGroups(roles, userId),
         email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
         displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
@@ -195,9 +189,9 @@ export function createAmplifyCognitoClient(
     async signInWithPassword(identifier, password) {
       await ensureConfigured();
       const result = await signIn({ username: identifier, password });
-      return result.isSignedIn || result.nextStep.signInStep === "DONE"
-        ? "done"
-        : "requires_action";
+      if (result.isSignedIn || result.nextStep.signInStep === "DONE") return "done";
+      if (result.nextStep.signInStep === "CONFIRM_SIGN_UP") return "confirm_sign_up";
+      return "requires_action";
     },
 
     async signInWithOidc(providerId) {
@@ -241,6 +235,12 @@ export function createAmplifyCognitoClient(
       return result.isSignUpComplete || result.nextStep.signUpStep === "DONE"
         ? "done"
         : "requires_action";
+    },
+
+    async resendSignUpCode(email) {
+      await ensureConfigured();
+      const result = await amplifyResendSignUpCode({ username: email });
+      return result.destination ?? null;
     },
 
     async signOut() {
