@@ -31,15 +31,12 @@ test("profile writes are scoped and revision protected", async () => {
   assert.equal((await repository.load(alice))?.displayName, "Alice");
   assert.notEqual(storage.getItem(userProfileStorageKey(alice)), null);
 
-  await assert.rejects(
-    repository.save(alice, { displayName: "Stale" }, null),
-    (error: unknown) => {
-      assert.ok(error instanceof UserProfileConflictError);
-      assert.equal(error.expectedRevision, null);
-      assert.equal(error.actualRevision, 1);
-      return true;
-    },
-  );
+  await assert.rejects(repository.save(alice, { displayName: "Stale" }, null), (error: unknown) => {
+    assert.ok(error instanceof UserProfileConflictError);
+    assert.equal(error.expectedRevision, null);
+    assert.equal(error.actualRevision, 1);
+    return true;
+  });
 
   const second = await repository.save(alice, { displayName: "Alice Example" }, 1);
   assert.equal(second.displayName, "Alice Example");
