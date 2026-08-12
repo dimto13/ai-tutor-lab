@@ -23,9 +23,6 @@ function toAuthSession(
   };
 }
 
-/**
- * AWS/Cognito implementation of the cloud-neutral AuthService port.
- */
 export function createCognitoAuthService(
   client: CognitoAuthClient = createAmplifyCognitoClient(),
 ): AuthService {
@@ -45,6 +42,12 @@ export function createCognitoAuthService(
       }
 
       const outcome = await client.signInWithPassword(request.identifier, request.password);
+      if (outcome === "confirm_sign_up") {
+        return {
+          status: "confirmation_required",
+          email: request.identifier,
+        };
+      }
       if (outcome !== "done") {
         throw new Error("Authentication requires an additional verification step.");
       }
@@ -86,6 +89,13 @@ export function createCognitoAuthService(
       if (outcome !== "done") {
         throw new Error("Registration confirmation requires an additional verification step.");
       }
+    },
+
+    async resendSignUpCode(request) {
+      return {
+        email: request.email,
+        destination: await client.resendSignUpCode(request.email),
+      };
     },
 
     async signOut() {
