@@ -16,6 +16,22 @@ test.describe("Öffentliche Landingpage", () => {
     await expect(signIn).toHaveAttribute("href", "/anmelden");
   });
 
+  test("hält Registrierung und Anmeldung auf schmalen Displays im Viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto(landingUrl);
+
+    for (const link of [
+      page.getByRole("link", { name: "Registrieren" }),
+      page.getByRole("link", { name: "Anmelden" }),
+    ]) {
+      await expect(link).toBeVisible();
+      const box = await link.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    }
+  });
+
   test("wechselt über die Abschnittspunkte bis zum Abschluss-Aufruf", async ({ page }) => {
     await page.goto(landingUrl);
 
