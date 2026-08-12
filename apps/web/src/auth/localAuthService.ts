@@ -52,6 +52,13 @@ export function createLocalAuthService(options: LocalAuthServiceOptions): AuthSe
 
     async confirmSignUp() {},
 
+    async resendSignUpCode(request) {
+      return {
+        email: request.email,
+        destination: null,
+      };
+    },
+
     async signOut() {
       currentSession = null;
     },
