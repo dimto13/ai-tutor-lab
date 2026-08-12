@@ -112,7 +112,10 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   );
 
   const displayName =
-    profile?.displayName?.trim() || identity?.displayName?.trim() || identity?.email || "Angemeldet";
+    profile?.displayName?.trim() ||
+    identity?.displayName?.trim() ||
+    identity?.email ||
+    "Angemeldet";
 
   const value = useMemo<UserProfileContextValue>(
     () => ({ profile, status, error, displayName, saveDisplayName }),
