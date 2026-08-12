@@ -1,4 +1,4 @@
-import type { AuthService, AuthSession, SignInResult } from "../authService";
+import type { AuthService, AuthSession, SignInResult, SignUpResult } from "../authService";
 import {
   createAmplifyCognitoClient,
   type AmplifyCognitoClientOptions,
@@ -23,9 +23,6 @@ function toAuthSession(
   };
 }
 
-/**
- * AWS/Cognito implementation of the cloud-neutral AuthService port.
- */
 export function createCognitoAuthService(
   client: CognitoAuthClient = createAmplifyCognitoClient(),
 ): AuthService {
@@ -45,6 +42,12 @@ export function createCognitoAuthService(
       }
 
       const outcome = await client.signInWithPassword(request.identifier, request.password);
+      if (outcome === "confirm_sign_up") {
+        return {
+          status: "confirmation_required",
+          email: request.identifier,
+        };
+      }
       if (outcome !== "done") {
         throw new Error("Authentication requires an additional verification step.");
       }
@@ -57,6 +60,41 @@ export function createCognitoAuthService(
       return {
         status: "authenticated",
         session,
+      };
+    },
+
+    async signUp(request): Promise<SignUpResult> {
+      const outcome = await client.signUpWithPassword(request.email, request.password);
+
+      if (outcome.status === "requires_action") {
+        throw new Error("Registration requires an additional verification step.");
+      }
+
+      if (outcome.status === "confirmation_required") {
+        return {
+          status: "confirmation_required",
+          email: request.email,
+          destination: outcome.destination,
+        };
+      }
+
+      return {
+        status: "complete",
+        email: request.email,
+      };
+    },
+
+    async confirmSignUp(request) {
+      const outcome = await client.confirmSignUp(request.email, request.confirmationCode);
+      if (outcome !== "done") {
+        throw new Error("Registration confirmation requires an additional verification step.");
+      }
+    },
+
+    async resendSignUpCode(request) {
+      return {
+        email: request.email,
+        destination: await client.resendSignUpCode(request.email),
       };
     },
 

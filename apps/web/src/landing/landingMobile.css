@@ -1,0 +1,23 @@
+@media (max-width: 480px) {
+  .lp .lp-top {
+    gap: 6px;
+    padding: 14px 12px;
+    font-size: 12px;
+  }
+
+  .lp .lp-mark {
+    display: none;
+  }
+
+  .lp .lp-top b {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .lp .lp-signin {
+    margin-right: 0 !important;
+    padding: 6px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}

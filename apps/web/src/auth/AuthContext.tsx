@@ -8,7 +8,17 @@ import {
   type ReactNode,
 } from "react";
 
-import type { AuthService, AuthSession, SignInRequest, SignInResult } from "./authService";
+import type {
+  AuthService,
+  AuthSession,
+  ConfirmSignUpRequest,
+  ResendSignUpCodeRequest,
+  ResendSignUpCodeResult,
+  SignInRequest,
+  SignInResult,
+  SignUpRequest,
+  SignUpResult,
+} from "./authService";
 
 export type AuthStatus = "loading" | "anonymous" | "authenticated";
 
@@ -18,6 +28,9 @@ export interface AuthContextValue {
   error: string | null;
   refresh: () => Promise<void>;
   signIn: (request: SignInRequest) => Promise<SignInResult>;
+  signUp: (request: SignUpRequest) => Promise<SignUpResult>;
+  confirmSignUp: (request: ConfirmSignUpRequest) => Promise<void>;
+  resendSignUpCode: (request: ResendSignUpCodeRequest) => Promise<ResendSignUpCodeResult>;
   signOut: () => Promise<void>;
 }
 
@@ -70,7 +83,69 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
         if (result.status === "authenticated") {
           setSession(result.session);
           setStatus("authenticated");
+        } else if (result.status === "confirmation_required") {
+          setSession(null);
+          setStatus("anonymous");
         }
+        return result;
+      } catch (cause) {
+        setSession(null);
+        setError(messageOf(cause));
+        setStatus("anonymous");
+        throw cause;
+      }
+    },
+    [service],
+  );
+
+  const signUp = useCallback(
+    async (request: SignUpRequest) => {
+      setStatus("loading");
+      setError(null);
+
+      try {
+        const result = await service.signUp(request);
+        setSession(null);
+        setStatus("anonymous");
+        return result;
+      } catch (cause) {
+        setSession(null);
+        setError(messageOf(cause));
+        setStatus("anonymous");
+        throw cause;
+      }
+    },
+    [service],
+  );
+
+  const confirmSignUp = useCallback(
+    async (request: ConfirmSignUpRequest) => {
+      setStatus("loading");
+      setError(null);
+
+      try {
+        await service.confirmSignUp(request);
+        setSession(null);
+        setStatus("anonymous");
+      } catch (cause) {
+        setSession(null);
+        setError(messageOf(cause));
+        setStatus("anonymous");
+        throw cause;
+      }
+    },
+    [service],
+  );
+
+  const resendSignUpCode = useCallback(
+    async (request: ResendSignUpCodeRequest) => {
+      setStatus("loading");
+      setError(null);
+
+      try {
+        const result = await service.resendSignUpCode(request);
+        setSession(null);
+        setStatus("anonymous");
         return result;
       } catch (cause) {
         setSession(null);
@@ -95,8 +170,18 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
   }, [service]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, session, error, refresh, signIn, signOut }),
-    [status, session, error, refresh, signIn, signOut],
+    () => ({
+      status,
+      session,
+      error,
+      refresh,
+      signIn,
+      signUp,
+      confirmSignUp,
+      resendSignUpCode,
+      signOut,
+    }),
+    [status, session, error, refresh, signIn, signUp, confirmSignUp, resendSignUpCode, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
