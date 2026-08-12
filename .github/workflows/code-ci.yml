@@ -58,6 +58,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Validate Amplify Data schema
+        run: npm run validate:amplify-schema
+
       - name: Package boundary tests
         run: npm run test:packages
 
