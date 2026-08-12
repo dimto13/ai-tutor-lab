@@ -46,6 +46,9 @@ function createLazyCognitoAuthService(outputsUrl: string): AuthService {
     async confirmSignUp(request) {
       await (await getService()).confirmSignUp(request);
     },
+    async resendSignUpCode(request) {
+      return (await getService()).resendSignUpCode(request);
+    },
     async signOut() {
       await (await getService()).signOut();
     },
