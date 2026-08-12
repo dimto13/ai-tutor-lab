@@ -28,6 +28,9 @@ function createFakeClient(overrides: Partial<CognitoAuthClient> = {}): CognitoAu
     async confirmSignUp() {
       return "done";
     },
+    async resendSignUpCode() {
+      return "l***@example.test";
+    },
     async signOut() {},
     ...overrides,
   };
@@ -96,6 +99,26 @@ test("Cognito password sign-in returns the normalized authenticated session", as
   }
 });
 
+test("Cognito password sign-in exposes unfinished sign-up as confirmation request", async () => {
+  const client = createFakeClient({
+    async signInWithPassword() {
+      return "confirm_sign_up";
+    },
+  });
+  const auth = createCognitoAuthService(client);
+
+  const result = await auth.signIn({
+    method: "password",
+    identifier: "learner@example.test",
+    password: "secret",
+  });
+
+  assert.deepEqual(result, {
+    status: "confirmation_required",
+    email: "learner@example.test",
+  });
+});
+
 test("Cognito OIDC sign-in stays provider-neutral above the adapter", async () => {
   let providerId: string | null = null;
   const client = createFakeClient({
@@ -153,6 +176,25 @@ test("Cognito adapter confirms a registration without leaking provider types", a
   });
 
   assert.deepEqual(confirmation, ["learner@example.test", "123456"]);
+});
+
+test("Cognito adapter resends a sign-up code through provider-neutral boundary", async () => {
+  let resendEmail: string | null = null;
+  const client = createFakeClient({
+    async resendSignUpCode(email) {
+      resendEmail = email;
+      return "l***@example.test";
+    },
+  });
+  const auth = createCognitoAuthService(client);
+
+  const result = await auth.resendSignUpCode({ email: "learner@example.test" });
+
+  assert.equal(resendEmail, "learner@example.test");
+  assert.deepEqual(result, {
+    email: "learner@example.test",
+    destination: "l***@example.test",
+  });
 });
 
 test("Cognito adapter rejects unsupported additional sign-in steps", async () => {
