@@ -47,24 +47,34 @@
    **und** `e2e-training-modes` abgeschlossen und grün sind — ein noch laufender Workflow ist
    kein grüner Workflow. Der Pre-Commit-Hook in `.githooks/` fängt Formatverstöße bereits beim
    Commit ab; er wird durch `npm ci` automatisch aktiviert.
-7. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
+7. **Automatische und menschliche Reviews sind Merge-Gates, nicht nur Information.** Vor jedem Merge
+   werden alle PR-Reviews und PR-Kommentare seit der letzten relevanten Codeänderung geprüft. Das gilt
+   ausdrücklich für das Jenkins-Review mit Marker `[agy-review]`, weitere Review-Bots und menschliche
+   Reviewer. Findings werden in `actionable`, `advisory` oder `nicht zutreffend` eingeordnet.
+   Actionable Findings werden vor dem Merge umgesetzt oder mit einer konkreten technischen Begründung
+   im PR bewusst verworfen; ein grüner CI-Lauf ersetzt diese Prüfung nicht. Review-Vorschläge werden
+   nicht blind umgesetzt: Architekturgrenzen, Sicherheit, Tests und fachliche Anforderungen haben
+   Vorrang. Nach einem Review-Folgecommit müssen CI und — sofern Jenkins für den neuen Head erneut
+   reviewed — das aktuelle automatische Review wieder geprüft werden. Vor dem Merge darf kein
+   unbehandeltes actionable Finding und kein unresolved/requested-change-Review verbleiben.
+8. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
    Synchronisation oder Fehlersuche.
-8. **Keine temporären GitHub-Actions-Workflows für Implementierungsarbeit.** Dateien unter
+9. **Keine temporären GitHub-Actions-Workflows für Implementierungsarbeit.** Dateien unter
    `.github/workflows/` dürfen nicht als einmalige Implementierungs-, Patch-, Formatter- oder
    Migrations-Runner angelegt werden. Solche Arbeiten erfolgen lokal auf dem Feature-Branch mit den
    dafür vorgesehenen Projektwerkzeugen. Neue oder geänderte Workflows müssen eine dauerhafte
    Repository-Funktion haben und Bestandteil des eigentlichen Review-Scopes sein.
-9. **Session- und Kontextmanagement über #201.** Bei längeren Implementierungsläufen wird der
-   operative Stand im Implementation-Control-Issue #201 gepflegt. Eine neue Session darf sich nicht
-   ausschließlich auf Chat-Historie oder Modellgedächtnis verlassen, sondern prüft mindestens den
-   aktuellen `main`-SHA, #201 inklusive letztem Handoff, die Issues des nächsten Arbeitsblocks sowie
-   relevante offene PRs/CI-Läufe. Ein Session-Cut erfolgt bevorzugt an natürlichen Grenzen
-   (abgeschlossener Architekturblock, ungefähr 2–4 Issues/PRs, grüner Merge vor Themenwechsel oder
-   früher bei hoher Kontextlast). Vor dem Cut wird in #201 ein Handoff mit Start-/End-SHA,
-   abgeschlossenen Arbeiten, Architekturentscheidungen, offenen Risiken und dem exakten nächsten
-   Arbeitsschritt hinterlegt. Die Session-Health-Werte `FRESH`, `ACTIVE`, `CUT-SOON` und `CUT` sind
-   qualitative Arbeitsmetriken und keine behauptete exakte Tokenmessung.
-10. **`deploy` ist ausschließlich Release-Zeiger.** KI-Agenten entwickeln nicht auf `deploy`, mergen
+10. **Session- und Kontextmanagement über #201.** Bei längeren Implementierungsläufen wird der
+    operative Stand im Implementation-Control-Issue #201 gepflegt. Eine neue Session darf sich nicht
+    ausschließlich auf Chat-Historie oder Modellgedächtnis verlassen, sondern prüft mindestens den
+    aktuellen `main`-SHA, #201 inklusive letztem Handoff, die Issues des nächsten Arbeitsblocks sowie
+    relevante offene PRs/CI-Läufe. Ein Session-Cut erfolgt bevorzugt an natürlichen Grenzen
+    (abgeschlossener Architekturblock, ungefähr 2–4 Issues/PRs, grüner Merge vor Themenwechsel oder
+    früher bei hoher Kontextlast). Vor dem Cut wird in #201 ein Handoff mit Start-/End-SHA,
+    abgeschlossenen Arbeiten, Architekturentscheidungen, offenen Risiken und dem exakten nächsten
+    Arbeitsschritt hinterlegt. Die Session-Health-Werte `FRESH`, `ACTIVE`, `CUT-SOON` und `CUT` sind
+    qualitative Arbeitsmetriken und keine behauptete exakte Tokenmessung.
+11. **`deploy` ist ausschließlich Release-Zeiger.** KI-Agenten entwickeln nicht auf `deploy`, mergen
     nicht nach `deploy` und verschieben diesen Ref nicht. Nach einem vollständig grünen Merge nach
     `main` führt ausschließlich der Repository-Eigentümer die bewusste Deployment-Freigabe mit
     `git push origin main:deploy` aus. Erst dieser Nutzer-Push darf AWS Amplify auslösen.
