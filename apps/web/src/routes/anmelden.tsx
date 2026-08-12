@@ -9,9 +9,8 @@ interface AuthPageSearch {
 }
 
 export const Route = createFileRoute("/anmelden")({
-  validateSearch: (search: Record<string, unknown>): AuthPageSearch => ({
-    mode: search["mode"] === "registrieren" ? "registrieren" : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): AuthPageSearch =>
+    search["mode"] === "registrieren" ? { mode: "registrieren" } : {},
   head: () => ({
     meta: [
       { title: "Anmelden – AI Training Lab" },
