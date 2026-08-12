@@ -221,8 +221,9 @@ aws amplify get-job --app-id <APP_ID> --branch-name deploy --job-id <JOB_ID> \
   --query 'job.steps[].{step:stepName,status:status}' --output table
 ```
 
-Ein Job durchlaeuft `PENDING`, `PROVISIONING`, `RUNNING` und endet in `SUCCEED`, `FAILED` oder
-`CANCELLED`. Laufendes Deployment bis zum Endzustand verfolgen:
+Moegliche aktive Jobzustaende sind `CREATED`, `PENDING`, `PROVISIONING`, `RUNNING` und
+`CANCELLING`. Ein Job endet in `SUCCEED`, `FAILED` oder `CANCELLED`. Laufendes Deployment bis zum
+Endzustand verfolgen:
 
 ```bash
 until aws amplify get-job --app-id <APP_ID> --branch-name deploy \
