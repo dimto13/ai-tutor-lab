@@ -31,7 +31,9 @@ function caller(ctx) {
 }
 
 function itemId(subject) {
-  return ["profile", util.base64Encode(subject.tenantId), util.base64Encode(subject.userId)].join(".");
+  return ["profile", util.base64Encode(subject.tenantId), util.base64Encode(subject.userId)].join(
+    ".",
+  );
 }
 
 export function request(ctx) {
