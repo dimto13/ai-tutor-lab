@@ -27,15 +27,19 @@ const serverOwnedModels = [
   "Attestation",
 ] as const;
 
-const clientOperations = [
-  "loadTrainingState",
-  "saveTrainingState",
-  "loadRuntimeSnapshot",
-  "saveRuntimeSnapshot",
-  "deleteRuntimeSnapshot",
-  "loadUserPreferences",
-  "saveUserPreferences",
-] as const;
+const clientOperationDataSources = {
+  loadTrainingState: "TrainingSession",
+  saveTrainingState: "TrainingSession",
+  loadRuntimeSnapshot: "RuntimeSnapshot",
+  saveRuntimeSnapshot: "RuntimeSnapshot",
+  deleteRuntimeSnapshot: "RuntimeSnapshot",
+  loadUserPreferences: "UserPreferences",
+  saveUserPreferences: "UserPreferences",
+} as const;
+
+const clientOperations = Object.keys(clientOperationDataSources) as Array<
+  keyof typeof clientOperationDataSources
+>;
 
 const schemaMembers = [
   "TrainingMode",
@@ -47,6 +51,9 @@ const schemaMembers = [
   "UserPreferencesEnvelope",
   ...clientOperations,
 ] as const;
+
+const disabledGeneratedOperationsPattern =
+  /\.disableOperations\(\s*\[\s*["']queries["']\s*,\s*["']mutations["']\s*,\s*["']subscriptions["']\s*,?\s*\]\s*\)/;
 
 function definitionBlock(source: string, name: string): string {
   const start = source.indexOf(`  ${name}:`);
@@ -70,7 +77,7 @@ test("all durable user data models carry explicit ownership and expose no genera
     assert.match(block, /userId:\s*a\.string\(\)\.required\(\)/, `${model} needs userId`);
     assert.match(
       block,
-      /\.disableOperations\(\["queries", "mutations", "subscriptions"\]\)/,
+      disabledGeneratedOperationsPattern,
       `${model} must disable generated browser CRUD and subscriptions`,
     );
     assert.match(block, /allow\.authenticated\(\)/, `${model} needs an explicit Amplify auth rule`);
@@ -101,8 +108,14 @@ test("client persistence operations never accept authoritative owner fields", as
       );
     }
 
+    const dataSource = clientOperationDataSources[operation];
     assert.match(block, /allow\.authenticated\(\)/, `${operation} must require authentication`);
     assert.match(block, /a\.handler\.custom\(/, `${operation} must use a server resolver`);
+    assert.match(
+      block,
+      new RegExp(`dataSource:\\s*a\\.ref\\(["']${dataSource}["']\\)`),
+      `${operation} must retain its server-side ${dataSource} data source`,
+    );
   }
 });
 
