@@ -8,7 +8,7 @@
 # aufgeloest (docs/19, Abschnitt 5). AMPLIFY_APP_ID und AMPLIFY_BRANCH ueberschreiben
 # die Ermittlung, etwa fuer eine zweite Umgebung.
 #
-# Aufruf: npm run amplify:status
+# Aufruf: npm run amplify:status (Watch-Modus) oder npm run amplify:status -- --once (Einzelausgabe)
 
 set -eu
 
@@ -19,6 +19,37 @@ REPO_NAME="ai-tutor-lab"
 ACTIVE_STATUSES="CREATED PENDING PROVISIONING RUNNING CANCELLING"
 
 TAB=$(printf '\t')
+
+WATCH=true
+INTERVAL=5
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --once|-1)
+      WATCH=false
+      shift
+      ;;
+    -w|--watch)
+      WATCH=true
+      shift
+      ;;
+    -n|--interval|-i)
+      if [ -n "${2:-}" ]; then
+        INTERVAL="$2"
+        shift 2
+      else
+        shift
+      fi
+      ;;
+    --interval=*)
+      INTERVAL="${1#*=}"
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
 
 die() {
   printf '\n%s\n\n' "$1" >&2
@@ -204,78 +235,97 @@ APP_NAME=$(printf '%s' "$APP_INFO" | cut -f1)
 APP_PLATFORM=$(printf '%s' "$APP_INFO" | cut -f2)
 APP_DOMAIN=$(printf '%s' "$APP_INFO" | cut -f3)
 
-JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 10 \
-  --query 'jobSummaries[].[jobId,status,commitId,startTime,endTime]' --output text)
+render_status() {
+  JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 10 \
+    --query 'jobSummaries[].[jobId,status,commitId,startTime,endTime]' --output text)
 
-printf '\n'
-printf 'AWS Amplify | %s (%s) | Branch %s\n' "$APP_NAME" "$APP_ID" "$BRANCH"
-printf 'Plattform %s | https://%s.%s\n' "$APP_PLATFORM" "$BRANCH" "$APP_DOMAIN"
-printf '\n'
+  printf '\n'
+  printf 'AWS Amplify | %s (%s) | Branch %s\n' "$APP_NAME" "$APP_ID" "$BRANCH"
+  printf 'Plattform %s | https://%s.%s\n' "$APP_PLATFORM" "$BRANCH" "$APP_DOMAIN"
+  printf '\n'
 
-RUNNING_COUNT=0
-while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
-  [ -z "$job_id" ] && continue
-  if is_active "$status"; then
-    RUNNING_COUNT=$((RUNNING_COUNT + 1))
-  fi
-done <<EOF
-$JOBS
-EOF
-
-if [ "$RUNNING_COUNT" -gt 0 ]; then
-  printf 'LAEUFT GERADE: %s Job(s) aktiv\n' "$RUNNING_COUNT"
+  RUNNING_COUNT=0
   while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
     [ -z "$job_id" ] && continue
     if is_active "$status"; then
-      print_job_detail "$job_id" "$status" "$commit_id" "$start_time" "$end_time" "yes"
+      RUNNING_COUNT=$((RUNNING_COUNT + 1))
     fi
   done <<EOF
 $JOBS
 EOF
-else
-  printf 'KEIN DEPLOYMENT AKTIV: derzeit laeuft kein Job.\n'
-fi
-printf '\n'
 
-LATEST_FINISHED=$(
+  if [ "$RUNNING_COUNT" -gt 0 ]; then
+    printf 'LAEUFT GERADE: %s Job(s) aktiv\n' "$RUNNING_COUNT"
+    while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
+      [ -z "$job_id" ] && continue
+      if is_active "$status"; then
+        print_job_detail "$job_id" "$status" "$commit_id" "$start_time" "$end_time" "yes"
+      fi
+    done <<EOF
+$JOBS
+EOF
+  else
+    printf 'KEIN DEPLOYMENT AKTIV: derzeit laeuft kein Job.\n'
+  fi
+  printf '\n'
+
+  LATEST_FINISHED=$(
+    while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
+      [ -z "$job_id" ] && continue
+      if ! is_active "$status"; then
+        printf '%s\t%s\t%s\t%s\t%s\n' "$job_id" "$status" "$commit_id" "$start_time" "$end_time"
+        break
+      fi
+    done <<EOF
+$JOBS
+EOF
+  )
+
+  if [ -z "$LATEST_FINISHED" ]; then
+    printf 'Letztes abgeschlossenes Deployment: keines vorhanden.\n'
+  else
+    job_id=$(printf '%s' "$LATEST_FINISHED" | cut -f1)
+    status=$(printf '%s' "$LATEST_FINISHED" | cut -f2)
+    commit_id=$(printf '%s' "$LATEST_FINISHED" | cut -f3)
+    start_time=$(printf '%s' "$LATEST_FINISHED" | cut -f4)
+    end_time=$(printf '%s' "$LATEST_FINISHED" | cut -f5)
+    printf 'Letztes abgeschlossenes Deployment (%s):\n' "$status"
+    print_job_detail "$job_id" "$status" "$commit_id" "$start_time" "$end_time" "no"
+  fi
+  printf '\n'
+
+  printf 'Historie:\n'
   while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
     [ -z "$job_id" ] && continue
-    if ! is_active "$status"; then
-      printf '%s\t%s\t%s\t%s\t%s\n' "$job_id" "$status" "$commit_id" "$start_time" "$end_time"
-      break
+    if is_active "$status"; then
+      marker=">"
+      duration=$(format_duration "$start_time")
+    else
+      marker=" "
+      duration=$(format_duration "$start_time" "$end_time")
     fi
+    printf '%s %4s | %-12s | %-7s | %s | %s\n' \
+      "$marker" "$job_id" "$status" "$(short_commit "$commit_id")" \
+      "$(format_timestamp "$start_time")" "$duration"
   done <<EOF
 $JOBS
 EOF
-)
+  printf '\n'
+}
 
-if [ -z "$LATEST_FINISHED" ]; then
-  printf 'Letztes abgeschlossenes Deployment: keines vorhanden.\n'
+if [ "$WATCH" = "true" ]; then
+  trap 'printf "\nWatch-Modus beendet.\n"; exit 0' INT TERM
+  while true; do
+    clear 2>/dev/null || printf '\033[2J\033[H'
+    now=$(node -e '
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      process.stdout.write(`${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
+    ' 2>/dev/null || date)
+    printf 'Every %ss: npm run amplify:status (Strg+C zum Beenden)\t\t%s\n' "$INTERVAL" "$now"
+    render_status
+    sleep "$INTERVAL"
+  done
 else
-  job_id=$(printf '%s' "$LATEST_FINISHED" | cut -f1)
-  status=$(printf '%s' "$LATEST_FINISHED" | cut -f2)
-  commit_id=$(printf '%s' "$LATEST_FINISHED" | cut -f3)
-  start_time=$(printf '%s' "$LATEST_FINISHED" | cut -f4)
-  end_time=$(printf '%s' "$LATEST_FINISHED" | cut -f5)
-  printf 'Letztes abgeschlossenes Deployment (%s):\n' "$status"
-  print_job_detail "$job_id" "$status" "$commit_id" "$start_time" "$end_time" "no"
+  render_status
 fi
-printf '\n'
-
-printf 'Historie:\n'
-while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
-  [ -z "$job_id" ] && continue
-  if is_active "$status"; then
-    marker=">"
-    duration=$(format_duration "$start_time")
-  else
-    marker=" "
-    duration=$(format_duration "$start_time" "$end_time")
-  fi
-  printf '%s %4s | %-12s | %-7s | %s | %s\n' \
-    "$marker" "$job_id" "$status" "$(short_commit "$commit_id")" \
-    "$(format_timestamp "$start_time")" "$duration"
-done <<EOF
-$JOBS
-EOF
-printf '\n'
