@@ -32,7 +32,9 @@ function subjectForSession(userId: string, tenantId: string | null): UserProfile
 }
 
 function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : "Das Nutzerprofil konnte nicht gespeichert werden.";
+  return error instanceof Error
+    ? error.message
+    : "Das Nutzerprofil konnte nicht gespeichert werden.";
 }
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
@@ -42,9 +44,11 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const identity = auth.session?.identity ?? null;
+  const userId = identity?.userId ?? null;
+  const tenantId = identity?.tenantId ?? null;
   const subject = useMemo(
-    () => (identity ? subjectForSession(identity.userId, identity.tenantId) : null),
-    [identity?.userId, identity?.tenantId],
+    () => (userId ? subjectForSession(userId, tenantId) : null),
+    [userId, tenantId],
   );
 
   const load = useCallback(
