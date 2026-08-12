@@ -25,7 +25,9 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
       await profile.saveDisplayName(draftName);
       setSettingsOpen(false);
     } catch (cause) {
-      setSaveError(cause instanceof Error ? cause.message : "Das Profil konnte nicht gespeichert werden.");
+      setSaveError(
+        cause instanceof Error ? cause.message : "Das Profil konnte nicht gespeichert werden.",
+      );
     } finally {
       setSaving(false);
     }
@@ -124,7 +126,8 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
               <div className="rounded-lg border border-border bg-background/40 p-3">
                 <p className="text-xs font-medium text-foreground">Lernpräferenzen</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Dein selbst eingeschätztes KI-Level wird im nächsten Schritt hier ergänzt und für passende Lernempfehlungen verwendet.
+                  Dein selbst eingeschätztes KI-Level wird im nächsten Schritt hier ergänzt und für
+                  passende Lernempfehlungen verwendet.
                 </p>
               </div>
 
