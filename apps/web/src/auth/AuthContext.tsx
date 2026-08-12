@@ -181,17 +181,7 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
       resendSignUpCode,
       signOut,
     }),
-    [
-      status,
-      session,
-      error,
-      refresh,
-      signIn,
-      signUp,
-      confirmSignUp,
-      resendSignUpCode,
-      signOut,
-    ],
+    [status, session, error, refresh, signIn, signUp, confirmSignUp, resendSignUpCode, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
