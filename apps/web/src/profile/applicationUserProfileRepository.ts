@@ -1,5 +1,5 @@
 import type { UserProfileRepository } from "./userProfileRepository";
-import { createLocalUserProfileRepository } from "./adapters/localUserProfileRepository";
+import { createLocalUserProfileRepository } from "@/persistence/adapters/localUserProfileRepository";
 
 function configuredMode(): "local" | "remote" {
   const authMode = import.meta.env["VITE_AUTH_MODE"]?.trim().toLowerCase();
@@ -12,7 +12,7 @@ function createLazyRemoteRepository(): UserProfileRepository {
   let repositoryPromise: Promise<UserProfileRepository> | null = null;
 
   function getRepository(): Promise<UserProfileRepository> {
-    repositoryPromise ??= import("./adapters/amplifyUserProfileRepository").then(
+    repositoryPromise ??= import("@/persistence/adapters/amplifyUserProfileRepository").then(
       ({ createAmplifyUserProfileRepository }) => createAmplifyUserProfileRepository(),
     );
     return repositoryPromise;
