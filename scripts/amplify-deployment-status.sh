@@ -204,7 +204,7 @@ APP_NAME=$(printf '%s' "$APP_INFO" | cut -f1)
 APP_PLATFORM=$(printf '%s' "$APP_INFO" | cut -f2)
 APP_DOMAIN=$(printf '%s' "$APP_INFO" | cut -f3)
 
-JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-results 10 \
+JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 10 \
   --query 'jobSummaries[].[jobId,status,commitId,startTime,endTime]' --output text)
 
 printf '\n'
