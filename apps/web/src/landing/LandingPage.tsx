@@ -214,9 +214,12 @@ export function LandingPage() {
     };
   }, [reduced]);
 
-  const goToScene = useCallback((index: number) => {
-    sceneRefs.current[index]?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  const goToScene = useCallback(
+    (index: number) => {
+      sceneRefs.current[index]?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+    },
+    [reduced],
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
