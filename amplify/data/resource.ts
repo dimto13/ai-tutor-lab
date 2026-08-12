@@ -163,6 +163,14 @@ export const schema = a.schema({
     payload: a.json().required(),
   }),
 
+  UserProfileEnvelope: a.customType({
+    tenantId: a.string().required(),
+    userId: a.string().required(),
+    displayName: a.string(),
+    email: a.email(),
+    revision: a.integer().required(),
+  }),
+
   UserPreferencesEnvelope: a.customType({
     tenantId: a.string().required(),
     userId: a.string().required(),
@@ -255,6 +263,32 @@ export const schema = a.schema({
       a.handler.custom({
         dataSource: a.ref("RuntimeSnapshot"),
         entry: "./delete-runtime-snapshot.js",
+      }),
+    ),
+
+  loadUserProfile: a
+    .query()
+    .returns(a.ref("UserProfileEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("UserProfile"),
+        entry: "./load-user-profile.js",
+      }),
+    ),
+
+  saveUserProfile: a
+    .mutation()
+    .arguments({
+      displayName: a.string(),
+      expectedRevision: a.integer(),
+    })
+    .returns(a.ref("UserProfileEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("UserProfile"),
+        entry: "./save-user-profile.js",
       }),
     ),
 
