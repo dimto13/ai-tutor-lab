@@ -43,11 +43,7 @@ function profileRecord(
   if (subject.tenantId !== null && data.tenantId !== subject.tenantId) {
     throw new Error("Persisted user profile belongs to a different tenant");
   }
-  if (
-    typeof data.revision !== "number" ||
-    !Number.isInteger(data.revision) ||
-    data.revision < 1
-  ) {
+  if (typeof data.revision !== "number" || !Number.isInteger(data.revision) || data.revision < 1) {
     throw new Error("Persisted user profile has an invalid revision");
   }
 
