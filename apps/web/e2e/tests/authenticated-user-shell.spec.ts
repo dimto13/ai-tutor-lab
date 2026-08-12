@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("authenticated shell shows real identity, persists display name and logs out", async ({ page }) => {
+test("authenticated shell shows real identity, persists display name and logs out", async ({
+  page,
+}) => {
   await page.goto("/");
 
   await expect(page.getByText("Lokaler Lernender", { exact: true })).toBeVisible();
