@@ -1,3 +1,4 @@
+import appsync from "@aws-appsync/eslint-plugin";
 import js from "@eslint/js";
 import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
 import globals from "globals";
@@ -45,6 +46,14 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
     },
+  },
+  {
+    // AppSync JS resolvers run in the restricted APPSYNC_JS runtime, not in Node. Unsupported
+    // syntax is rejected by AppSync at deploy time with an opaque "The code contains one or more
+    // errors", so it must fail here instead. The `base` preset covers the syntax-level rules; the
+    // additional rules in `recommended` need type information and are therefore not enabled.
+    files: ["amplify/data/**/*.js"],
+    ...appsync.configs.base,
   },
   {
     files: ["packages/**/*.{ts,tsx}"],
