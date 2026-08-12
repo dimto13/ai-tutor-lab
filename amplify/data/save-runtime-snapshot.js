@@ -8,19 +8,22 @@ function caller(ctx) {
 
   const groups = identity.groups || [];
   let tenantId = null;
+  // The APPSYNC_JS runtime rejects `continue`, so the tenant group is selected by a
+  // positive condition instead of skipping non-matching entries.
   for (const group of groups) {
-    if (typeof group !== "string" || !group.startsWith("tenant:")) continue;
-    const candidate = group.slice("tenant:".length);
-    if (candidate.length === 0) {
-      util.error("Invalid tenant membership", "TenantMembershipError");
+    if (typeof group === "string" && group.startsWith("tenant:")) {
+      const candidate = group.slice("tenant:".length);
+      if (candidate.length === 0) {
+        util.error("Invalid tenant membership", "TenantMembershipError");
+      }
+      if (tenantId !== null && tenantId !== candidate) {
+        util.error(
+          "Multiple tenant memberships require explicit tenant selection",
+          "TenantMembershipError",
+        );
+      }
+      tenantId = candidate;
     }
-    if (tenantId !== null && tenantId !== candidate) {
-      util.error(
-        "Multiple tenant memberships require explicit tenant selection",
-        "TenantMembershipError",
-      );
-    }
-    tenantId = candidate;
   }
 
   return {
