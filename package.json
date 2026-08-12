@@ -27,6 +27,7 @@
     "typecheck": "npm run typecheck:amplify && npm run typecheck --workspaces --if-present",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
     "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
+    "validate:amplify-schema": "node --experimental-strip-types scripts/validate-amplify-schema.mjs",
     "validate:amplify-output": "node scripts/validate-amplify-output.mjs",
     "validate:amplify-runtime": "node scripts/smoke-amplify-runtime.mjs",
     "amplify:status": "sh scripts/amplify-deployment-status.sh",
@@ -34,7 +35,7 @@
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
     "test:architecture": "node --experimental-strip-types --test tests/architecture/*.test.ts",
     "test:packages": "npm run test --workspaces --if-present",
-    "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run build",
+    "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run validate:amplify-schema && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run build",
     "lint": "eslint amplify apps packages scripts tests",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -1,114 +1,144 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 
-const schema = a.schema({
+export const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
   StepStatus: a.enum(["NOT_STARTED", "ACTIVE", "VALIDATION_FAILED", "COMPLETED", "SKIPPED"]),
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
 
-  UserProfile: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    displayName: a.string(),
-    email: a.email(),
-    profileVersion: a.integer().required(),
-  }),
+  UserProfile: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      displayName: a.string(),
+      email: a.email(),
+      profileVersion: a.integer().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  UserPreferences: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    language: a.string(),
-    preferredTrainingMode: a.ref("TrainingMode"),
-    weeklyGoalMinutes: a.integer(),
-    accessibility: a.json(),
-    preferencesVersion: a.integer().required(),
-    stateUpdatedAt: a.float().required(),
-  }),
+  UserPreferences: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      language: a.string(),
+      preferredTrainingMode: a.ref("TrainingMode"),
+      weeklyGoalMinutes: a.integer(),
+      accessibility: a.json(),
+      preferencesVersion: a.integer().required(),
+      stateUpdatedAt: a.float().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  TrainingSession: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    schemaVersion: a.integer().required(),
-    revision: a.integer().required(),
-    stateUpdatedAt: a.float().required(),
-    payload: a.json().required(),
-  }),
+  TrainingSession: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      schemaVersion: a.integer().required(),
+      revision: a.integer().required(),
+      stateUpdatedAt: a.float().required(),
+      payload: a.json().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  StepState: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    stepId: a.string().required(),
-    status: a.ref("StepStatus").required(),
-    stateUpdatedAt: a.float().required(),
-  }),
+  StepState: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string().required(),
+      status: a.ref("StepStatus").required(),
+      stateUpdatedAt: a.float().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  RuntimeSnapshot: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    runtimeId: a.string().required(),
-    schemaVersion: a.integer().required(),
-    revision: a.integer().required(),
-    stateUpdatedAt: a.float().required(),
-    payload: a.json().required(),
-  }),
+  RuntimeSnapshot: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      runtimeId: a.string().required(),
+      schemaVersion: a.integer().required(),
+      revision: a.integer().required(),
+      stateUpdatedAt: a.float().required(),
+      payload: a.json().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  HintUsage: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    stepId: a.string().required(),
-    level: a.integer().required(),
-    occurredAt: a.float().required(),
-  }),
+  HintUsage: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string().required(),
+      level: a.integer().required(),
+      occurredAt: a.float().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  Attempt: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    stepId: a.string().required(),
-    outcome: a.ref("AttemptOutcome").required(),
-    occurredAt: a.float().required(),
-    message: a.string(),
-  }),
+  Attempt: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string().required(),
+      outcome: a.ref("AttemptOutcome").required(),
+      occurredAt: a.float().required(),
+      message: a.string(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  ScoreEvent: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    scenarioId: a.string().required(),
-    mode: a.ref("TrainingMode").required(),
-    eventType: a.string().required(),
-    pointsDelta: a.integer().required(),
-    occurredAt: a.float().required(),
-    sourceRevision: a.integer(),
-    metadata: a.json(),
-  }),
+  ScoreEvent: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      eventType: a.string().required(),
+      pointsDelta: a.integer().required(),
+      occurredAt: a.float().required(),
+      sourceRevision: a.integer(),
+      metadata: a.json(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  SkillProfile: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    technologyId: a.string().required(),
-    points: a.integer().required(),
-    level: a.string(),
-    sourceRevision: a.integer().required(),
-    calculatedAt: a.float().required(),
-  }),
+  SkillProfile: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      technologyId: a.string().required(),
+      points: a.integer().required(),
+      level: a.string(),
+      sourceRevision: a.integer().required(),
+      calculatedAt: a.float().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
-  Attestation: a.model({
-    tenantId: a.string().required(),
-    userId: a.string().required(),
-    learningObjectiveId: a.string().required(),
-    issuedAt: a.float().required(),
-    validUntil: a.float(),
-    sourceRevision: a.integer().required(),
-    evidence: a.json(),
-  }),
+  Attestation: a
+    .model({
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      learningObjectiveId: a.string().required(),
+      issuedAt: a.float().required(),
+      validUntil: a.float(),
+      sourceRevision: a.integer().required(),
+      evidence: a.json(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   TrainingStateEnvelope: a.customType({
     tenantId: a.string().required(),

@@ -95,9 +95,16 @@ bidirektionalem Cache bleibt eine separate Ausbaustufe von AITP-14/#8.
 
 Jeder dauerhafte fachliche Datensatz traegt explizit `tenantId` und `userId`.
 
-Die generierten Model-CRUD-Operationen erhalten absichtlich keine Browser-Autorisierungsregel.
+Amplify verlangt auch fuer Models ohne generierten Browserzugriff eine explizite
+Autorisierungsregel. Die servereigenen Models verwenden deshalb `allow.authenticated()`, waehrend
+`disableOperations(["queries", "mutations", "subscriptions"])` die generierten Model-CRUD- und
+Subscription-Operationen vollstaendig deaktiviert. Ein leeres Authorization-Regelset ist nicht
+ausreichend, weil der Amplify-Schema-Transform es weiterhin als fehlende Authorization ablehnt.
+
 Der Browser greift fuer TrainingSession, RuntimeSnapshot und UserPreferences ausschliesslich ueber
-authentifizierte Custom Operations zu.
+authentifizierte Custom Operations zu. Dadurch oeffnet `allow.authenticated()` keinen direkten
+Model-Pfad, ueber den `userId` oder `tenantId` an den serverseitigen Resolvern vorbei manipuliert
+werden koennten.
 
 `UserPreferences` besitzt einen eigenen Persistenzpfad und ist nicht Teil des Session-Payloads.
 Sprache, bevorzugter Trainingsmodus, Wochenziel und Accessibility-Einstellungen koennen dadurch
@@ -146,6 +153,18 @@ Persistenz-Slice aber bewusst keinen Client-Mutationspfad.
 Die Punkteberechnung und Erzeugung autoritativer ScoreEvents wird in AITP-60/#31 serverseitig
 implementiert. Bis dahin kann ein manipuliertes Browserobjekt keinen serverseitigen Punktestand,
 Kompetenzstand oder Nachweis erzeugen.
+
+## CI-Validierung des Amplify-Data-Schemas
+
+`typecheck:amplify` prueft nur TypeScript und fuehrt den Amplify-Schema-Transform nicht aus. Deshalb
+wird das exportierte `schema` zusaetzlich mit `scripts/validate-amplify-schema.mjs` transformiert.
+`npm run validate:amplify-schema` laeuft sowohl in `npm run check` als auch als eigener CI-Schritt
+nach dem Typecheck.
+
+Dieser Guard faengt Laufzeitfehler des Data-Schemas — insbesondere fehlende oder ungueltige
+Authorization-Regeln — bereits vor Merge und Release ab. Er ersetzt bewusst keine vollstaendige
+CDK-Synthese und keinen realen Cloud-Deploy; Stack-/IAM-/CloudFormation-Probleme koennen weiterhin
+erst in der Amplify-Pipeline sichtbar werden.
 
 ## Deployment
 
