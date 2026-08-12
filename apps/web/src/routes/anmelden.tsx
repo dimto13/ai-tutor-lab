@@ -15,7 +15,10 @@ export const Route = createFileRoute("/anmelden")({
   head: () => ({
     meta: [
       { title: "Anmelden – AI Training Lab" },
-      { name: "description", content: "Beim AI Training Lab anmelden oder ein Lernkonto registrieren." },
+      {
+        name: "description",
+        content: "Beim AI Training Lab anmelden oder ein Lernkonto registrieren.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
