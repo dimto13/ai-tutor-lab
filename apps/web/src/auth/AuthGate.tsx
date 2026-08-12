@@ -1,5 +1,5 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { GraduationCap, LogOut } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
 import { useAuth } from "./AuthContext";
@@ -50,23 +50,5 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <LoadingScreen label="Weiterleitung …" />;
   }
 
-  const identity = auth.session?.identity;
-  const identityLabel = identity?.displayName ?? identity?.email ?? "Angemeldet";
-
-  return (
-    <>
-      {children}
-      <div className="fixed bottom-4 right-4 z-[100] flex items-center gap-2 rounded-lg border border-border bg-panel/95 px-3 py-2 shadow-lg backdrop-blur">
-        <span className="max-w-48 truncate text-xs text-muted-foreground">{identityLabel}</span>
-        <button
-          type="button"
-          onClick={() => void auth.signOut().catch(() => undefined)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-white/5"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Abmelden
-        </button>
-      </div>
-    </>
-  );
+  return <>{children}</>;
 }
