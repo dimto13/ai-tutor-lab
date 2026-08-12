@@ -13,8 +13,8 @@ export const schema = a.schema({
       email: a.email(),
       profileVersion: a.integer().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   UserPreferences: a
     .model({
@@ -27,8 +27,8 @@ export const schema = a.schema({
       preferencesVersion: a.integer().required(),
       stateUpdatedAt: a.float().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   TrainingSession: a
     .model({
@@ -41,8 +41,8 @@ export const schema = a.schema({
       stateUpdatedAt: a.float().required(),
       payload: a.json().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   StepState: a
     .model({
@@ -54,8 +54,8 @@ export const schema = a.schema({
       status: a.ref("StepStatus").required(),
       stateUpdatedAt: a.float().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   RuntimeSnapshot: a
     .model({
@@ -69,8 +69,8 @@ export const schema = a.schema({
       stateUpdatedAt: a.float().required(),
       payload: a.json().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   HintUsage: a
     .model({
@@ -82,8 +82,8 @@ export const schema = a.schema({
       level: a.integer().required(),
       occurredAt: a.float().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   Attempt: a
     .model({
@@ -96,8 +96,8 @@ export const schema = a.schema({
       occurredAt: a.float().required(),
       message: a.string(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   ScoreEvent: a
     .model({
@@ -111,8 +111,8 @@ export const schema = a.schema({
       sourceRevision: a.integer(),
       metadata: a.json(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   SkillProfile: a
     .model({
@@ -124,8 +124,8 @@ export const schema = a.schema({
       sourceRevision: a.integer().required(),
       calculatedAt: a.float().required(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   Attestation: a
     .model({
@@ -137,8 +137,8 @@ export const schema = a.schema({
       sourceRevision: a.integer().required(),
       evidence: a.json(),
     })
-    .disableOperations(["queries", "mutations", "subscriptions"])
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
 
   TrainingStateEnvelope: a.customType({
     tenantId: a.string().required(),
