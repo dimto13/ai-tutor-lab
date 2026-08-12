@@ -180,3 +180,76 @@ geprueft:
 
 PR-Preview-Deployments sind bewusst nicht Bestandteil dieses Flows, um unnoetige AWS-Deployments
 zu vermeiden.
+
+## 7. Deployment-Ueberwachung per AWS CLI
+
+Der Zustand eines Deployments ist ausschliesslich in AWS sichtbar. Ein gruener GitHub-Workflow
+sagt darueber nichts aus: Amplify baut den Branch `deploy`, GitHub Actions baut `main`.
+
+### Ein Aufruf fuer den Gesamtzustand
+
+```bash
+npm run amplify:status
+```
+
+`scripts/amplify-deployment-status.sh` beantwortet in einer Ausgabe, ob gerade ein Job laeuft,
+wie das letzte abgeschlossene Deployment ausgegangen ist und wie die juengste Historie aussieht.
+Bei einer fehlgeschlagenen Phase gibt es den Befehl aus, der das zugehoerige Build-Log abruft.
+Das Skript laeuft unter POSIX `sh`; fuer portable Zeitverarbeitung nutzt es die im Repository
+ohnehin vorausgesetzte Node.js-22-Runtime sowie die AWS CLI.
+
+Die App-ID wird ueber das angebundene Repository aufgeloest, nicht fest verdrahtet.
+`AMPLIFY_APP_ID` und `AMPLIFY_BRANCH` ueberschreiben die Ermittlung.
+
+### Einzelbefehle
+
+Aktuell angebundene App und Branch ermitteln:
+
+```bash
+aws amplify list-apps --query 'apps[].{name:name,appId:appId,platform:platform}' --output table
+aws amplify list-branches --app-id <APP_ID> \
+  --query 'branches[].{branch:branchName,stage:stage,activeJob:activeJobId}' --output table
+```
+
+Job-Historie und einzelner Job mit seinen Phasen:
+
+```bash
+aws amplify list-jobs --app-id <APP_ID> --branch-name deploy --max-items 10 \
+  --query 'jobSummaries[].{job:jobId,status:status,commit:commitId,start:startTime}' --output table
+
+aws amplify get-job --app-id <APP_ID> --branch-name deploy --job-id <JOB_ID> \
+  --query 'job.steps[].{step:stepName,status:status}' --output table
+```
+
+`--max-items 10` begrenzt die Gesamtausgabe der automatisch paginierenden AWS CLI auf die zehn
+juengsten Jobs. Der Amplify-Serviceparameter `maxResults` begrenzt dagegen nur eine einzelne
+API-Antwortseite und wird deshalb hier nicht als Historienlimit verwendet.
+
+Moegliche aktive Jobzustaende sind `CREATED`, `PENDING`, `PROVISIONING`, `RUNNING` und
+`CANCELLING`. Ein Job endet in `SUCCEED`, `FAILED` oder `CANCELLED`. Laufendes Deployment bis zum
+Endzustand verfolgen:
+
+```bash
+until aws amplify get-job --app-id <APP_ID> --branch-name deploy \
+        --job-id "$(aws amplify get-branch --app-id <APP_ID> --branch-name deploy \
+                    --query 'branch.activeJobId' --output text)" \
+        --query 'job.summary.status' --output text | tee /dev/stderr \
+      | grep -qE 'SUCCEED|FAILED|CANCELLED'; do sleep 15; done
+```
+
+### Logs
+
+Build-Logs liegen als vorsignierte S3-Adresse am jeweiligen Schritt. Die Adresse ist nur eine
+Stunde gueltig und wird deshalb bei Bedarf frisch aufgeloest, nicht notiert:
+
+```bash
+curl -s "$(aws amplify get-job --app-id <APP_ID> --branch-name deploy --job-id <JOB_ID> \
+  --query 'job.steps[?stepName==`BUILD`].logUrl' --output text)" | tail -60
+```
+
+Die SSR-Laufzeitlogs der Compute-Umgebung -- Punkt 6 der Abnahme in Abschnitt 6 -- stehen in
+CloudWatch unter der Log-Gruppe `/aws/amplify/<APP_ID>`:
+
+```bash
+aws logs tail /aws/amplify/<APP_ID> --since 1h --follow --format short
+```
