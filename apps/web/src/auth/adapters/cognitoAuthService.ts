@@ -1,4 +1,4 @@
-import type { AuthService, AuthSession, SignInResult } from "../authService";
+import type { AuthService, AuthSession, SignInResult, SignUpResult } from "../authService";
 import {
   createAmplifyCognitoClient,
   type AmplifyCognitoClientOptions,
@@ -58,6 +58,34 @@ export function createCognitoAuthService(
         status: "authenticated",
         session,
       };
+    },
+
+    async signUp(request): Promise<SignUpResult> {
+      const outcome = await client.signUpWithPassword(request.email, request.password);
+
+      if (outcome.status === "requires_action") {
+        throw new Error("Registration requires an additional verification step.");
+      }
+
+      if (outcome.status === "confirmation_required") {
+        return {
+          status: "confirmation_required",
+          email: request.email,
+          destination: outcome.destination,
+        };
+      }
+
+      return {
+        status: "complete",
+        email: request.email,
+      };
+    },
+
+    async confirmSignUp(request) {
+      const outcome = await client.confirmSignUp(request.email, request.confirmationCode);
+      if (outcome !== "done") {
+        throw new Error("Registration confirmation requires an additional verification step.");
+      }
     },
 
     async signOut() {

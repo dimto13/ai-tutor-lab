@@ -3,11 +3,14 @@ import { expect, test } from "@playwright/test";
 const landingUrl = "/willkommen";
 
 test.describe("Öffentliche Landingpage", () => {
-  test("zeigt die Eröffnungsszene und führt zur Anmeldung", async ({ page }) => {
+  test("zeigt die Eröffnungsszene und führt zu Anmeldung oder Registrierung", async ({ page }) => {
     await page.goto(landingUrl);
 
     await expect(page.getByRole("heading", { name: "Über KI reden" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Bedienen wenige." })).toBeVisible();
+
+    const register = page.getByRole("link", { name: "Registrieren" });
+    await expect(register).toHaveAttribute("href", "/anmelden?mode=registrieren");
 
     const signIn = page.getByRole("link", { name: "Anmelden" });
     await expect(signIn).toHaveAttribute("href", "/anmelden");
@@ -25,6 +28,7 @@ test.describe("Öffentliche Landingpage", () => {
     await lastSection.click();
     await expect(lastSection).toHaveAttribute("aria-current", "true");
     await expect(firstSection).not.toHaveAttribute("aria-current", "true");
+    await expect(page.getByRole("heading", { name: "kommst du." })).toBeVisible();
 
     const cta = page.getByRole("link", { name: "Erste Übung starten" });
     await expect(cta).toHaveAttribute("href", "/anmelden");

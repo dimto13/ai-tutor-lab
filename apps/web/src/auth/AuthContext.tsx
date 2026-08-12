@@ -8,7 +8,15 @@ import {
   type ReactNode,
 } from "react";
 
-import type { AuthService, AuthSession, SignInRequest, SignInResult } from "./authService";
+import type {
+  AuthService,
+  AuthSession,
+  ConfirmSignUpRequest,
+  SignInRequest,
+  SignInResult,
+  SignUpRequest,
+  SignUpResult,
+} from "./authService";
 
 export type AuthStatus = "loading" | "anonymous" | "authenticated";
 
@@ -18,6 +26,8 @@ export interface AuthContextValue {
   error: string | null;
   refresh: () => Promise<void>;
   signIn: (request: SignInRequest) => Promise<SignInResult>;
+  signUp: (request: SignUpRequest) => Promise<SignUpResult>;
+  confirmSignUp: (request: ConfirmSignUpRequest) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -82,6 +92,45 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
     [service],
   );
 
+  const signUp = useCallback(
+    async (request: SignUpRequest) => {
+      setStatus("loading");
+      setError(null);
+
+      try {
+        const result = await service.signUp(request);
+        setSession(null);
+        setStatus("anonymous");
+        return result;
+      } catch (cause) {
+        setSession(null);
+        setError(messageOf(cause));
+        setStatus("anonymous");
+        throw cause;
+      }
+    },
+    [service],
+  );
+
+  const confirmSignUp = useCallback(
+    async (request: ConfirmSignUpRequest) => {
+      setStatus("loading");
+      setError(null);
+
+      try {
+        await service.confirmSignUp(request);
+        setSession(null);
+        setStatus("anonymous");
+      } catch (cause) {
+        setSession(null);
+        setError(messageOf(cause));
+        setStatus("anonymous");
+        throw cause;
+      }
+    },
+    [service],
+  );
+
   const signOut = useCallback(async () => {
     setError(null);
     try {
@@ -95,8 +144,8 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
   }, [service]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, session, error, refresh, signIn, signOut }),
-    [status, session, error, refresh, signIn, signOut],
+    () => ({ status, session, error, refresh, signIn, signUp, confirmSignUp, signOut }),
+    [status, session, error, refresh, signIn, signUp, confirmSignUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

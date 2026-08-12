@@ -1,4 +1,10 @@
-import type { AuthService, AuthSession, SignInResult, UserIdentity } from "./authService";
+import type {
+  AuthService,
+  AuthSession,
+  SignInResult,
+  SignUpResult,
+  UserIdentity,
+} from "./authService";
 
 export interface LocalAuthServiceOptions {
   identity: UserIdentity;
@@ -36,6 +42,15 @@ export function createLocalAuthService(options: LocalAuthServiceOptions): AuthSe
         session: currentSession,
       };
     },
+
+    async signUp(request): Promise<SignUpResult> {
+      return {
+        status: "complete",
+        email: request.email,
+      };
+    },
+
+    async confirmSignUp() {},
 
     async signOut() {
       currentSession = null;

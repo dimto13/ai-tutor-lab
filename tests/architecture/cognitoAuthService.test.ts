@@ -22,6 +22,12 @@ function createFakeClient(overrides: Partial<CognitoAuthClient> = {}): CognitoAu
       return "done";
     },
     async signInWithOidc() {},
+    async signUpWithPassword() {
+      return { status: "complete" };
+    },
+    async confirmSignUp() {
+      return "done";
+    },
     async signOut() {},
     ...overrides,
   };
@@ -105,6 +111,50 @@ test("Cognito OIDC sign-in stays provider-neutral above the adapter", async () =
   assert.deepEqual(result, { status: "redirecting" });
 });
 
+test("Cognito adapter maps email/password registration to a confirmation request", async () => {
+  let credentials: [string, string] | null = null;
+  const client = createFakeClient({
+    async signUpWithPassword(email, password) {
+      credentials = [email, password];
+      return {
+        status: "confirmation_required",
+        destination: "l***@example.test",
+      };
+    },
+  });
+  const auth = createCognitoAuthService(client);
+
+  const result = await auth.signUp({
+    email: "learner@example.test",
+    password: "secret",
+  });
+
+  assert.deepEqual(credentials, ["learner@example.test", "secret"]);
+  assert.deepEqual(result, {
+    status: "confirmation_required",
+    email: "learner@example.test",
+    destination: "l***@example.test",
+  });
+});
+
+test("Cognito adapter confirms a registration without leaking provider types", async () => {
+  let confirmation: [string, string] | null = null;
+  const client = createFakeClient({
+    async confirmSignUp(email, confirmationCode) {
+      confirmation = [email, confirmationCode];
+      return "done";
+    },
+  });
+  const auth = createCognitoAuthService(client);
+
+  await auth.confirmSignUp({
+    email: "learner@example.test",
+    confirmationCode: "123456",
+  });
+
+  assert.deepEqual(confirmation, ["learner@example.test", "123456"]);
+});
+
 test("Cognito adapter rejects unsupported additional sign-in steps", async () => {
   const client = createFakeClient({
     async signInWithPassword() {
@@ -119,6 +169,20 @@ test("Cognito adapter rejects unsupported additional sign-in steps", async () =>
       identifier: "learner@example.test",
       password: "secret",
     }),
+    /additional verification step/,
+  );
+});
+
+test("Cognito adapter rejects unsupported additional registration steps", async () => {
+  const client = createFakeClient({
+    async signUpWithPassword() {
+      return { status: "requires_action" };
+    },
+  });
+  const auth = createCognitoAuthService(client);
+
+  await assert.rejects(
+    auth.signUp({ email: "learner@example.test", password: "secret" }),
     /additional verification step/,
   );
 });

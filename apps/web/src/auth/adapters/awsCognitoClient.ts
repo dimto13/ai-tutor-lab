@@ -1,10 +1,12 @@
 import { Amplify } from "aws-amplify";
 import {
+  confirmSignUp as amplifyConfirmSignUp,
   fetchAuthSession,
   fetchUserAttributes,
   signIn,
   signInWithRedirect,
   signOut,
+  signUp as amplifySignUp,
 } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 
@@ -18,10 +20,24 @@ export interface CognitoSessionSnapshot {
   expiresAt: string | null;
 }
 
+export type CognitoSignUpOutcome =
+  | {
+      status: "complete";
+    }
+  | {
+      status: "confirmation_required";
+      destination: string | null;
+    }
+  | {
+      status: "requires_action";
+    };
+
 export interface CognitoAuthClient {
   getSession(forceRefresh?: boolean): Promise<CognitoSessionSnapshot | null>;
   signInWithPassword(identifier: string, password: string): Promise<"done" | "requires_action">;
   signInWithOidc(providerId: string): Promise<void>;
+  signUpWithPassword(email: string, password: string): Promise<CognitoSignUpOutcome>;
+  confirmSignUp(email: string, confirmationCode: string): Promise<"done" | "requires_action">;
   signOut(): Promise<void>;
 }
 
@@ -187,6 +203,44 @@ export function createAmplifyCognitoClient(
     async signInWithOidc(providerId) {
       await ensureConfigured();
       await signInWithRedirect({ provider: { custom: providerId } });
+    },
+
+    async signUpWithPassword(email, password) {
+      await ensureConfigured();
+      const result = await amplifySignUp({
+        username: email,
+        password,
+        options: {
+          userAttributes: {
+            email,
+          },
+        },
+      });
+
+      if (result.isSignUpComplete || result.nextStep.signUpStep === "DONE") {
+        return { status: "complete" };
+      }
+
+      if (result.nextStep.signUpStep === "CONFIRM_SIGN_UP") {
+        return {
+          status: "confirmation_required",
+          destination: result.nextStep.codeDeliveryDetails?.destination ?? null,
+        };
+      }
+
+      return { status: "requires_action" };
+    },
+
+    async confirmSignUp(email, confirmationCode) {
+      await ensureConfigured();
+      const result = await amplifyConfirmSignUp({
+        username: email,
+        confirmationCode,
+      });
+
+      return result.isSignUpComplete || result.nextStep.signUpStep === "DONE"
+        ? "done"
+        : "requires_action";
     },
 
     async signOut() {

@@ -329,7 +329,21 @@ export function LandingPage() {
           <GraduationCap className="h-4 w-4" />
         </span>
         <b>AI Training Lab</b>
-        <Link className="lp-signin" to="/anmelden">
+        <Link
+          className="lp-signin"
+          to="/anmelden"
+          search={{ mode: "registrieren" }}
+          style={{
+            marginLeft: "auto",
+            marginRight: "8px",
+            borderColor: "var(--lp-tutor)",
+            background: "var(--lp-tutor)",
+            color: "#04240f",
+          }}
+        >
+          Registrieren
+        </Link>
+        <Link className="lp-signin" to="/anmelden" style={{ marginLeft: 0 }}>
           Anmelden
         </Link>
       </div>
@@ -473,7 +487,7 @@ export function LandingPage() {
             <div className="lp-mask">
               <span>
                 <h2>
-                  <em>machst du.</em>
+                  <em>kommst du.</em>
                 </h2>
               </span>
             </div>

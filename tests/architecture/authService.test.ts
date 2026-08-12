@@ -18,6 +18,20 @@ test("local auth adapter follows the cloud-neutral AuthService lifecycle", async
   assert.equal(await auth.getSession(), null);
   assert.equal(await auth.refreshSession(), null);
 
+  const registration = await auth.signUp({
+    email: "new-user@example.test",
+    password: "not-used-by-local-adapter",
+  });
+  assert.deepEqual(registration, {
+    status: "complete",
+    email: "new-user@example.test",
+  });
+  await auth.confirmSignUp({
+    email: "new-user@example.test",
+    confirmationCode: "123456",
+  });
+  assert.equal(await auth.getSession(), null);
+
   const result = await auth.signIn({
     method: "password",
     identifier: "user@example.test",
