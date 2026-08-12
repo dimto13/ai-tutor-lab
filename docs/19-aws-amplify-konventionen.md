@@ -214,12 +214,16 @@ aws amplify list-branches --app-id <APP_ID> \
 Job-Historie und einzelner Job mit seinen Phasen:
 
 ```bash
-aws amplify list-jobs --app-id <APP_ID> --branch-name deploy --max-results 10 \
+aws amplify list-jobs --app-id <APP_ID> --branch-name deploy --max-items 10 \
   --query 'jobSummaries[].{job:jobId,status:status,commit:commitId,start:startTime}' --output table
 
 aws amplify get-job --app-id <APP_ID> --branch-name deploy --job-id <JOB_ID> \
   --query 'job.steps[].{step:stepName,status:status}' --output table
 ```
+
+`--max-items 10` begrenzt die Gesamtausgabe der automatisch paginierenden AWS CLI auf die zehn
+juengsten Jobs. Der Amplify-Serviceparameter `maxResults` begrenzt dagegen nur eine einzelne
+API-Antwortseite und wird deshalb hier nicht als Historienlimit verwendet.
 
 Moegliche aktive Jobzustaende sind `CREATED`, `PENDING`, `PROVISIONING`, `RUNNING` und
 `CANCELLING`. Ein Job endet in `SUCCEED`, `FAILED` oder `CANCELLED`. Laufendes Deployment bis zum
