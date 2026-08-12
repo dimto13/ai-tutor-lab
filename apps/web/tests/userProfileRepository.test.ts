@@ -4,7 +4,7 @@ import {
   LocalUserProfileRepository,
   userProfileStorageKey,
   type UserProfileStorageLike,
-} from "../src/profile/adapters/localUserProfileRepository.ts";
+} from "../src/persistence/adapters/localUserProfileRepository.ts";
 import { UserProfileConflictError } from "../src/profile/userProfileRepository.ts";
 
 class MemoryStorage implements UserProfileStorageLike {
