@@ -29,6 +29,10 @@ export type SignInResult =
       session: AuthSession;
     }
   | {
+      status: "confirmation_required";
+      email: string;
+    }
+  | {
       status: "redirecting";
     };
 
@@ -53,6 +57,15 @@ export interface ConfirmSignUpRequest {
   confirmationCode: string;
 }
 
+export interface ResendSignUpCodeRequest {
+  email: string;
+}
+
+export interface ResendSignUpCodeResult {
+  email: string;
+  destination: string | null;
+}
+
 /**
  * Cloud-neutral authentication boundary used by application and UI code.
  *
@@ -65,5 +78,6 @@ export interface AuthService {
   signIn(request: SignInRequest): Promise<SignInResult>;
   signUp(request: SignUpRequest): Promise<SignUpResult>;
   confirmSignUp(request: ConfirmSignUpRequest): Promise<void>;
+  resendSignUpCode(request: ResendSignUpCodeRequest): Promise<ResendSignUpCodeResult>;
   signOut(): Promise<void>;
 }
