@@ -67,6 +67,8 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
+  --color-tutor: var(--tutor);
+  --color-tutor-foreground: var(--tutor-foreground);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
@@ -93,6 +95,13 @@
   --success: oklch(0.7 0.14 152);
   --success-foreground: oklch(0.18 0.02 152);
   --warning: oklch(0.79 0.13 82);
+  /*
+   * Tutor layer. Reserved exclusively for the AI tutor: its messages, hints and
+   * highlights. It must never be used for simulated tooling (that is --accent)
+   * so learners can tell tutor and tool apart without reading a label.
+   */
+  --tutor: oklch(0.73 0.19 150);
+  --tutor-foreground: oklch(0.24 0.07 150);
   --border: oklch(0.31 0.016 258);
   --input: oklch(0.31 0.016 258);
   --ring: oklch(0.66 0.15 250);
@@ -133,6 +142,8 @@
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.984 0.003 247.858);
+  --tutor: oklch(0.73 0.19 150);
+  --tutor-foreground: oklch(0.24 0.07 150);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.551 0.027 264.364);
