@@ -13,9 +13,11 @@ export function SignInPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const oidcProviderId = import.meta.env["VITE_AUTH_OIDC_PROVIDER_ID"]?.trim();
+  const isLoading = auth.status === "loading";
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isLoading) return;
     try {
       await auth.signIn({ method: "password", identifier: email.trim(), password });
     } catch {
@@ -24,7 +26,7 @@ export function SignInPanel() {
   };
 
   const signInWithOidc = async () => {
-    if (!oidcProviderId) return;
+    if (!oidcProviderId || isLoading) return;
     try {
       await auth.signIn({ method: "oidc", providerId: oidcProviderId });
     } catch {
@@ -81,9 +83,11 @@ export function SignInPanel() {
 
           <button
             type="submit"
-            className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90"
+            disabled={isLoading}
+            aria-busy={isLoading}
+            className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Anmelden
+            {isLoading ? "Anmeldung läuft …" : "Anmelden"}
           </button>
         </form>
 
@@ -96,8 +100,9 @@ export function SignInPanel() {
             </div>
             <button
               type="button"
+              disabled={isLoading}
               onClick={() => void signInWithOidc()}
-              className="w-full rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/5"
+              className="w-full rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Mit Unternehmens-SSO anmelden
             </button>
