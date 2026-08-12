@@ -16,7 +16,7 @@ BRANCH="${AMPLIFY_BRANCH:-deploy}"
 REPO_NAME="ai-tutor-lab"
 
 # Amplify meldet waehrend eines Laufs nacheinander diese Zustaende.
-ACTIVE_STATUSES="PENDING PROVISIONING RUNNING CANCELLING"
+ACTIVE_STATUSES="CREATED PENDING PROVISIONING RUNNING CANCELLING"
 
 TAB=$(printf '\t')
 
