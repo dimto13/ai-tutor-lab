@@ -5,7 +5,7 @@ import { useAuth } from "./AuthContext";
 
 export type AuthPanelMode = "sign-in" | "register";
 type RegistrationStep = "credentials" | "confirmation";
-type AuthAction = "sign-in" | "register" | "confirm";
+type AuthAction = "sign-in" | "register" | "confirm" | "resend";
 
 function ErrorMessage({ message }: { message: string }) {
   return (
@@ -18,10 +18,6 @@ function ErrorMessage({ message }: { message: string }) {
   );
 }
 
-/**
- * Password / SSO sign-in and self-service registration form. Rendered by the
- * public `/anmelden` route. Cloud-specific auth details terminate behind AuthService.
- */
 export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPanelMode }) {
   const auth = useAuth();
   const [mode, setMode] = useState<AuthPanelMode>(initialMode);
@@ -70,6 +66,32 @@ export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPan
     setLastAuthAction(null);
   };
 
+  const resendConfirmationCode = async (emailOverride?: string) => {
+    const normalizedEmail = (emailOverride ?? email).trim();
+    if (!normalizedEmail) {
+      setLocalError("Gib zuerst deine E-Mail-Adresse ein.");
+      return;
+    }
+
+    setMode("register");
+    setRegistrationStep("confirmation");
+    setEmail(normalizedEmail);
+    setPassword("");
+    setPasswordConfirmation("");
+    setLocalError(null);
+    setNotice(null);
+    setLastAuthAction("resend");
+
+    try {
+      const result = await auth.resendSignUpCode({ email: normalizedEmail });
+      setConfirmationDestination(result.destination);
+      setNotice("Ein neuer Bestätigungscode wurde gesendet.");
+      setLastAuthAction(null);
+    } catch {
+      // AuthProvider exposes the normalized error below the form.
+    }
+  };
+
   const submitSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isLoading) return;
@@ -77,7 +99,15 @@ export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPan
     setNotice(null);
     setLastAuthAction("sign-in");
     try {
-      await auth.signIn({ method: "password", identifier: email.trim(), password });
+      const result = await auth.signIn({
+        method: "password",
+        identifier: email.trim(),
+        password,
+      });
+      if (result.status === "confirmation_required") {
+        setLastAuthAction(null);
+        await resendConfirmationCode(result.email);
+      }
     } catch {
       // AuthProvider exposes the normalized error below the form.
     }
@@ -155,7 +185,8 @@ export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPan
     ((mode === "sign-in" && lastAuthAction === "sign-in") ||
       (mode === "register" &&
         ((registrationStep === "credentials" && lastAuthAction === "register") ||
-          (registrationStep === "confirmation" && lastAuthAction === "confirm"))))
+          (registrationStep === "confirmation" &&
+            (lastAuthAction === "confirm" || lastAuthAction === "resend")))))
       ? auth.error
       : null;
 
@@ -311,8 +342,19 @@ export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPan
               </button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-muted-foreground">
-              Du hast bereits ein Lernkonto?{" "}
+            <p className="mt-5 text-center text-xs text-muted-foreground">
+              Registrierung schon begonnen?{" "}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => void resendConfirmationCode()}
+                className="font-medium text-accent hover:underline disabled:opacity-60"
+              >
+                E-Mail bestätigen
+              </button>
+            </p>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Du hast bereits ein bestätigtes Lernkonto?{" "}
               <button
                 type="button"
                 onClick={() => switchToSignIn()}
@@ -325,9 +367,23 @@ export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPan
         ) : (
           <>
             <p className="mt-6 text-sm leading-6 text-muted-foreground">
-              Wir haben einen Bestätigungscode an {confirmationDestination ?? email} gesendet.
+              {confirmationDestination
+                ? `Wir haben einen Bestätigungscode an ${confirmationDestination} gesendet.`
+                : "Gib den Bestätigungscode aus deiner E-Mail ein."}
             </p>
             <form className="mt-4 space-y-4" onSubmit={(event) => void submitConfirmation(event)}>
+              <label className="block text-sm text-foreground">
+                E-Mail
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring"
+                />
+              </label>
+
               <label className="block text-sm text-foreground">
                 Bestätigungscode
                 <input
@@ -355,13 +411,16 @@ export function SignInPanel({ initialMode = "sign-in" }: { initialMode?: AuthPan
               </button>
             </form>
 
-            <div className="mt-6 flex justify-between gap-4 text-xs">
+            <div className="mt-5 flex justify-between gap-4 text-xs">
               <button
                 type="button"
-                onClick={switchToRegister}
-                className="text-muted-foreground hover:text-foreground"
+                disabled={isLoading}
+                onClick={() => void resendConfirmationCode()}
+                className="text-muted-foreground hover:text-foreground disabled:opacity-60"
               >
-                E-Mail ändern
+                {isLoading && lastAuthAction === "resend"
+                  ? "Code wird gesendet …"
+                  : "Code erneut senden"}
               </button>
               <button
                 type="button"
