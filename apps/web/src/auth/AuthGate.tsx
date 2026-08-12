@@ -38,12 +38,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
     void navigate({ to: "/willkommen", replace: true });
   }, [navigate, shouldRedirect]);
 
+  // Public routes must render independently of the Cognito session bootstrap.
+  // This keeps the landing page available during SSR and slow auth requests.
+  if (isPublic) return <>{children}</>;
+
   if (auth.status === "loading") {
     return <LoadingScreen label="Anmeldung wird geprüft …" />;
   }
-
-  // Public routes render their own chrome and must not show the sign-out badge.
-  if (isPublic) return <>{children}</>;
 
   if (auth.status === "anonymous") {
     return <LoadingScreen label="Weiterleitung …" />;
