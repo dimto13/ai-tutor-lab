@@ -50,12 +50,34 @@ is_active() {
   return 1
 }
 
+# AWS liefert ISO-8601-Zeitstempel. Node.js ist im Repository ohnehin >=22 vorgeschrieben und
+# verarbeitet sie plattformneutral; damit bleibt das Shell-Skript auch auf macOS/BSD ohne
+# GNU-spezifisches `date -d` nutzbar.
 format_timestamp() {
   if [ -z "$1" ] || [ "$1" = "None" ]; then
     printf '%s' "-"
     return
   fi
-  date -d "$1" '+%d.%m.%Y, %H:%M:%S' 2>/dev/null || printf '%s' "$1"
+  node -e '
+    const value = process.argv[1];
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) process.exit(1);
+    const pad = (n) => String(n).padStart(2, "0");
+    process.stdout.write(`${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}, ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`);
+  ' "$1" 2>/dev/null || printf '%s' "$1"
+}
+
+parse_epoch_seconds() {
+  node -e '
+    const value = process.argv[1];
+    const timestamp = Date.parse(value);
+    if (Number.isNaN(timestamp)) process.exit(1);
+    process.stdout.write(String(Math.floor(timestamp / 1000)));
+  ' "$1"
+}
+
+current_epoch_seconds() {
+  node -e 'process.stdout.write(String(Math.floor(Date.now() / 1000)))'
 }
 
 # Ohne Endzeitpunkt wird gegen jetzt gerechnet, damit ein laufender Job seine bisherige
@@ -65,14 +87,14 @@ format_duration() {
     printf '%s' "-"
     return
   fi
-  start_seconds=$(date -d "$1" +%s 2>/dev/null) || {
+  start_seconds=$(parse_epoch_seconds "$1" 2>/dev/null) || {
     printf '%s' "-"
     return
   }
   if [ -n "${2:-}" ] && [ "$2" != "None" ]; then
-    end_seconds=$(date -d "$2" +%s 2>/dev/null) || end_seconds=$(date +%s)
+    end_seconds=$(parse_epoch_seconds "$2" 2>/dev/null) || end_seconds=$(current_epoch_seconds)
   else
-    end_seconds=$(date +%s)
+    end_seconds=$(current_epoch_seconds)
   fi
   total=$((end_seconds - start_seconds))
   if [ "$total" -lt 0 ]; then
@@ -158,6 +180,7 @@ EOF
 }
 
 command -v aws >/dev/null 2>&1 || die "Die AWS CLI ist nicht installiert oder nicht im PATH."
+command -v node >/dev/null 2>&1 || die "Node.js ist nicht installiert oder nicht im PATH."
 
 if [ -n "${AMPLIFY_APP_ID:-}" ]; then
   APP_ID="$AMPLIFY_APP_ID"

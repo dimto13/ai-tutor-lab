@@ -23,25 +23,36 @@
     "build:dev": "npm run build:dev -w @ai-train-lab/web",
     "build:packages": "npm run build -w @ai-train-lab/training-engine && npm run build -w @ai-train-lab/runtime-core && npm run build -w @ai-train-lab/runtime-terminal-sim && npm run build -w @ai-train-lab/runtime-vscode-sim && npm run build -w @ai-train-lab/catalog",
     "preview": "npm run preview -w @ai-train-lab/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck:amplify": "tsc --noEmit -p amplify/tsconfig.json",
+    "typecheck": "npm run typecheck:amplify && npm run typecheck --workspaces --if-present",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
     "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
     "validate:amplify-output": "node scripts/validate-amplify-output.mjs",
+    "validate:amplify-runtime": "node scripts/smoke-amplify-runtime.mjs",
     "amplify:status": "sh scripts/amplify-deployment-status.sh",
     "test:catalog": "node --experimental-strip-types --test tests/catalog/*.test.ts",
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
+    "test:architecture": "node --experimental-strip-types --test tests/architecture/*.test.ts",
     "test:packages": "npm run test --workspaces --if-present",
-    "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run build",
-    "lint": "eslint apps packages scripts tests",
+    "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run build",
+    "lint": "eslint amplify apps packages scripts tests",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "zod": "^3.24.2"
+    "aws-amplify": "^6.20.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^3.25.17"
   },
   "devDependencies": {
+    "@aws-amplify/backend": "^1.8.0",
+    "@aws-amplify/backend-cli": "^1.9.0",
     "@eslint/js": "^9.32.0",
     "@types/node": "^22.16.5",
+    "aws-cdk-lib": "^2.264.0",
+    "constructs": "^10.8.1",
+    "esbuild": "^0.28.2",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
@@ -49,7 +60,11 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "prettier": "^3.7.3",
+    "tsx": "^4.23.12",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1"
+  },
+  "overrides": {
+    "@opentelemetry/core": "2.10.0"
   }
 }

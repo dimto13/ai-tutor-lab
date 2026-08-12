@@ -10,6 +10,11 @@ historischer Ursprung. **Verbindlicher Projektstand und einzige Source of Truth 
 Git-Repository.** Entwicklung, Tests und Builds erfolgen unabhängig davon; Zielplattform für
 Hosting und Deployment ist AWS Amplify.
 
+AWS ist dabei die erste Infrastrukturimplementierung, nicht der Anwendungsvertrag. UI und
+fachliche Logik bleiben cloud-neutral und greifen über eigene Ports auf Cloud-Adapter zu. Die
+verbindliche Architekturgrenze steht in
+[`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md).
+
 ## Orientierung im Repository
 
 | Bereich                                                         | Inhalt                                                                                                                                       |
@@ -46,7 +51,7 @@ Node-Version über `.nvmrc` ausgewählt.
 git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
 nvm use
-npm ci --install-strategy=nested
+npm ci
 npm run dev:local
 ```
 
@@ -65,7 +70,7 @@ Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
 
 ```sh
 git pull
-npm ci --install-strategy=nested
+npm ci
 npm run dev:local
 ```
 

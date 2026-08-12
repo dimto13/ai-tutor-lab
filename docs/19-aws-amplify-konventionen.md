@@ -64,18 +64,49 @@ Der Build muss `apps/web/.amplify-hosting/` mit mindestens diesen Artefakten erz
 `scripts/validate-amplify-output.mjs` ist der Repo-seitige Guard fuer Manifest, Catch-all-Route,
 Compute-Resource und Runtime.
 
+### Das Compute-Artefakt muss wirklich gestartet werden
+
+Ein erfolgreicher Build und ein gueltiges `deploy-manifest.json` reichen nicht als Nachweis fuer
+einen funktionsfaehigen SSR-Deploy. Bei der ersten realen #43-Abnahme wurde ein formal gueltiges
+Bundle erfolgreich von Amplify deployed, lieferte aber auf jeder SSR-Route HTTP 500. Ursache war
+ein beim Bundling erzeugter Cross-Chunk-Helper (`__exportAll`), dessen importierte Bindung beim
+Laden des SSR-Moduls nicht aufrufbar war.
+
+Darum startet Code CI nach jedem Production-Build exakt
+`apps/web/.amplify-hosting/compute/default/server.js` unter Node.js 22 und prueft per HTTP:
+
+- `/` -> `200 text/html`
+- `/training/vscode-basics.guided` -> `200 text/html`
+
+Der Guard ist `npm run validate:amplify-runtime`. Ein Build darf nicht als deployment-ready
+gelten, wenn dieser Test fehlschlaegt.
+
+### SSR-Chunking fuer das aktuelle Nitro-Bundle
+
+Die aktuell verwendete Nitro-/Rolldown-Kombination erzeugte bei aktiviertem Server-Code-Splitting
+den oben beschriebenen defekten Cross-Chunk-Helper. Deshalb setzt die Production-Konfiguration
+vorerst `inlineDynamicImports: true`. Dadurch bleibt der Nitro-Servergraph in einem Bundle und
+der fehlerhafte Cross-Chunk-Pfad wird vermieden.
+
+Diese Option ist kein beliebig entfernbares Performance-Tuning, sondern ein durch den echten
+Compute-Runtime-Smoke abgesicherter Kompatibilitaets-Workaround fuer #225. Bei einem spaeteren
+Nitro-/Vite-/Rolldown-Upgrade darf sie erst entfernt werden, wenn der unveraenderte Runtime-Smoke
+mit wieder aktiviertem Code-Splitting gruen bleibt.
+
 ## 3. Monorepo-Build
 
 Amplify verwendet `appRoot: apps/web`, aber die npm-Workspaces werden vom Repo-Root gebaut.
 Deshalb steht `buildPath: /` unter `frontend:`.
 
-Wichtig aus den realen Build-Versuchen auf `deploy`:
+Wichtig aus den realen Build-Versuchen auf `deploy` und der #44-CI:
 
 - `buildPath` gehoert unter `frontend`; eine Backend-Phase kennt diesen Schluessel nicht.
 - Amplify-Phasen koennen dieselbe Shell/CWD weiterverwenden. Keine blinden mehrfachen `cd ../..`.
 - Node.js 22 wird vor dem Build explizit installiert und aktiviert.
-- Die Installationsstrategie bleibt mit GitHub CI konsistent:
-  `npm ci --install-strategy=nested`.
+- Die Installationsstrategie bleibt mit GitHub CI konsistent: normales `npm ci` gegen den
+  eingecheckten Lockfile. Die erzwungene Strategie `--install-strategy=nested` darf mit dem
+  Amplify/CDK-Dependency-Graph nicht verwendet werden, weil sie mit gebuendelten Abhaengigkeiten
+  kollidiert.
 - Fuer schnellere Builds wird nur der npm-Download-Cache `.npm` verwendet. `node_modules` wird
   nicht gecacht, weil `npm ci` ihn ohnehin neu erzeugt.
 
@@ -164,6 +195,8 @@ npm run amplify:status
 `scripts/amplify-deployment-status.sh` beantwortet in einer Ausgabe, ob gerade ein Job laeuft,
 wie das letzte abgeschlossene Deployment ausgegangen ist und wie die juengste Historie aussieht.
 Bei einer fehlgeschlagenen Phase gibt es den Befehl aus, der das zugehoerige Build-Log abruft.
+Das Skript laeuft unter POSIX `sh`; fuer portable Zeitverarbeitung nutzt es die im Repository
+ohnehin vorausgesetzte Node.js-22-Runtime sowie die AWS CLI.
 
 Die App-ID wird ueber das angebundene Repository aufgeloest, nicht fest verdrahtet.
 `AMPLIFY_APP_ID` und `AMPLIFY_BRANCH` ueberschreiben die Ermittlung.
