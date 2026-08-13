@@ -5,7 +5,9 @@ async function openExplore(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
-test("VS Code Grundlagen: Command Palette startet passende Oberflächenbefehle", async ({ page }) => {
+test("VS Code Grundlagen: Command Palette startet passende Oberflächenbefehle", async ({
+  page,
+}) => {
   await openExplore(page);
 
   await page.getByRole("button", { name: "View", exact: true }).click();
@@ -37,4 +39,4 @@ test("VS Code Grundlagen: Settings und Extensions bleiben fachlich getrennt", as
   await page.getByRole("menuitem", { name: "Preferences", exact: true }).click();
   await page.getByRole("menuitem", { name: "Extensions", exact: true }).click();
   await expect(page.getByText("GitHub Copilot", { exact: true })).toBeVisible();
-}
+});
