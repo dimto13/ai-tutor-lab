@@ -1,0 +1,145 @@
+{
+  "id": "developer-workflow-basics.challenge",
+  "moduleId": "developer-workflow-basics",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "Challenge: Entwicklungsauftrag handoff-ready abschließen",
+  "description": "Bearbeite ein bestehendes synthetisches Work Item selbstständig. Bewertet wird der Endzustand über Editor-, Copilot-, Prüf- und Git-State – nicht ein vorgegebener Klickpfad.",
+  "learningObjectives": ["combine_editor_git_ai_workflow"],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "programming.python",
+      "vscode.editor",
+      "vscode.terminal",
+      "git.repository",
+      "git.stage",
+      "git.commit",
+      "github.copilot",
+      "copilot.chat"
+    ]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["TASK.md", "calculator.py", "notes.txt"],
+      "contents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe die Änderung, teste sie und committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz: Entwurf für einen anderen Auftrag. Nicht mitcommitten.\n"
+      },
+      "committedContents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe die Änderung, teste sie und committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz.\n"
+      },
+      "trackedFiles": ["TASK.md", "calculator.py", "notes.txt"],
+      "scmChangedFiles": ["notes.txt"],
+      "openTabs": ["TASK.md", "calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": "terminal",
+      "branch": "main",
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "# TODO: add(a, b) implementieren\n",
+          "text": "\ndef add(a, b):\n    return a + b\n\nprint(\"CHECK: addition ready\")\n"
+        }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "promptContainsAny": ["add", "addition", "summe", "zwei zahlen"],
+          "response": "Für dieses Work Item sollte calculator.py eine kleine add(a, b)-Funktion enthalten. Prüfe den vorhandenen Dateikontext, kontrolliere den vorgeschlagenen Code im Editor und halte notes.txt aus deinem Commit heraus."
+        }
+      ]
+    }
+  },
+  "estimatedMinutes": 12,
+  "points": 220,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "state",
+        "selector": "scm.branch",
+        "equals": "feature/addition"
+      },
+      {
+        "kind": "state",
+        "selector": "filesystem.contents",
+        "match": {
+          "calculator.py": "# TODO: add(a, b) implementieren\n\ndef add(a, b):\n    return a + b\n\nprint(\"CHECK: addition ready\")\n"
+        }
+      },
+      {
+        "kind": "state",
+        "selector": "editor.dirtyFiles",
+        "excludes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "copilot.context.activeFile",
+        "equals": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "copilot.prompt.last",
+        "includesAny": ["add", "Addition", "Summe", "zwei Zahlen"]
+      },
+      {
+        "kind": "state",
+        "selector": "verification.lastResult",
+        "match": {
+          "ok": true,
+          "branch": "feature/addition"
+        }
+      },
+      {
+        "kind": "state",
+        "selector": "scm.changedFiles",
+        "includes": "notes.txt",
+        "excludes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.stagedFiles",
+        "excludes": "notes.txt"
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Der Auftrag wurde auf einem eigenen Branch feature/addition bearbeitet.",
+    "calculator.py enthält die kleine add(a, b)-Implementierung, wurde gespeichert und erfolgreich geprüft.",
+    "Copilot wurde mit calculator.py als explizitem Dateikontext für den Auftrag eingesetzt; der erzeugte Vorschlag wurde vor der Übernahme kontrolliert.",
+    "Nur calculator.py wurde mit der klaren Nachricht feat: implement addition committed. Die bereits vorher vorhandene Änderung in notes.txt bleibt lokal und uncommitted erhalten.",
+    "Der Endzustand ist handoff-ready: eigene Änderung committed, fremde Änderung sichtbar und unangetastet."
+  ],
+  "steps": [
+    {
+      "id": "complete-work-item",
+      "title": "Work Item selbstständig abschließen",
+      "description": "Es gibt keinen vorgeschriebenen Klickpfad. Entscheidend ist, dass du die Grenzen zwischen VS Code, lokalem Git und Copilot kontrollierst und einen reviewbaren Endzustand herstellst.",
+      "instruction": "Erfülle das Work Item aus TASK.md. Erfolgskriterien: Arbeite auf dem Branch feature/addition; nutze Copilot mit calculator.py als Dateikontext; stelle die dort geforderte add(a, b)-Funktion her und speichere sie; führe eine erfolgreiche Python-Prüfung aus; committe ausschließlich calculator.py mit der Nachricht feat: implement addition. Die bereits vorhandene Änderung in notes.txt muss unverändert lokal zurückbleiben.",
+      "why": "Die Challenge prüft den handoff-fähigen Zustand eines echten Entwicklungsablaufs statt das Nachklicken einer festen Reihenfolge.",
+      "helpLevels": [
+        "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
+        "Prüfe Branch und Working Tree, gib Copilot nur calculator.py als Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
+        "Am Ende müssen feature/addition, gespeicherte calculator.py, erfolgreiche Python-Prüfung und ein Commit nur für calculator.py zusammenpassen; notes.txt muss weiterhin als lokale Änderung übrig sein."
+      ],
+      "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
+    }
+  ]
+}
