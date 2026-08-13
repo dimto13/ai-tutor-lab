@@ -121,7 +121,13 @@ function simulatedBranchCommand(
   const createFlag = tokens[1] === "switch" ? "-c" : tokens[1] === "checkout" ? "-b" : null;
   if (createFlag) {
     if (tokens[2] !== createFlag) {
-      return unchangedResult(command, context, branch, [`usage: git ${tokens[1]} ${createFlag} <new-branch>`], 1);
+      return unchangedResult(
+        command,
+        context,
+        branch,
+        [`usage: git ${tokens[1]} ${createFlag} <new-branch>`],
+        1,
+      );
     }
     const nextBranch = tokens[3]?.trim() ?? "";
     if (!validBranchName(nextBranch)) {
@@ -159,7 +165,8 @@ export function executeTerminalCommand(
   const branch = activeBranch(context);
   const tokens = command.split(/\s+/).filter(Boolean);
   const simulatedBranchResult = simulatedBranchCommand(command, tokens, context, branch);
-  const result = simulatedBranchResult ?? withBranchOutput(simulateTerminalCommand(command, context), branch);
+  const result =
+    simulatedBranchResult ?? withBranchOutput(simulateTerminalCommand(command, context), branch);
   simulatorBranch = result.branch;
   return result;
 }
