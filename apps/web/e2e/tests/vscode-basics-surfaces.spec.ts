@@ -74,7 +74,9 @@ test("VS Code Grundlagen: neue Explorer-Datei wird erst nach Bearbeitung als ung
   await expect(dirtyStatus).toBeVisible();
 });
 
-test("VS Code Grundlagen: sichtbarer File-Save-Befehl speichert die aktive Datei", async ({ page }) => {
+test("VS Code Grundlagen: sichtbarer File-Save-Befehl speichert die aktive Datei", async ({
+  page,
+}) => {
   await page.goto("/training/vscode-basics.challenge");
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 
