@@ -76,6 +76,8 @@ test("Explore: integrierte Umgebung bleibt frei erkundbar und zeigt keine Guided
   ).toBeVisible();
   await expect(page.locator('[data-highlight="vscode.editor"]')).toBeVisible();
   await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText("main");
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+  await expect(page.getByText("M notes.txt", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Weiter/i })).toHaveCount(0);
 });
 
