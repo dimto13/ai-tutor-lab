@@ -120,12 +120,18 @@ function diffCommand(
   const staged = tokens.includes("--staged") || tokens.includes("--cached");
   const candidates = staged ? context.stagedFiles : context.changedFiles;
   const committedContents = context.committedContents ?? {};
+  const stagedFiles = new Set(context.stagedFiles);
   const output: string[] = [];
 
   for (const file of [...new Set(candidates)]) {
-    const before = committedContents[file] ?? "";
+    const committed = committedContents[file] ?? "";
+    const before = staged
+      ? committed
+      : stagedFiles.has(file)
+        ? (context.stagedContents[file] ?? committed)
+        : committed;
     const after = staged
-      ? (context.stagedContents[file] ?? before)
+      ? (context.stagedContents[file] ?? committed)
       : (context.contents[file] ?? "");
     const patch = diffLines(before, after);
     if (!patch.length) continue;
