@@ -1,12 +1,10 @@
 import { Eye, EyeOff, LogOut, Settings, UserRound, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import {
-  recommendationForSelfAssessedAiLevel,
-  type SelfAssessedAiLevel,
-} from "@ai-train-lab/training-engine";
+import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "./AuthContext";
 import { maskEmailAddress } from "./emailPrivacy";
 import { AI_LEVEL_OPTIONS } from "@/profile/aiLevelOptions";
+import { contentRecommendationForAiLevel } from "@/profile/aiLevelRecommendation";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
 
@@ -33,9 +31,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   const email = auth.session?.identity.email ?? profile.profile?.email ?? null;
   const displayedEmail = email ? (emailVisible ? email : maskEmailAddress(email)) : null;
-  const draftRecommendation = draftAiLevel
-    ? recommendationForSelfAssessedAiLevel(draftAiLevel)
-    : null;
+  const draftRecommendation = draftAiLevel ? contentRecommendationForAiLevel(draftAiLevel) : null;
 
   function openSettings() {
     setDraftName(profile.displayName);
