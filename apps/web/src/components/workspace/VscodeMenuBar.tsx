@@ -332,8 +332,18 @@ export function VscodeMenuBar({
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [menuLeft, setMenuLeft] = useState(0);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [commandPaletteQuery, setCommandPaletteQuery] = useState(">");
+  const [commandPaletteSelection, setCommandPaletteSelection] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const activeMenu = MENU_DEFINITIONS.find((menu) => menu.id === openMenu) ?? null;
+  const normalizedCommandQuery = commandPaletteQuery.replace(/^>/, "").trim().toLowerCase();
+  const visibleCommandPaletteActions = COMMAND_PALETTE_ACTIONS.filter((command) =>
+    command.label.toLowerCase().includes(normalizedCommandQuery),
+  );
+  const activeCommandPaletteSelection = Math.min(
+    commandPaletteSelection,
+    Math.max(0, visibleCommandPaletteActions.length - 1),
+  );
 
   const closeMenus = () => {
     setOpenMenu(null);
@@ -343,6 +353,8 @@ export function VscodeMenuBar({
   const showCommandPalette = () => {
     openCommandPalette?.();
     setSettingsOpen(false);
+    setCommandPaletteQuery(">");
+    setCommandPaletteSelection(0);
     setCommandPaletteOpen(true);
   };
 
@@ -369,6 +381,11 @@ export function VscodeMenuBar({
       setSettingsOpen(false);
     }
     closeMenus();
+  };
+
+  const runSelectedCommandPaletteAction = () => {
+    const command = visibleCommandPaletteActions[activeCommandPaletteSelection];
+    if (command) runAction(command.action);
   };
 
   return (
@@ -489,21 +506,60 @@ export function VscodeMenuBar({
             <input
               autoFocus
               aria-label="Command Palette-Eingabe"
-              defaultValue=">"
+              value={commandPaletteQuery}
+              onChange={(event) => {
+                setCommandPaletteQuery(event.target.value);
+                setCommandPaletteSelection(0);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setCommandPaletteSelection((current) =>
+                    visibleCommandPaletteActions.length
+                      ? (current + 1) % visibleCommandPaletteActions.length
+                      : 0,
+                  );
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setCommandPaletteSelection((current) =>
+                    visibleCommandPaletteActions.length
+                      ? (current - 1 + visibleCommandPaletteActions.length) %
+                        visibleCommandPaletteActions.length
+                      : 0,
+                  );
+                }
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  runSelectedCommandPaletteAction();
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setCommandPaletteOpen(false);
+                }
+              }}
               className="w-full rounded border border-ring bg-editor px-3 py-2 font-mono text-[13px] text-foreground outline-none"
             />
           </div>
-          <div className="p-1">
-            {COMMAND_PALETTE_ACTIONS.map((command) => (
+          <div className="p-1" role="listbox" aria-label="Command Palette-Ergebnisse">
+            {visibleCommandPaletteActions.map((command, index) => (
               <button
                 key={command.label}
                 type="button"
+                role="option"
+                aria-selected={index === activeCommandPaletteSelection}
+                onMouseEnter={() => setCommandPaletteSelection(index)}
                 onClick={() => runAction(command.action)}
-                className="block w-full rounded px-3 py-2 text-left text-[12px] text-foreground/90 hover:bg-white/10"
+                className={`block w-full rounded px-3 py-2 text-left text-[12px] text-foreground/90 hover:bg-white/10 ${
+                  index === activeCommandPaletteSelection ? "bg-white/10" : ""
+                }`}
               >
                 {command.label}
               </button>
             ))}
+            {visibleCommandPaletteActions.length === 0 ? (
+              <p className="px-3 py-2 text-[12px] text-muted-foreground">Kein passender Befehl.</p>
+            ) : null}
           </div>
           <p className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
             Die Command Palette sucht und startet VS-Code-Befehle, ohne dass du deren Menüposition
