@@ -172,7 +172,9 @@ test("Guided: Explorer, Folder, Editor, Speichern und Panel laufen als Anfänger
 
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("Hello AI Training");
-  await expect(page.getByRole("status", { name: "notiz.txt: ungespeicherte Änderungen" })).toBeVisible();
+  await expect(
+    page.getByRole("status", { name: "notiz.txt: ungespeicherte Änderungen" }),
+  ).toBeVisible();
   await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
 
   await editor.press("Control+s");
