@@ -47,6 +47,7 @@ const clientOperations = Object.keys(clientOperationDataSources) as Array<
 
 const schemaMembers = [
   "TrainingMode",
+  "SelfAssessedAiLevel",
   "StepStatus",
   "AttemptOutcome",
   ...serverOwnedModels,
@@ -157,6 +158,23 @@ test("user profile and preferences persist independently from training sessions"
     const block = definitionBlock(source, operation);
     assert.match(block, /dataSource:\s*a\.ref\(["']UserPreferences["']\)/);
   }
+});
+
+test("self-assessed AI level is a user preference and not a measured skill field", async () => {
+  const source = await readFile(dataResourceUrl, "utf8");
+  const enumBlock = definitionBlock(source, "SelfAssessedAiLevel");
+  const preferencesBlock = definitionBlock(source, "UserPreferences");
+  const envelopeBlock = definitionBlock(source, "UserPreferencesEnvelope");
+  const saveBlock = definitionBlock(source, "saveUserPreferences");
+  const skillBlock = definitionBlock(source, "SkillProfile");
+
+  assert.match(enumBlock, /beginner/);
+  assert.match(enumBlock, /intermediate/);
+  assert.match(enumBlock, /advanced/);
+  assert.match(preferencesBlock, /selfAssessedAiLevel:\s*a\.ref\(["']SelfAssessedAiLevel["']\)/);
+  assert.match(envelopeBlock, /selfAssessedAiLevel:\s*a\.ref\(["']SelfAssessedAiLevel["']\)/);
+  assert.match(saveBlock, /selfAssessedAiLevel:\s*a\.ref\(["']SelfAssessedAiLevel["']\)/);
+  assert.doesNotMatch(skillBlock, /selfAssessedAiLevel/);
 });
 
 test("score and credential models have no client mutation handler in the persistence slice", async () => {
