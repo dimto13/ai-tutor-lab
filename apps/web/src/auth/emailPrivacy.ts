@@ -14,11 +14,11 @@ export function maskEmailAddress(email: string): string {
   const visibleIndexes = new Set<number>();
 
   if (visibleCount === 1) {
-    visibleIndexes.add(maskableIndexes[0]);
+    visibleIndexes.add(maskableIndexes[0]!);
   } else {
     for (let slot = 0; slot < visibleCount; slot += 1) {
       const position = Math.round((slot * (maskableIndexes.length - 1)) / (visibleCount - 1));
-      visibleIndexes.add(maskableIndexes[position]);
+      visibleIndexes.add(maskableIndexes[position]!);
     }
   }
 
@@ -36,7 +36,8 @@ export function emailMaskRatio(email: string, maskedEmail: string): number {
   let maskedCount = 0;
 
   for (let index = 0; index < originalCharacters.length; index += 1) {
-    if (!isMaskableCharacter(originalCharacters[index])) continue;
+    const originalCharacter = originalCharacters[index]!;
+    if (!isMaskableCharacter(originalCharacter)) continue;
     maskableCount += 1;
     if (maskedCharacters[index] === "*") maskedCount += 1;
   }
