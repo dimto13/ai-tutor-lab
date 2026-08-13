@@ -42,9 +42,9 @@ async function expectSpotlightAround(spotlight: Locator, target: Locator): Promi
     .toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
 }
 
-async function runTerminalCommand(page: Page, command: string): Promise<void> {
+async function runTerminalCommand(page: Page, ...parts: string[]): Promise<void> {
   const input = page.getByLabel("Terminal-Eingabe");
-  await input.fill(command);
+  await input.fill(parts.join(" "));
   await input.press("Enter");
 }
 
@@ -56,63 +56,71 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
 
   const spotlight = page.getByTestId("highlight-frame");
   const terminalInput = page.locator('[data-highlight="vscode.panel.terminal.input"]');
-  const secondarySideBar = page.locator('[data-highlight="vscode.secondarySideBar"]');
   const editorHost = page.locator('[data-highlight="vscode.editor"]');
 
   await expectGuidedStep(page, 1, "Aktuellen Branch prüfen");
   await expectSpotlightAround(spotlight, terminalInput);
-  await runTerminalCommand(page, "git branch --show-current");
+  await runTerminalCommand(page, "git", "branch", "--show-current");
 
   await expectGuidedStep(page, 2, "Working Tree vor der Änderung prüfen");
-  await runTerminalCommand(page, "git status");
+  await runTerminalCommand(page, "git", "status");
   await expect(page.getByText("notes.txt", { exact: false }).last()).toBeVisible();
 
   await expectGuidedStep(page, 3, "Eigenen Feature-Branch anlegen");
-  await runTerminalCommand(page, "git switch -c feature/addition");
+  await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
 
-  await expectGuidedStep(page, 4, "Copilot mit Aufgaben- und Dateikontext einsetzen");
-  await expectSpotlightAround(spotlight, secondarySideBar);
+  await expectGuidedStep(page, 4, "Copilot Chat öffnen");
+  const chatToggle = page.locator('[data-highlight="copilot.chat.toggle"]');
+  await expectSpotlightAround(spotlight, chatToggle);
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  await expectSpotlightAround(spotlight, secondarySideBar);
+
+  await expectGuidedStep(page, 5, "Relevante Datei als Kontext anhängen");
+  const addContext = page.locator('[data-highlight="copilot.chat.addContext"]');
+  await expectSpotlightAround(spotlight, addContext);
   await page.getByRole("button", { name: "Kontext hinzufügen", exact: true }).click();
   await page.getByRole("button", { name: "Datei anhängen: calculator.py", exact: true }).click();
   await expect(page.locator('[data-highlight="copilot.chat.contextAttachment"]')).toContainText(
     "calculator.py",
   );
+
+  await expectGuidedStep(page, 6, "Auftrag an Copilot formulieren");
+  const promptTarget = page.locator('[data-highlight="copilot.chat.prompt"]');
+  await expectSpotlightAround(spotlight, promptTarget);
   const prompt = page.getByPlaceholder("Ask Copilot...");
   await prompt.fill("Implementiere bitte die Addition für zwei Zahlen in calculator.py.");
   await prompt.press("Enter");
 
-  await expectGuidedStep(page, 5, "KI-Vorschlag im Editor prüfen und übernehmen");
+  await expectGuidedStep(page, 7, "KI-Vorschlag im Editor prüfen und übernehmen");
   await expectSpotlightAround(spotlight, editorHost);
   await page.getByRole("button", { name: "Copilot Chat schließen" }).click();
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.focus();
   await editor.press("Tab");
 
-  await expectGuidedStep(page, 6, "Datei speichern");
+  await expectGuidedStep(page, 8, "Datei speichern");
   await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
 
-  await expectGuidedStep(page, 7, "Working-Tree-Diff reviewen");
-  await runTerminalCommand(page, "git diff");
-  await expect(page.getByText("diff --git a/calculator.py b/calculator.py", { exact: true })).toBeVisible();
+  await expectGuidedStep(page, 9, "Working-Tree-Diff reviewen");
+  await runTerminalCommand(page, "git", "diff");
+  await expect(
+    page.getByText("diff --git a/calculator.py b/calculator.py", { exact: true }),
+  ).toBeVisible();
 
-  await expectGuidedStep(page, 8, "Änderung ausführen und Prüfergebnis interpretieren");
-  await runTerminalCommand(page, "python calculator.py");
+  await expectGuidedStep(page, 10, "Änderung ausführen und Prüfergebnis interpretieren");
+  await runTerminalCommand(page, "python", "calculator.py");
   await expect(page.getByText("CHECK: addition ready", { exact: true })).toBeVisible();
 
-  await expectGuidedStep(page, 9, "Nur die eigene Datei stagen");
-  await runTerminalCommand(page, "git add calculator.py");
+  await expectGuidedStep(page, 11, "Nur die eigene Datei stagen");
+  await runTerminalCommand(page, "git", "add", "calculator.py");
 
-  await expectGuidedStep(page, 10, "Gestagten Diff kontrollieren");
-  await runTerminalCommand(page, "git diff --staged");
+  await expectGuidedStep(page, 12, "Klaren Commit erstellen");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: implement addition"');
+  await expect(
+    page.getByText(/\[feature\/addition [0-9a-f]+\] feat: implement addition/),
+  ).toBeVisible();
 
-  await expectGuidedStep(page, 11, "Klaren Commit erstellen");
-  await runTerminalCommand(page, 'git commit -m "feat: implement addition"');
-  await expect(page.getByText(/\[feature\/addition [0-9a-f]+\] feat: implement addition/)).toBeVisible();
-
-  await expectGuidedStep(page, 12, "Handoff-Zustand prüfen");
-  await runTerminalCommand(page, "git status");
+  await expectGuidedStep(page, 13, "Handoff-Zustand prüfen");
+  await runTerminalCommand(page, "git", "status");
   await expect(page.getByText("notes.txt", { exact: true }).last()).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
