@@ -110,6 +110,7 @@
         "kind": "state",
         "selector": "verification.lastResult",
         "match": {
+          "command": "python calculator.py",
           "ok": true,
           "branch": "feature/addition"
         }
@@ -134,6 +135,16 @@
         "kind": "state",
         "selector": "scm.lastCommit.message",
         "includesAny": ["addition", "addieren", "calculator"]
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.files",
+        "includes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.fileCount",
+        "equals": 1
       },
       {
         "kind": "any",
@@ -231,6 +242,28 @@
         ]
       },
       "message": "calculator.py ist noch nicht für den Commit vorgemerkt. Stage gezielt nur calculator.py und kontrolliere die Auswahl, bevor du erneut committest."
+    },
+    {
+      "eventTypes": ["scm.committed"],
+      "when": {
+        "kind": "not",
+        "of": {
+          "kind": "all",
+          "of": [
+            {
+              "kind": "state",
+              "selector": "scm.lastCommit.files",
+              "includes": "calculator.py"
+            },
+            {
+              "kind": "state",
+              "selector": "scm.lastCommit.fileCount",
+              "equals": 1
+            }
+          ]
+        }
+      },
+      "message": "Der letzte Commit enthält nicht ausschließlich calculator.py. Stelle sicher, dass genau diese Datei im qualifizierenden Commit enthalten ist und fremde Änderungen lokal bleiben."
     },
     {
       "eventTypes": ["scm.committed"],
