@@ -34,9 +34,7 @@ test("authenticated shell persists account settings and protects the email displ
   await expect(recommendation).toContainText("Visual Studio Code – Grundlagen · Guided");
 
   await dialog.getByRole("radio", { name: /Erfahren/ }).check();
-  await expect(recommendation).toContainText(
-    "Mit KI recherchieren und Quellen prüfen · Challenge",
-  );
+  await expect(recommendation).toContainText("Mit KI recherchieren und Quellen prüfen · Challenge");
 
   const nameInput = dialog.getByRole("textbox", { name: "Name" });
   await nameInput.fill("Tobias Test");
