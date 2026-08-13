@@ -68,6 +68,9 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
 
   await expectGuidedStep(page, 3, "Eigenen Feature-Branch anlegen");
   await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
+  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText(
+    "feature/addition",
+  );
 
   await expectGuidedStep(page, 4, "Copilot Chat öffnen");
   const chatToggle = page.locator('[data-highlight="copilot.chat.toggle"]');
