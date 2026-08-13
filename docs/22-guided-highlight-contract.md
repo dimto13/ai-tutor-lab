@@ -32,7 +32,7 @@ Im Szenario `git-basics` kombinierte `step_4` mehrere unterschiedliche Copilot-H
 
 Der markierte Target war `copilot.chat.toggle`. Ein Klick darauf emittiert `copilot.chat.opened`; abgeschlossen wurde der Schritt jedoch erst durch `ai.suggestion.accepted`. Das Overlay folgte korrekt dem weiterhin aktiven Schritt und blieb deshalb auf dem statischen Einstiegstarget stehen. Der Fehler lag damit nicht in der Overlay-Geometrie, sondern im nicht deckungsgleichen Content-Vertrag aus Handlung, Validator und Highlight.
 
-Der reparierte Schritt behandelt den Inline-Vorschlag als eigene Editor-Handlung und markiert `copilot.inline.accept`. Für den späteren zusammengesetzten Chat-Ablauf wird die stabile `vscode.secondarySideBar` markiert, weil sowohl der Copilot-Einstieg als auch das Prompt-Feld in diesem Arbeitsbereich liegen.
+Der reparierte Schritt behandelt den Inline-Vorschlag als eigene Editor-Handlung und markiert den stabilen Host-Arbeitsbereich `vscode.editor`. Dort sind sowohl der vorgeschlagene Code als auch der Hinweis `Tab – annehmen` sichtbar. Der feinere Copilot-Hinweis wird per Portal in den Host-Editor gerendert und ist deshalb kein geeigneter Cross-Container-Spotlight-Anker. Für den späteren zusammengesetzten Chat-Ablauf wird entsprechend die stabile `vscode.secondarySideBar` markiert, weil Copilot-Einstieg, Kontext und Prompt in diesem Arbeitsbereich liegen.
 
 ## Fallback
 
