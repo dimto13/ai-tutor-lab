@@ -32,10 +32,7 @@ interface WorkflowRuntimeState {
   terminalLastResult: TerminalLastResult | null;
 }
 
-interface WorkflowRuntimeSnapshot {
-  schemaVersion: 1;
-  runtimeId: "vscode-simulator";
-  base: unknown;
+interface WorkflowRuntimeSnapshot extends BaseVscodeRuntimeState {
   workflow: WorkflowRuntimeState;
 }
 
@@ -121,20 +118,26 @@ function isTerminalLastResult(value: unknown): value is TerminalLastResult {
   );
 }
 
+function isWorkflowState(value: unknown): value is WorkflowRuntimeState {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Partial<WorkflowRuntimeState>;
+  return (
+    typeof candidate.branch === "string" &&
+    (candidate.terminalLastResult === null || isTerminalLastResult(candidate.terminalLastResult))
+  );
+}
+
 function isWorkflowSnapshot(value: unknown): value is WorkflowRuntimeSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const candidate = value as Partial<WorkflowRuntimeSnapshot>;
-  const workflow = candidate.workflow;
-  if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) return false;
-  const workflowCandidate = workflow as Partial<WorkflowRuntimeState>;
-  return (
-    candidate.schemaVersion === 1 &&
-    candidate.runtimeId === "vscode-simulator" &&
-    Object.prototype.hasOwnProperty.call(candidate, "base") &&
-    typeof workflowCandidate.branch === "string" &&
-    (workflowCandidate.terminalLastResult === null ||
-      isTerminalLastResult(workflowCandidate.terminalLastResult))
-  );
+  const candidate = value as { workflow?: unknown };
+  return isWorkflowState(candidate.workflow);
+}
+
+function baseSnapshotFromWorkflowSnapshot(
+  snapshot: WorkflowRuntimeSnapshot,
+): BaseVscodeRuntimeState {
+  const { workflow: _workflow, ...baseSnapshot } = snapshot;
+  return baseSnapshot;
 }
 
 export const vscodeRuntime = {
@@ -209,10 +212,9 @@ export const vscodeRuntime = {
   },
 
   async snapshot(): Promise<WorkflowRuntimeSnapshot> {
+    const baseSnapshot = (await baseVscodeRuntime.snapshot()) as BaseVscodeRuntimeState;
     return {
-      schemaVersion: 1,
-      runtimeId: "vscode-simulator",
-      base: await baseVscodeRuntime.snapshot(),
+      ...baseSnapshot,
       workflow: cloneWorkflowState(workflowState),
     };
   },
@@ -221,7 +223,7 @@ export const vscodeRuntime = {
     if (isWorkflowSnapshot(snapshot)) {
       workflowState = cloneWorkflowState(snapshot.workflow);
       setTerminalBranchContext(workflowState.branch);
-      await baseVscodeRuntime.restore(snapshot.base);
+      await baseVscodeRuntime.restore(baseSnapshotFromWorkflowSnapshot(snapshot));
       return;
     }
 
