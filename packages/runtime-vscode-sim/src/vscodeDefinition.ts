@@ -126,6 +126,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "terminal.lines",
     "terminal.cwd",
     "terminal.lastResult",
+    "verification.lastResult",
     "scm.branch",
     "scm.staged",
     "scm.stagedFiles",
