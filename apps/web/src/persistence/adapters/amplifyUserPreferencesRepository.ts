@@ -82,6 +82,7 @@ function preferencesRecord(
 export function createAmplifyUserPreferencesRepository(): UserPreferencesRepository {
   const client = generateClient<Schema>();
   type SaveArgs = Parameters<typeof client.mutations.saveUserPreferences>[0];
+  type AccessibilityArg = Exclude<SaveArgs["accessibility"], undefined>;
 
   const repository: UserPreferencesRepository = {
     async load(subject) {
@@ -96,7 +97,7 @@ export function createAmplifyUserPreferencesRepository(): UserPreferencesReposit
         language: value.language,
         preferredTrainingMode: value.preferredTrainingMode,
         weeklyGoalMinutes: value.weeklyGoalMinutes,
-        accessibility: value.accessibility as SaveArgs["accessibility"],
+        accessibility: value.accessibility as AccessibilityArg,
         selfAssessedAiLevel: value.selfAssessedAiLevel,
         ...(expectedRevision === null ? {} : { expectedRevision }),
       };
