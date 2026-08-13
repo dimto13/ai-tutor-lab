@@ -116,7 +116,7 @@
       "helpLevels": [
         "Der Vorschlag erscheint halbtransparent direkt im Editor von hello.py.",
         "Prüfe den Text und fokussiere anschließend den Editor. Mit Tab übernimmst du den Vorschlag.",
-        "Der Hinweis Tab – annehmen am Inline-Vorschlag wird hervorgehoben. Klicke in den Editor und drücke Tab. Wenn der Schritt nicht weitergeht, prüfe zuerst, ob hello.py noch aktiv ist und der Vorschlag sichtbar ist."
+        "Der Editor wird als Arbeitsbereich hervorgehoben. Prüfe dort den sichtbaren Hinweis Tab – annehmen, klicke in den Editor und drücke Tab. Wenn der Schritt nicht weitergeht, prüfe zuerst, ob hello.py noch aktiv ist und der Vorschlag sichtbar ist."
       ],
       "expectedEvent": "ai.suggestion.accepted",
       "validation": {
@@ -129,7 +129,7 @@
           "text": "Hello from Copilot"
         }
       },
-      "highlightTarget": "copilot.inline.accept",
+      "highlightTarget": "vscode.editor",
       "highlightTooltip": "Prüfe den Inline-Vorschlag im Editor und übernimm ihn mit Tab.",
       "onFailure": {
         "message": "Die Übernahme wurde erkannt, entspricht aber noch nicht dem erwarteten hello.py-Vorschlag. Prüfe die aktive Datei und den Editorinhalt, bevor du es erneut versuchst.",
