@@ -48,6 +48,35 @@ async function runTerminalCommand(page: Page, ...parts: string[]): Promise<void>
   await input.press("Enter");
 }
 
+test("Workflow-Kachel bietet Explore, Guided und Challenge mit sichtbaren Voraussetzungen", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const heading = page.getByRole("heading", {
+    name: "VS Code, Git & GitHub Copilot – Zusammenspiel",
+  });
+  await expect(heading).toBeVisible();
+  const card = heading.locator("xpath=ancestor::article");
+  await expect(card.getByText("Workflow · 3 Modi")).toBeVisible();
+  await expect(card.getByText(/Voraussetzung.*VS Code.*Git.*GitHub Copilot/)).toBeVisible();
+  await expect(card.getByRole("link", { name: /Explore/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Guided/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Challenge/ })).toBeVisible();
+});
+
+test("Explore: integrierte Umgebung bleibt frei erkundbar und zeigt keine Guided-Navigation", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.explore");
+  await waitUntilReady(page);
+  await expect(
+    page.getByRole("heading", { name: "VS Code, Git & GitHub Copilot – Zusammenspiel erkunden" }),
+  ).toBeVisible();
+  await expect(page.locator('[data-highlight="vscode.editor"]')).toBeVisible();
+  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText("main");
+  await expect(page.getByRole("button", { name: /Weiter/i })).toHaveCount(0);
+});
+
 test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zustand", async ({
   page,
 }) => {
@@ -128,4 +157,38 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(spotlight).toHaveCount(0);
+});
+
+test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeicherte Änderung", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.challenge");
+  await waitUntilReady(page);
+  await expect(page.getByRole("button", { name: /Weiter/i })).toHaveCount(0);
+
+  await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
+  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText(
+    "feature/addition",
+  );
+
+  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
+    "return a + b",
+  );
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+
+  await runTerminalCommand(page, "python", "calculator.py");
+  await expect(page.getByText(/calculator\.py enthält noch ungespeicherte Änderungen/)).toBeVisible();
+
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+  await runTerminalCommand(page, "python", "calculator.py");
+  await expect(page.getByText("CHECK: addition ready", { exact: true })).toBeVisible();
+
+  await runTerminalCommand(page, "git", "add", "calculator.py");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await runTerminalCommand(page, "git", "status");
+  await expect(page.getByText("notes.txt", { exact: true }).last()).toBeVisible();
 });
