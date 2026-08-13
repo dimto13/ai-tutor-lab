@@ -89,7 +89,7 @@
       "helpLevels": [
         "Nutze die bereits geöffnete Terminal-Eingabe unter dem Editor.",
         "Verwende die in den Git-Grundlagen gelernte Anzeige des aktuell aktiven Branches.",
-        "Die Ausgabe muss zeigen, dass der Ausgangszweig main aktiv ist."
+        "Nutze die Terminal-Eingabe, führe dort die bekannte Branch-Anzeige aus und prüfe, dass die Ausgabe main als aktiven Ausgangszweig zeigt."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -122,7 +122,7 @@
       "helpLevels": [
         "Git kann dir den aktuellen Working Tree mit offenen Änderungen zeigen.",
         "Nutze die aus den Git-Grundlagen bekannte Statusanzeige und lies die Ausgabe vollständig.",
-        "Die Ausgabe muss den Branch main zeigen; im Runtime-Zustand ist notes.txt bereits als Änderung vorhanden."
+        "Nutze die bekannte Git-Statusanzeige im Terminal, lies die Ausgabe vollständig und identifiziere notes.txt als bereits vorhandene Änderung auf main."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -196,7 +196,7 @@
       "helpLevels": [
         "Nutze im geöffneten Chat die Aktion Kontext hinzufügen.",
         "Wähle anschließend Datei anhängen: calculator.py.",
-        "Hänge calculator.py an; notes.txt gehört nicht in den KI-Kontext."
+        "Nutze im geöffneten Copilot Chat die Aktion Kontext hinzufügen, wähle calculator.py aus und prüfe, dass nur diese Datei als Kontext angehängt ist; notes.txt bleibt außen vor."
       ],
       "expectedEvent": "copilot.context.changed",
       "validation": {
@@ -276,7 +276,7 @@
       "helpLevels": [
         "Achte auf den Punkt im Tab von calculator.py: Er kennzeichnet ungespeicherte Änderungen.",
         "Nutze einen der in den VS-Code-Grundlagen geübten Speicherwege.",
-        "Der Dirty-Punkt von calculator.py muss danach verschwinden."
+        "Nutze einen bekannten Speicherweg in VS Code, speichere calculator.py und prüfe anschließend, dass der Dirty-Punkt am Tab verschwunden ist."
       ],
       "expectedEvent": "file.saved",
       "validation": {
@@ -309,7 +309,7 @@
       "helpLevels": [
         "Nutze wieder das integrierte Terminal unter dem Editor.",
         "Verwende die Diff-Anzeige aus den Git-Grundlagen und prüfe die Dateien getrennt.",
-        "Der ausgegebene Patch muss calculator.py enthalten; notes.txt bleibt eine separate vorhandene Änderung."
+        "Nutze die bekannte Git-Diff-Anzeige im Terminal, lies den Patch für calculator.py und vergleiche ihn mit der separat vorhandenen Änderung in notes.txt."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -342,7 +342,7 @@
       "helpLevels": [
         "Führe die geänderte Datei direkt mit Python im Terminal aus.",
         "Lies sowohl die Ausgabe als auch mögliche Fehlermeldungen.",
-        "Die Ausführung muss mit CHECK: addition ready erfolgreich enden."
+        "Führe calculator.py mit Python im Terminal aus, lies die Ausgabe vollständig und prüfe, dass CHECK: addition ready ohne Fehler erscheint."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -382,7 +382,7 @@
       "helpLevels": [
         "Vermeide eine Sammelaktion über alle geänderten Dateien.",
         "Nutze die aus den Git-Grundlagen bekannte Aktion zum gezielten Staging einer einzelnen Datei.",
-        "Prüfe danach: calculator.py ist gestaged, notes.txt nicht."
+        "Nutze die bekannte selektive Staging-Aktion für calculator.py und prüfe danach im Git-Zustand, dass calculator.py gestaged ist und notes.txt ungestaged bleibt."
       ],
       "expectedEvent": "scm.staged",
       "validation": {
@@ -417,7 +417,7 @@
       "helpLevels": [
         "Committe nur den bereits kontrollierten Staging-Bereich.",
         "Nutze die Nachricht feat: implement addition für diesen kleinen fachlichen Auftrag.",
-        "Nach dem Commit darf calculator.py nicht mehr zu den offenen Änderungen gehören."
+        "Nutze die Git-Commit-Aktion mit der Nachricht feat: implement addition und prüfe danach, dass calculator.py nicht mehr zu den offenen Änderungen gehört."
       ],
       "expectedEvent": "scm.committed",
       "validation": {
@@ -451,7 +451,7 @@
       "helpLevels": [
         "Prüfe denselben Working-Tree-Zustand wie am Anfang noch einmal.",
         "Nutze die Git-Statusanzeige und vergleiche die verbliebenen Änderungen mit dem Ausgangszustand.",
-        "Die Ausgabe muss feature/addition zeigen; notes.txt bleibt lokal geändert, calculator.py nicht."
+        "Nutze die Git-Statusanzeige erneut, lies den Endzustand vollständig und prüfe: feature/addition ist aktiv, notes.txt bleibt lokal geändert und calculator.py ist nicht mehr offen."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
