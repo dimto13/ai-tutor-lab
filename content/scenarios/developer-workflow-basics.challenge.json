@@ -111,6 +111,9 @@
         "selector": "verification.lastResult",
         "match": {
           "command": "python calculator.py",
+          "target": "calculator.py",
+          "output": "CHECK: addition ready",
+          "saved": true,
           "ok": true,
           "branch": "feature/addition"
         }
