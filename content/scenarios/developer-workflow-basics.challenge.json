@@ -157,6 +157,77 @@
       }
     ]
   },
+  "challengeDiagnostics": [
+    {
+      "eventTypes": ["terminal.command.executed", "scm.staged", "scm.committed"],
+      "when": {
+        "kind": "state",
+        "selector": "editor.dirtyFiles",
+        "includes": "calculator.py"
+      },
+      "message": "calculator.py enthält noch ungespeicherte Änderungen. Speichere die Datei, bevor du Prüfung, Staging oder Commit als belastbaren Endzustand wertest."
+    },
+    {
+      "eventTypes": ["terminal.command.executed"],
+      "when": {
+        "kind": "state",
+        "selector": "verification.lastResult",
+        "match": {
+          "ok": false
+        }
+      },
+      "message": "Die letzte Prüfung ist fehlgeschlagen. Korrigiere calculator.py, speichere sie und führe die Prüfung erneut erfolgreich aus."
+    },
+    {
+      "eventTypes": ["file.saved", "scm.staged"],
+      "when": {
+        "kind": "not",
+        "of": {
+          "kind": "state",
+          "selector": "filesystem.contents",
+          "match": {
+            "calculator.py": "# TODO: add(a, b) implementieren\n\ndef add(a, b):\n    return a + b\n\nprint(\"CHECK: addition ready\")\n"
+          }
+        }
+      },
+      "message": "Der Inhalt von calculator.py erfüllt das Work Item noch nicht. Prüfe insbesondere die add(a, b)-Implementierung und die erwartete CHECK-Ausgabe."
+    },
+    {
+      "eventTypes": ["scm.staged"],
+      "when": {
+        "kind": "state",
+        "selector": "scm.stagedFiles",
+        "includes": "notes.txt"
+      },
+      "message": "notes.txt wurde mitgestaged, obwohl diese Änderung nicht zu deinem Auftrag gehört. Entferne notes.txt aus dem Staging-Bereich und behalte nur calculator.py für deinen Commit."
+    },
+    {
+      "eventTypes": ["terminal.command.executed"],
+      "when": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "terminal.command.executed",
+            "contains": {
+              "command": "git commit"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "scm.changedFiles",
+            "includes": "calculator.py"
+          },
+          {
+            "kind": "state",
+            "selector": "scm.stagedFiles",
+            "excludes": "calculator.py"
+          }
+        ]
+      },
+      "message": "calculator.py ist noch nicht für den Commit vorgemerkt. Stage gezielt nur calculator.py und kontrolliere die Auswahl, bevor du erneut committest."
+    }
+  ],
   "solutionComparison": [
     "Der Auftrag wurde auf einem eigenen Branch feature/addition statt direkt auf main bearbeitet.",
     "Copilot wurde kontrolliert eingesetzt: entweder über den geprüften Inline-Vorschlag oder mit calculator.py als explizitem Chat-Kontext.",
@@ -174,7 +245,7 @@
       "helpLevels": [
         "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
         "Prüfe Branch und Working Tree, begrenze Copilot auf den relevanten Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
-        "Führe den Auftrag jetzt bis zum Endzustand aus: Wechsle auf feature/addition, stelle calculator.py fertig und speichere sie, führe eine erfolgreiche Prüfung aus und committe nur calculator.py; kontrolliere danach, dass notes.txt unverändert lokal und unstaged übrig bleibt."
+        "Nutze Branch-, Status-, Diff- und Prüfaktionen, kontrolliere den Copilot-Kontext und stelle anschließend den geforderten Handoff-Endzustand her: calculator.py abgeschlossen, notes.txt unverändert lokal und unstaged."
       ],
       "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
     }
