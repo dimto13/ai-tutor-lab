@@ -132,6 +132,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "scm.stagedFiles",
     "scm.changedFiles",
     "scm.commits",
+    "scm.lastCommit.message",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 
