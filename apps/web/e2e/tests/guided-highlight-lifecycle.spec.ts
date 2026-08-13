@@ -70,7 +70,7 @@ test("Explore: integrierte Umgebung bleibt frei erkundbar und zeigt keine Guided
   await page.goto("/training/developer-workflow-basics.explore");
   await waitUntilReady(page);
   await expect(
-    page.getByRole("heading", { name: "VS Code, Git & GitHub Copilot – Zusammenspiel erkunden" }),
+    page.getByText("VS Code, Git & GitHub Copilot – Zusammenspiel erkunden", { exact: true }).first(),
   ).toBeVisible();
   await expect(page.locator('[data-highlight="vscode.editor"]')).toBeVisible();
   await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText("main");
@@ -185,7 +185,7 @@ test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeich
 
   await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
   await runTerminalCommand(page, "python", "calculator.py");
-  await expect(page.getByText("CHECK: addition ready", { exact: true })).toBeVisible();
+  await expect(page.getByText("CHECK: addition ready", { exact: true }).last()).toBeVisible();
 
   await runTerminalCommand(page, "git", "add", "calculator.py");
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
