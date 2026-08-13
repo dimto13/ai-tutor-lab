@@ -52,6 +52,7 @@ export function request(ctx) {
     preferredTrainingMode: ctx.args.preferredTrainingMode ?? null,
     weeklyGoalMinutes: ctx.args.weeklyGoalMinutes ?? null,
     accessibility: ctx.args.accessibility ?? null,
+    selfAssessedAiLevel: ctx.args.selfAssessedAiLevel ?? null,
     preferencesVersion: revision,
     stateUpdatedAt: util.time.nowEpochMilliSeconds(),
   };
@@ -80,6 +81,7 @@ export function response(ctx) {
     preferredTrainingMode: ctx.result.preferredTrainingMode,
     weeklyGoalMinutes: ctx.result.weeklyGoalMinutes,
     accessibility: ctx.result.accessibility,
+    selfAssessedAiLevel: ctx.result.selfAssessedAiLevel,
     revision: ctx.result.preferencesVersion,
     updatedAt: ctx.result.stateUpdatedAt,
   };
