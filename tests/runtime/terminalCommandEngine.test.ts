@@ -204,6 +204,34 @@ test("terminal engine removes a staged tracked file when git add restores the co
   assert.match(status.output.join("\n"), /nothing to commit, working tree clean/);
 });
 
+test("terminal engine can unstage one file without discarding its working-tree change", () => {
+  let context: TerminalCommandContext = {
+    ...baseContext(),
+    contents: {
+      ...baseContext().contents,
+      "README.md": "# Changed\n",
+    },
+    changedFiles: ["README.md", "hello.py"],
+  };
+
+  const addAll = executeTerminalCommand("git add .", context);
+  assert.equal(addAll.exitCode, 0);
+  assert.deepEqual(addAll.stagedFiles, ["README.md", "hello.py"]);
+  context = nextContext(context, addAll);
+
+  const restore = executeTerminalCommand("git restore --staged README.md", context);
+  assert.equal(restore.exitCode, 0);
+  assert.deepEqual(restore.stagedFiles, ["hello.py"]);
+  assert.deepEqual(restore.stagedFilesChanged, ["README.md"]);
+  assert.equal(restore.stagedContents["README.md"], undefined);
+  assert.deepEqual(restore.changedFiles, ["README.md", "hello.py"]);
+  context = nextContext(context, restore);
+
+  const status = executeTerminalCommand("git status", context).output.join("\n");
+  assert.match(status, /Changes to be committed:[\s\S]*hello\.py/);
+  assert.match(status, /Changes not staged for commit:[\s\S]*README\.md/);
+});
+
 test("terminal engine returns realistic, helpful errors for invalid commands", () => {
   const context = baseContext();
 
