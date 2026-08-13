@@ -109,14 +109,14 @@
     },
     {
       "id": "step_4",
-      "title": "Ersten Code von Copilot erzeugen und prüfen",
-      "description": "hello.py ist eine Python-Datei, aber du musst den ersten Code nicht selbst erfinden oder abtippen. Copilot erzeugt einen vorbereiteten Inline-Vorschlag, den du vor dem Übernehmen prüfst.",
-      "instruction": "Öffne Copilot, erzeuge den Inline-Vorschlag für hello.py und nimm ihn nach der Sichtprüfung an.",
-      "why": "So lernst du einen realistischen KI-Workflow: Ziel und Kontext festlegen, Vorschlag erzeugen lassen, Ergebnis prüfen und erst danach übernehmen.",
+      "title": "Inline-Vorschlag prüfen und übernehmen",
+      "description": "Für die leere hello.py stellt Copilot direkt im Editor einen vorbereiteten Inline-Vorschlag bereit. Du musst dafür Copilot Chat nicht öffnen: Prüfe den vorgeschlagenen Code dort, wo er später in der Datei stehen würde.",
+      "instruction": "Prüfe den sichtbaren Inline-Vorschlag print(\"Hello from Copilot\") und übernimm ihn bewusst mit Tab.",
+      "why": "Inline-Vorschläge und Copilot Chat sind unterschiedliche Arbeitsformen. Hier lernst du den direkten Editor-Workflow: Vorschlag sehen, Inhalt prüfen und erst danach übernehmen.",
       "helpLevels": [
-        "Öffne Copilot über den Button rechts oberhalb des Editors.",
-        "Klicke im Bereich Inline-Vorschlag zuerst auf Vorschlag erzeugen und prüfe den angezeigten Text.",
-        "Der Copilot-Button wird hervorgehoben. Öffne Copilot, klicke auf Vorschlag erzeugen, prüfe print(\"Hello from Copilot\") und klicke anschließend auf Annehmen."
+        "Der Vorschlag erscheint halbtransparent direkt im Editor von hello.py.",
+        "Prüfe den Text und fokussiere anschließend den Editor. Mit Tab übernimmst du den Vorschlag.",
+        "Der Hinweis Tab – annehmen am Inline-Vorschlag wird hervorgehoben. Klicke in den Editor und drücke Tab. Wenn der Schritt nicht weitergeht, prüfe zuerst, ob hello.py noch aktiv ist und der Vorschlag sichtbar ist."
       ],
       "expectedEvent": "ai.suggestion.accepted",
       "validation": {
@@ -129,9 +129,13 @@
           "text": "Hello from Copilot"
         }
       },
-      "highlightTarget": "copilot.chat.toggle",
-      "highlightTooltip": "Öffne Copilot und erzeuge den vorbereiteten Inline-Vorschlag.",
-      "successMessage": "Der erste Code wurde von Copilot erzeugt, geprüft und bewusst übernommen."
+      "highlightTarget": "copilot.inline.accept",
+      "highlightTooltip": "Prüfe den Inline-Vorschlag im Editor und übernimm ihn mit Tab.",
+      "onFailure": {
+        "message": "Die Übernahme wurde erkannt, entspricht aber noch nicht dem erwarteten hello.py-Vorschlag. Prüfe die aktive Datei und den Editorinhalt, bevor du es erneut versuchst.",
+        "markTarget": "vscode.editor"
+      },
+      "successMessage": "Der erste Code wurde direkt im Editor geprüft und bewusst übernommen."
     },
     {
       "id": "step_5",
@@ -205,13 +209,13 @@
     {
       "id": "step_8",
       "title": "GitHub Copilot einsetzen",
-      "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor.",
-      "instruction": "Öffne Copilot Chat und bitte in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert.",
+      "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor. Der gesamte Copilot-Arbeitsbereich in der Secondary Side Bar bleibt markiert, während du vom Öffnen des Chats zum Prompt wechselst.",
+      "instruction": "Öffne Copilot Chat in der Secondary Side Bar und bitte in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert.",
       "why": "Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Der Chat übernimmt den geöffneten Dateikontext, während VS Code selbst unabhängig davon weiter funktioniert.",
       "helpLevels": [
-        "Der Copilot-Chat ist im Editorbereich erreichbar.",
-        "Klicke auf Copilot und beschreibe die gewünschte Addition zweier Zahlen in eigenen Worten.",
-        "Der Copilot-Button wird hervorgehoben. Öffne ihn, bitte im Prompt-Feld um eine Python-Funktion für die Addition zweier Zahlen und drücke Enter. Die genaue Formulierung ist frei."
+        "Arbeite in der Secondary Side Bar rechts vom Editor: Dort öffnest du Copilot Chat und formulierst anschließend die Anfrage.",
+        "Klicke auf Copilot und beschreibe im Feld Ask Copilot... die gewünschte Addition zweier Zahlen in eigenen Worten.",
+        "Die Secondary Side Bar bleibt als Arbeitsbereich hervorgehoben. Öffne dort Copilot, bitte im Prompt-Feld um eine Python-Funktion für die Addition zweier Zahlen und drücke Enter. Wenn der Chat bereits offen ist, gehe direkt zum Prompt-Feld."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
@@ -221,8 +225,12 @@
           "activeFile": "hello.py"
         }
       },
-      "highlightTarget": "copilot.chat.toggle",
-      "highlightTooltip": "GitHub Copilot als integriertes, aber eigenständiges Produkt öffnen.",
+      "highlightTarget": "vscode.secondarySideBar",
+      "highlightTooltip": "Nutze die Secondary Side Bar für Copilot Chat und den anschließenden Prompt.",
+      "onFailure": {
+        "message": "Copilot hat die Anfrage erkannt, aber nicht im erwarteten hello.py-Kontext. Öffne hello.py und sende die Anfrage im Copilot-Prompt erneut.",
+        "markTarget": "copilot.chat.prompt"
+      },
       "successMessage": "Copilot hat deine frei formulierte Anfrage im aktuellen Dateikontext verarbeitet."
     }
   ],
