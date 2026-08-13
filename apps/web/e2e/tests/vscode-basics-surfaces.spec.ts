@@ -5,7 +5,7 @@ async function openExplore(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
-test("VS Code Grundlagen: Command Palette startet passende Oberflächenbefehle", async ({
+test("VS Code Grundlagen: Command Palette filtert und startet Befehle per Tastatur", async ({
   page,
 }) => {
   await openExplore(page);
@@ -14,11 +14,14 @@ test("VS Code Grundlagen: Command Palette startet passende Oberflächenbefehle",
   await page.getByRole("menuitem", { name: /Command Palette/ }).click();
 
   const palette = page.getByRole("dialog", { name: "Command Palette" });
+  const input = page.getByLabel("Command Palette-Eingabe");
   await expect(palette).toBeVisible();
-  await expect(page.getByLabel("Command Palette-Eingabe")).toHaveValue(">");
+  await expect(input).toHaveValue(">");
   await expect(palette.getByText(/sucht und startet VS-Code-Befehle/)).toBeVisible();
 
-  await palette.getByRole("button", { name: "Search: Show Search" }).click();
+  await input.fill(">search");
+  await expect(palette.getByRole("option", { name: "Search: Show Search" })).toBeVisible();
+  await input.press("Enter");
   await expect(page.getByText("Volltextsuche über den aktuellen Arbeitskontext.")).toBeVisible();
 });
 
@@ -43,4 +46,25 @@ test("VS Code Grundlagen: Settings und Extensions bleiben fachlich getrennt", as
   await page.getByRole("menuitem", { name: "Preferences", exact: true }).click();
   await page.getByRole("menuitem", { name: "Extensions", exact: true }).click();
   await expect(page.getByText("GitHub Copilot", { exact: true })).toBeVisible();
+});
+
+test("VS Code Grundlagen: neue Explorer-Datei wird erst nach Bearbeitung als ungespeichert markiert", async ({
+  page,
+}) => {
+  await page.goto("/training/vscode-basics.challenge");
+  await expect(page.getByRole("status")).toHaveText("Training bereit");
+
+  await page.getByRole("button", { name: "File", exact: true }).click();
+  await page.getByRole("menuitem", { name: /Open Folder\.\.\./ }).click();
+  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
+  await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
+
+  const dirtyStatus = page.getByRole("status", {
+    name: "challenge.txt: ungespeicherte Änderungen",
+  });
+  await expect(dirtyStatus).toHaveCount(0);
+
+  await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("noch nicht fertig");
+  await expect(dirtyStatus).toBeVisible();
 });
