@@ -179,7 +179,9 @@ test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeich
   await editor.press("Tab");
 
   await runTerminalCommand(page, "python", "calculator.py");
-  await expect(page.getByText(/calculator\.py enthält noch ungespeicherte Änderungen/)).toBeVisible();
+  await expect(
+    page.getByText(/calculator\.py enthält noch ungespeicherte Änderungen/),
+  ).toBeVisible();
 
   await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
   await runTerminalCommand(page, "python", "calculator.py");
