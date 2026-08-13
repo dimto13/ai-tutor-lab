@@ -232,6 +232,17 @@ export const vscodeRuntime = {
     if (selector === "terminal.lastCheckResult") {
       return cloneTerminalLastResult(workflowState.terminalLastCheckResult) as T;
     }
+    if (selector === "editor.hasUnsavedChanges") {
+      const dirtyFiles = await baseVscodeRuntime.query<string[]>("editor.dirtyFiles");
+      return (dirtyFiles.length > 0) as T;
+    }
+    if (selector === "scm.isClean") {
+      const [changedFiles, stagedFiles] = await Promise.all([
+        baseVscodeRuntime.query<string[]>("scm.changedFiles"),
+        baseVscodeRuntime.query<string[]>("scm.stagedFiles"),
+      ]);
+      return (changedFiles.length === 0 && stagedFiles.length === 0) as T;
+    }
     if (selector === "scm.lastCommit") {
       const commits = await baseVscodeRuntime.query<Array<Record<string, unknown>>>("scm.commits");
       return (commits.at(-1) ?? null) as T;
