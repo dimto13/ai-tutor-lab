@@ -67,6 +67,8 @@ test("VS Code Explore keeps the core navigation and orientation surfaces discove
   for (const target of [
     "vscode.menu.file",
     "vscode.menu.view",
+    "vscode.commandPalette",
+    "vscode.settings",
     "vscode.activityBar.explorer",
     "vscode.activityBar.search",
     "vscode.activityBar.extensions",
