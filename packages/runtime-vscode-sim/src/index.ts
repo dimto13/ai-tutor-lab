@@ -39,7 +39,11 @@ interface WorkflowRuntimeState {
   terminalLastCheckResult: TerminalCheckResult | null;
 }
 
-interface WorkflowRuntimeSnapshot {
+interface FlatWorkflowRuntimeSnapshot extends VscodeRuntimeState {
+  workflowSchemaVersion: 1;
+}
+
+interface LegacyWorkflowRuntimeSnapshot {
   schemaVersion: 1;
   runtimeId: "vscode-simulator";
   base: unknown;
@@ -151,9 +155,30 @@ function checkSubject(command: string): string | null {
   return tokens[1] ?? null;
 }
 
-function isWorkflowSnapshot(value: unknown): value is WorkflowRuntimeSnapshot {
+function normalizeStoredCheck(value: unknown): TerminalCheckResult | null {
+  if (value === null || value === undefined) return null;
+  if (isTerminalCheckResult(value)) return cloneTerminalCheckResult(value);
+  if (isTerminalLastResult(value)) {
+    return { ...value, subject: null, content: null };
+  }
+  return null;
+}
+
+function isFlatWorkflowSnapshot(value: unknown): value is FlatWorkflowRuntimeSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const candidate = value as Partial<WorkflowRuntimeSnapshot>;
+  const candidate = value as Partial<FlatWorkflowRuntimeSnapshot>;
+  return (
+    candidate.workflowSchemaVersion === 1 &&
+    typeof candidate.branch === "string" &&
+    (candidate.terminalLastResult === null || isTerminalLastResult(candidate.terminalLastResult)) &&
+    (candidate.terminalLastCheckResult === null ||
+      isTerminalLastResult(candidate.terminalLastCheckResult))
+  );
+}
+
+function isLegacyWorkflowSnapshot(value: unknown): value is LegacyWorkflowRuntimeSnapshot {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Partial<LegacyWorkflowRuntimeSnapshot>;
   const workflow = candidate.workflow;
   if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) return false;
   const workflowCandidate = workflow as Partial<WorkflowRuntimeState>;
@@ -165,23 +190,36 @@ function isWorkflowSnapshot(value: unknown): value is WorkflowRuntimeSnapshot {
     typeof workflowCandidate.branch === "string" &&
     (workflowCandidate.terminalLastResult === null ||
       isTerminalLastResult(workflowCandidate.terminalLastResult)) &&
-    (lastCheckResult === undefined ||
-      lastCheckResult === null ||
-      isTerminalLastResult(lastCheckResult))
+    (lastCheckResult === undefined || lastCheckResult === null || isTerminalLastResult(lastCheckResult))
   );
 }
 
-function workflowStateFromSnapshot(snapshot: WorkflowRuntimeSnapshot): WorkflowRuntimeState {
-  const storedCheck = snapshot.workflow.terminalLastCheckResult as unknown;
-  const terminalLastCheckResult = isTerminalCheckResult(storedCheck)
-    ? storedCheck
-    : isTerminalLastResult(storedCheck)
-      ? { ...storedCheck, subject: null, content: null }
-      : null;
+function workflowStateFromFlatSnapshot(snapshot: FlatWorkflowRuntimeSnapshot): WorkflowRuntimeState {
+  return {
+    branch: snapshot.branch,
+    terminalLastResult: cloneTerminalLastResult(snapshot.terminalLastResult),
+    terminalLastCheckResult: normalizeStoredCheck(snapshot.terminalLastCheckResult),
+  };
+}
+
+function baseStateFromFlatSnapshot(snapshot: FlatWorkflowRuntimeSnapshot): BaseVscodeRuntimeState {
+  const {
+    workflowSchemaVersion: _workflowSchemaVersion,
+    branch: _branch,
+    terminalLastResult: _terminalLastResult,
+    terminalLastCheckResult: _terminalLastCheckResult,
+    ...base
+  } = snapshot;
+  return base;
+}
+
+function workflowStateFromLegacySnapshot(
+  snapshot: LegacyWorkflowRuntimeSnapshot,
+): WorkflowRuntimeState {
   return {
     branch: snapshot.workflow.branch,
     terminalLastResult: cloneTerminalLastResult(snapshot.workflow.terminalLastResult),
-    terminalLastCheckResult: cloneTerminalCheckResult(terminalLastCheckResult),
+    terminalLastCheckResult: normalizeStoredCheck(snapshot.workflow.terminalLastCheckResult),
   };
 }
 
@@ -284,18 +322,27 @@ export const vscodeRuntime = {
     return baseVscodeRuntime.query<T>(selector);
   },
 
-  async snapshot(): Promise<WorkflowRuntimeSnapshot> {
+  async snapshot(): Promise<FlatWorkflowRuntimeSnapshot> {
+    const base = (await baseVscodeRuntime.snapshot()) as BaseVscodeRuntimeState;
     return {
-      schemaVersion: 1,
-      runtimeId: "vscode-simulator",
-      base: await baseVscodeRuntime.snapshot(),
-      workflow: cloneWorkflowState(workflowState),
+      ...base,
+      workflowSchemaVersion: 1,
+      branch: workflowState.branch,
+      terminalLastResult: cloneTerminalLastResult(workflowState.terminalLastResult),
+      terminalLastCheckResult: cloneTerminalCheckResult(workflowState.terminalLastCheckResult),
     };
   },
 
   async restore(snapshot: unknown): Promise<void> {
-    if (isWorkflowSnapshot(snapshot)) {
-      workflowState = workflowStateFromSnapshot(snapshot);
+    if (isFlatWorkflowSnapshot(snapshot)) {
+      workflowState = workflowStateFromFlatSnapshot(snapshot);
+      setTerminalBranchContext(workflowState.branch);
+      await baseVscodeRuntime.restore(baseStateFromFlatSnapshot(snapshot));
+      return;
+    }
+
+    if (isLegacyWorkflowSnapshot(snapshot)) {
+      workflowState = workflowStateFromLegacySnapshot(snapshot);
       setTerminalBranchContext(workflowState.branch);
       await baseVscodeRuntime.restore(snapshot.base);
       return;
