@@ -242,6 +242,7 @@
       "vscode.activity_bar",
       "vscode.explorer",
       "vscode.editor",
+      "vscode.side_bar",
       "vscode.terminal",
       "git.repository",
       "git.stage",
