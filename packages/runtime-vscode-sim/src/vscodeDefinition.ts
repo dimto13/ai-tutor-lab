@@ -125,6 +125,8 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "panel.active",
     "terminal.lines",
     "terminal.cwd",
+    "terminal.lastResult",
+    "scm.branch",
     "scm.staged",
     "scm.stagedFiles",
     "scm.changedFiles",
