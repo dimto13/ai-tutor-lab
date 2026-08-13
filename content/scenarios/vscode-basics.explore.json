@@ -24,6 +24,8 @@
       "vscode.run_menu",
       "vscode.terminal_menu",
       "vscode.help_menu",
+      "vscode.command_palette",
+      "vscode.settings",
       "vscode.side_bar",
       "vscode.view",
       "vscode.explorer",
