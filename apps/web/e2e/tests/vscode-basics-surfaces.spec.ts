@@ -17,6 +17,7 @@ test("VS Code Grundlagen: Command Palette filtert, zählt als Lernoberfläche un
   const input = page.getByLabel("Command Palette-Eingabe");
   await expect(palette).toBeVisible();
   await expect(page.getByText("2 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText(/zentrale Befehlssuche von VS Code/)).toBeVisible();
   await expect(input).toHaveValue(">");
   await expect(palette.getByText(/sucht und startet VS-Code-Befehle/)).toBeVisible();
 
@@ -38,6 +39,7 @@ test("VS Code Grundlagen: Settings zählen als Lernoberfläche und bleiben von E
   const settings = page.getByRole("dialog", { name: "Settings" });
   await expect(settings).toBeVisible();
   await expect(page.getByText("2 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText(/automatisches Speichern oder das Farbschema/)).toBeVisible();
   await expect(
     settings.getByText(/Einstellungen verändern das Verhalten von VS Code/),
   ).toBeVisible();
