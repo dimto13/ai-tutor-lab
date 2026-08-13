@@ -25,11 +25,13 @@ export interface TerminalLastResult {
 export interface VscodeRuntimeState extends BaseVscodeRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
+  terminalLastCheckResult: TerminalLastResult | null;
 }
 
 interface WorkflowRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
+  terminalLastCheckResult: TerminalLastResult | null;
 }
 
 interface WorkflowRuntimeSnapshot {
@@ -48,6 +50,7 @@ type RuntimeEventListener = (event: TrainingEvent) => void;
 const initialWorkflowState = (): WorkflowRuntimeState => ({
   branch: "main",
   terminalLastResult: null,
+  terminalLastCheckResult: null,
 });
 
 let workflowState = initialWorkflowState();
@@ -66,6 +69,7 @@ function cloneWorkflowState(value: WorkflowRuntimeState): WorkflowRuntimeState {
   return {
     branch: value.branch,
     terminalLastResult: cloneTerminalLastResult(value.terminalLastResult),
+    terminalLastCheckResult: cloneTerminalLastResult(value.terminalLastCheckResult),
   };
 }
 
@@ -74,6 +78,7 @@ function mergedRuntimeState(base: BaseVscodeRuntimeState): VscodeRuntimeState {
     ...base,
     branch: workflowState.branch,
     terminalLastResult: cloneTerminalLastResult(workflowState.terminalLastResult),
+    terminalLastCheckResult: cloneTerminalLastResult(workflowState.terminalLastCheckResult),
   };
 }
 
@@ -121,20 +126,35 @@ function isTerminalLastResult(value: unknown): value is TerminalLastResult {
   );
 }
 
+function isCheckCommand(command: string): boolean {
+  const executable = command.trim().split(/\s+/, 1)[0]?.toLocaleLowerCase("en-US");
+  return executable === "python" || executable === "python3";
+}
+
 function isWorkflowSnapshot(value: unknown): value is WorkflowRuntimeSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Partial<WorkflowRuntimeSnapshot>;
   const workflow = candidate.workflow;
   if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) return false;
   const workflowCandidate = workflow as Partial<WorkflowRuntimeState>;
+  const lastCheckResult = workflowCandidate.terminalLastCheckResult;
   return (
     candidate.schemaVersion === 1 &&
     candidate.runtimeId === "vscode-simulator" &&
     Object.prototype.hasOwnProperty.call(candidate, "base") &&
     typeof workflowCandidate.branch === "string" &&
     (workflowCandidate.terminalLastResult === null ||
-      isTerminalLastResult(workflowCandidate.terminalLastResult))
+      isTerminalLastResult(workflowCandidate.terminalLastResult)) &&
+    (lastCheckResult === undefined || lastCheckResult === null || isTerminalLastResult(lastCheckResult))
   );
+}
+
+function workflowStateFromSnapshot(snapshot: WorkflowRuntimeSnapshot): WorkflowRuntimeState {
+  return {
+    branch: snapshot.workflow.branch,
+    terminalLastResult: cloneTerminalLastResult(snapshot.workflow.terminalLastResult),
+    terminalLastCheckResult: cloneTerminalLastResult(snapshot.workflow.terminalLastCheckResult ?? null),
+  };
 }
 
 export const vscodeRuntime = {
@@ -178,14 +198,18 @@ export const vscodeRuntime = {
     try {
       const execution = baseVscodeRuntime.executeTerminalCommand(command);
       const branch = getTerminalBranchContext();
+      const terminalLastResult: TerminalLastResult = {
+        command: command.trim(),
+        exitCode: execution.exitCode,
+        ok: execution.exitCode === 0,
+        branch,
+      };
       workflowState = {
         branch,
-        terminalLastResult: {
-          command: command.trim(),
-          exitCode: execution.exitCode,
-          ok: execution.exitCode === 0,
-          branch,
-        },
+        terminalLastResult,
+        terminalLastCheckResult: isCheckCommand(command)
+          ? terminalLastResult
+          : workflowState.terminalLastCheckResult,
       };
       notifyWorkflowState("mutation");
       stateUpdated = true;
@@ -205,6 +229,13 @@ export const vscodeRuntime = {
     if (selector === "terminal.lastResult") {
       return cloneTerminalLastResult(workflowState.terminalLastResult) as T;
     }
+    if (selector === "terminal.lastCheckResult") {
+      return cloneTerminalLastResult(workflowState.terminalLastCheckResult) as T;
+    }
+    if (selector === "scm.lastCommit") {
+      const commits = await baseVscodeRuntime.query<Array<Record<string, unknown>>>("scm.commits");
+      return (commits.at(-1) ?? null) as T;
+    }
     return baseVscodeRuntime.query<T>(selector);
   },
 
@@ -219,7 +250,7 @@ export const vscodeRuntime = {
 
   async restore(snapshot: unknown): Promise<void> {
     if (isWorkflowSnapshot(snapshot)) {
-      workflowState = cloneWorkflowState(snapshot.workflow);
+      workflowState = workflowStateFromSnapshot(snapshot);
       setTerminalBranchContext(workflowState.branch);
       await baseVscodeRuntime.restore(snapshot.base);
       return;
