@@ -122,6 +122,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "editor.activeFile",
     "editor.openTabs",
     "editor.dirtyFiles",
+    "editor.hasUnsavedChanges",
     "panel.active",
     "terminal.lines",
     "terminal.cwd",
@@ -132,6 +133,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "scm.stagedFiles",
     "scm.changedFiles",
     "scm.commits",
+    "scm.isClean",
     "scm.lastCommit",
   ],
 } as const satisfies RuntimeReferenceDefinition;
