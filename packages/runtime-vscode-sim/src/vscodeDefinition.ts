@@ -38,9 +38,9 @@ export const VSCODE_RUNTIME_DEFINITION = {
     {
       ref: "vscode.commandPalette",
       label: "Command Palette",
-      conceptKey: "vscode.view_menu",
+      conceptKey: "vscode.command_palette",
     },
-    { ref: "vscode.settings", label: "Settings", conceptKey: "vscode.file_menu" },
+    { ref: "vscode.settings", label: "Settings", conceptKey: "vscode.settings" },
     {
       ref: "vscode.activityBar.explorer",
       label: "Explorer",
