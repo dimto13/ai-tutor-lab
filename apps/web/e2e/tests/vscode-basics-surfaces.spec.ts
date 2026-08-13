@@ -31,8 +31,12 @@ test("VS Code Grundlagen: Settings und Extensions bleiben fachlich getrennt", as
 
   const settings = page.getByRole("dialog", { name: "Settings" });
   await expect(settings).toBeVisible();
-  await expect(settings.getByText(/Einstellungen verändern das Verhalten von VS Code/)).toBeVisible();
-  await expect(settings.getByText(/Extensions erweitern dagegen den Funktionsumfang/)).toBeVisible();
+  await expect(
+    settings.getByText(/Einstellungen verändern das Verhalten von VS Code/),
+  ).toBeVisible();
+  await expect(
+    settings.getByText(/Extensions erweitern dagegen den Funktionsumfang/),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Settings schließen" }).click();
 
   await page.getByRole("button", { name: "File", exact: true }).click();
