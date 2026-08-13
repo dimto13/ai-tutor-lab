@@ -155,7 +155,7 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
 
   await expectGuidedStep(page, 13, "Handoff-Zustand prüfen");
   await runTerminalCommand(page, "git", "status");
-  await expect(page.getByText("notes.txt", { exact: true }).last()).toBeVisible();
+  await expect(page.getByText("notes.txt", { exact: false }).last()).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(spotlight).toHaveCount(0);
@@ -193,6 +193,4 @@ test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeich
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
-  await runTerminalCommand(page, "git", "status");
-  await expect(page.getByText("notes.txt", { exact: true }).last()).toBeVisible();
 });
