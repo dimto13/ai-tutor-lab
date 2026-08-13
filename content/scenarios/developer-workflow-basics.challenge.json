@@ -5,7 +5,11 @@
   "learningLayer": "ai_workflow",
   "title": "Challenge: Entwicklungsauftrag handoff-ready abschließen",
   "description": "Bearbeite ein bestehendes synthetisches Work Item selbstständig. Bewertet wird der Endzustand über Editor-, Copilot-, Prüf- und Git-State – nicht ein vorgegebener Klickpfad.",
-  "learningObjectives": ["combine_editor_git_ai_workflow"],
+  "learningObjectives": [
+    "combine_editor_git_ai_workflow",
+    "control_copilot_context",
+    "review_copilot_output"
+  ],
   "audience": {
     "personaId": "non-programmer",
     "glossaryConcepts": [
@@ -13,11 +17,17 @@
       "programming.python",
       "vscode.editor",
       "vscode.terminal",
+      "vscode.source_control",
       "git.repository",
+      "git.working_tree",
+      "git.branch",
       "git.stage",
       "git.commit",
+      "platform.diff",
       "github.copilot",
-      "copilot.chat"
+      "copilot.chat",
+      "copilot.inline_suggestion",
+      "ai.context"
     ]
   },
   "environment": {
@@ -86,18 +96,15 @@
       },
       {
         "kind": "state",
+        "selector": "filesystem.contents",
+        "match": {
+          "notes.txt": "Lokale Notiz: Entwurf für einen anderen Auftrag. Nicht mitcommitten.\n"
+        }
+      },
+      {
+        "kind": "state",
         "selector": "editor.dirtyFiles",
         "excludes": "calculator.py"
-      },
-      {
-        "kind": "state",
-        "selector": "copilot.context.activeFile",
-        "equals": "calculator.py"
-      },
-      {
-        "kind": "state",
-        "selector": "copilot.prompt.last",
-        "includesAny": ["add", "Addition", "Summe", "zwei Zahlen"]
       },
       {
         "kind": "state",
@@ -116,28 +123,58 @@
       {
         "kind": "state",
         "selector": "scm.stagedFiles",
+        "excludes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.stagedFiles",
         "excludes": "notes.txt"
+      },
+      {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "copilot.inline.status",
+            "equals": "accepted"
+          },
+          {
+            "kind": "all",
+            "of": [
+              {
+                "kind": "state",
+                "selector": "copilot.context.activeFile",
+                "equals": "calculator.py"
+              },
+              {
+                "kind": "state",
+                "selector": "copilot.prompt.last",
+                "includesAny": ["add", "Addition", "Summe", "zwei Zahlen"]
+              }
+            ]
+          }
+        ]
       }
     ]
   },
   "solutionComparison": [
-    "Der Auftrag wurde auf einem eigenen Branch feature/addition bearbeitet.",
-    "calculator.py enthält die kleine add(a, b)-Implementierung, wurde gespeichert und erfolgreich geprüft.",
-    "Copilot wurde mit calculator.py als explizitem Dateikontext für den Auftrag eingesetzt; der erzeugte Vorschlag wurde vor der Übernahme kontrolliert.",
-    "Nur calculator.py wurde mit der klaren Nachricht feat: implement addition committed. Die bereits vorher vorhandene Änderung in notes.txt bleibt lokal und uncommitted erhalten.",
-    "Der Endzustand ist handoff-ready: eigene Änderung committed, fremde Änderung sichtbar und unangetastet."
+    "Der Auftrag wurde auf einem eigenen Branch feature/addition statt direkt auf main bearbeitet.",
+    "Copilot wurde kontrolliert eingesetzt: entweder über den geprüften Inline-Vorschlag oder mit calculator.py als explizitem Chat-Kontext.",
+    "calculator.py enthält die add(a, b)-Implementierung, wurde gespeichert und erfolgreich geprüft.",
+    "calculator.py wurde als eigener nachvollziehbarer Versionsstand abgeschlossen; die bereits vorher vorhandene Änderung in notes.txt bleibt inhaltlich unverändert, lokal und unstaged erhalten.",
+    "Der Endzustand ist handoff-ready: eigene Änderung abgeschlossen, fremde Änderung sichtbar und unangetastet."
   ],
   "steps": [
     {
       "id": "complete-work-item",
       "title": "Work Item selbstständig abschließen",
       "description": "Es gibt keinen vorgeschriebenen Klickpfad. Entscheidend ist, dass du die Grenzen zwischen VS Code, lokalem Git und Copilot kontrollierst und einen reviewbaren Endzustand herstellst.",
-      "instruction": "Erfülle das Work Item aus TASK.md. Erfolgskriterien: Arbeite auf dem Branch feature/addition; nutze Copilot mit calculator.py als Dateikontext; stelle die dort geforderte add(a, b)-Funktion her und speichere sie; führe eine erfolgreiche Python-Prüfung aus; committe ausschließlich calculator.py mit der Nachricht feat: implement addition. Die bereits vorhandene Änderung in notes.txt muss unverändert lokal zurückbleiben.",
+      "instruction": "Erfülle das Work Item aus TASK.md auf dem Branch feature/addition. Nutze Copilot kontrolliert über Inline-Vorschlag oder Chat, stelle die geforderte add(a, b)-Funktion in calculator.py her, speichere und prüfe sie erfolgreich und committe ausschließlich calculator.py mit einer verständlichen Nachricht. Die bereits vorhandene Änderung in notes.txt muss inhaltlich unverändert lokal zurückbleiben.",
       "why": "Die Challenge prüft den handoff-fähigen Zustand eines echten Entwicklungsablaufs statt das Nachklicken einer festen Reihenfolge.",
       "helpLevels": [
         "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
-        "Prüfe Branch und Working Tree, gib Copilot nur calculator.py als Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
-        "Am Ende müssen feature/addition, gespeicherte calculator.py, erfolgreiche Python-Prüfung und ein Commit nur für calculator.py zusammenpassen; notes.txt muss weiterhin als lokale Änderung übrig sein."
+        "Prüfe Branch und Working Tree, begrenze Copilot auf den relevanten Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
+        "Am Ende müssen feature/addition, gespeicherte calculator.py, erfolgreiche Prüfung und ein Commit nur für calculator.py zusammenpassen; notes.txt muss unverändert als lokale, unstaged Änderung übrig sein."
       ],
       "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
     }
