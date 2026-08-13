@@ -67,6 +67,16 @@ async function reachCreateFileStep(page: Page): Promise<void> {
   await expectGuidedStep(page, 9, "Datei erstellen");
 }
 
+async function completeChallengeFile(page: Page): Promise<void> {
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.fill("VS Code Grundlagen abgeschlossen");
+  await expect(
+    page.getByRole("status", { name: "challenge.txt: ungespeicherte Änderungen" }),
+  ).toBeVisible();
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+  await editor.press("Control+s");
+}
+
 test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das Konzept", async ({
   page,
 }) => {
@@ -235,7 +245,7 @@ test("Guided: schmaler Viewport hält Kopfzeile, Menüs, Editor und Highlight vo
   await expect(page.getByTestId("highlight-frame")).toBeVisible();
 });
 
-test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bewertet", async ({
+test("Challenge: freier Klickpfad wird ausschließlich über den gespeicherten Zielzustand bewertet", async ({
   page,
 }) => {
   await page.goto("/training/vscode-basics.challenge");
@@ -247,6 +257,7 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
+  await completeChallengeFile(page);
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
@@ -259,7 +270,9 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   ).toBeVisible();
 });
 
-test("Challenge: alternativer Workspace-Pfad erfüllt denselben Endzustand", async ({ page }) => {
+test("Challenge: alternativer Workspace-Pfad erfüllt denselben gespeicherten Endzustand", async ({
+  page,
+}) => {
   await page.goto("/training/vscode-basics.challenge");
   await waitForTrainingReady(page);
 
@@ -270,11 +283,12 @@ test("Challenge: alternativer Workspace-Pfad erfüllt denselben Endzustand", asy
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
+  await completeChallengeFile(page);
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
     page.getByText(
-      "Der konkrete Klickweg darf abweichen; bewertet wird nur, ob Arbeitskontext und Zieldatei vorhanden sind.",
+      "Der konkrete Klickweg darf abweichen; bewertet wird der vollständige gespeicherte Endzustand.",
       { exact: true },
     ),
   ).toBeVisible();
