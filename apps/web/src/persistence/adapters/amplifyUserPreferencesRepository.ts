@@ -71,8 +71,7 @@ function preferencesRecord(
     subject: { userId: subject.userId, tenantId: data.tenantId },
     language: typeof data.language === "string" ? data.language : null,
     preferredTrainingMode: trainingMode(data.preferredTrainingMode),
-    weeklyGoalMinutes:
-      typeof data.weeklyGoalMinutes === "number" ? data.weeklyGoalMinutes : null,
+    weeklyGoalMinutes: typeof data.weeklyGoalMinutes === "number" ? data.weeklyGoalMinutes : null,
     accessibility: data.accessibility ?? null,
     selfAssessedAiLevel: data.selfAssessedAiLevel ?? null,
     revision: data.revision,
