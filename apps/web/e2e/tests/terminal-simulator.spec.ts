@@ -36,7 +36,9 @@ test("Terminal-Simulator führt Datei-, Git- und Python-Befehle zustandsabhängi
   await expect(page.getByText("[main 0000001] add hello example", { exact: true })).toBeVisible();
 
   await runTerminalCommand(page, "ls");
-  await expect(page.getByText(/README\.md.*docs\/.*hello\.py.*src\//)).toBeVisible();
+  await expect(
+    page.getByText(/TASK\.md.*calculator\.py.*docs\/.*hello\.py.*notes\.txt.*src\//),
+  ).toBeVisible();
 
   await runTerminalCommand(page, "python hello.py");
   await expect(page.getByText("Hello AI Training", { exact: true })).toBeVisible();
