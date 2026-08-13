@@ -166,11 +166,7 @@ function baseSnapshotFromWorkflowSnapshot(
 
 function verificationTarget(command: string): string | null {
   const [program, rawTarget] = command.trim().split(/\s+/);
-  if (
-    (program !== "python" && program !== "python3") ||
-    !rawTarget ||
-    rawTarget.startsWith("-")
-  ) {
+  if ((program !== "python" && program !== "python3") || !rawTarget || rawTarget.startsWith("-")) {
     return null;
   }
   return rawTarget.replace(/^\.\//, "");
