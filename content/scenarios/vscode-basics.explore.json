@@ -56,6 +56,8 @@
     "vscode.menu.run",
     "vscode.menu.terminal",
     "vscode.menu.help",
+    "vscode.commandPalette",
+    "vscode.settings",
     "vscode.activityBar.explorer",
     "vscode.activityBar.search",
     "vscode.activityBar.scm",
@@ -79,8 +81,8 @@
       "why": "Du sollst später nicht eine Klickfolge auswendig reproduzieren, sondern je nach Aufgabe erkennen, welcher Bereich oder Einstieg sinnvoll ist.",
       "helpLevels": [
         "Beginne mit Activity Bar, Primary Side Bar, Editor, Panel und Status Bar und öffne danach die Menüs oben.",
-        "Vergleiche Explorer und Search, öffne Extensions und sieh in File nach Preferences sowie in View nach Command Palette. Wechsle im Panel zwischen Terminal, Problems und Output.",
-        "Prüfe nacheinander File, Edit, Selection, View, Go, Run, Terminal und Help. Klicke außerdem Explorer, Search, Source Control und Extensions in der Activity Bar, die Primary Side Bar, den Editor, die drei Panel-Views und die Status Bar an. Öffne über File auch die Einträge für Ordner und Workspace. Der Fortschritt zeigt dir, was noch fehlt."
+        "Vergleiche Explorer und Search, öffne Extensions und öffne über File → Preferences die Settings sowie über View die Command Palette. Wechsle im Panel zwischen Terminal, Problems und Output.",
+        "Prüfe nacheinander File, Edit, Selection, View, Go, Run, Terminal und Help. Öffne außerdem Command Palette und Settings tatsächlich. Klicke Explorer, Search, Source Control und Extensions in der Activity Bar, die Primary Side Bar, den Editor, die drei Panel-Views und die Status Bar an. Öffne über File auch die Einträge für Ordner und Workspace. Der Fortschritt zeigt dir, was noch fehlt."
       ],
       "successMessage": "Oberfläche erkundet. Du kennst jetzt die wichtigsten Bereiche und weißt, welcher Einstieg zu welcher Art von Aufgabe gehört."
     }
