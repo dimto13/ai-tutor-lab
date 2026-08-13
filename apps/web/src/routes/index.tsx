@@ -14,6 +14,7 @@ import {
   Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { AccountMenu } from "@/auth/AccountMenu";
 import { useStoredProgressPercent } from "@/state/trainingStore";
 
 export const Route = createFileRoute("/")({
@@ -274,9 +275,9 @@ function Dashboard() {
           <span className="text-sm font-semibold tracking-tight text-foreground">
             AI Training Lab
           </span>
-          <span className="ml-auto text-xs text-muted-foreground">
-            Maria Schmidt · Contoso GmbH
-          </span>
+          <div className="ml-auto">
+            <AccountMenu />
+          </div>
         </div>
       </header>
 

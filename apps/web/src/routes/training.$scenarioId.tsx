@@ -10,6 +10,7 @@ import {
   Monitor,
   Target,
 } from "lucide-react";
+import { AccountMenu } from "@/auth/AccountMenu";
 import { TrainingProvider, useTraining } from "@/state/trainingStore";
 import { RuntimeWorkspace } from "@/components/workspace/RuntimeWorkspace";
 import { GuidePanel } from "@/components/training/GuidePanel";
@@ -103,6 +104,7 @@ function TimedChallengeBriefing({
         <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
           {scenario.title}
         </span>
+        <AccountMenu compact />
         <span className="rounded border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
           Challenge
         </span>
@@ -284,7 +286,7 @@ function TrainingLayout() {
               Highlights
             </button>
           ) : null}
-          <span className="hidden text-[13px] text-muted-foreground 2xl:inline">Maria Schmidt</span>
+          <AccountMenu compact />
           <Link
             to="/"
             aria-label="Training verlassen"

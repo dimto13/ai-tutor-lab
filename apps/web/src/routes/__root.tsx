@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import { AuthGate } from "../auth/AuthGate";
 import { AuthProvider } from "../auth/AuthContext";
 import { createApplicationAuthService } from "../auth/applicationAuthService";
+import { UserProfileProvider } from "../profile/UserProfileContext";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -137,10 +138,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider service={authService}>
-        <AuthGate>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </AuthGate>
+        <UserProfileProvider>
+          <AuthGate>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </AuthGate>
+        </UserProfileProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

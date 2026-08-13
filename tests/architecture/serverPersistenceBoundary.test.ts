@@ -10,6 +10,8 @@ const resolverUrls = [
   "load-runtime-snapshot.js",
   "save-runtime-snapshot.js",
   "delete-runtime-snapshot.js",
+  "load-user-profile.js",
+  "save-user-profile.js",
   "load-user-preferences.js",
   "save-user-preferences.js",
 ].map((file) => new URL(`../../amplify/data/${file}`, import.meta.url));
@@ -33,6 +35,8 @@ const clientOperationDataSources = {
   loadRuntimeSnapshot: "RuntimeSnapshot",
   saveRuntimeSnapshot: "RuntimeSnapshot",
   deleteRuntimeSnapshot: "RuntimeSnapshot",
+  loadUserProfile: "UserProfile",
+  saveUserProfile: "UserProfile",
   loadUserPreferences: "UserPreferences",
   saveUserPreferences: "UserPreferences",
 } as const;
@@ -48,6 +52,7 @@ const schemaMembers = [
   ...serverOwnedModels,
   "TrainingStateEnvelope",
   "RuntimeSnapshotEnvelope",
+  "UserProfileEnvelope",
   "UserPreferencesEnvelope",
   ...clientOperations,
 ] as const;
@@ -130,13 +135,27 @@ test("AppSync persistence resolvers derive subject identity from Cognito context
   }
 });
 
-test("user preferences persist independently from training sessions", async () => {
+test("user profile and preferences persist independently from training sessions", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
+  for (const operation of [
+    "loadUserProfile",
+    "saveUserProfile",
+    "loadUserPreferences",
+    "saveUserPreferences",
+  ]) {
+    const block = definitionBlock(source, operation);
+    assert.doesNotMatch(block, /dataSource:\s*a\.ref\(["']TrainingSession["']\)/);
+    assert.doesNotMatch(block, /scenarioId\s*:/);
+  }
+
+  for (const operation of ["loadUserProfile", "saveUserProfile"]) {
+    const block = definitionBlock(source, operation);
+    assert.match(block, /dataSource:\s*a\.ref\(["']UserProfile["']\)/);
+  }
+
   for (const operation of ["loadUserPreferences", "saveUserPreferences"]) {
     const block = definitionBlock(source, operation);
     assert.match(block, /dataSource:\s*a\.ref\(["']UserPreferences["']\)/);
-    assert.doesNotMatch(block, /dataSource:\s*a\.ref\(["']TrainingSession["']\)/);
-    assert.doesNotMatch(block, /scenarioId\s*:/);
   }
 });
 
