@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 export type VscodeWorkspaceView = "explorer" | "search" | "scm" | "extensions";
@@ -9,6 +9,9 @@ type MenuId = "file" | "edit" | "selection" | "view" | "go" | "run" | "terminal"
 type MenuAction =
   | "open-folder"
   | "open-workspace"
+  | "open-command-palette"
+  | "open-settings"
+  | "save-active-file"
   | "view-explorer"
   | "view-search"
   | "view-scm"
@@ -56,7 +59,7 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
       { label: "Add Folder to Workspace..." },
       { label: "Save Workspace As..." },
       { label: "Duplicate Workspace" },
-      { label: "Save", shortcut: "Ctrl+S", separatorBefore: true },
+      { label: "Save", shortcut: "Ctrl+S", action: "save-active-file", separatorBefore: true },
       { label: "Save As...", shortcut: "Ctrl+Shift+S" },
       { label: "Save All" },
       { label: "Share", separatorBefore: true, children: [{ label: "Export Profile..." }] },
@@ -64,8 +67,8 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
       {
         label: "Preferences",
         children: [
-          { label: "Settings" },
-          { label: "Extensions" },
+          { label: "Settings", action: "open-settings" },
+          { label: "Extensions", action: "view-extensions" },
           { label: "Keyboard Shortcuts" },
           { label: "Configure User Snippets" },
           { label: "Profiles" },
@@ -124,7 +127,11 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
     label: "View",
     target: "vscode.menu.view",
     entries: [
-      { label: "Command Palette...", shortcut: "Ctrl+Shift+P" },
+      {
+        label: "Command Palette...",
+        shortcut: "Ctrl+Shift+P",
+        action: "open-command-palette",
+      },
       { label: "Open View..." },
       {
         label: "Appearance",
@@ -271,7 +278,11 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
     target: "vscode.menu.help",
     entries: [
       { label: "Welcome" },
-      { label: "Show All Commands", shortcut: "Ctrl+Shift+P" },
+      {
+        label: "Show All Commands",
+        shortcut: "Ctrl+Shift+P",
+        action: "open-command-palette",
+      },
       { label: "Documentation", separatorBefore: true },
       { label: "Editor Playground" },
       { label: "Show Release Notes" },
@@ -297,7 +308,16 @@ interface VscodeMenuBarProps {
   openView: (view: VscodeWorkspaceView, target: string) => void;
   openPanel: (panel: VscodePanelView) => void;
   openTerminal: () => void;
+  openCommandPalette?: () => void;
+  openSettings?: () => void;
 }
+
+const COMMAND_PALETTE_ACTIONS = [
+  { label: "View: Show Explorer", action: "view-explorer" },
+  { label: "Search: Show Search", action: "view-search" },
+  { label: "Preferences: Open Settings", action: "open-settings" },
+  { label: "Extensions: Show Extensions", action: "view-extensions" },
+] as const satisfies ReadonlyArray<{ label: string; action: MenuAction }>;
 
 export function VscodeMenuBar({
   inspect,
@@ -305,21 +325,63 @@ export function VscodeMenuBar({
   openView,
   openPanel,
   openTerminal,
+  openCommandPalette,
+  openSettings,
 }: VscodeMenuBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [menuLeft, setMenuLeft] = useState(0);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [commandPaletteQuery, setCommandPaletteQuery] = useState(">");
+  const [commandPaletteSelection, setCommandPaletteSelection] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const activeMenu = MENU_DEFINITIONS.find((menu) => menu.id === openMenu) ?? null;
+  const normalizedCommandQuery = commandPaletteQuery.replace(/^>/, "").trim().toLowerCase();
+  const visibleCommandPaletteActions = COMMAND_PALETTE_ACTIONS.filter((command) =>
+    command.label.toLowerCase().includes(normalizedCommandQuery),
+  );
+  const activeCommandPaletteSelection = Math.min(
+    commandPaletteSelection,
+    Math.max(0, visibleCommandPaletteActions.length - 1),
+  );
 
   const closeMenus = () => {
     setOpenMenu(null);
     setOpenSubmenu(null);
   };
 
+  const showCommandPalette = () => {
+    inspect("vscode.commandPalette");
+    openCommandPalette?.();
+    setSettingsOpen(false);
+    setCommandPaletteQuery(">");
+    setCommandPaletteSelection(0);
+    setCommandPaletteOpen(true);
+  };
+
+  const showSettings = () => {
+    inspect("vscode.settings");
+    openSettings?.();
+    setCommandPaletteOpen(false);
+    setSettingsOpen(true);
+  };
+
   const runAction = (action: MenuAction | undefined) => {
     if (action === "open-folder") openWorkingContext("folder");
     if (action === "open-workspace") openWorkingContext("workspace");
+    if (action === "open-command-palette") showCommandPalette();
+    if (action === "open-settings") showSettings();
+    if (action === "save-active-file") {
+      rootRef.current?.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "s",
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    }
     if (action === "view-explorer") openView("explorer", "vscode.activityBar.explorer");
     if (action === "view-search") openView("search", "vscode.activityBar.search");
     if (action === "view-scm") openView("scm", "vscode.activityBar.scm");
@@ -327,7 +389,16 @@ export function VscodeMenuBar({
     if (action === "view-problems") openPanel("problems");
     if (action === "view-output") openPanel("output");
     if (action === "view-terminal" || action === "new-terminal") openTerminal();
+    if (action && action !== "open-command-palette" && action !== "open-settings") {
+      setCommandPaletteOpen(false);
+      setSettingsOpen(false);
+    }
     closeMenus();
+  };
+
+  const runSelectedCommandPaletteAction = () => {
+    const command = visibleCommandPaletteActions[activeCommandPaletteSelection];
+    if (command) runAction(command.action);
   };
 
   return (
@@ -436,6 +507,118 @@ export function VscodeMenuBar({
             );
           })}
         </div>
+      ) : null}
+
+      {commandPaletteOpen ? (
+        <div
+          role="dialog"
+          aria-label="Command Palette"
+          data-highlight="vscode.commandPalette"
+          className="absolute left-1/2 top-full z-50 mt-2 w-[min(38rem,calc(100vw-1rem))] -translate-x-1/2 overflow-hidden rounded-md border border-border bg-panel shadow-2xl"
+        >
+          <div className="border-b border-border px-3 py-2">
+            <input
+              autoFocus
+              aria-label="Command Palette-Eingabe"
+              value={commandPaletteQuery}
+              onChange={(event) => {
+                setCommandPaletteQuery(event.target.value);
+                setCommandPaletteSelection(0);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setCommandPaletteSelection((current) =>
+                    visibleCommandPaletteActions.length
+                      ? (current + 1) % visibleCommandPaletteActions.length
+                      : 0,
+                  );
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setCommandPaletteSelection((current) =>
+                    visibleCommandPaletteActions.length
+                      ? (current - 1 + visibleCommandPaletteActions.length) %
+                        visibleCommandPaletteActions.length
+                      : 0,
+                  );
+                }
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  runSelectedCommandPaletteAction();
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setCommandPaletteOpen(false);
+                }
+              }}
+              className="w-full rounded border border-ring bg-editor px-3 py-2 font-mono text-[13px] text-foreground outline-none"
+            />
+          </div>
+          <div className="p-1" role="listbox" aria-label="Command Palette-Ergebnisse">
+            {visibleCommandPaletteActions.map((command, index) => (
+              <button
+                key={command.label}
+                type="button"
+                role="option"
+                aria-selected={index === activeCommandPaletteSelection}
+                onMouseEnter={() => setCommandPaletteSelection(index)}
+                onClick={() => runAction(command.action)}
+                className={`block w-full rounded px-3 py-2 text-left text-[12px] text-foreground/90 hover:bg-white/10 ${
+                  index === activeCommandPaletteSelection ? "bg-white/10" : ""
+                }`}
+              >
+                {command.label}
+              </button>
+            ))}
+            {visibleCommandPaletteActions.length === 0 ? (
+              <p className="px-3 py-2 text-[12px] text-muted-foreground">Kein passender Befehl.</p>
+            ) : null}
+          </div>
+          <p className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
+            Die Command Palette sucht und startet VS-Code-Befehle, ohne dass du deren Menüposition
+            kennen musst.
+          </p>
+        </div>
+      ) : null}
+
+      {settingsOpen ? (
+        <section
+          role="dialog"
+          aria-label="Settings"
+          data-highlight="vscode.settings"
+          className="absolute left-1/2 top-full z-50 mt-2 w-[min(44rem,calc(100vw-1rem))] -translate-x-1/2 rounded-md border border-border bg-editor p-4 shadow-2xl"
+        >
+          <div className="flex items-start gap-4">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm font-semibold text-foreground">Settings</h2>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                Einstellungen verändern das Verhalten von VS Code. Extensions erweitern dagegen den
+                Funktionsumfang um zusätzliche Werkzeuge, Sprachen oder Integrationen.
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Settings schließen"
+              onClick={() => setSettingsOpen(false)}
+              className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-4 space-y-2 text-[12px]">
+            <div className="rounded border border-border bg-panel px-3 py-2">
+              <span className="font-medium text-foreground">Editor: Auto Save</span>
+              <span className="ml-2 text-muted-foreground">
+                Konfiguration des Speicherverhaltens
+              </span>
+            </div>
+            <div className="rounded border border-border bg-panel px-3 py-2">
+              <span className="font-medium text-foreground">Workbench: Color Theme</span>
+              <span className="ml-2 text-muted-foreground">Konfiguration der Oberfläche</span>
+            </div>
+          </div>
+        </section>
       ) : null}
     </div>
   );

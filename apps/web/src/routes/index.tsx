@@ -62,10 +62,10 @@ const toolTrainings: TrainingCardModel[] = [
     scenarioId: null,
     title: "Visual Studio Code – Grundlagen",
     description:
-      "Oberfläche, Activity Bar, Explorer, Ordner, Workspaces, Editor und Panel verstehen und selbst bedienen.",
+      "Keine IT-Vorkenntnisse erforderlich. Lerne Oberfläche, Explorer, Suche, Command Palette, Datei/Ordner/Workspace, Editor und Speichern sowie Terminal, Problems, Output, Settings und Extensions kennen. Explore ca. 10 Min., Guided ca. 14 Min., Challenge ca. 8 Min.",
     icon: Code2,
     available: true,
-    label: "IDE · 3 Modi · 4 Übungen",
+    label: "IDE · 3 Modi + Speed Challenge",
     modes: [
       {
         scenarioId: "vscode-basics.explore",

@@ -4,8 +4,14 @@
   "mode": "explore",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Explorer-Modus",
-  "description": "Erkunde die Oberfläche frei. Klicke auf Bereiche, Menüs und Bedienelemente; das Training erklärt ihre Aufgabe in einfacher Sprache und mit vertrauten Vergleichen, ohne Fehlermeldungen oder vorgegebene Reihenfolge.",
-  "learningObjectives": ["understand_vscode_ui", "understand_workspace"],
+  "description": "Erkunde die Oberfläche frei. Lerne nicht nur einzelne Schaltflächen kennen, sondern welche Bereiche für Dateien, Suche, Befehle, Einstellungen, Erweiterungen und Ausgaben zuständig sind.",
+  "learningObjectives": [
+    "understand_vscode_ui",
+    "understand_workspace",
+    "navigate_vscode",
+    "understand_panel_views",
+    "configure_vscode"
+  ],
   "audience": {
     "personaId": "non-programmer",
     "glossaryConcepts": [
@@ -18,6 +24,8 @@
       "vscode.run_menu",
       "vscode.terminal_menu",
       "vscode.help_menu",
+      "vscode.command_palette",
+      "vscode.settings",
       "vscode.side_bar",
       "vscode.view",
       "vscode.explorer",
@@ -39,7 +47,7 @@
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator"
   },
-  "estimatedMinutes": 8,
+  "estimatedMinutes": 10,
   "points": 100,
   "exploreTargets": [
     "vscode.menu.file",
@@ -50,6 +58,8 @@
     "vscode.menu.run",
     "vscode.menu.terminal",
     "vscode.menu.help",
+    "vscode.commandPalette",
+    "vscode.settings",
     "vscode.activityBar.explorer",
     "vscode.activityBar.search",
     "vscode.activityBar.scm",
@@ -67,16 +77,16 @@
   "steps": [
     {
       "id": "explore_surface",
-      "title": "Oberfläche frei erkunden",
-      "description": "Es gibt keine richtige Reihenfolge. Untersuche die sichtbaren Bereiche und öffne auch die Menüs oben. Wenn du ein Element anklickst, erklärt das Training, wofür es gedacht ist. Achte besonders darauf, dass VS Code links eine Primary Side Bar und rechts eine getrennte Secondary Side Bar bereitstellt.",
-      "instruction": "Klicke auf Elemente der VS-Code-Oberfläche, die du kennenlernen möchtest.",
-      "why": "Im Explorer-Modus baust du zunächst ein mentales Modell der Oberfläche auf, bevor du konkrete Abläufe übst.",
+      "title": "Oberfläche und Wege frei erkunden",
+      "description": "Es gibt keine richtige Reihenfolge. Untersuche die sichtbaren Bereiche und öffne die Menüs oben. Achte nicht nur darauf, wo etwas liegt, sondern wofür du welchen Weg verwenden würdest: Explorer für Dateien und Ordner, Search für Inhalte über mehrere Dateien, View für Ansichten und die Command Palette, File für Arbeitskontext und Einstellungen sowie Extensions für zusätzliche Funktionen.",
+      "instruction": "Erkunde die VS-Code-Oberfläche und finde die Bereiche für Dateien, Suche, Befehle, Erweiterungen, Konfiguration und Ausgaben.",
+      "why": "Du sollst später nicht eine Klickfolge auswendig reproduzieren, sondern je nach Aufgabe erkennen, welcher Bereich oder Einstieg sinnvoll ist.",
       "helpLevels": [
-        "Klicke auf einen Bereich oder ein Menü, das du noch nicht kennst.",
-        "Öffne auch die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help sowie das untere Panel.",
-        "Öffne nacheinander die Menüs File, Edit, Selection, View, Go, Run, Terminal und Help; klicke außerdem auf die Bereiche der Activity Bar, die Primary Side Bar, den Editor, die Panel-Tabs und die Status Bar. Die schmale Secondary Side Bar rechts ist ein eigener Host für zusätzliche Views. Der Fortschritt zeigt dir, was noch fehlt."
+        "Beginne mit Activity Bar, Primary Side Bar, Editor, Panel und Status Bar und öffne danach die Menüs oben.",
+        "Vergleiche Explorer und Search, öffne Extensions und öffne über File → Preferences die Settings sowie über View die Command Palette. Wechsle im Panel zwischen Terminal, Problems und Output.",
+        "Prüfe nacheinander File, Edit, Selection, View, Go, Run, Terminal und Help. Öffne außerdem Command Palette und Settings tatsächlich. Klicke Explorer, Search, Source Control und Extensions in der Activity Bar, die Primary Side Bar, den Editor, die drei Panel-Views und die Status Bar an. Öffne über File auch die Einträge für Ordner und Workspace. Der Fortschritt zeigt dir, was noch fehlt."
       ],
-      "successMessage": "Oberfläche vollständig erkundet."
+      "successMessage": "Oberfläche erkundet. Du kennst jetzt die wichtigsten Bereiche und weißt, welcher Einstieg zu welcher Art von Aufgabe gehört."
     }
   ]
 }

@@ -71,6 +71,7 @@ export function Workspace() {
   const [contents, setContents] = useState<Record<string, string>>(INITIAL_CONTENT);
   const [tabs, setTabs] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
+  const [dirtyFiles, setDirtyFiles] = useState<string[]>([]);
   const [newFileName, setNewFileName] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelView>("terminal");
@@ -91,6 +92,7 @@ export function Workspace() {
     if (!container) return;
 
     const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
+      setDirtyFiles([...runtimeState.dirtyFiles]);
       if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
 
       setWorkspaceMode(runtimeState.workspaceMode);
@@ -181,6 +183,7 @@ export function Workspace() {
     setFiles((current) => [...current, { name, kind: "file" }]);
     setContents((current) => ({ ...current, [name]: "" }));
     vscodeRuntime.addFile(name);
+    vscodeRuntime.saveFile(name);
     openFile(name);
     const acceptedTrainingFiles = new Set(["hello.py", "notiz.txt", "challenge.txt"]);
     const nextWrongFile = acceptedTrainingFiles.has(name) ? null : name;
@@ -455,27 +458,40 @@ export function Workspace() {
                   Keine Datei geöffnet
                 </span>
               ) : (
-                tabs.map((tab) => (
-                  <div
-                    key={tab}
-                    className={`flex shrink-0 items-center gap-2 border-r border-border px-3 text-[13px] ${
-                      activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
-                    }`}
-                  >
-                    <button onClick={() => openFile(tab)}>{tab}</button>
-                    <button
-                      aria-label={`${tab} schließen`}
-                      onClick={() => {
-                        setTabs((current) => current.filter((item) => item !== tab));
-                        if (activeFile === tab) setActiveFile(null);
-                        vscodeRuntime.closeFile(tab);
-                      }}
-                      className="text-muted-foreground hover:text-foreground"
+                tabs.map((tab) => {
+                  const dirty = dirtyFiles.includes(tab);
+                  return (
+                    <div
+                      key={tab}
+                      className={`flex shrink-0 items-center gap-2 border-r border-border px-3 text-[13px] ${
+                        activeFile === tab ? "bg-editor text-foreground" : "text-muted-foreground"
+                      }`}
                     >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))
+                      <button onClick={() => openFile(tab)}>{tab}</button>
+                      {dirty ? (
+                        <span
+                          role="status"
+                          aria-label={`${tab}: ungespeicherte Änderungen`}
+                          title="Ungespeicherte Änderungen"
+                          className="text-[10px] leading-none text-foreground"
+                        >
+                          ●
+                        </span>
+                      ) : null}
+                      <button
+                        aria-label={`${tab} schließen`}
+                        onClick={() => {
+                          setTabs((current) => current.filter((item) => item !== tab));
+                          if (activeFile === tab) setActiveFile(null);
+                          vscodeRuntime.closeFile(tab);
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

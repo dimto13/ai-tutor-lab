@@ -67,6 +67,16 @@ async function reachCreateFileStep(page: Page): Promise<void> {
   await expectGuidedStep(page, 9, "Datei erstellen");
 }
 
+async function completeChallengeFile(page: Page): Promise<void> {
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.fill("VS Code Grundlagen abgeschlossen");
+  await expect(
+    page.getByRole("status", { name: "challenge.txt: ungespeicherte Änderungen" }),
+  ).toBeVisible();
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+  await editor.press("Control+s");
+}
+
 test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das Konzept", async ({
   page,
 }) => {
@@ -74,11 +84,11 @@ test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das 
   await waitForTrainingReady(page);
 
   await expect(page.getByRole("heading", { name: "Oberfläche frei untersuchen" })).toBeVisible();
-  await expect(page.getByText("0 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText("0 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
 
-  await expect(page.getByText("1 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(
     page.getByText(/Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts\./),
   ).toBeVisible();
@@ -111,7 +121,7 @@ test("Explore: alle Hauptmenüs öffnen vollständig und werden als Lernoberflä
     await expect(menu.getByRole("menuitem", { name: expectedItem }).first()).toBeVisible();
   }
 
-  await expect(page.getByText("8 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText("8 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(page.getByText(/Hilfe- und Informationszentrale/)).toBeVisible();
 });
 
@@ -150,15 +160,27 @@ test("Guided: Grundbegriffe sind vor der ersten Aufgabe optional vorgeschaltet",
   await expect(page.locator("header").getByText("Schritt 7 von 13", { exact: true })).toBeVisible();
 });
 
-test("Guided: Explorer, Folder, Editor und Panel laufen als Anfängerpfad", async ({ page }) => {
+test("Guided: Explorer, Folder, Editor, Speichern und Panel laufen als Anfängerpfad", async ({
+  page,
+}) => {
   await reachCreateFileStep(page);
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("notiz.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
-  await expectGuidedStep(page, 10, "Editor mit einfachem Text verwenden");
+  await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
 
-  await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Hello AI Training");
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.fill("Hello AI Training");
+  await expect(
+    page.getByRole("status", { name: "notiz.txt: ungespeicherte Änderungen" }),
+  ).toBeVisible();
+  await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
+
+  await editor.press("Control+s");
+  await expect(
+    page.getByRole("status", { name: "notiz.txt: ungespeicherte Änderungen" }),
+  ).toHaveCount(0);
   await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
@@ -225,7 +247,7 @@ test("Guided: schmaler Viewport hält Kopfzeile, Menüs, Editor und Highlight vo
   await expect(page.getByTestId("highlight-frame")).toBeVisible();
 });
 
-test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bewertet", async ({
+test("Challenge: freier Klickpfad wird ausschließlich über den gespeicherten Zielzustand bewertet", async ({
   page,
 }) => {
   await page.goto("/training/vscode-basics.challenge");
@@ -237,6 +259,7 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
+  await completeChallengeFile(page);
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
@@ -249,7 +272,9 @@ test("Challenge: freier Klickpfad wird ausschließlich über den Zielzustand bew
   ).toBeVisible();
 });
 
-test("Challenge: alternativer Workspace-Pfad erfüllt denselben Endzustand", async ({ page }) => {
+test("Challenge: alternativer Workspace-Pfad erfüllt denselben gespeicherten Endzustand", async ({
+  page,
+}) => {
   await page.goto("/training/vscode-basics.challenge");
   await waitForTrainingReady(page);
 
@@ -260,11 +285,12 @@ test("Challenge: alternativer Workspace-Pfad erfüllt denselben Endzustand", asy
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
+  await completeChallengeFile(page);
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
     page.getByText(
-      "Der konkrete Klickweg darf abweichen; bewertet wird nur, ob Arbeitskontext und Zieldatei vorhanden sind.",
+      "Der konkrete Klickweg darf abweichen; bewertet wird der vollständige gespeicherte Endzustand.",
       { exact: true },
     ),
   ).toBeVisible();
@@ -305,7 +331,7 @@ test("Guided: falsches Ergebnis erzeugt Feedback und lässt eine Korrektur zu", 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("notiz.txt");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
-  await expectGuidedStep(page, 10, "Editor mit einfachem Text verwenden");
+  await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
 });
 
 test("Semantische Targets: Runtime löst Highlights ohne Test-CSS-Selektoren auf", async ({

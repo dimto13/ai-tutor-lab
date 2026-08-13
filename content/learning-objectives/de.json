@@ -5,12 +5,12 @@
     {
       "id": "understand_vscode_ui",
       "title": "VS-Code-Oberfläche verstehen",
-      "description": "Activity Bar, Side Bar, Editor, Panel und Status Bar unterscheiden und ihrer Aufgabe zuordnen."
+      "description": "Menüleiste, Activity Bar, Primary und Secondary Side Bar, Editor, Panel und Status Bar unterscheiden und ihrer Aufgabe zuordnen."
     },
     {
       "id": "understand_workspace",
-      "title": "Ordner und Workspace unterscheiden",
-      "description": "Single-Folder-Arbeitskontext und gespeicherten Multi-Root-Workspace fachlich unterscheiden."
+      "title": "Datei, Ordner und Workspace unterscheiden",
+      "description": "Datei, Ordner, Single-Folder-Arbeitskontext und gespeicherten Multi-Root-Workspace fachlich unterscheiden."
     },
     {
       "id": "create_file",
@@ -18,9 +18,24 @@
       "description": "Innerhalb eines geöffneten VS-Code-Arbeitskontexts eine neue Datei über den Explorer anlegen."
     },
     {
+      "id": "edit_and_save_vscode_file",
+      "title": "Datei bearbeiten und sicher speichern",
+      "description": "Eine Datei im Editor verändern, den ungespeicherten Zustand erkennen und die Änderung gezielt speichern."
+    },
+    {
+      "id": "navigate_vscode",
+      "title": "Passenden Navigationsweg in VS Code wählen",
+      "description": "Explorer, Suche und Command Palette nach Aufgabe unterscheiden und den passenden Einstieg für Dateien, Inhalte oder Befehle wählen."
+    },
+    {
       "id": "understand_panel_views",
       "title": "Panel-Views unterscheiden",
-      "description": "Terminal, Problems und Output als unterschiedliche Views innerhalb des Panels einordnen."
+      "description": "Terminal, Problems und Output als unterschiedliche Views innerhalb des Panels einordnen und passend zur Aufgabe auswählen."
+    },
+    {
+      "id": "configure_vscode",
+      "title": "VS Code konfigurieren und erweitern",
+      "description": "Settings als Konfiguration und Extensions als Erweiterungen unterscheiden und den jeweiligen Einstieg finden."
     },
     {
       "id": "operate_vscode_without_guidance",

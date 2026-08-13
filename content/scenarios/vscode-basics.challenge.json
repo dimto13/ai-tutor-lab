@@ -4,8 +4,12 @@
   "mode": "challenge",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Challenge",
-  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Die Challenge baut auf den zuvor erklärten VS-Code-Grundbegriffen einschließlich Primary und Secondary Side Bar auf. Entscheidend ist der Endzustand, nicht dein Klickweg.",
-  "learningObjectives": ["operate_vscode_without_guidance", "create_file_in_existing_project"],
+  "description": "Löse eine realistische Aufgabe ohne Schritt-für-Schritt-Führung. Entscheidend ist ein fachlich vollständiger Endzustand: Arbeitskontext geöffnet, Zieldatei erstellt, Inhalt korrekt und Änderung gespeichert. Dein Klickweg bleibt frei.",
+  "learningObjectives": [
+    "operate_vscode_without_guidance",
+    "create_file_in_existing_project",
+    "edit_and_save_vscode_file"
+  ],
   "audience": {
     "personaId": "non-programmer",
     "glossaryConcepts": [
@@ -27,7 +31,7 @@
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator"
   },
-  "estimatedMinutes": 6,
+  "estimatedMinutes": 8,
   "points": 100,
   "completionValidation": {
     "kind": "all",
@@ -41,27 +45,41 @@
         "kind": "state",
         "selector": "filesystem.files",
         "includes": "challenge.txt"
+      },
+      {
+        "kind": "state",
+        "selector": "filesystem.contents",
+        "match": {
+          "challenge.txt": "VS Code Grundlagen abgeschlossen"
+        }
+      },
+      {
+        "kind": "state",
+        "selector": "editor.dirtyFiles",
+        "excludes": "challenge.txt"
       }
     ]
   },
   "solutionComparison": [
     "Einen bestehenden Ordner oder Workspace als Arbeitskontext öffnen.",
     "Im Explorer innerhalb des Projektordners eine neue Datei challenge.txt anlegen.",
-    "Der konkrete Klickweg darf abweichen; bewertet wird nur, ob Arbeitskontext und Zieldatei vorhanden sind."
+    "Den geforderten Text im Editor eintragen und den ungespeicherten Zustand erkennen.",
+    "Die Datei speichern; ob du dafür Strg+S, Cmd+S oder einen anderen zulässigen VS-Code-Weg verwendest, ist für die Bewertung unerheblich.",
+    "Der konkrete Klickweg darf abweichen; bewertet wird der vollständige gespeicherte Endzustand."
   ],
   "steps": [
     {
       "id": "challenge_goal",
-      "title": "Bestehendes Projekt öffnen und Textdatei anlegen",
-      "description": "Du bekommst nur Ziel und Erfolgskriterien. Die Begriffe Ordner, Workspace, Explorer sowie Primary und Secondary Side Bar wurden in den Grundlagen bereits eingeführt. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge.",
-      "instruction": "Öffne einen bestehenden Projektkontext und lege darin eine Datei challenge.txt an.",
-      "why": "Die Challenge prüft, ob du die bereits erklärte Oberfläche selbstständig einsetzen kannst und nicht nur eine Klickfolge reproduzierst.",
+      "title": "Bestehendes Projekt öffnen und gespeicherte Textdatei herstellen",
+      "description": "Du bekommst nur Ziel und Erfolgskriterien. Es gibt keine automatische Markierung und keine vorgegebene Reihenfolge. Ein Ordner oder gespeicherter Workspace sind beide zulässige Wege in den Arbeitskontext.",
+      "instruction": "Öffne einen bestehenden Projektkontext. Lege darin challenge.txt an, trage exakt den Text VS Code Grundlagen abgeschlossen ein und speichere die Datei.",
+      "why": "Die Challenge prüft, ob du Arbeitskontext, Explorer, Editor und Speichern als zusammenhängenden Ablauf selbstständig einsetzen kannst – nicht, ob du eine Klickfolge reproduzierst.",
       "helpLevels": [
         "Überlege zuerst, wie VS Code einen bestehenden Ordner oder Workspace als Arbeitskontext öffnet.",
-        "Öffne einen Ordner oder Workspace und nutze anschließend den Explorer.",
-        "Öffne über das File-Menü einen bestehenden Ordner oder Workspace, wechsle danach in den Explorer und lege im geöffneten Projekt die Datei challenge.txt an."
+        "Öffne den Arbeitskontext, lege challenge.txt im Explorer an und bearbeite die Datei im Editor. Achte vor dem Abschluss auf den ungespeicherten Zustand.",
+        "Öffne über das File-Menü einen Ordner oder Workspace, lege im Explorer challenge.txt an, trage VS Code Grundlagen abgeschlossen ein und speichere die Datei mit Strg+S beziehungsweise Cmd+S."
       ],
-      "successMessage": "Challenge erfüllt. Der Endzustand entspricht den Erfolgskriterien."
+      "successMessage": "Challenge erfüllt. Arbeitskontext, Dateiinhalt und gespeicherter Zustand entsprechen den Erfolgskriterien."
     }
   ]
 }
