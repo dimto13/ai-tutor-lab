@@ -129,7 +129,8 @@ function isWorkflowState(value: unknown): value is WorkflowRuntimeState {
   return (
     typeof candidate.branch === "string" &&
     (candidate.terminalLastResult === null || isTerminalLastResult(candidate.terminalLastResult)) &&
-    (candidate.verificationLastResult === null ||
+    (candidate.verificationLastResult === undefined ||
+      candidate.verificationLastResult === null ||
       isTerminalLastResult(candidate.verificationLastResult))
   );
 }
