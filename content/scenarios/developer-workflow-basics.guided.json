@@ -209,13 +209,13 @@
     {
       "id": "step_8",
       "title": "GitHub Copilot einsetzen",
-      "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor. Der gesamte Copilot-Arbeitsbereich in der Secondary Side Bar bleibt markiert, während du vom Öffnen des Chats zum Prompt wechselst.",
-      "instruction": "Öffne Copilot Chat in der Secondary Side Bar und bitte in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert.",
-      "why": "Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Der Chat übernimmt den geöffneten Dateikontext, während VS Code selbst unabhängig davon weiter funktioniert.",
+      "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor. Der gesamte Copilot-Arbeitsbereich in der Secondary Side Bar bleibt markiert, während du den Chat öffnest, hello.py gezielt als Kontext anhängst und danach den Prompt sendest.",
+      "instruction": "Öffne Copilot Chat in der Secondary Side Bar, füge hello.py über Kontext hinzufügen als Dateikontext hinzu und bitte anschließend in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert.",
+      "why": "Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Der Dateikontext wird bewusst an den Chat angehängt, damit die Anfrage nachvollziehbar auf hello.py bezogen ist, statt impliziten Kontext anzunehmen.",
       "helpLevels": [
-        "Arbeite in der Secondary Side Bar rechts vom Editor: Dort öffnest du Copilot Chat und formulierst anschließend die Anfrage.",
-        "Klicke auf Copilot und beschreibe im Feld Ask Copilot... die gewünschte Addition zweier Zahlen in eigenen Worten.",
-        "Die Secondary Side Bar bleibt als Arbeitsbereich hervorgehoben. Öffne dort Copilot, bitte im Prompt-Feld um eine Python-Funktion für die Addition zweier Zahlen und drücke Enter. Wenn der Chat bereits offen ist, gehe direkt zum Prompt-Feld."
+        "Arbeite in der Secondary Side Bar rechts vom Editor: Öffne Copilot Chat, hänge hello.py als Kontext an und formuliere danach die Anfrage.",
+        "Klicke auf Copilot, dann auf Kontext hinzufügen und Datei anhängen: hello.py. Beschreibe anschließend im Feld Ask Copilot... die gewünschte Addition zweier Zahlen in eigenen Worten.",
+        "Die Secondary Side Bar bleibt als Arbeitsbereich hervorgehoben. Öffne dort Copilot, wähle Kontext hinzufügen → Datei anhängen: hello.py, gib danach im Prompt-Feld die Anfrage für eine Python-Funktion zur Addition zweier Zahlen ein und drücke Enter. Wenn der Chat bereits offen ist, beginne direkt mit dem Kontext."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
@@ -226,12 +226,12 @@
         }
       },
       "highlightTarget": "vscode.secondarySideBar",
-      "highlightTooltip": "Nutze die Secondary Side Bar für Copilot Chat und den anschließenden Prompt.",
+      "highlightTooltip": "Nutze die Secondary Side Bar für Copilot Chat, hello.py als Kontext und den anschließenden Prompt.",
       "onFailure": {
-        "message": "Copilot hat die Anfrage erkannt, aber nicht im erwarteten hello.py-Kontext. Öffne hello.py und sende die Anfrage im Copilot-Prompt erneut.",
-        "markTarget": "copilot.chat.prompt"
+        "message": "Copilot hat die Anfrage erkannt, aber hello.py ist noch nicht als erwarteter Dateikontext angehängt. Füge hello.py über Kontext hinzufügen hinzu und sende die Anfrage danach erneut.",
+        "markTarget": "copilot.chat.addContext"
       },
-      "successMessage": "Copilot hat deine frei formulierte Anfrage im aktuellen Dateikontext verarbeitet."
+      "successMessage": "Copilot hat deine frei formulierte Anfrage mit hello.py als explizitem Dateikontext verarbeitet."
     }
   ],
   "audience": {
