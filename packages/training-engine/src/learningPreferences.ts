@@ -56,11 +56,11 @@ export function recommendationForSelfAssessedAiLevel(
       };
     case "advanced":
       return {
-        scenarioId: "research-workflow.challenge",
+        scenarioId: "copilot-basics.challenge",
         mode: "challenge",
-        title: "Mit KI recherchieren und Quellen prüfen · Challenge",
+        title: "GitHub Copilot – Grundlagen · Challenge",
         reason:
-          "Nutze einen offenen Workflow mit höherer Eigenständigkeit, Quellenprüfung und fachlicher Ergebnisbewertung.",
+          "Steige direkt in eine eigenständigere Challenge ein, in der du KI-Vorschläge kritisch prüfst und bewusst übernimmst.",
       };
   }
 }
