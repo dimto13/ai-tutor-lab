@@ -228,6 +228,10 @@ export const vscodeRuntime = {
     if (selector === "verification.lastResult") {
       return cloneTerminalLastResult(workflowState.verificationLastResult) as T;
     }
+    if (selector === "scm.lastCommit.message") {
+      const commits = await baseVscodeRuntime.query<Array<{ message: string }>>("scm.commits");
+      return (commits.at(-1)?.message ?? null) as T;
+    }
     return baseVscodeRuntime.query<T>(selector);
   },
 
