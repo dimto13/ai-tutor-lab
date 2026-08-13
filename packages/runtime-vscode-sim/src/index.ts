@@ -22,16 +22,21 @@ export interface TerminalLastResult {
   branch: string;
 }
 
+export interface TerminalCheckResult extends TerminalLastResult {
+  subject: string | null;
+  content: string | null;
+}
+
 export interface VscodeRuntimeState extends BaseVscodeRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
-  terminalLastCheckResult: TerminalLastResult | null;
+  terminalLastCheckResult: TerminalCheckResult | null;
 }
 
 interface WorkflowRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
-  terminalLastCheckResult: TerminalLastResult | null;
+  terminalLastCheckResult: TerminalCheckResult | null;
 }
 
 interface WorkflowRuntimeSnapshot {
@@ -65,11 +70,15 @@ function cloneTerminalLastResult(value: TerminalLastResult | null): TerminalLast
   return value ? { ...value } : null;
 }
 
+function cloneTerminalCheckResult(value: TerminalCheckResult | null): TerminalCheckResult | null {
+  return value ? { ...value } : null;
+}
+
 function cloneWorkflowState(value: WorkflowRuntimeState): WorkflowRuntimeState {
   return {
     branch: value.branch,
     terminalLastResult: cloneTerminalLastResult(value.terminalLastResult),
-    terminalLastCheckResult: cloneTerminalLastResult(value.terminalLastCheckResult),
+    terminalLastCheckResult: cloneTerminalCheckResult(value.terminalLastCheckResult),
   };
 }
 
@@ -78,7 +87,7 @@ function mergedRuntimeState(base: BaseVscodeRuntimeState): VscodeRuntimeState {
     ...base,
     branch: workflowState.branch,
     terminalLastResult: cloneTerminalLastResult(workflowState.terminalLastResult),
-    terminalLastCheckResult: cloneTerminalLastResult(workflowState.terminalLastCheckResult),
+    terminalLastCheckResult: cloneTerminalCheckResult(workflowState.terminalLastCheckResult),
   };
 }
 
@@ -126,9 +135,20 @@ function isTerminalLastResult(value: unknown): value is TerminalLastResult {
   );
 }
 
-function isCheckCommand(command: string): boolean {
-  const executable = command.trim().split(/\s+/, 1)[0]?.toLocaleLowerCase("en-US");
-  return executable === "python" || executable === "python3";
+function isTerminalCheckResult(value: unknown): value is TerminalCheckResult {
+  if (!isTerminalLastResult(value)) return false;
+  const candidate = value as Partial<TerminalCheckResult>;
+  return (
+    (candidate.subject === null || typeof candidate.subject === "string") &&
+    (candidate.content === null || typeof candidate.content === "string")
+  );
+}
+
+function checkSubject(command: string): string | null {
+  const tokens = command.trim().split(/\s+/).filter(Boolean);
+  const executable = tokens[0]?.toLocaleLowerCase("en-US");
+  if (executable !== "python" && executable !== "python3") return null;
+  return tokens[1] ?? null;
 }
 
 function isWorkflowSnapshot(value: unknown): value is WorkflowRuntimeSnapshot {
@@ -145,15 +165,23 @@ function isWorkflowSnapshot(value: unknown): value is WorkflowRuntimeSnapshot {
     typeof workflowCandidate.branch === "string" &&
     (workflowCandidate.terminalLastResult === null ||
       isTerminalLastResult(workflowCandidate.terminalLastResult)) &&
-    (lastCheckResult === undefined || lastCheckResult === null || isTerminalLastResult(lastCheckResult))
+    (lastCheckResult === undefined ||
+      lastCheckResult === null ||
+      isTerminalLastResult(lastCheckResult))
   );
 }
 
 function workflowStateFromSnapshot(snapshot: WorkflowRuntimeSnapshot): WorkflowRuntimeState {
+  const storedCheck = snapshot.workflow.terminalLastCheckResult as unknown;
+  const terminalLastCheckResult = isTerminalCheckResult(storedCheck)
+    ? storedCheck
+    : isTerminalLastResult(storedCheck)
+      ? { ...storedCheck, subject: null, content: null }
+      : null;
   return {
     branch: snapshot.workflow.branch,
     terminalLastResult: cloneTerminalLastResult(snapshot.workflow.terminalLastResult),
-    terminalLastCheckResult: cloneTerminalLastResult(snapshot.workflow.terminalLastCheckResult ?? null),
+    terminalLastCheckResult: cloneTerminalCheckResult(terminalLastCheckResult),
   };
 }
 
@@ -204,12 +232,18 @@ export const vscodeRuntime = {
         ok: execution.exitCode === 0,
         branch,
       };
+      const subject = checkSubject(command);
       workflowState = {
         branch,
         terminalLastResult,
-        terminalLastCheckResult: isCheckCommand(command)
-          ? terminalLastResult
-          : workflowState.terminalLastCheckResult,
+        terminalLastCheckResult:
+          subject !== null
+            ? {
+                ...terminalLastResult,
+                subject,
+                content: latestBaseState?.contents[subject] ?? null,
+              }
+            : workflowState.terminalLastCheckResult,
       };
       notifyWorkflowState("mutation");
       stateUpdated = true;
@@ -230,7 +264,7 @@ export const vscodeRuntime = {
       return cloneTerminalLastResult(workflowState.terminalLastResult) as T;
     }
     if (selector === "terminal.lastCheckResult") {
-      return cloneTerminalLastResult(workflowState.terminalLastCheckResult) as T;
+      return cloneTerminalCheckResult(workflowState.terminalLastCheckResult) as T;
     }
     if (selector === "editor.hasUnsavedChanges") {
       const dirtyFiles = await baseVscodeRuntime.query<string[]>("editor.dirtyFiles");
