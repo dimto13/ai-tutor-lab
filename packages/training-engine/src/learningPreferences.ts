@@ -9,12 +9,12 @@ export interface LearningPreferences {
 }
 
 export type ExplanationDepth = "foundational" | "balanced" | "concise";
+export type ChallengeIntensity = "introductory" | "standard" | "high";
 
-export interface LearningRecommendation {
-  scenarioId: string;
-  mode: TrainingMode;
-  title: string;
-  reason: string;
+export interface LearningAdaptation {
+  explanationDepth: ExplanationDepth;
+  preferredEntryMode: TrainingMode;
+  challengeIntensity: ChallengeIntensity;
 }
 
 export function isSelfAssessedAiLevel(value: unknown): value is SelfAssessedAiLevel {
@@ -24,43 +24,28 @@ export function isSelfAssessedAiLevel(value: unknown): value is SelfAssessedAiLe
 export function explanationDepthForSelfAssessedAiLevel(
   level: SelfAssessedAiLevel,
 ): ExplanationDepth {
-  switch (level) {
-    case "beginner":
-      return "foundational";
-    case "intermediate":
-      return "balanced";
-    case "advanced":
-      return "concise";
-  }
+  return adaptationForSelfAssessedAiLevel(level).explanationDepth;
 }
 
-export function recommendationForSelfAssessedAiLevel(
-  level: SelfAssessedAiLevel,
-): LearningRecommendation {
+export function adaptationForSelfAssessedAiLevel(level: SelfAssessedAiLevel): LearningAdaptation {
   switch (level) {
     case "beginner":
       return {
-        scenarioId: "vscode-basics.guided",
-        mode: "guided",
-        title: "Visual Studio Code – Grundlagen · Guided",
-        reason:
-          "Starte mit einer klar geführten Einführung, damit Oberfläche, Dateien, Ordner und Workspaces sicher sitzen.",
+        explanationDepth: "foundational",
+        preferredEntryMode: "guided",
+        challengeIntensity: "introductory",
       };
     case "intermediate":
       return {
-        scenarioId: "copilot-basics.guided",
-        mode: "guided",
-        title: "GitHub Copilot – Grundlagen · Guided",
-        reason:
-          "Vertiefe strukturierte KI-Nutzung mit kontrolliertem Kontext, Vorschlägen und bewusster Übernahme.",
+        explanationDepth: "balanced",
+        preferredEntryMode: "guided",
+        challengeIntensity: "standard",
       };
     case "advanced":
       return {
-        scenarioId: "copilot-basics.challenge",
-        mode: "challenge",
-        title: "GitHub Copilot – Grundlagen · Challenge",
-        reason:
-          "Steige direkt in eine eigenständigere Challenge ein, in der du KI-Vorschläge kritisch prüfst und bewusst übernimmst.",
+        explanationDepth: "concise",
+        preferredEntryMode: "challenge",
+        challengeIntensity: "high",
       };
   }
 }
