@@ -2,6 +2,7 @@ import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 
 export const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
+  SelfAssessedAiLevel: a.enum(["beginner", "intermediate", "advanced"]),
   StepStatus: a.enum(["NOT_STARTED", "ACTIVE", "VALIDATION_FAILED", "COMPLETED", "SKIPPED"]),
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
 
@@ -24,6 +25,7 @@ export const schema = a.schema({
       preferredTrainingMode: a.ref("TrainingMode"),
       weeklyGoalMinutes: a.integer(),
       accessibility: a.json(),
+      selfAssessedAiLevel: a.ref("SelfAssessedAiLevel"),
       preferencesVersion: a.integer().required(),
       stateUpdatedAt: a.float().required(),
     })
@@ -178,6 +180,7 @@ export const schema = a.schema({
     preferredTrainingMode: a.ref("TrainingMode"),
     weeklyGoalMinutes: a.integer(),
     accessibility: a.json(),
+    selfAssessedAiLevel: a.ref("SelfAssessedAiLevel"),
     revision: a.integer().required(),
     updatedAt: a.float().required(),
   }),
@@ -310,6 +313,7 @@ export const schema = a.schema({
       preferredTrainingMode: a.ref("TrainingMode"),
       weeklyGoalMinutes: a.integer(),
       accessibility: a.json(),
+      selfAssessedAiLevel: a.ref("SelfAssessedAiLevel"),
       expectedRevision: a.integer(),
     })
     .returns(a.ref("UserPreferencesEnvelope"))
