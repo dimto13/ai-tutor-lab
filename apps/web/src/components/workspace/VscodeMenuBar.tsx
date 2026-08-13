@@ -11,6 +11,7 @@ type MenuAction =
   | "open-workspace"
   | "open-command-palette"
   | "open-settings"
+  | "save-active-file"
   | "view-explorer"
   | "view-search"
   | "view-scm"
@@ -58,7 +59,7 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
       { label: "Add Folder to Workspace..." },
       { label: "Save Workspace As..." },
       { label: "Duplicate Workspace" },
-      { label: "Save", shortcut: "Ctrl+S", separatorBefore: true },
+      { label: "Save", shortcut: "Ctrl+S", action: "save-active-file", separatorBefore: true },
       { label: "Save As...", shortcut: "Ctrl+Shift+S" },
       { label: "Save All" },
       { label: "Share", separatorBefore: true, children: [{ label: "Export Profile..." }] },
@@ -351,6 +352,7 @@ export function VscodeMenuBar({
   };
 
   const showCommandPalette = () => {
+    inspect("vscode.commandPalette");
     openCommandPalette?.();
     setSettingsOpen(false);
     setCommandPaletteQuery(">");
@@ -359,6 +361,7 @@ export function VscodeMenuBar({
   };
 
   const showSettings = () => {
+    inspect("vscode.settings");
     openSettings?.();
     setCommandPaletteOpen(false);
     setSettingsOpen(true);
@@ -369,6 +372,16 @@ export function VscodeMenuBar({
     if (action === "open-workspace") openWorkingContext("workspace");
     if (action === "open-command-palette") showCommandPalette();
     if (action === "open-settings") showSettings();
+    if (action === "save-active-file") {
+      rootRef.current?.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "s",
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    }
     if (action === "view-explorer") openView("explorer", "vscode.activityBar.explorer");
     if (action === "view-search") openView("search", "vscode.activityBar.search");
     if (action === "view-scm") openView("scm", "vscode.activityBar.scm");
@@ -500,6 +513,7 @@ export function VscodeMenuBar({
         <div
           role="dialog"
           aria-label="Command Palette"
+          data-highlight="vscode.commandPalette"
           className="absolute left-1/2 top-full z-50 mt-2 w-[min(38rem,calc(100vw-1rem))] -translate-x-1/2 overflow-hidden rounded-md border border-border bg-panel shadow-2xl"
         >
           <div className="border-b border-border px-3 py-2">
@@ -572,6 +586,7 @@ export function VscodeMenuBar({
         <section
           role="dialog"
           aria-label="Settings"
+          data-highlight="vscode.settings"
           className="absolute left-1/2 top-full z-50 mt-2 w-[min(44rem,calc(100vw-1rem))] -translate-x-1/2 rounded-md border border-border bg-editor p-4 shadow-2xl"
         >
           <div className="flex items-start gap-4">
