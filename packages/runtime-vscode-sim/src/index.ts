@@ -232,6 +232,14 @@ export const vscodeRuntime = {
       const commits = await baseVscodeRuntime.query<Array<{ message: string }>>("scm.commits");
       return (commits.at(-1)?.message ?? null) as T;
     }
+    if (selector === "scm.lastCommit.files") {
+      const commits = await baseVscodeRuntime.query<Array<{ files: string[] }>>("scm.commits");
+      return [...(commits.at(-1)?.files ?? [])] as T;
+    }
+    if (selector === "scm.lastCommit.fileCount") {
+      const commits = await baseVscodeRuntime.query<Array<{ files: string[] }>>("scm.commits");
+      return (commits.at(-1)?.files.length ?? 0) as T;
+    }
     return baseVscodeRuntime.query<T>(selector);
   },
 
