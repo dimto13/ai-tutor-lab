@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("authenticated shell shows real identity, persists display name and logs out", async ({
+test("authenticated shell persists account settings and protects the email display", async ({
   page,
 }) => {
   await page.goto("/");
@@ -12,8 +12,31 @@ test("authenticated shell shows real identity, persists display name and logs ou
 
   await page.getByRole("button", { name: "Einstellungen öffnen" }).click();
   const dialog = page.getByRole("dialog", { name: "Einstellungen" });
+  const emailDisplay = dialog.getByTestId("account-email");
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText("learner@local.test", { exact: true })).toBeVisible();
+  await expect(emailDisplay).toContainText("@");
+  await expect(emailDisplay).toContainText("*");
+  await expect(emailDisplay).not.toHaveText("learner@local.test");
+
+  await dialog.getByRole("button", { name: "E-Mail anzeigen" }).click();
+  await expect(emailDisplay).toHaveText("learner@local.test");
+  await expect(dialog.getByRole("button", { name: "E-Mail verbergen" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await dialog.getByRole("button", { name: "E-Mail verbergen" }).click();
+  await expect(emailDisplay).toContainText("*");
+  await expect(emailDisplay).not.toHaveText("learner@local.test");
+
+  await dialog.getByRole("radio", { name: /Anfänger/ }).check();
+  const recommendation = dialog.getByTestId("ai-level-recommendation");
+  await expect(recommendation).toContainText("Visual Studio Code – Grundlagen · Guided");
+
+  await dialog.getByRole("radio", { name: /Erfahren/ }).check();
+  await expect(recommendation).toContainText(
+    "Mit KI recherchieren und Quellen prüfen · Challenge",
+  );
 
   const nameInput = dialog.getByRole("textbox", { name: "Name" });
   await nameInput.fill("Tobias Test");
@@ -25,6 +48,13 @@ test("authenticated shell shows real identity, persists display name and logs ou
   await page.reload();
   await expect(page.getByText("Tobias Test", { exact: true })).toBeVisible();
 
+  await page.getByRole("button", { name: "Einstellungen öffnen" }).click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("radio", { name: /Erfahren/ })).toBeChecked();
+  await expect(emailDisplay).toContainText("*");
+  await expect(emailDisplay).not.toHaveText("learner@local.test");
+
+  await dialog.getByRole("button", { name: "Einstellungen schließen" }).click();
   await page.getByRole("button", { name: "Abmelden" }).click();
   await expect(page).toHaveURL(/\/willkommen$/);
 });
