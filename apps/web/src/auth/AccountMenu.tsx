@@ -64,7 +64,9 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
       closeSettings();
     } catch (cause) {
       setSaveError(
-        cause instanceof Error ? cause.message : "Die Einstellungen konnten nicht gespeichert werden.",
+        cause instanceof Error
+          ? cause.message
+          : "Die Einstellungen konnten nicht gespeichert werden.",
       );
     } finally {
       setSaving(false);
@@ -193,8 +195,8 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                   KI-Erfahrungslevel
                 </legend>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Deine Selbsteinschätzung beeinflusst Empfehlungen und Erklärungstiefe. Sie ist kein
-                  gemessener Kompetenznachweis.
+                  Deine Selbsteinschätzung beeinflusst Empfehlungen und Erklärungstiefe. Sie ist
+                  kein gemessener Kompetenznachweis.
                 </p>
                 <div className="mt-3 space-y-2">
                   {AI_LEVEL_OPTIONS.map((option) => {
