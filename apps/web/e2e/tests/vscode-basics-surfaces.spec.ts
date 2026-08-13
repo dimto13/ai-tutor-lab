@@ -5,7 +5,7 @@ async function openExplore(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
-test("VS Code Grundlagen: Command Palette filtert und startet Befehle per Tastatur", async ({
+test("VS Code Grundlagen: Command Palette filtert, zählt als Lernoberfläche und startet Befehle per Tastatur", async ({
   page,
 }) => {
   await openExplore(page);
@@ -16,6 +16,7 @@ test("VS Code Grundlagen: Command Palette filtert und startet Befehle per Tastat
   const palette = page.getByRole("dialog", { name: "Command Palette" });
   const input = page.getByLabel("Command Palette-Eingabe");
   await expect(palette).toBeVisible();
+  await expect(page.getByText("2 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(input).toHaveValue(">");
   await expect(palette.getByText(/sucht und startet VS-Code-Befehle/)).toBeVisible();
 
@@ -25,7 +26,9 @@ test("VS Code Grundlagen: Command Palette filtert und startet Befehle per Tastat
   await expect(page.getByText("Volltextsuche über den aktuellen Arbeitskontext.")).toBeVisible();
 });
 
-test("VS Code Grundlagen: Settings und Extensions bleiben fachlich getrennt", async ({ page }) => {
+test("VS Code Grundlagen: Settings zählen als Lernoberfläche und bleiben von Extensions getrennt", async ({
+  page,
+}) => {
   await openExplore(page);
 
   await page.getByRole("button", { name: "File", exact: true }).click();
@@ -34,6 +37,7 @@ test("VS Code Grundlagen: Settings und Extensions bleiben fachlich getrennt", as
 
   const settings = page.getByRole("dialog", { name: "Settings" });
   await expect(settings).toBeVisible();
+  await expect(page.getByText("2 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(
     settings.getByText(/Einstellungen verändern das Verhalten von VS Code/),
   ).toBeVisible();
@@ -46,6 +50,7 @@ test("VS Code Grundlagen: Settings und Extensions bleiben fachlich getrennt", as
   await page.getByRole("menuitem", { name: "Preferences", exact: true }).click();
   await page.getByRole("menuitem", { name: "Extensions", exact: true }).click();
   await expect(page.getByText("GitHub Copilot", { exact: true })).toBeVisible();
+  await expect(page.getByText("3 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
 });
 
 test("VS Code Grundlagen: neue Explorer-Datei wird erst nach Bearbeitung als ungespeichert markiert", async ({
@@ -67,4 +72,29 @@ test("VS Code Grundlagen: neue Explorer-Datei wird erst nach Bearbeitung als ung
 
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("noch nicht fertig");
   await expect(dirtyStatus).toBeVisible();
+});
+
+test("VS Code Grundlagen: sichtbarer File-Save-Befehl speichert die aktive Datei", async ({ page }) => {
+  await page.goto("/training/vscode-basics.challenge");
+  await expect(page.getByRole("status")).toHaveText("Training bereit");
+
+  await page.getByRole("button", { name: "File", exact: true }).click();
+  await page.getByRole("menuitem", { name: /Open Folder\.\.\./ }).click();
+  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
+  await page.getByPlaceholder("dateiname.ext").fill("challenge.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
+
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  const dirtyStatus = page.getByRole("status", {
+    name: "challenge.txt: ungespeicherte Änderungen",
+  });
+  await editor.fill("VS Code Grundlagen abgeschlossen");
+  await expect(dirtyStatus).toBeVisible();
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "File", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Save", exact: true }).click();
+
+  await expect(dirtyStatus).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
