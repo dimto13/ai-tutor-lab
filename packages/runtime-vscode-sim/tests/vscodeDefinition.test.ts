@@ -64,6 +64,7 @@ test("VS Code workflow state persists branch and last terminal result", async ()
       exitCode: 0,
       ok: true,
       branch: "feature/workflow",
+      output: "Switched to a new branch 'feature/workflow'",
     });
 
     const status = vscodeRuntime.executeTerminalCommand(terminalCommand("git", "status"));
@@ -77,6 +78,7 @@ test("VS Code workflow state persists branch and last terminal result", async ()
       exitCode: 0,
       ok: true,
       branch: "feature/workflow",
+      output: "tests passed",
     });
 
     const snapshot = await vscodeRuntime.snapshot();
@@ -90,6 +92,7 @@ test("VS Code workflow state persists branch and last terminal result", async ()
       exitCode: 0,
       ok: true,
       branch: "feature/workflow",
+      output: "tests passed",
     });
   } finally {
     unsubscribe();
