@@ -135,11 +135,17 @@ function diffCommand(
   return resultFromContext(command, context, branch, output);
 }
 
-function withBranchOutput(result: BaseTerminalCommandResult, branch: string): TerminalCommandResult {
+function withBranchOutput(
+  result: BaseTerminalCommandResult,
+  branch: string,
+): TerminalCommandResult {
   const output = result.output.map((line) =>
     line
       .replace(/^On branch main$/, `On branch ${branch}`)
-      .replace(/^Your branch is up to date with 'origin\/main'\.$/, `Your branch is up to date with 'origin/${branch}'.`)
+      .replace(
+        /^Your branch is up to date with 'origin\/main'\.$/,
+        `Your branch is up to date with 'origin/${branch}'.`,
+      )
       .replace(/^\[main (.+)\]$/, `[${branch} $1]`),
   );
   return { ...result, output, branch };
