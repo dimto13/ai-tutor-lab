@@ -168,14 +168,36 @@ const toolTrainings: TrainingCardModel[] = [
 const workflowTrainings: TrainingCardModel[] = [
   {
     id: "developer-workflow-basics",
-    scenarioId: "git-basics",
+    scenarioId: null,
     title: "VS Code, Git & GitHub Copilot – Zusammenspiel",
     description:
-      "Die bereits bekannten Werkzeuge in einem durchgängigen Entwicklungsablauf verbinden: Projekt bearbeiten, Änderungen versionieren und Copilot einsetzen.",
-    steps: 8,
+      "Voraussetzungen: VS-Code-, Git- und Copilot-Grundlagen. Verbinde die Werkzeuge in einem realistischen Work Item: Branch und Working Tree prüfen, Copilot mit bewusstem Kontext einsetzen, Diff und Prüfung kontrollieren, selektiv stagen, committen und einen handoff-fähigen Zustand herstellen.",
     icon: GitBranch,
     available: true,
-    label: "Workflow · Guided",
+    label: "AI Workflow · 3 Modi · Voraussetzungen: VS Code · Git · Copilot",
+    modes: [
+      {
+        scenarioId: "developer-workflow-basics.explore",
+        label: "Explore",
+        description: "Werkzeuggrenzen und Übergaben frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "git-basics",
+        label: "Guided",
+        description: "Work Item kontrolliert bis zum Handoff führen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "developer-workflow-basics.challenge",
+        label: "Challenge",
+        description: "Handoff-ready Endzustand selbstständig herstellen",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
   },
   {
     id: "research-workflow",
