@@ -20,6 +20,10 @@ export interface TerminalLastResult {
   exitCode: number;
   ok: boolean;
   branch: string;
+  output?: string;
+  target?: string;
+  content?: string;
+  saved?: boolean;
 }
 
 export interface VscodeRuntimeState extends BaseVscodeRuntimeState {
@@ -89,7 +93,15 @@ function publishRuntimeEvent(event: TrainingEvent): void {
   for (const listener of runtimeEventListeners) listener(event);
 }
 
+function invalidateStaleVerification(runtimeState: BaseVscodeRuntimeState): void {
+  const verification = workflowState.verificationLastResult;
+  if (!verification?.target || verification.content === undefined) return;
+  if (runtimeState.contents[verification.target] === verification.content) return;
+  workflowState = { ...workflowState, verificationLastResult: null };
+}
+
 baseVscodeRuntime.subscribeState((runtimeState, reason) => {
+  invalidateStaleVerification(runtimeState);
   latestBaseState = runtimeState;
   notifyWorkflowState(reason);
 });
@@ -119,7 +131,11 @@ function isTerminalLastResult(value: unknown): value is TerminalLastResult {
     typeof candidate.command === "string" &&
     typeof candidate.exitCode === "number" &&
     typeof candidate.ok === "boolean" &&
-    typeof candidate.branch === "string"
+    typeof candidate.branch === "string" &&
+    (candidate.output === undefined || typeof candidate.output === "string") &&
+    (candidate.target === undefined || typeof candidate.target === "string") &&
+    (candidate.content === undefined || typeof candidate.content === "string") &&
+    (candidate.saved === undefined || typeof candidate.saved === "boolean")
   );
 }
 
@@ -148,9 +164,16 @@ function baseSnapshotFromWorkflowSnapshot(
   return baseSnapshot;
 }
 
-function isVerificationCommand(command: string): boolean {
-  const [program] = command.trim().split(/\s+/);
-  return program === "python" || program === "python3";
+function verificationTarget(command: string): string | null {
+  const [program, rawTarget] = command.trim().split(/\s+/);
+  if (
+    (program !== "python" && program !== "python3") ||
+    !rawTarget ||
+    rawTarget.startsWith("-")
+  ) {
+    return null;
+  }
+  return rawTarget.replace(/^\.\//, "");
 }
 
 export const vscodeRuntime = {
@@ -192,20 +215,32 @@ export const vscodeRuntime = {
     let stateUpdated = false;
 
     try {
+      const previousTerminalLineCount = latestBaseState?.terminalLines.length ?? 0;
       const execution = baseVscodeRuntime.executeTerminalCommand(command);
       const branch = getTerminalBranchContext();
+      const output = execution.lines.slice(previousTerminalLineCount + 1).join("\n");
+      const target = verificationTarget(command);
       const terminalLastResult: TerminalLastResult = {
         command: command.trim(),
         exitCode: execution.exitCode,
         ok: execution.exitCode === 0,
         branch,
+        output,
       };
+      const verificationLastResult = target
+        ? {
+            ...terminalLastResult,
+            target,
+            content: latestBaseState?.contents[target] ?? "",
+            saved: !(latestBaseState?.dirtyFiles.includes(target) ?? false),
+          }
+        : workflowState.verificationLastResult?.branch === branch
+          ? workflowState.verificationLastResult
+          : null;
       workflowState = {
         branch,
         terminalLastResult,
-        verificationLastResult: isVerificationCommand(command)
-          ? cloneTerminalLastResult(terminalLastResult)
-          : workflowState.verificationLastResult,
+        verificationLastResult,
       };
       notifyWorkflowState("mutation");
       stateUpdated = true;
