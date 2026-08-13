@@ -183,6 +183,7 @@ export function Workspace() {
     setFiles((current) => [...current, { name, kind: "file" }]);
     setContents((current) => ({ ...current, [name]: "" }));
     vscodeRuntime.addFile(name);
+    vscodeRuntime.saveFile(name);
     openFile(name);
     const acceptedTrainingFiles = new Set(["hello.py", "notiz.txt", "challenge.txt"]);
     const nextWrongFile = acceptedTrainingFiles.has(name) ? null : name;
