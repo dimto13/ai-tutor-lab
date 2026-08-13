@@ -88,6 +88,11 @@ test("Guided: korrekte Teilaktionen lassen das Spotlight nicht auf einem erledig
   await expectGuidedStep(page, 8, "GitHub Copilot einsetzen");
   await expectSpotlightAround(spotlight, secondarySideBar);
 
+  await page.getByRole("button", { name: "Kontext hinzufügen", exact: true }).click();
+  await page.getByRole("button", { name: "Datei anhängen: hello.py", exact: true }).click();
+  await expect(page.getByText("hello.py", { exact: true })).toBeVisible();
+  await expectSpotlightAround(spotlight, secondarySideBar);
+
   const prompt = page.getByPlaceholder("Ask Copilot...");
   await prompt.fill("Erstelle eine einfache Python-Funktion, die zwei Zahlen addiert.");
   await prompt.press("Enter");
