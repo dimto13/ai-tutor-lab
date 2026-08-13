@@ -42,7 +42,9 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehäng
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
 
   const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
-  await copilotPrompt.fill("Erkläre die Addition in calculator.py und halte notes.txt aus dem Commit.");
+  await copilotPrompt.fill(
+    "Erkläre die Addition in calculator.py und halte notes.txt aus dem Commit.",
+  );
   await copilotPrompt.press("Enter");
   await expect(page.getByText(/add\(a, b\)-Funktion/)).toBeVisible();
   await expect(page.getByText(/notes\.txt.*nicht.*Commit/)).toBeVisible();
