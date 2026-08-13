@@ -95,7 +95,7 @@ test("VS Code Grundlagen: sichtbarer File-Save-Befehl speichert die aktive Datei
   await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "File", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Save", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Save Ctrl+S", exact: true }).click();
 
   await expect(dirtyStatus).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
