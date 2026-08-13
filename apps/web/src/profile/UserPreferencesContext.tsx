@@ -134,7 +134,9 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     [preferences, status, error, selfAssessedAiLevel, saveSelfAssessedAiLevel],
   );
 
-  return <UserPreferencesContext.Provider value={value}>{children}</UserPreferencesContext.Provider>;
+  return (
+    <UserPreferencesContext.Provider value={value}>{children}</UserPreferencesContext.Provider>
+  );
 }
 
 export function useUserPreferences(): UserPreferencesContextValue {
