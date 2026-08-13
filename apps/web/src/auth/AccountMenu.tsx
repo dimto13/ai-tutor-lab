@@ -1,6 +1,9 @@
 import { Eye, EyeOff, LogOut, Settings, UserRound, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
+import {
+  recommendationForSelfAssessedAiLevel,
+  type SelfAssessedAiLevel,
+} from "@ai-train-lab/training-engine";
 import { useAuth } from "./AuthContext";
 import { maskEmailAddress } from "./emailPrivacy";
 import { AI_LEVEL_OPTIONS } from "@/profile/aiLevelOptions";
@@ -30,6 +33,9 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   const email = auth.session?.identity.email ?? profile.profile?.email ?? null;
   const displayedEmail = email ? (emailVisible ? email : maskEmailAddress(email)) : null;
+  const draftRecommendation = draftAiLevel
+    ? recommendationForSelfAssessedAiLevel(draftAiLevel)
+    : null;
 
   function openSettings() {
     setDraftName(profile.displayName);
@@ -222,6 +228,27 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                     );
                   })}
                 </div>
+
+                {draftRecommendation ? (
+                  <div
+                    data-testid="ai-level-recommendation"
+                    className="mt-3 rounded-lg border border-accent/40 bg-accent/10 p-3"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
+                      Empfehlung für deinen Einstieg
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-foreground">
+                      {draftRecommendation.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {draftRecommendation.reason}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                    Wähle eine Stufe, um eine passende Einstiegsempfehlung zu sehen.
+                  </p>
+                )}
               </fieldset>
 
               {saveError || profile.error || preferences.error ? (
