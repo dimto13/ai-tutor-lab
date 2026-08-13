@@ -29,6 +29,6 @@ test("recommendation changes with self-assessed AI level", () => {
   assert.equal(beginner.mode, "guided");
   assert.equal(intermediate.scenarioId, "copilot-basics.guided");
   assert.equal(intermediate.mode, "guided");
-  assert.equal(advanced.scenarioId, "research-workflow.challenge");
+  assert.equal(advanced.scenarioId, "copilot-basics.challenge");
   assert.equal(advanced.mode, "challenge");
 });
