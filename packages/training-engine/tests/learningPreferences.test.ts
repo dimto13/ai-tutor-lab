@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  adaptationForSelfAssessedAiLevel,
   explanationDepthForSelfAssessedAiLevel,
   isSelfAssessedAiLevel,
-  recommendationForSelfAssessedAiLevel,
 } from "../src/learningPreferences.ts";
 
 test("self-assessed AI levels are stable domain values", () => {
@@ -20,15 +20,20 @@ test("explanation depth changes with self-assessed AI level", () => {
   assert.equal(explanationDepthForSelfAssessedAiLevel("advanced"), "concise");
 });
 
-test("recommendation changes with self-assessed AI level", () => {
-  const beginner = recommendationForSelfAssessedAiLevel("beginner");
-  const intermediate = recommendationForSelfAssessedAiLevel("intermediate");
-  const advanced = recommendationForSelfAssessedAiLevel("advanced");
-
-  assert.equal(beginner.scenarioId, "vscode-basics.guided");
-  assert.equal(beginner.mode, "guided");
-  assert.equal(intermediate.scenarioId, "copilot-basics.guided");
-  assert.equal(intermediate.mode, "guided");
-  assert.equal(advanced.scenarioId, "copilot-basics.challenge");
-  assert.equal(advanced.mode, "challenge");
+test("adaptation changes entry mode and challenge intensity without naming content", () => {
+  assert.deepEqual(adaptationForSelfAssessedAiLevel("beginner"), {
+    explanationDepth: "foundational",
+    preferredEntryMode: "guided",
+    challengeIntensity: "introductory",
+  });
+  assert.deepEqual(adaptationForSelfAssessedAiLevel("intermediate"), {
+    explanationDepth: "balanced",
+    preferredEntryMode: "guided",
+    challengeIntensity: "standard",
+  });
+  assert.deepEqual(adaptationForSelfAssessedAiLevel("advanced"), {
+    explanationDepth: "concise",
+    preferredEntryMode: "challenge",
+    challengeIntensity: "high",
+  });
 });
