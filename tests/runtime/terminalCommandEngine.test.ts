@@ -27,6 +27,7 @@ function baseContext(): TerminalCommandContext {
     stagedFiles: [],
     stagedContents: {},
     commits: [],
+    branch: "main",
   };
 }
 
@@ -42,6 +43,7 @@ function nextContext(
     stagedFiles: result.stagedFiles,
     stagedContents: result.stagedContents,
     commits: result.commits,
+    branch: result.branch,
   };
 }
 
@@ -108,6 +110,60 @@ test("terminal engine resolves a bare workspace name relative to the current dir
   const explicitWorkspace = executeTerminalCommand("cd ~/ai-training-demo", context);
   assert.equal(explicitWorkspace.exitCode, 0);
   assert.equal(explicitWorkspace.cwd, "");
+});
+
+test("terminal engine exposes and creates the active Git branch", () => {
+  let context = baseContext();
+
+  const branchBefore = executeTerminalCommand("git branch --show-current", context);
+  assert.equal(branchBefore.exitCode, 0);
+  assert.deepEqual(branchBefore.output, ["main"]);
+
+  const switchBranch = executeTerminalCommand("git switch -c feature/addition", context);
+  assert.equal(switchBranch.exitCode, 0);
+  assert.equal(switchBranch.branch, "feature/addition");
+  assert.deepEqual(switchBranch.output, ["Switched to a new branch 'feature/addition'"]);
+  context = nextContext(context, switchBranch);
+
+  assert.deepEqual(executeTerminalCommand("git branch --show-current", context).output, [
+    "feature/addition",
+  ]);
+  assert.match(executeTerminalCommand("git status", context).output.join("\n"), /On branch feature\/addition/);
+
+  const checkoutBranch = executeTerminalCommand("git checkout -b fix/review", context);
+  assert.equal(checkoutBranch.exitCode, 0);
+  assert.equal(checkoutBranch.branch, "fix/review");
+
+  const invalidBranch = executeTerminalCommand("git switch -c ../bad", context);
+  assert.equal(invalidBranch.exitCode, 128);
+  assert.equal(invalidBranch.branch, "feature/addition");
+});
+
+test("terminal engine shows a diff against the committed baseline", () => {
+  const context: TerminalCommandContext = {
+    ...baseContext(),
+    files: ["README.md", "src/app.py"],
+    contents: {
+      "README.md": "# Demo\n",
+      "src/app.py": 'print("Changed")\n',
+    },
+    committedContents: {
+      "README.md": "# Demo\n",
+      "src/app.py": 'print("Hello from src")\n',
+    },
+    changedFiles: ["src/app.py"],
+  };
+
+  const diff = executeTerminalCommand("git diff", context);
+  assert.equal(diff.exitCode, 0);
+  assert.match(diff.output.join("\n"), /diff --git a\/src\/app\.py b\/src\/app\.py/);
+  assert.match(diff.output.join("\n"), /-print\("Hello from src"\)/);
+  assert.match(diff.output.join("\n"), /\+print\("Changed"\)/);
+
+  const staged = executeTerminalCommand("git add src/app.py", context);
+  const stagedContext = nextContext(context, staged);
+  const stagedDiff = executeTerminalCommand("git diff --staged", stagedContext);
+  assert.match(stagedDiff.output.join("\n"), /\+print\("Changed"\)/);
 });
 
 test("terminal engine stages and commits the actual changed files", () => {
