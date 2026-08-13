@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "ai_workflow",
   "title": "VS Code, Git & GitHub Copilot – Zusammenspiel",
-  "description": "Wende die Werkzeuge gemeinsam in einem typischen Entwicklungsablauf an: Projekt öffnen, Datei bearbeiten, Änderungen mit Git versionieren und Copilot einsetzen.",
+  "description": "Verbinde die bereits bekannten Grundlagen von VS Code, lokalem Git und GitHub Copilot in einem realistischen Entwicklungsauftrag: Zustand prüfen, eigenen Branch anlegen, Copilot kontrolliert einsetzen, Änderung reviewen und testen, selektiv stagen, committen und einen handoff-fähigen Zustand herstellen.",
   "learningObjectives": ["combine_editor_git_ai_workflow"],
   "environment": {
     "productId": "vscode",
@@ -18,155 +18,80 @@
       }
     ],
     "seed": {
-      "chatResponses": [
-        {
-          "file": "hello.py",
-          "response": "Hier ist eine einfache Python-Funktion zum Addieren zweier Zahlen:\n\ndef add(a, b):\n    return a + b",
-          "promptContainsAny": ["addier", "addition", "summe", "zwei zahlen"]
-        }
-      ],
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["TASK.md", "calculator.py", "notes.txt"],
+      "contents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe die Änderung, teste sie und committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz: Entwurf für einen anderen Auftrag. Nicht mitcommitten.\n"
+      },
+      "committedContents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe die Änderung, teste sie und committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz.\n"
+      },
+      "trackedFiles": ["TASK.md", "calculator.py", "notes.txt"],
+      "scmChangedFiles": ["notes.txt"],
+      "openTabs": ["TASK.md", "calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": "terminal",
+      "branch": "main",
       "inlineSuggestions": [
         {
-          "file": "hello.py",
-          "whenContentEquals": "",
-          "text": "print(\"Hello from Copilot\")\n"
-        },
+          "file": "calculator.py",
+          "whenContentEquals": "# TODO: add(a, b) implementieren\n",
+          "text": "\ndef add(a, b):\n    return a + b\n\nprint(\"CHECK: addition ready\")\n"
+        }
+      ],
+      "chatResponses": [
         {
-          "file": "hello.py",
-          "whenContentEquals": "print(\"Hello AI Training\")",
-          "text": "\n\ndef add(a, b):\n    return a + b\n"
+          "file": "calculator.py",
+          "promptContainsAny": ["add", "addition", "summe", "zwei zahlen"],
+          "response": "Für dieses Work Item sollte calculator.py eine kleine add(a, b)-Funktion enthalten. Prüfe den vorhandenen Dateikontext, kontrolliere den vorgeschlagenen Code im Editor und halte notes.txt aus deinem Commit heraus."
         }
       ]
     }
   },
-  "points": 100,
+  "estimatedMinutes": 16,
+  "points": 140,
   "steps": [
     {
       "id": "step_1",
-      "title": "Explorer öffnen",
-      "description": "Für den Workflow brauchst du Zugriff auf die Projektdateien im Explorer.",
-      "instruction": "Öffne den Explorer in der Leiste links.",
-      "why": "Der kombinierte Workflow startet im vorhandenen Projektkontext. Die Oberfläche selbst wird im separaten VS-Code-Grundkurs erklärt.",
+      "title": "Aktuellen Branch prüfen",
+      "description": "Das Work Item ist in TASK.md beschrieben und calculator.py ist bereits geöffnet. Bevor du etwas änderst, klärst du zuerst, auf welchem lokalen Git-Branch du arbeitest.",
+      "instruction": "Prüfe im Terminal mit git branch --show-current den aktuellen Branch.",
+      "why": "VS Code zeigt und bearbeitet Dateien; der Branch gehört zum lokalen Git-Zustand. Vor einer Änderung musst du wissen, auf welchem Versionszweig du dich befindest.",
       "helpLevels": [
-        "Der Explorer befindet sich links in der Activity Bar.",
-        "Klicke auf das oberste Datei-Symbol in der schmalen Leiste am linken Rand.",
-        "Das Explorer-Symbol wird deutlich hervorgehoben. Klicke genau auf dieses oberste Datei-Symbol in der Activity Bar."
+        "Nutze die bereits geöffnete Terminal-Eingabe unter dem Editor.",
+        "Gib git branch --show-current ein und drücke Enter.",
+        "Die Terminal-Eingabe ist hervorgehoben. Gib dort exakt git branch --show-current ein und bestätige mit Enter."
       ],
-      "expectedEvent": "explorer.opened",
+      "expectedEvent": "terminal.command.executed",
       "validation": {
         "kind": "event",
-        "type": "explorer.opened"
+        "type": "terminal.command.executed",
+        "match": {
+          "command": "git branch --show-current"
+        },
+        "contains": {
+          "output": "main"
+        }
       },
-      "highlightTarget": "vscode.activityBar.explorer",
-      "highlightTooltip": "Öffne den Explorer für den Projektworkflow.",
-      "successMessage": "Explorer geöffnet. Jetzt kannst du mit dem vorbereiteten Projekt arbeiten."
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Lokalen Git-Branch vor der Änderung prüfen.",
+      "successMessage": "Du arbeitest auf main. Jetzt prüfst du den vorhandenen Working Tree."
     },
     {
       "id": "step_2",
-      "title": "Repository öffnen",
-      "description": "Für den gemeinsamen Workflow ist ein versioniertes Beispielprojekt vorbereitet.",
-      "instruction": "Öffne das vorbereitete Repository ai-training-demo.",
-      "why": "Git arbeitet mit einem Repository. In diesem Kurs steht nicht die VS-Code-Oberfläche im Mittelpunkt, sondern der Ablauf über mehrere Werkzeuge hinweg.",
+      "title": "Working Tree vor der Änderung prüfen",
+      "description": "Im Projekt existiert bereits eine lokale Änderung, die zu einem anderen Auftrag gehört.",
+      "instruction": "Führe git status aus und identifiziere die bereits geänderte Datei notes.txt.",
+      "why": "Ein professioneller Workflow beginnt mit dem vorhandenen Zustand. So erkennst du fremde oder unabhängige Änderungen, bevor du selbst Dateien bearbeitest oder etwas stagest.",
       "helpLevels": [
-        "Im Explorer wird ein vorbereitetes Repository angeboten.",
-        "Klicke im Explorer auf den Eintrag ai-training-demo.",
-        "Der Eintrag ai-training-demo wird im Explorer hervorgehoben. Klicke genau auf diesen Repository-Eintrag."
-      ],
-      "expectedEvent": "repository.opened",
-      "validation": {
-        "kind": "event",
-        "type": "repository.opened",
-        "match": {
-          "name": "ai-training-demo"
-        }
-      },
-      "highlightTarget": "vscode.explorer.preparedRepository",
-      "highlightTooltip": "Öffne das vorbereitete Repository ai-training-demo.",
-      "successMessage": "Repository geöffnet. Der gemeinsame Arbeitskontext ist bereit."
-    },
-    {
-      "id": "step_3",
-      "title": "Datei erstellen",
-      "description": "Erstelle eine neue Datei im vorbereiteten Projekt.",
-      "instruction": "Erstelle im Projektverzeichnis eine neue Datei hello.py.",
-      "why": "Die Datei liefert eine konkrete Änderung, die anschließend im Editor bearbeitet und mit Git versioniert wird.",
-      "helpLevels": [
-        "Im Explorer-Kopf gibt es eine Aktion zum Anlegen neuer Dateien.",
-        "Klicke auf Neue Datei, tippe hello.py und drücke Enter.",
-        "Der Button Neue Datei wird hervorgehoben. Klicke darauf, tippe hello.py in das Eingabefeld und drücke Enter."
-      ],
-      "expectedEvent": "file.created",
-      "validation": {
-        "kind": "event",
-        "type": "file.created",
-        "match": {
-          "filename": "hello.py"
-        }
-      },
-      "highlightTarget": "vscode.explorer.newFile",
-      "highlightTooltip": "Neue Datei im Projekt anlegen.",
-      "successMessage": "hello.py wurde erstellt und im Editor geöffnet."
-    },
-    {
-      "id": "step_4",
-      "title": "Inline-Vorschlag prüfen und übernehmen",
-      "description": "Für die leere hello.py stellt Copilot direkt im Editor einen vorbereiteten Inline-Vorschlag bereit. Du musst dafür Copilot Chat nicht öffnen: Prüfe den vorgeschlagenen Code dort, wo er später in der Datei stehen würde.",
-      "instruction": "Prüfe den sichtbaren Inline-Vorschlag print(\"Hello from Copilot\") und übernimm ihn bewusst mit Tab.",
-      "why": "Inline-Vorschläge und Copilot Chat sind unterschiedliche Arbeitsformen. Hier lernst du den direkten Editor-Workflow: Vorschlag sehen, Inhalt prüfen und erst danach übernehmen.",
-      "helpLevels": [
-        "Der Vorschlag erscheint halbtransparent direkt im Editor von hello.py.",
-        "Prüfe den Text und fokussiere anschließend den Editor. Mit Tab übernimmst du den Vorschlag.",
-        "Der Editor wird als Arbeitsbereich hervorgehoben. Prüfe dort den sichtbaren Hinweis Tab – annehmen, klicke in den Editor und drücke Tab. Wenn der Schritt nicht weitergeht, prüfe zuerst, ob hello.py noch aktiv ist und der Vorschlag sichtbar ist."
-      ],
-      "expectedEvent": "ai.suggestion.accepted",
-      "validation": {
-        "kind": "event",
-        "type": "ai.suggestion.accepted",
-        "match": {
-          "file": "hello.py"
-        },
-        "contains": {
-          "text": "Hello from Copilot"
-        }
-      },
-      "highlightTarget": "vscode.editor",
-      "highlightTooltip": "Prüfe den Inline-Vorschlag im Editor und übernimm ihn mit Tab.",
-      "onFailure": {
-        "message": "Die Übernahme wurde erkannt, entspricht aber noch nicht dem erwarteten hello.py-Vorschlag. Prüfe die aktive Datei und den Editorinhalt, bevor du es erneut versuchst.",
-        "markTarget": "vscode.editor"
-      },
-      "successMessage": "Der erste Code wurde direkt im Editor geprüft und bewusst übernommen."
-    },
-    {
-      "id": "step_5",
-      "title": "Terminal öffnen",
-      "description": "Wechsle für die Git-Befehle in das integrierte Terminal.",
-      "instruction": "Öffne über Terminal → New Terminal ein integriertes Terminal.",
-      "why": "Der Workflow verbindet Editor und Kommandozeile innerhalb desselben Projektkontexts. Das Terminal-Menü ist ein regulärer Einstieg in die Terminal-View.",
-      "helpLevels": [
-        "Öffne oben in der Menüleiste das Menü Terminal.",
-        "Wähle im geöffneten Terminal-Menü New Terminal.",
-        "Das Terminal-Menü wird hervorgehoben. Öffne es und klicke auf New Terminal."
-      ],
-      "expectedEvent": "terminal.opened",
-      "validation": {
-        "kind": "event",
-        "type": "terminal.opened"
-      },
-      "highlightTarget": "vscode.menu.terminal",
-      "highlightTooltip": "Terminal → New Terminal öffnet das Terminal für die Git-Befehle.",
-      "successMessage": "Terminal über den regulären Terminal-Menüpfad geöffnet. Jetzt kannst du den Repository-Status prüfen."
-    },
-    {
-      "id": "step_6",
-      "title": "Git Status prüfen",
-      "description": "Prüfe, welche Änderung Git im Repository erkannt hat.",
-      "instruction": "Führe im Terminal git status aus.",
-      "why": "Vor einem Commit kontrollierst du, welche Dateien neu, geändert oder vorgemerkt sind.",
-      "helpLevels": [
-        "Tippe den Befehl in das Terminal und drücke Enter.",
-        "Schreibe genau: git status",
-        "Die Terminal-Eingabezeile wird hervorgehoben. Tippe dort genau git status und drücke Enter."
+        "Git kann dir neue, geänderte und gestagte Dateien im Working Tree zeigen.",
+        "Gib git status in das Terminal ein und lies die Ausgabe vollständig.",
+        "Führe git status aus. In der Ausgabe muss notes.txt als bereits vorhandene lokale Änderung auffallen."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
@@ -174,64 +99,321 @@
         "type": "terminal.command.executed",
         "match": {
           "command": "git status"
+        },
+        "contains": {
+          "output": "notes.txt"
         }
       },
       "highlightTarget": "vscode.panel.terminal.input",
-      "highlightTooltip": "Befehle eingeben und mit Enter ausführen.",
-      "successMessage": "Git erkennt hello.py als neue, noch nicht versionierte Datei."
+      "highlightTooltip": "Vorhandene lokale Änderungen mit Git prüfen.",
+      "successMessage": "notes.txt ist bereits geändert und gehört nicht zu deinem Work Item. Diese Änderung musst du erhalten."
     },
     {
-      "id": "step_7",
-      "title": "Git Commit erstellen",
-      "description": "Nimm die Änderung in die Versionshistorie auf: erst vormerken, dann committen.",
-      "instruction": "Führe git add hello.py und danach git commit -m \"add hello example\" aus.",
-      "why": "Der Commit macht aus der Editoränderung einen nachvollziehbaren Stand im Repository.",
+      "id": "step_3",
+      "title": "Eigenen Feature-Branch anlegen",
+      "description": "Trenne deine Arbeit vom Ausgangsbranch, bevor du den Auftrag umsetzt.",
+      "instruction": "Erstelle und aktiviere den Branch feature/addition mit git switch -c feature/addition.",
+      "why": "Der Branch ist ein Git-Konzept. VS Code bleibt dieselbe Workbench, aber Git ordnet deine folgenden Änderungen nun einem eigenen Versionszweig zu.",
       "helpLevels": [
-        "Zwei Befehle, in dieser Reihenfolge: erst vormerken, dann committen.",
-        "Tippe: git add hello.py — dann: git commit -m \"add hello example\"",
-        "Die Terminal-Eingabezeile wird hervorgehoben. Tippe zuerst git add hello.py und drücke Enter; tippe danach git commit -m \"add hello example\" und drücke erneut Enter."
+        "Du brauchst einen neuen Branch mit dem Namen feature/addition.",
+        "Nutze git switch mit der Option -c, um einen neuen Branch zu erzeugen und direkt dorthin zu wechseln.",
+        "Gib git switch -c feature/addition in die hervorgehobene Terminal-Eingabe ein und bestätige mit Enter."
       ],
       "expectedEvent": "terminal.command.executed",
       "validation": {
-        "kind": "event",
-        "type": "terminal.command.executed",
-        "match": {
-          "staged": true
-        },
-        "contains": {
-          "command": "git commit"
-        }
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "terminal.command.executed",
+            "match": {
+              "command": "git switch -c feature/addition"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "scm.branch",
+            "equals": "feature/addition"
+          }
+        ]
       },
       "highlightTarget": "vscode.panel.terminal.input",
-      "highlightTooltip": "Erst git add, dann git commit.",
-      "successMessage": "Commit erstellt. Deine Änderung ist jetzt in der Git-Historie."
+      "highlightTooltip": "Eigenen lokalen Git-Branch anlegen.",
+      "successMessage": "feature/addition ist aktiv. Die eigentliche Implementierung kann beginnen."
     },
     {
-      "id": "step_8",
-      "title": "GitHub Copilot einsetzen",
-      "description": "Ergänze den bestehenden Workflow jetzt um KI-Unterstützung im Editor. Der gesamte Copilot-Arbeitsbereich in der Secondary Side Bar bleibt markiert, während du den Chat öffnest, hello.py gezielt als Kontext anhängst und danach den Prompt sendest.",
-      "instruction": "Öffne Copilot Chat in der Secondary Side Bar, füge hello.py über Kontext hinzufügen als Dateikontext hinzu und bitte anschließend in eigenen Worten um eine einfache Python-Funktion, die zwei Zahlen addiert.",
-      "why": "Copilot ist ein eigenständiges Produkt, das in VS Code integriert ist. Der Dateikontext wird bewusst an den Chat angehängt, damit die Anfrage nachvollziehbar auf hello.py bezogen ist, statt impliziten Kontext anzunehmen.",
+      "id": "step_4",
+      "title": "Copilot mit Aufgaben- und Dateikontext einsetzen",
+      "description": "Jetzt wechselst du vom lokalen Git-Zustand zum KI-Assistenten. calculator.py ist bereits die aktive Datei; Copilot kennt sie aber erst als Chat-Kontext, wenn du sie bewusst anhängst.",
+      "instruction": "Öffne Copilot Chat, füge calculator.py über Kontext hinzufügen als Dateikontext hinzu und bitte in eigenen Worten um die add(a, b)-Implementierung aus dem Work Item.",
+      "why": "Git verwaltet Versionen, Copilot erzeugt Unterstützung. Der explizite Dateikontext macht nachvollziehbar, worauf sich die KI-Antwort bezieht und verhindert, dass du fremde Projektänderungen unnötig in den Prompt einbeziehst.",
       "helpLevels": [
-        "Arbeite in der Secondary Side Bar rechts vom Editor: Öffne Copilot Chat, hänge hello.py als Kontext an und formuliere danach die Anfrage.",
-        "Klicke auf Copilot, dann auf Kontext hinzufügen und Datei anhängen: hello.py. Beschreibe anschließend im Feld Ask Copilot... die gewünschte Addition zweier Zahlen in eigenen Worten.",
-        "Die Secondary Side Bar bleibt als Arbeitsbereich hervorgehoben. Öffne dort Copilot, wähle Kontext hinzufügen → Datei anhängen: hello.py, gib danach im Prompt-Feld die Anfrage für eine Python-Funktion zur Addition zweier Zahlen ein und drücke Enter. Wenn der Chat bereits offen ist, beginne direkt mit dem Kontext."
+        "Wechsle in die Secondary Side Bar rechts und öffne dort Copilot.",
+        "Öffne Copilot, wähle Kontext hinzufügen → Datei anhängen: calculator.py und formuliere danach den Auftrag zur Addition.",
+        "Die Secondary Side Bar bleibt als Arbeitsbereich hervorgehoben. Hänge calculator.py an und sende anschließend eine Anfrage für die add(a, b)-Funktion; notes.txt gehört nicht in den KI-Kontext."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
         "kind": "event",
         "type": "copilot.prompt.submitted",
         "match": {
-          "activeFile": "hello.py"
+          "activeFile": "calculator.py"
         }
       },
       "highlightTarget": "vscode.secondarySideBar",
-      "highlightTooltip": "Nutze die Secondary Side Bar für Copilot Chat, hello.py als Kontext und den anschließenden Prompt.",
+      "highlightTooltip": "Copilot Chat mit bewusstem Dateikontext nutzen.",
       "onFailure": {
-        "message": "Copilot hat die Anfrage erkannt, aber hello.py ist noch nicht als erwarteter Dateikontext angehängt. Füge hello.py über Kontext hinzufügen hinzu und sende die Anfrage danach erneut.",
+        "message": "Die Anfrage wurde erkannt, aber calculator.py ist noch nicht als erwarteter Dateikontext aktiv. Hänge calculator.py an und sende den Auftrag erneut.",
         "markTarget": "copilot.chat.addContext"
       },
-      "successMessage": "Copilot hat deine frei formulierte Anfrage mit hello.py als explizitem Dateikontext verarbeitet."
+      "successMessage": "Copilot hat den Auftrag mit calculator.py als explizitem Kontext verarbeitet."
+    },
+    {
+      "id": "step_5",
+      "title": "KI-Vorschlag im Editor prüfen und übernehmen",
+      "description": "Die KI-Unterstützung wird erst dann Teil deiner Datei, wenn du den sichtbaren Inline-Vorschlag im Editor kontrollierst und bewusst annimmst.",
+      "instruction": "Prüfe den Inline-Vorschlag in calculator.py und übernimm ihn mit Tab.",
+      "why": "Copilot schlägt vor; VS Code ist der Ort, an dem du den resultierenden Code siehst und verantwortest. Die Übernahme ist deshalb eine bewusste Editor-Aktion.",
+      "helpLevels": [
+        "Der Vorschlag erscheint halbtransparent direkt in calculator.py.",
+        "Prüfe insbesondere return a + b und die CHECK-Ausgabe, fokussiere dann den Editor und drücke Tab.",
+        "Der Editor ist hervorgehoben. Prüfe den dort sichtbaren Ghost Text und übernimm ihn mit Tab."
+      ],
+      "expectedEvent": "ai.suggestion.accepted",
+      "validation": {
+        "kind": "event",
+        "type": "ai.suggestion.accepted",
+        "match": {
+          "file": "calculator.py"
+        },
+        "contains": {
+          "text": "return a + b"
+        }
+      },
+      "highlightTarget": "vscode.editor",
+      "highlightTooltip": "KI-Vorschlag im Editor kontrollieren und bewusst übernehmen.",
+      "onFailure": {
+        "message": "Die Übernahme passt noch nicht zum erwarteten calculator.py-Vorschlag. Prüfe aktive Datei und Vorschlag, bevor du erneut übernimmst.",
+        "markTarget": "vscode.editor"
+      },
+      "successMessage": "Die vorgeschlagene Implementierung ist im Editor übernommen und damit deine zu prüfende Änderung."
+    },
+    {
+      "id": "step_6",
+      "title": "Datei speichern",
+      "description": "Die Editoränderung ist zunächst noch als ungespeicherter Zustand markiert.",
+      "instruction": "Speichere calculator.py, zum Beispiel mit Ctrl/Cmd+S oder File → Save.",
+      "why": "Der Dirty-Zustand gehört zum Editor. Vor Review, Prüfung und Versionskontrolle stellst du sicher, dass der beabsichtigte Dateiinhalt gespeichert ist.",
+      "helpLevels": [
+        "Achte auf den Punkt im Tab von calculator.py: Er kennzeichnet ungespeicherte Änderungen.",
+        "Fokussiere calculator.py und nutze Ctrl/Cmd+S oder den Save-Eintrag im File-Menü.",
+        "Der Editor ist hervorgehoben. Speichere die aktive calculator.py; der Dirty-Punkt muss danach verschwinden."
+      ],
+      "expectedEvent": "file.saved",
+      "validation": {
+        "kind": "event",
+        "type": "file.saved",
+        "match": {
+          "filename": "calculator.py"
+        }
+      },
+      "highlightTarget": "vscode.editor",
+      "highlightTooltip": "Ungespeicherte Editoränderung vor der Prüfung sichern.",
+      "successMessage": "calculator.py ist gespeichert. Jetzt reviewst du die tatsächliche Git-Differenz."
+    },
+    {
+      "id": "step_7",
+      "title": "Working-Tree-Diff reviewen",
+      "description": "Wechsle zurück zu lokalem Git und prüfe, was sich gegenüber dem letzten Commit tatsächlich geändert hat.",
+      "instruction": "Führe git diff aus und vergleiche deine calculator.py-Änderung mit der bereits vorher vorhandenen Änderung in notes.txt.",
+      "why": "Der Diff ist der Kontrollpunkt zwischen Editor/KI und Versionsverwaltung. Er zeigt dir, welche Änderungen Git wirklich als uncommitted betrachtet.",
+      "helpLevels": [
+        "Nutze wieder das integrierte Terminal unter dem Editor.",
+        "Gib git diff ein und prüfe die Abschnitte für calculator.py und notes.txt getrennt.",
+        "Führe git diff in der hervorgehobenen Terminal-Eingabe aus. calculator.py ist deine Änderung; notes.txt bleibt fremder Bestand."
+      ],
+      "expectedEvent": "terminal.command.executed",
+      "validation": {
+        "kind": "event",
+        "type": "terminal.command.executed",
+        "match": {
+          "command": "git diff"
+        },
+        "contains": {
+          "output": "calculator.py"
+        }
+      },
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Diff vor Test und Staging reviewen.",
+      "successMessage": "Du hast eigene und fremde Änderung im Diff voneinander getrennt."
+    },
+    {
+      "id": "step_8",
+      "title": "Änderung ausführen und Prüfergebnis interpretieren",
+      "description": "Vor dem Staging prüfst du die gespeicherte Python-Datei im aktuellen Branch.",
+      "instruction": "Führe python calculator.py aus und prüfe, dass die Ausführung erfolgreich mit CHECK: addition ready endet.",
+      "why": "Ein Diff zeigt, was geändert wurde; eine Prüfung zeigt, ob der neue Stand ausführbar ist. Erst beide Signale zusammen sind eine belastbare Grundlage für den Commit.",
+      "helpLevels": [
+        "Führe die geänderte Datei direkt mit Python im Terminal aus.",
+        "Gib python calculator.py ein und lies sowohl Ausgabe als auch eventuelle Fehlermeldungen.",
+        "Führe python calculator.py aus. Erwartet wird die Ausgabe CHECK: addition ready ohne Fehler."
+      ],
+      "expectedEvent": "terminal.command.executed",
+      "validation": {
+        "kind": "event",
+        "type": "terminal.command.executed",
+        "match": {
+          "command": "python calculator.py",
+          "exitCode": 0
+        },
+        "contains": {
+          "output": "CHECK: addition ready"
+        }
+      },
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Gespeicherte Änderung vor dem Staging prüfen.",
+      "onFailure": {
+        "message": "Die Prüfung ist fehlgeschlagen oder liefert noch nicht die erwartete CHECK-Ausgabe. Korrigiere calculator.py und speichere sie, bevor du weitermachst.",
+        "markTarget": "vscode.panel.terminal.input"
+      },
+      "successMessage": "Die gespeicherte Änderung wurde erfolgreich geprüft."
+    },
+    {
+      "id": "step_9",
+      "title": "Nur die eigene Datei stagen",
+      "description": "Jetzt entscheidest du bewusst, welche Änderung in deinen Commit darf.",
+      "instruction": "Stage ausschließlich calculator.py mit git add calculator.py. notes.txt darf nicht im Staging-Bereich landen.",
+      "why": "Staging ist die Git-Auswahl für den nächsten Commit. Selektives Staging schützt unabhängige lokale Änderungen anderer Aufgaben vor einem versehentlichen Commit.",
+      "helpLevels": [
+        "Vermeide eine Sammelaktion über alle geänderten Dateien.",
+        "Gib git add calculator.py ein; notes.txt muss ungestaged bleiben.",
+        "Nutze in der hervorgehobenen Terminal-Eingabe exakt git add calculator.py und bestätige mit Enter."
+      ],
+      "expectedEvent": "scm.staged",
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "scm.stagedFiles",
+            "includes": "calculator.py"
+          },
+          {
+            "kind": "state",
+            "selector": "scm.stagedFiles",
+            "excludes": "notes.txt"
+          }
+        ]
+      },
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Selektiv nur calculator.py stagen.",
+      "onFailure": {
+        "message": "Das Staging ist noch nicht sauber getrennt. calculator.py muss gestaged sein, notes.txt darf nicht zum nächsten Commit gehören.",
+        "markTarget": "vscode.panel.terminal.input"
+      },
+      "successMessage": "Nur calculator.py ist für den nächsten Commit vorgemerkt; notes.txt bleibt unangetastet."
+    },
+    {
+      "id": "step_10",
+      "title": "Gestagten Diff kontrollieren",
+      "description": "Vor dem Commit prüfst du noch einmal exakt die Auswahl, die Git committen würde.",
+      "instruction": "Führe git diff --staged aus und kontrolliere, dass der gestagte Diff calculator.py betrifft und notes.txt weiterhin außen vor bleibt.",
+      "why": "Der gestagte Diff ist der letzte Review-Punkt vor der Versionshistorie. Er beantwortet nicht nur, was geändert wurde, sondern was tatsächlich in den nächsten Commit kommt.",
+      "helpLevels": [
+        "Git kann den Diff des Staging-Bereichs separat anzeigen.",
+        "Nutze git diff --staged und prüfe, welche Datei im Patch erscheint.",
+        "Führe git diff --staged aus. Der Patch muss calculator.py zeigen; notes.txt bleibt ungestaged."
+      ],
+      "expectedEvent": "terminal.command.executed",
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "terminal.command.executed",
+            "match": {
+              "command": "git diff --staged"
+            },
+            "contains": {
+              "output": "calculator.py"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "scm.stagedFiles",
+            "excludes": "notes.txt"
+          }
+        ]
+      },
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Gestagte Commit-Auswahl vor dem Commit reviewen.",
+      "successMessage": "Der gestagte Diff enthält nur deine calculator.py-Änderung."
+    },
+    {
+      "id": "step_11",
+      "title": "Klaren Commit erstellen",
+      "description": "Der geprüfte und selektiv gestagte Stand kann jetzt in die lokale Historie aufgenommen werden.",
+      "instruction": "Erstelle den Commit mit git commit -m \"feat: implement addition\".",
+      "why": "Eine klare Commit-Nachricht macht Zweck und Umfang der Änderung für Review und spätere Zusammenarbeit nachvollziehbar.",
+      "helpLevels": [
+        "Committe nur den bereits kontrollierten Staging-Bereich.",
+        "Nutze die Nachricht feat: implement addition für diesen kleinen fachlichen Auftrag.",
+        "Gib git commit -m \"feat: implement addition\" in die Terminal-Eingabe ein und bestätige mit Enter."
+      ],
+      "expectedEvent": "scm.committed",
+      "validation": {
+        "kind": "event",
+        "type": "scm.committed",
+        "match": {
+          "message": "feat: implement addition"
+        }
+      },
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Geprüfte, selektiv gestagte Änderung klar committen.",
+      "successMessage": "calculator.py ist mit einer klaren Commit-Nachricht versioniert."
+    },
+    {
+      "id": "step_12",
+      "title": "Handoff-Zustand prüfen",
+      "description": "Zum Abschluss kontrollierst du, was nach deinem Commit noch lokal übrig ist.",
+      "instruction": "Führe erneut git status aus. calculator.py darf nicht mehr offen sein; die fremde Änderung in notes.txt muss weiterhin sichtbar und uncommitted bleiben.",
+      "why": "Ein guter Handoff endet nicht beim Commit. Du verifizierst, dass deine Arbeit sauber abgeschlossen wurde und unabhängige lokale Arbeit weder verloren noch versehentlich übernommen wurde.",
+      "helpLevels": [
+        "Prüfe denselben Working-Tree-Zustand wie am Anfang noch einmal.",
+        "Führe git status aus und vergleiche die verbliebenen Änderungen mit dem Ausgangszustand.",
+        "Nach git status muss notes.txt weiterhin als lokale Änderung erscheinen; calculator.py gehört nicht mehr zu den offenen Änderungen."
+      ],
+      "expectedEvent": "terminal.command.executed",
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "terminal.command.executed",
+            "match": {
+              "command": "git status"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "scm.branch",
+            "equals": "feature/addition"
+          },
+          {
+            "kind": "state",
+            "selector": "scm.changedFiles",
+            "includes": "notes.txt",
+            "excludes": "calculator.py"
+          }
+        ]
+      },
+      "highlightTarget": "vscode.panel.terminal.input",
+      "highlightTooltip": "Handoff-ready Endzustand des lokalen Git-Repositories prüfen.",
+      "onFailure": {
+        "message": "Der Handoff-Zustand passt noch nicht: calculator.py muss committed sein und notes.txt weiterhin als unabhängige lokale Änderung übrig bleiben.",
+        "markTarget": "vscode.panel.terminal.input"
+      },
+      "successMessage": "Der Workflow ist handoff-ready: eigene Änderung geprüft und committed, fremde Änderung sichtbar und erhalten."
     }
   ],
   "audience": {
@@ -239,10 +421,7 @@
     "glossaryConcepts": [
       "foundation.code",
       "programming.python",
-      "vscode.activity_bar",
-      "vscode.explorer",
       "vscode.editor",
-      "vscode.side_bar",
       "vscode.terminal",
       "git.repository",
       "git.stage",
