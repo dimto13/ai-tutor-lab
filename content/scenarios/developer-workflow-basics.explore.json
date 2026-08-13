@@ -17,8 +17,11 @@
       "vscode.source_control",
       "vscode.status_bar",
       "git.repository",
+      "git.working_tree",
+      "git.branch",
       "git.stage",
       "git.commit",
+      "platform.diff",
       "github.copilot",
       "copilot.chat",
       "copilot.inline_suggestion"
