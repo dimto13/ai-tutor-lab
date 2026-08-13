@@ -16,7 +16,6 @@ export interface TerminalCommandContext {
   stagedFiles: string[];
   stagedContents: Record<string, string>;
   commits: TerminalCommit[];
-  branch: string;
 }
 
 export interface TerminalCommandResult {
@@ -32,7 +31,6 @@ export interface TerminalCommandResult {
   commits: TerminalCommit[];
   stagedFilesChanged: string[];
   committed: boolean;
-  branch: string;
 }
 
 interface ParsedCommand {
@@ -182,7 +180,6 @@ function unchangedResult(
     commits: context.commits.map((commit) => ({ ...commit, files: [...commit.files] })),
     stagedFilesChanged: [],
     committed: false,
-    branch: context.branch,
   };
 }
 
@@ -306,10 +303,7 @@ function gitStatus(command: string, context: TerminalCommandContext): TerminalCo
   const stagedModified = staged.filter((file) => tracked.has(file));
   const untracked = unstaged.filter((file) => !tracked.has(file) && !staged.includes(file));
   const modified = unstaged.filter((file) => tracked.has(file) || staged.includes(file));
-  const output = [
-    `On branch ${context.branch}`,
-    `Your branch is up to date with 'origin/${context.branch}'.`,
-  ];
+  const output = ["On branch main", "Your branch is up to date with 'origin/main'."];
 
   if (staged.length) {
     output.push("", "Changes to be committed:");
@@ -442,7 +436,7 @@ function gitCommit(
     return total + contents.split("\n").filter((line) => line.length > 0).length;
   }, 0);
   const output = [
-    `[${context.branch} ${hash}] ${message}`,
+    `[main ${hash}] ${message}`,
     ` ${committedFiles.length} file${committedFiles.length === 1 ? "" : "s"} changed, ${insertions} insertion${insertions === 1 ? "" : "s"}(+)`,
   ];
   const trackedFiles = new Set(context.trackedFiles);
@@ -466,96 +460,6 @@ function gitCommit(
   };
 }
 
-function validBranchName(value: string): boolean {
-  return (
-    Boolean(value) &&
-    !value.startsWith("-") &&
-    !value.includes("..") &&
-    !value.endsWith("/") &&
-    /^[A-Za-z0-9._/-]+$/.test(value)
-  );
-}
-
-function gitBranch(
-  command: string,
-  tokens: string[],
-  context: TerminalCommandContext,
-): TerminalCommandResult {
-  if (tokens.length === 2) {
-    return unchangedResult(command, context, [`* ${context.branch}`]);
-  }
-  if (tokens.length === 3 && tokens[2] === "--show-current") {
-    return unchangedResult(command, context, [context.branch]);
-  }
-  return unchangedResult(command, context, ["usage: git branch [--show-current]"], 1);
-}
-
-function switchBranch(
-  command: string,
-  tokens: string[],
-  context: TerminalCommandContext,
-  createFlag: string,
-): TerminalCommandResult {
-  const createIndex = tokens.indexOf(createFlag);
-  const branch = createIndex >= 0 ? tokens[createIndex + 1]?.trim() : undefined;
-  if (!branch || !validBranchName(branch)) {
-    return unchangedResult(command, context, ["fatal: invalid branch name"], 128);
-  }
-  return {
-    ...unchangedResult(command, context, [`Switched to a new branch '${branch}'`]),
-    branch,
-  };
-}
-
-function gitSwitch(
-  command: string,
-  tokens: string[],
-  context: TerminalCommandContext,
-): TerminalCommandResult {
-  if (tokens[2] === "-c") return switchBranch(command, tokens, context, "-c");
-  return unchangedResult(command, context, ["usage: git switch -c <new-branch>"], 1);
-}
-
-function gitCheckout(
-  command: string,
-  tokens: string[],
-  context: TerminalCommandContext,
-): TerminalCommandResult {
-  if (tokens[2] === "-b") return switchBranch(command, tokens, context, "-b");
-  return unchangedResult(command, context, ["usage: git checkout -b <new-branch>"], 1);
-}
-
-function diffLines(before: string, after: string): string[] {
-  if (before === after) return [];
-  const beforeLines = before.split("\n");
-  const afterLines = after.split("\n");
-  return [
-    `@@ -1,${Math.max(1, beforeLines.length)} +1,${Math.max(1, afterLines.length)} @@`,
-    ...beforeLines.filter((line) => line.length > 0).map((line) => `-${line}`),
-    ...afterLines.filter((line) => line.length > 0).map((line) => `+${line}`),
-  ];
-}
-
-function gitDiff(
-  command: string,
-  tokens: string[],
-  context: TerminalCommandContext,
-): TerminalCommandResult {
-  const staged = tokens.includes("--staged") || tokens.includes("--cached");
-  const committedContents = context.committedContents ?? {};
-  const candidates = staged ? context.stagedFiles : context.changedFiles;
-  const output: string[] = [];
-
-  for (const file of unique(candidates)) {
-    const before = committedContents[file] ?? "";
-    const after = staged ? context.stagedContents[file] ?? before : context.contents[file] ?? "";
-    const patch = diffLines(before, after);
-    if (!patch.length) continue;
-    output.push(`diff --git a/${file} b/${file}`, `--- a/${file}`, `+++ b/${file}`, ...patch);
-  }
-  return unchangedResult(command, context, output);
-}
-
 function runGit(
   command: string,
   tokens: string[],
@@ -563,20 +467,13 @@ function runGit(
 ): TerminalCommandResult {
   const subcommand = tokens[1];
   if (subcommand === "status") return gitStatus(command, context);
-  if (subcommand === "branch") return gitBranch(command, tokens, context);
-  if (subcommand === "switch") return gitSwitch(command, tokens, context);
-  if (subcommand === "checkout") return gitCheckout(command, tokens, context);
-  if (subcommand === "diff") return gitDiff(command, tokens, context);
   if (subcommand === "add") return gitAdd(command, tokens, context);
   if (subcommand === "commit") return gitCommit(command, tokens, context);
   if (!subcommand) {
     return unchangedResult(
       command,
       context,
-      [
-        "usage: git <command> [<args>]",
-        "Available commands: status, branch, switch, checkout, diff, add, commit",
-      ],
+      ["usage: git <command> [<args>]", "Available commands: status, add, commit"],
       1,
     );
   }
