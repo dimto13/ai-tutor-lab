@@ -174,7 +174,11 @@ test("Guided: Fehlversuche werden gezählt, verändern aber die aktuelle Punktza
   await createFile(page, "wrong.py");
   await createFile(page, "notiz.txt");
 
-  await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Hello AI Training");
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.fill("Hello AI Training");
+  await editor.press("Control+s");
+  await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
+
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
   await page
     .getByRole("menuitem", { name: /New Terminal/ })
