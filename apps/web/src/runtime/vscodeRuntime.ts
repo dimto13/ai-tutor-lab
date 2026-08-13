@@ -1,1 +1,1 @@
-export * from "@ai-train-lab/runtime-vscode-sim/vscodeRuntime";
+export * from "@ai-train-lab/runtime-vscode-sim";
