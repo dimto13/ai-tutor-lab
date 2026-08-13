@@ -522,8 +522,8 @@ export function VscodeMenuBar({
             <div className="min-w-0 flex-1">
               <h2 className="text-sm font-semibold text-foreground">Settings</h2>
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-                Einstellungen verändern das Verhalten von VS Code. Extensions erweitern dagegen
-                den Funktionsumfang um zusätzliche Werkzeuge, Sprachen oder Integrationen.
+                Einstellungen verändern das Verhalten von VS Code. Extensions erweitern dagegen den
+                Funktionsumfang um zusätzliche Werkzeuge, Sprachen oder Integrationen.
               </p>
             </div>
             <button
@@ -538,7 +538,9 @@ export function VscodeMenuBar({
           <div className="mt-4 space-y-2 text-[12px]">
             <div className="rounded border border-border bg-panel px-3 py-2">
               <span className="font-medium text-foreground">Editor: Auto Save</span>
-              <span className="ml-2 text-muted-foreground">Konfiguration des Speicherverhaltens</span>
+              <span className="ml-2 text-muted-foreground">
+                Konfiguration des Speicherverhaltens
+              </span>
             </div>
             <div className="rounded border border-border bg-panel px-3 py-2">
               <span className="font-medium text-foreground">Workbench: Color Theme</span>
