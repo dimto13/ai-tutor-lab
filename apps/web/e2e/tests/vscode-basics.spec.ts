@@ -84,11 +84,11 @@ test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das 
   await waitForTrainingReady(page);
 
   await expect(page.getByRole("heading", { name: "Oberfläche frei untersuchen" })).toBeVisible();
-  await expect(page.getByText("0 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText("0 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
 
-  await expect(page.getByText("1 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(
     page.getByText(/Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts\./),
   ).toBeVisible();
@@ -121,7 +121,7 @@ test("Explore: alle Hauptmenüs öffnen vollständig und werden als Lernoberflä
     await expect(menu.getByRole("menuitem", { name: expectedItem }).first()).toBeVisible();
   }
 
-  await expect(page.getByText("8 von 21 Oberflächen untersucht", { exact: true })).toBeVisible();
+  await expect(page.getByText("8 von 23 Oberflächen untersucht", { exact: true })).toBeVisible();
   await expect(page.getByText(/Hilfe- und Informationszentrale/)).toBeVisible();
 });
 
