@@ -62,8 +62,8 @@ test("Guided: korrekte Teilaktionen lassen das Spotlight nicht auf einem erledig
 
   await expectGuidedStep(page, 4, "Inline-Vorschlag prüfen und übernehmen");
   const spotlight = page.getByTestId("highlight-frame");
-  const inlineAccept = page.locator('[data-highlight="copilot.inline.accept"]');
-  await expectSpotlightAround(spotlight, inlineAccept);
+  const editorHost = page.locator('[data-highlight="vscode.editor"]');
+  await expectSpotlightAround(spotlight, editorHost);
 
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.focus();
