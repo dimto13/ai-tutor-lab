@@ -4,6 +4,7 @@ import {
   resetTerminalBranchContext,
   setTerminalBranchContext,
 } from "@ai-train-lab/runtime-terminal-sim";
+import type { TrainingEvent } from "@ai-train-lab/training-engine";
 import {
   vscodeRuntime as baseVscodeRuntime,
   type VscodeRuntimeState as BaseVscodeRuntimeState,
@@ -42,6 +43,7 @@ type RuntimeStateListener = (
   state: VscodeRuntimeState,
   reason: VscodeRuntimeStateChangeReason,
 ) => void;
+type RuntimeEventListener = (event: TrainingEvent) => void;
 
 const initialWorkflowState = (): WorkflowRuntimeState => ({
   branch: "main",
@@ -51,7 +53,10 @@ const initialWorkflowState = (): WorkflowRuntimeState => ({
 let workflowState = initialWorkflowState();
 let mountedInitialWorkflowState: WorkflowRuntimeState | null = null;
 let latestBaseState: BaseVscodeRuntimeState | null = null;
+let bufferTerminalEvents = false;
+let queuedTerminalEvents: TrainingEvent[] = [];
 const workflowStateListeners = new Set<RuntimeStateListener>();
+const runtimeEventListeners = new Set<RuntimeEventListener>();
 
 function cloneTerminalLastResult(value: TerminalLastResult | null): TerminalLastResult | null {
   return value ? { ...value } : null;
@@ -78,9 +83,21 @@ function notifyWorkflowState(reason: VscodeRuntimeStateChangeReason): void {
   for (const listener of workflowStateListeners) listener(snapshot, reason);
 }
 
+function publishRuntimeEvent(event: TrainingEvent): void {
+  for (const listener of runtimeEventListeners) listener(event);
+}
+
 baseVscodeRuntime.subscribeState((runtimeState, reason) => {
   latestBaseState = runtimeState;
   notifyWorkflowState(reason);
+});
+
+baseVscodeRuntime.subscribe((event) => {
+  if (bufferTerminalEvents) {
+    queuedTerminalEvents.push(event);
+    return;
+  }
+  publishRuntimeEvent(event);
 });
 
 function workflowStateFromSeed(seed?: RuntimeSeed): WorkflowRuntimeState {
@@ -136,6 +153,11 @@ export const vscodeRuntime = {
     latestBaseState = null;
   },
 
+  subscribe(handler: RuntimeEventListener): () => void {
+    runtimeEventListeners.add(handler);
+    return () => runtimeEventListeners.delete(handler);
+  },
+
   subscribeState(handler: RuntimeStateListener): () => void {
     workflowStateListeners.add(handler);
     return () => workflowStateListeners.delete(handler);
@@ -149,19 +171,33 @@ export const vscodeRuntime = {
 
   executeTerminalCommand(command: string): VscodeTerminalExecution {
     setTerminalBranchContext(workflowState.branch);
-    const execution = baseVscodeRuntime.executeTerminalCommand(command);
-    const branch = getTerminalBranchContext();
-    workflowState = {
-      branch,
-      terminalLastResult: {
-        command: command.trim(),
-        exitCode: execution.exitCode,
-        ok: execution.exitCode === 0,
+    bufferTerminalEvents = true;
+    queuedTerminalEvents = [];
+    let stateUpdated = false;
+
+    try {
+      const execution = baseVscodeRuntime.executeTerminalCommand(command);
+      const branch = getTerminalBranchContext();
+      workflowState = {
         branch,
-      },
-    };
-    notifyWorkflowState("mutation");
-    return execution;
+        terminalLastResult: {
+          command: command.trim(),
+          exitCode: execution.exitCode,
+          ok: execution.exitCode === 0,
+          branch,
+        },
+      };
+      notifyWorkflowState("mutation");
+      stateUpdated = true;
+      return execution;
+    } finally {
+      bufferTerminalEvents = false;
+      const events = queuedTerminalEvents;
+      queuedTerminalEvents = [];
+      if (stateUpdated) {
+        for (const event of events) publishRuntimeEvent(event);
+      }
+    }
   },
 
   async query<T = unknown>(selector: string): Promise<T> {
