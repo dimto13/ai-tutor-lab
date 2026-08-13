@@ -9,6 +9,7 @@
     "understand_vscode_ui",
     "understand_workspace",
     "create_file",
+    "edit_and_save_vscode_file",
     "understand_panel_views"
   ],
   "audience": {
@@ -42,7 +43,7 @@
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator"
   },
-  "estimatedMinutes": 12,
+  "estimatedMinutes": 14,
   "points": 100,
   "steps": [
     {
@@ -117,29 +118,43 @@
     },
     {
       "id": "edit_file",
-      "title": "Editor mit einfachem Text verwenden",
-      "description": "Der Editor ist die große Arbeitsfläche für den Inhalt einer Datei. In diesem VS-Code-Grundkurs musst du keinen Code schreiben: Du bearbeitest nur einen normalen Text.",
-      "instruction": "Tippe den Text Hello AI Training in notiz.txt.",
-      "rationale": "Explorer und Editor haben getrennte Rollen: Im Explorer wählst du Dateien aus, im Editor bearbeitest du ihren Inhalt. Programmierung ist dafür nicht erforderlich.",
+      "title": "Datei bearbeiten und speichern",
+      "description": "Der Editor ist die große Arbeitsfläche für den Inhalt einer Datei. Sobald du eine Datei änderst, markiert VS Code sie als ungespeichert. In der Tab-Leiste erkennst du diesen Zustand am Punkt neben dem Dateinamen.",
+      "instruction": "Tippe den Text Hello AI Training in notiz.txt. Prüfe den Punkt für ungespeicherte Änderungen und speichere die Datei anschließend mit Strg+S beziehungsweise Cmd+S auf macOS.",
+      "rationale": "Eine Änderung im Editor ist nicht dasselbe wie eine gespeicherte Datei. Der Dirty-State zeigt dir, dass sich der sichtbare Inhalt seit dem letzten Speichern geändert hat. Erst der Speichervorgang beseitigt diese Markierung.",
       "helpLevels": [
-        "Klicke in die große Arbeitsfläche des Editors.",
-        "Tippe genau den Text Hello AI Training ein.",
-        "Der Editorbereich wird hervorgehoben. Klicke hinein und tippe genau Hello AI Training."
+        "Klicke in den Editor, tippe genau Hello AI Training und beobachte den Punkt neben notiz.txt.",
+        "Nach der Änderung ist notiz.txt als ungespeichert markiert. Drücke Strg+S; auf macOS Cmd+S.",
+        "Der Editor wird hervorgehoben. Tippe Hello AI Training, prüfe die Ungespeichert-Markierung im Tab und speichere mit Strg+S beziehungsweise Cmd+S."
       ],
-      "expectedEvent": "file.updated",
+      "expectedEvent": "file.saved",
       "validation": {
-        "kind": "event",
-        "type": "file.updated",
-        "match": {
-          "filename": "notiz.txt"
-        },
-        "contains": {
-          "content": "Hello AI Training"
-        }
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "file.saved",
+            "match": {
+              "filename": "notiz.txt"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "filesystem.contents",
+            "match": {
+              "notiz.txt": "Hello AI Training"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "editor.dirtyFiles",
+            "excludes": "notiz.txt"
+          }
+        ]
       },
       "highlightTarget": "vscode.editor",
-      "highlightTooltip": "Editor: Inhalt der aktuell geöffneten Datei bearbeiten.",
-      "successMessage": "Text erkannt. Du hast den Editor verwendet, ohne Programmcode schreiben zu müssen."
+      "highlightTooltip": "Bearbeite notiz.txt, erkenne den ungespeicherten Zustand am Punkt im Tab und speichere anschließend mit Strg+S beziehungsweise Cmd+S.",
+      "successMessage": "Text korrekt gespeichert. Die Ungespeichert-Markierung ist verschwunden."
     },
     {
       "id": "open_terminal",
