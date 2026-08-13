@@ -153,7 +153,8 @@ async function challengeDiagnosticMessage(
   event: TrainingEvent,
 ): Promise<string | null> {
   for (const diagnostic of scenario.challengeDiagnostics ?? []) {
-    if (diagnostic.eventTypes && !diagnostic.eventTypes.some((type) => type === event.type)) continue;
+    if (diagnostic.eventTypes && !diagnostic.eventTypes.some((type) => type === event.type))
+      continue;
     const result = await validateDeclarative(diagnostic.when, scenario, event);
     if (result.outcome === "pass") return diagnostic.message;
   }
