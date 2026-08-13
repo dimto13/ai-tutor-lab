@@ -196,3 +196,30 @@ test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeich
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
+
+test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git add .", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.challenge");
+  await waitUntilReady(page);
+
+  await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
+
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+  await editor.fill(
+    'def add(left, right):\n    return left + right\n\nprint("CHECK: addition ready")\n',
+  );
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+
+  await runTerminalCommand(page, "python3", "calculator.py");
+  await expect(page.getByText("CHECK: addition ready", { exact: true }).last()).toBeVisible();
+
+  await runTerminalCommand(page, "git", "add", ".");
+  await expect(page.getByText(/git restore --staged notes\.txt/)).toBeVisible();
+  await runTerminalCommand(page, "git", "restore", "--staged", "notes.txt");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
