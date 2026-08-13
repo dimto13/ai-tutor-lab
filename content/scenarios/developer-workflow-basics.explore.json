@@ -1,0 +1,91 @@
+{
+  "id": "git-basics.explore",
+  "moduleId": "developer-workflow-basics",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "Integrierten Entwicklungsworkflow erkunden",
+  "description": "Erkunde einen synthetischen Arbeitsplatz und ordne Arbeitsoberfläche, lokale Versionsverwaltung und KI-Unterstützung ihren jeweiligen Aufgaben zu.",
+  "learningObjectives": [
+    "combine_editor_git_ai_workflow",
+    "understand_project_context",
+    "understand_repository_and_remote",
+    "choose_copilot_interaction",
+    "control_copilot_context",
+    "review_copilot_output"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "vscode.workspace",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.source_control",
+      "vscode.terminal",
+      "vscode.status_bar",
+      "vscode.side_bar",
+      "git.repository",
+      "git.stage",
+      "git.commit",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.inline_suggestion",
+      "ai.context"
+    ]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["README.md", "work-item.txt"],
+      "contents": {
+        "README.md": "Synthetisches Trainingsprojekt.",
+        "work-item.txt": "Synthetischer Arbeitsauftrag."
+      },
+      "trackedFiles": ["README.md", "work-item.txt"],
+      "openTabs": ["work-item.txt"],
+      "activeFile": "work-item.txt",
+      "activePanel": null,
+      "branch": "main"
+    }
+  },
+  "estimatedMinutes": 9,
+  "points": 80,
+  "exploreTargets": [
+    "vscode.workspace.context",
+    "vscode.activityBar.explorer",
+    "vscode.editor",
+    "vscode.activityBar.scm",
+    "vscode.panel.terminal",
+    "vscode.statusBar",
+    "vscode.secondarySideBar",
+    "copilot.chat.toggle",
+    "copilot.chat.addContext",
+    "copilot.chat.prompt",
+    "copilot.inline.suggestion"
+  ],
+  "steps": [
+    {
+      "id": "explore-integrated-workflow",
+      "title": "Werkzeuggrenzen und Übergaben erkunden",
+      "description": "Du kannst die Bereiche in beliebiger Reihenfolge untersuchen. Entscheidend ist, welcher Zustand welchem Werkzeug gehört.",
+      "instruction": "Untersuche Projektkontext, Explorer, Editor, Versionsansicht, Terminal und Status Bar sowie Chat, Kontext und Inline-Unterstützung. Achte auf die Übergaben zwischen Bearbeitung, Versionszustand und KI-Unterstützung.",
+      "why": "Ein kontrollierter Workflow entsteht, wenn Arbeitsoberfläche, Versionszustand und Assistenzsystem als getrennte Verantwortungsbereiche verstanden werden.",
+      "helpLevels": [
+        "Beginne mit Explorer, Editor und Versionsansicht.",
+        "Untersuche danach Terminal und Status Bar und öffne anschließend den KI-Arbeitsbereich.",
+        "Prüfe alle markierten Arbeitsbereiche und ordne jeden davon Bearbeitung, Versionszustand oder KI-Unterstützung zu."
+      ],
+      "successMessage": "Du hast die Werkzeuggrenzen und die wichtigsten Übergabepunkte untersucht."
+    }
+  ]
+}
