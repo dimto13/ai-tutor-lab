@@ -72,6 +72,7 @@ export function Workspace() {
   const [tabs, setTabs] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [dirtyFiles, setDirtyFiles] = useState<string[]>([]);
+  const [branch, setBranch] = useState("main");
   const [newFileName, setNewFileName] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelView>("terminal");
@@ -93,6 +94,7 @@ export function Workspace() {
 
     const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
       setDirtyFiles([...runtimeState.dirtyFiles]);
+      setBranch(runtimeState.branch);
       if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
 
       setWorkspaceMode(runtimeState.workspaceMode);
@@ -652,7 +654,7 @@ export function Workspace() {
         className="flex h-7 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-border bg-statusbar px-2 text-[11px] text-foreground/80 sm:gap-4 sm:px-3"
       >
         <span className="flex shrink-0 items-center gap-1">
-          <GitBranch className="h-3.5 w-3.5" /> main
+          <GitBranch className="h-3.5 w-3.5" /> {branch}
         </span>
         <span className="hidden min-w-0 truncate sm:inline">
           {workspaceMode === "workspace"
