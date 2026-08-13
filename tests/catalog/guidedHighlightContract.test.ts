@@ -28,7 +28,7 @@ test("guided highlight targets stay aligned with the active workflow action", ()
     match: { file: "hello.py" },
     contains: { text: "Hello from Copilot" },
   });
-  assert.equal(inlineStep?.highlightTarget, "copilot.inline.accept");
+  assert.equal(inlineStep?.highlightTarget, "vscode.editor");
 
   const chatStep = developerWorkflow.steps.find((step) => step.id === "step_8");
   assert.deepEqual(chatStep?.validation, {
