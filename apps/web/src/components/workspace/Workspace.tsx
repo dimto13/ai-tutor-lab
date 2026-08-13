@@ -72,6 +72,9 @@ export function Workspace() {
   const [tabs, setTabs] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [dirtyFiles, setDirtyFiles] = useState<string[]>([]);
+  const [scmChangedFiles, setScmChangedFiles] = useState<string[]>([]);
+  const [stagedFiles, setStagedFiles] = useState<string[]>([]);
+  const [trackedFiles, setTrackedFiles] = useState<string[]>([]);
   const [branch, setBranch] = useState("main");
   const [newFileName, setNewFileName] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -79,7 +82,6 @@ export function Workspace() {
   const [lines, setLines] = useState<string[]>([]);
   const [command, setCommand] = useState("");
   const [terminalPrompt, setTerminalPrompt] = useState("user@lab:~/ai-training-demo$");
-  const [staged, setStaged] = useState(false);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
   const [copilotChatOpen, setCopilotChatOpen] = useState(false);
 
@@ -94,6 +96,9 @@ export function Workspace() {
 
     const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
       setDirtyFiles([...runtimeState.dirtyFiles]);
+      setScmChangedFiles([...runtimeState.scmChangedFiles]);
+      setStagedFiles([...runtimeState.stagedFiles]);
+      setTrackedFiles([...runtimeState.trackedFiles]);
       setBranch(runtimeState.branch);
       if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
 
@@ -109,7 +114,6 @@ export function Workspace() {
       setLines([...runtimeState.terminalLines]);
       setCommand(runtimeState.terminalCommand);
       setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
-      setStaged(runtimeState.staged);
       setWrongFile(runtimeState.wrongFile);
       setNewFileName(null);
     });
@@ -230,7 +234,6 @@ export function Workspace() {
     setCommand("");
     setLines(result.lines);
     setTerminalPrompt(result.prompt);
-    setStaged(result.staged);
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -337,8 +340,21 @@ export function Workspace() {
               ) : view === "scm" ? (
                 <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
                   <p className="mb-2 text-foreground">Änderungen</p>
-                  {files.some((file) => file.name === "hello.py") ? (
-                    <p className="font-mono text-warning">{staged ? "A" : "U"} hello.py</p>
+                  {scmChangedFiles.length > 0 ? (
+                    <div className="space-y-1">
+                      {scmChangedFiles.map((file) => {
+                        const status = trackedFiles.includes(file)
+                          ? "M"
+                          : stagedFiles.includes(file)
+                            ? "A"
+                            : "U";
+                        return (
+                          <p key={file} className="font-mono text-warning">
+                            {status} {file}
+                          </p>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <p>Keine Änderungen erkannt.</p>
                   )}
