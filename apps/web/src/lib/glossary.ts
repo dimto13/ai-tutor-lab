@@ -1,6 +1,7 @@
 import glossaryData from "../../../../content/glossary/de.json" with { type: "json" };
 import productGlossaryData from "../../../../content/glossary/products.de.json" with { type: "json" };
 import vscodeMenuGlossaryData from "../../../../content/glossary/vscode-menus.de.json" with { type: "json" };
+import vscodeSurfaceGlossaryData from "../../../../content/glossary/vscode-surfaces.de.json" with { type: "json" };
 import type { TechnologyId } from "../types/training";
 
 export interface GlossaryConcept {
@@ -21,6 +22,7 @@ const glossarySources = [
   glossaryData,
   productGlossaryData,
   vscodeMenuGlossaryData,
+  vscodeSurfaceGlossaryData,
 ] as unknown as GlossaryDataSource[];
 const concepts = glossarySources.flatMap((source) => source.concepts);
 const technologyConcepts = glossarySources.reduce<Partial<Record<TechnologyId, string[]>>>(
