@@ -174,7 +174,7 @@
       "helpLevels": [
         "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
         "Prüfe Branch und Working Tree, begrenze Copilot auf den relevanten Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
-        "Am Ende müssen feature/addition, gespeicherte calculator.py, erfolgreiche Prüfung und ein Commit nur für calculator.py zusammenpassen; notes.txt muss unverändert als lokale, unstaged Änderung übrig sein."
+        "Führe den Auftrag jetzt bis zum Endzustand aus: Wechsle auf feature/addition, stelle calculator.py fertig und speichere sie, führe eine erfolgreiche Prüfung aus und committe nur calculator.py; kontrolliere danach, dass notes.txt unverändert lokal und unstaged übrig bleibt."
       ],
       "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
     }
