@@ -70,7 +70,9 @@ test("Explore: integrierte Umgebung bleibt frei erkundbar und zeigt keine Guided
   await page.goto("/training/developer-workflow-basics.explore");
   await waitUntilReady(page);
   await expect(
-    page.getByText("VS Code, Git & GitHub Copilot – Zusammenspiel erkunden", { exact: true }).first(),
+    page
+      .getByText("VS Code, Git & GitHub Copilot – Zusammenspiel erkunden", { exact: true })
+      .first(),
   ).toBeVisible();
   await expect(page.locator('[data-highlight="vscode.editor"]')).toBeVisible();
   await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText("main");
