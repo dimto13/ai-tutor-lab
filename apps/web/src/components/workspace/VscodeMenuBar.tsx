@@ -9,6 +9,8 @@ type MenuId = "file" | "edit" | "selection" | "view" | "go" | "run" | "terminal"
 type MenuAction =
   | "open-folder"
   | "open-workspace"
+  | "open-command-palette"
+  | "open-settings"
   | "view-explorer"
   | "view-search"
   | "view-scm"
@@ -64,8 +66,8 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
       {
         label: "Preferences",
         children: [
-          { label: "Settings" },
-          { label: "Extensions" },
+          { label: "Settings", action: "open-settings" },
+          { label: "Extensions", action: "view-extensions" },
           { label: "Keyboard Shortcuts" },
           { label: "Configure User Snippets" },
           { label: "Profiles" },
@@ -124,7 +126,11 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
     label: "View",
     target: "vscode.menu.view",
     entries: [
-      { label: "Command Palette...", shortcut: "Ctrl+Shift+P" },
+      {
+        label: "Command Palette...",
+        shortcut: "Ctrl+Shift+P",
+        action: "open-command-palette",
+      },
       { label: "Open View..." },
       {
         label: "Appearance",
@@ -271,7 +277,7 @@ const MENU_DEFINITIONS: readonly MenuDefinition[] = [
     target: "vscode.menu.help",
     entries: [
       { label: "Welcome" },
-      { label: "Show All Commands", shortcut: "Ctrl+Shift+P" },
+      { label: "Show All Commands", shortcut: "Ctrl+Shift+P", action: "open-command-palette" },
       { label: "Documentation", separatorBefore: true },
       { label: "Editor Playground" },
       { label: "Show Release Notes" },
@@ -297,6 +303,8 @@ interface VscodeMenuBarProps {
   openView: (view: VscodeWorkspaceView, target: string) => void;
   openPanel: (panel: VscodePanelView) => void;
   openTerminal: () => void;
+  openCommandPalette: () => void;
+  openSettings: () => void;
 }
 
 export function VscodeMenuBar({
@@ -305,6 +313,8 @@ export function VscodeMenuBar({
   openView,
   openPanel,
   openTerminal,
+  openCommandPalette,
+  openSettings,
 }: VscodeMenuBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
@@ -320,6 +330,8 @@ export function VscodeMenuBar({
   const runAction = (action: MenuAction | undefined) => {
     if (action === "open-folder") openWorkingContext("folder");
     if (action === "open-workspace") openWorkingContext("workspace");
+    if (action === "open-command-palette") openCommandPalette();
+    if (action === "open-settings") openSettings();
     if (action === "view-explorer") openView("explorer", "vscode.activityBar.explorer");
     if (action === "view-search") openView("search", "vscode.activityBar.search");
     if (action === "view-scm") openView("scm", "vscode.activityBar.scm");
