@@ -1,5 +1,19 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import developerWorkflow from "../../content/scenarios/developer-workflow-basics.guided.json" with { type: "json" };
+
+const developerWorkflow = JSON.parse(
+  readFileSync(
+    resolve(process.cwd(), "content/scenarios/developer-workflow-basics.guided.json"),
+    "utf8",
+  ),
+) as {
+  steps: Array<{
+    id: string;
+    validation?: { kind: string; type?: string };
+    highlightTarget?: string;
+  }>;
+};
 
 describe("guided highlight authoring contract", () => {
   it("keeps the combined developer workflow aligned with the action that can complete the step", () => {
