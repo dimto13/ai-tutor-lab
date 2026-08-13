@@ -146,7 +146,7 @@ function withBranchOutput(
         /^Your branch is up to date with 'origin\/main'\.$/,
         `Your branch is up to date with 'origin/${branch}'.`,
       )
-      .replace(/^\[main (.+)\]$/, `[${branch} $1]`),
+      .replace(/^\[main ([^\]]+)\](.*)$/, `[${branch} $1]$2`),
   );
   return { ...result, output, branch };
 }
