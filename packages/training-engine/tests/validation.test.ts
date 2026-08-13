@@ -79,6 +79,24 @@ test("state validator queries runtime state declaratively", async () => {
   );
 });
 
+test("not validator inverts relevant declarative conditions and preserves ignore", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const validation: Validation = {
+    kind: "not",
+    of: { kind: "state", selector: "editor.dirtyFiles", includes: "calculator.py" },
+  };
+
+  assert.equal(
+    (await registry.validate(validation, { query: async () => ["notes.txt"] })).outcome,
+    "pass",
+  );
+  assert.equal(
+    (await registry.validate(validation, { query: async () => ["calculator.py"] })).outcome,
+    "near-miss",
+  );
+  assert.equal((await registry.validate(validation)).outcome, "ignore");
+});
+
 test("sequence validator supports ordered event chains", async () => {
   const registry = createDefaultValidatorRegistry();
   const validation: Validation = {
