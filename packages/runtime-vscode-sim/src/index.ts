@@ -190,11 +190,15 @@ function isLegacyWorkflowSnapshot(value: unknown): value is LegacyWorkflowRuntim
     typeof workflowCandidate.branch === "string" &&
     (workflowCandidate.terminalLastResult === null ||
       isTerminalLastResult(workflowCandidate.terminalLastResult)) &&
-    (lastCheckResult === undefined || lastCheckResult === null || isTerminalLastResult(lastCheckResult))
+    (lastCheckResult === undefined ||
+      lastCheckResult === null ||
+      isTerminalLastResult(lastCheckResult))
   );
 }
 
-function workflowStateFromFlatSnapshot(snapshot: FlatWorkflowRuntimeSnapshot): WorkflowRuntimeState {
+function workflowStateFromFlatSnapshot(
+  snapshot: FlatWorkflowRuntimeSnapshot,
+): WorkflowRuntimeState {
   return {
     branch: snapshot.branch,
     terminalLastResult: cloneTerminalLastResult(snapshot.terminalLastResult),
