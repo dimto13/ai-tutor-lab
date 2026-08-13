@@ -404,6 +404,41 @@ function gitAdd(
   };
 }
 
+function gitRestore(
+  command: string,
+  tokens: string[],
+  context: TerminalCommandContext,
+): TerminalCommandResult {
+  if (tokens[2] !== "--staged" || tokens.length < 4) {
+    return unchangedResult(command, context, ["usage: git restore --staged <path>..."], 1);
+  }
+
+  const selected: string[] = [];
+  for (const path of tokens.slice(3)) {
+    const matches = filesForGitPath(context, path);
+    if (matches === null) {
+      return unchangedResult(
+        command,
+        context,
+        [`error: pathspec '${path}' did not match any file(s) known to git`],
+        1,
+      );
+    }
+    selected.push(...matches);
+  }
+
+  const filesToUnstage = unique(selected).filter((file) => context.stagedFiles.includes(file));
+  const stagedContents = { ...context.stagedContents };
+  for (const file of filesToUnstage) delete stagedContents[file];
+
+  return {
+    ...unchangedResult(command, context, []),
+    stagedFiles: context.stagedFiles.filter((file) => !filesToUnstage.includes(file)),
+    stagedContents,
+    stagedFilesChanged: filesToUnstage,
+  };
+}
+
 function gitCommit(
   command: string,
   tokens: string[],
@@ -468,12 +503,13 @@ function runGit(
   const subcommand = tokens[1];
   if (subcommand === "status") return gitStatus(command, context);
   if (subcommand === "add") return gitAdd(command, tokens, context);
+  if (subcommand === "restore") return gitRestore(command, tokens, context);
   if (subcommand === "commit") return gitCommit(command, tokens, context);
   if (!subcommand) {
     return unchangedResult(
       command,
       context,
-      ["usage: git <command> [<args>]", "Available commands: status, add, commit"],
+      ["usage: git <command> [<args>]", "Available commands: status, add, restore, commit"],
       1,
     );
   }
