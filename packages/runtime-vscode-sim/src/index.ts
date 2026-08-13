@@ -25,11 +25,13 @@ export interface TerminalLastResult {
 export interface VscodeRuntimeState extends BaseVscodeRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
+  verificationLastResult: TerminalLastResult | null;
 }
 
 interface WorkflowRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
+  verificationLastResult: TerminalLastResult | null;
 }
 
 interface WorkflowRuntimeSnapshot extends BaseVscodeRuntimeState {
@@ -45,6 +47,7 @@ type RuntimeEventListener = (event: TrainingEvent) => void;
 const initialWorkflowState = (): WorkflowRuntimeState => ({
   branch: "main",
   terminalLastResult: null,
+  verificationLastResult: null,
 });
 
 let workflowState = initialWorkflowState();
@@ -63,6 +66,7 @@ function cloneWorkflowState(value: WorkflowRuntimeState): WorkflowRuntimeState {
   return {
     branch: value.branch,
     terminalLastResult: cloneTerminalLastResult(value.terminalLastResult),
+    verificationLastResult: cloneTerminalLastResult(value.verificationLastResult),
   };
 }
 
@@ -71,6 +75,7 @@ function mergedRuntimeState(base: BaseVscodeRuntimeState): VscodeRuntimeState {
     ...base,
     branch: workflowState.branch,
     terminalLastResult: cloneTerminalLastResult(workflowState.terminalLastResult),
+    verificationLastResult: cloneTerminalLastResult(workflowState.verificationLastResult),
   };
 }
 
@@ -123,7 +128,9 @@ function isWorkflowState(value: unknown): value is WorkflowRuntimeState {
   const candidate = value as Partial<WorkflowRuntimeState>;
   return (
     typeof candidate.branch === "string" &&
-    (candidate.terminalLastResult === null || isTerminalLastResult(candidate.terminalLastResult))
+    (candidate.terminalLastResult === null || isTerminalLastResult(candidate.terminalLastResult)) &&
+    (candidate.verificationLastResult === null ||
+      isTerminalLastResult(candidate.verificationLastResult))
   );
 }
 
@@ -138,6 +145,11 @@ function baseSnapshotFromWorkflowSnapshot(
 ): BaseVscodeRuntimeState {
   const { workflow: _workflow, ...baseSnapshot } = snapshot;
   return baseSnapshot;
+}
+
+function isVerificationCommand(command: string): boolean {
+  const [program] = command.trim().split(/\s+/);
+  return program === "python" || program === "python3";
 }
 
 export const vscodeRuntime = {
@@ -181,14 +193,18 @@ export const vscodeRuntime = {
     try {
       const execution = baseVscodeRuntime.executeTerminalCommand(command);
       const branch = getTerminalBranchContext();
+      const terminalLastResult: TerminalLastResult = {
+        command: command.trim(),
+        exitCode: execution.exitCode,
+        ok: execution.exitCode === 0,
+        branch,
+      };
       workflowState = {
         branch,
-        terminalLastResult: {
-          command: command.trim(),
-          exitCode: execution.exitCode,
-          ok: execution.exitCode === 0,
-          branch,
-        },
+        terminalLastResult,
+        verificationLastResult: isVerificationCommand(command)
+          ? cloneTerminalLastResult(terminalLastResult)
+          : workflowState.verificationLastResult,
       };
       notifyWorkflowState("mutation");
       stateUpdated = true;
@@ -207,6 +223,9 @@ export const vscodeRuntime = {
     if (selector === "scm.branch") return workflowState.branch as T;
     if (selector === "terminal.lastResult") {
       return cloneTerminalLastResult(workflowState.terminalLastResult) as T;
+    }
+    if (selector === "verification.lastResult") {
+      return cloneTerminalLastResult(workflowState.verificationLastResult) as T;
     }
     return baseVscodeRuntime.query<T>(selector);
   },
