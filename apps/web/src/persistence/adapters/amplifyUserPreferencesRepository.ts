@@ -96,7 +96,7 @@ export function createAmplifyUserPreferencesRepository(): UserPreferencesReposit
         language: value.language,
         preferredTrainingMode: value.preferredTrainingMode,
         weeklyGoalMinutes: value.weeklyGoalMinutes,
-        accessibility: value.accessibility,
+        accessibility: value.accessibility as SaveArgs["accessibility"],
         selfAssessedAiLevel: value.selfAssessedAiLevel,
         ...(expectedRevision === null ? {} : { expectedRevision }),
       };
