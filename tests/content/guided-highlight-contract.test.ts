@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import developerWorkflow from "../../content/scenarios/developer-workflow-basics.guided.json";
+import developerWorkflow from "../../content/scenarios/developer-workflow-basics.guided.json" with { type: "json" };
 
 describe("guided highlight authoring contract", () => {
   it("keeps the combined developer workflow aligned with the action that can complete the step", () => {
