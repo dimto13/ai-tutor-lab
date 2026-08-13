@@ -58,10 +58,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<UserPreferencesContextValue["status"]>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const identity = auth.session?.identity ?? null;
+  const userId = auth.session?.identity.userId ?? null;
+  const tenantId = auth.session?.identity.tenantId ?? null;
   const subject = useMemo(
-    () => (identity ? subjectForSession(identity.userId, identity.tenantId) : null),
-    [identity?.userId, identity?.tenantId],
+    () => (userId ? subjectForSession(userId, tenantId) : null),
+    [tenantId, userId],
   );
 
   const load = useCallback(
