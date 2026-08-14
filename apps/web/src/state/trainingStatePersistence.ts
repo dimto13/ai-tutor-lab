@@ -18,6 +18,7 @@ export interface RuntimeReconnectRestore {
 }
 
 export interface TrainingStateReconnectResult {
+  /** Present only when reconnect discovered a newer authoritative server session. */
   session: TrainingSession | null;
   runtimeRestores: RuntimeReconnectRestore[];
 }
@@ -184,13 +185,15 @@ export class TrainingStatePersistence {
     let session: TrainingSession | null = null;
     if (sessionResult.status !== "none") {
       this.sessionRevision = sessionResult.record?.revision ?? null;
-      session = restoreTrainingSession(
-        this.scenario,
-        this.scenario.id,
-        sessionResult.record?.value,
-        Date.now(),
-        this.key.subject,
-      );
+      if (sessionResult.status === "conflict") {
+        session = restoreTrainingSession(
+          this.scenario,
+          this.scenario.id,
+          sessionResult.record?.value,
+          Date.now(),
+          this.key.subject,
+        );
+      }
     }
 
     const runtimeRestores: RuntimeReconnectRestore[] = [];
