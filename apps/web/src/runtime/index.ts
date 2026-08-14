@@ -1,31 +1,31 @@
-import { artifactPreviewRuntime } from "./artifactPreviewRuntime";
-import { copilotRuntime } from "./copilotRuntime";
-import { getRuntimeReferenceDefinition } from "./referenceCatalog";
-import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime";
-import { vscodeRuntime } from "./vscodeRuntime";
-import type { RuntimeAdapter } from "./runtimeAdapter";
-import type { TrainingEvent, UiTargetRef } from "../types/training";
+import { artifactPreviewRuntime } from "./artifactPreviewRuntime.ts";
+import { copilotRuntime } from "./copilotRuntime.ts";
+import { getRuntimeReferenceDefinition } from "./referenceCatalog.ts";
+import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime.ts";
+import { vscodeRuntime } from "./vscodeRuntime.ts";
+import type { RuntimeAdapter } from "./runtimeAdapter.ts";
+import type { TrainingEvent, UiTargetRef } from "../types/training.ts";
 
 export type {
   RuntimeAdapter,
   RuntimeCapability,
   RuntimeSeed,
   RuntimeSurfaceDescription,
-} from "./runtimeAdapter";
-export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime";
-export type { CopilotProductProfile } from "./copilotProductProfile";
-export type { ArtifactPreviewRuntimeAdapter, ArtifactPreviewState } from "./artifactPreviewRuntime";
+} from "./runtimeAdapter.ts";
+export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime.ts";
+export type { CopilotProductProfile } from "./copilotProductProfile.ts";
+export type { ArtifactPreviewRuntimeAdapter, ArtifactPreviewState } from "./artifactPreviewRuntime.ts";
 export type {
   ArtifactPreviewSeed,
   DataArtifact,
   HtmlArtifact,
   PreviewArtifact,
   TableArtifact,
-} from "./artifactPreviewContent";
+} from "./artifactPreviewContent.ts";
 export type {
   SourceControlPlatformAdapter,
   SourceControlPlatformState,
-} from "./sourceControlPlatformRuntime";
+} from "./sourceControlPlatformRuntime.ts";
 
 interface CopilotSnapshotEnvelope {
   kind: "copilot-prompt-context-v1";
