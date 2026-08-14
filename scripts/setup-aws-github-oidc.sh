@@ -53,26 +53,35 @@ POLICY_ARN="arn:aws:iam::$ACCOUNT_ID:policy/$POLICY_NAME"
 # Amplify-Entwicklerprofil hat sie typischerweise nicht. Ohne Vorabpruefung faellt das erst mitten
 # im Ablauf als rohes AccessDenied auf, und zwar bei einem Aufruf, dessen Name nichts darueber
 # sagt, was zu tun ist. Deshalb einmal lesend anklopfen, bevor irgendetwas angelegt wird.
-PROBE=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$PROVIDER_ARN" 2>&1 >/dev/null) || true
-case "$PROBE" in
-  *AccessDenied* | *"not authorized"*)
-    die "Dieses AWS-Profil darf IAM nicht administrieren:
+#
+# Geprueft wird nicht auf bestimmte Fehlertexte -- deren Schreibweise waere geraten. Stattdessen
+# gilt: Erfolg oder "Provider existiert noch nicht" sind die beiden erwarteten Ausgaenge, alles
+# andere haelt an. Damit faengt die Pruefung auch abgelaufene Anmeldungen und Netzwerkfehler ab.
+#
+# Die Umleitung "2>&1 >/dev/null" ist in dieser Reihenfolge beabsichtigt: stderr geht in die
+# Kommandosubstitution, stdout wird verworfen. So enthaelt PROBE nur die Fehlermeldung.
+if ! PROBE=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$PROVIDER_ARN" 2>&1 >/dev/null); then
+  case "$PROBE" in
+    *NoSuchEntity*) ;;
+    *)
+      die "Die lesende IAM-Vorabpruefung ist fehlgeschlagen:
 
 $PROBE
 
-Das Skript legt OIDC-Provider, Policy und Rolle an; ein Amplify-Entwicklerprofil reicht dafuer
-nicht. Zwei Wege:
+Haeufigster Grund: Dem Profil fehlen die IAM-Rechte. Das Skript legt OIDC-Provider, Policy und
+Rolle an; ein Amplify-Entwicklerprofil reicht dafuer nicht. Zwei Wege:
 
   1. Ein Profil mit IAM-Rechten verwenden:
        AWS_PROFILE=<admin-profil> npm run cloud:setup-oidc
 
   2. Dem aktuellen Benutzer voruebergehend genau die noetigen Rechte geben -- als Inline-Policy
      aus infra/aws/github-oidc/setup-permissions-policy.json -- und sie nach der Einrichtung
-     wieder entfernen.
+     wieder entfernen. Der Platzhalter <AWS_ACCOUNT_ID> darin ist hier $ACCOUNT_ID.
 
 Beides ist in docs/23-cloud-abnahme-kanal.md, Abschnitt Einrichtung, beschrieben."
-    ;;
-esac
+      ;;
+  esac
+fi
 
 # 1. OIDC-Provider. Ein manuell gepflegter Zertifikats-Thumbprint ist beim aktuellen
 #    AWS/GitHub-OIDC-Verfahren nicht mehr noetig; AWS prueft die Kette selbst.
