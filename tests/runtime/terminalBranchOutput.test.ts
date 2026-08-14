@@ -110,3 +110,37 @@ test("plain diff compares the working tree with the staged snapshot", () => {
   assert.ok(laterUnstaged.output.includes("+value = 3"));
   assert.ok(!laterUnstaged.output.includes("-value = 1"));
 });
+
+test("git diff honors explicit pathspecs", () => {
+  const context: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py", "notes.txt"],
+    contents: {
+      "calculator.py": "return a + b\n",
+      "notes.txt": "local draft\n",
+    },
+    committedContents: {
+      "calculator.py": "# TODO\n",
+      "notes.txt": "local note\n",
+    },
+    trackedFiles: ["calculator.py", "notes.txt"],
+    changedFiles: ["calculator.py", "notes.txt"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+
+  const calculatorDiff = executeTerminalCommand(
+    command("git", "diff", "calculator.py"),
+    context,
+  );
+  assert.ok(calculatorDiff.output.includes("diff --git a/calculator.py b/calculator.py"));
+  assert.ok(!calculatorDiff.output.some((line) => line.includes("notes.txt")));
+
+  const notesDiff = executeTerminalCommand(command("git", "diff", "--", "notes.txt"), context);
+  assert.ok(notesDiff.output.includes("diff --git a/notes.txt b/notes.txt"));
+  assert.ok(!notesDiff.output.some((line) => line.includes("calculator.py")));
+});
