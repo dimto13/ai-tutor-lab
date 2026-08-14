@@ -12,7 +12,7 @@ import type {
   TrainingStateRepository,
   TrainingStateWriteOptions,
 } from "@ai-train-lab/training-engine";
-import { browserLocalStorage } from "./browserLocalStorage";
+import { browserLocalStorage } from "./browserLocalStorage.ts";
 
 export interface StorageLike {
   getItem(key: string): string | null;
