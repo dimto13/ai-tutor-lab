@@ -52,7 +52,22 @@ POLICY_ARN="arn:aws:iam::$ACCOUNT_ID:policy/$POLICY_NAME"
 # 1. OIDC-Provider. Ein manuell gepflegter Zertifikats-Thumbprint ist beim aktuellen
 #    AWS/GitHub-OIDC-Verfahren nicht mehr noetig; AWS prueft die Kette selbst.
 if aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$PROVIDER_ARN" >/dev/null 2>&1; then
-  printf 'OIDC-Provider vorhanden: %s\n' "$PROVIDER_ARN"
+  # Ein bereits vorhandener Provider kann aus einem anderen Vorhaben stammen und unsere Audience
+  # nicht enthalten. AWS lehnt das Token dann mit InvalidIdentityToken ab -- eine Meldung, die
+  # nicht auf die Ursache zeigt. Blosse Existenz ist deshalb kein ausreichender Nachweis.
+  CLIENT_IDS=$(aws iam get-open-id-connect-provider \
+    --open-id-connect-provider-arn "$PROVIDER_ARN" --query 'ClientIDList' --output text)
+  case " $(printf '%s' "$CLIENT_IDS" | tr '\t\n' '  ') " in
+    *" $AUDIENCE "*)
+      printf 'OIDC-Provider vorhanden: %s\n' "$PROVIDER_ARN"
+      ;;
+    *)
+      aws iam add-client-id-to-open-id-connect-provider \
+        --open-id-connect-provider-arn "$PROVIDER_ARN" \
+        --client-id "$AUDIENCE"
+      printf 'OIDC-Provider vorhanden, Audience %s ergaenzt.\n' "$AUDIENCE"
+      ;;
+  esac
 else
   aws iam create-open-id-connect-provider \
     --url "https://$PROVIDER_HOST" \
@@ -103,8 +118,25 @@ aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn "$POLICY_ARN"
 
 ROLE_ARN=$(aws iam get-role --role-name "$ROLE_NAME" --query 'Role.Arn' --output text)
 
+# Abschliessender Selbstnachweis: was der Workflow spaeter braucht, steht damit im Protokoll des
+# Laufs -- die registrierten Audiences des Providers und der Subject-Claim der Trust-Policy.
+REGISTERED_AUDIENCES=$(aws iam get-open-id-connect-provider \
+  --open-id-connect-provider-arn "$PROVIDER_ARN" --query 'ClientIDList' --output text)
+# Bewusst nicht ueber einen festen Pfad wie Statement[0].Condition.StringEquals: Die Ausgabe soll
+# den real hinterlegten Wert zeigen, auch wenn die Policy spaeter mehrere Statements enthaelt oder
+# StringLike verwendet. Sonst meldete der Selbstnachweis genau dann nichts, wenn es interessant wird.
+TRUSTED_SUBJECT=$(aws iam get-role --role-name "$ROLE_NAME" \
+  --query 'Role.AssumeRolePolicyDocument' --output json |
+  tr ',' '\n' |
+  sed -n 's/.*"token\.actions\.githubusercontent\.com:sub"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+  tr '\n' ' ')
+[ -n "$TRUSTED_SUBJECT" ] || TRUSTED_SUBJECT="(keine sub-Bedingung in der Trust-Policy)"
+
+printf '\nProvider-Audiences: %s\n' "$REGISTERED_AUDIENCES"
+printf 'Vertrauter Subject: %s\n' "$TRUSTED_SUBJECT"
+
 printf '\nFertig. Rollen-ARN:\n  %s\n' "$ROLE_ARN"
-printf '\nFalls die Environment-Variable noch fehlt oder abweicht:\n'
-printf '  gh variable set AWS_ROLE_ARN --env cloud-acceptance --body "%s"\n' "$ROLE_ARN"
+printf '\nFalls das Environment-Secret noch fehlt oder abweicht:\n'
+printf '  gh secret set AWS_ROLE_ARN --env cloud-acceptance --body "%s"\n' "$ROLE_ARN"
 printf '\nNachweis anschliessend ueber den Workflow "Cloud Acceptance" (workflow_dispatch auf main).\n'
 printf 'Die erste Anmeldung kann wegen der IAM-Konsistenz einige Sekunden brauchen.\n\n'
