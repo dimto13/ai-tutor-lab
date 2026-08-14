@@ -232,7 +232,9 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach falsch
   await expect(page.getByText(/git reset HEAD~1/)).toBeVisible();
 
   await runTerminalCommand(page, "git", "reset", "HEAD~1");
-  await expect(page.getByText("Unstaged changes after reset:", { exact: true }).last()).toBeVisible();
+  await expect(
+    page.getByText("Unstaged changes after reset:", { exact: true }).last(),
+  ).toBeVisible();
   await runTerminalCommand(page, "git", "add", "calculator.py");
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
 
