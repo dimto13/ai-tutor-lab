@@ -186,25 +186,45 @@ function evaluateAddExpression(
   return first === null || second === null ? null : first + second;
 }
 
+interface AddDefinition {
+  index: number;
+  firstParameter: string;
+  secondParameter: string;
+}
+
+function effectiveAddDefinition(lines: string[]): AddDefinition | null {
+  let result: AddDefinition | null = null;
+  const pattern =
+    /^\s*def\s+add\(\s*([A-Za-z_]\w*)(?:\s*:\s*[^,]+)?\s*,\s*([A-Za-z_]\w*)(?:\s*:\s*[^)]+)?\s*\)\s*(?:->\s*[^:]+)?\s*:\s*$/;
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = pattern.exec(lines[index] ?? "");
+    if (!match) continue;
+    result = {
+      index,
+      firstParameter: match[1] ?? "",
+      secondParameter: match[2] ?? "",
+    };
+  }
+  return result;
+}
+
 function probeAddFunction(contents: string): number | null {
   const lines = contents.split("\n");
-  for (let index = 0; index < lines.length; index += 1) {
-    const definition = /^\s*def\s+add\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\)\s*:\s*$/.exec(
-      lines[index] ?? "",
-    );
-    if (!definition) continue;
-    const firstParameter = definition[1] ?? "";
-    const secondParameter = definition[2] ?? "";
+  const definition = effectiveAddDefinition(lines);
+  if (!definition) return null;
 
-    for (let bodyIndex = index + 1; bodyIndex < lines.length; bodyIndex += 1) {
-      const line = lines[bodyIndex] ?? "";
-      if (line.trim() && !/^\s/.test(line)) break;
-      const code = (line.trim().split("#")[0] ?? "").trim();
-      if (!code) continue;
-      const returnStatement = /^return\s+(.+)$/.exec(code);
-      if (!returnStatement) continue;
-      return evaluateAddExpression(returnStatement[1] ?? "", firstParameter, secondParameter);
-    }
+  for (let bodyIndex = definition.index + 1; bodyIndex < lines.length; bodyIndex += 1) {
+    const line = lines[bodyIndex] ?? "";
+    if (line.trim() && !/^\s/.test(line)) break;
+    const code = (line.trim().split("#")[0] ?? "").trim();
+    if (!code) continue;
+    const returnStatement = /^return\s+(.+)$/.exec(code);
+    if (!returnStatement) continue;
+    return evaluateAddExpression(
+      returnStatement[1] ?? "",
+      definition.firstParameter,
+      definition.secondParameter,
+    );
   }
   return null;
 }
