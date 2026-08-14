@@ -45,11 +45,18 @@ function itemId(subject, scenarioId, mode, runtimeId) {
 
 export function request(ctx) {
   const subject = caller(ctx);
+  const expectedRevision = ctx.args.expectedRevision;
+  const condition =
+    expectedRevision === null || expectedRevision === undefined
+      ? { expression: "attribute_not_exists(id)" }
+      : util.transform.toDynamoDBConditionExpression({ revision: { eq: expectedRevision } });
+
   return {
     operation: "DeleteItem",
     key: util.dynamodb.toMapValues({
       id: itemId(subject, ctx.args.scenarioId, ctx.args.mode, ctx.args.runtimeId),
     }),
+    condition,
   };
 }
 
