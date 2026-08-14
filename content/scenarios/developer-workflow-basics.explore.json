@@ -77,11 +77,9 @@
   "estimatedMinutes": 10,
   "points": 80,
   "exploreTargets": [
-    "vscode.explorer.tree",
     "vscode.editor",
     "vscode.activityBar.scm",
     "vscode.panel.terminal",
-    "vscode.panel.terminal.input",
     "vscode.statusBar",
     "copilot.chat.toggle",
     "copilot.chat.addContext",
