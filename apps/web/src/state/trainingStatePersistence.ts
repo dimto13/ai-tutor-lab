@@ -125,10 +125,41 @@ export class TrainingStatePersistence {
     return operation;
   }
 
-  async deleteRuntimeSnapshot(runtimeId: string): Promise<void> {
-    await (this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve());
-    await this.repository.deleteRuntimeSnapshot(this.key, runtimeId);
-    this.runtimeRevisions.set(runtimeId, null);
-    this.runtimesRequiringRestore.delete(runtimeId);
+  deleteRuntimeSnapshot(runtimeId: string): Promise<void> {
+    const previous = this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve();
+    const operation = previous.then(async () => {
+      if (this.runtimesRequiringRestore.has(runtimeId)) {
+        throw new Error("Runtime snapshot must be restored before it can be deleted");
+      }
+
+      if (!this.runtimeRevisions.has(runtimeId)) {
+        const current = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
+        this.runtimeRevisions.set(runtimeId, current?.revision ?? null);
+      }
+
+      try {
+        await this.repository.deleteRuntimeSnapshot(this.key, runtimeId, {
+          expectedRevision: this.runtimeRevisions.get(runtimeId) ?? null,
+        });
+        this.runtimeRevisions.set(runtimeId, null);
+        this.runtimesRequiringRestore.delete(runtimeId);
+      } catch (error) {
+        if (!(error instanceof TrainingStateConflictError)) throw error;
+        const latest = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
+        this.runtimeRevisions.set(runtimeId, latest?.revision ?? null);
+        if (latest) this.runtimesRequiringRestore.add(runtimeId);
+        else this.runtimesRequiringRestore.delete(runtimeId);
+        throw error;
+      }
+    });
+
+    this.runtimeWriteChains.set(
+      runtimeId,
+      operation.then(
+        () => undefined,
+        () => undefined,
+      ),
+    );
+    return operation;
   }
 }
