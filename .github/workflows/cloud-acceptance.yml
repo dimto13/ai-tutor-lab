@@ -208,6 +208,11 @@ jobs:
           # Der Endpunktvergleich ist dabei kein Ersatz, sondern die schaerfere Pruefung: Frueher
           # wurde die URL nachtraeglich verglichen, jetzt ist sie das Suchkriterium. Genau eine
           # API muss passen -- keine oder mehrere sind beides ein Fehler.
+          #
+          # list-graphql-apis paginiert die AWS CLI von sich aus vollstaendig (Paginator mit
+          # result_key graphqlApis) und fuehrt die Seiten zusammen. Ein --max-items wuerde dieses
+          # Ergebnis clientseitig abschneiden und genau die Luecke aufreissen, die es zu vermeiden
+          # gilt -- deshalb bewusst ohne Begrenzung.
           api_match=$(aws appsync list-graphql-apis --output json |
             jq -er --arg url "${data_url}" '
               [.graphqlApis[] | select((.uris.GRAPHQL // "" | rtrimstr("/")) == ($url | rtrimstr("/")))]
@@ -216,9 +221,8 @@ jobs:
             echo "::error::Keine eindeutige AppSync-API zum Endpunkt der Live-Outputs gefunden: ${data_url}"
             exit 1
           }
-          api_id=$(printf '%s' "${api_match}" | jq -er '.apiId')
-          api_name=$(printf '%s' "${api_match}" | jq -er '.name')
-          api_auth=$(printf '%s' "${api_match}" | jq -er '.authenticationType')
+          IFS=$'\t' read -r api_id api_name api_auth \
+            <<<"$(printf '%s' "${api_match}" | jq -er '[.apiId, .name, .authenticationType] | @tsv')"
 
           if [ "${api_auth}" != "${data_auth}" ]; then
             echo "::error::Live-Output und AWS widersprechen sich bei AppSync-Auth: output=${data_auth}, aws=${api_auth}."
