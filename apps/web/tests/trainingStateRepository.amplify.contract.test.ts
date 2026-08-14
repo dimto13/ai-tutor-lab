@@ -38,6 +38,18 @@ class FakeAmplifyTrainingStateBackend {
     return subject.tenantId ?? `personal:${subject.userId}`;
   }
 
+  conflict() {
+    return {
+      data: null,
+      errors: [
+        {
+          errorType: "ConditionalCheckFailedException",
+          message: "The conditional request failed",
+        },
+      ],
+    };
+  }
+
   save(
     store: Map<string, StoredValue>,
     storageKey: string,
@@ -47,17 +59,7 @@ class FakeAmplifyTrainingStateBackend {
     const current = store.get(storageKey);
     const expectedRevision = args.expectedRevision ?? null;
     const actualRevision = current?.revision ?? null;
-    if (expectedRevision !== actualRevision) {
-      return {
-        data: null,
-        errors: [
-          {
-            errorType: "ConditionalCheckFailedException",
-            message: "The conditional request failed",
-          },
-        ],
-      };
-    }
+    if (expectedRevision !== actualRevision) return this.conflict();
 
     const value: StoredValue = {
       userId: subject.userId,
@@ -70,6 +72,17 @@ class FakeAmplifyTrainingStateBackend {
     };
     store.set(storageKey, value);
     return { data: structuredClone(value), errors: undefined };
+  }
+
+  deleteRuntime(subject: TrainingSubjectRef, args: OperationArgs) {
+    const storageKey = this.runtimeKey(subject, args);
+    const current = this.runtimes.get(storageKey);
+    const expectedRevision = args.expectedRevision ?? null;
+    const actualRevision = current?.revision ?? null;
+    if (expectedRevision !== actualRevision) return this.conflict();
+
+    this.runtimes.delete(storageKey);
+    return { data: true, errors: undefined };
   }
 
   clientFor(subject: TrainingSubjectRef): unknown {
@@ -89,10 +102,7 @@ class FakeAmplifyTrainingStateBackend {
           this.save(this.sessions, this.sessionKey(subject, args), subject, args),
         saveRuntimeSnapshot: async (args: OperationArgs) =>
           this.save(this.runtimes, this.runtimeKey(subject, args), subject, args),
-        deleteRuntimeSnapshot: async (args: OperationArgs) => {
-          this.runtimes.delete(this.runtimeKey(subject, args));
-          return { data: true, errors: undefined };
-        },
+        deleteRuntimeSnapshot: async (args: OperationArgs) => this.deleteRuntime(subject, args),
       },
     };
   }
