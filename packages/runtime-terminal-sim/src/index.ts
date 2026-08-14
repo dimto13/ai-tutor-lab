@@ -119,9 +119,7 @@ function diffCommand(
 ): TerminalCommandResult | null {
   if (tokens[0] !== "git" || tokens[1] !== "diff") return null;
   const staged = tokens.includes("--staged") || tokens.includes("--cached");
-  const pathspecs = tokens
-    .slice(2)
-    .filter((token) => token !== "--" && !token.startsWith("-"));
+  const pathspecs = tokens.slice(2).filter((token) => token !== "--" && !token.startsWith("-"));
   const candidates = staged ? context.stagedFiles : context.changedFiles;
   const scopedCandidates = pathspecs.length
     ? candidates.filter((file) => pathspecs.includes(file))
