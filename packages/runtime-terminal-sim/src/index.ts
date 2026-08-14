@@ -146,28 +146,38 @@ function diffCommand(
   return resultFromContext(command, context, branch, output);
 }
 
-function valueForParameter(
+function valueForName(
   name: string,
   firstParameter: string,
   secondParameter: string,
+  variables: Readonly<Record<string, number>>,
 ): number | null {
   if (name === firstParameter) return 2;
   if (name === secondParameter) return 3;
-  return null;
+  return variables[name] ?? null;
 }
 
 function evaluateAddExpression(
   rawExpression: string,
   firstParameter: string,
   secondParameter: string,
+  variables: Readonly<Record<string, number>> = {},
 ): number | null {
   let expression = rawExpression.trim();
   if (/^\([^()]+\)$/.test(expression)) expression = expression.slice(1, -1).trim();
+  if (/^-?\d+$/.test(expression)) return Number(expression);
+  if (/^[A-Za-z_]\w*$/.test(expression)) {
+    return valueForName(expression, firstParameter, secondParameter, variables);
+  }
 
-  const binary = /^([A-Za-z_]\w*)\s*([+*-])\s*([A-Za-z_]\w*)$/.exec(expression);
+  const binary = /^([A-Za-z_]\w*|-?\d+)\s*([+*-])\s*([A-Za-z_]\w*|-?\d+)$/.exec(expression);
   if (binary) {
-    const left = valueForParameter(binary[1] ?? "", firstParameter, secondParameter);
-    const right = valueForParameter(binary[3] ?? "", firstParameter, secondParameter);
+    const left = /^-?\d+$/.test(binary[1] ?? "")
+      ? Number(binary[1])
+      : valueForName(binary[1] ?? "", firstParameter, secondParameter, variables);
+    const right = /^-?\d+$/.test(binary[3] ?? "")
+      ? Number(binary[3])
+      : valueForName(binary[3] ?? "", firstParameter, secondParameter, variables);
     if (left === null || right === null) return null;
     if (binary[2] === "+") return left + right;
     if (binary[2] === "-") return left - right;
@@ -181,8 +191,8 @@ function evaluateAddExpression(
   if (!sum) return null;
   const firstName = sum[1] ?? sum[3] ?? "";
   const secondName = sum[2] ?? sum[4] ?? "";
-  const first = valueForParameter(firstName, firstParameter, secondParameter);
-  const second = valueForParameter(secondName, firstParameter, secondParameter);
+  const first = valueForName(firstName, firstParameter, secondParameter, variables);
+  const second = valueForName(secondName, firstParameter, secondParameter, variables);
   return first === null || second === null ? null : first + second;
 }
 
@@ -234,6 +244,7 @@ function probeAddFunction(contents: string): number | null {
   const definitionIndent = indentationWidth(lines[definition.index] ?? "");
   const bodyIndent = functionBodyIndent(lines, definition.index);
   if (bodyIndent === null) return null;
+  const variables: Record<string, number> = {};
 
   for (let bodyIndex = definition.index + 1; bodyIndex < lines.length; bodyIndex += 1) {
     const line = lines[bodyIndex] ?? "";
@@ -244,13 +255,40 @@ function probeAddFunction(contents: string): number | null {
     if (indent !== bodyIndent) continue;
     const code = (trimmed.split("#")[0] ?? "").trim();
     if (!code) continue;
+    if (/^raise\b/.test(code)) return null;
+
+    const assignment = /^([A-Za-z_]\w*)\s*=\s*(.+)$/.exec(code);
+    if (assignment) {
+      const value = evaluateAddExpression(
+        assignment[2] ?? "",
+        definition.firstParameter,
+        definition.secondParameter,
+        variables,
+      );
+      if (value === null) return null;
+      variables[assignment[1] ?? ""] = value;
+      continue;
+    }
+
     const returnStatement = /^return\s+(.+)$/.exec(code);
     if (!returnStatement) continue;
     return evaluateAddExpression(
       returnStatement[1] ?? "",
       definition.firstParameter,
       definition.secondParameter,
+      variables,
     );
+  }
+  return null;
+}
+
+function topLevelRaiseBeforeCheck(contents: string): string | null {
+  for (const line of contents.split("\n")) {
+    if (!line.trim() || indentationWidth(line) !== 0) continue;
+    const code = (line.trim().split("#")[0] ?? "").trim();
+    if (/^print\((['"])CHECK: addition ready\1\)\s*$/.test(code)) return null;
+    const raised = /^raise\s+(.+)$/.exec(code);
+    if (raised) return raised[1] ?? "RuntimeError";
   }
   return null;
 }
@@ -261,12 +299,23 @@ function verifyAdditionBehavior(
   context: TerminalCommandContext,
 ): BaseTerminalCommandResult {
   if (tokens[0] !== "python" && tokens[0] !== "python3") return result;
-  if (result.exitCode !== 0 || !result.output.includes("CHECK: addition ready")) return result;
   const requested = tokens[1]?.replace(/^\.\//, "");
   if (!requested) return result;
   const path = [context.cwd, requested].filter(Boolean).join("/");
   const contents = context.contents[path] ?? context.contents[requested];
-  const probe = contents === undefined ? null : probeAddFunction(contents);
+  if (contents === undefined) return result;
+
+  const raised = topLevelRaiseBeforeCheck(contents);
+  if (raised) {
+    return {
+      ...result,
+      output: [`RuntimeError: ${raised}`],
+      exitCode: 1,
+    };
+  }
+  if (result.exitCode !== 0 || !result.output.includes("CHECK: addition ready")) return result;
+
+  const probe = probeAddFunction(contents);
   if (probe === 5) return result;
   return {
     ...result,
