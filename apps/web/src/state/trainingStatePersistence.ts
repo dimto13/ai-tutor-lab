@@ -5,7 +5,7 @@ import type {
   TrainingStateKey,
   TrainingStateRepository,
 } from "@ai-train-lab/training-engine";
-import { supportsPendingTrainingStateSynchronization } from "../persistence/pendingTrainingStateSynchronization";
+import { supportsPendingTrainingStateSynchronization } from "../persistence/pendingTrainingStateSynchronization.ts";
 
 export interface TrainingStateLoadResult {
   session: TrainingSession;
