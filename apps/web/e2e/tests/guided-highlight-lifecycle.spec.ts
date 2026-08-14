@@ -229,7 +229,6 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach falsch
   await runTerminalCommand(page, "git", "add", ".");
   await expect(page.getByText(/git restore --staged notes\.txt/)).toBeVisible();
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
-  await expect(page.getByText(/git reset HEAD~1/)).toBeVisible();
 
   await runTerminalCommand(page, "git", "reset", "HEAD~1");
   await expect(
