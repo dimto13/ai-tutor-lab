@@ -247,6 +247,11 @@ export function Workspace() {
       target: "vscode.activityBar.extensions",
     },
   ];
+  const stagedSet = new Set(stagedFiles);
+  const stagedChanges = scmChangedFiles.filter((file) => stagedSet.has(file));
+  const unstagedChanges = scmChangedFiles.filter((file) => !stagedSet.has(file));
+  const scmStatus = (file: string, staged: boolean) =>
+    trackedFiles.includes(file) ? "M" : staged ? "A" : "U";
 
   const switchPanel = (panel: PanelView) => {
     inspect(`vscode.panel.${panel}`);
@@ -339,22 +344,29 @@ export function Workspace() {
                 </p>
               ) : view === "scm" ? (
                 <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
-                  <p className="mb-2 text-foreground">Änderungen</p>
-                  {scmChangedFiles.length > 0 ? (
-                    <div className="space-y-1">
-                      {scmChangedFiles.map((file) => {
-                        const status = trackedFiles.includes(file)
-                          ? "M"
-                          : stagedFiles.includes(file)
-                            ? "A"
-                            : "U";
-                        return (
-                          <p key={file} className="font-mono text-warning">
-                            {status} {file}
+                  {stagedChanges.length > 0 ? (
+                    <div className="mb-4">
+                      <p className="mb-2 text-foreground">Staged Changes</p>
+                      <div className="space-y-1">
+                        {stagedChanges.map((file) => (
+                          <p key={file} className="font-mono text-success">
+                            {scmStatus(file, true)} {file}
                           </p>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
+                  ) : null}
+                  <p className="mb-2 text-foreground">Änderungen</p>
+                  {unstagedChanges.length > 0 ? (
+                    <div className="space-y-1">
+                      {unstagedChanges.map((file) => (
+                        <p key={file} className="font-mono text-warning">
+                          {scmStatus(file, false)} {file}
+                        </p>
+                      ))}
+                    </div>
+                  ) : stagedChanges.length > 0 ? (
+                    <p>Keine unstaged Änderungen.</p>
                   ) : (
                     <p>Keine Änderungen erkannt.</p>
                   )}
