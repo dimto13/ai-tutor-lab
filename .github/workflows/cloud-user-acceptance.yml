@@ -9,6 +9,11 @@ name: Cloud User Acceptance
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/cloud-user-acceptance.yml"
 
 concurrency:
   group: cloud-user-acceptance
@@ -16,6 +21,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   authenticated-user-e2e:
@@ -24,6 +30,11 @@ jobs:
     environment: cloud-acceptance
     timeout-minutes: 12
     steps:
+      - name: Cloud Acceptance parallel starten
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run cloud-acceptance.yml --ref main -f log_window=1h
+
       - name: Checkout
         uses: actions/checkout@v7
 
