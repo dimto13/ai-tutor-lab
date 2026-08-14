@@ -33,7 +33,7 @@ GitHub-Token anzufordern. Ob daraus Zugriff wird, entscheidet allein AWS.
 | AWS    | OIDC-Provider `token.actions.githubusercontent.com`          | Vertrauen zu GitHub als Identitätsanbieter                |
 | AWS    | Policy `AiTutorCloudAcceptanceReadOnly`                      | eng geschnittene Leserechte                               |
 | AWS    | Rolle `AiTutorGitHubReadOnly`                                | wird vom Workflow angenommen                              |
-| Repo   | `infra/aws/github-oidc/*.json`                               | die beiden Policies als versionierte Quelle               |
+| Repo   | `infra/aws/github-oidc/*.json`                               | Trust-, Berechtigungs- und Bootstrap-Policy               |
 | Repo   | `scripts/setup-aws-github-oidc.sh`                           | idempotente Einrichtung der AWS-Seite                     |
 
 ### Environment-Konfiguration
@@ -67,6 +67,26 @@ Einstellungen, die ein beliebiger Mitarbeitender setzen kann.
 ```bash
 AWS_PROFILE=<admin-profil> npm run cloud:setup-oidc
 ```
+
+Fehlen dem Profil die IAM-Rechte, bricht das Skript sofort ab, bevor es irgendetwas anlegt, und
+sagt, was fehlt. Dann gibt es zwei Wege.
+
+**Weg 1 — Profil mit IAM-Rechten verwenden.** Der direkte Weg, wenn ein solches Profil existiert.
+
+**Weg 2 — dem vorhandenen Benutzer vorübergehend genau die nötigen Rechte geben.** Dafür liegt
+`infra/aws/github-oidc/setup-permissions-policy.json` bereit: eine eng geschnittene Inline-Policy,
+die ausschließlich die drei Ressourcen dieses Vorhabens betrifft — den GitHub-OIDC-Provider, die
+Policy `AiTutorCloudAcceptanceReadOnly` und die Rolle `AiTutorGitHubReadOnly`. `AttachRolePolicy`
+ist zusätzlich per Bedingung auf genau diese eine Policy begrenzt, damit an die neue Rolle nichts
+anderes gehängt werden kann.
+
+In der AWS-Konsole unter IAM → Benutzer → `amplify-dev-user` → Berechtigungen → Inline-Policy
+anlegen, `<AWS_ACCOUNT_ID>` ersetzen, Skript ausführen, Policy danach wieder entfernen.
+
+Diese Rechte sind bewusst Bootstrap-Rechte auf Zeit: Wer eine Rolle anlegen und Policies daran
+hängen darf, kann Berechtigungen ausweiten. Die Beschränkung auf feste Ressourcennamen begrenzt
+das, hebt es aber nicht auf — deshalb nach der Einrichtung entfernen. Der laufende Betrieb braucht
+sie nicht: Der Workflow selbst kommt ohne IAM-Rechte aus.
 
 Das Skript legt OIDC-Provider, Policy und Rolle an beziehungsweise aktualisiert sie. Ist der
 Provider bereits vorhanden, prüft es zusätzlich, ob die Audience `sts.amazonaws.com` registriert
