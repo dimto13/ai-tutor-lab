@@ -303,10 +303,22 @@ function OrientationItem({
 
 function ExploreGuide() {
   const { scenario, progress, percent } = useTraining();
-  const runtime = getRuntimeAdapter(scenario.environment?.runtimeAdapterId);
-  const surface = (runtime?.describeSurface() ?? []).filter((item) =>
-    (scenario.exploreTargets ?? []).includes(item.ref),
-  );
+  const runtimeIds = [
+    scenario.environment?.runtimeAdapterId,
+    ...(scenario.environment?.integrations ?? []).map((integration) => integration.runtimeAdapterId),
+  ].filter((runtimeId): runtimeId is string => Boolean(runtimeId));
+  const targets = new Set(scenario.exploreTargets ?? []);
+  const surface = [
+    ...new Map(
+      runtimeIds
+        .flatMap((runtimeId) => getRuntimeAdapter(runtimeId)?.describeSurface() ?? [])
+        .filter((item) => targets.has(item.ref))
+        .map((item) => [item.ref, item] as const),
+    ).values(),
+  ];
+  const exploredSurfaceCount = surface.filter((item) =>
+    progress.exploredTargets.includes(item.ref),
+  ).length;
   const activeSurface = surface.find((item) => item.ref === progress.lastInspectedRef) ?? null;
   const concept = activeSurface
     ? (getGlossaryConceptByKey(activeSurface.conceptKey) ??
@@ -332,7 +344,7 @@ function ExploreGuide() {
           <span>{percent} %</span>
         </div>
         <p className="mt-1 text-[13px] text-foreground">
-          {progress.exploredTargets.length} von {surface.length} Oberflächen untersucht
+          {exploredSurfaceCount} von {surface.length} Oberflächen untersucht
         </p>
       </div>
 
