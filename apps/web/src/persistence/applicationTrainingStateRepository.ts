@@ -38,8 +38,8 @@ function createLazyRemoteRepository(): TrainingStateRepository {
     async saveRuntimeSnapshot(key, runtimeId, snapshot, options) {
       return (await getRepository()).saveRuntimeSnapshot(key, runtimeId, snapshot, options);
     },
-    async deleteRuntimeSnapshot(key, runtimeId) {
-      await (await getRepository()).deleteRuntimeSnapshot(key, runtimeId);
+    async deleteRuntimeSnapshot(key, runtimeId, options) {
+      await (await getRepository()).deleteRuntimeSnapshot(key, runtimeId, options);
     },
   };
 }
