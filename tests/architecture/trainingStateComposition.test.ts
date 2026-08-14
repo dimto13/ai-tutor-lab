@@ -8,7 +8,7 @@ const compositionUrl = new URL(
 );
 const storeUrl = new URL("../../apps/web/src/state/trainingStore.tsx", import.meta.url);
 const localAdapterUrl = new URL(
-  "../../apps/web/src/state/localStorageTrainingStateRepository.ts",
+  "../../apps/web/src/persistence/adapters/localStorageTrainingStateRepository.ts",
   import.meta.url,
 );
 
