@@ -217,7 +217,7 @@
       "message": "calculator.py wurde ausgeführt, aber die erwartete CHECK-Ausgabe fehlt noch. Prüfe die add(a, b)-Implementierung und führe die Datei anschließend erneut aus."
     },
     {
-      "eventTypes": ["scm.staged"],
+      "eventTypes": ["terminal.command.executed", "scm.staged"],
       "when": {
         "kind": "state",
         "selector": "scm.stagedFiles",
