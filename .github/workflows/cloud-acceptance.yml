@@ -1,0 +1,188 @@
+name: Cloud Acceptance
+
+# Dauerhafter Diagnosekanal GitHub -> AWS -> reale Anwendung.
+#
+# Der Workflow deployt nichts. Er meldet sich per OIDC mit kurzlebigen Credentials an einer
+# ausschliesslich lesenden IAM-Rolle an und macht den realen Zustand der Amplify-Umgebung
+# reproduzierbar sichtbar. Statische AWS-Schluessel gibt es in diesem Repository bewusst nicht.
+#
+# Einrichtung und Erstnachweis: docs/23-cloud-abnahme-kanal.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      log_window:
+        description: "Zeitfenster der CloudWatch-Diagnose, z. B. 1h, 30m, 2d"
+        required: false
+        default: "1h"
+
+concurrency:
+  group: cloud-acceptance
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  aws-diagnose:
+    name: AWS-Diagnose
+    runs-on: ubuntu-latest
+    # Das Environment ist Teil der Vertrauensbeziehung: der OIDC-Subject-Claim enthaelt
+    # "environment:cloud-acceptance", und nur dafuer erlaubt die AWS-Trust-Policy das Annehmen
+    # der Rolle. Die Branch-Beschraenkung des Environments auf main gehoert deshalb zwingend dazu.
+    environment: cloud-acceptance
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # Erlaubt dem Job lediglich, ein GitHub-OIDC-Token anzufordern. Ob daraus AWS-Zugriff wird,
+      # entscheidet allein die Trust-Policy der Rolle.
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: AWS-Kontonummer in Logs maskieren
+        # Dies ist ein oeffentliches Repository, seine Workflow-Logs sind oeffentlich lesbar.
+        # Die Maskierung wirkt nur auf spaetere Schritte und steht deshalb vor der Anmeldung.
+        env:
+          ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ROLE_ARN}" ]; then
+            echo "::error::Environment-Variable AWS_ROLE_ARN fehlt (siehe docs/23-cloud-abnahme-kanal.md)."
+            exit 1
+          fi
+          account=$(printf '%s' "${ROLE_ARN}" | cut -d: -f5)
+          # Ein unerwartetes ARN-Format wuerde hier still zu einer leeren Maske fuehren und die
+          # Kontonummer in den folgenden Schritten oeffentlich sichtbar lassen. Deshalb Abbruch.
+          case "${account}" in
+            "" | *[!0-9]*)
+              echo "::error::AWS_ROLE_ARN hat nicht das erwartete Format arn:aws:iam::<konto>:role/<name>."
+              exit 1
+              ;;
+          esac
+          echo "::add-mask::${account}"
+
+      - name: OIDC-Claims dieses Jobs anzeigen
+        # Bewusst vor der AWS-Anmeldung: Schlaegt AssumeRole fehl, ist der tatsaechliche
+        # Subject-Claim trotzdem sichtbar und die Trust-Policy laesst sich exakt korrigieren,
+        # statt das Format zu raten.
+        run: |
+          set -euo pipefail
+          token=$(curl -sS \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value')
+          # Das Token selbst ist ein Credential und wird nie ausgegeben, nur seine Claims.
+          echo "::add-mask::${token}"
+          payload=$(printf '%s' "${token}" | cut -d. -f2 | tr '_-' '/+')
+          case $((${#payload} % 4)) in
+            2) payload="${payload}==" ;;
+            3) payload="${payload}=" ;;
+          esac
+          claims=$(printf '%s' "${payload}" | base64 -d | jq '{
+            sub, aud, repository, repository_id, repository_owner, repository_owner_id,
+            environment, ref, job_workflow_ref
+          }')
+          echo "${claims}"
+          {
+            echo "### OIDC-Claims"
+            echo ""
+            echo '```json'
+            echo "${claims}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: AWS-Anmeldung per OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: ai-tutor-cloud-acceptance
+
+      - name: Angenommene Rolle pruefen
+        run: |
+          set -euo pipefail
+          arn=$(aws sts get-caller-identity --query 'Arn' --output text)
+          echo "Aktive Identitaet: ${arn}"
+          case "${arn}" in
+            *:assumed-role/*) ;;
+            *)
+              echo "::error::Unerwartete Identitaet - erwartet wird eine per AssumeRole angenommene Rolle."
+              exit 1
+              ;;
+          esac
+          echo "### AWS-Identitaet" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`${arn}\`" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Amplify-App lesen
+        run: |
+          set -euo pipefail
+          aws amplify get-app --app-id "${{ vars.AMPLIFY_APP_ID }}" \
+            --query 'app.{name:name,appId:appId,platform:platform,repository:repository,domain:defaultDomain}' \
+            --output table
+
+      - name: Deployment-Zustand ausgeben
+        # Wiederverwendung des vorhandenen Diagnoseskripts. Es kennt bereits die aktiven
+        # Jobzustaende, die Phasen eines Jobs und den Weg zum Log einer fehlgeschlagenen Phase.
+        env:
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+          AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
+        run: npm run amplify:status:once
+
+      - name: Backend-Ressourcen auflisten
+        # Metadaten fuer #44/#45: welcher User-Pool und welche AppSync-API stehen real hinter der
+        # deployten Umgebung. Es werden keine Nutzerdaten und keine Tabelleninhalte gelesen.
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          echo "== Cognito User Pools =="
+          aws cognito-idp list-user-pools --max-results 20 \
+            --query 'UserPools[].{name:Name,id:Id}' --output table
+          echo "== AppSync APIs =="
+          aws appsync list-graphql-apis \
+            --query 'graphqlApis[].{name:name,apiId:apiId,auth:authenticationType}' --output table
+
+      - name: SSR-Laufzeitlogs pruefen
+        # Ein gruener Amplify-Build ist kein Nachweis fuer eine laufende SSR-Umgebung; genau diese
+        # Luecke hatte den HTTP-500-Fall auf deploy verursacht (docs/19, Abschnitt 2).
+        if: ${{ !cancelled() }}
+        env:
+          LOG_WINDOW: ${{ inputs.log_window }}
+        run: |
+          set -euo pipefail
+          group="/aws/amplify/${{ vars.AMPLIFY_APP_ID }}"
+          if [ -z "$(aws logs describe-log-groups --log-group-name-prefix "${group}" \
+                      --query 'logGroups[?logGroupName==`'"${group}"'`].logGroupName' --output text)" ]; then
+            echo "Log-Gruppe ${group} existiert nicht - die Compute-Umgebung hat noch nichts geloggt."
+            exit 0
+          fi
+          echo "== Letzte Ereignisse in ${group} (${LOG_WINDOW}) =="
+          aws logs tail "${group}" --since "${LOG_WINDOW}" --format short | tail -n 100
+
+      - name: Reale Anwendung aufrufen
+        # Der einzige Schritt, der die Anwendung so sieht wie ein Nutzer. Er braucht kein AWS und
+        # laeuft deshalb auch dann, wenn eine der Diagnosen zuvor fehlgeschlagen ist.
+        if: ${{ !cancelled() }}
+        env:
+          BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+        run: |
+          set -euo pipefail
+          # Ein abschliessender Schraegstrich in der Variable ergaebe sonst eine doppelte Trennung.
+          base="${BASE_URL%/}"
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${base}/")
+          echo "GET ${base}/ -> ${code}"
+          {
+            echo "### Reale Anwendung"
+            echo ""
+            echo "\`GET ${base}/\` -> ${code}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${code}" != "200" ]; then
+            echo "::error::Die deployte Anwendung antwortet mit HTTP ${code} statt 200."
+            exit 1
+          fi

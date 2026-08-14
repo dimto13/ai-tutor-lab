@@ -32,6 +32,7 @@
     "validate:amplify-runtime": "node scripts/smoke-amplify-runtime.mjs",
     "amplify:status": "sh scripts/amplify-deployment-status.sh",
     "amplify:status:once": "sh scripts/amplify-deployment-status.sh --once",
+    "cloud:setup-oidc": "sh scripts/setup-aws-github-oidc.sh",
     "test:catalog": "node --experimental-strip-types --test tests/catalog/*.test.ts",
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
     "test:architecture": "node --experimental-strip-types --test tests/architecture/*.test.ts",

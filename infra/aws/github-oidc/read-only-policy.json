@@ -1,0 +1,55 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AmplifyDiagnostics",
+      "Effect": "Allow",
+      "Action": [
+        "amplify:ListApps",
+        "amplify:GetApp",
+        "amplify:GetBranch",
+        "amplify:ListJobs",
+        "amplify:GetJob"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchDiagnostics",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CognitoMetadata",
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:ListUserPools",
+        "cognito-idp:ListUserPoolClients",
+        "cognito-idp:DescribeUserPool",
+        "cognito-idp:DescribeUserPoolClient"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AppSyncMetadata",
+      "Effect": "Allow",
+      "Action": ["appsync:ListGraphqlApis", "appsync:GetGraphqlApi"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AmplifyBackendDiscovery",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackResources",
+        "cloudformation:ListStackResources"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
