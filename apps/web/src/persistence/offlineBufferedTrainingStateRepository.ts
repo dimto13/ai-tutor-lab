@@ -16,7 +16,11 @@ import {
   type OfflineRuntimeEntry,
   type OfflineSessionEntry,
   type OfflineTrainingStateStore,
-} from "./offlineTrainingStateStore.ts";
+} from "./offlineTrainingStateStore";
+import type {
+  PendingTrainingStateSynchronization,
+  PendingTrainingStateSynchronizationResult,
+} from "./pendingTrainingStateSynchronization";
 
 function virtualRevision(remoteRevision: number | null): number {
   return remoteRevision ?? 0;
@@ -193,7 +197,9 @@ async function latestRuntimeAfterConflict(
  * a newer server record: the conditional remote write conflicts and the server state replaces the
  * buffered candidate.
  */
-export class OfflineBufferedTrainingStateRepository implements TrainingStateRepository {
+export class OfflineBufferedTrainingStateRepository
+  implements TrainingStateRepository, PendingTrainingStateSynchronization
+{
   readonly remote: TrainingStateRepository;
   readonly store: OfflineTrainingStateStore;
 
@@ -202,23 +208,37 @@ export class OfflineBufferedTrainingStateRepository implements TrainingStateRepo
     this.store = store;
   }
 
+  async synchronizePendingSession(
+    key: TrainingStateKey,
+  ): Promise<PendingTrainingStateSynchronizationResult<StoredTrainingSession>> {
+    const cached = this.store.loadSession(key);
+    if (!cached?.pending) return { status: "none", record: null };
+
+    try {
+      const saved = await this.remote.saveSession(key, cached.value, {
+        expectedRevision: cached.remoteRevision,
+        updatedAt: cached.updatedAt,
+      });
+      cacheSession(this.store, key, saved);
+      return { status: "synchronized", record: saved };
+    } catch (error) {
+      if (error instanceof TrainingStateConflictError) {
+        const latest = await latestSessionAfterConflict(this.remote, this.store, key);
+        return { status: "conflict", record: latest };
+      }
+      throw error;
+    }
+  }
+
   async loadSession(
     key: TrainingStateKey,
   ): Promise<TrainingStateRecord<StoredTrainingSession> | null> {
     const cached = this.store.loadSession(key);
     if (cached?.pending) {
       try {
-        const saved = await this.remote.saveSession(key, cached.value, {
-          expectedRevision: cached.remoteRevision,
-          updatedAt: cached.updatedAt,
-        });
-        cacheSession(this.store, key, saved);
-        return saved;
+        return (await this.synchronizePendingSession(key)).record;
       } catch (error) {
         if (error instanceof TrainingStateUnavailableError) return sessionRecord(cached);
-        if (error instanceof TrainingStateConflictError) {
-          return latestSessionAfterConflict(this.remote, this.store, key);
-        }
         throw error;
       }
     }
@@ -269,6 +289,38 @@ export class OfflineBufferedTrainingStateRepository implements TrainingStateRepo
     }
   }
 
+  async synchronizePendingRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+  ): Promise<PendingTrainingStateSynchronizationResult<unknown>> {
+    const cached = this.store.loadRuntimeSnapshot(key, runtimeId);
+    if (!cached?.pending) return { status: "none", record: null };
+
+    try {
+      if (cached.deleted) {
+        await this.remote.deleteRuntimeSnapshot(key, runtimeId, {
+          expectedRevision: cached.remoteRevision,
+          updatedAt: cached.updatedAt,
+        });
+        this.store.deleteRuntimeSnapshot(key, runtimeId);
+        return { status: "synchronized", record: null };
+      }
+
+      const saved = await this.remote.saveRuntimeSnapshot(key, runtimeId, cached.value, {
+        expectedRevision: cached.remoteRevision,
+        updatedAt: cached.updatedAt,
+      });
+      cacheRuntime(this.store, key, runtimeId, saved);
+      return { status: "synchronized", record: saved };
+    } catch (error) {
+      if (error instanceof TrainingStateConflictError) {
+        const latest = await latestRuntimeAfterConflict(this.remote, this.store, key, runtimeId);
+        return { status: "conflict", record: latest };
+      }
+      throw error;
+    }
+  }
+
   async loadRuntimeSnapshot(
     key: TrainingStateKey,
     runtimeId: string,
@@ -276,26 +328,9 @@ export class OfflineBufferedTrainingStateRepository implements TrainingStateRepo
     const cached = this.store.loadRuntimeSnapshot(key, runtimeId);
     if (cached?.pending) {
       try {
-        if (cached.deleted) {
-          await this.remote.deleteRuntimeSnapshot(key, runtimeId, {
-            expectedRevision: cached.remoteRevision,
-            updatedAt: cached.updatedAt,
-          });
-          this.store.deleteRuntimeSnapshot(key, runtimeId);
-          return null;
-        }
-
-        const saved = await this.remote.saveRuntimeSnapshot(key, runtimeId, cached.value, {
-          expectedRevision: cached.remoteRevision,
-          updatedAt: cached.updatedAt,
-        });
-        cacheRuntime(this.store, key, runtimeId, saved);
-        return saved;
+        return (await this.synchronizePendingRuntimeSnapshot(key, runtimeId)).record;
       } catch (error) {
         if (error instanceof TrainingStateUnavailableError) return runtimeRecord(cached);
-        if (error instanceof TrainingStateConflictError) {
-          return latestRuntimeAfterConflict(this.remote, this.store, key, runtimeId);
-        }
         throw error;
       }
     }
