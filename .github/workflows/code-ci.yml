@@ -115,3 +115,35 @@ jobs:
             apps/web/e2e/test-results
           if-no-files-found: ignore
           retention-days: 7
+
+  prune-remote-branches:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'ops/purge-branches-once' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout with push credentials
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Delete every remote branch except main and deploy
+        run: |
+          set -euo pipefail
+          mapfile -t branches < <(
+            git ls-remote --heads origin |
+              awk '{sub("refs/heads/", "", $2); print $2}' |
+              sort
+          )
+
+          for branch in "${branches[@]}"; do
+            case "${branch}" in
+              main|deploy)
+                echo "KEEP   ${branch}"
+                ;;
+              *)
+                echo "DELETE ${branch}"
+                git push origin --delete "${branch}"
+                ;;
+            esac
+          done
