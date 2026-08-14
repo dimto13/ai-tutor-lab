@@ -148,6 +148,10 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
 
   await expectGuidedStep(page, 11, "Nur die eigene Datei stagen");
   await runTerminalCommand(page, "git", "add", "calculator.py");
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+  await expect(page.getByText("Staged Changes", { exact: true })).toBeVisible();
+  await expect(page.getByText("M calculator.py", { exact: true })).toBeVisible();
+  await expect(page.getByText("M notes.txt", { exact: true })).toBeVisible();
 
   await expectGuidedStep(page, 12, "Klaren Commit erstellen");
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: implement addition"');
@@ -209,6 +213,11 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git ad
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.focus();
   await editor.press("Tab");
+  await editor.fill('print("CHECK: addition ready")\n');
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+  await runTerminalCommand(page, "python3", "calculator.py");
+  await expect(page.getByText(/CHECK-Ausgabe allein reicht nicht/)).toBeVisible();
+
   await editor.fill(
     'def add(left, right):\n    return left + right\n\nprint("CHECK: addition ready")\n',
   );
