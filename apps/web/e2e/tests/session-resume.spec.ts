@@ -37,7 +37,7 @@ test("Guided session and VS Code runtime resume exactly after closing and reopen
       page.evaluate(() =>
         Object.entries(localStorage).some(
           ([key, value]) =>
-            key.includes(":runtime:vscode-sim:v3") && value.includes("feature/addition"),
+            key.includes(":runtime:vscode-simulator:v3") && value.includes("feature/addition"),
         ),
       ),
     )
