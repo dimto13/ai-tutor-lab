@@ -72,13 +72,17 @@ export function Workspace() {
   const [tabs, setTabs] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [dirtyFiles, setDirtyFiles] = useState<string[]>([]);
+  const [scmChangedFiles, setScmChangedFiles] = useState<string[]>([]);
+  const [stagedFiles, setStagedFiles] = useState<string[]>([]);
+  const [stagedContents, setStagedContents] = useState<Record<string, string>>({});
+  const [trackedFiles, setTrackedFiles] = useState<string[]>([]);
+  const [branch, setBranch] = useState("main");
   const [newFileName, setNewFileName] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<PanelView>("terminal");
   const [lines, setLines] = useState<string[]>([]);
   const [command, setCommand] = useState("");
   const [terminalPrompt, setTerminalPrompt] = useState("user@lab:~/ai-training-demo$");
-  const [staged, setStaged] = useState(false);
   const [wrongFile, setWrongFile] = useState<string | null>(null);
   const [copilotChatOpen, setCopilotChatOpen] = useState(false);
 
@@ -93,6 +97,11 @@ export function Workspace() {
 
     const unsubscribe = vscodeRuntime.subscribeState((runtimeState, reason) => {
       setDirtyFiles([...runtimeState.dirtyFiles]);
+      setScmChangedFiles([...runtimeState.scmChangedFiles]);
+      setStagedFiles([...runtimeState.stagedFiles]);
+      setStagedContents({ ...runtimeState.stagedContents });
+      setTrackedFiles([...runtimeState.trackedFiles]);
+      setBranch(runtimeState.branch);
       if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
 
       setWorkspaceMode(runtimeState.workspaceMode);
@@ -107,7 +116,6 @@ export function Workspace() {
       setLines([...runtimeState.terminalLines]);
       setCommand(runtimeState.terminalCommand);
       setTerminalPrompt(vscodeRuntime.getTerminalPrompt());
-      setStaged(runtimeState.staged);
       setWrongFile(runtimeState.wrongFile);
       setNewFileName(null);
     });
@@ -228,7 +236,6 @@ export function Workspace() {
     setCommand("");
     setLines(result.lines);
     setTerminalPrompt(result.prompt);
-    setStaged(result.staged);
   };
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
@@ -242,6 +249,13 @@ export function Workspace() {
       target: "vscode.activityBar.extensions",
     },
   ];
+  const stagedSet = new Set(stagedFiles);
+  const stagedChanges = scmChangedFiles.filter((file) => stagedSet.has(file));
+  const unstagedChanges = scmChangedFiles.filter(
+    (file) => !stagedSet.has(file) || contents[file] !== stagedContents[file],
+  );
+  const scmStatus = (file: string, staged: boolean) =>
+    trackedFiles.includes(file) ? "M" : staged ? "A" : "U";
 
   const switchPanel = (panel: PanelView) => {
     inspect(`vscode.panel.${panel}`);
@@ -334,9 +348,29 @@ export function Workspace() {
                 </p>
               ) : view === "scm" ? (
                 <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
+                  {stagedChanges.length > 0 ? (
+                    <div className="mb-4">
+                      <p className="mb-2 text-foreground">Staged Changes</p>
+                      <div className="space-y-1">
+                        {stagedChanges.map((file) => (
+                          <p key={file} className="font-mono text-success">
+                            {scmStatus(file, true)} {file}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                   <p className="mb-2 text-foreground">Änderungen</p>
-                  {files.some((file) => file.name === "hello.py") ? (
-                    <p className="font-mono text-warning">{staged ? "A" : "U"} hello.py</p>
+                  {unstagedChanges.length > 0 ? (
+                    <div className="space-y-1">
+                      {unstagedChanges.map((file) => (
+                        <p key={file} className="font-mono text-warning">
+                          {scmStatus(file, false)} {file}
+                        </p>
+                      ))}
+                    </div>
+                  ) : stagedChanges.length > 0 ? (
+                    <p>Keine unstaged Änderungen.</p>
                   ) : (
                     <p>Keine Änderungen erkannt.</p>
                   )}
@@ -652,7 +686,7 @@ export function Workspace() {
         className="flex h-7 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-border bg-statusbar px-2 text-[11px] text-foreground/80 sm:gap-4 sm:px-3"
       >
         <span className="flex shrink-0 items-center gap-1">
-          <GitBranch className="h-3.5 w-3.5" /> main
+          <GitBranch className="h-3.5 w-3.5" /> {branch}
         </span>
         <span className="hidden min-w-0 truncate sm:inline">
           {workspaceMode === "workspace"

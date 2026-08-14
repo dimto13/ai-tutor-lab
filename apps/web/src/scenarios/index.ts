@@ -6,7 +6,9 @@ import vscodeExploreRaw from "../../../../content/scenarios/vscode-basics.explor
 import vscodeGuidedRaw from "../../../../content/scenarios/vscode-basics.guided.json";
 import vscodeChallengeRaw from "../../../../content/scenarios/vscode-basics.challenge.json";
 import vscodeShortcutsChallengeRaw from "../../../../content/scenarios/vscode-shortcuts.challenge.json";
-import developerWorkflowRaw from "../../../../content/scenarios/developer-workflow-basics.guided.json";
+import developerWorkflowExploreRaw from "../../../../content/scenarios/developer-workflow-basics.explore.json";
+import developerWorkflowGuidedRaw from "../../../../content/scenarios/developer-workflow-basics.guided.json";
+import developerWorkflowChallengeRaw from "../../../../content/scenarios/developer-workflow-basics.challenge.json";
 import copilotBasicsExploreRaw from "../../../../content/scenarios/copilot-basics.explore.json";
 import copilotBasicsGuidedRaw from "../../../../content/scenarios/copilot-basics.guided.json";
 import copilotBasicsChallengeRaw from "../../../../content/scenarios/copilot-basics.challenge.json";
@@ -21,7 +23,9 @@ const vscodeExploreScenario = parseScenario(vscodeExploreRaw);
 const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
 const vscodeChallengeScenario = parseScenario(vscodeChallengeRaw);
 const vscodeShortcutsChallengeScenario = parseScenario(vscodeShortcutsChallengeRaw);
-const developerWorkflowScenario = parseScenario(developerWorkflowRaw);
+const developerWorkflowExploreScenario = parseScenario(developerWorkflowExploreRaw);
+const developerWorkflowGuidedScenario = parseScenario(developerWorkflowGuidedRaw);
+const developerWorkflowChallengeScenario = parseScenario(developerWorkflowChallengeRaw);
 const copilotBasicsExploreScenario = parseScenario(copilotBasicsExploreRaw);
 const copilotBasicsGuidedScenario = parseScenario(copilotBasicsGuidedRaw);
 const copilotBasicsChallengeScenario = parseScenario(copilotBasicsChallengeRaw);
@@ -41,7 +45,9 @@ const scenarios: Record<string, Scenario> = {
   [vscodeGuidedScenario.id]: vscodeGuidedScenario,
   [vscodeChallengeScenario.id]: vscodeChallengeScenario,
   [vscodeShortcutsChallengeScenario.id]: vscodeShortcutsChallengeScenario,
-  [developerWorkflowScenario.id]: developerWorkflowScenario,
+  [developerWorkflowExploreScenario.id]: developerWorkflowExploreScenario,
+  [developerWorkflowGuidedScenario.id]: developerWorkflowGuidedScenario,
+  [developerWorkflowChallengeScenario.id]: developerWorkflowChallengeScenario,
   [copilotBasicsExploreScenario.id]: copilotBasicsExploreScenario,
   [copilotBasicsGuidedScenario.id]: copilotBasicsGuidedScenario,
   [copilotBasicsChallengeScenario.id]: copilotBasicsChallengeScenario,

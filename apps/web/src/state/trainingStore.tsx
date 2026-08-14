@@ -148,6 +148,19 @@ function validateDeclarative(
   });
 }
 
+async function challengeDiagnosticMessage(
+  scenario: Scenario,
+  event: TrainingEvent,
+): Promise<string | null> {
+  for (const diagnostic of scenario.challengeDiagnostics ?? []) {
+    if (diagnostic.eventTypes && !diagnostic.eventTypes.some((type) => type === event.type))
+      continue;
+    const result = await validateDeclarative(diagnostic.when, scenario, event);
+    if (result.outcome === "pass") return diagnostic.message;
+  }
+  return null;
+}
+
 export function TrainingProvider({
   scenarioId,
   children,
@@ -371,7 +384,17 @@ export function TrainingProvider({
 
         const challengeStartedAt = startedProgress.startedAt;
         const result = await validateDeclarative(scenario.completionValidation, scenario, event);
-        if (result.outcome !== "pass") return;
+        if (result.outcome !== "pass") {
+          const message = await challengeDiagnosticMessage(scenario, event);
+          const currentProgress = progressRef.current;
+          if (
+            currentProgress.challengeOutcome === "active" &&
+            currentProgress.startedAt === challengeStartedAt
+          ) {
+            setFeedback(message ? { kind: "error", message } : null);
+          }
+          return;
+        }
 
         const currentProgress = progressRef.current;
         if (
@@ -386,6 +409,7 @@ export function TrainingProvider({
           return;
         }
 
+        setFeedback(null);
         setProgress((current) => {
           if (
             current.challengeOutcome !== "active" ||

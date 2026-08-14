@@ -81,6 +81,7 @@ export const validationSchema: z.ZodType<Validation> = z.lazy(
       }),
       z.object({ kind: z.literal("all"), of: z.array(validationSchema).min(1) }),
       z.object({ kind: z.literal("any"), of: z.array(validationSchema).min(1) }),
+      z.object({ kind: z.literal("not"), of: validationSchema }),
     ]) as z.ZodType<Validation>,
 );
 
@@ -202,6 +203,14 @@ const integrationEnvironmentSchema = z
   })
   .strict();
 
+const challengeDiagnosticSchema = z
+  .object({
+    eventTypes: z.array(workspaceEventNameSchema).min(1).optional(),
+    when: validationSchema,
+    message: z.string().min(1),
+  })
+  .strict();
+
 export const scenarioSchema = z
   .object({
     id: z.string().min(1),
@@ -228,6 +237,7 @@ export const scenarioSchema = z
     resources: z.array(resourceSchema).optional(),
     exploreTargets: z.array(z.string().min(1)).optional(),
     completionValidation: validationSchema.optional(),
+    challengeDiagnostics: z.array(challengeDiagnosticSchema).min(1).optional(),
     solutionComparison: z.array(z.string().min(1)).optional(),
     steps: z.array(stepSchema).min(1),
   })
@@ -317,6 +327,14 @@ export const scenarioSchema = z
         code: z.ZodIssueCode.custom,
         message: "challenge scenarios require completionValidation",
         path: ["completionValidation"],
+      });
+    }
+
+    if (scenario.challengeDiagnostics && scenario.mode !== "challenge") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "challengeDiagnostics are only valid for challenge scenarios",
+        path: ["challengeDiagnostics"],
       });
     }
 

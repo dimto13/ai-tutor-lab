@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createCopilotRuntime } from "../../apps/web/src/runtime/copilotRuntime.ts";
+import { copilotRuntime, createCopilotRuntime } from "../../apps/web/src/runtime/copilotRuntime.ts";
+import { getRuntimeAdapter } from "../../apps/web/src/runtime/index.ts";
 
 function createContainer(): HTMLElement {
   return {
@@ -70,6 +71,32 @@ test("Copilot file explanations are derived from the content supplied for the ac
     assert.match(changedResponse, /return a - b/);
     assert.doesNotMatch(changedResponse, /noch keinen Funktionskörper/);
   } finally {
+    await runtime.unmount();
+  }
+});
+
+test("registered Copilot runtime preserves prompt-time context across later attachment changes", async () => {
+  const runtime = getRuntimeAdapter("github-copilot-vscode-simulator");
+  assert.ok(runtime);
+  const unsubscribe = runtime.subscribe(() => undefined);
+  await runtime.mount(createContainer());
+
+  try {
+    copilotRuntime.setContextActiveFile("notes.txt");
+    copilotRuntime.submitPrompt("Bitte add implementieren.");
+    copilotRuntime.setContextActiveFile("calculator.py");
+
+    assert.equal(await runtime.query("copilot.prompt.contextFile"), "notes.txt");
+
+    const snapshot = await runtime.snapshot();
+    copilotRuntime.setContextActiveFile("calculator.py");
+    copilotRuntime.submitPrompt("Addition für calculator.py");
+    assert.equal(await runtime.query("copilot.prompt.contextFile"), "calculator.py");
+
+    await runtime.restore(snapshot);
+    assert.equal(await runtime.query("copilot.prompt.contextFile"), "notes.txt");
+  } finally {
+    unsubscribe();
     await runtime.unmount();
   }
 });

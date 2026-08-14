@@ -138,6 +138,11 @@ export type Validation =
   | {
       kind: "any";
       of: Validation[];
+    }
+  | {
+      /** Logical negation for declarative state/event conditions. */
+      kind: "not";
+      of: Validation;
     };
 
 export interface StepFailureFeedback {
@@ -145,6 +150,15 @@ export interface StepFailureFeedback {
   message: string;
   /** Optional semantic runtime target to emphasize while showing the failure feedback. */
   markTarget?: UiTargetRef;
+}
+
+export interface ChallengeDiagnostic {
+  /** Optional event filter so incomplete-but-valid intermediate states stay silent. */
+  eventTypes?: WorkspaceEventName[];
+  /** Diagnostic condition evaluated against the same runtime state as completion validation. */
+  when: Validation;
+  /** Learner-facing explanation of the concrete end-state problem. */
+  message: string;
 }
 
 export interface TrainingStep {
@@ -233,6 +247,8 @@ export interface Scenario {
   exploreTargets?: UiTargetRef[];
   /** Challenge mode: final-state validation, independent of click order. */
   completionValidation?: Validation;
+  /** Challenge mode: declarative feedback for relevant incomplete/incorrect states. */
+  challengeDiagnostics?: ChallengeDiagnostic[];
   /** Shown after a successful challenge as a reference solution. */
   solutionComparison?: string[];
   steps: TrainingStep[];

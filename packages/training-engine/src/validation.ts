@@ -52,7 +52,8 @@ export function createDefaultValidatorRegistry(): ValidatorRegistry {
     .register("state", validateState)
     .register("sequence", validateSequence)
     .register("all", validateAll)
-    .register("any", validateAny);
+    .register("any", validateAny)
+    .register("not", validateNot);
 }
 
 /** Transitional adapter until all authored scenarios use declarative validation. */
@@ -187,6 +188,19 @@ async function validateAny(
   return results.find((result) => result.outcome === "near-miss") ?? IGNORE;
 }
 
+async function validateNot(
+  spec: ValidatorSpec,
+  context: ValidationContext,
+  registry: ValidatorRegistry,
+): Promise<EngineValidationResult> {
+  const validation = asValidation(spec, "not");
+  const result = await registry.validate(validation.of, context);
+  if (result.outcome === "ignore") return IGNORE;
+  return result.outcome === "pass"
+    ? { outcome: "near-miss", details: { rule: "not", field: validation.of.kind } }
+    : PASS;
+}
+
 async function bestResultForEvents(
   validation: Validation,
   events: readonly TrainingEvent[],
@@ -218,7 +232,9 @@ type ExtractValidation<K extends Validation["kind"]> = K extends "event"
       ? Extract<Validation, { kind: "sequence" }>
       : K extends "all"
         ? { kind: "all"; of: Validation[] }
-        : { kind: "any"; of: Validation[] };
+        : K extends "any"
+          ? { kind: "any"; of: Validation[] }
+          : { kind: "not"; of: Validation };
 
 function combineAll(results: EngineValidationResult[]): EngineValidationResult {
   if (results.every((result) => result.outcome === "pass")) return PASS;

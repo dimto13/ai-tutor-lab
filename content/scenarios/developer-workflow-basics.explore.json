@@ -1,0 +1,105 @@
+{
+  "id": "developer-workflow-basics.explore",
+  "moduleId": "developer-workflow-basics",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "VS Code, Git & GitHub Copilot – Zusammenspiel erkunden",
+  "description": "Erkunde frei, wie VS Code als Workbench, lokales Git als Versionsverwaltung und GitHub Copilot als integrierter KI-Assistent zusammenspielen. Im vorbereiteten Repository liegt neben der eigentlichen Aufgabe bereits eine fremde lokale Änderung, die nicht versehentlich übernommen werden darf.",
+  "learningObjectives": ["combine_editor_git_ai_workflow"],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "programming.python",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.terminal",
+      "vscode.source_control",
+      "vscode.status_bar",
+      "git.repository",
+      "git.working_tree",
+      "git.branch",
+      "git.stage",
+      "git.commit",
+      "platform.diff",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.inline_suggestion"
+    ]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["TASK.md", "calculator.py", "notes.txt"],
+      "contents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe die Änderung, teste sie und committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz: Entwurf für einen anderen Auftrag. Nicht mitcommitten.\n"
+      },
+      "committedContents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe die Änderung, teste sie und committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz.\n"
+      },
+      "trackedFiles": ["TASK.md", "calculator.py", "notes.txt"],
+      "scmChangedFiles": ["notes.txt"],
+      "openTabs": ["TASK.md", "calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": "terminal",
+      "branch": "main",
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "# TODO: add(a, b) implementieren\n",
+          "text": "\ndef add(a, b):\n    return a + b\n\nprint(\"CHECK: addition ready\")\n"
+        }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "promptContainsAny": ["add", "addition", "summe", "zwei zahlen"],
+          "response": "Für dieses Work Item sollte calculator.py eine kleine add(a, b)-Funktion enthalten. Prüfe den vorhandenen Dateikontext, kontrolliere den vorgeschlagenen Code im Editor und achte darauf, die fremde Änderung in notes.txt nicht in deinen Commit aufzunehmen."
+        }
+      ]
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 80,
+  "exploreTargets": [
+    "vscode.editor",
+    "vscode.activityBar.scm",
+    "vscode.panel.terminal",
+    "vscode.statusBar",
+    "copilot.chat.toggle",
+    "copilot.chat.addContext",
+    "copilot.chat.contextAttachment",
+    "copilot.chat.prompt",
+    "copilot.inline.suggestion"
+  ],
+  "steps": [
+    {
+      "id": "explore-integrated-workflow",
+      "title": "Werkzeuggrenzen und Übergaben erkunden",
+      "description": "Du darfst die Umgebung in beliebiger Reihenfolge untersuchen. VS Code stellt Workbench, Editor, Explorer und integriertes Terminal bereit. Git verwaltet lokal Branch, Working Tree, Staging und Commits. Copilot ist ein eigener KI-Assistent, der in VS Code eingebettet ist und nur den Kontext kennt, den du ihm gibst.",
+      "instruction": "Untersuche TASK.md und calculator.py im Explorer und Editor. Prüfe im Terminal Branch, git status und git diff. Öffne die Source-Control-Ansicht. Öffne anschließend Copilot Chat, hänge calculator.py als Kontext an und untersuche Prompt sowie Inline-Vorschlag. Achte bei jedem Wechsel darauf, welches Werkzeug gerade für welchen Zustand verantwortlich ist.",
+      "why": "Der integrierte Entwicklungsworkflow wird sicherer, wenn du nicht nur weißt, wo du klickst, sondern welche Verantwortung VS Code, Git und Copilot jeweils haben und welche Information beim Wechsel zwischen ihnen erhalten bleibt.",
+      "helpLevels": [
+        "Beginne mit Editor, Terminal und Source Control und vergleiche, welche Informationen du in jedem Bereich siehst.",
+        "Prüfe im Terminal git branch --show-current, git status und git diff. Öffne danach Copilot und hänge calculator.py als Dateikontext an.",
+        "Untersuche Explorer/Editor → Terminal/Source Control → Copilot Chat/Inline-Vorschlag. Beobachte besonders die bereits vorhandene Änderung in notes.txt und halte sie vom eigentlichen Work Item getrennt."
+      ],
+      "successMessage": "Du hast die zentralen Übergaben zwischen Workbench, lokalem Git und Copilot untersucht."
+    }
+  ]
+}

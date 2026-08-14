@@ -20,21 +20,16 @@ const developerWorkflow = readJson<GuidedScenario>(
   "../../content/scenarios/developer-workflow-basics.guided.json",
 );
 
-test("guided highlight targets stay aligned with the active workflow action", () => {
-  const inlineStep = developerWorkflow.steps.find((step) => step.id === "step_4");
-  assert.deepEqual(inlineStep?.validation, {
-    kind: "event",
-    type: "ai.suggestion.accepted",
-    match: { file: "hello.py" },
-    contains: { text: "Hello from Copilot" },
-  });
-  assert.equal(inlineStep?.highlightTarget, "vscode.editor");
+function expectAtomicStep(stepId: string, eventType: string, highlightTarget: string): void {
+  const step = developerWorkflow.steps.find((candidate) => candidate.id === stepId);
+  assert.equal(step?.validation?.kind, "event");
+  assert.equal(step?.validation?.type, eventType);
+  assert.equal(step?.highlightTarget, highlightTarget);
+}
 
-  const chatStep = developerWorkflow.steps.find((step) => step.id === "step_8");
-  assert.deepEqual(chatStep?.validation, {
-    kind: "event",
-    type: "copilot.prompt.submitted",
-    match: { activeFile: "hello.py" },
-  });
-  assert.equal(chatStep?.highlightTarget, "vscode.secondarySideBar");
+test("guided highlight targets stay aligned with atomic Copilot workflow actions", () => {
+  expectAtomicStep("step_4", "copilot.chat.opened", "copilot.chat.toggle");
+  expectAtomicStep("step_5", "copilot.context.changed", "copilot.chat.addContext");
+  expectAtomicStep("step_6", "copilot.prompt.submitted", "copilot.chat.prompt");
+  expectAtomicStep("step_7", "ai.suggestion.accepted", "vscode.editor");
 });

@@ -17,16 +17,10 @@ test("Terminal-Simulator führt Datei-, Git- und Python-Befehle zustandsabhängi
   await waitUntilReady(page);
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
-  await page.getByRole("button", { name: "ai-training-demo", exact: true }).click();
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
   await page.getByPlaceholder("dateiname.ext").fill("hello.py");
   await page.getByPlaceholder("dateiname.ext").press("Enter");
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill('print("Hello AI Training")');
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
-  await page
-    .getByRole("menuitem", { name: /New Terminal/ })
-    .first()
-    .click();
 
   await runTerminalCommand(page, "git status");
   await expect(page.getByText("Untracked files:", { exact: true })).toBeVisible();
@@ -42,7 +36,9 @@ test("Terminal-Simulator führt Datei-, Git- und Python-Befehle zustandsabhängi
   await expect(page.getByText("[main 0000001] add hello example", { exact: true })).toBeVisible();
 
   await runTerminalCommand(page, "ls");
-  await expect(page.getByText(/README\.md.*docs\/.*hello\.py.*src\//)).toBeVisible();
+  await expect(
+    page.getByText(/TASK\.md.*calculator\.py.*docs\/.*hello\.py.*notes\.txt.*src\//),
+  ).toBeVisible();
 
   await runTerminalCommand(page, "python hello.py");
   await expect(page.getByText("Hello AI Training", { exact: true })).toBeVisible();

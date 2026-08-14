@@ -1,0 +1,349 @@
+{
+  "id": "developer-workflow-basics.challenge",
+  "moduleId": "developer-workflow-basics",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "Challenge: Entwicklungsauftrag handoff-ready abschließen",
+  "description": "Bearbeite ein bestehendes synthetisches Work Item selbstständig. Bewertet wird der Endzustand über Editor-, Copilot-, Prüf- und Git-State – nicht ein vorgegebener Klickpfad.",
+  "learningObjectives": [
+    "combine_editor_git_ai_workflow",
+    "control_copilot_context",
+    "review_copilot_output"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "foundation.code",
+      "programming.python",
+      "vscode.editor",
+      "vscode.terminal",
+      "vscode.source_control",
+      "git.repository",
+      "git.working_tree",
+      "git.branch",
+      "git.stage",
+      "git.commit",
+      "platform.diff",
+      "platform.status_checks",
+      "github.copilot",
+      "copilot.chat",
+      "copilot.inline_suggestion",
+      "ai.context"
+    ]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["ai-training-demo"],
+      "files": ["TASK.md", "calculator.py", "notes.txt"],
+      "contents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe sie mit den zwei Self-Checks assert add(2, 3) == 5 und assert add(-1, 4) == 3 und gib nach erfolgreicher Prüfung CHECK: addition ready aus. Committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz: Entwurf für einen anderen Auftrag. Nicht mitcommitten.\n"
+      },
+      "committedContents": {
+        "TASK.md": "# Work Item\n\nImplementiere in calculator.py die Funktion add(a, b). Prüfe sie mit den zwei Self-Checks assert add(2, 3) == 5 und assert add(-1, 4) == 3 und gib nach erfolgreicher Prüfung CHECK: addition ready aus. Committe ausschließlich calculator.py. Die bereits vorhandene lokale Änderung in notes.txt gehört nicht zu deinem Auftrag.\n",
+        "calculator.py": "# TODO: add(a, b) implementieren\n",
+        "notes.txt": "Lokale Notiz.\n"
+      },
+      "trackedFiles": ["TASK.md", "calculator.py", "notes.txt"],
+      "scmChangedFiles": ["notes.txt"],
+      "openTabs": ["TASK.md", "calculator.py"],
+      "activeFile": "calculator.py",
+      "activePanel": "terminal",
+      "branch": "main",
+      "inlineSuggestions": [
+        {
+          "file": "calculator.py",
+          "whenContentEquals": "# TODO: add(a, b) implementieren\n",
+          "text": "\ndef add(a, b):\n    return a + b\n\nassert add(2, 3) == 5\nassert add(-1, 4) == 3\nprint(\"CHECK: addition ready\")\n"
+        }
+      ],
+      "chatResponses": [
+        {
+          "file": "calculator.py",
+          "promptContainsAny": ["add", "addition", "summe", "zwei zahlen"],
+          "response": "Für dieses Work Item sollte calculator.py eine kleine add(a, b)-Funktion enthalten. Prüfe den vorhandenen Dateikontext, kontrolliere den vorgeschlagenen Code im Editor, führe die beiden Self-Checks aus und halte notes.txt aus deinem Commit heraus."
+        }
+      ]
+    }
+  },
+  "estimatedMinutes": 12,
+  "points": 220,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "state",
+        "selector": "scm.branch",
+        "equals": "feature/addition"
+      },
+      {
+        "kind": "state",
+        "selector": "filesystem.contents",
+        "match": {
+          "notes.txt": "Lokale Notiz: Entwurf für einen anderen Auftrag. Nicht mitcommitten.\n"
+        }
+      },
+      {
+        "kind": "state",
+        "selector": "editor.dirtyFiles",
+        "excludes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "verification.lastResult",
+        "match": {
+          "target": "calculator.py",
+          "saved": true,
+          "ok": true,
+          "branch": "feature/addition"
+        }
+      },
+      {
+        "kind": "state",
+        "selector": "verification.lastResult.content",
+        "includes": "assert add(2, 3) == 5"
+      },
+      {
+        "kind": "state",
+        "selector": "verification.lastResult.content",
+        "includes": "assert add(-1, 4) == 3"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.changedFiles",
+        "includes": "notes.txt",
+        "excludes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.stagedFiles",
+        "excludes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.stagedFiles",
+        "excludes": "notes.txt"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.message",
+        "includesAny": ["addition", "addieren", "calculator"]
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.files",
+        "includes": "calculator.py"
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.fileCount",
+        "equals": 1
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.branch",
+        "equals": "feature/addition"
+      },
+      {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "copilot.inline.status",
+            "equals": "accepted"
+          },
+          {
+            "kind": "all",
+            "of": [
+              {
+                "kind": "state",
+                "selector": "copilot.prompt.contextFile",
+                "equals": "calculator.py"
+              },
+              {
+                "kind": "state",
+                "selector": "copilot.prompt.last",
+                "includesAny": ["add", "Addition", "Summe", "zwei Zahlen"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "challengeDiagnostics": [
+    {
+      "eventTypes": ["terminal.command.executed", "scm.staged", "scm.committed"],
+      "when": {
+        "kind": "state",
+        "selector": "editor.dirtyFiles",
+        "includes": "calculator.py"
+      },
+      "message": "calculator.py enthält noch ungespeicherte Änderungen. Speichere die Datei, bevor du Prüfung, Staging oder Commit als belastbaren Endzustand wertest."
+    },
+    {
+      "eventTypes": ["terminal.command.executed"],
+      "when": {
+        "kind": "state",
+        "selector": "verification.lastResult",
+        "match": {
+          "ok": false
+        }
+      },
+      "message": "Die letzte Prüfung ist fehlgeschlagen. Korrigiere calculator.py, speichere sie und führe die beiden Self-Checks erneut erfolgreich aus."
+    },
+    {
+      "eventTypes": ["terminal.command.executed"],
+      "when": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "verification.lastResult",
+            "match": {
+              "target": "calculator.py",
+              "ok": true
+            }
+          },
+          {
+            "kind": "any",
+            "of": [
+              {
+                "kind": "not",
+                "of": {
+                  "kind": "state",
+                  "selector": "verification.lastResult.content",
+                  "includes": "assert add(2, 3) == 5"
+                }
+              },
+              {
+                "kind": "not",
+                "of": {
+                  "kind": "state",
+                  "selector": "verification.lastResult.content",
+                  "includes": "assert add(-1, 4) == 3"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "message": "Die Datei wurde ausgeführt, aber die zwei vorgegebenen Self-Checks fehlen. Ergänze beide assert-Prüfungen aus TASK.md und führe calculator.py erneut aus."
+    },
+    {
+      "eventTypes": ["terminal.command.executed", "scm.staged"],
+      "when": {
+        "kind": "state",
+        "selector": "scm.stagedFiles",
+        "includes": "notes.txt"
+      },
+      "message": "notes.txt wurde mitgestaged, obwohl diese Änderung nicht zu deinem Auftrag gehört. Entferne sie mit git restore --staged notes.txt aus dem Staging-Bereich und behalte nur calculator.py für deinen Commit."
+    },
+    {
+      "eventTypes": ["terminal.command.executed"],
+      "when": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "terminal.command.executed",
+            "contains": {
+              "command": "git commit"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "scm.changedFiles",
+            "includes": "calculator.py"
+          },
+          {
+            "kind": "state",
+            "selector": "scm.stagedFiles",
+            "excludes": "calculator.py"
+          }
+        ]
+      },
+      "message": "calculator.py ist noch nicht für den Commit vorgemerkt. Stage gezielt nur calculator.py und kontrolliere die Auswahl, bevor du erneut committest."
+    },
+    {
+      "eventTypes": ["scm.committed"],
+      "when": {
+        "kind": "not",
+        "of": {
+          "kind": "all",
+          "of": [
+            {
+              "kind": "state",
+              "selector": "scm.lastCommit.files",
+              "includes": "calculator.py"
+            },
+            {
+              "kind": "state",
+              "selector": "scm.lastCommit.fileCount",
+              "equals": 1
+            }
+          ]
+        }
+      },
+      "message": "Der letzte Commit enthält nicht ausschließlich calculator.py. Nimm diesen lokalen Commit mit git reset HEAD~1 zurück; deine Arbeitskopie bleibt erhalten. Stage danach nur calculator.py neu, damit fremde Änderungen lokal bleiben."
+    },
+    {
+      "eventTypes": ["scm.committed"],
+      "when": {
+        "kind": "not",
+        "of": {
+          "kind": "state",
+          "selector": "scm.lastCommit.branch",
+          "equals": "feature/addition"
+        }
+      },
+      "message": "Der qualifizierende Commit wurde nicht auf feature/addition erstellt. Lege den Feature-Branch vor deiner Änderung und dem Commit an."
+    },
+    {
+      "eventTypes": ["scm.committed"],
+      "when": {
+        "kind": "not",
+        "of": {
+          "kind": "state",
+          "selector": "scm.lastCommit.message",
+          "includesAny": ["addition", "addieren", "calculator"]
+        }
+      },
+      "message": "Der Commit ist entstanden, aber seine Nachricht beschreibt den fachlichen Zweck noch nicht klar genug. Benenne die Addition beziehungsweise calculator.py nachvollziehbar."
+    }
+  ],
+  "solutionComparison": [
+    "Der Auftrag wurde auf einem eigenen Branch feature/addition statt direkt auf main bearbeitet.",
+    "Copilot wurde kontrolliert eingesetzt: entweder über den geprüften Inline-Vorschlag oder mit calculator.py als explizitem Chat-Kontext.",
+    "calculator.py enthält eine nachvollziehbare add(a, b)-Implementierung und besteht die zwei in TASK.md definierten Self-Checks bei erfolgreicher Python-Ausführung.",
+    "calculator.py wurde auf feature/addition mit einer verständlichen, fachlich passenden Commit-Nachricht als eigener Versionsstand abgeschlossen; die bereits vorher vorhandene Änderung in notes.txt bleibt inhaltlich unverändert, lokal und unstaged erhalten.",
+    "Der Endzustand ist handoff-ready: eigene Änderung abgeschlossen, fremde Änderung sichtbar und unangetastet."
+  ],
+  "steps": [
+    {
+      "id": "complete-work-item",
+      "title": "Work Item selbstständig abschließen",
+      "description": "Es gibt keinen vorgeschriebenen Klickpfad. Entscheidend ist, dass du die Grenzen zwischen VS Code, lokalem Git und Copilot kontrollierst und einen reviewbaren Endzustand herstellst.",
+      "instruction": "Erfülle das Work Item aus TASK.md auf dem Branch feature/addition. Nutze Copilot kontrolliert über Inline-Vorschlag oder Chat, stelle eine funktional passende add(a, b)-Funktion in calculator.py her, führe die zwei vorgegebenen Self-Checks erfolgreich aus und committe ausschließlich calculator.py auf diesem Branch mit einer verständlichen Nachricht, die Addition oder calculator.py benennt. Die bereits vorhandene Änderung in notes.txt muss inhaltlich unverändert lokal zurückbleiben.",
+      "why": "Die Challenge prüft den handoff-fähigen Zustand eines echten Entwicklungsablaufs statt das Nachklicken einer festen Reihenfolge.",
+      "helpLevels": [
+        "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
+        "Prüfe Branch und Working Tree, begrenze Copilot auf den relevanten Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
+        "Nutze Branch-, Status-, Diff- und Prüfaktionen, kontrolliere den Copilot-Kontext und stelle anschließend den geforderten Handoff-Endzustand her: calculator.py abgeschlossen, fachlich klarer Commit auf feature/addition, notes.txt unverändert lokal und unstaged. Falls du versehentlich alles gestaged hast, entferne fremde Dateien mit git restore --staged <datei>. Falls du bereits zu viel committed hast, nimm den letzten lokalen Commit mit git reset HEAD~1 zurück und stage danach nur calculator.py neu."
+      ],
+      "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
+    }
+  ]
+}

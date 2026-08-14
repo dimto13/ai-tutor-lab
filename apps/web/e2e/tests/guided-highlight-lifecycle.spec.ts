@@ -42,63 +42,222 @@ async function expectSpotlightAround(spotlight: Locator, target: Locator): Promi
     .toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
 }
 
-async function runTerminalCommand(page: Page, command: string): Promise<void> {
+async function runTerminalCommand(page: Page, ...parts: string[]): Promise<void> {
   const input = page.getByLabel("Terminal-Eingabe");
-  await input.fill(command);
+  await input.fill(parts.join(" "));
   await input.press("Enter");
 }
 
-test("Guided: korrekte Teilaktionen lassen das Spotlight nicht auf einem erledigten Ziel hängen", async ({
+test("Workflow-Kachel bietet Explore, Guided und Challenge mit sichtbaren Voraussetzungen", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const heading = page.getByRole("heading", {
+    name: "VS Code, Git & GitHub Copilot – Zusammenspiel",
+  });
+  await expect(heading).toBeVisible();
+  const card = heading.locator("xpath=ancestor::article");
+  await expect(card.getByText("Workflow · 3 Modi")).toBeVisible();
+  await expect(card.getByText(/Voraussetzung.*VS Code.*Git.*GitHub Copilot/)).toBeVisible();
+  await expect(card.getByRole("link", { name: /Explore/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Guided/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Challenge/ })).toBeVisible();
+});
+
+test("Explore: integrierte Umgebung bleibt frei erkundbar und zeigt keine Guided-Navigation", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.explore");
+  await waitUntilReady(page);
+  await expect(
+    page
+      .getByText("VS Code, Git & GitHub Copilot – Zusammenspiel erkunden", { exact: true })
+      .first(),
+  ).toBeVisible();
+  await expect(page.locator('[data-highlight="vscode.editor"]')).toBeVisible();
+  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText("main");
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+  await expect(page.getByText("M notes.txt", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Weiter/i })).toHaveCount(0);
+});
+
+test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zustand", async ({
   page,
 }) => {
   await page.goto("/training/git-basics");
   await waitUntilReady(page);
 
-  await page.getByRole("button", { name: "Explorer", exact: true }).click();
-  await page.getByRole("button", { name: "ai-training-demo", exact: true }).click();
-  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
-  await page.getByPlaceholder("dateiname.ext").fill("hello.py");
-  await page.getByPlaceholder("dateiname.ext").press("Enter");
-
-  await expectGuidedStep(page, 4, "Inline-Vorschlag prüfen und übernehmen");
   const spotlight = page.getByTestId("highlight-frame");
+  const terminalInput = page.locator('[data-highlight="vscode.panel.terminal.input"]');
   const editorHost = page.locator('[data-highlight="vscode.editor"]');
+
+  await expectGuidedStep(page, 1, "Aktuellen Branch prüfen");
+  await expectSpotlightAround(spotlight, terminalInput);
+  await runTerminalCommand(page, "git", "branch", "--show-current");
+
+  await expectGuidedStep(page, 2, "Working Tree vor der Änderung prüfen");
+  await runTerminalCommand(page, "git", "status");
+  await expect(page.getByText("notes.txt", { exact: false }).last()).toBeVisible();
+
+  await expectGuidedStep(page, 3, "Eigenen Feature-Branch anlegen");
+  await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
+  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText(
+    "feature/addition",
+  );
+
+  await expectGuidedStep(page, 4, "Copilot Chat öffnen");
+  const chatToggle = page.locator('[data-highlight="copilot.chat.toggle"]');
+  await expectSpotlightAround(spotlight, chatToggle);
+  await page.getByRole("button", { name: "Copilot", exact: true }).click();
+
+  await expectGuidedStep(page, 5, "Relevante Datei als Kontext anhängen");
+  const addContext = page.locator('[data-highlight="copilot.chat.addContext"]');
+  await expectSpotlightAround(spotlight, addContext);
+  await page.getByRole("button", { name: "Kontext hinzufügen", exact: true }).click();
+  await page.getByRole("button", { name: "Datei anhängen: calculator.py", exact: true }).click();
+  await expect(page.locator('[data-highlight="copilot.chat.contextAttachment"]')).toContainText(
+    "calculator.py",
+  );
+
+  await expectGuidedStep(page, 6, "Auftrag an Copilot formulieren");
+  const promptTarget = page.locator('[data-highlight="copilot.chat.prompt"]');
+  await expectSpotlightAround(spotlight, promptTarget);
+  const prompt = page.getByPlaceholder("Ask Copilot...");
+  await prompt.fill("Implementiere bitte die Addition für zwei Zahlen in calculator.py.");
+  await prompt.press("Enter");
+
+  await expectGuidedStep(page, 7, "KI-Vorschlag im Editor prüfen und übernehmen");
   await expectSpotlightAround(spotlight, editorHost);
+  await page.getByRole("button", { name: "Copilot Chat schließen" }).click();
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+
+  await expectGuidedStep(page, 8, "Datei speichern");
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+
+  await expectGuidedStep(page, 9, "Working-Tree-Diff reviewen");
+  await runTerminalCommand(page, "git", "diff");
+  await expect(
+    page.getByText("diff --git a/calculator.py b/calculator.py", { exact: true }),
+  ).toBeVisible();
+
+  await expectGuidedStep(page, 10, "Änderung ausführen und Prüfergebnis interpretieren");
+  await runTerminalCommand(page, "python", "calculator.py");
+  await expect(page.getByText("CHECK: addition ready", { exact: true })).toBeVisible();
+
+  await expectGuidedStep(page, 11, "Nur die eigene Datei stagen");
+  await runTerminalCommand(page, "git", "add", "calculator.py");
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+  await expect(page.getByText("Staged Changes", { exact: true })).toBeVisible();
+  await expect(page.getByText("M calculator.py", { exact: true })).toBeVisible();
+  await expect(page.getByText("M notes.txt", { exact: true })).toBeVisible();
+
+  await expectGuidedStep(page, 12, "Klaren Commit erstellen");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: implement addition"');
+  await expect(
+    page.getByText(/\[feature\/addition [0-9a-f]+\] feat: implement addition/),
+  ).toBeVisible();
+
+  await expectGuidedStep(page, 13, "Handoff-Zustand prüfen");
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+  await expect(page.getByText("M notes.txt", { exact: true })).toBeVisible();
+  await runTerminalCommand(page, "git", "status");
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(spotlight).toHaveCount(0);
+});
+
+test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeicherte Änderung", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.challenge");
+  await waitUntilReady(page);
+  await expect(page.getByRole("button", { name: /Weiter/i })).toHaveCount(0);
+
+  await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
+  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText(
+    "feature/addition",
+  );
+
+  await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
+    "return a + b",
+  );
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+
+  await runTerminalCommand(page, "python", "calculator.py");
+  await expect(
+    page.getByText(/calculator\.py enthält noch ungespeicherte Änderungen/),
+  ).toBeVisible();
+
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+  await runTerminalCommand(page, "python", "calculator.py");
+  await expect(page.getByText("CHECK: addition ready", { exact: true }).last()).toBeVisible();
+
+  await runTerminalCommand(page, "git", "add", "calculator.py");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
+test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach falschem Commit", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.challenge");
+  await waitUntilReady(page);
+
+  await runTerminalCommand(page, "git", "switch", "-c", "feature/addition");
 
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.focus();
   await editor.press("Tab");
-  await expectGuidedStep(page, 5, "Terminal öffnen");
-  await expectSpotlightAround(spotlight, page.locator('[data-highlight="vscode.menu.terminal"]'));
+  await editor.fill('print("CHECK: addition ready")\n');
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+  await runTerminalCommand(page, "python3", "calculator.py");
+  await expect(page.getByText(/zwei vorgegebenen Self-Checks fehlen/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
-  await page
-    .getByRole("menuitem", { name: /New Terminal/ })
-    .first()
-    .click();
-  await runTerminalCommand(page, "git status");
-  await runTerminalCommand(page, "git add hello.py");
-  await runTerminalCommand(page, 'git commit -m "add hello example"');
-
-  await expectGuidedStep(page, 8, "GitHub Copilot einsetzen");
-  const secondarySideBar = page.locator('[data-highlight="vscode.secondarySideBar"]');
-  await expectSpotlightAround(spotlight, secondarySideBar);
-
-  await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  await expectGuidedStep(page, 8, "GitHub Copilot einsetzen");
-  await expectSpotlightAround(spotlight, secondarySideBar);
-
-  await page.getByRole("button", { name: "Kontext hinzufügen", exact: true }).click();
-  await page.getByRole("button", { name: "Datei anhängen: hello.py", exact: true }).click();
-  await expect(page.locator('[data-highlight="copilot.chat.contextAttachment"]')).toContainText(
-    "hello.py",
+  await editor.fill(
+    'def add(left, right):\n    result = left + right\n    return result\n\nassert add(2, 3) == 5\nassert add(-1, 4) == 3\nprint("CHECK: addition ready")\n',
   );
-  await expectSpotlightAround(spotlight, secondarySideBar);
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
 
-  const prompt = page.getByPlaceholder("Ask Copilot...");
-  await prompt.fill("Erstelle eine einfache Python-Funktion, die zwei Zahlen addiert.");
-  await prompt.press("Enter");
+  await runTerminalCommand(page, "python3", "calculator.py");
+  await expect(page.getByText("CHECK: addition ready", { exact: true }).last()).toBeVisible();
+
+  await runTerminalCommand(page, "git", "add", ".");
+  await expect(page.getByText(/git restore --staged notes\.txt/)).toBeVisible();
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
+
+  await runTerminalCommand(page, "git", "reset", "HEAD~1");
+  await expect(
+    page.getByText("Unstaged changes after reset:", { exact: true }).last(),
+  ).toBeVisible();
+  await runTerminalCommand(page, "git", "add", "calculator.py");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
-  await expect(spotlight).toHaveCount(0);
+});
+
+test("Source Control zeigt staged Inhalt und spätere Arbeitskopie gleichzeitig", async ({
+  page,
+}) => {
+  await page.goto("/training/developer-workflow-basics.challenge");
+  await waitUntilReady(page);
+
+  await runTerminalCommand(page, "git", "switch", "--create", "feature/addition");
+
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+  await runTerminalCommand(page, "git", "add", "calculator.py");
+
+  await editor.fill(`${await editor.inputValue()}\n# post-stage edit\n`);
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+
+  await expect(page.getByText("Staged Changes", { exact: true })).toBeVisible();
+  await expect(page.getByText("Änderungen", { exact: true })).toBeVisible();
+  await expect(page.getByText("M calculator.py", { exact: true })).toHaveCount(2);
 });

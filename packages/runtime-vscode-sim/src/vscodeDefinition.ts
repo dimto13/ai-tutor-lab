@@ -125,10 +125,18 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "panel.active",
     "terminal.lines",
     "terminal.cwd",
+    "terminal.lastResult",
+    "verification.lastResult",
+    "verification.lastResult.content",
+    "scm.branch",
     "scm.staged",
     "scm.stagedFiles",
     "scm.changedFiles",
     "scm.commits",
+    "scm.lastCommit.message",
+    "scm.lastCommit.files",
+    "scm.lastCommit.fileCount",
+    "scm.lastCommit.branch",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 

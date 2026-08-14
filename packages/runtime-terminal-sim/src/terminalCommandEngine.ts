@@ -239,28 +239,311 @@ function runCd(
   return { ...unchangedResult(command, context, []), cwd: target };
 }
 
+type PythonScalar = number | string | boolean;
+
+interface PythonFunction {
+  parameters: string[];
+  bodyStart: number;
+  bodyEnd: number;
+  bodyIndent: number;
+}
+
+interface PythonExecutionContext {
+  lines: string[];
+  functions: Map<string, PythonFunction>;
+  variables: Record<string, PythonScalar>;
+}
+
+function indentationWidth(line: string): number {
+  return line.length - line.trimStart().length;
+}
+
+function splitArguments(value: string): string[] {
+  const argumentsList: string[] = [];
+  let depth = 0;
+  let quote: "'" | '"' | null = null;
+  let current = "";
+  for (const character of value) {
+    if (quote) {
+      current += character;
+      if (character === quote) quote = null;
+      continue;
+    }
+    if (character === "'" || character === '"') {
+      quote = character;
+      current += character;
+      continue;
+    }
+    if (character === "(" || character === "[") depth += 1;
+    if (character === ")" || character === "]") depth -= 1;
+    if (character === "," && depth === 0) {
+      argumentsList.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += character;
+  }
+  if (current.trim()) argumentsList.push(current.trim());
+  return argumentsList;
+}
+
+function stripOuterParentheses(value: string): string {
+  let result = value.trim();
+  while (result.startsWith("(") && result.endsWith(")")) {
+    let depth = 0;
+    let wrapsWholeValue = true;
+    for (let index = 0; index < result.length; index += 1) {
+      const character = result[index];
+      if (character === "(") depth += 1;
+      if (character === ")") depth -= 1;
+      if (depth === 0 && index < result.length - 1) {
+        wrapsWholeValue = false;
+        break;
+      }
+    }
+    if (!wrapsWholeValue) break;
+    result = result.slice(1, -1).trim();
+  }
+  return result;
+}
+
+function findTopLevelOperator(
+  value: string,
+  operators: string[],
+): { index: number; operator: string } | null {
+  let depth = 0;
+  let quote: "'" | '"' | null = null;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index] ?? "";
+    if (quote) {
+      if (character === quote && value[index - 1] !== "\\") quote = null;
+      continue;
+    }
+    if (character === "'" || character === '"') {
+      quote = character;
+      continue;
+    }
+    if (character === "(" || character === "[") depth += 1;
+    if (character === ")" || character === "]") depth -= 1;
+    if (depth !== 0) continue;
+    for (const operator of operators) {
+      if (value.startsWith(operator, index)) return { index, operator };
+    }
+  }
+  return null;
+}
+
+function pythonError(type: string, detail = ""): Error {
+  return new Error(`${type}${detail ? `: ${detail}` : ""}`);
+}
+
+function evaluatePythonExpression(
+  rawExpression: string,
+  execution: PythonExecutionContext,
+  localVariables: Record<string, PythonScalar> = execution.variables,
+): PythonScalar {
+  const expression = stripOuterParentheses(rawExpression);
+  const equality = findTopLevelOperator(expression, ["==", "!="]);
+  if (equality) {
+    const left = evaluatePythonExpression(
+      expression.slice(0, equality.index),
+      execution,
+      localVariables,
+    );
+    const right = evaluatePythonExpression(
+      expression.slice(equality.index + equality.operator.length),
+      execution,
+      localVariables,
+    );
+    return equality.operator === "==" ? left === right : left !== right;
+  }
+
+  const binary = findTopLevelOperator(expression, ["+", "-", "*"]);
+  if (binary && binary.index > 0) {
+    const left = evaluatePythonExpression(
+      expression.slice(0, binary.index),
+      execution,
+      localVariables,
+    );
+    const right = evaluatePythonExpression(
+      expression.slice(binary.index + binary.operator.length),
+      execution,
+      localVariables,
+    );
+    if (typeof left !== "number" || typeof right !== "number") {
+      throw pythonError("TypeError", "unsupported operand type");
+    }
+    if (binary.operator === "+") return left + right;
+    if (binary.operator === "-") return left - right;
+    return left * right;
+  }
+
+  if (/^-?\d+$/.test(expression)) return Number(expression);
+  const stringLiteral = /^(['"])(.*)\1$/.exec(expression);
+  if (stringLiteral) return (stringLiteral[2] ?? "").replaceAll("\\n", "\n");
+  if (expression === "True") return true;
+  if (expression === "False") return false;
+
+  const sumMatch = /^sum\(\s*[[(](.*)[\])]\s*\)$/.exec(expression);
+  if (sumMatch) {
+    const values = splitArguments(sumMatch[1] ?? "").map((item) =>
+      evaluatePythonExpression(item, execution, localVariables),
+    );
+    if (values.some((value) => typeof value !== "number")) {
+      throw pythonError("TypeError", "sum expects numbers");
+    }
+    return (values as number[]).reduce((total, value) => total + value, 0);
+  }
+
+  const call = /^([A-Za-z_]\w*)\((.*)\)$/.exec(expression);
+  if (call) {
+    const functionName = call[1] ?? "";
+    const args = splitArguments(call[2] ?? "").map((item) =>
+      evaluatePythonExpression(item, execution, localVariables),
+    );
+    return executePythonFunction(functionName, args, execution);
+  }
+
+  if (Object.hasOwn(localVariables, expression)) return localVariables[expression]!;
+  throw pythonError("NameError", `name '${expression}' is not defined`);
+}
+
+function executePythonFunction(
+  name: string,
+  args: PythonScalar[],
+  execution: PythonExecutionContext,
+): PythonScalar {
+  const definition = execution.functions.get(name);
+  if (!definition) throw pythonError("NameError", `name '${name}' is not defined`);
+  if (args.length !== definition.parameters.length) {
+    throw pythonError("TypeError", `${name}() received the wrong number of arguments`);
+  }
+  const locals: Record<string, PythonScalar> = {};
+  definition.parameters.forEach((parameter, index) => {
+    locals[parameter] = args[index]!;
+  });
+
+  for (let index = definition.bodyStart; index < definition.bodyEnd; index += 1) {
+    const line = execution.lines[index] ?? "";
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    if (indentationWidth(line) !== definition.bodyIndent) continue;
+    const code = (trimmed.split("#")[0] ?? "").trim();
+    if (!code || code === "pass") continue;
+    const raiseStatement = /^raise(?:\s+(.+))?$/.exec(code);
+    if (raiseStatement) throw pythonError("RuntimeError", raiseStatement[1] ?? "raised");
+    const assignment = /^([A-Za-z_]\w*)\s*=\s*(.+)$/.exec(code);
+    if (assignment) {
+      locals[assignment[1] ?? ""] = evaluatePythonExpression(
+        assignment[2] ?? "",
+        execution,
+        locals,
+      );
+      continue;
+    }
+    const returnStatement = /^return(?:\s+(.+))?$/.exec(code);
+    if (returnStatement) {
+      return returnStatement[1]
+        ? evaluatePythonExpression(returnStatement[1], execution, locals)
+        : false;
+    }
+  }
+  throw pythonError("RuntimeError", `${name}() completed without a return value`);
+}
+
+function collectPythonFunctions(lines: string[]): Map<string, PythonFunction> {
+  const functions = new Map<string, PythonFunction>();
+  const definitionPattern = /^\s*def\s+([A-Za-z_]\w*)\(\s*([^)]*)\)\s*(?:->\s*[^:]+)?\s*:\s*$/;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    if (indentationWidth(line) !== 0) continue;
+    const match = definitionPattern.exec(line);
+    if (!match) continue;
+    const parameters = splitArguments(match[2] ?? "").map((parameter) =>
+      (parameter.split(":")[0] ?? "").trim(),
+    );
+    const bodyStart = index + 1;
+    let bodyEnd = lines.length;
+    let bodyIndent = 0;
+    for (let bodyIndex = index + 1; bodyIndex < lines.length; bodyIndex += 1) {
+      const bodyLine = lines[bodyIndex] ?? "";
+      if (!bodyLine.trim()) continue;
+      const indent = indentationWidth(bodyLine);
+      if (indent === 0) {
+        bodyEnd = bodyIndex;
+        break;
+      }
+      if (bodyIndent === 0 && !bodyLine.trim().startsWith("#")) bodyIndent = indent;
+    }
+    functions.set(match[1] ?? "", { parameters, bodyStart, bodyEnd, bodyIndent });
+    index = Math.max(index, bodyEnd - 1);
+  }
+  return functions;
+}
+
 function pythonOutput(contents: string, filename: string): { output: string[]; exitCode: number } {
   const output: string[] = [];
   const lines = contents.split("\n");
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index] ?? "";
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const printMatch = /^print\((['"])(.*)\1\)\s*$/.exec(trimmed);
-    if (printMatch) {
-      output.push((printMatch[2] ?? "").replaceAll("\\n", "\n"));
-      continue;
+  const execution: PythonExecutionContext = {
+    lines,
+    functions: collectPythonFunctions(lines),
+    variables: {},
+  };
+
+  try {
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? "";
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      if (indentationWidth(line) !== 0) continue;
+
+      const definition = /^def\s+([A-Za-z_]\w*)\(/.exec(trimmed);
+      if (definition) {
+        const registered = execution.functions.get(definition[1] ?? "");
+        if (registered) index = Math.max(index, registered.bodyEnd - 1);
+        continue;
+      }
+
+      const code = (trimmed.split("#")[0] ?? "").trim();
+      const assertStatement = /^assert\s+(.+)$/.exec(code);
+      if (assertStatement) {
+        const value = evaluatePythonExpression(assertStatement[1] ?? "", execution);
+        if (value !== true) throw pythonError("AssertionError");
+        continue;
+      }
+
+      const raiseStatement = /^raise(?:\s+(.+))?$/.exec(code);
+      if (raiseStatement) throw pythonError("RuntimeError", raiseStatement[1] ?? "raised");
+
+      const assignment = /^([A-Za-z_]\w*)\s*=\s*(.+)$/.exec(code);
+      if (assignment) {
+        execution.variables[assignment[1] ?? ""] = evaluatePythonExpression(
+          assignment[2] ?? "",
+          execution,
+        );
+        continue;
+      }
+
+      const printMatch = /^print\((.*)\)\s*$/.exec(code);
+      if (printMatch) {
+        const value = evaluatePythonExpression(printMatch[1] ?? "", execution);
+        output.push(String(value));
+        continue;
+      }
+      if (trimmed.startsWith("print(")) {
+        return {
+          output: [
+            `  File "${filename}", line ${index + 1}`,
+            `    ${trimmed}`,
+            "SyntaxError: invalid syntax",
+          ],
+          exitCode: 1,
+        };
+      }
     }
-    if (trimmed.startsWith("print(")) {
-      return {
-        output: [
-          `  File "${filename}", line ${index + 1}`,
-          `    ${trimmed}`,
-          "SyntaxError: invalid syntax",
-        ],
-        exitCode: 1,
-      };
-    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "RuntimeError";
+    return { output: [...output, message], exitCode: 1 };
   }
   return { output, exitCode: 0 };
 }
@@ -404,6 +687,41 @@ function gitAdd(
   };
 }
 
+function gitRestore(
+  command: string,
+  tokens: string[],
+  context: TerminalCommandContext,
+): TerminalCommandResult {
+  if (tokens[2] !== "--staged" || tokens.length < 4) {
+    return unchangedResult(command, context, ["usage: git restore --staged <path>..."], 1);
+  }
+
+  const selected: string[] = [];
+  for (const path of tokens.slice(3)) {
+    const matches = filesForGitPath(context, path);
+    if (matches === null) {
+      return unchangedResult(
+        command,
+        context,
+        [`error: pathspec '${path}' did not match any file(s) known to git`],
+        1,
+      );
+    }
+    selected.push(...matches);
+  }
+
+  const filesToUnstage = unique(selected).filter((file) => context.stagedFiles.includes(file));
+  const stagedContents = { ...context.stagedContents };
+  for (const file of filesToUnstage) delete stagedContents[file];
+
+  return {
+    ...unchangedResult(command, context, []),
+    stagedFiles: context.stagedFiles.filter((file) => !filesToUnstage.includes(file)),
+    stagedContents,
+    stagedFilesChanged: filesToUnstage,
+  };
+}
+
 function gitCommit(
   command: string,
   tokens: string[],
@@ -468,12 +786,13 @@ function runGit(
   const subcommand = tokens[1];
   if (subcommand === "status") return gitStatus(command, context);
   if (subcommand === "add") return gitAdd(command, tokens, context);
+  if (subcommand === "restore") return gitRestore(command, tokens, context);
   if (subcommand === "commit") return gitCommit(command, tokens, context);
   if (!subcommand) {
     return unchangedResult(
       command,
       context,
-      ["usage: git <command> [<args>]", "Available commands: status, add, commit"],
+      ["usage: git <command> [<args>]", "Available commands: status, add, restore, commit"],
       1,
     );
   }
