@@ -1,9 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-function requireEnvironmentValue(name: "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD"): string {
+type CloudEnvironmentName = "CLOUD_BASE_URL" | "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD";
+
+function requireEnvironmentValue(name: CloudEnvironmentName): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is required for authenticated cloud acceptance.`);
-  return name === "CLOUD_TEST_EMAIL" ? value.trim() : value;
+  return name === "CLOUD_TEST_PASSWORD" ? value : value.trim();
 }
 
 async function signIn(page: Page, email: string, password: string) {
@@ -33,12 +35,13 @@ async function checkedRadioIndex(radios: Locator): Promise<number> {
 test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({
   browser,
 }) => {
+  const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
   const runMarker = process.env.GITHUB_RUN_ID?.trim() || "local";
   const changedName = `Cloud Acceptance ${runMarker}`;
 
-  const firstContext = await browser.newContext();
+  const firstContext = await browser.newContext({ baseURL });
   const firstPage = await firstContext.newPage();
   await signIn(firstPage, email, password);
 
@@ -66,7 +69,7 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
 
   await firstContext.close();
 
-  const secondContext = await browser.newContext();
+  const secondContext = await browser.newContext({ baseURL });
   const secondPage = await secondContext.newPage();
   await signIn(secondPage, email, password);
   await expect(secondPage.getByText(changedName, { exact: true })).toBeVisible();
