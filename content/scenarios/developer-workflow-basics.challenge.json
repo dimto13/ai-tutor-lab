@@ -24,6 +24,7 @@
       "git.stage",
       "git.commit",
       "platform.diff",
+      "platform.status_checks",
       "github.copilot",
       "copilot.chat",
       "copilot.inline_suggestion",
