@@ -156,8 +156,9 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
   ).toBeVisible();
 
   await expectGuidedStep(page, 13, "Handoff-Zustand prüfen");
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+  await expect(page.getByText("M notes.txt", { exact: true })).toBeVisible();
   await runTerminalCommand(page, "git", "status");
-  await expect(page.getByText("notes.txt", { exact: false }).last()).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(spotlight).toHaveCount(0);
