@@ -36,6 +36,7 @@ interface WorkflowRuntimeState {
   branch: string;
   terminalLastResult: TerminalLastResult | null;
   verificationLastResult: TerminalLastResult | null;
+  commitOrigin: string | null;
 }
 
 interface WorkflowRuntimeSnapshot extends BaseVscodeRuntimeState {
@@ -52,6 +53,7 @@ const initialWorkflowState = (): WorkflowRuntimeState => ({
   branch: "main",
   terminalLastResult: null,
   verificationLastResult: null,
+  commitOrigin: null,
 });
 
 let workflowState = initialWorkflowState();
@@ -71,6 +73,7 @@ function cloneWorkflowState(value: WorkflowRuntimeState): WorkflowRuntimeState {
     branch: value.branch,
     terminalLastResult: cloneTerminalLastResult(value.terminalLastResult),
     verificationLastResult: cloneTerminalLastResult(value.verificationLastResult),
+    commitOrigin: value.commitOrigin ?? null,
   };
 }
 
@@ -147,7 +150,10 @@ function isWorkflowState(value: unknown): value is WorkflowRuntimeState {
     (candidate.terminalLastResult === null || isTerminalLastResult(candidate.terminalLastResult)) &&
     (candidate.verificationLastResult === undefined ||
       candidate.verificationLastResult === null ||
-      isTerminalLastResult(candidate.verificationLastResult))
+      isTerminalLastResult(candidate.verificationLastResult)) &&
+    (candidate.commitOrigin === undefined ||
+      candidate.commitOrigin === null ||
+      typeof candidate.commitOrigin === "string")
   );
 }
 
@@ -212,6 +218,7 @@ export const vscodeRuntime = {
 
     try {
       const previousTerminalLineCount = latestBaseState?.terminalLines.length ?? 0;
+      const previousCommitCount = latestBaseState?.commits.length ?? 0;
       const execution = baseVscodeRuntime.executeTerminalCommand(command);
       const branch = getTerminalBranchContext();
       const output = execution.lines.slice(previousTerminalLineCount + 1).join("\n");
@@ -233,10 +240,12 @@ export const vscodeRuntime = {
         : workflowState.verificationLastResult?.branch === branch
           ? workflowState.verificationLastResult
           : null;
+      const createdVersion = (latestBaseState?.commits.length ?? 0) > previousCommitCount;
       workflowState = {
         branch,
         terminalLastResult,
         verificationLastResult,
+        commitOrigin: createdVersion ? branch : workflowState.commitOrigin,
       };
       notifyWorkflowState("mutation");
       stateUpdated = true;
@@ -275,8 +284,7 @@ export const vscodeRuntime = {
       return (commits.at(-1)?.files.length ?? 0) as T;
     }
     if (selector === "scm.lastCommit.branch") {
-      const commits = await baseVscodeRuntime.query<Array<{ branch?: string }>>("scm.commits");
-      return (commits.at(-1)?.branch ?? null) as T;
+      return workflowState.commitOrigin as T;
     }
     return baseVscodeRuntime.query<T>(selector);
   },
