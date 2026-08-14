@@ -5,7 +5,7 @@ import test from "node:test";
 
 const sourceRoots = [resolve("apps/web/src"), resolve("packages")];
 const sourceExtensions = new Set([".ts", ".tsx"]);
-const directLocalStoragePattern = /\b(?:window|globalThis)\s*\.\s*localStorage\b/;
+const directLocalStoragePattern = /\b(?:(?:window|globalThis)\s*\.\s*)?localStorage\b/;
 
 async function collectSourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -27,6 +27,19 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
 function isAdapterBoundary(path: string): boolean {
   return relative(process.cwd(), path).split(sep).includes("adapters");
 }
+
+test("localStorage boundary pattern covers bare and global browser access", () => {
+  for (const source of [
+    'localStorage.getItem("key")',
+    'window.localStorage.setItem("key", "value")',
+    'globalThis . localStorage.removeItem("key")',
+  ]) {
+    assert.match(source, directLocalStoragePattern);
+  }
+
+  assert.doesNotMatch("browserLocalStorage()", directLocalStoragePattern);
+  assert.doesNotMatch("LocalStorageTrainingStateRepository", directLocalStoragePattern);
+});
 
 test("direct browser localStorage access stays behind adapter directories", async () => {
   const violations: string[] = [];
