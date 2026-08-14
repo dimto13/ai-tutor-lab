@@ -141,3 +141,41 @@ test("git diff honors explicit pathspecs", () => {
   assert.ok(notesDiff.output.includes("diff --git a/notes.txt b/notes.txt"));
   assert.ok(!notesDiff.output.some((line) => line.includes("calculator.py")));
 });
+
+test("python verification checks add behavior rather than source hints", () => {
+  const baseContext: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py"],
+    contents: {},
+    committedContents: {},
+    trackedFiles: ["calculator.py"],
+    changedFiles: ["calculator.py"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+
+  const invalid = executeTerminalCommand(command("python", "calculator.py"), {
+    ...baseContext,
+    contents: {
+      "calculator.py":
+        'def add(a, b):\n    return a - b  # +\n\nprint("CHECK: addition ready")\n',
+    },
+  });
+  assert.equal(invalid.exitCode, 1);
+  assert.ok(invalid.output.some((line) => line.includes("returned -1; expected 5")));
+  assert.ok(!invalid.output.includes("CHECK: addition ready"));
+
+  const valid = executeTerminalCommand(command("python3", "calculator.py"), {
+    ...baseContext,
+    contents: {
+      "calculator.py":
+        'def add(a, b):\n    return sum([b, a])\n\nprint("CHECK: addition ready")\n',
+    },
+  });
+  assert.equal(valid.exitCode, 0);
+  assert.ok(valid.output.includes("CHECK: addition ready"));
+});
