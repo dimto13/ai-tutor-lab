@@ -233,7 +233,8 @@ function resetLastCommit(command: string): VscodeTerminalExecution | null {
   const stateBefore = latestBaseState;
   const baseline = lastCommitBaseline;
   const latestCommit = stateBefore?.commits.at(-1);
-  if (!stateBefore || !baseline || !latestCommit || latestCommit.hash !== baseline.hash) return null;
+  if (!stateBefore || !baseline || !latestCommit || latestCommit.hash !== baseline.hash)
+    return null;
 
   const prompt = baseVscodeRuntime.getTerminalPrompt();
   baseVscodeRuntime.executeTerminalCommand(command);
@@ -242,11 +243,7 @@ function resetLastCommit(command: string): VscodeTerminalExecution | null {
   const outputLines = changedFiles.length
     ? ["Unstaged changes after reset:", ...changedFiles.map((file) => `M\t${file}`)]
     : [];
-  const terminalLines = [
-    ...stateBefore.terminalLines,
-    `${prompt} ${command}`,
-    ...outputLines,
-  ];
+  const terminalLines = [...stateBefore.terminalLines, `${prompt} ${command}`, ...outputLines];
   const nextState: BaseVscodeRuntimeState = {
     ...stateBefore,
     terminalLines,
