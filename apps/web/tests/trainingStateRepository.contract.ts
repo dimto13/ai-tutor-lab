@@ -158,7 +158,7 @@ export function defineTrainingStateRepositoryContract(
     assert.equal(await fixture.repositoryFor(aliceTenantB).loadSession(key(aliceTenantB)), null);
   });
 
-  test(`${name}: restores, revisions and deletes runtime snapshots across repository instances`, async () => {
+  test(`${name}: restores, revisions and conditionally deletes runtime snapshots`, async () => {
     const fixture = createFixture();
     const subject = { userId: "alice", tenantId: "tenant-a" };
     const stateKey = key(subject);
@@ -201,7 +201,16 @@ export function defineTrainingStateRepositoryContract(
       currentSnapshot,
     );
 
-    await secondDevice.deleteRuntimeSnapshot(stateKey, runtimeId);
+    await assert.rejects(
+      secondDevice.deleteRuntimeSnapshot(stateKey, runtimeId, { expectedRevision: 1 }),
+      (error: unknown) => assertConflict(error, 1, 2),
+    );
+    assert.deepEqual(
+      (await firstDevice.loadRuntimeSnapshot(stateKey, runtimeId))?.value,
+      currentSnapshot,
+    );
+
+    await secondDevice.deleteRuntimeSnapshot(stateKey, runtimeId, { expectedRevision: 2 });
     assert.equal(await firstDevice.loadRuntimeSnapshot(stateKey, runtimeId), null);
   });
 }
