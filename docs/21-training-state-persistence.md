@@ -47,6 +47,10 @@ Die Training Engine kennt weder `localStorage` noch Amplify, AppSync oder Dynamo
 Revisionsverwaltung. Ein echter Revisionskonflikt wird nicht durch einen stillen Client-Overwrite
 aufgeloest: Die persistierte Autoritaet wird erneut geladen.
 
+Die optionale Reconnect-Faehigkeit liegt bewusst **nicht** im Training-Engine-Port. Sie wird als
+Web-Anwendungscapability `PendingTrainingStateSynchronization` modelliert. Damit bleiben lokale oder
+spaetere alternative Persistenzadapter frei von Browser-/Offline-Konzepten.
+
 ## Adapterauswahl
 
 `apps/web/src/persistence/applicationTrainingStateRepository.ts` ist die Composition Root.
@@ -126,12 +130,20 @@ Damit entsteht kein geraeteuebergreifendes `last write wins`.
    Offline-Writes fuer denselben Schluessel werden auf den letzten Kandidaten koalesziert.
 4. Runtime-Loeschungen werden als Tombstone gepuffert, sodass auch `save -> delete` bzw.
    `delete -> save` offline deterministisch auf derselben Remote-Basis abgebildet werden koennen.
-5. Beim naechsten Zugriff wird ein `pending`-Eintrag zuerst mit seiner gespeicherten
-   `remoteRevision` konditional synchronisiert.
-6. Bei Erfolg wird der Cache auf die neue Serverrevision gesetzt und `pending` entfernt.
-7. Bei `TrainingStateConflictError` wird der aktuelle Serverstand geladen, der lokale Kandidat
-   verworfen und der Serverzustand als Autoritaet gecacht.
-8. Wenn beim ersten Offline-Zugriff noch kein Cache existiert, darf lokal mit einem neuen Zustand
+5. Fuer die aktive TrainingSession hoert der `TrainingProvider` auf das Browser-`online`-Event und
+   ruft `synchronizeAfterReconnect(...)` auf. Dabei werden **nur pending Eintraege** synchronisiert;
+   bereits saubere Records erhalten keine zusaetzliche Revision.
+6. Ist beim Reconnect keine aktive TrainingSession gemountet, bleibt der Puffer dauerhaft erhalten.
+   Beim naechsten Zugriff auf denselben Session-/Runtime-Key wird der pending Eintrag vor dem Read
+   synchronisiert. Damit geht auch ein ueber einen Browser-Neustart liegender Offline-Stand nicht
+   verloren.
+7. Bei Erfolg wird der Cache auf die neue Serverrevision gesetzt und `pending` entfernt.
+8. Bei `TrainingStateConflictError` wird der aktuelle Serverstand geladen, der lokale Kandidat
+   verworfen und der Serverzustand als Autoritaet gecacht. Fuer die aktive Session wird dieser Stand
+   sofort in den React-State uebernommen. Ein konkurrierender Runtime-Snapshot wird vor weiteren
+   Runtime-Writes wiederhergestellt; bis zur erfolgreichen Wiederherstellung bleiben Writes fuer
+   diesen Runtime-Key blockiert.
+9. Wenn beim ersten Offline-Zugriff noch kein Cache existiert, darf lokal mit einem neuen Zustand
    gearbeitet werden. Seine Create-Basis bleibt `null`; intern kann Revision `0` als sichtbarer
    Offline-/Migrations-Sentinel auftreten. Beim Reconnect ist der Server-Create weiterhin
    konditional, sodass ein inzwischen existierender Serverdatensatz nicht ueberschrieben wird.
@@ -152,6 +164,14 @@ Nicht als Offline-Fall behandelt werden insbesondere:
 
 Diese Fehler werden normal weitergegeben. Dadurch kann ein kaputtes oder falsch konfiguriertes
 Backend nicht scheinbar erfolgreich hinter altem Browserzustand weiterlaufen.
+
+### Browser-Speicher ist eine harte Dauerhaftigkeitsgrenze
+
+Ein Offline-Write darf nur als erfolgreich gepuffert gelten, wenn der Browser den Outbox-Eintrag
+wirklich in `localStorage` speichern konnte. `QuotaExceededError` und vergleichbare Schreibfehler
+werden deshalb **nicht** geschluckt. Der Adapter kapselt sie als `OfflineTrainingStateStorageError`
+und laesst den Write fehlschlagen. Ein Warning ohne Fehler waere fachlich falsch, weil die Anwendung
+sonst Dauerhaftigkeit behaupten wuerde, obwohl der Offline-Stand nur noch im Arbeitsspeicher liegt.
 
 ## Serverseitiges Datenmodell
 
@@ -237,10 +257,12 @@ offline-gepufferte Implementierungen. Zusaetzliche Offline-Tests pruefen insbeso
 
 - mehrere Offline-Writes gegen dieselbe Remote-CAS-Basis
 - Wiederaufnahme des gepufferten Zustands nach Browser-/Repository-Neustart
+- explizite pending-Synchronisation fuer Browser-Reconnect
 - Serverautoritaet bei konkurrierender Geraeteaenderung
 - gepufferte Runtime-Loeschungen
 - kein Fallback bei Auth-/Anwendungsfehlern
 - enge Klassifizierung von Amplify-Fetch-/Netzwerkfehlern
+- fail-loud-Verhalten bei Browser-Quota-/Storage-Schreibfehlern
 
 `typecheck:amplify` prueft nur TypeScript und fuehrt den Amplify-Schema-Transform nicht aus. Deshalb
 wird das exportierte `schema` zusaetzlich mit `scripts/validate-amplify-schema.mjs` transformiert.
