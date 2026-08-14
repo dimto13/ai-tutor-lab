@@ -161,8 +161,7 @@ test("python verification checks add behavior rather than source hints", () => {
   const invalid = executeTerminalCommand(command("python", "calculator.py"), {
     ...baseContext,
     contents: {
-      "calculator.py":
-        'def add(a, b):\n    return a - b  # +\n\nprint("CHECK: addition ready")\n',
+      "calculator.py": 'def add(a, b):\n    return a - b  # +\n\nprint("CHECK: addition ready")\n',
     },
   });
   assert.equal(invalid.exitCode, 1);
@@ -172,8 +171,7 @@ test("python verification checks add behavior rather than source hints", () => {
   const valid = executeTerminalCommand(command("python3", "calculator.py"), {
     ...baseContext,
     contents: {
-      "calculator.py":
-        'def add(a, b):\n    return sum([b, a])\n\nprint("CHECK: addition ready")\n',
+      "calculator.py": 'def add(a, b):\n    return sum([b, a])\n\nprint("CHECK: addition ready")\n',
     },
   });
   assert.equal(valid.exitCode, 0);
