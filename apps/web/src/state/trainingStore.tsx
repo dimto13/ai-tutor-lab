@@ -566,6 +566,8 @@ export function TrainingProvider({
     const activeStepIndex = progress.activeStepId
       ? scenario.steps.findIndex((step) => step.id === progress.activeStepId)
       : scenario.steps.length;
+    const scoreMultiplier = modeMultiplier(mode);
+    const basePoints = scenario.points ?? Math.max(scenario.steps.length * 10, 10);
 
     return {
       scenario,
@@ -573,54 +575,59 @@ export function TrainingProvider({
       progress,
       activeStepIndex,
       completedCount,
-      percent: progressPercent(scenario, progress),
+      percent: Math.round((completedCount / totalCount) * 100),
       isFinished,
       isChallengeFailed,
       isReady: hydrated,
       feedback: effectiveFeedback,
       helpLevel: visibleHelpLevel,
-      scoreMultiplier: modeMultiplier(mode),
-      earnedPoints: 0,
+      scoreMultiplier,
+      earnedPoints: Math.round(basePoints * scoreMultiplier),
       challengeOutcome: progress.challengeOutcome,
-      challengeRemainingSeconds,
+      challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
-        const next = Math.min(3, visibleHelpLevel + 1);
-        if (next === visibleHelpLevel) return;
-        setVisibleHelpLevel(next);
-        if (mode === "guided" && progress.activeStepId) {
-          setProgress((current) => recordHintUsage(current, progress.activeStepId!, next));
-        }
+        if (mode !== "guided" || visibleHelpLevel >= 3) return;
+        const stepId = progressRef.current.activeStepId;
+        if (!stepId) return;
+        const nextLevel = (visibleHelpLevel + 1) as 1 | 2 | 3;
+        setProgress((current) => recordHintUsage(current, stepId, nextLevel));
+        setVisibleHelpLevel(nextLevel);
       },
       resetHelp: () => setVisibleHelpLevel(0),
       completeExplanationStep: () => {
         if (mode !== "guided") return;
-        const stepId = progress.activeStepId;
+        const stepId = progressRef.current.activeStepId;
         if (!stepId) return;
         const step = scenario.steps.find((candidate) => candidate.id === stepId);
         if (!step || step.stepType !== "explanation") return;
-        completeStep(stepId, step.successMessage);
+        completeStep(step.id, step.successMessage);
       },
       skipOptionalSteps: () => {
         if (mode !== "guided") return;
-        setProgress((current) => skipConsecutiveOptionalSteps(current, scenario));
+        const current = progressRef.current;
+        const step = scenario.steps.find((candidate) => candidate.id === current.activeStepId);
+        if (!step?.optional) return;
+        setProgress((session) => skipConsecutiveOptionalSteps(session, scenario));
         setVisibleHelpLevel(0);
-        setFeedback(null);
+        setFeedback({
+          kind: "success",
+          message: "Grundbegriffe übersprungen. Du kannst sie jederzeit über das Glossar öffnen.",
+        });
       },
       restart: () => {
+        for (const runtime of scenarioRuntimes) {
+          if (persistence) {
+            void persistence.deleteRuntimeSnapshot(runtime.id).catch(() => undefined);
+          }
+          runtime.reset?.();
+        }
         setProgress(newSession(scenario, subject));
         setVisibleHelpLevel(0);
         setFeedback(null);
-        setChallengeRemainingSeconds(null);
-        for (const runtime of scenarioRuntimes) {
-          void persistence?.deleteRuntimeSnapshot(runtime.id).catch(() => {
-            // Reset remains usable even if persistence cleanup fails.
-          });
-          runtime.reset?.();
-        }
       },
       registerMistake: (message: string) => {
-        setProgress((current) => recordMistake(current, current.activeStepId));
-        setFeedback({ kind: "error", message });
+        setProgress((current) => recordMistake(current));
+        if (mode !== "explore") setFeedback({ kind: "error", message });
       },
       persistRuntimeSnapshot,
       restoreRuntimeSnapshot,
@@ -633,10 +640,10 @@ export function TrainingProvider({
     feedback,
     visibleHelpLevel,
     challengeRemainingSeconds,
-    subject,
-    scenarioRuntimes,
-    persistence,
     completeStep,
+    scenarioRuntimes,
+    subject,
+    persistence,
     persistRuntimeSnapshot,
     restoreRuntimeSnapshot,
   ]);
@@ -649,3 +656,49 @@ export function useTraining() {
   if (!ctx) throw new Error("useTraining must be used inside TrainingProvider");
   return ctx;
 }
+
+/** Read-only progress for one dashboard training (no training provider needed). */
+export function useStoredProgressPercent(scenarioId: string | null) {
+  const auth = useAuth();
+  const subject = useMemo<TrainingSubjectRef | null>(() => {
+    if (!auth.session) return null;
+    return {
+      userId: auth.session.identity.userId,
+      tenantId: auth.session.identity.tenantId,
+    };
+  }, [auth.session]);
+  const scenario = scenarioId ? getScenario(scenarioId) : undefined;
+  const persistence = useMemo(
+    () => (scenario && subject ? createPersistence(scenario, subject) : null),
+    [scenario, subject],
+  );
+  const [percent, setPercent] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!scenario || !persistence) {
+      setPercent(0);
+      return () => undefined;
+    }
+
+    void persistence
+      .loadSession()
+      .then(({ session }) => {
+        if (!cancelled) setPercent(progressPercent(scenario, session));
+      })
+      .catch(() => {
+        if (!cancelled) setPercent(0);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scenario, persistence]);
+  return percent;
+}
+
+export const useHighlightTarget = () => {
+  const { progress, scenario, helpLevel } = useTraining();
+  const step = scenario.steps.find((candidate) => candidate.id === progress.activeStepId);
+  return useCallback(() => ({ step, helpLevel }), [step, helpLevel])();
+};
