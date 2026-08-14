@@ -148,9 +148,11 @@ export function defineTrainingStateRepositoryContract(
     const bobTenantA = { userId: "bob", tenantId: "tenant-a" };
     const aliceTenantB = { userId: "alice", tenantId: "tenant-b" };
 
-    await fixture.repositoryFor(aliceTenantA).saveSession(key(aliceTenantA), richSession(aliceTenantA), {
-      expectedRevision: null,
-    });
+    await fixture
+      .repositoryFor(aliceTenantA)
+      .saveSession(key(aliceTenantA), richSession(aliceTenantA), {
+        expectedRevision: null,
+      });
 
     assert.equal(await fixture.repositoryFor(bobTenantA).loadSession(key(bobTenantA)), null);
     assert.equal(await fixture.repositoryFor(aliceTenantB).loadSession(key(aliceTenantB)), null);
@@ -174,7 +176,10 @@ export function defineTrainingStateRepositoryContract(
       expectedRevision: null,
     });
     assert.equal(first.revision, 1);
-    assert.deepEqual((await secondDevice.loadRuntimeSnapshot(stateKey, runtimeId))?.value, initialSnapshot);
+    assert.deepEqual(
+      (await secondDevice.loadRuntimeSnapshot(stateKey, runtimeId))?.value,
+      initialSnapshot,
+    );
 
     const currentSnapshot = { ...initialSnapshot, branch: "feature/current" };
     const second = await firstDevice.saveRuntimeSnapshot(stateKey, runtimeId, currentSnapshot, {
