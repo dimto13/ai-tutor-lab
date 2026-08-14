@@ -100,6 +100,27 @@ test("serializes runtime snapshot writes per runtime", async () => {
   assert.deepEqual(stored?.value, { value: 2 });
 });
 
+test("does not overwrite an existing runtime before the client restores it", async () => {
+  const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const firstClient = coordinator(repository);
+  const secondClient = coordinator(repository);
+
+  await firstClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/server" });
+  await secondClient.saveRuntimeSnapshot("vscode-sim", { branch: "main" });
+
+  let stored = await repository.loadRuntimeSnapshot(key, "vscode-sim");
+  assert.equal(stored?.revision, 1);
+  assert.deepEqual(stored?.value, { branch: "feature/server" });
+
+  const restored = await secondClient.loadRuntimeSnapshot("vscode-sim");
+  assert.deepEqual(restored, { branch: "feature/server" });
+
+  await secondClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/client-after-restore" });
+  stored = await repository.loadRuntimeSnapshot(key, "vscode-sim");
+  assert.equal(stored?.revision, 2);
+  assert.deepEqual(stored?.value, { branch: "feature/client-after-restore" });
+});
+
 test("loads the latest session after queued writes complete", async () => {
   const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const persistence = coordinator(repository);
