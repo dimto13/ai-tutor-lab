@@ -85,9 +85,10 @@ function branchCommand(
     return resultFromContext(command, context, branch, ["usage: git branch [--show-current]"], 1);
   }
 
-  const createFlag = tokens[1] === "switch" ? "-c" : tokens[1] === "checkout" ? "-b" : null;
-  if (!createFlag) return null;
-  const flagIndex = tokens.indexOf(createFlag);
+  const createFlags =
+    tokens[1] === "switch" ? ["-c", "--create"] : tokens[1] === "checkout" ? ["-b"] : [];
+  if (!createFlags.length) return null;
+  const flagIndex = tokens.findIndex((token) => createFlags.includes(token));
   const nextBranch = flagIndex >= 0 ? tokens[flagIndex + 1]?.trim() : undefined;
   if (!nextBranch || !validBranchName(nextBranch)) {
     return resultFromContext(command, context, branch, ["fatal: invalid branch name"], 128);
