@@ -119,8 +119,11 @@ function runtimeRecord(
   };
 }
 
-export function createAmplifyTrainingStateRepository(): TrainingStateRepository {
-  const client = generateClient<Schema>();
+type AmplifyTrainingStateClient = ReturnType<typeof generateClient<Schema>>;
+
+export function createAmplifyTrainingStateRepositoryWithClient(
+  client: AmplifyTrainingStateClient,
+): TrainingStateRepository {
   type SaveSessionArgs = Parameters<typeof client.mutations.saveTrainingState>[0];
   type SaveRuntimeArgs = Parameters<typeof client.mutations.saveRuntimeSnapshot>[0];
 
@@ -204,4 +207,8 @@ export function createAmplifyTrainingStateRepository(): TrainingStateRepository 
   };
 
   return repository;
+}
+
+export function createAmplifyTrainingStateRepository(): TrainingStateRepository {
+  return createAmplifyTrainingStateRepositoryWithClient(generateClient<Schema>());
 }
