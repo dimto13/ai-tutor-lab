@@ -216,10 +216,10 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach falsch
   await editor.fill('print("CHECK: addition ready")\n');
   await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
   await runTerminalCommand(page, "python3", "calculator.py");
-  await expect(page.getByText(/AssertionError: add\(2, 3\) could not be verified/)).toBeVisible();
+  await expect(page.getByText(/zwei vorgegebenen Self-Checks fehlen/)).toBeVisible();
 
   await editor.fill(
-    'def add(left, right):\n    return left + right\n\nprint("CHECK: addition ready")\n',
+    'def add(left, right):\n    result = left + right\n    return result\n\nassert add(2, 3) == 5\nassert add(-1, 4) == 3\nprint("CHECK: addition ready")\n',
   );
   await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
 
@@ -231,9 +231,7 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach falsch
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
 
   await runTerminalCommand(page, "git", "reset", "HEAD~1");
-  await expect(
-    page.getByText("Unstaged changes after reset:", { exact: true }).last(),
-  ).toBeVisible();
+  await expect(page.getByText("Unstaged changes after reset:", { exact: true }).last()).toBeVisible();
   await runTerminalCommand(page, "git", "add", "calculator.py");
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
 
