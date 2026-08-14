@@ -112,6 +112,21 @@
       },
       {
         "kind": "state",
+        "selector": "verification.lastResult.content",
+        "includes": "def add"
+      },
+      {
+        "kind": "state",
+        "selector": "verification.lastResult.content",
+        "includes": "return"
+      },
+      {
+        "kind": "state",
+        "selector": "verification.lastResult.content",
+        "includesAny": ["+", "sum("]
+      },
+      {
+        "kind": "state",
         "selector": "scm.changedFiles",
         "includes": "notes.txt",
         "excludes": "calculator.py"
@@ -140,6 +155,11 @@
         "kind": "state",
         "selector": "scm.lastCommit.fileCount",
         "equals": 1
+      },
+      {
+        "kind": "state",
+        "selector": "scm.lastCommit.branch",
+        "equals": "feature/addition"
       },
       {
         "kind": "any",
@@ -217,6 +237,53 @@
       "message": "calculator.py wurde ausgeführt, aber die erwartete CHECK-Ausgabe fehlt noch. Prüfe die add(a, b)-Implementierung und führe die Datei anschließend erneut aus."
     },
     {
+      "eventTypes": ["terminal.command.executed"],
+      "when": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "verification.lastResult",
+            "match": {
+              "target": "calculator.py",
+              "ok": true,
+              "output": "CHECK: addition ready"
+            }
+          },
+          {
+            "kind": "any",
+            "of": [
+              {
+                "kind": "not",
+                "of": {
+                  "kind": "state",
+                  "selector": "verification.lastResult.content",
+                  "includes": "def add"
+                }
+              },
+              {
+                "kind": "not",
+                "of": {
+                  "kind": "state",
+                  "selector": "verification.lastResult.content",
+                  "includes": "return"
+                }
+              },
+              {
+                "kind": "not",
+                "of": {
+                  "kind": "state",
+                  "selector": "verification.lastResult.content",
+                  "includesAny": ["+", "sum("]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "message": "Die CHECK-Ausgabe allein reicht nicht. calculator.py muss auch eine nachvollziehbare add-Funktion mit einem additiven Rückgabepfad enthalten."
+    },
+    {
       "eventTypes": ["terminal.command.executed", "scm.staged"],
       "when": {
         "kind": "state",
@@ -279,6 +346,18 @@
         "kind": "not",
         "of": {
           "kind": "state",
+          "selector": "scm.lastCommit.branch",
+          "equals": "feature/addition"
+        }
+      },
+      "message": "Der qualifizierende Commit wurde nicht auf feature/addition erstellt. Lege den Feature-Branch vor deiner Änderung und dem Commit an."
+    },
+    {
+      "eventTypes": ["scm.committed"],
+      "when": {
+        "kind": "not",
+        "of": {
+          "kind": "state",
           "selector": "scm.lastCommit.message",
           "includesAny": ["addition", "addieren", "calculator"]
         }
@@ -289,8 +368,8 @@
   "solutionComparison": [
     "Der Auftrag wurde auf einem eigenen Branch feature/addition statt direkt auf main bearbeitet.",
     "Copilot wurde kontrolliert eingesetzt: entweder über den geprüften Inline-Vorschlag oder mit calculator.py als explizitem Chat-Kontext.",
-    "calculator.py enthält eine funktional passende add(a, b)-Implementierung, wurde gespeichert und mit der erwarteten CHECK-Ausgabe erfolgreich geprüft.",
-    "calculator.py wurde mit einer verständlichen, fachlich passenden Commit-Nachricht als eigener Versionsstand abgeschlossen; die bereits vorher vorhandene Änderung in notes.txt bleibt inhaltlich unverändert, lokal und unstaged erhalten.",
+    "calculator.py enthält eine nachvollziehbare add(a, b)-Implementierung, wurde gespeichert und mit der erwarteten CHECK-Ausgabe erfolgreich geprüft.",
+    "calculator.py wurde auf feature/addition mit einer verständlichen, fachlich passenden Commit-Nachricht als eigener Versionsstand abgeschlossen; die bereits vorher vorhandene Änderung in notes.txt bleibt inhaltlich unverändert, lokal und unstaged erhalten.",
     "Der Endzustand ist handoff-ready: eigene Änderung abgeschlossen, fremde Änderung sichtbar und unangetastet."
   ],
   "steps": [
@@ -298,12 +377,12 @@
       "id": "complete-work-item",
       "title": "Work Item selbstständig abschließen",
       "description": "Es gibt keinen vorgeschriebenen Klickpfad. Entscheidend ist, dass du die Grenzen zwischen VS Code, lokalem Git und Copilot kontrollierst und einen reviewbaren Endzustand herstellst.",
-      "instruction": "Erfülle das Work Item aus TASK.md auf dem Branch feature/addition. Nutze Copilot kontrolliert über Inline-Vorschlag oder Chat, stelle eine funktional passende add(a, b)-Funktion in calculator.py her, speichere und prüfe sie erfolgreich und committe ausschließlich calculator.py mit einer verständlichen Nachricht, die Addition oder calculator.py benennt. Die bereits vorhandene Änderung in notes.txt muss inhaltlich unverändert lokal zurückbleiben.",
+      "instruction": "Erfülle das Work Item aus TASK.md auf dem Branch feature/addition. Nutze Copilot kontrolliert über Inline-Vorschlag oder Chat, stelle eine funktional passende add(a, b)-Funktion in calculator.py her, speichere und prüfe sie erfolgreich und committe ausschließlich calculator.py auf diesem Branch mit einer verständlichen Nachricht, die Addition oder calculator.py benennt. Die bereits vorhandene Änderung in notes.txt muss inhaltlich unverändert lokal zurückbleiben.",
       "why": "Die Challenge prüft den handoff-fähigen Zustand eines echten Entwicklungsablaufs statt das Nachklicken einer festen Reihenfolge.",
       "helpLevels": [
         "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
         "Prüfe Branch und Working Tree, begrenze Copilot auf den relevanten Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
-        "Nutze Branch-, Status-, Diff- und Prüfaktionen, kontrolliere den Copilot-Kontext und stelle anschließend den geforderten Handoff-Endzustand her: calculator.py abgeschlossen, fachlich klarer Commit, notes.txt unverändert lokal und unstaged. Falls du versehentlich alles gestaged hast, kannst du fremde Dateien mit git restore --staged <datei> wieder aus dem Staging-Bereich entfernen."
+        "Nutze Branch-, Status-, Diff- und Prüfaktionen, kontrolliere den Copilot-Kontext und stelle anschließend den geforderten Handoff-Endzustand her: calculator.py abgeschlossen, fachlich klarer Commit auf feature/addition, notes.txt unverändert lokal und unstaged. Falls du versehentlich alles gestaged hast, kannst du fremde Dateien mit git restore --staged <datei> wieder aus dem Staging-Bereich entfernen."
       ],
       "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
     }
