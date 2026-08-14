@@ -133,10 +133,7 @@ test("git diff honors explicit pathspecs", () => {
     branch: "feature/addition",
   };
 
-  const calculatorDiff = executeTerminalCommand(
-    command("git", "diff", "calculator.py"),
-    context,
-  );
+  const calculatorDiff = executeTerminalCommand(command("git", "diff", "calculator.py"), context);
   assert.ok(calculatorDiff.output.includes("diff --git a/calculator.py b/calculator.py"));
   assert.ok(!calculatorDiff.output.some((line) => line.includes("notes.txt")));
 
