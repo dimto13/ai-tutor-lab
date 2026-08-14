@@ -208,7 +208,9 @@ export function createAmplifyTrainingStateRepositoryWithClient(
           ? {}
           : { expectedRevision: options.expectedRevision }),
       };
-      const result = await executeAmplifyOperation(() => client.mutations.saveRuntimeSnapshot(args));
+      const result = await executeAmplifyOperation(() =>
+        client.mutations.saveRuntimeSnapshot(args),
+      );
       if (result.errors?.length) {
         if (isRevisionConflict(result.errors)) {
           const current = await repository.loadRuntimeSnapshot(key, runtimeId);
