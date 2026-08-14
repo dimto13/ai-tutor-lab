@@ -384,7 +384,7 @@ function evaluatePythonExpression(
   if (expression === "True") return true;
   if (expression === "False") return false;
 
-  const sumMatch = /^sum\(\s*[\[(](.*)[\])]\s*\)$/.exec(expression);
+  const sumMatch = /^sum\(\s*[[(](.*)[\])]\s*\)$/.exec(expression);
   if (sumMatch) {
     const values = splitArguments(sumMatch[1] ?? "").map((item) =>
       evaluatePythonExpression(item, execution, localVariables),
@@ -462,7 +462,7 @@ function collectPythonFunctions(lines: string[]): Map<string, PythonFunction> {
     const parameters = splitArguments(match[2] ?? "").map((parameter) =>
       (parameter.split(":")[0] ?? "").trim(),
     );
-    let bodyStart = index + 1;
+    const bodyStart = index + 1;
     let bodyEnd = lines.length;
     let bodyIndent = 0;
     for (let bodyIndex = index + 1; bodyIndex < lines.length; bodyIndex += 1) {
