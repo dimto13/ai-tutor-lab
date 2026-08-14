@@ -46,7 +46,14 @@ function useRuntimePersistence(
       window.cancelAnimationFrame(frame);
       unsubscribe();
     };
-  }, [isReady, persistRuntimeSnapshot, restoreRuntimeSnapshot, runtimeId, snapshot, subscribeState]);
+  }, [
+    isReady,
+    persistRuntimeSnapshot,
+    restoreRuntimeSnapshot,
+    runtimeId,
+    snapshot,
+    subscribeState,
+  ]);
 }
 
 function PersistedVscodeWorkspace() {
