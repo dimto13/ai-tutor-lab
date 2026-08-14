@@ -234,7 +234,9 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git ad
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("Source Control zeigt staged Inhalt und spätere Arbeitskopie gleichzeitig", async ({ page }) => {
+test("Source Control zeigt staged Inhalt und spätere Arbeitskopie gleichzeitig", async ({
+  page,
+}) => {
   await page.goto("/training/developer-workflow-basics.challenge");
   await waitUntilReady(page);
 
