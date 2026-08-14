@@ -229,11 +229,23 @@
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
-        "kind": "event",
-        "type": "copilot.prompt.submitted",
-        "match": {
-          "activeFile": "calculator.py"
-        }
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "copilot.prompt.submitted",
+            "match": {
+              "activeFile": "calculator.py"
+            }
+          },
+          {
+            "kind": "event",
+            "type": "copilot.prompt.submitted",
+            "containsAny": {
+              "prompt": ["add", "addition", "summe", "zwei zahlen"]
+            }
+          }
+        ]
       },
       "highlightTarget": "copilot.chat.prompt",
       "highlightTooltip": "Konkreten Auftrag mit begrenztem Dateikontext senden.",
@@ -361,6 +373,7 @@
             "kind": "state",
             "selector": "verification.lastResult",
             "match": {
+              "target": "calculator.py",
               "ok": true,
               "branch": "feature/addition"
             }
@@ -481,6 +494,7 @@
             "kind": "state",
             "selector": "verification.lastResult",
             "match": {
+              "target": "calculator.py",
               "ok": true,
               "branch": "feature/addition"
             }
