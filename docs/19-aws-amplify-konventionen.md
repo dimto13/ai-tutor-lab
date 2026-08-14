@@ -254,3 +254,11 @@ CloudWatch unter der Log-Gruppe `/aws/amplify/<APP_ID>`:
 ```bash
 aws logs tail /aws/amplify/<APP_ID> --since 1h --follow --format short
 ```
+
+### Dieselbe Diagnose reproduzierbar aus GitHub Actions
+
+Die Befehle oben brauchen ein lokal angemeldetes AWS-Profil und sind damit an einen einzelnen
+Rechner gebunden. Denselben Zustand liefert der Workflow `Cloud Acceptance` reproduzierbar aus
+GitHub Actions: Anmeldung per OIDC an einer ausschliesslich lesenden Rolle, ohne statische
+AWS-Schluessel im Repository. Einrichtung, Erstnachweis und Grenzen des Zugangs stehen in
+[`23-cloud-abnahme-kanal.md`](23-cloud-abnahme-kanal.md).

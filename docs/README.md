@@ -41,6 +41,7 @@ vom POC zur produktreifen Plattform.
 | `18-monorepo-architektur.md`         | Workspace-Struktur, Package-Grenzen, Training Engine und Deployment-Basis                       | Entwicklung              |
 | `19-aws-amplify-konventionen.md`     | Verbindliche AWS-Amplify-, Build-, Release- und Gen-2-Regeln                                    | Entwicklung, LLM-Agenten |
 | `20-cloud-provider-boundary.md`      | Cloud-neutrale Ports/Adapter-Grenze; AWS heute, weitere Provider später                         | Entwicklung, LLM-Agenten |
+| `23-cloud-abnahme-kanal.md`          | Lesender OIDC-Zugang von GitHub Actions zu AWS für die Cloud-Abnahme                            | Entwicklung, Security    |
 | `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich, LLM-Agenten        |
 | `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
 
