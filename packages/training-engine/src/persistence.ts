@@ -42,6 +42,23 @@ export class TrainingStateConflictError extends Error {
 }
 
 /**
+ * Signals a temporary transport/connectivity failure at the persistence boundary.
+ *
+ * Application code may use this signal to activate an offline buffer. Authentication,
+ * authorization, schema and validation failures must not be translated to this error because
+ * doing so would hide real server failures behind stale browser state.
+ */
+export class TrainingStateUnavailableError extends Error {
+  readonly originalError: unknown;
+
+  constructor(originalError?: unknown) {
+    super("Training state repository is temporarily unavailable");
+    this.name = "TrainingStateUnavailableError";
+    this.originalError = originalError;
+  }
+}
+
+/**
  * Cloud-neutral persistence boundary for resumable training state.
  *
  * Runtime snapshots intentionally remain opaque to the training engine. Runtime
