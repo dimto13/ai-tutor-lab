@@ -11,17 +11,25 @@ const localAdapterUrl = new URL(
   "../../apps/web/src/persistence/adapters/localStorageTrainingStateRepository.ts",
   import.meta.url,
 );
+const offlineAdapterUrl = new URL(
+  "../../apps/web/src/persistence/adapters/localStorageOfflineTrainingStateStore.ts",
+  import.meta.url,
+);
 
 test("training state composition keeps Amplify lazy and local mode cloud-free", async () => {
-  const [compositionSource, storeSource, localAdapterSource] = await Promise.all([
-    readFile(compositionUrl, "utf8"),
-    readFile(storeUrl, "utf8"),
-    readFile(localAdapterUrl, "utf8"),
-  ]);
+  const [compositionSource, storeSource, localAdapterSource, offlineAdapterSource] =
+    await Promise.all([
+      readFile(compositionUrl, "utf8"),
+      readFile(storeUrl, "utf8"),
+      readFile(localAdapterUrl, "utf8"),
+      readFile(offlineAdapterUrl, "utf8"),
+    ]);
 
   assert.match(compositionSource, /import\(["']\.\/adapters\/amplifyTrainingStateRepository["']\)/);
   assert.doesNotMatch(compositionSource, /from\s+["']aws-amplify\/data["']/);
   assert.match(compositionSource, /createBrowserTrainingStateRepository\(\)/);
+  assert.match(compositionSource, /createBrowserOfflineTrainingStateStore\(\)/);
+  assert.match(compositionSource, /new OfflineBufferedTrainingStateRepository\(/);
   assert.match(
     compositionSource,
     /import\.meta\.env\.PROD\s*\?\s*["']remote["']\s*:\s*["']local["']/,
@@ -31,4 +39,5 @@ test("training state composition keeps Amplify lazy and local mode cloud-free", 
   assert.doesNotMatch(storeSource, /createBrowserTrainingStateRepository/);
   assert.doesNotMatch(storeSource, /aws-amplify\/data/);
   assert.doesNotMatch(localAdapterSource, /aws-amplify\/data/);
+  assert.doesNotMatch(offlineAdapterSource, /aws-amplify\/data/);
 });
