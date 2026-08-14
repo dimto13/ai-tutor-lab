@@ -1,1 +1,1 @@
-export * from "../persistence/adapters/localStorageTrainingStateRepository";
+export * from "../persistence/adapters/localStorageTrainingStateRepository.ts";
