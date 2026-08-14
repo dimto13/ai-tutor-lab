@@ -33,7 +33,11 @@ jobs:
       - name: Cloud Acceptance parallel starten
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run cloud-acceptance.yml --ref main -f log_window=1h
+        run: >-
+          gh workflow run cloud-acceptance.yml
+          --repo dimto13/ai-tutor-lab
+          --ref main
+          -f log_window=1h
 
       - name: Checkout
         uses: actions/checkout@v7
