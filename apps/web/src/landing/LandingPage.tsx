@@ -73,6 +73,7 @@ function useParticles(canvasRef: React.RefObject<HTMLCanvasElement | null>, enab
 
 export function LandingPage() {
   const [activeScene, setActiveScene] = useState(0);
+  const [hydrated, setHydrated] = useState(false);
 
   const deckRef = useRef<HTMLDivElement | null>(null);
   const sceneRefs = useRef<Array<HTMLElement | null>>([]);
@@ -85,7 +86,10 @@ export function LandingPage() {
   const flashRef = useRef<HTMLDivElement | null>(null);
 
   const [reduced, setReduced] = useState(false);
-  useEffect(() => setReduced(prefersReducedMotion()), []);
+  useEffect(() => {
+    setHydrated(true);
+    setReduced(prefersReducedMotion());
+  }, []);
 
   useParticles(canvasRef, !reduced);
 
@@ -356,6 +360,7 @@ export function LandingPage() {
             className={activeScene === index ? "is-on" : undefined}
             aria-label={`Abschnitt ${index + 1} von ${SCENE_COUNT}`}
             aria-current={activeScene === index ? "true" : undefined}
+            disabled={!hydrated}
             onClick={() => goToScene(index)}
           />
         ))}
