@@ -3,8 +3,9 @@
 ## Ziel
 
 #45 / AITP-84 fuehrt die serverseitige, nutzer- und mandantenbezogene Persistenz ein, ohne die
-Training Engine an AWS zu koppeln. Der fachliche Vertrag ist `TrainingStateRepository`; Browser-
-und Cloud-Implementierungen liegen hinter diesem Port.
+Training Engine an AWS zu koppeln. AITP-14/#8 ergaenzt darauf den revisionssicheren Offline-Puffer.
+Der fachliche Vertrag bleibt `TrainingStateRepository`; Browser- und Cloud-Implementierungen liegen
+hinter diesem Port.
 
 ```text
 TrainingProvider / Application Logic
@@ -13,17 +14,20 @@ TrainingProvider / Application Logic
     TrainingStatePersistence
               |
               v
-    TrainingStateRepository
+OfflineBufferedTrainingStateRepository
+       |                         |
+       |                         v
+       |                OfflineTrainingStateStore
+       |                  Browser Cache/Outbox
+       v
+MigratingTrainingStateRepository
        |                |
        v                v
-LocalStorage        Remote Adapter
-lokal/Migration     Amplify Data
-                         |
-                         v
-                 AppSync Resolver
-                         |
-                         v
-                      DynamoDB
+Remote Adapter      LocalStorage
+Amplify Data        Legacy-Migration
+       |
+       v
+AppSync Resolver -> DynamoDB
 ```
 
 ## Gemeinsamer Repository-Vertrag
@@ -35,6 +39,7 @@ lokal/Migration     Amplify Data
 - `TrainingStateKey { subject, scenarioId, mode }`
 - versionierte Records mit `schemaVersion`, `revision` und `updatedAt`
 - Optimistic Concurrency ueber `expectedRevision`
+- `TrainingStateUnavailableError` als enges Signal fuer temporaere Transport-/Netzwerkausfaelle
 
 Die Training Engine kennt weder `localStorage` noch Amplify, AppSync oder DynamoDB.
 
@@ -46,21 +51,24 @@ aufgeloest: Die persistierte Autoritaet wird erneut geladen.
 
 `apps/web/src/persistence/applicationTrainingStateRepository.ts` ist die Composition Root.
 
-- Lokale Entwicklung und E2E verwenden `LocalStorageTrainingStateRepository`.
+- Lokale Entwicklung und E2E verwenden `LocalStorageTrainingStateRepository` direkt.
 - Cognito-/Produktionsbetrieb verwendet den lazy geladenen Amplify-Data-Adapter.
+- Davor liegt `MigratingTrainingStateRepository` fuer die einmalige Uebernahme alter Browserstaende.
+- Ganz aussen liegt `OfflineBufferedTrainingStateRepository` mit einem getrennten
+  `OfflineTrainingStateStore` als Browser-Cache und Outbox.
 - `VITE_TRAINING_STATE_MODE=local|remote` kann die Auswahl explizit setzen.
 - Ohne explizite Angabe folgt die Persistenz dem Auth-Modus; Production faellt auf `remote` zurueck.
 
 Der Amplify-Adapter wird dynamisch geladen. Lokale Tests ziehen dadurch kein `aws-amplify/data` in
 den lokalen Modulgraphen.
 
-## Browser-Persistenz und Migration
+## Browser-Persistenz und Legacy-Migration
 
-`LocalStorageTrainingStateRepository` ist die lokale Implementierung und Migrationsquelle. Sie
-verwendet versionierte Envelopes und trennt Daten nach Mandant, Nutzer, Szenario und Modus.
+`LocalStorageTrainingStateRepository` ist die lokale Implementierung und Legacy-Migrationsquelle.
+Sie verwendet versionierte Envelopes und trennt Daten nach Mandant, Nutzer, Szenario und Modus.
 
 Bestehende nutzergebundene Session-v3- und Runtime-v2-Eintraege werden lesend in das neue lokale
-Format uebernommen. Beim Wechsel auf Remote-Persistenz gilt zusaetzlich eine one-way Migration:
+Format uebernommen. Beim Wechsel auf Remote-Persistenz gilt weiterhin die one-way Migration:
 
 1. Der Remote-Adapter wird immer zuerst gelesen.
 2. Nur wenn der Server erfolgreich bestaetigt, dass noch kein Datensatz existiert, darf der
@@ -68,15 +76,82 @@ Format uebernommen. Beim Wechsel auf Remote-Persistenz gilt zusaetzlich eine one
 3. Dieser Kandidat erhaelt intern Revision `0`; reale Serverrevisionen beginnen bei `1`.
 4. Der erste erfolgreiche Remote-Write legt den Serverdatensatz atomar an.
 5. Existiert inzwischen ein Serverdatensatz, gewinnt der Serverstand.
-6. Ein fehlgeschlagener Server-Read wird niemals durch einen moeglicherweise veralteten Browserstand
-   kaschiert.
+6. Ein fehlgeschlagener Server-Read wird niemals durch einen Legacy-Browserstand kaschiert.
 7. Historische Eintraege mit `tenantId=null` duerfen nur in den deterministischen persoenlichen
    Kontext `personal:<sub>` desselben Nutzers uebernommen werden. Sie werden niemals automatisch in
    einen spaeter zugewiesenen benannten Tenant migriert.
 
-Damit koennen bereits erreichte nutzergebundene Ergebnisse uebernommen werden, ohne die
-Serverautoritaet oder Mandantentrennung aufzuweichen. Eine vollstaendige Offline-Synchronisation mit
-bidirektionalem Cache bleibt eine separate Ausbaustufe von AITP-14/#8.
+Legacy-Migration und Offline-Puffer sind bewusst getrennte Verantwortlichkeiten. Der
+`LocalStorageTrainingStateRepository` bleibt Migrationsquelle; der neue Offline-Store fuehrt eigene,
+versionierte Cache-/Outbox-Schluessel.
+
+## Offline-Puffer und Reconnect-Synchronisation
+
+`OfflineBufferedTrainingStateRepository` implementiert den Offline-Teil von AITP-14/#8, ohne die
+Serverautoritaet aufzuweichen.
+
+### Grundregel
+
+Jeder Cache-/Outbox-Eintrag merkt sich die **zuletzt beobachtete Remote-Revision** als
+`remoteRevision`. Offline-Schreibvorgaenge erhoehen diese Revision nicht lokal. Mehrere Aenderungen
+koennen deshalb zu einem letzten lokalen Kandidaten zusammengefasst werden, waehrend dieselbe
+Remote-CAS-Basis erhalten bleibt.
+
+Beispiel:
+
+```text
+Server Revision 7
+      |
+      v
+Browser offline
+  Aenderung A -> Basis bleibt 7
+  Aenderung B -> Basis bleibt 7, A wird durch B ersetzt
+      |
+      v
+Reconnect
+  save(expectedRevision=7, value=B)
+      |
+      +-- Server noch 7 -> Erfolg, Server wird 8
+      |
+      `-- Server bereits 8 -> Konflikt, Serverzustand gewinnt
+```
+
+Damit entsteht kein geraeteuebergreifendes `last write wins`.
+
+### Verhalten im Detail
+
+1. Erfolgreiche Remote-Reads und -Writes aktualisieren den lokalen Cache.
+2. Bei einem temporaeren Transportausfall darf aus diesem Cache gelesen werden.
+3. Session- und Runtime-Writes werden bei Transportausfall als `pending` gespeichert. Mehrere
+   Offline-Writes fuer denselben Schluessel werden auf den letzten Kandidaten koalesziert.
+4. Runtime-Loeschungen werden als Tombstone gepuffert, sodass auch `save -> delete` bzw.
+   `delete -> save` offline deterministisch auf derselben Remote-Basis abgebildet werden koennen.
+5. Beim naechsten Zugriff wird ein `pending`-Eintrag zuerst mit seiner gespeicherten
+   `remoteRevision` konditional synchronisiert.
+6. Bei Erfolg wird der Cache auf die neue Serverrevision gesetzt und `pending` entfernt.
+7. Bei `TrainingStateConflictError` wird der aktuelle Serverstand geladen, der lokale Kandidat
+   verworfen und der Serverzustand als Autoritaet gecacht.
+8. Wenn beim ersten Offline-Zugriff noch kein Cache existiert, darf lokal mit einem neuen Zustand
+   gearbeitet werden. Seine Create-Basis bleibt `null`; intern kann Revision `0` als sichtbarer
+   Offline-/Migrations-Sentinel auftreten. Beim Reconnect ist der Server-Create weiterhin
+   konditional, sodass ein inzwischen existierender Serverdatensatz nicht ueberschrieben wird.
+
+### Welche Fehler Offline-Fallback ausloesen duerfen
+
+Der Offline-Puffer wird **nur** bei `TrainingStateUnavailableError` aktiviert. Der Amplify-Adapter
+uebersetzt dafuer ausschliesslich typische Fetch-/Netzwerkfehler in dieses Signal.
+
+Nicht als Offline-Fall behandelt werden insbesondere:
+
+- fehlende oder abgelaufene Authentifizierung
+- fehlende Autorisierung
+- AppSync-/Schemafehler
+- ungueltige Serverdaten
+- fachliche Validierungsfehler
+- Revisionskonflikte
+
+Diese Fehler werden normal weitergegeben. Dadurch kann ein kaputtes oder falsch konfiguriertes
+Backend nicht scheinbar erfolgreich hinter altem Browserzustand weiterlaufen.
 
 ## Serverseitiges Datenmodell
 
@@ -138,12 +213,13 @@ Session-, Runtime- und Preference-Schreibvorgaenge verwenden `expectedRevision`.
 - Neuer Datensatz: Schreiben nur, wenn noch kein Eintrag mit dieser ID existiert.
 - Bestehender Datensatz: Schreiben nur, wenn die gespeicherte Revision dem erwarteten Wert entspricht.
 - Erfolgreicher Write: Revision wird um eins erhoeht und serverseitig zeitgestempelt.
-- Konflikt: Der Client darf den Serverstand nicht blind ueberschreiben, sondern muss den aktuellen
-  autoritativen Zustand laden.
+- Offline-Write: Die zuletzt bekannte Remote-Revision bleibt als CAS-Basis unveraendert.
+- Reconnect ohne Konkurrenz: Der letzte gepufferte Kandidat wird gegen diese Basis geschrieben.
+- Reconnect mit Konkurrenz: Der konditionale Write scheitert; der Serverstand wird geladen und gewinnt.
 
-Im Cognito-/Produktionsmodus ist der serverseitige Zustand die persistierte Autoritaet. LocalStorage
-ist aktuell lokale Entwicklung plus one-way Migrationsquelle; echte Offline-Synchronisation folgt
-in AITP-14/#8.
+Im Cognito-/Produktionsmodus ist der serverseitige Zustand immer die persistierte Autoritaet.
+LocalStorage ist Cache, Outbox und Legacy-Migrationsquelle, aber keine zweite gleichberechtigte
+Wahrheit.
 
 ## Punkte, Kompetenz und Nachweise
 
@@ -154,7 +230,17 @@ Die Punkteberechnung und Erzeugung autoritativer ScoreEvents wird in AITP-60/#31
 implementiert. Bis dahin kann ein manipuliertes Browserobjekt keinen serverseitigen Punktestand,
 Kompetenzstand oder Nachweis erzeugen.
 
-## CI-Validierung des Amplify-Data-Schemas
+## CI-Validierung
+
+Der gemeinsame `TrainingStateRepository`-Contract laeuft fuer lokale, Amplify- und
+offline-gepufferte Implementierungen. Zusaetzliche Offline-Tests pruefen insbesondere:
+
+- mehrere Offline-Writes gegen dieselbe Remote-CAS-Basis
+- Wiederaufnahme des gepufferten Zustands nach Browser-/Repository-Neustart
+- Serverautoritaet bei konkurrierender Geraeteaenderung
+- gepufferte Runtime-Loeschungen
+- kein Fallback bei Auth-/Anwendungsfehlern
+- enge Klassifizierung von Amplify-Fetch-/Netzwerkfehlern
 
 `typecheck:amplify` prueft nur TypeScript und fuehrt den Amplify-Schema-Transform nicht aus. Deshalb
 wird das exportierte `schema` zusaetzlich mit `scripts/validate-amplify-schema.mjs` transformiert.
@@ -166,9 +252,9 @@ Authorization-Regeln — bereits vor Merge und Release ab. Er ersetzt bewusst ke
 CDK-Synthese und keinen realen Cloud-Deploy; Stack-/IAM-/CloudFormation-Probleme koennen weiterhin
 erst in der Amplify-Pipeline sichtbar werden.
 
-## Deployment
+## Deployment und reale Abnahme
 
-Auch dieser Backend-Slice wird erst ueber den normalen Releasepfad aktiviert:
+Auch dieser Slice wird erst ueber den normalen Releasepfad aktiviert:
 
 ```text
 Feature-PR -> main (nur bei gruener CI) -> manuelle Freigabe des Repository-Eigentuemers
@@ -176,3 +262,7 @@ Feature-PR -> main (nur bei gruener CI) -> manuelle Freigabe des Repository-Eige
 ```
 
 `deploy` bleibt ein Release-Zeiger und wird von KI-Agenten nicht verschoben.
+
+Die Code-/Contract-Tests beweisen die Konflikt- und Offline-Semantik reproduzierbar. Die finale reale
+Cross-Device-Abnahme von #8/#45 benoetigt weiterhin einen echten Cognito-Testnutzer im geschuetzten
+Cloud-Acceptance-Environment und ist ein separates Release-Gate.
