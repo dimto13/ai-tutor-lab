@@ -100,6 +100,17 @@ test("serializes runtime snapshot writes per runtime", async () => {
   assert.deepEqual(stored?.value, { value: 2 });
 });
 
+test("serializes runtime deletes behind queued writes", async () => {
+  const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const persistence = coordinator(repository);
+
+  const save = persistence.saveRuntimeSnapshot("vscode-sim", { branch: "feature/queued" });
+  const remove = persistence.deleteRuntimeSnapshot("vscode-sim");
+
+  await Promise.all([save, remove]);
+  assert.equal(await repository.loadRuntimeSnapshot(key, "vscode-sim"), null);
+});
+
 test("does not overwrite an existing runtime before the client restores it", async () => {
   const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const firstClient = coordinator(repository);
@@ -144,6 +155,32 @@ test("blocks stale reconnect writes until the runtime reloads authoritative stat
   stored = await repository.loadRuntimeSnapshot(key, "vscode-sim");
   assert.equal(stored?.revision, 3);
   assert.deepEqual(stored?.value, { branch: "feature/after-resync" });
+});
+
+test("blocks stale runtime delete until authoritative state was restored", async () => {
+  const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const firstClient = coordinator(repository);
+  const secondClient = coordinator(repository);
+
+  await firstClient.saveRuntimeSnapshot("vscode-sim", { branch: "main" });
+  assert.deepEqual(await secondClient.loadRuntimeSnapshot("vscode-sim"), { branch: "main" });
+
+  await firstClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/server-newer" });
+  await secondClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/stale-offline" });
+
+  await assert.rejects(
+    secondClient.deleteRuntimeSnapshot("vscode-sim"),
+    /must be restored before it can be deleted/,
+  );
+  assert.deepEqual((await repository.loadRuntimeSnapshot(key, "vscode-sim"))?.value, {
+    branch: "feature/server-newer",
+  });
+
+  assert.deepEqual(await secondClient.loadRuntimeSnapshot("vscode-sim"), {
+    branch: "feature/server-newer",
+  });
+  await secondClient.deleteRuntimeSnapshot("vscode-sim");
+  assert.equal(await repository.loadRuntimeSnapshot(key, "vscode-sim"), null);
 });
 
 test("loads the latest session after queued writes complete", async () => {
