@@ -146,7 +146,11 @@ function diffCommand(
   return resultFromContext(command, context, branch, output);
 }
 
-function valueForParameter(name: string, firstParameter: string, secondParameter: string): number | null {
+function valueForParameter(
+  name: string,
+  firstParameter: string,
+  secondParameter: string,
+): number | null {
   if (name === firstParameter) return 2;
   if (name === secondParameter) return 3;
   return null;
@@ -199,11 +203,7 @@ function probeAddFunction(contents: string): number | null {
       if (!code) continue;
       const returnStatement = /^return\s+(.+)$/.exec(code);
       if (!returnStatement) continue;
-      return evaluateAddExpression(
-        returnStatement[1] ?? "",
-        firstParameter,
-        secondParameter,
-      );
+      return evaluateAddExpression(returnStatement[1] ?? "", firstParameter, secondParameter);
     }
   }
   return null;
