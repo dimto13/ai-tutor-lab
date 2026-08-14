@@ -16,11 +16,11 @@ import {
   type OfflineRuntimeEntry,
   type OfflineSessionEntry,
   type OfflineTrainingStateStore,
-} from "./offlineTrainingStateStore";
+} from "./offlineTrainingStateStore.ts";
 import type {
   PendingTrainingStateSynchronization,
   PendingTrainingStateSynchronizationResult,
-} from "./pendingTrainingStateSynchronization";
+} from "./pendingTrainingStateSynchronization.ts";
 
 function virtualRevision(remoteRevision: number | null): number {
   return remoteRevision ?? 0;
