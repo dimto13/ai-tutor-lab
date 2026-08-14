@@ -2,12 +2,13 @@ import { sameTrainingStateKey } from "@ai-train-lab/training-engine";
 import type { TrainingStateKey } from "@ai-train-lab/training-engine";
 import {
   OFFLINE_TRAINING_STATE_SCHEMA_VERSION,
+  OfflineTrainingStateStorageError,
   type OfflineRuntimeEntry,
   type OfflineSessionEntry,
   type OfflineTrainingStateStore,
-} from "../offlineTrainingStateStore.ts";
-import { browserLocalStorage } from "./browserLocalStorage.ts";
-import type { StorageLike } from "./localStorageTrainingStateRepository.ts";
+} from "../offlineTrainingStateStore";
+import { browserLocalStorage } from "./browserLocalStorage";
+import type { StorageLike } from "./localStorageTrainingStateRepository";
 
 function subjectKey(key: TrainingStateKey): string {
   const tenantKey =
@@ -82,6 +83,19 @@ function parseRuntime(
   return parsed as unknown as OfflineRuntimeEntry;
 }
 
+function storeValue(
+  storage: StorageLike,
+  key: string,
+  value: string,
+  operation: "save-session" | "save-runtime",
+): void {
+  try {
+    storage.setItem(key, value);
+  } catch (error) {
+    throw new OfflineTrainingStateStorageError(operation, error);
+  }
+}
+
 export class LocalStorageOfflineTrainingStateStore implements OfflineTrainingStateStore {
   readonly storage: StorageLike;
 
@@ -100,7 +114,12 @@ export class LocalStorageOfflineTrainingStateStore implements OfflineTrainingSta
   }
 
   saveSession(entry: OfflineSessionEntry): void {
-    this.storage.setItem(offlineSessionStorageKey(entry.key), JSON.stringify(entry));
+    storeValue(
+      this.storage,
+      offlineSessionStorageKey(entry.key),
+      JSON.stringify(entry),
+      "save-session",
+    );
   }
 
   deleteSession(key: TrainingStateKey): void {
@@ -118,9 +137,11 @@ export class LocalStorageOfflineTrainingStateStore implements OfflineTrainingSta
   }
 
   saveRuntimeSnapshot(entry: OfflineRuntimeEntry): void {
-    this.storage.setItem(
+    storeValue(
+      this.storage,
       offlineRuntimeStorageKey(entry.key, entry.runtimeId),
       JSON.stringify(entry),
+      "save-runtime",
     );
   }
 
