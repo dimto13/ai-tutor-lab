@@ -4,7 +4,7 @@ import { getRuntimeReferenceDefinition } from "./referenceCatalog";
 import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime";
 import { vscodeRuntime } from "./vscodeRuntime";
 import type { RuntimeAdapter } from "./runtimeAdapter";
-import type { UiTargetRef } from "../types/training";
+import type { TrainingEvent, UiTargetRef } from "../types/training";
 
 export type {
   RuntimeAdapter,
@@ -27,9 +27,85 @@ export type {
   SourceControlPlatformState,
 } from "./sourceControlPlatformRuntime";
 
+interface CopilotSnapshotEnvelope {
+  kind: "copilot-prompt-context-v1";
+  runtime: unknown;
+  promptContextFile: string | null;
+}
+
+let copilotPromptContextFile: string | null = null;
+
+function promptContextFromEvent(event: TrainingEvent): string | null | undefined {
+  if (event.type !== "copilot.prompt.submitted") return undefined;
+  const payload = event.payload;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const activeFile = (payload as Record<string, unknown>)["activeFile"];
+  return typeof activeFile === "string" ? activeFile : null;
+}
+
+function isCopilotSnapshotEnvelope(value: unknown): value is CopilotSnapshotEnvelope {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Partial<CopilotSnapshotEnvelope>;
+  return (
+    candidate.kind === "copilot-prompt-context-v1" &&
+    Object.prototype.hasOwnProperty.call(candidate, "runtime") &&
+    (candidate.promptContextFile === null || typeof candidate.promptContextFile === "string")
+  );
+}
+
+const registeredCopilotRuntime: RuntimeAdapter = {
+  ...copilotRuntime,
+
+  async mount(container, seed) {
+    copilotPromptContextFile = null;
+    await copilotRuntime.mount(container, seed);
+  },
+
+  async unmount() {
+    copilotPromptContextFile = null;
+    await copilotRuntime.unmount();
+  },
+
+  subscribe(handler) {
+    return copilotRuntime.subscribe((event) => {
+      const promptContext = promptContextFromEvent(event);
+      if (promptContext !== undefined) copilotPromptContextFile = promptContext;
+      handler(event);
+    });
+  },
+
+  async query<T = unknown>(selector: string): Promise<T> {
+    if (selector === "copilot.prompt.contextFile") return copilotPromptContextFile as T;
+    return copilotRuntime.query<T>(selector);
+  },
+
+  async snapshot(): Promise<CopilotSnapshotEnvelope> {
+    return {
+      kind: "copilot-prompt-context-v1",
+      runtime: await copilotRuntime.snapshot(),
+      promptContextFile: copilotPromptContextFile,
+    };
+  },
+
+  async restore(snapshot: unknown): Promise<void> {
+    if (isCopilotSnapshotEnvelope(snapshot)) {
+      copilotPromptContextFile = snapshot.promptContextFile;
+      await copilotRuntime.restore(snapshot.runtime);
+      return;
+    }
+    copilotPromptContextFile = null;
+    await copilotRuntime.restore(snapshot);
+  },
+
+  reset() {
+    copilotPromptContextFile = null;
+    copilotRuntime.reset();
+  },
+};
+
 const runtimes: Record<string, RuntimeAdapter> = {
   [vscodeRuntime.id]: vscodeRuntime,
-  [copilotRuntime.id]: copilotRuntime,
+  [registeredCopilotRuntime.id]: registeredCopilotRuntime,
   [artifactPreviewRuntime.id]: artifactPreviewRuntime,
   [sourceControlPlatformRuntime.id]: sourceControlPlatformRuntime,
 };
