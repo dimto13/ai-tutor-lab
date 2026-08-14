@@ -83,16 +83,26 @@ function parseRuntime(
   return parsed as unknown as OfflineRuntimeEntry;
 }
 
+function removeStaleValue(storage: StorageLike, key: string): void {
+  try {
+    storage.removeItem(key);
+  } catch {
+    // A cache cleanup failure must not turn an already successful remote operation into a failure.
+  }
+}
+
 function storeValue(
   storage: StorageLike,
   key: string,
   value: string,
   operation: "save-session" | "save-runtime",
+  durabilityRequired: boolean,
 ): void {
   try {
     storage.setItem(key, value);
   } catch (error) {
-    throw new OfflineTrainingStateStorageError(operation, error);
+    if (durabilityRequired) throw new OfflineTrainingStateStorageError(operation, error);
+    removeStaleValue(storage, key);
   }
 }
 
@@ -119,6 +129,7 @@ export class LocalStorageOfflineTrainingStateStore implements OfflineTrainingSta
       offlineSessionStorageKey(entry.key),
       JSON.stringify(entry),
       "save-session",
+      entry.pending,
     );
   }
 
@@ -142,6 +153,7 @@ export class LocalStorageOfflineTrainingStateStore implements OfflineTrainingSta
       offlineRuntimeStorageKey(entry.key, entry.runtimeId),
       JSON.stringify(entry),
       "save-runtime",
+      entry.pending,
     );
   }
 
