@@ -174,7 +174,7 @@
             "of": [
               {
                 "kind": "state",
-                "selector": "copilot.context.activeFile",
+                "selector": "copilot.prompt.contextFile",
                 "equals": "calculator.py"
               },
               {
