@@ -201,24 +201,27 @@ jobs:
             --user-pool-id "${user_pool_id}" --client-id "${user_pool_client_id}" \
             --query 'UserPoolClient.ClientName' --output text)
 
-          api_id=$(node -e '
-            const url = new URL(process.argv[1]);
-            const [id] = url.hostname.split(".");
-            if (!id) process.exit(1);
-            process.stdout.write(id);
-          ' "${data_url}")
-          api_info=$(aws appsync get-graphql-api --api-id "${api_id}" \
-            --query 'graphqlApi.[name,authenticationType,uris.GRAPHQL]' --output text)
-          api_name=$(printf '%s' "${api_info}" | cut -f1)
-          api_auth=$(printf '%s' "${api_info}" | cut -f2)
-          api_url=$(printf '%s' "${api_info}" | cut -f3)
+          # Die API wird ueber ihren Endpunkt aufgeloest, nicht aus dem Hostnamen abgeleitet: Der
+          # DNS-Praefix des GraphQL-Endpunkts ist nicht zwingend die API-ID. Bei dieser App weichen
+          # beide voneinander ab, weshalb get-graphql-api mit NotFoundException scheiterte.
+          #
+          # Der Endpunktvergleich ist dabei kein Ersatz, sondern die schaerfere Pruefung: Frueher
+          # wurde die URL nachtraeglich verglichen, jetzt ist sie das Suchkriterium. Genau eine
+          # API muss passen -- keine oder mehrere sind beides ein Fehler.
+          api_match=$(aws appsync list-graphql-apis --output json |
+            jq -er --arg url "${data_url}" '
+              [.graphqlApis[] | select((.uris.GRAPHQL // "" | rtrimstr("/")) == ($url | rtrimstr("/")))]
+              | if length == 1 then .[0] else empty end
+            ') || {
+            echo "::error::Keine eindeutige AppSync-API zum Endpunkt der Live-Outputs gefunden: ${data_url}"
+            exit 1
+          }
+          api_id=$(printf '%s' "${api_match}" | jq -er '.apiId')
+          api_name=$(printf '%s' "${api_match}" | jq -er '.name')
+          api_auth=$(printf '%s' "${api_match}" | jq -er '.authenticationType')
 
           if [ "${api_auth}" != "${data_auth}" ]; then
             echo "::error::Live-Output und AWS widersprechen sich bei AppSync-Auth: output=${data_auth}, aws=${api_auth}."
-            exit 1
-          fi
-          if [ "${api_url%/}" != "${data_url%/}" ]; then
-            echo "::error::Live-Output zeigt nicht auf die von AWS gelesene AppSync-URL."
             exit 1
           fi
 
