@@ -233,3 +233,23 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git ad
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
+
+test("Source Control zeigt staged Inhalt und spätere Arbeitskopie gleichzeitig", async ({ page }) => {
+  await page.goto("/training/developer-workflow-basics.challenge");
+  await waitUntilReady(page);
+
+  await runTerminalCommand(page, "git", "switch", "--create", "feature/addition");
+
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.focus();
+  await editor.press("Tab");
+  await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
+  await runTerminalCommand(page, "git", "add", "calculator.py");
+
+  await editor.fill(`${await editor.inputValue()}\n# post-stage edit\n`);
+  await page.getByRole("button", { name: "Source Control", exact: true }).click();
+
+  await expect(page.getByText("Staged Changes", { exact: true })).toBeVisible();
+  await expect(page.getByText("Änderungen", { exact: true })).toBeVisible();
+  await expect(page.getByText("M calculator.py", { exact: true })).toHaveCount(2);
+});
