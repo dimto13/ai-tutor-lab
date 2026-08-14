@@ -154,7 +154,10 @@ function withBranchOutput(
       )
       .replace(/^\[main ([^\]]+)\](.*)$/, `[${branch} $1]$2`),
   );
-  return { ...result, output, branch };
+  const commits = result.commits.map((commit, index) =>
+    result.committed && index === result.commits.length - 1 ? { ...commit, branch } : commit,
+  );
+  return { ...result, commits, output, branch };
 }
 
 export function executeTerminalCommand(
