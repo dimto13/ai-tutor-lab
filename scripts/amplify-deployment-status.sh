@@ -238,7 +238,7 @@ APP_DOMAIN=$(printf '%s' "$APP_INFO" | cut -f3)
 get_job_steps_summary() {
   steps_job_id="$1"
   steps_raw=$(run_aws amplify get-job --app-id "$APP_ID" --branch-name "$BRANCH" \
-    --job-id "$steps_job_id" --query 'job.steps[].[stepName,status]' --output text)
+    --job-id "$steps_job_id" --query 'job.steps[].[stepName,status]' --output text 2>/dev/null) || steps_raw=""
   rendered_summary=""
   if [ -n "$steps_raw" ]; then
     while IFS="$TAB" read -r s_name s_status; do
@@ -256,11 +256,7 @@ EOF
 }
 
 current_clock_timestamp() {
-  node -e '
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    process.stdout.write(`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
-  ' 2>/dev/null || date '+%H:%M:%S'
+  date '+%H:%M:%S'
 }
 
 render_status() {
@@ -357,35 +353,27 @@ if [ "$WATCH" = "true" ]; then
     JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 10 \
       --query 'jobSummaries[].[jobId,status,commitId,startTime,endTime]' --output text)
 
+    now_ts=$(current_clock_timestamp)
     CURRENT_RUNNING=0
+
     while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
       [ -z "$job_id" ] && continue
       if is_active "$status"; then
         CURRENT_RUNNING=$((CURRENT_RUNNING + 1))
+        steps_summary=$(get_job_steps_summary "$job_id")
+        if [ -n "$steps_summary" ]; then
+          printf '[%s] Job %s | %s | %s | laeuft seit %s\n' \
+            "$now_ts" "$job_id" "$status" "$steps_summary" "$(format_duration "$start_time")"
+        else
+          printf '[%s] Job %s | %s | laeuft seit %s\n' \
+            "$now_ts" "$job_id" "$status" "$(format_duration "$start_time")"
+        fi
       fi
     done <<EOF
 $JOBS
 EOF
 
-    now_ts=$(current_clock_timestamp)
-
-    if [ "$CURRENT_RUNNING" -gt 0 ]; then
-      while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
-        [ -z "$job_id" ] && continue
-        if is_active "$status"; then
-          steps_summary=$(get_job_steps_summary "$job_id")
-          if [ -n "$steps_summary" ]; then
-            printf '[%s] Job %s | %s | %s | laeuft seit %s\n' \
-              "$now_ts" "$job_id" "$status" "$steps_summary" "$(format_duration "$start_time")"
-          else
-            printf '[%s] Job %s | %s | laeuft seit %s\n' \
-              "$now_ts" "$job_id" "$status" "$(format_duration "$start_time")"
-          fi
-        fi
-      done <<EOF
-$JOBS
-EOF
-    else
+    if [ "$CURRENT_RUNNING" -eq 0 ]; then
       printf '\n============================================================\n'
       printf '[%s] Zusammenfassung des Deployments:\n' "$now_ts"
       printf '============================================================\n'
