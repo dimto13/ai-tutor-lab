@@ -14,7 +14,10 @@ export type {
 } from "./runtimeAdapter.ts";
 export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime.ts";
 export type { CopilotProductProfile } from "./copilotProductProfile.ts";
-export type { ArtifactPreviewRuntimeAdapter, ArtifactPreviewState } from "./artifactPreviewRuntime.ts";
+export type {
+  ArtifactPreviewRuntimeAdapter,
+  ArtifactPreviewState,
+} from "./artifactPreviewRuntime.ts";
 export type {
   ArtifactPreviewSeed,
   DataArtifact,
