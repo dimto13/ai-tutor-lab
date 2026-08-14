@@ -60,7 +60,9 @@ der STS-Antwort, den die Secret-Maskierung nicht erfasst.
 ## Einrichtung
 
 Die AWS-Seite ist eine bewusste Handlung des Repository-Eigentümers und braucht ein Profil mit
-IAM-Rechten. Das Entwicklerprofil `amplify-dev-user` reicht dafür nicht aus.
+IAM-Rechten. Das Entwicklerprofil `amplify-dev-user` reicht dafür nicht aus. Für die GitHub-Seite
+braucht es entsprechend Adminrechte am Repository — Environment, Variablen und Secrets sind keine
+Einstellungen, die ein beliebiger Mitarbeitender setzen kann.
 
 ```bash
 AWS_PROFILE=<admin-profil> npm run cloud:setup-oidc

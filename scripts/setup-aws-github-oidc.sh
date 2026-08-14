@@ -122,9 +122,15 @@ ROLE_ARN=$(aws iam get-role --role-name "$ROLE_NAME" --query 'Role.Arn' --output
 # Laufs -- die registrierten Audiences des Providers und der Subject-Claim der Trust-Policy.
 REGISTERED_AUDIENCES=$(aws iam get-open-id-connect-provider \
   --open-id-connect-provider-arn "$PROVIDER_ARN" --query 'ClientIDList' --output text)
+# Bewusst nicht ueber einen festen Pfad wie Statement[0].Condition.StringEquals: Die Ausgabe soll
+# den real hinterlegten Wert zeigen, auch wenn die Policy spaeter mehrere Statements enthaelt oder
+# StringLike verwendet. Sonst meldete der Selbstnachweis genau dann nichts, wenn es interessant wird.
 TRUSTED_SUBJECT=$(aws iam get-role --role-name "$ROLE_NAME" \
-  --query 'Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals."token.actions.githubusercontent.com:sub"' \
-  --output text)
+  --query 'Role.AssumeRolePolicyDocument' --output json |
+  tr ',' '\n' |
+  sed -n 's/.*"token\.actions\.githubusercontent\.com:sub"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+  tr '\n' ' ')
+[ -n "$TRUSTED_SUBJECT" ] || TRUSTED_SUBJECT="(keine sub-Bedingung in der Trust-Policy)"
 
 printf '\nProvider-Audiences: %s\n' "$REGISTERED_AUDIENCES"
 printf 'Vertrauter Subject: %s\n' "$TRUSTED_SUBJECT"
