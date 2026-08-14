@@ -177,3 +177,51 @@ test("python verification checks add behavior rather than source hints", () => {
   assert.equal(valid.exitCode, 0);
   assert.ok(valid.output.includes("CHECK: addition ready"));
 });
+
+test("python verification uses the last effective add definition", () => {
+  const context: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py"],
+    contents: {
+      "calculator.py":
+        'def add(a, b):\n    return a + b\n\ndef add(a, b):\n    return a - b\n\nprint("CHECK: addition ready")\n',
+    },
+    committedContents: {},
+    trackedFiles: ["calculator.py"],
+    changedFiles: ["calculator.py"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+
+  const result = executeTerminalCommand(command("python", "calculator.py"), context);
+  assert.equal(result.exitCode, 1);
+  assert.ok(result.output.some((line) => line.includes("returned -1; expected 5")));
+});
+
+test("python verification accepts typed add signatures", () => {
+  const context: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py"],
+    contents: {
+      "calculator.py":
+        'def add(a: int, b: int) -> int:\n    return a + b\n\nprint("CHECK: addition ready")\n',
+    },
+    committedContents: {},
+    trackedFiles: ["calculator.py"],
+    changedFiles: ["calculator.py"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+
+  const result = executeTerminalCommand(command("python3", "calculator.py"), context);
+  assert.equal(result.exitCode, 0);
+  assert.ok(result.output.includes("CHECK: addition ready"));
+});
