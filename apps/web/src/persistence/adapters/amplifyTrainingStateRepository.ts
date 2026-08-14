@@ -119,10 +119,14 @@ function runtimeRecord(
   };
 }
 
-export function createAmplifyTrainingStateRepository(): TrainingStateRepository {
-  const client = generateClient<Schema>();
+type AmplifyTrainingStateClient = ReturnType<typeof generateClient<Schema>>;
+
+export function createAmplifyTrainingStateRepositoryWithClient(
+  client: AmplifyTrainingStateClient,
+): TrainingStateRepository {
   type SaveSessionArgs = Parameters<typeof client.mutations.saveTrainingState>[0];
   type SaveRuntimeArgs = Parameters<typeof client.mutations.saveRuntimeSnapshot>[0];
+  type DeleteRuntimeArgs = Parameters<typeof client.mutations.deleteRuntimeSnapshot>[0];
 
   const repository: TrainingStateRepository = {
     async loadSession(key) {
@@ -192,16 +196,30 @@ export function createAmplifyTrainingStateRepository(): TrainingStateRepository 
       return runtimeRecord(key, result.data, runtimeId);
     },
 
-    async deleteRuntimeSnapshot(key, runtimeId) {
-      const result = await client.mutations.deleteRuntimeSnapshot({
+    async deleteRuntimeSnapshot(key, runtimeId, options) {
+      const args: DeleteRuntimeArgs = {
         scenarioId: key.scenarioId,
         mode: key.mode,
         runtimeId,
-      });
-      if (result.errors?.length) throw new Error(errorText(result.errors));
+        ...(options.expectedRevision === null
+          ? {}
+          : { expectedRevision: options.expectedRevision }),
+      };
+      const result = await client.mutations.deleteRuntimeSnapshot(args);
+      if (result.errors?.length) {
+        if (isRevisionConflict(result.errors)) {
+          const current = await repository.loadRuntimeSnapshot(key, runtimeId);
+          throw new TrainingStateConflictError(options.expectedRevision, current?.revision ?? null);
+        }
+        throw new Error(errorText(result.errors));
+      }
       if (result.data !== true) throw new Error("Amplify Data did not confirm runtime deletion");
     },
   };
 
   return repository;
+}
+
+export function createAmplifyTrainingStateRepository(): TrainingStateRepository {
+  return createAmplifyTrainingStateRepositoryWithClient(generateClient<Schema>());
 }

@@ -1,5 +1,5 @@
 import type { TrainingStateRepository } from "@ai-train-lab/training-engine";
-import { createBrowserTrainingStateRepository } from "@/state/localStorageTrainingStateRepository";
+import { createBrowserTrainingStateRepository } from "./adapters/localStorageTrainingStateRepository";
 import { MigratingTrainingStateRepository } from "./migratingTrainingStateRepository";
 
 export type ApplicationTrainingStateMode = "local" | "remote";
@@ -38,8 +38,8 @@ function createLazyRemoteRepository(): TrainingStateRepository {
     async saveRuntimeSnapshot(key, runtimeId, snapshot, options) {
       return (await getRepository()).saveRuntimeSnapshot(key, runtimeId, snapshot, options);
     },
-    async deleteRuntimeSnapshot(key, runtimeId) {
-      await (await getRepository()).deleteRuntimeSnapshot(key, runtimeId);
+    async deleteRuntimeSnapshot(key, runtimeId, options) {
+      await (await getRepository()).deleteRuntimeSnapshot(key, runtimeId, options);
     },
   };
 }

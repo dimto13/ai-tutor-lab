@@ -61,6 +61,24 @@ function rebindPersonalSession(
   );
 }
 
+async function purgeLocalRuntimeSnapshot(
+  repository: TrainingStateRepository,
+  key: TrainingStateKey,
+  runtimeId: string,
+): Promise<void> {
+  for (;;) {
+    const current = await repository.loadRuntimeSnapshot(key, runtimeId);
+    try {
+      await repository.deleteRuntimeSnapshot(key, runtimeId, {
+        expectedRevision: current?.revision ?? null,
+      });
+      return;
+    } catch (error) {
+      if (!(error instanceof TrainingStateConflictError)) throw error;
+    }
+  }
+}
+
 /**
  * One-way compatibility bridge from owned browser state to the authoritative
  * remote repository.
@@ -150,11 +168,17 @@ export class MigratingTrainingStateRepository implements TrainingStateRepository
     return this.remote.saveRuntimeSnapshot(key, runtimeId, snapshot, remoteWriteOptions(options));
   }
 
-  async deleteRuntimeSnapshot(key: TrainingStateKey, runtimeId: string): Promise<void> {
-    await this.remote.deleteRuntimeSnapshot(key, runtimeId);
-    await this.localMigrationSource.deleteRuntimeSnapshot(key, runtimeId);
+  async deleteRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+    options: TrainingStateWriteOptions,
+  ): Promise<void> {
+    await this.remote.deleteRuntimeSnapshot(key, runtimeId, remoteWriteOptions(options));
+    await purgeLocalRuntimeSnapshot(this.localMigrationSource, key, runtimeId);
 
     const legacyKey = previousPersonalKey(key);
-    if (legacyKey) await this.localMigrationSource.deleteRuntimeSnapshot(legacyKey, runtimeId);
+    if (legacyKey) {
+      await purgeLocalRuntimeSnapshot(this.localMigrationSource, legacyKey, runtimeId);
+    }
   }
 }
