@@ -32,22 +32,23 @@ export interface VscodeRuntimeState extends BaseVscodeRuntimeState {
   verificationLastResult: TerminalLastResult | null;
 }
 
-interface WorkflowRuntimeState {
-  branch: string;
-  terminalLastResult: TerminalLastResult | null;
-  verificationLastResult: TerminalLastResult | null;
-  commitOrigin: string | null;
-}
-
-interface WorkflowRuntimeSnapshot extends BaseVscodeRuntimeState {
-  workflow: WorkflowRuntimeState;
-}
-
 interface CommitBaseline {
   hash: string;
   committedContents: Record<string, string>;
   trackedFiles: string[];
   commitOrigin: string | null;
+}
+
+interface WorkflowRuntimeState {
+  branch: string;
+  terminalLastResult: TerminalLastResult | null;
+  verificationLastResult: TerminalLastResult | null;
+  commitOrigin: string | null;
+  commitBaseline?: CommitBaseline | null;
+}
+
+interface WorkflowRuntimeSnapshot extends BaseVscodeRuntimeState {
+  workflow: WorkflowRuntimeState;
 }
 
 type RuntimeStateListener = (
@@ -61,12 +62,12 @@ const initialWorkflowState = (): WorkflowRuntimeState => ({
   terminalLastResult: null,
   verificationLastResult: null,
   commitOrigin: null,
+  commitBaseline: null,
 });
 
 let workflowState = initialWorkflowState();
 let mountedInitialWorkflowState: WorkflowRuntimeState | null = null;
 let latestBaseState: BaseVscodeRuntimeState | null = null;
-let lastCommitBaseline: CommitBaseline | null = null;
 let bufferTerminalEvents = false;
 let queuedTerminalEvents: TrainingEvent[] = [];
 const workflowStateListeners = new Set<RuntimeStateListener>();
@@ -76,12 +77,24 @@ function cloneTerminalLastResult(value: TerminalLastResult | null): TerminalLast
   return value ? { ...value } : null;
 }
 
+function cloneCommitBaseline(value: CommitBaseline | null | undefined): CommitBaseline | null {
+  return value
+    ? {
+        hash: value.hash,
+        committedContents: { ...value.committedContents },
+        trackedFiles: [...value.trackedFiles],
+        commitOrigin: value.commitOrigin,
+      }
+    : null;
+}
+
 function cloneWorkflowState(value: WorkflowRuntimeState): WorkflowRuntimeState {
   return {
     branch: value.branch,
     terminalLastResult: cloneTerminalLastResult(value.terminalLastResult),
     verificationLastResult: cloneTerminalLastResult(value.verificationLastResult),
     commitOrigin: value.commitOrigin ?? null,
+    commitBaseline: cloneCommitBaseline(value.commitBaseline),
   };
 }
 
@@ -150,6 +163,27 @@ function isTerminalLastResult(value: unknown): value is TerminalLastResult {
   );
 }
 
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.values(value as Record<string, unknown>).every((item) => typeof item === "string")
+  );
+}
+
+function isCommitBaseline(value: unknown): value is CommitBaseline {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Partial<CommitBaseline>;
+  return (
+    typeof candidate.hash === "string" &&
+    isStringRecord(candidate.committedContents) &&
+    Array.isArray(candidate.trackedFiles) &&
+    candidate.trackedFiles.every((file) => typeof file === "string") &&
+    (candidate.commitOrigin === null || typeof candidate.commitOrigin === "string")
+  );
+}
+
 function isWorkflowState(value: unknown): value is WorkflowRuntimeState {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Partial<WorkflowRuntimeState>;
@@ -161,7 +195,10 @@ function isWorkflowState(value: unknown): value is WorkflowRuntimeState {
       isTerminalLastResult(candidate.verificationLastResult)) &&
     (candidate.commitOrigin === undefined ||
       candidate.commitOrigin === null ||
-      typeof candidate.commitOrigin === "string")
+      typeof candidate.commitOrigin === "string") &&
+    (candidate.commitBaseline === undefined ||
+      candidate.commitBaseline === null ||
+      isCommitBaseline(candidate.commitBaseline))
   );
 }
 
@@ -231,7 +268,7 @@ function rewriteResetEvent(command: string, output: string, cwd: string): void {
 
 function resetLastCommit(command: string): VscodeTerminalExecution | null {
   const stateBefore = latestBaseState;
-  const baseline = lastCommitBaseline;
+  const baseline = workflowState.commitBaseline ?? null;
   const latestCommit = stateBefore?.commits.at(-1);
   if (!stateBefore || !baseline || !latestCommit || latestCommit.hash !== baseline.hash)
     return null;
@@ -266,8 +303,8 @@ function resetLastCommit(command: string): VscodeTerminalExecution | null {
       output: outputLines.join("\n"),
     },
     commitOrigin: baseline.commitOrigin,
+    commitBaseline: null,
   };
-  lastCommitBaseline = null;
   void baseVscodeRuntime.restore(nextState);
   rewriteResetEvent(command, outputLines.join("\n"), stateBefore.terminalCwd || ".");
 
@@ -285,7 +322,6 @@ export const vscodeRuntime = {
   async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
     workflowState = workflowStateFromSeed(seed);
     mountedInitialWorkflowState = cloneWorkflowState(workflowState);
-    lastCommitBaseline = null;
     resetTerminalBranchContext(workflowState.branch);
     await baseVscodeRuntime.mount(container, seed);
   },
@@ -294,7 +330,6 @@ export const vscodeRuntime = {
     await baseVscodeRuntime.unmount();
     mountedInitialWorkflowState = null;
     latestBaseState = null;
-    lastCommitBaseline = null;
   },
 
   subscribe(handler: RuntimeEventListener): () => void {
@@ -309,7 +344,6 @@ export const vscodeRuntime = {
 
   reset(): void {
     workflowState = cloneWorkflowState(mountedInitialWorkflowState ?? initialWorkflowState());
-    lastCommitBaseline = null;
     resetTerminalBranchContext(workflowState.branch);
     baseVscodeRuntime.reset();
   },
@@ -356,10 +390,11 @@ export const vscodeRuntime = {
           ? workflowState.verificationLastResult
           : null;
       const createdVersion = (latestBaseState?.commits.length ?? 0) > previousCommitCount;
+      let commitBaseline = workflowState.commitBaseline ?? null;
       if (createdVersion) {
         const createdCommit = latestBaseState?.commits.at(-1);
         if (createdCommit) {
-          lastCommitBaseline = {
+          commitBaseline = {
             hash: createdCommit.hash,
             committedContents: previousCommittedContents,
             trackedFiles: previousTrackedFiles,
@@ -372,6 +407,7 @@ export const vscodeRuntime = {
         terminalLastResult,
         verificationLastResult,
         commitOrigin: createdVersion ? branch : workflowState.commitOrigin,
+        commitBaseline,
       };
       notifyWorkflowState("mutation");
       stateUpdated = true;
@@ -424,7 +460,6 @@ export const vscodeRuntime = {
   },
 
   async restore(snapshot: unknown): Promise<void> {
-    lastCommitBaseline = null;
     if (isWorkflowSnapshot(snapshot)) {
       workflowState = cloneWorkflowState(snapshot.workflow);
       setTerminalBranchContext(workflowState.branch);
