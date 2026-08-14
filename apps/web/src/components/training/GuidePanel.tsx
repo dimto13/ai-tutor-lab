@@ -305,7 +305,9 @@ function ExploreGuide() {
   const { scenario, progress, percent } = useTraining();
   const runtimeIds = [
     scenario.environment?.runtimeAdapterId,
-    ...(scenario.environment?.integrations ?? []).map((integration) => integration.runtimeAdapterId),
+    ...(scenario.environment?.integrations ?? []).map(
+      (integration) => integration.runtimeAdapterId,
+    ),
   ].filter((runtimeId): runtimeId is string => Boolean(runtimeId));
   const targets = new Set(scenario.exploreTargets ?? []);
   const surface = [
