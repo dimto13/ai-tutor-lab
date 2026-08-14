@@ -202,7 +202,7 @@ test("Challenge: freier Inline-Pfad validiert Endzustand und erklärt ungespeich
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git add .", async ({
+test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach falschem Commit", async ({
   page,
 }) => {
   await page.goto("/training/developer-workflow-basics.challenge");
@@ -216,7 +216,7 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git ad
   await editor.fill('print("CHECK: addition ready")\n');
   await editor.press(process.platform === "darwin" ? "Meta+S" : "Control+S");
   await runTerminalCommand(page, "python3", "calculator.py");
-  await expect(page.getByText(/CHECK-Ausgabe allein reicht nicht/)).toBeVisible();
+  await expect(page.getByText(/AssertionError: add\(2, 3\) could not be verified/)).toBeVisible();
 
   await editor.fill(
     'def add(left, right):\n    return left + right\n\nprint("CHECK: addition ready")\n',
@@ -228,7 +228,12 @@ test("Challenge: akzeptiert äquivalenten Code, python3 und Recovery nach git ad
 
   await runTerminalCommand(page, "git", "add", ".");
   await expect(page.getByText(/git restore --staged notes\.txt/)).toBeVisible();
-  await runTerminalCommand(page, "git", "restore", "--staged", "notes.txt");
+  await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
+  await expect(page.getByText(/git reset HEAD~1/)).toBeVisible();
+
+  await runTerminalCommand(page, "git", "reset", "HEAD~1");
+  await expect(page.getByText("Unstaged changes after reset:", { exact: true }).last()).toBeVisible();
+  await runTerminalCommand(page, "git", "add", "calculator.py");
   await runTerminalCommand(page, "git", "commit", "-m", '"feat: calculator addition"');
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
