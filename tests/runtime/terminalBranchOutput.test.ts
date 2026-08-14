@@ -25,6 +25,23 @@ function contextAfter(
   };
 }
 
+function pythonContext(contents: string): TerminalCommandContext {
+  return {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py"],
+    contents: { "calculator.py": contents },
+    committedContents: {},
+    trackedFiles: ["calculator.py"],
+    changedFiles: ["calculator.py"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+}
+
 test("commit output uses the active feature branch", () => {
   let context: TerminalCommandContext = {
     workspaceRoot: "ai-training-demo",
@@ -142,159 +159,73 @@ test("git diff honors explicit pathspecs", () => {
   assert.ok(!notesDiff.output.some((line) => line.includes("calculator.py")));
 });
 
-test("python verification checks add behavior rather than source hints", () => {
-  const baseContext: TerminalCommandContext = {
-    workspaceRoot: "ai-training-demo",
-    cwd: "",
-    directories: [],
-    files: ["calculator.py"],
-    contents: {},
-    committedContents: {},
-    trackedFiles: ["calculator.py"],
-    changedFiles: ["calculator.py"],
-    stagedFiles: [],
-    stagedContents: {},
-    commits: [],
-    branch: "feature/addition",
-  };
+test("python assertions reject a wrong function result", () => {
+  const result = executeTerminalCommand(
+    command("python", "calculator.py"),
+    pythonContext(
+      'def add(a, b):\n    return a - b\n\nassert add(2, 3) == 5\nprint("CHECK: addition ready")\n',
+    ),
+  );
 
-  const invalid = executeTerminalCommand(command("python", "calculator.py"), {
-    ...baseContext,
-    contents: {
-      "calculator.py": 'def add(a, b):\n    return a - b  # +\n\nprint("CHECK: addition ready")\n',
-    },
-  });
-  assert.equal(invalid.exitCode, 1);
-  assert.ok(invalid.output.some((line) => line.includes("returned -1; expected 5")));
-  assert.ok(!invalid.output.includes("CHECK: addition ready"));
-
-  const valid = executeTerminalCommand(command("python3", "calculator.py"), {
-    ...baseContext,
-    contents: {
-      "calculator.py": 'def add(a, b):\n    return sum([b, a])\n\nprint("CHECK: addition ready")\n',
-    },
-  });
-  assert.equal(valid.exitCode, 0);
-  assert.ok(valid.output.includes("CHECK: addition ready"));
-});
-
-test("python verification uses the last effective add definition", () => {
-  const context: TerminalCommandContext = {
-    workspaceRoot: "ai-training-demo",
-    cwd: "",
-    directories: [],
-    files: ["calculator.py"],
-    contents: {
-      "calculator.py":
-        'def add(a, b):\n    return a + b\n\ndef add(a, b):\n    return a - b\n\nprint("CHECK: addition ready")\n',
-    },
-    committedContents: {},
-    trackedFiles: ["calculator.py"],
-    changedFiles: ["calculator.py"],
-    stagedFiles: [],
-    stagedContents: {},
-    commits: [],
-    branch: "feature/addition",
-  };
-
-  const result = executeTerminalCommand(command("python", "calculator.py"), context);
   assert.equal(result.exitCode, 1);
-  assert.ok(result.output.some((line) => line.includes("returned -1; expected 5")));
-});
-
-test("python verification accepts typed add signatures", () => {
-  const context: TerminalCommandContext = {
-    workspaceRoot: "ai-training-demo",
-    cwd: "",
-    directories: [],
-    files: ["calculator.py"],
-    contents: {
-      "calculator.py":
-        'def add(a: int, b: int) -> int:\n    return a + b\n\nprint("CHECK: addition ready")\n',
-    },
-    committedContents: {},
-    trackedFiles: ["calculator.py"],
-    changedFiles: ["calculator.py"],
-    stagedFiles: [],
-    stagedContents: {},
-    commits: [],
-    branch: "feature/addition",
-  };
-
-  const result = executeTerminalCommand(command("python3", "calculator.py"), context);
-  assert.equal(result.exitCode, 0);
-  assert.ok(result.output.includes("CHECK: addition ready"));
-});
-
-test("python verification ignores nested unreachable returns", () => {
-  const context: TerminalCommandContext = {
-    workspaceRoot: "ai-training-demo",
-    cwd: "",
-    directories: [],
-    files: ["calculator.py"],
-    contents: {
-      "calculator.py":
-        'def add(a, b):\n    if False:\n        return a + b\n    return a - b\n\nprint("CHECK: addition ready")\n',
-    },
-    committedContents: {},
-    trackedFiles: ["calculator.py"],
-    changedFiles: ["calculator.py"],
-    stagedFiles: [],
-    stagedContents: {},
-    commits: [],
-    branch: "feature/addition",
-  };
-
-  const result = executeTerminalCommand(command("python", "calculator.py"), context);
-  assert.equal(result.exitCode, 1);
-  assert.ok(result.output.some((line) => line.includes("returned -1; expected 5")));
-});
-
-test("python verification accepts local variables before return", () => {
-  const context: TerminalCommandContext = {
-    workspaceRoot: "ai-training-demo",
-    cwd: "",
-    directories: [],
-    files: ["calculator.py"],
-    contents: {
-      "calculator.py":
-        'def add(a, b):\n    result = a + b\n    return result\n\nprint("CHECK: addition ready")\n',
-    },
-    committedContents: {},
-    trackedFiles: ["calculator.py"],
-    changedFiles: ["calculator.py"],
-    stagedFiles: [],
-    stagedContents: {},
-    commits: [],
-    branch: "feature/addition",
-  };
-
-  const result = executeTerminalCommand(command("python", "calculator.py"), context);
-  assert.equal(result.exitCode, 0);
-  assert.ok(result.output.includes("CHECK: addition ready"));
-});
-
-test("python verification fails on top-level raise before CHECK output", () => {
-  const context: TerminalCommandContext = {
-    workspaceRoot: "ai-training-demo",
-    cwd: "",
-    directories: [],
-    files: ["calculator.py"],
-    contents: {
-      "calculator.py":
-        'def add(a, b):\n    return a + b\n\nraise RuntimeError("boom")\nprint("CHECK: addition ready")\n',
-    },
-    committedContents: {},
-    trackedFiles: ["calculator.py"],
-    changedFiles: ["calculator.py"],
-    stagedFiles: [],
-    stagedContents: {},
-    commits: [],
-    branch: "feature/addition",
-  };
-
-  const result = executeTerminalCommand(command("python", "calculator.py"), context);
-  assert.equal(result.exitCode, 1);
-  assert.ok(result.output.some((line) => line.includes("RuntimeError")));
+  assert.ok(result.output.includes("AssertionError"));
   assert.ok(!result.output.includes("CHECK: addition ready"));
+});
+
+test("python assertions accept equivalent multi-statement implementations", () => {
+  const result = executeTerminalCommand(
+    command("python3", "calculator.py"),
+    pythonContext(
+      'def add(left: int, right: int) -> int:\n    result = left + right\n    return result\n\nassert add(2, 3) == 5\nassert add(-1, 4) == 3\nprint("CHECK: addition ready")\n',
+    ),
+  );
+
+  assert.equal(result.exitCode, 0);
+  assert.ok(result.output.includes("CHECK: addition ready"));
+});
+
+test("python execution uses the last effective function definition", () => {
+  const result = executeTerminalCommand(
+    command("python", "calculator.py"),
+    pythonContext(
+      'def add(a, b):\n    return a + b\n\ndef add(a, b):\n    return a - b\n\nassert add(2, 3) == 5\nprint("CHECK: addition ready")\n',
+    ),
+  );
+
+  assert.equal(result.exitCode, 1);
+  assert.ok(result.output.includes("AssertionError"));
+});
+
+test("python execution ignores nested statements on an unreachable branch", () => {
+  const result = executeTerminalCommand(
+    command("python", "calculator.py"),
+    pythonContext(
+      'def add(a, b):\n    if False:\n        return a + b\n    return a - b\n\nassert add(2, 3) == 5\nprint("CHECK: addition ready")\n',
+    ),
+  );
+
+  assert.equal(result.exitCode, 1);
+  assert.ok(result.output.includes("AssertionError"));
+});
+
+test("python execution fails for raises before or after prior output", () => {
+  const before = executeTerminalCommand(
+    command("python", "calculator.py"),
+    pythonContext(
+      'def add(a, b):\n    return a + b\n\nraise RuntimeError("boom")\nprint("CHECK: addition ready")\n',
+    ),
+  );
+  assert.equal(before.exitCode, 1);
+  assert.ok(before.output.some((line) => line.includes("RuntimeError")));
+  assert.ok(!before.output.includes("CHECK: addition ready"));
+
+  const after = executeTerminalCommand(
+    command("python", "calculator.py"),
+    pythonContext(
+      'def add(a, b):\n    return a + b\n\nprint("CHECK: addition ready")\nraise RuntimeError("boom")\n',
+    ),
+  );
+  assert.equal(after.exitCode, 1);
+  assert.ok(after.output.includes("CHECK: addition ready"));
+  assert.ok(after.output.some((line) => line.includes("RuntimeError")));
 });
