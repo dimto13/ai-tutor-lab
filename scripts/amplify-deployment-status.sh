@@ -235,6 +235,34 @@ APP_NAME=$(printf '%s' "$APP_INFO" | cut -f1)
 APP_PLATFORM=$(printf '%s' "$APP_INFO" | cut -f2)
 APP_DOMAIN=$(printf '%s' "$APP_INFO" | cut -f3)
 
+get_job_steps_summary() {
+  steps_job_id="$1"
+  steps_raw=$(run_aws amplify get-job --app-id "$APP_ID" --branch-name "$BRANCH" \
+    --job-id "$steps_job_id" --query 'job.steps[].[stepName,status]' --output text)
+  rendered_summary=""
+  if [ -n "$steps_raw" ]; then
+    while IFS="$TAB" read -r s_name s_status; do
+      [ -z "$s_name" ] && continue
+      if [ -z "$rendered_summary" ]; then
+        rendered_summary="$s_name: $s_status"
+      else
+        rendered_summary="$rendered_summary | $s_name: $s_status"
+      fi
+    done <<EOF
+$steps_raw
+EOF
+  fi
+  printf '%s' "$rendered_summary"
+}
+
+current_clock_timestamp() {
+  node -e '
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    process.stdout.write(`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
+  ' 2>/dev/null || date '+%H:%M:%S'
+}
+
 render_status() {
   JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 10 \
     --query 'jobSummaries[].[jobId,status,commitId,startTime,endTime]' --output text)
@@ -313,19 +341,82 @@ EOF
   printf '\n'
 }
 
+render_status
+
 if [ "$WATCH" = "true" ]; then
-  trap 'printf "\nWatch-Modus beendet.\n"; exit 0' INT TERM
+  if [ "$RUNNING_COUNT" -eq 0 ]; then
+    exit 0
+  fi
+
+  trap 'printf "\nUeberwachung abgebrochen.\n"; exit 0' INT TERM
+  printf 'Warte auf Abschluss des laufenden Deployments (Pruefung alle %ss, Strg+C zum Abbrechen)...\n' "$INTERVAL"
+
   while true; do
-    clear 2>/dev/null || printf '\033[2J\033[H'
-    now=$(node -e '
-      const d = new Date();
-      const pad = (n) => String(n).padStart(2, "0");
-      process.stdout.write(`${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
-    ' 2>/dev/null || date)
-    printf 'Every %ss: npm run amplify:status (Strg+C zum Beenden)\t\t%s\n' "$INTERVAL" "$now"
-    render_status
     sleep "$INTERVAL"
+
+    JOBS=$(run_aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 10 \
+      --query 'jobSummaries[].[jobId,status,commitId,startTime,endTime]' --output text)
+
+    CURRENT_RUNNING=0
+    while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
+      [ -z "$job_id" ] && continue
+      if is_active "$status"; then
+        CURRENT_RUNNING=$((CURRENT_RUNNING + 1))
+      fi
+    done <<EOF
+$JOBS
+EOF
+
+    now_ts=$(current_clock_timestamp)
+
+    if [ "$CURRENT_RUNNING" -gt 0 ]; then
+      while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
+        [ -z "$job_id" ] && continue
+        if is_active "$status"; then
+          steps_summary=$(get_job_steps_summary "$job_id")
+          if [ -n "$steps_summary" ]; then
+            printf '[%s] Job %s | %s | %s | laeuft seit %s\n' \
+              "$now_ts" "$job_id" "$status" "$steps_summary" "$(format_duration "$start_time")"
+          else
+            printf '[%s] Job %s | %s | laeuft seit %s\n' \
+              "$now_ts" "$job_id" "$status" "$(format_duration "$start_time")"
+          fi
+        fi
+      done <<EOF
+$JOBS
+EOF
+    else
+      printf '\n============================================================\n'
+      printf '[%s] Zusammenfassung des Deployments:\n' "$now_ts"
+      printf '============================================================\n'
+
+      LATEST_FINISHED=$(
+        while IFS="$TAB" read -r job_id status commit_id start_time end_time; do
+          [ -z "$job_id" ] && continue
+          if ! is_active "$status"; then
+            printf '%s\t%s\t%s\t%s\t%s\n' "$job_id" "$status" "$commit_id" "$start_time" "$end_time"
+            break
+          fi
+        done <<EOF
+$JOBS
+EOF
+      )
+
+      if [ -n "$LATEST_FINISHED" ]; then
+        fin_job_id=$(printf '%s' "$LATEST_FINISHED" | cut -f1)
+        fin_status=$(printf '%s' "$LATEST_FINISHED" | cut -f2)
+        fin_commit_id=$(printf '%s' "$LATEST_FINISHED" | cut -f3)
+        fin_start_time=$(printf '%s' "$LATEST_FINISHED" | cut -f4)
+        fin_end_time=$(printf '%s' "$LATEST_FINISHED" | cut -f5)
+        print_job_detail "$fin_job_id" "$fin_status" "$fin_commit_id" "$fin_start_time" "$fin_end_time" "no"
+        printf '\n'
+        if [ "$fin_status" = "SUCCEED" ]; then
+          printf 'Ergebnis: Deployment erfolgreich abgeschlossen (SUCCEED).\n'
+        else
+          printf 'Ergebnis: Deployment beendet mit Status %s.\n' "$fin_status"
+        fi
+      fi
+      exit 0
+    fi
   done
-else
-  render_status
 fi

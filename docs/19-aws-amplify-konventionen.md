@@ -192,7 +192,7 @@ sagt darueber nichts aus: Amplify baut den Branch `deploy`, GitHub Actions baut 
 npm run amplify:status
 ```
 
-`scripts/amplify-deployment-status.sh` laeuft standardmaessig im Watch-Modus (Aktualisierung alle 5 Sekunden, beendbar mit Strg+C). Fuer eine einmalige Ausgabe kann `npm run amplify:status:once` oder `npm run amplify:status -- --once` verwendet werden.
+`scripts/amplify-deployment-status.sh` zeigt den initialen Zustand und fuegt bei einem aktiven Deployment statusaktualisierte Zeilen mit Zeitstempel an (standardmaessig alle 5 Sekunden), bis das Deployment beendet ist. Nach Abschluss gibt das Skript eine Zusammenfassung aus und beendet sich automatisch (oder vorab per Strg+C). Fuer eine rein einmalige Ausgabe ohne Verfolgung kann `npm run amplify:status:once` oder `npm run amplify:status -- --once` verwendet werden.
 
 Das Skript beantwortet den aktuellen Zustand: ob gerade ein Job laeuft, wie das letzte abgeschlossene Deployment ausgegangen ist und wie die juengste Historie aussieht.
 Bei einer fehlgeschlagenen Phase gibt es den Befehl aus, der das zugehoerige Build-Log abruft.
