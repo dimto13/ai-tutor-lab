@@ -220,7 +220,17 @@ export class LocalStorageTrainingStateRepository implements TrainingStateReposit
     return record;
   }
 
-  async deleteRuntimeSnapshot(key: TrainingStateKey, runtimeId: string): Promise<void> {
+  async deleteRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+    options: TrainingStateWriteOptions,
+  ): Promise<void> {
+    if (!runtimeId.trim()) throw new Error("Runtime id must not be blank");
+    const current = await this.loadRuntimeSnapshot(key, runtimeId);
+    const actualRevision = current?.revision ?? null;
+    if (options.expectedRevision !== actualRevision) {
+      throw new TrainingStateConflictError(options.expectedRevision, actualRevision);
+    }
     this.storage.removeItem(runtimeSnapshotStorageKey(key, runtimeId));
     this.storage.removeItem(legacyRuntimeSnapshotStorageKey(key, runtimeId));
   }
