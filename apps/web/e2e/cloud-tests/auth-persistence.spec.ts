@@ -1,9 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 function requireEnvironmentValue(name: "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD"): string {
-  const value = process.env[name]?.trim();
+  const value = process.env[name];
   if (!value) throw new Error(`${name} is required for authenticated cloud acceptance.`);
-  return value;
+  return name === "CLOUD_TEST_EMAIL" ? value.trim() : value;
 }
 
 async function signIn(page: Page, email: string, password: string) {
