@@ -1,0 +1,96 @@
+name: Cloud User Acceptance
+
+# Zustandsbasierte E2E-Abnahme gegen die reale Amplify-Anwendung.
+#
+# Dieser Workflow hat keinerlei AWS-IAM-Rechte. Er benutzt ausschliesslich ein dediziertes
+# Cognito-Testkonto und die oeffentliche Web-App. Der Test veraendert Profil/Praeferenzen des
+# Testkontos temporaer, prueft den Zustand in einem frischen Browserkontext und stellt ihn danach
+# soweit moeglich wieder her. Infrastruktur und Deployments werden nicht veraendert.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: cloud-user-acceptance
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  authenticated-user-e2e:
+    name: Cognito + AppSync Cross-Device
+    runs-on: ubuntu-latest
+    environment: cloud-acceptance
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Testkonfiguration pruefen
+        env:
+          CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+          CLOUD_TEST_EMAIL: ${{ secrets.CLOUD_TEST_EMAIL }}
+          CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUD_BASE_URL}" ]; then
+            echo "::error::Environment-Variable AMPLIFY_BASE_URL fehlt."
+            exit 1
+          fi
+          if [ -z "${CLOUD_TEST_EMAIL}" ]; then
+            echo "::error::Environment-Secret CLOUD_TEST_EMAIL fehlt."
+            exit 1
+          fi
+          if [ -z "${CLOUD_TEST_PASSWORD}" ]; then
+            echo "::error::Environment-Secret CLOUD_TEST_PASSWORD fehlt."
+            exit 1
+          fi
+
+      - name: Reale Client-Konfiguration pruefen
+        env:
+          CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+        run: |
+          set -euo pipefail
+          base="${CLOUD_BASE_URL%/}"
+          curl -fsS --max-time 30 "${base}/" -o /dev/null
+          curl -fsS --max-time 30 "${base}/amplify_outputs.json" \
+            | jq -e '.auth.user_pool_id and .auth.user_pool_client_id and .data.url' >/dev/null
+
+      - name: Playwright installieren
+        run: npm install --prefix apps/web/e2e --package-lock=false --ignore-scripts --no-audit --no-fund
+
+      - name: Chromium installieren
+        run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Cognito- und AppSync-Abnahme ausfuehren
+        env:
+          CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+          CLOUD_TEST_EMAIL: ${{ secrets.CLOUD_TEST_EMAIL }}
+          CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ./apps/web/e2e/node_modules/.bin/playwright test \
+            --config apps/web/e2e/cloud.playwright.config.ts
+          {
+            echo "### Authentifizierte Cloud-Abnahme"
+            echo ""
+            echo "- Cognito Passwort-Login: bestanden"
+            echo "- Profil/Praeferenz ueber AppSync geschrieben: bestanden"
+            echo "- Frischer Browserkontext sieht denselben Serverzustand: bestanden"
+            echo "- Logout: bestanden"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Screenshot bei Fehler hochladen
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloud-user-acceptance-screenshots
+          path: apps/web/e2e/cloud-test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 3
