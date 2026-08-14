@@ -259,6 +259,7 @@ export const schema = a.schema({
       scenarioId: a.string().required(),
       mode: a.ref("TrainingMode").required(),
       runtimeId: a.string().required(),
+      expectedRevision: a.integer(),
     })
     .returns(a.boolean())
     .authorization((allow) => [allow.authenticated()])

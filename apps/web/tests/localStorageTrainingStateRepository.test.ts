@@ -151,6 +151,6 @@ test("runtime snapshots share revision semantics and migrate legacy v2 values", 
   assert.equal(storage.getItem(legacyKey), null);
   assert.notEqual(storage.getItem(runtimeSnapshotStorageKey(stateKey, runtimeId)), null);
 
-  await repository.deleteRuntimeSnapshot(stateKey, runtimeId);
+  await repository.deleteRuntimeSnapshot(stateKey, runtimeId, { expectedRevision: 1 });
   assert.equal(storage.getItem(runtimeSnapshotStorageKey(stateKey, runtimeId)), null);
 });

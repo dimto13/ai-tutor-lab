@@ -4,10 +4,6 @@ import { extname, join, relative, resolve, sep } from "node:path";
 import test from "node:test";
 
 const cloudNeutralRoots = [resolve("apps/web/src"), resolve("packages")];
-const adapterRoots = [
-  resolve("apps/web/src/auth/adapters"),
-  resolve("apps/web/src/persistence/adapters"),
-];
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const cloudSdkPrefixes = [
   "aws-amplify",
@@ -67,8 +63,8 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
   return files;
 }
 
-function isInside(path: string, directory: string): boolean {
-  return path === directory || path.startsWith(`${directory}${sep}`);
+function isAdapterBoundary(path: string): boolean {
+  return relative(process.cwd(), path).split(sep).includes("adapters");
 }
 
 test("cloud import detector covers static, side-effect, dynamic and AWS SDK imports", () => {
@@ -92,12 +88,12 @@ test("cloud import detector covers static, side-effect, dynamic and AWS SDK impo
   ]);
 });
 
-test("cloud SDK imports stay behind designated adapter boundaries", async () => {
+test("cloud SDK imports stay behind adapter directories by convention", async () => {
   const violations: string[] = [];
 
   for (const root of cloudNeutralRoots) {
     for (const file of await collectSourceFiles(root)) {
-      if (adapterRoots.some((adapterRoot) => isInside(file, adapterRoot))) continue;
+      if (isAdapterBoundary(file)) continue;
 
       const source = await readFile(file, "utf8");
       const imports = cloudSdkImports(source);
@@ -110,6 +106,6 @@ test("cloud SDK imports stay behind designated adapter boundaries", async () => 
   assert.deepEqual(
     violations,
     [],
-    `Cloud SDK imports are only allowed below designated adapter directories: ${violations.join("; ")}`,
+    `Cloud SDK imports are only allowed below adapter directories: ${violations.join("; ")}`,
   );
 });

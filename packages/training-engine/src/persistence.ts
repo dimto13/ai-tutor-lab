@@ -21,7 +21,7 @@ export interface TrainingStateRecord<T> {
 export interface TrainingStateWriteOptions {
   /**
    * Optimistic concurrency token. `null` means that no current record may exist.
-   * Adapters must reject a write when the persisted revision differs.
+   * Adapters must reject a write or delete when the persisted revision differs.
    */
   expectedRevision: number | null;
   updatedAt?: number;
@@ -65,7 +65,11 @@ export interface TrainingStateRepository {
     snapshot: unknown,
     options: TrainingStateWriteOptions,
   ): Promise<TrainingStateRecord<unknown>>;
-  deleteRuntimeSnapshot(key: TrainingStateKey, runtimeId: string): Promise<void>;
+  deleteRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+    options: TrainingStateWriteOptions,
+  ): Promise<void>;
 }
 
 export function sameTrainingSubject(
