@@ -249,3 +249,52 @@ test("python verification ignores nested unreachable returns", () => {
   assert.equal(result.exitCode, 1);
   assert.ok(result.output.some((line) => line.includes("returned -1; expected 5")));
 });
+
+test("python verification accepts local variables before return", () => {
+  const context: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py"],
+    contents: {
+      "calculator.py":
+        'def add(a, b):\n    result = a + b\n    return result\n\nprint("CHECK: addition ready")\n',
+    },
+    committedContents: {},
+    trackedFiles: ["calculator.py"],
+    changedFiles: ["calculator.py"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+
+  const result = executeTerminalCommand(command("python", "calculator.py"), context);
+  assert.equal(result.exitCode, 0);
+  assert.ok(result.output.includes("CHECK: addition ready"));
+});
+
+test("python verification fails on top-level raise before CHECK output", () => {
+  const context: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: ["calculator.py"],
+    contents: {
+      "calculator.py":
+        'def add(a, b):\n    return a + b\n\nraise RuntimeError("boom")\nprint("CHECK: addition ready")\n',
+    },
+    committedContents: {},
+    trackedFiles: ["calculator.py"],
+    changedFiles: ["calculator.py"],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "feature/addition",
+  };
+
+  const result = executeTerminalCommand(command("python", "calculator.py"), context);
+  assert.equal(result.exitCode, 1);
+  assert.ok(result.output.some((line) => line.includes("RuntimeError")));
+  assert.ok(!result.output.includes("CHECK: addition ready"));
+});
