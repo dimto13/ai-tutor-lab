@@ -146,6 +146,93 @@ function diffCommand(
   return resultFromContext(command, context, branch, output);
 }
 
+function valueForParameter(name: string, firstParameter: string, secondParameter: string): number | null {
+  if (name === firstParameter) return 2;
+  if (name === secondParameter) return 3;
+  return null;
+}
+
+function evaluateAddExpression(
+  rawExpression: string,
+  firstParameter: string,
+  secondParameter: string,
+): number | null {
+  let expression = rawExpression.trim();
+  if (/^\([^()]+\)$/.test(expression)) expression = expression.slice(1, -1).trim();
+
+  const binary = /^([A-Za-z_]\w*)\s*([+*-])\s*([A-Za-z_]\w*)$/.exec(expression);
+  if (binary) {
+    const left = valueForParameter(binary[1] ?? "", firstParameter, secondParameter);
+    const right = valueForParameter(binary[3] ?? "", firstParameter, secondParameter);
+    if (left === null || right === null) return null;
+    if (binary[2] === "+") return left + right;
+    if (binary[2] === "-") return left - right;
+    if (binary[2] === "*") return left * right;
+  }
+
+  const sum =
+    /^sum\(\s*(?:\[\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\]|\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\))\s*\)$/.exec(
+      expression,
+    );
+  if (!sum) return null;
+  const firstName = sum[1] ?? sum[3] ?? "";
+  const secondName = sum[2] ?? sum[4] ?? "";
+  const first = valueForParameter(firstName, firstParameter, secondParameter);
+  const second = valueForParameter(secondName, firstParameter, secondParameter);
+  return first === null || second === null ? null : first + second;
+}
+
+function probeAddFunction(contents: string): number | null {
+  const lines = contents.split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const definition = /^\s*def\s+add\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\)\s*:\s*$/.exec(
+      lines[index] ?? "",
+    );
+    if (!definition) continue;
+    const firstParameter = definition[1] ?? "";
+    const secondParameter = definition[2] ?? "";
+
+    for (let bodyIndex = index + 1; bodyIndex < lines.length; bodyIndex += 1) {
+      const line = lines[bodyIndex] ?? "";
+      if (line.trim() && !/^\s/.test(line)) break;
+      const code = (line.trim().split("#")[0] ?? "").trim();
+      if (!code) continue;
+      const returnStatement = /^return\s+(.+)$/.exec(code);
+      if (!returnStatement) continue;
+      return evaluateAddExpression(
+        returnStatement[1] ?? "",
+        firstParameter,
+        secondParameter,
+      );
+    }
+  }
+  return null;
+}
+
+function verifyAdditionBehavior(
+  result: BaseTerminalCommandResult,
+  tokens: string[],
+  context: TerminalCommandContext,
+): BaseTerminalCommandResult {
+  if (tokens[0] !== "python" && tokens[0] !== "python3") return result;
+  if (result.exitCode !== 0 || !result.output.includes("CHECK: addition ready")) return result;
+  const requested = tokens[1]?.replace(/^\.\//, "");
+  if (!requested) return result;
+  const path = [context.cwd, requested].filter(Boolean).join("/");
+  const contents = context.contents[path] ?? context.contents[requested];
+  const probe = contents === undefined ? null : probeAddFunction(contents);
+  if (probe === 5) return result;
+  return {
+    ...result,
+    output: [
+      probe === null
+        ? "AssertionError: add(2, 3) could not be verified"
+        : `AssertionError: add(2, 3) returned ${probe}; expected 5`,
+    ],
+    exitCode: 1,
+  };
+}
+
 function withBranchOutput(
   result: BaseTerminalCommandResult,
   branch: string,
@@ -177,5 +264,6 @@ export function executeTerminalCommand(
   const diffResult = diffCommand(command, tokens, context, branch);
   if (diffResult) return diffResult;
 
-  return withBranchOutput(executeBaseTerminalCommand(command, context), branch);
+  const baseResult = executeBaseTerminalCommand(command, context);
+  return withBranchOutput(verifyAdditionBehavior(baseResult, tokens, context), branch);
 }
