@@ -208,15 +208,41 @@ function effectiveAddDefinition(lines: string[]): AddDefinition | null {
   return result;
 }
 
+function indentationWidth(line: string): number {
+  return line.length - line.trimStart().length;
+}
+
+function functionBodyIndent(lines: string[], definitionIndex: number): number | null {
+  const definitionIndent = indentationWidth(lines[definitionIndex] ?? "");
+  let bodyIndent: number | null = null;
+  for (let index = definitionIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const indent = indentationWidth(line);
+    if (indent <= definitionIndent) break;
+    if (trimmed.startsWith("#")) continue;
+    bodyIndent = bodyIndent === null ? indent : Math.min(bodyIndent, indent);
+  }
+  return bodyIndent;
+}
+
 function probeAddFunction(contents: string): number | null {
   const lines = contents.split("\n");
   const definition = effectiveAddDefinition(lines);
   if (!definition) return null;
+  const definitionIndent = indentationWidth(lines[definition.index] ?? "");
+  const bodyIndent = functionBodyIndent(lines, definition.index);
+  if (bodyIndent === null) return null;
 
   for (let bodyIndex = definition.index + 1; bodyIndex < lines.length; bodyIndex += 1) {
     const line = lines[bodyIndex] ?? "";
-    if (line.trim() && !/^\s/.test(line)) break;
-    const code = (line.trim().split("#")[0] ?? "").trim();
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const indent = indentationWidth(line);
+    if (indent <= definitionIndent) break;
+    if (indent !== bodyIndent) continue;
+    const code = (trimmed.split("#")[0] ?? "").trim();
     if (!code) continue;
     const returnStatement = /^return\s+(.+)$/.exec(code);
     if (!returnStatement) continue;
