@@ -121,6 +121,31 @@ test("does not overwrite an existing runtime before the client restores it", asy
   assert.deepEqual(stored?.value, { branch: "feature/client-after-restore" });
 });
 
+test("blocks stale reconnect writes until the runtime reloads authoritative state", async () => {
+  const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const firstClient = coordinator(repository);
+  const secondClient = coordinator(repository);
+
+  await firstClient.saveRuntimeSnapshot("vscode-sim", { branch: "main" });
+  assert.deepEqual(await secondClient.loadRuntimeSnapshot("vscode-sim"), { branch: "main" });
+
+  await firstClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/server-newer" });
+  await secondClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/stale-offline" });
+  await secondClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/still-stale" });
+
+  let stored = await repository.loadRuntimeSnapshot(key, "vscode-sim");
+  assert.equal(stored?.revision, 2);
+  assert.deepEqual(stored?.value, { branch: "feature/server-newer" });
+
+  const restored = await secondClient.loadRuntimeSnapshot("vscode-sim");
+  assert.deepEqual(restored, { branch: "feature/server-newer" });
+
+  await secondClient.saveRuntimeSnapshot("vscode-sim", { branch: "feature/after-resync" });
+  stored = await repository.loadRuntimeSnapshot(key, "vscode-sim");
+  assert.equal(stored?.revision, 3);
+  assert.deepEqual(stored?.value, { branch: "feature/after-resync" });
+});
+
 test("loads the latest session after queued writes complete", async () => {
   const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const persistence = coordinator(repository);
