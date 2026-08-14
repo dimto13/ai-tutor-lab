@@ -36,6 +36,8 @@ test("training state composition keeps Amplify lazy and local mode cloud-free", 
   );
 
   assert.match(storeSource, /createApplicationTrainingStateRepository\(\)/);
+  assert.match(storeSource, /synchronizeAfterReconnect\(/);
+  assert.match(storeSource, /addEventListener\(["']online["']/);
   assert.doesNotMatch(storeSource, /createBrowserTrainingStateRepository/);
   assert.doesNotMatch(storeSource, /aws-amplify\/data/);
   assert.doesNotMatch(localAdapterSource, /aws-amplify\/data/);
