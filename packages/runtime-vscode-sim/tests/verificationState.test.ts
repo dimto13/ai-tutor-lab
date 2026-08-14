@@ -84,7 +84,7 @@ test("bare python does not count as file verification", async () => {
   }
 });
 
-test("last commit can be reset without losing working-tree changes", async () => {
+test("last commit recovery survives snapshot restore", async () => {
   await vscodeRuntime.mount(createContainer(), {
     workspaceMode: "folder",
     folders: ["demo"],
@@ -111,6 +111,9 @@ test("last commit can be reset without losing working-tree changes", async () =>
     );
     assert.equal((await vscodeRuntime.query<Array<unknown>>("scm.commits")).length, 1);
     assert.deepEqual(await vscodeRuntime.query("scm.changedFiles"), []);
+
+    const persisted = await vscodeRuntime.snapshot();
+    await vscodeRuntime.restore(persisted);
 
     const reset = vscodeRuntime.executeTerminalCommand(command("git", "reset", "HEAD~1"));
     assert.equal(reset.exitCode, 0);
