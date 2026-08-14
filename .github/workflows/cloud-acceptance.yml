@@ -48,13 +48,22 @@ jobs:
 
       - name: AWS-Kontonummer in Logs maskieren
         # Dies ist ein oeffentliches Repository, seine Workflow-Logs sind oeffentlich lesbar.
-        # Die Maskierung wirkt nur auf spaetere Schritte und steht deshalb vor der Anmeldung.
+        #
+        # Der Rollen-ARN kommt bewusst aus den Secrets, nicht aus den Variablen: GitHub gibt den
+        # env-Block eines Schrittes im Log aus, bevor dessen Skript laeuft. Als Variable stuende
+        # die Kontonummer damit im Log, noch bevor ::add-mask:: sie schuetzen kann. Secrets
+        # maskiert GitHub dagegen von sich aus. Das ist ein Maskierungsmittel, keine Aussage
+        # darueber, dass eine Kontonummer geheim waere.
+        #
+        # Die daraus abgeleitete Maske bleibt trotzdem noetig: Sie deckt die blosse Kontonummer
+        # auch dort ab, wo sie in anderen Zeichenketten auftaucht, etwa im assumed-role-ARN der
+        # STS-Antwort.
         env:
-          ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           set -euo pipefail
           if [ -z "${ROLE_ARN}" ]; then
-            echo "::error::Environment-Variable AWS_ROLE_ARN fehlt (siehe docs/23-cloud-abnahme-kanal.md)."
+            echo "::error::Environment-Secret AWS_ROLE_ARN fehlt (siehe docs/23-cloud-abnahme-kanal.md)."
             exit 1
           fi
           account=$(printf '%s' "${ROLE_ARN}" | cut -d: -f5)
@@ -62,7 +71,7 @@ jobs:
           # Kontonummer in den folgenden Schritten oeffentlich sichtbar lassen. Deshalb Abbruch.
           case "${account}" in
             "" | *[!0-9]*)
-              echo "::error::AWS_ROLE_ARN hat nicht das erwartete Format arn:aws:iam::<konto>:role/<name>."
+              echo "::error::AWS_ROLE_ARN hat nicht das Format arn:aws:iam::<konto>:role/<name>."
               exit 1
               ;;
           esac
@@ -100,7 +109,7 @@ jobs:
       - name: AWS-Anmeldung per OIDC
         uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: ai-tutor-cloud-acceptance
 

@@ -29,26 +29,33 @@ GitHub-Token anzufordern. Ob daraus Zugriff wird, entscheidet allein AWS.
 | Ort    | Artefakt                                                     | Zweck                                                     |
 | ------ | ------------------------------------------------------------ | --------------------------------------------------------- |
 | GitHub | Environment `cloud-acceptance`, auf Branch `main` beschränkt | Teil des Subject-Claims und damit der Vertrauensbeziehung |
-| GitHub | Environment-Variablen (siehe unten)                          | Konfiguration, keine Geheimnisse                          |
+| GitHub | Environment-Variablen und -Secret (siehe unten)              | Konfiguration des Laufs                                   |
 | AWS    | OIDC-Provider `token.actions.githubusercontent.com`          | Vertrauen zu GitHub als Identitätsanbieter                |
 | AWS    | Policy `AiTutorCloudAcceptanceReadOnly`                      | eng geschnittene Leserechte                               |
 | AWS    | Rolle `AiTutorGitHubReadOnly`                                | wird vom Workflow angenommen                              |
 | Repo   | `infra/aws/github-oidc/*.json`                               | die beiden Policies als versionierte Quelle               |
 | Repo   | `scripts/setup-aws-github-oidc.sh`                           | idempotente Einrichtung der AWS-Seite                     |
 
-### Environment-Variablen
+### Environment-Konfiguration
 
-| Name               | Wert                                                       |
-| ------------------ | ---------------------------------------------------------- |
-| `AWS_ROLE_ARN`     | `arn:aws:iam::<AWS_ACCOUNT_ID>:role/AiTutorGitHubReadOnly` |
-| `AWS_REGION`       | Region der Amplify-App (`us-east-1`)                       |
-| `AMPLIFY_APP_ID`   | `dvycwqmhfzz12`                                            |
-| `AMPLIFY_BRANCH`   | `deploy`                                                   |
-| `AMPLIFY_BASE_URL` | `https://deploy.dvycwqmhfzz12.amplifyapp.com`              |
+| Name               | Art      | Wert                                                       |
+| ------------------ | -------- | ---------------------------------------------------------- |
+| `AWS_ROLE_ARN`     | Secret   | `arn:aws:iam::<AWS_ACCOUNT_ID>:role/AiTutorGitHubReadOnly` |
+| `AWS_REGION`       | Variable | Region der Amplify-App (`us-east-1`)                       |
+| `AMPLIFY_APP_ID`   | Variable | `dvycwqmhfzz12`                                            |
+| `AMPLIFY_BRANCH`   | Variable | `deploy`                                                   |
+| `AMPLIFY_BASE_URL` | Variable | `https://deploy.dvycwqmhfzz12.amplifyapp.com`              |
 
-Rollen-ARN, Region und App-ID sind Konfiguration, keine Passwörter, und werden deshalb als
-Variablen und nicht als Secrets geführt. Die AWS-Kontonummer steht bewusst in keiner
-Repository-Datei: dieses Repository ist öffentlich.
+Region, App-ID und Branch sind Konfiguration und werden als Variablen geführt. Die AWS-Kontonummer
+steht bewusst in keiner Repository-Datei, denn dieses Repository ist öffentlich — und damit sind es
+auch seine Workflow-Logs.
+
+Genau deshalb liegt der Rollen-ARN als **Secret** vor, obwohl eine Kontonummer kein Geheimnis ist:
+GitHub gibt den `env`-Block eines Schrittes im Log aus, **bevor** dessen Skript läuft. Als Variable
+stünde die Kontonummer dort, noch bevor `::add-mask::` sie schützen könnte. Secrets maskiert GitHub
+von sich aus. Der Maskierungsschritt im Workflow bleibt trotzdem nötig: Er deckt die bloße
+Kontonummer auch dort ab, wo sie in anderen Zeichenketten auftaucht — etwa im `assumed-role`-ARN
+der STS-Antwort, den die Secret-Maskierung nicht erfasst.
 
 ## Einrichtung
 
@@ -59,10 +66,27 @@ IAM-Rechten. Das Entwicklerprofil `amplify-dev-user` reicht dafür nicht aus.
 AWS_PROFILE=<admin-profil> npm run cloud:setup-oidc
 ```
 
-Das Skript legt OIDC-Provider, Policy und Rolle an beziehungsweise aktualisiert sie und gibt am
-Ende den Rollen-ARN aus. Die GitHub-Seite — Environment, Branch-Beschränkung auf `main` und die
-Variablen — ist bereits eingerichtet; abweichende Werte lassen sich mit
-`gh variable set <NAME> --env cloud-acceptance --body "<wert>"` korrigieren.
+Das Skript legt OIDC-Provider, Policy und Rolle an beziehungsweise aktualisiert sie. Ist der
+Provider bereits vorhanden, prüft es zusätzlich, ob die Audience `sts.amazonaws.com` registriert
+ist, und ergänzt sie sonst — ein aus anderem Anlass angelegter Provider ohne diese Audience führt
+sonst zu einem Fehlerbild, das nicht auf seine Ursache zeigt.
+
+Am Ende gibt das Skript den Rollen-ARN, die registrierten Audiences und den vertrauten
+Subject-Claim aus. Diese drei Werte sind der Selbstnachweis der Einrichtung: Sie lassen sich direkt
+gegen die Ausgabe des ersten Workflow-Laufs halten.
+
+Prüfen lässt sich der Zustand jederzeit ohne das Skript:
+
+```bash
+aws iam get-open-id-connect-provider \
+  --open-id-connect-provider-arn arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
+aws iam get-role --role-name AiTutorGitHubReadOnly --query 'Role.AssumeRolePolicyDocument'
+```
+
+Die GitHub-Seite — Environment, Branch-Beschränkung auf `main`, Variablen und Secret — ist bereits
+eingerichtet. Abweichende Werte lassen sich mit
+`gh variable set <NAME> --env cloud-acceptance --body "<wert>"` beziehungsweise
+`gh secret set AWS_ROLE_ARN --env cloud-acceptance --body "<arn>"` korrigieren.
 
 ### Subject-Claim
 
@@ -95,13 +119,14 @@ Die AWS-Kontonummer wird in den Logs maskiert, weil Workflow-Logs öffentlicher 
 
 ## Fehlerbilder
 
-| Symptom                                                   | Ursache und Behandlung                                                                                                                                                                                                                                                        |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | Subject-Claim und Trust-Policy weichen ab. Der Schritt „OIDC-Claims dieses Jobs anzeigen“ läuft vor der Anmeldung und gibt den tatsächlichen `sub` aus — diesen Wert in `infra/aws/github-oidc/trust-policy.json` übernehmen und `npm run cloud:setup-oidc` erneut ausführen. |
-| Anmeldung schlägt direkt nach der Ersteinrichtung fehl    | IAM ist eventual consistent. Nach einigen Sekunden erneut starten.                                                                                                                                                                                                            |
-| `Environment-Variable AWS_ROLE_ARN fehlt`                 | Variable im Environment `cloud-acceptance` nachtragen.                                                                                                                                                                                                                        |
-| `AccessDenied` bei einem Diagnosebefehl                   | Die Aktion fehlt in `read-only-policy.json`. Ergänzen, `npm run cloud:setup-oidc` erneut ausführen — und dabei lesend bleiben.                                                                                                                                                |
-| Schritt „Reale Anwendung aufrufen“ meldet HTTP 500        | Der Build war erfolgreich, die SSR-Umgebung startet aber nicht. Der Schritt „SSR-Laufzeitlogs prüfen“ im selben Lauf zeigt die Ursache.                                                                                                                                       |
+| Symptom                                                   | Ursache und Behandlung                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `The web identity token provided could not be validated`  | AWS kann das Token keinem registrierten Provider zuordnen (`InvalidIdentityToken`). Die Meldung zeigt nicht auf ihre Ursache: Sie erscheint sowohl, wenn der OIDC-Provider gar nicht existiert — also die Einrichtung noch aussteht — als auch, wenn er existiert, aber `sts.amazonaws.com` nicht in seiner `ClientIDList` steht. Beides klärt `npm run cloud:setup-oidc`; das Skript legt an oder ergänzt die Audience und gibt beide Werte am Ende aus. Ob die Rolle überhaupt existiert, beantwortet `aws iam get-role --role-name AiTutorGitHubReadOnly`. |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | Provider und Token passen, aber der Subject-Claim weicht von der Trust-Policy ab. Der Schritt „OIDC-Claims dieses Jobs anzeigen“ läuft vor der Anmeldung und gibt den tatsächlichen `sub` aus — diesen Wert in `infra/aws/github-oidc/trust-policy.json` übernehmen und `npm run cloud:setup-oidc` erneut ausführen.                                                                                                                                                                                                                                          |
+| Anmeldung schlägt direkt nach der Ersteinrichtung fehl    | IAM ist eventual consistent. Nach einigen Sekunden erneut starten.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `Environment-Secret AWS_ROLE_ARN fehlt`                   | Secret im Environment `cloud-acceptance` nachtragen.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `AccessDenied` bei einem Diagnosebefehl                   | Die Aktion fehlt in `read-only-policy.json`. Ergänzen, `npm run cloud:setup-oidc` erneut ausführen — und dabei lesend bleiben.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Schritt „Reale Anwendung aufrufen“ meldet HTTP 500        | Der Build war erfolgreich, die SSR-Umgebung startet aber nicht. Der Schritt „SSR-Laufzeitlogs prüfen“ im selben Lauf zeigt die Ursache.                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ## Grenzen des Zugangs
 
