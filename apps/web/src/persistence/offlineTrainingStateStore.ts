@@ -10,10 +10,7 @@ export class OfflineTrainingStateStorageError extends Error {
   readonly operation: "save-session" | "save-runtime";
   readonly originalError: unknown;
 
-  constructor(
-    operation: "save-session" | "save-runtime",
-    originalError: unknown,
-  ) {
+  constructor(operation: "save-session" | "save-runtime", originalError: unknown) {
     super(`Offline training state could not be durably stored during ${operation}`);
     this.name = "OfflineTrainingStateStorageError";
     this.operation = operation;
