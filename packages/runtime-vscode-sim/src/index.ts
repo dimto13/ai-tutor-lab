@@ -259,6 +259,9 @@ export const vscodeRuntime = {
     if (selector === "verification.lastResult") {
       return cloneTerminalLastResult(workflowState.verificationLastResult) as T;
     }
+    if (selector === "verification.lastResult.content") {
+      return (workflowState.verificationLastResult?.content ?? null) as T;
+    }
     if (selector === "scm.lastCommit.message") {
       const commits = await baseVscodeRuntime.query<Array<{ message: string }>>("scm.commits");
       return (commits.at(-1)?.message ?? null) as T;
@@ -270,6 +273,10 @@ export const vscodeRuntime = {
     if (selector === "scm.lastCommit.fileCount") {
       const commits = await baseVscodeRuntime.query<Array<{ files: string[] }>>("scm.commits");
       return (commits.at(-1)?.files.length ?? 0) as T;
+    }
+    if (selector === "scm.lastCommit.branch") {
+      const commits = await baseVscodeRuntime.query<Array<{ branch?: string }>>("scm.commits");
+      return (commits.at(-1)?.branch ?? null) as T;
     }
     return baseVscodeRuntime.query<T>(selector);
   },
