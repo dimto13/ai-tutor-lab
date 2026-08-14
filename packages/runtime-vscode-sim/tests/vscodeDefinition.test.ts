@@ -27,6 +27,8 @@ test("VS Code simulator publishes a semantic runtime definition", () => {
   assert.ok(!surfaceRefs.has("vscode.statusBar.terminal"));
   assert.ok(VSCODE_RUNTIME_DEFINITION.querySelectors.includes("scm.branch"));
   assert.ok(VSCODE_RUNTIME_DEFINITION.querySelectors.includes("terminal.lastResult"));
+  assert.ok(VSCODE_RUNTIME_DEFINITION.querySelectors.includes("verification.lastResult.content"));
+  assert.ok(VSCODE_RUNTIME_DEFINITION.querySelectors.includes("scm.lastCommit.branch"));
 });
 
 test("VS Code workflow state persists branch and last terminal result", async () => {
@@ -80,6 +82,10 @@ test("VS Code workflow state persists branch and last terminal result", async ()
       branch: "feature/workflow",
       output: "tests passed",
     });
+    assert.equal(
+      await vscodeRuntime.query("verification.lastResult.content"),
+      'print("tests passed")\n',
+    );
 
     const snapshot = await vscodeRuntime.snapshot();
     vscodeRuntime.executeTerminalCommand(terminalCommand("git", "switch", "-c", "scratch/other"));
@@ -96,6 +102,31 @@ test("VS Code workflow state persists branch and last terminal result", async ()
     });
   } finally {
     unsubscribe();
+    await vscodeRuntime.unmount();
+  }
+});
+
+test("VS Code records the branch where a commit was created", async () => {
+  await vscodeRuntime.mount(createContainer(), {
+    workspaceMode: "folder",
+    folders: ["ai-training-demo"],
+    files: ["work.py"],
+    contents: { "work.py": 'print("changed")\n' },
+    committedContents: { "work.py": 'print("before")\n' },
+    trackedFiles: ["work.py"],
+    scmChangedFiles: ["work.py"],
+    branch: "main",
+  });
+
+  try {
+    assert.equal(vscodeRuntime.executeTerminalCommand("git add work.py").exitCode, 0);
+    assert.equal(vscodeRuntime.executeTerminalCommand('git commit -m "update work"').exitCode, 0);
+    assert.equal(await vscodeRuntime.query("scm.lastCommit.branch"), "main");
+
+    vscodeRuntime.executeTerminalCommand("git switch -c feature/later");
+    assert.equal(await vscodeRuntime.query("scm.branch"), "feature/later");
+    assert.equal(await vscodeRuntime.query("scm.lastCommit.branch"), "main");
+  } finally {
     await vscodeRuntime.unmount();
   }
 });
