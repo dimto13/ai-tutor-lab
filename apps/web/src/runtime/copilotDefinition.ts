@@ -68,6 +68,7 @@ export const COPILOT_RUNTIME_DEFINITION = {
     "copilot.conversation.id",
     "copilot.conversation.messageCount",
     "copilot.prompt.last",
+    "copilot.prompt.contextFile",
     "copilot.mode",
     "copilot.model",
     "copilot.context.activeFile",
