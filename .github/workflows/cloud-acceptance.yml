@@ -160,19 +160,22 @@ jobs:
           # Eine fehlgeschlagene AWS-Abfrage darf nicht wie eine fehlende Log-Gruppe aussehen:
           # in einer Bedingung loest ein Fehler der Kommandosubstitution kein set -e aus, das
           # Ergebnis waere schlicht leer. Deshalb Exitcode und Fehlertext getrennt auswerten.
+          # Die Fehlerausgabe bleibt getrennt: eine Warnung der AWS CLI auf stderr wuerde sonst im
+          # Ergebnis landen und den Vergleich verfaelschen. Gleiches Vorgehen wie run_aws in
+          # scripts/amplify-deployment-status.sh.
+          err_file=$(mktemp)
           if ! found=$(aws logs describe-log-groups --log-group-name-prefix "${group}" \
-                         --query 'logGroups[].logGroupName' --output text 2>&1); then
-            echo "::error::CloudWatch-Abfrage fehlgeschlagen: ${found}"
+                         --query "logGroups[?logGroupName=='${group}'].logGroupName" \
+                         --output text 2>"${err_file}"); then
+            echo "::error::CloudWatch-Abfrage fehlgeschlagen: $(cat "${err_file}")"
+            rm -f "${err_file}"
             exit 1
           fi
-          # Mehrere Treffer trennt die AWS CLI mit Tabulatoren.
-          case " $(printf '%s' "${found}" | tr '\t\n' '  ') " in
-            *" ${group} "*) ;;
-            *)
-              echo "Log-Gruppe ${group} existiert nicht - die Compute-Umgebung hat noch nichts geloggt."
-              exit 0
-              ;;
-          esac
+          rm -f "${err_file}"
+          if [ -z "${found}" ]; then
+            echo "Log-Gruppe ${group} existiert nicht - die Compute-Umgebung hat noch nichts geloggt."
+            exit 0
+          fi
           echo "== Letzte Ereignisse in ${group} (${LOG_WINDOW}) =="
           aws logs tail "${group}" --since "${LOG_WINDOW}" --format short | tail -n 100
 
