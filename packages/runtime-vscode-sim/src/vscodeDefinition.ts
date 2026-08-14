@@ -127,6 +127,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "terminal.cwd",
     "terminal.lastResult",
     "verification.lastResult",
+    "verification.lastResult.content",
     "scm.branch",
     "scm.staged",
     "scm.stagedFiles",
@@ -135,6 +136,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "scm.lastCommit.message",
     "scm.lastCommit.files",
     "scm.lastCommit.fileCount",
+    "scm.lastCommit.branch",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 
