@@ -175,7 +175,9 @@ export class TrainingStatePersistence {
     return operation;
   }
 
-  async synchronizeAfterReconnect(runtimeIds: readonly string[]): Promise<TrainingStateReconnectResult> {
+  async synchronizeAfterReconnect(
+    runtimeIds: readonly string[],
+  ): Promise<TrainingStateReconnectResult> {
     if (!supportsPendingTrainingStateSynchronization(this.repository)) {
       return { session: null, runtimeRestores: [] };
     }
