@@ -45,7 +45,8 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   const firstDialog = await openSettings(firstPage);
   const firstNameInput = firstDialog.getByRole("textbox", { name: "Name" });
   const originalName = await firstNameInput.inputValue();
-  if (!originalName.trim()) throw new Error("Cloud test account must have a non-empty display name.");
+  if (!originalName.trim())
+    throw new Error("Cloud test account must have a non-empty display name.");
 
   const firstEmailDisplay = firstDialog.getByTestId("account-email");
   await expect(firstEmailDisplay).toContainText("@");
