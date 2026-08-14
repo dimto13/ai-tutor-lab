@@ -1,0 +1,44 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "OidcProviderBootstrap",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateOpenIDConnectProvider",
+        "iam:GetOpenIDConnectProvider",
+        "iam:AddClientIDToOpenIDConnectProvider"
+      ],
+      "Resource": "arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+    },
+    {
+      "Sid": "ReadOnlyPolicyBootstrap",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreatePolicy",
+        "iam:GetPolicy",
+        "iam:ListPolicyVersions",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicyVersion"
+      ],
+      "Resource": "arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AiTutorCloudAcceptanceReadOnly"
+    },
+    {
+      "Sid": "RoleBootstrap",
+      "Effect": "Allow",
+      "Action": ["iam:CreateRole", "iam:GetRole", "iam:UpdateAssumeRolePolicy"],
+      "Resource": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/AiTutorGitHubReadOnly"
+    },
+    {
+      "Sid": "AttachOnlyTheReadOnlyPolicy",
+      "Effect": "Allow",
+      "Action": "iam:AttachRolePolicy",
+      "Resource": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/AiTutorGitHubReadOnly",
+      "Condition": {
+        "ArnEquals": {
+          "iam:PolicyARN": "arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AiTutorCloudAcceptanceReadOnly"
+        }
+      }
+    }
+  ]
+}

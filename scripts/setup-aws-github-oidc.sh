@@ -49,6 +49,31 @@ sed "s|<AWS_ACCOUNT_ID>|$ACCOUNT_ID|g" "$TRUST_TEMPLATE" >"$TRUST_POLICY"
 PROVIDER_ARN="arn:aws:iam::$ACCOUNT_ID:oidc-provider/$PROVIDER_HOST"
 POLICY_ARN="arn:aws:iam::$ACCOUNT_ID:policy/$POLICY_NAME"
 
+# Fehlende IAM-Rechte sind der wahrscheinlichste Grund, aus dem dieses Skript scheitert -- ein
+# Amplify-Entwicklerprofil hat sie typischerweise nicht. Ohne Vorabpruefung faellt das erst mitten
+# im Ablauf als rohes AccessDenied auf, und zwar bei einem Aufruf, dessen Name nichts darueber
+# sagt, was zu tun ist. Deshalb einmal lesend anklopfen, bevor irgendetwas angelegt wird.
+PROBE=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$PROVIDER_ARN" 2>&1 >/dev/null) || true
+case "$PROBE" in
+  *AccessDenied* | *"not authorized"*)
+    die "Dieses AWS-Profil darf IAM nicht administrieren:
+
+$PROBE
+
+Das Skript legt OIDC-Provider, Policy und Rolle an; ein Amplify-Entwicklerprofil reicht dafuer
+nicht. Zwei Wege:
+
+  1. Ein Profil mit IAM-Rechten verwenden:
+       AWS_PROFILE=<admin-profil> npm run cloud:setup-oidc
+
+  2. Dem aktuellen Benutzer voruebergehend genau die noetigen Rechte geben -- als Inline-Policy
+     aus infra/aws/github-oidc/setup-permissions-policy.json -- und sie nach der Einrichtung
+     wieder entfernen.
+
+Beides ist in docs/23-cloud-abnahme-kanal.md, Abschnitt Einrichtung, beschrieben."
+    ;;
+esac
+
 # 1. OIDC-Provider. Ein manuell gepflegter Zertifikats-Thumbprint ist beim aktuellen
 #    AWS/GitHub-OIDC-Verfahren nicht mehr noetig; AWS prueft die Kette selbst.
 if aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$PROVIDER_ARN" >/dev/null 2>&1; then
