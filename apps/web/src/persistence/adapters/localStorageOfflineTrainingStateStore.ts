@@ -6,9 +6,9 @@ import {
   type OfflineRuntimeEntry,
   type OfflineSessionEntry,
   type OfflineTrainingStateStore,
-} from "../offlineTrainingStateStore";
-import { browserLocalStorage } from "./browserLocalStorage";
-import type { StorageLike } from "./localStorageTrainingStateRepository";
+} from "../offlineTrainingStateStore.ts";
+import { browserLocalStorage } from "./browserLocalStorage.ts";
+import type { StorageLike } from "./localStorageTrainingStateRepository.ts";
 
 function subjectKey(key: TrainingStateKey): string {
   const tenantKey =
