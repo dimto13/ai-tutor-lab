@@ -6,6 +6,21 @@ import type {
 
 export const OFFLINE_TRAINING_STATE_SCHEMA_VERSION = 1 as const;
 
+export class OfflineTrainingStateStorageError extends Error {
+  readonly operation: "save-session" | "save-runtime";
+  readonly originalError: unknown;
+
+  constructor(
+    operation: "save-session" | "save-runtime",
+    originalError: unknown,
+  ) {
+    super(`Offline training state could not be durably stored during ${operation}`);
+    this.name = "OfflineTrainingStateStorageError";
+    this.operation = operation;
+    this.originalError = originalError;
+  }
+}
+
 interface OfflineEntryBase {
   schemaVersion: typeof OFFLINE_TRAINING_STATE_SCHEMA_VERSION;
   key: TrainingStateKey;
