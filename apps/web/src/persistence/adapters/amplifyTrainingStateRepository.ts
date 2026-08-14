@@ -2,6 +2,7 @@ import { generateClient } from "aws-amplify/data";
 import {
   TRAINING_STATE_SCHEMA_VERSION,
   TrainingStateConflictError,
+  TrainingStateUnavailableError,
   sameTrainingSubject,
 } from "@ai-train-lab/training-engine";
 import type {
@@ -28,6 +29,25 @@ function errorText(errors: unknown): string {
 
 function isRevisionConflict(errors: unknown): boolean {
   return /ConditionalCheckFailed|conditional request failed/i.test(errorText(errors));
+}
+
+function isTransportUnavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === "NetworkError") return true;
+  const message = error.message.trim();
+  return (
+    /^(Failed to fetch|fetch failed|Network request failed|Load failed)$/i.test(message) ||
+    /\bERR_NETWORK\b/.test(message)
+  );
+}
+
+async function executeAmplifyOperation<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (isTransportUnavailable(error)) throw new TrainingStateUnavailableError(error);
+    throw error;
+  }
 }
 
 function assertServerIdentity(key: TrainingStateKey, userId: unknown, tenantId: unknown): void {
@@ -130,10 +150,12 @@ export function createAmplifyTrainingStateRepositoryWithClient(
 
   const repository: TrainingStateRepository = {
     async loadSession(key) {
-      const result = await client.queries.loadTrainingState({
-        scenarioId: key.scenarioId,
-        mode: key.mode,
-      });
+      const result = await executeAmplifyOperation(() =>
+        client.queries.loadTrainingState({
+          scenarioId: key.scenarioId,
+          mode: key.mode,
+        }),
+      );
       if (result.errors?.length) throw new Error(errorText(result.errors));
       if (!result.data) return null;
       return sessionRecord(key, result.data);
@@ -150,7 +172,7 @@ export function createAmplifyTrainingStateRepositoryWithClient(
           ? {}
           : { expectedRevision: options.expectedRevision }),
       };
-      const result = await client.mutations.saveTrainingState(args);
+      const result = await executeAmplifyOperation(() => client.mutations.saveTrainingState(args));
       if (result.errors?.length) {
         if (isRevisionConflict(result.errors)) {
           const current = await repository.loadSession(key);
@@ -163,11 +185,13 @@ export function createAmplifyTrainingStateRepositoryWithClient(
     },
 
     async loadRuntimeSnapshot(key, runtimeId) {
-      const result = await client.queries.loadRuntimeSnapshot({
-        scenarioId: key.scenarioId,
-        mode: key.mode,
-        runtimeId,
-      });
+      const result = await executeAmplifyOperation(() =>
+        client.queries.loadRuntimeSnapshot({
+          scenarioId: key.scenarioId,
+          mode: key.mode,
+          runtimeId,
+        }),
+      );
       if (result.errors?.length) throw new Error(errorText(result.errors));
       if (!result.data) return null;
       return runtimeRecord(key, result.data, runtimeId);
@@ -184,7 +208,7 @@ export function createAmplifyTrainingStateRepositoryWithClient(
           ? {}
           : { expectedRevision: options.expectedRevision }),
       };
-      const result = await client.mutations.saveRuntimeSnapshot(args);
+      const result = await executeAmplifyOperation(() => client.mutations.saveRuntimeSnapshot(args));
       if (result.errors?.length) {
         if (isRevisionConflict(result.errors)) {
           const current = await repository.loadRuntimeSnapshot(key, runtimeId);
@@ -205,7 +229,9 @@ export function createAmplifyTrainingStateRepositoryWithClient(
           ? {}
           : { expectedRevision: options.expectedRevision }),
       };
-      const result = await client.mutations.deleteRuntimeSnapshot(args);
+      const result = await executeAmplifyOperation(() =>
+        client.mutations.deleteRuntimeSnapshot(args),
+      );
       if (result.errors?.length) {
         if (isRevisionConflict(result.errors)) {
           const current = await repository.loadRuntimeSnapshot(key, runtimeId);
