@@ -121,7 +121,10 @@ const key: TrainingStateKey = {
 };
 
 function session(lastAction: string): TrainingSession {
-  return recordLastAction(createTrainingSession(scenario, scenario.id, 100, key.subject), lastAction);
+  return recordLastAction(
+    createTrainingSession(scenario, scenario.id, 100, key.subject),
+    lastAction,
+  );
 }
 
 function fixture() {
