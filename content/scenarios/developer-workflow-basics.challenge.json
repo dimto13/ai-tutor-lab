@@ -338,7 +338,7 @@
           ]
         }
       },
-      "message": "Der letzte Commit enthält nicht ausschließlich calculator.py. Stelle sicher, dass genau diese Datei im qualifizierenden Commit enthalten ist und fremde Änderungen lokal bleiben."
+      "message": "Der letzte Commit enthält nicht ausschließlich calculator.py. Nimm diesen lokalen Commit mit git reset HEAD~1 zurück; deine Arbeitskopie bleibt erhalten. Stage danach nur calculator.py neu, damit fremde Änderungen lokal bleiben."
     },
     {
       "eventTypes": ["scm.committed"],
@@ -382,7 +382,7 @@
       "helpLevels": [
         "Trenne zuerst Auftrag, eigene Änderung und bereits vorhandene fremde Änderung voneinander.",
         "Prüfe Branch und Working Tree, begrenze Copilot auf den relevanten Kontext und kontrolliere deine Änderung vor Prüfung und Commit.",
-        "Nutze Branch-, Status-, Diff- und Prüfaktionen, kontrolliere den Copilot-Kontext und stelle anschließend den geforderten Handoff-Endzustand her: calculator.py abgeschlossen, fachlich klarer Commit auf feature/addition, notes.txt unverändert lokal und unstaged. Falls du versehentlich alles gestaged hast, kannst du fremde Dateien mit git restore --staged <datei> wieder aus dem Staging-Bereich entfernen."
+        "Nutze Branch-, Status-, Diff- und Prüfaktionen, kontrolliere den Copilot-Kontext und stelle anschließend den geforderten Handoff-Endzustand her: calculator.py abgeschlossen, fachlich klarer Commit auf feature/addition, notes.txt unverändert lokal und unstaged. Falls du versehentlich alles gestaged hast, entferne fremde Dateien mit git restore --staged <datei>. Falls du bereits zu viel committed hast, nimm den letzten lokalen Commit mit git reset HEAD~1 zurück und stage danach nur calculator.py neu."
       ],
       "successMessage": "Der Entwicklungsauftrag ist geprüft, sauber versioniert und handoff-ready abgeschlossen."
     }
