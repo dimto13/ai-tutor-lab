@@ -5,10 +5,21 @@ import type {
   TrainingStateKey,
   TrainingStateRepository,
 } from "@ai-train-lab/training-engine";
+import { supportsPendingTrainingStateSynchronization } from "../persistence/pendingTrainingStateSynchronization";
 
 export interface TrainingStateLoadResult {
   session: TrainingSession;
   revision: number | null;
+}
+
+export interface RuntimeReconnectRestore {
+  runtimeId: string;
+  snapshot: unknown | null;
+}
+
+export interface TrainingStateReconnectResult {
+  session: TrainingSession | null;
+  runtimeRestores: RuntimeReconnectRestore[];
 }
 
 /**
@@ -161,5 +172,44 @@ export class TrainingStatePersistence {
       ),
     );
     return operation;
+  }
+
+  async synchronizeAfterReconnect(runtimeIds: readonly string[]): Promise<TrainingStateReconnectResult> {
+    if (!supportsPendingTrainingStateSynchronization(this.repository)) {
+      return { session: null, runtimeRestores: [] };
+    }
+
+    await this.sessionWriteChain;
+    const sessionResult = await this.repository.synchronizePendingSession(this.key);
+    let session: TrainingSession | null = null;
+    if (sessionResult.status !== "none") {
+      this.sessionRevision = sessionResult.record?.revision ?? null;
+      session = restoreTrainingSession(
+        this.scenario,
+        this.scenario.id,
+        sessionResult.record?.value,
+        Date.now(),
+        this.key.subject,
+      );
+    }
+
+    const runtimeRestores: RuntimeReconnectRestore[] = [];
+    for (const runtimeId of runtimeIds) {
+      await (this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve());
+      const result = await this.repository.synchronizePendingRuntimeSnapshot(this.key, runtimeId);
+      if (result.status === "none") continue;
+
+      this.runtimeRevisions.set(runtimeId, result.record?.revision ?? null);
+      if (result.status === "conflict") {
+        this.runtimesRequiringRestore.add(runtimeId);
+        runtimeRestores.push({ runtimeId, snapshot: result.record?.value ?? null });
+      }
+    }
+
+    return { session, runtimeRestores };
+  }
+
+  markRuntimeSnapshotRestored(runtimeId: string): void {
+    this.runtimesRequiringRestore.delete(runtimeId);
   }
 }
