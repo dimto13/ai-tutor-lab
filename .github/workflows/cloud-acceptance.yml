@@ -145,8 +145,9 @@ jobs:
         run: npm run amplify:status:once
 
       - name: Backend-Ressourcen auflisten
-        # Metadaten fuer #44/#45: welcher User-Pool und welche AppSync-API stehen real hinter der
-        # deployten Umgebung. Es werden keine Nutzerdaten und keine Tabelleninhalte gelesen.
+        # Breiter Inventarblick fuer #44/#45. Der folgende Bindungs-Schritt beweist anschliessend,
+        # welche dieser Ressourcen die live ausgelieferte Anwendung tatsaechlich referenziert.
+        # Es werden keine Nutzerdaten und keine Tabelleninhalte gelesen.
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
@@ -156,6 +157,84 @@ jobs:
           echo "== AppSync APIs =="
           aws appsync list-graphql-apis \
             --query 'graphqlApis[].{name:name,apiId:apiId,auth:authenticationType}' --output table
+
+      - name: Live-Backend-Zuordnung pruefen
+        # amplify_outputs.json ist bei einer Web-App oeffentliche Client-Konfiguration. Wir geben
+        # die Datei trotzdem nicht komplett aus, sondern verwenden nur die IDs/URLs, um exakt den
+        # von der live ausgelieferten Anwendung verwendeten Cognito-/AppSync-Stack nachzuweisen.
+        if: ${{ !cancelled() }}
+        env:
+          BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+        run: |
+          set -euo pipefail
+          base="${BASE_URL%/}"
+          outputs=$(mktemp)
+          trap 'rm -f "${outputs}"' EXIT
+
+          curl -fsS --max-time 30 "${base}/amplify_outputs.json" -o "${outputs}"
+
+          version=$(jq -er '.version | select(type == "string" and length > 0)' "${outputs}")
+          user_pool_id=$(jq -er '.auth.user_pool_id | select(type == "string" and length > 0)' "${outputs}")
+          user_pool_client_id=$(jq -er '.auth.user_pool_client_id | select(type == "string" and length > 0)' "${outputs}")
+          auth_region=$(jq -er '.auth.aws_region | select(type == "string" and length > 0)' "${outputs}")
+          unauthenticated=$(jq -r '.auth.unauthenticated_identities_enabled // false' "${outputs}")
+          data_url=$(jq -er '.data.url | select(type == "string" and length > 0)' "${outputs}")
+          data_region=$(jq -er '.data.aws_region | select(type == "string" and length > 0)' "${outputs}")
+          data_auth=$(jq -er '.data.default_authorization_type | select(type == "string" and length > 0)' "${outputs}")
+
+          if [ "${auth_region}" != "${AWS_REGION}" ] || [ "${data_region}" != "${AWS_REGION}" ]; then
+            echo "::error::Live-Konfiguration zeigt auf Region auth=${auth_region}, data=${data_region}; erwartet ${AWS_REGION}."
+            exit 1
+          fi
+          if [ "${unauthenticated}" != "false" ]; then
+            echo "::error::Live-Konfiguration erlaubt unauthentifizierte Identitaeten."
+            exit 1
+          fi
+          if [ "${data_auth}" != "AMAZON_COGNITO_USER_POOLS" ]; then
+            echo "::error::Unerwartete AppSync-Standardautorisierung: ${data_auth}."
+            exit 1
+          fi
+
+          pool_name=$(aws cognito-idp describe-user-pool \
+            --user-pool-id "${user_pool_id}" --query 'UserPool.Name' --output text)
+          client_name=$(aws cognito-idp describe-user-pool-client \
+            --user-pool-id "${user_pool_id}" --client-id "${user_pool_client_id}" \
+            --query 'UserPoolClient.ClientName' --output text)
+
+          api_id=$(node -e '
+            const url = new URL(process.argv[1]);
+            const [id] = url.hostname.split(".");
+            if (!id) process.exit(1);
+            process.stdout.write(id);
+          ' "${data_url}")
+          api_info=$(aws appsync get-graphql-api --api-id "${api_id}" \
+            --query 'graphqlApi.[name,authenticationType,uris.GRAPHQL]' --output text)
+          api_name=$(printf '%s' "${api_info}" | cut -f1)
+          api_auth=$(printf '%s' "${api_info}" | cut -f2)
+          api_url=$(printf '%s' "${api_info}" | cut -f3)
+
+          if [ "${api_auth}" != "${data_auth}" ]; then
+            echo "::error::Live-Output und AWS widersprechen sich bei AppSync-Auth: output=${data_auth}, aws=${api_auth}."
+            exit 1
+          fi
+          if [ "${api_url%/}" != "${data_url%/}" ]; then
+            echo "::error::Live-Output zeigt nicht auf die von AWS gelesene AppSync-URL."
+            exit 1
+          fi
+
+          echo "Live-Backend eindeutig zugeordnet:"
+          echo "  Outputs-Version: ${version}"
+          echo "  Cognito: ${pool_name} / ${client_name} (${user_pool_id})"
+          echo "  AppSync: ${api_name} (${api_id}) / ${api_auth}"
+          {
+            echo "### Live-Backend-Zuordnung"
+            echo ""
+            echo "- Amplify Outputs: \`${version}\`"
+            echo "- Cognito User Pool: \`${pool_name}\` (\`${user_pool_id}\`)"
+            echo "- Cognito App Client: \`${client_name}\`"
+            echo "- AppSync: \`${api_name}\` (\`${api_id}\`)"
+            echo "- Standard-Auth: \`${api_auth}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: SSR-Laufzeitlogs pruefen
         # Ein gruener Amplify-Build ist kein Nachweis fuer eine laufende SSR-Umgebung; genau diese
