@@ -35,9 +35,15 @@ function useRuntimePersistence(
     });
 
     const frame = window.requestAnimationFrame(() => {
-      void restoreRuntimeSnapshot(runtimeId).finally(() => {
-        if (active) persistenceReady = true;
-      });
+      void snapshot()
+        .then((initialSnapshot) => {
+          if (!active) return false;
+          persistRuntimeSnapshot(runtimeId, initialSnapshot);
+          return restoreRuntimeSnapshot(runtimeId);
+        })
+        .finally(() => {
+          if (active) persistenceReady = true;
+        });
     });
 
     return () => {
