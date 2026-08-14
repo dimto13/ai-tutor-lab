@@ -74,6 +74,7 @@ export function Workspace() {
   const [dirtyFiles, setDirtyFiles] = useState<string[]>([]);
   const [scmChangedFiles, setScmChangedFiles] = useState<string[]>([]);
   const [stagedFiles, setStagedFiles] = useState<string[]>([]);
+  const [stagedContents, setStagedContents] = useState<Record<string, string>>({});
   const [trackedFiles, setTrackedFiles] = useState<string[]>([]);
   const [branch, setBranch] = useState("main");
   const [newFileName, setNewFileName] = useState<string | null>(null);
@@ -98,6 +99,7 @@ export function Workspace() {
       setDirtyFiles([...runtimeState.dirtyFiles]);
       setScmChangedFiles([...runtimeState.scmChangedFiles]);
       setStagedFiles([...runtimeState.stagedFiles]);
+      setStagedContents({ ...runtimeState.stagedContents });
       setTrackedFiles([...runtimeState.trackedFiles]);
       setBranch(runtimeState.branch);
       if (reason !== "mount" && reason !== "restore" && reason !== "reset") return;
@@ -249,7 +251,9 @@ export function Workspace() {
   ];
   const stagedSet = new Set(stagedFiles);
   const stagedChanges = scmChangedFiles.filter((file) => stagedSet.has(file));
-  const unstagedChanges = scmChangedFiles.filter((file) => !stagedSet.has(file));
+  const unstagedChanges = scmChangedFiles.filter(
+    (file) => !stagedSet.has(file) || contents[file] !== stagedContents[file],
+  );
   const scmStatus = (file: string, staged: boolean) =>
     trackedFiles.includes(file) ? "M" : staged ? "A" : "U";
 
