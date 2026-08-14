@@ -322,7 +322,9 @@ export function TrainingProvider({
 
           for (const restore of runtimeRestores) {
             if (cancelled) return;
-            const runtime = scenarioRuntimes.find((candidate) => candidate.id === restore.runtimeId);
+            const runtime = scenarioRuntimes.find(
+              (candidate) => candidate.id === restore.runtimeId,
+            );
             if (!runtime) continue;
 
             try {
