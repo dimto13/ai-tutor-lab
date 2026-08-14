@@ -274,6 +274,23 @@ test("does not hide authorization or other non-transport failures behind the off
   assert.equal(offlineStore.loadSession(key), null);
 });
 
+test("does not turn a successful remote write into a failure when only the cache is full", async () => {
+  const remoteDelegate = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const remote = new SwitchableTrainingStateRepository(remoteDelegate);
+  const repository = new OfflineBufferedTrainingStateRepository(
+    remote,
+    new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()),
+  );
+
+  const saved = await repository.saveSession(key, session("remote-success"), {
+    expectedRevision: null,
+  });
+
+  assert.equal(saved.revision, 1);
+  assert.equal(saved.value.lastAction, "remote-success");
+  assert.equal((await remoteDelegate.loadSession(key))?.value.lastAction, "remote-success");
+});
+
 test("fails loudly when browser quota prevents durable offline buffering", async () => {
   const remoteDelegate = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const remote = new SwitchableTrainingStateRepository(remoteDelegate);
