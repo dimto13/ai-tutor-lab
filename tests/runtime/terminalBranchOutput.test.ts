@@ -52,6 +52,32 @@ test("commit output uses the active feature branch", () => {
   assert.match(committed.output[0] ?? "", /\[feature\/addition 0000001\] add hello example/);
 });
 
+test("git switch supports the documented --create long form", () => {
+  const context: TerminalCommandContext = {
+    workspaceRoot: "ai-training-demo",
+    cwd: "",
+    directories: [],
+    files: [],
+    contents: {},
+    committedContents: {},
+    trackedFiles: [],
+    changedFiles: [],
+    stagedFiles: [],
+    stagedContents: {},
+    commits: [],
+    branch: "main",
+  };
+
+  const switched = executeTerminalCommand(
+    command("git", "switch", "--create", "feature/addition"),
+    context,
+  );
+
+  assert.equal(switched.exitCode, 0);
+  assert.equal(switched.branch, "feature/addition");
+  assert.deepEqual(switched.output, ["Switched to a new branch 'feature/addition'"]);
+});
+
 test("plain diff compares the working tree with the staged snapshot", () => {
   const context: TerminalCommandContext = {
     workspaceRoot: "ai-training-demo",
