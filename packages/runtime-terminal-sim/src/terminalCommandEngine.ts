@@ -307,7 +307,10 @@ function stripOuterParentheses(value: string): string {
   return result;
 }
 
-function findTopLevelOperator(value: string, operators: string[]): { index: number; operator: string } | null {
+function findTopLevelOperator(
+  value: string,
+  operators: string[],
+): { index: number; operator: string } | null {
   let depth = 0;
   let quote: "'" | '"' | null = null;
   for (let index = 0; index < value.length; index += 1) {
@@ -342,7 +345,11 @@ function evaluatePythonExpression(
   const expression = stripOuterParentheses(rawExpression);
   const equality = findTopLevelOperator(expression, ["==", "!="]);
   if (equality) {
-    const left = evaluatePythonExpression(expression.slice(0, equality.index), execution, localVariables);
+    const left = evaluatePythonExpression(
+      expression.slice(0, equality.index),
+      execution,
+      localVariables,
+    );
     const right = evaluatePythonExpression(
       expression.slice(equality.index + equality.operator.length),
       execution,
@@ -353,7 +360,11 @@ function evaluatePythonExpression(
 
   const binary = findTopLevelOperator(expression, ["+", "-", "*"]);
   if (binary && binary.index > 0) {
-    const left = evaluatePythonExpression(expression.slice(0, binary.index), execution, localVariables);
+    const left = evaluatePythonExpression(
+      expression.slice(0, binary.index),
+      execution,
+      localVariables,
+    );
     const right = evaluatePythonExpression(
       expression.slice(binary.index + binary.operator.length),
       execution,
@@ -442,8 +453,7 @@ function executePythonFunction(
 
 function collectPythonFunctions(lines: string[]): Map<string, PythonFunction> {
   const functions = new Map<string, PythonFunction>();
-  const definitionPattern =
-    /^\s*def\s+([A-Za-z_]\w*)\(\s*([^)]*)\)\s*(?:->\s*[^:]+)?\s*:\s*$/;
+  const definitionPattern = /^\s*def\s+([A-Za-z_]\w*)\(\s*([^)]*)\)\s*(?:->\s*[^:]+)?\s*:\s*$/;
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index] ?? "";
     if (indentationWidth(line) !== 0) continue;
