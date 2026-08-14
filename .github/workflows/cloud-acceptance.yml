@@ -58,6 +58,14 @@ jobs:
             exit 1
           fi
           account=$(printf '%s' "${ROLE_ARN}" | cut -d: -f5)
+          # Ein unerwartetes ARN-Format wuerde hier still zu einer leeren Maske fuehren und die
+          # Kontonummer in den folgenden Schritten oeffentlich sichtbar lassen. Deshalb Abbruch.
+          case "${account}" in
+            "" | *[!0-9]*)
+              echo "::error::AWS_ROLE_ARN hat nicht das erwartete Format arn:aws:iam::<konto>:role/<name>."
+              exit 1
+              ;;
+          esac
           echo "::add-mask::${account}"
 
       - name: OIDC-Claims dieses Jobs anzeigen
@@ -165,12 +173,14 @@ jobs:
           BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
         run: |
           set -euo pipefail
-          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE_URL}/")
-          echo "GET ${BASE_URL}/ -> ${code}"
+          # Ein abschliessender Schraegstrich in der Variable ergaebe sonst eine doppelte Trennung.
+          base="${BASE_URL%/}"
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${base}/")
+          echo "GET ${base}/ -> ${code}"
           {
             echo "### Reale Anwendung"
             echo ""
-            echo "\`GET ${BASE_URL}/\` -> ${code}"
+            echo "\`GET ${base}/\` -> ${code}"
           } >> "${GITHUB_STEP_SUMMARY}"
           if [ "${code}" != "200" ]; then
             echo "::error::Die deployte Anwendung antwortet mit HTTP ${code} statt 200."
