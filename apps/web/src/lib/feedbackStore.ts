@@ -1,3 +1,5 @@
+import { browserLocalStorage } from "@/persistence/adapters/browserLocalStorage";
+
 export type FeedbackSource = "tutor" | "completion";
 
 export interface FeedbackContextSnapshot {
@@ -19,11 +21,6 @@ export interface FeedbackRecord {
 
 const STORAGE_KEY = "ai-training-lab:feedback:v1";
 const NOTICE_KEY = "ai-training-lab:feedback-notice:v1";
-
-function storage(): Storage | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage;
-}
 
 function createId(): string {
   if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
@@ -51,10 +48,10 @@ function isFeedbackRecord(value: unknown): value is FeedbackRecord {
 }
 
 export function loadFeedbackRecords(): FeedbackRecord[] {
-  const localStorage = storage();
-  if (!localStorage) return [];
+  const storage = browserLocalStorage();
+  if (!storage) return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.filter(isFeedbackRecord) : [];
@@ -68,8 +65,8 @@ export function saveFeedbackRecord(
   text: string,
   context: Omit<FeedbackContextSnapshot, "timestamp">,
 ): FeedbackRecord {
-  const localStorage = storage();
-  if (!localStorage) throw new Error("Feedback storage is not available");
+  const storage = browserLocalStorage();
+  if (!storage) throw new Error("Feedback storage is not available");
 
   const normalizedText = text.trim();
   if (!normalizedText) throw new TypeError("Feedback text must not be empty");
@@ -84,16 +81,16 @@ export function saveFeedbackRecord(
     },
   };
   const records = [...loadFeedbackRecords(), record];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  storage.setItem(STORAGE_KEY, JSON.stringify(records));
   return record;
 }
 
 export function hasAcknowledgedFeedbackNotice(): boolean {
-  return storage()?.getItem(NOTICE_KEY) === "1";
+  return browserLocalStorage()?.getItem(NOTICE_KEY) === "1";
 }
 
 export function acknowledgeFeedbackNotice(): void {
-  storage()?.setItem(NOTICE_KEY, "1");
+  browserLocalStorage()?.setItem(NOTICE_KEY, "1");
 }
 
 export function feedbackExportJson(): string {
