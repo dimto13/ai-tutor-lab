@@ -158,7 +158,11 @@ export function resolveHighestMinimumLevel(
     highestRank = Math.max(highestRank, getClassificationLevelRank(scheme, indicator.minLevel));
   }
 
-  return scheme.levels[highestRank].id;
+  const highestLevel = scheme.levels[highestRank];
+  if (!highestLevel) {
+    throw new Error("Classification scheme must contain at least one level");
+  }
+  return highestLevel.id;
 }
 
 export function isAiToolAllowed(
@@ -182,7 +186,11 @@ export function classifyByIndicators(
   const baseRank = getClassificationLevelRank(scheme, baseLevelId);
   const uncertain = options.uncertain === true;
   const resolvedRank = uncertain ? Math.min(baseRank + 1, scheme.levels.length - 1) : baseRank;
-  const levelId = scheme.levels[resolvedRank].id;
+  const level = scheme.levels[resolvedRank];
+  if (!level) {
+    throw new Error("Classification scheme must contain at least one level");
+  }
+  const levelId = level.id;
 
   return {
     levelId,
