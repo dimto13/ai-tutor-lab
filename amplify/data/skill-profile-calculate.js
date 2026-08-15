@@ -39,9 +39,12 @@ function technologyByScenario() {
 function resolveLevel(points, eligibleChallengeCount) {
   let level = "novice";
   for (const threshold of LEVEL_THRESHOLDS) {
-    if (points < threshold.minPoints) continue;
-    if (threshold.requiresEligibleChallenge && eligibleChallengeCount < 1) continue;
-    level = threshold.id;
+    if (
+      points >= threshold.minPoints &&
+      (!threshold.requiresEligibleChallenge || eligibleChallengeCount >= 1)
+    ) {
+      level = threshold.id;
+    }
   }
   return level;
 }
@@ -76,19 +79,20 @@ export function response(ctx) {
 
   for (const run of ctx.stash.skillScenarioRuns || []) {
     const technologyId = scenarioTechnology[run.scenarioId];
-    if (!technologyId) continue;
-    if (typeof run.sourceRevision === "number") {
-      sourceRevisionByTechnology[technologyId] = Math.max(
-        sourceRevisionByTechnology[technologyId],
-        run.sourceRevision,
-      );
-    }
-    if (run.evidenceEligible !== true) continue;
-
-    const evidenceKey = scenarioVersionKey(run.scenarioId, run.scenarioVersion);
-    eligibleScenarioVersionKeys[evidenceKey] = true;
-    if (run.mode === "challenge") {
-      eligibleChallengeKeysByTechnology[technologyId][evidenceKey] = true;
+    if (technologyId) {
+      if (typeof run.sourceRevision === "number") {
+        sourceRevisionByTechnology[technologyId] = Math.max(
+          sourceRevisionByTechnology[technologyId],
+          run.sourceRevision,
+        );
+      }
+      if (run.evidenceEligible === true) {
+        const evidenceKey = scenarioVersionKey(run.scenarioId, run.scenarioVersion);
+        eligibleScenarioVersionKeys[evidenceKey] = true;
+        if (run.mode === "challenge") {
+          eligibleChallengeKeysByTechnology[technologyId][evidenceKey] = true;
+        }
+      }
     }
   }
 
@@ -98,20 +102,21 @@ export function response(ctx) {
 
   for (const event of ctx.stash.skillScoreEvents || []) {
     const technologyId = scenarioTechnology[event.scenarioId];
-    if (!technologyId) continue;
-    if (typeof event.pointsDelta !== "number" || !Number.isFinite(event.pointsDelta)) {
-      util.error("Score event contains invalid points", "SkillProfileEvidenceError");
-    }
-    if (typeof event.sourceRevision === "number") {
-      sourceRevisionByTechnology[technologyId] = Math.max(
-        sourceRevisionByTechnology[technologyId],
-        event.sourceRevision,
-      );
-    }
+    if (technologyId) {
+      if (typeof event.pointsDelta !== "number" || !Number.isFinite(event.pointsDelta)) {
+        util.error("Score event contains invalid points", "SkillProfileEvidenceError");
+      }
+      if (typeof event.sourceRevision === "number") {
+        sourceRevisionByTechnology[technologyId] = Math.max(
+          sourceRevisionByTechnology[technologyId],
+          event.sourceRevision,
+        );
+      }
 
-    const evidenceKey = scenarioVersionKey(event.scenarioId, event.scenarioVersion);
-    if (eligibleScenarioVersionKeys[evidenceKey] === true) {
-      pointsByTechnology[technologyId] += event.pointsDelta;
+      const evidenceKey = scenarioVersionKey(event.scenarioId, event.scenarioVersion);
+      if (eligibleScenarioVersionKeys[evidenceKey] === true) {
+        pointsByTechnology[technologyId] += event.pointsDelta;
+      }
     }
   }
 
