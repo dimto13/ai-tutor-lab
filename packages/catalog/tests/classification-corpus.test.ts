@@ -13,9 +13,12 @@ const defaultSchemeUrl = new URL(
   import.meta.url,
 );
 
+async function loadRawCorpus() {
+  return JSON.parse(await readFile(corpusUrl, "utf8")) as unknown;
+}
+
 async function loadCorpus() {
-  const raw = JSON.parse(await readFile(corpusUrl, "utf8")) as unknown;
-  return parseSyntheticDocumentCorpus(raw).corpus;
+  return parseSyntheticDocumentCorpus(await loadRawCorpus()).corpus;
 }
 
 async function loadDefaultScheme() {
@@ -36,6 +39,39 @@ test("synthetic corpus covers the requested size, markings and boundary cases", 
   }
 });
 
+test("corpus schema rejects broken synthetic-data invariants", async () => {
+  const valid = parseSyntheticDocumentCorpus(await loadRawCorpus());
+
+  const duplicateId = structuredClone(valid);
+  const firstDocument = duplicateId.corpus.documents[0];
+  const secondDocument = duplicateId.corpus.documents[1];
+  assert.ok(firstDocument);
+  assert.ok(secondDocument);
+  secondDocument.id = firstDocument.id;
+  assert.throws(
+    () => parseSyntheticDocumentCorpus(duplicateId),
+    /duplicate synthetic document id/,
+  );
+
+  const missingMarker = structuredClone(valid);
+  const markerDocument = missingMarker.corpus.documents[0];
+  assert.ok(markerDocument);
+  markerDocument.content = "Pressemitteilung ohne Synthetik-Hinweis";
+  assert.throws(
+    () => parseSyntheticDocumentCorpus(missingMarker),
+    /synthetic marker must prefix document content/,
+  );
+
+  const tooFewBoundaryCases = structuredClone(valid);
+  for (const document of tooFewBoundaryCases.corpus.documents) {
+    delete document.boundaryCase;
+  }
+  assert.throws(
+    () => parseSyntheticDocumentCorpus(tooFewBoundaryCases),
+    /synthetic corpus must contain at least five boundary cases/,
+  );
+});
+
 test("document features and expected indicator lists stay synchronized", async () => {
   const corpus = await loadCorpus();
 
@@ -50,6 +86,30 @@ test("document features and expected indicator lists stay synchronized", async (
     const expectedIndicatorIds = [...new Set(document.expected.indicatorIds)].sort();
 
     assert.deepEqual(featureIndicatorIds, expectedIndicatorIds, document.id);
+  }
+});
+
+test("all corpus references exist in the shared ClassificationScheme", async () => {
+  const corpus = await loadCorpus();
+  const scheme = await loadDefaultScheme();
+  const knownIndicatorIds = new Set(scheme.indicators.map((indicator) => indicator.id));
+  const knownLevelIds = new Set(scheme.levels.map((level) => level.id));
+  const configuredTools = scheme.aiPolicy.map((policy) => policy.tool).sort();
+
+  for (const document of corpus.documents) {
+    for (const indicatorId of document.expected.indicatorIds) {
+      assert.ok(knownIndicatorIds.has(indicatorId), `${document.id}: ${indicatorId}`);
+    }
+    for (const feature of document.features) {
+      if (feature.indicatorId) {
+        assert.ok(
+          knownIndicatorIds.has(feature.indicatorId),
+          `${document.id}: ${feature.indicatorId}`,
+        );
+      }
+    }
+    assert.ok(knownLevelIds.has(document.expected.levelId), document.id);
+    assert.deepEqual(Object.keys(document.expected.aiDecisions).sort(), configuredTools, document.id);
   }
 });
 
