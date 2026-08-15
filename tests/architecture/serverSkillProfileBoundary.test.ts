@@ -74,12 +74,12 @@ test("skill evidence loaders use authenticated owner indexes, never scan and rej
 test("competence projection requires eligible run evidence for points and challenge gates", async () => {
   const source = await readFile(calculateUrl, "utf8");
 
-  assert.match(source, /run\.evidenceEligible !== true/);
+  assert.match(source, /run\.evidenceEligible === true/);
   assert.match(source, /eligibleScenarioVersionKeys\[evidenceKey\] = true/);
   assert.match(source, /run\.mode === ["']challenge["']/);
   assert.match(source, /eligibleScenarioVersionKeys\[evidenceKey\] === true/);
   assert.match(source, /pointsByTechnology\[technologyId\] \+= event\.pointsDelta/);
-  assert.match(source, /eligibleChallengeCount < 1/);
+  assert.match(source, /eligibleChallengeCount >= 1/);
   assert.doesNotMatch(source, /selfAssessedAiLevel/);
   assert.doesNotMatch(source, /UserPreferences/);
   assert.doesNotMatch(source, /provider/i);
