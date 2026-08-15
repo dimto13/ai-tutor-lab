@@ -67,7 +67,10 @@ test("default YAML, JSON schema and runtime schema stay synchronized", async () 
   );
 
   for (const level of document.classificationScheme.levels) {
-    assertExactKeys(level as unknown as Record<string, unknown>, jsonSchema.$defs.classificationLevel.required);
+    assertExactKeys(
+      level as unknown as Record<string, unknown>,
+      jsonSchema.$defs.classificationLevel.required,
+    );
   }
   for (const indicator of document.classificationScheme.indicators) {
     assertExactKeys(
@@ -76,7 +79,10 @@ test("default YAML, JSON schema and runtime schema stay synchronized", async () 
     );
   }
   for (const policy of document.classificationScheme.aiPolicy) {
-    assertExactKeys(policy as unknown as Record<string, unknown>, jsonSchema.$defs.aiToolPolicy.required);
+    assertExactKeys(
+      policy as unknown as Record<string, unknown>,
+      jsonSchema.$defs.aiToolPolicy.required,
+    );
   }
 });
 
