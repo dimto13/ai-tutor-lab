@@ -34,7 +34,7 @@ function ratioValue(raw: string): number | null {
 
 function scoreResolverDefinitions(source: string): ScoreDefinition[] {
   const pattern =
-    /"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*points:\s*(\d+(?:\.\d+)?),\s*estimatedMinutes:\s*(\d+(?:\.\d+)?),\s*fastRunThresholdRatio:\s*(null|\d+(?:\.\d+)?)\s*\}/g;
+    /"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*points:\s*(\d+(?:\.\d+)?),\s*estimatedMinutes:\s*(\d+(?:\.\d+)?),\s*fastRunThresholdRatio:\s*(null|\d+(?:\.\d+)?)\s*,?\s*\}/g;
   const definitions: ScoreDefinition[] = [];
 
   for (const match of source.matchAll(pattern)) {
@@ -54,7 +54,7 @@ function scoreResolverDefinitions(source: string): ScoreDefinition[] {
 
 function runResolverDefinitions(source: string): RunDefinition[] {
   const pattern =
-    /"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*estimatedMinutes:\s*(\d+(?:\.\d+)?),\s*fastRunThresholdRatio:\s*(null|\d+(?:\.\d+)?)\s*\}/g;
+    /"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*estimatedMinutes:\s*(\d+(?:\.\d+)?),\s*fastRunThresholdRatio:\s*(null|\d+(?:\.\d+)?)\s*,?\s*\}/g;
   const definitions: RunDefinition[] = [];
 
   for (const match of source.matchAll(pattern)) {
