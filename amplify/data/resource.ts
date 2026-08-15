@@ -103,16 +103,23 @@ export const schema = a.schema({
 
   ScoreEvent: a
     .model({
+      ownerKey: a.string().required(),
       tenantId: a.string().required(),
       userId: a.string().required(),
       scenarioId: a.string().required(),
+      scenarioVersion: a.string().required(),
+      sessionId: a.string().required(),
       mode: a.ref("TrainingMode").required(),
       eventType: a.string().required(),
-      pointsDelta: a.integer().required(),
+      pointsDelta: a.float().required(),
       occurredAt: a.float().required(),
-      sourceRevision: a.integer(),
-      metadata: a.json(),
+      sourceRevision: a.integer().required(),
+      metadata: a.json().required(),
+      appendToken: a.string().required(),
     })
+    .secondaryIndexes((index) => [
+      index("ownerKey").sortKeys(["occurredAt"]).name("scoreEventsByOwnerTime"),
+    ])
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
 
@@ -183,6 +190,26 @@ export const schema = a.schema({
     selfAssessedAiLevel: a.ref("SelfAssessedAiLevel"),
     revision: a.integer().required(),
     updatedAt: a.float().required(),
+  }),
+
+  ScoreEventEnvelope: a.customType({
+    id: a.id().required(),
+    tenantId: a.string().required(),
+    userId: a.string().required(),
+    scenarioId: a.string().required(),
+    scenarioVersion: a.string().required(),
+    sessionId: a.string().required(),
+    mode: a.ref("TrainingMode").required(),
+    eventType: a.string().required(),
+    points: a.float().required(),
+    occurredAt: a.float().required(),
+    sourceRevision: a.integer().required(),
+    breakdown: a.json().required(),
+  }),
+
+  ScoreAwardEnvelope: a.customType({
+    created: a.boolean().required(),
+    event: a.ref("ScoreEventEnvelope").required(),
   }),
 
   loadTrainingState: a
@@ -323,6 +350,37 @@ export const schema = a.schema({
       a.handler.custom({
         dataSource: a.ref("UserPreferences"),
         entry: "./save-user-preferences.js",
+      }),
+    ),
+
+  awardScenarioScore: a
+    .mutation()
+    .arguments({
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+    })
+    .returns(a.ref("ScoreAwardEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TrainingSession"),
+        entry: "./award-score-load-session.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("ScoreEvent"),
+        entry: "./award-score-write-event.js",
+      }),
+    ]),
+
+  listMyScoreEvents: a
+    .query()
+    .arguments({ limit: a.integer() })
+    .returns(a.ref("ScoreEventEnvelope").array())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("ScoreEvent"),
+        entry: "./list-score-events.js",
       }),
     ),
 });
