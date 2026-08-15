@@ -1,5 +1,6 @@
 import { BookOpen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { requestGuidedConceptHighlight } from "@/components/overlay/guidedConceptHighlight";
 import { segmentGlossaryText } from "@/lib/glossary";
 
 export function GlossaryText({
@@ -14,12 +15,15 @@ export function GlossaryText({
 
     const concept = segment.concept;
     return (
-      <Popover key={`${index}-${concept.key}`}>
+      <Popover
+        key={`${index}-${concept.key}`}
+        onOpenChange={(open) => requestGuidedConceptHighlight(open ? concept : null)}
+      >
         <PopoverTrigger asChild>
           <button
             type="button"
             className="inline-flex items-baseline gap-0.5 rounded-sm font-medium text-accent underline decoration-accent/50 decoration-dotted underline-offset-2 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`${concept.term}: Begriffserklärung öffnen`}
+            aria-label={`${concept.term}: Begriffserklärung öffnen und in der Oberfläche zeigen`}
           >
             {segment.text}
             <BookOpen className="h-2.5 w-2.5 self-center" aria-hidden="true" />
@@ -31,6 +35,11 @@ export function GlossaryText({
           </p>
           <h3 className="mt-1 text-sm font-semibold text-foreground">{concept.term}</h3>
           <p className="mt-2 text-[13px] leading-relaxed text-foreground">{concept.simple}</p>
+          {concept.uiTargets.length > 0 ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-accent">
+              Die blaue Markierung zeigt dir den zugehörigen Bereich in der Oberfläche.
+            </p>
+          ) : null}
           <details className="mt-3 text-[12px] text-muted-foreground">
             <summary className="cursor-pointer font-medium text-foreground">
               Technisch genauer
