@@ -31,9 +31,11 @@ function caller(ctx) {
 }
 
 function scoreOwnerKey(subject) {
-  return ["score-owner:v1", util.base64Encode(subject.tenantId), util.base64Encode(subject.userId)].join(
-    ".",
-  );
+  return [
+    "score-owner:v1",
+    util.base64Encode(subject.tenantId),
+    util.base64Encode(subject.userId),
+  ].join(".");
 }
 
 export function request(ctx) {
@@ -67,7 +69,10 @@ export function response(ctx) {
 
   for (const item of items) {
     if (item.tenantId !== subject.tenantId || item.userId !== subject.userId) {
-      util.error("Score ledger returned an event outside the authenticated owner scope", "ScoreScopeError");
+      util.error(
+        "Score ledger returned an event outside the authenticated owner scope",
+        "ScoreScopeError",
+      );
     }
     const breakdown = item.metadata ? item.metadata.breakdown : null;
     if (!breakdown) util.error("Persisted score event is invalid", "ScorePersistenceError");
