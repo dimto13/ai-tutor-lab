@@ -24,9 +24,7 @@ export function useScenarioScoreAward(
 ): ScenarioScoreAwardState {
   const service = useMemo(() => createApplicationScenarioScoreService(), []);
   const [retryToken, setRetryToken] = useState(0);
-  const [status, setStatus] = useState<ScenarioScoreAwardStatus>(
-    service ? "idle" : "unavailable",
-  );
+  const [status, setStatus] = useState<ScenarioScoreAwardStatus>(service ? "idle" : "unavailable");
   const [result, setResult] = useState<AppendScoreEventResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +80,8 @@ export function useScenarioScoreAward(
         })
         .catch((reason: unknown) => {
           if (cancelled) return;
-          const message = reason instanceof Error ? reason.message : "Score konnte nicht geladen werden";
+          const message =
+            reason instanceof Error ? reason.message : "Score konnte nicht geladen werden";
           setError(message);
           setStatus("error");
           scheduleRetry(run);
