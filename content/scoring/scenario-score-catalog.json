@@ -1,46 +1,173 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "scenarios": [
-    { "id": "artifact-preview-foundation.guided", "mode": "guided", "version": "1", "points": 40 },
-    { "id": "claude-code-basics.guided", "mode": "guided", "version": "1", "points": 60 },
-    { "id": "copilot-basics.challenge", "mode": "challenge", "version": "1", "points": 180 },
-    { "id": "copilot-basics.explore", "mode": "explore", "version": "1", "points": 70 },
-    { "id": "copilot-basics.guided", "mode": "guided", "version": "1", "points": 140 },
+    {
+      "id": "artifact-preview-foundation.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 40,
+      "estimatedMinutes": 5,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "claude-code-basics.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 60,
+      "estimatedMinutes": 8,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "copilot-basics.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 180,
+      "estimatedMinutes": 8,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "copilot-basics.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 70,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "copilot-basics.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 140,
+      "estimatedMinutes": 16,
+      "fastRunThresholdRatio": 0.25
+    },
     {
       "id": "developer-workflow-basics.challenge",
       "mode": "challenge",
       "version": "1",
-      "points": 220
+      "points": 220,
+      "estimatedMinutes": 12,
+      "fastRunThresholdRatio": 0.25
     },
-    { "id": "developer-workflow-basics.explore", "mode": "explore", "version": "1", "points": 80 },
-    { "id": "git-basics", "mode": "guided", "version": "1", "points": 160 },
-    { "id": "html-page-workflow.challenge", "mode": "challenge", "version": "1", "points": 280 },
-    { "id": "html-page-workflow.explore", "mode": "explore", "version": "1", "points": 80 },
-    { "id": "html-page-workflow.guided", "mode": "guided", "version": "1", "points": 180 },
-    { "id": "research-workflow.challenge", "mode": "challenge", "version": "1", "points": 260 },
-    { "id": "research-workflow.explore", "mode": "explore", "version": "1", "points": 80 },
-    { "id": "research-workflow.guided", "mode": "guided", "version": "1", "points": 170 },
+    {
+      "id": "developer-workflow-basics.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 80,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "git-basics",
+      "mode": "guided",
+      "version": "1",
+      "points": 160,
+      "estimatedMinutes": 17,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "html-page-workflow.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 280,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "html-page-workflow.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 80,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "html-page-workflow.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 180,
+      "estimatedMinutes": 18,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "research-workflow.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 260,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "research-workflow.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 80,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "research-workflow.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 170,
+      "estimatedMinutes": 18,
+      "fastRunThresholdRatio": 0.25
+    },
     {
       "id": "source-control-platform-basics.challenge",
       "mode": "challenge",
       "version": "1",
-      "points": 220
+      "points": 220,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
     },
     {
       "id": "source-control-platform-basics.explore",
       "mode": "explore",
       "version": "1",
-      "points": 60
+      "points": 60,
+      "estimatedMinutes": 12,
+      "fastRunThresholdRatio": 0.25
     },
     {
       "id": "source-control-platform-basics.guided",
       "mode": "guided",
       "version": "1",
-      "points": 140
+      "points": 140,
+      "estimatedMinutes": 18,
+      "fastRunThresholdRatio": 0.25
     },
-    { "id": "vscode-basics.challenge", "mode": "challenge", "version": "1", "points": 100 },
-    { "id": "vscode-basics.explore", "mode": "explore", "version": "1", "points": 100 },
-    { "id": "vscode-basics.guided", "mode": "guided", "version": "1", "points": 100 },
-    { "id": "vscode-shortcuts.challenge", "mode": "challenge", "version": "1", "points": 120 }
+    {
+      "id": "vscode-basics.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 100,
+      "estimatedMinutes": 8,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "vscode-basics.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 100,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "vscode-basics.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 100,
+      "estimatedMinutes": 14,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "vscode-shortcuts.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 120,
+      "estimatedMinutes": 2,
+      "fastRunThresholdRatio": null
+    }
   ]
 }
