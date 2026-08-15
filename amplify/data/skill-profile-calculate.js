@@ -93,7 +93,8 @@ export function response(ctx) {
   }
 
   const pointsByTechnology = {};
-  for (const technologyId of Object.keys(TECHNOLOGY_SCENARIOS)) pointsByTechnology[technologyId] = 0;
+  for (const technologyId of Object.keys(TECHNOLOGY_SCENARIOS))
+    pointsByTechnology[technologyId] = 0;
 
   for (const event of ctx.stash.skillScoreEvents || []) {
     const technologyId = scenarioTechnology[event.scenarioId];
