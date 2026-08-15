@@ -11,6 +11,8 @@
       "instruction": "Merke dir: Die Activity Bar wählt einen Hauptbereich aus. Ein Klick auf eines ihrer Symbole zeigt rechts daneben den zugehörigen Inhalt in der Primary Side Bar an.",
       "why": "Wenn du die Activity Bar als Navigation verstehst, kannst du die linke Seite von VS Code schneller einordnen, statt einzelne Symbole auswendig zu lernen.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.activityBar.explorer",
+      "highlightTooltip": "Die blaue Umrandung zeigt dir die Activity Bar ganz links. Ihre Symbole wechseln den Hauptbereich.",
       "successMessage": "Die Activity Bar ist als Navigation zwischen den Hauptbereichen eingeordnet."
     },
     {
@@ -22,6 +24,8 @@
       "instruction": "Merke dir: Die Activity Bar steuert vor allem die Primary Side Bar. Die Secondary Side Bar schafft Platz für zusätzliche Views, ohne den Inhalt der Primary Side Bar zu ersetzen.",
       "why": "Wenn du Primary und Secondary Side Bar unterscheidest, kannst du später gleichzeitig Projektstruktur und zusätzliche Werkzeuge wie Chat räumlich korrekt einordnen.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.sideBar",
+      "highlightTooltip": "Die blaue Umrandung zeigt dir die Primary Side Bar neben der Activity Bar.",
       "successMessage": "Primary und Secondary Side Bar sind als getrennte Bereiche eingeordnet."
     },
     {
@@ -33,6 +37,8 @@
       "instruction": "Merke dir: In der Navigation suchst du eine Datei aus; im Editor arbeitest du anschließend an ihrem Inhalt.",
       "why": "Die Trennung hilft dir zu erkennen, ob du gerade eine Datei auswählst oder ihren Inhalt bearbeitest.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.editor",
+      "highlightTooltip": "Die blaue Umrandung zeigt dir den Editor als zentrale Arbeitsfläche.",
       "successMessage": "Der Editor ist als zentrale Arbeitsfläche für Dateiinhalt eingeordnet."
     },
     {
@@ -44,6 +50,8 @@
       "instruction": "Merke dir: Der Editor enthält den Dateiinhalt; das Panel ergänzt ihn um zusätzliche Werkzeuge und Ausgaben.",
       "why": "Wenn du das Panel als Container verstehst, kannst du die unterschiedlichen Ansichten darin später leichter einordnen.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.panel.terminal",
+      "highlightTooltip": "Das Panel liegt unter dem Editor. Sobald es geöffnet ist, werden seine Views dort visuell hervorgehoben.",
       "successMessage": "Das Panel ist als zusätzlicher Werkzeug- und Informationsbereich eingeordnet."
     },
     {
@@ -55,6 +63,8 @@
       "instruction": "Merke dir: Die Status Bar informiert dich über den aktuellen Zustand, zum Beispiel über Zeile und Spalte oder den Typ einer geöffneten Datei, und enthält teilweise direkt anklickbare Aktionen.",
       "why": "Statusinformationen sind dort dauerhaft sichtbar, ohne dass du dafür ein eigenes Fenster öffnen musst.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.statusBar",
+      "highlightTooltip": "Die blaue Umrandung zeigt dir die Status Bar am unteren Rand von VS Code.",
       "successMessage": "Die Status Bar ist als kompakte Zustandsanzeige eingeordnet."
     },
     {
@@ -66,6 +76,8 @@
       "instruction": "Merke dir: Größere Bereiche wie Primary oder Secondary Side Bar sowie das Panel können mehrere Views enthalten.",
       "why": "Der Begriff View taucht in VS Code häufig auf. Wenn du Container und konkrete Ansicht unterscheidest, werden Beschreibungen der Oberfläche deutlich verständlicher.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.sideBar",
+      "highlightTooltip": "Die Side Bar ist ein Beispiel für einen Container, in dem konkrete Views angezeigt werden.",
       "successMessage": "Eine View ist als konkrete Ansicht innerhalb eines größeren Bereichs eingeordnet."
     },
     {
@@ -77,6 +89,8 @@
       "instruction": "Merke dir: Im Explorer findest und organisierst du Dateien und Ordner; den Inhalt einer geöffneten Datei bearbeitest du anschließend im Editor (der zentralen Arbeitsfläche).",
       "why": "Diese Trennung zwischen Dateistruktur und Dateiinhalt ist die Grundlage für fast alle weiteren Schritte in VS Code.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.explorer.tree",
+      "highlightTooltip": "Die Markierung verbindet den Explorer-Einstieg links mit seinem Datei- und Ordnerbereich, sobald dieser sichtbar ist.",
       "successMessage": "Der Explorer ist als Datei- und Ordnerübersicht eingeordnet."
     },
     {
@@ -88,6 +102,8 @@
       "instruction": "Merke dir: Das Terminal ist eine eigene View (Ansicht) im Panel (Zusatzbereich unter der Arbeitsfläche). Du musst Befehle nicht auswendig lernen; wichtig ist zunächst, dass du erkennst, wo Befehle eingegeben und ihre Ausgaben angezeigt werden.",
       "why": "Spätere KI-Workflows können Befehle vorschlagen oder ausführen. Du solltest deshalb erkennen können, was im Terminal passiert, auch wenn du selbst nicht programmierst.",
       "helpLevels": ["", "", ""],
+      "highlightTarget": "vscode.panel.terminal",
+      "highlightTooltip": "Das Terminal ist eine View im unteren Panel und wird dort markiert, sobald das Panel geöffnet ist.",
       "successMessage": "Das Terminal ist als textbasierte Befehlsansicht im Panel eingeordnet."
     }
   ]
