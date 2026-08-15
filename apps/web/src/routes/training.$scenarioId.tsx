@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { SCORE_MODE_MULTIPLIER } from "@ai-train-lab/training-engine";
 import {
   BookOpen,
   Clock3,
@@ -188,7 +189,6 @@ function TrainingLayout() {
     isReady,
     feedback,
     helpLevel,
-    scoreMultiplier,
     challengeRemainingSeconds,
   } = useTraining();
   const [highlightsOn, setHighlightsOn] = useState(true);
@@ -235,7 +235,7 @@ function TrainingLayout() {
           {scenario.title}
         </span>
         <span className="hidden shrink-0 rounded border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent md:inline-flex">
-          {mode} ×{scoreMultiplier}
+          {mode} ×{SCORE_MODE_MULTIPLIER[mode]}
         </span>
         <span className="hidden h-4 w-px shrink-0 bg-border xl:block" />
         <span className="hidden shrink-0 whitespace-nowrap text-[13px] text-foreground xl:inline">
