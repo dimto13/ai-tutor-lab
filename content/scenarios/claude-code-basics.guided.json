@@ -1,0 +1,183 @@
+{
+  "id": "claude-code-basics.guided",
+  "moduleId": "claude-code-basics",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Claude Code – Vorschlag prüfen und freigeben",
+  "description": "Gib einem Agenten auf der Kommandozeile ein Ziel in eigenen Worten, lies seinen Arbeitsplan und entscheide bewusst über die vorgeschlagene Änderung.",
+  "learningObjectives": [
+    "start_cli_agent_session",
+    "instruct_agent_in_natural_language",
+    "inspect_agent_change_proposal",
+    "decide_on_agent_change"
+  ],
+  "environment": {
+    "productId": "claude-code",
+    "version": "1.x",
+    "runtimeAdapterId": "claude-code-cli-simulator",
+    "seed": {
+      "claudeCode": {
+        "model": "claude-opus-5",
+        "cwd": "~/onboarding-guide",
+        "files": {
+          "README.md": "# Onboarding Guide\n\nEine kurze Sammlung für neue Teammitglieder.\n",
+          "docs/setup.md": "# Einrichtung\n\nNoch offen.\n"
+        },
+        "proposals": [
+          {
+            "id": "readme-installation",
+            "path": "README.md",
+            "label": "Abschnitt „Erste Schritte“ ergänzen",
+            "summary": "Fügt der README einen kurzen Abschnitt mit den ersten Schritten hinzu.",
+            "promptMatch": [
+              "erste schritte",
+              "einstieg",
+              "einrichtung",
+              "readme",
+              "anleitung",
+              "starten"
+            ],
+            "planSteps": [
+              "README.md im Arbeitsverzeichnis lesen",
+              "Abschnitt „Erste Schritte“ formulieren",
+              "Änderung zur Freigabe vorlegen"
+            ],
+            "nextContent": "# Onboarding Guide\n\nEine kurze Sammlung für neue Teammitglieder.\n\n## Erste Schritte\n\n1. Lies docs/setup.md.\n2. Melde dich im Team-Kanal.\n3. Bearbeite die erste Übungsaufgabe.\n"
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 8,
+  "points": 60,
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "cli_agent.session",
+      "cli_agent.transcript",
+      "cli_agent.prompt",
+      "cli_agent.plan",
+      "cli_agent.proposed_change",
+      "cli_agent.permission",
+      "cli_agent.workspace"
+    ]
+  },
+  "steps": [
+    {
+      "id": "start-agent-session",
+      "title": "Sitzung starten",
+      "description": "Ein Agent auf der Kommandozeile arbeitet immer in einem bestimmten Ordner. Dieser Ordner legt fest, welche Dateien er überhaupt sehen und ändern kann.",
+      "instruction": "Starte die Sitzung und lies im Sitzungskopf, in welchem Arbeitsverzeichnis der Agent arbeitet.",
+      "why": "Wer den Wirkungsbereich kennt, kann einschätzen, welche Dateien eine Anweisung überhaupt betreffen kann.",
+      "helpLevels": [
+        "Der Sitzungskopf steht ganz oben und nennt Modell und Ordner.",
+        "Starte die Sitzung über den Sitzungskopf.",
+        "Der Sitzungskopf am oberen Rand wird hervorgehoben. Starte dort die Sitzung und lies den angezeigten Ordner ~/onboarding-guide."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "terminal.opened"
+      },
+      "highlightTarget": "claude.session.header",
+      "highlightTooltip": "Modell und Arbeitsverzeichnis der Sitzung.",
+      "successMessage": "Die Sitzung läuft im Ordner ~/onboarding-guide."
+    },
+    {
+      "id": "list-workspace-files",
+      "title": "Dateien im Arbeitsverzeichnis ansehen",
+      "description": "Bevor du etwas änderst, lohnt sich ein Blick auf den Bestand. Ein gewöhnliches Kommando reicht dafür aus.",
+      "instruction": "Lass dir mit dem Kommando ls die Dateien im Arbeitsverzeichnis auflisten.",
+      "why": "Der Agent ersetzt gewöhnliche Kommandos nicht; beide Wege stehen in derselben Sitzung nebeneinander.",
+      "helpLevels": [
+        "Kommandos tippst du in dieselbe Zeile wie deine Anweisungen an den Agenten.",
+        "Tippe ls und bestätige die Eingabe.",
+        "Die Dateiliste des Arbeitsverzeichnisses wird hervorgehoben. Tippe in der Eingabezeile ls und bestätige mit der Eingabetaste."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "terminal.command.executed",
+        "containsAny": {
+          "command": ["ls", "dir"]
+        }
+      },
+      "highlightTarget": "claude.workspace.files",
+      "highlightTooltip": "Diese Dateien liegen im Wirkungsbereich der Sitzung.",
+      "successMessage": "Du siehst den Bestand: README.md und docs/setup.md."
+    },
+    {
+      "id": "ask-agent-for-change",
+      "title": "Ziel in eigenen Worten formulieren",
+      "description": "Statt eine Befehlssyntax zu lernen, beschreibst du dem Agenten das Ziel. Er leitet daraus einen Arbeitsplan ab.",
+      "instruction": "Bitte den Agenten in eigenen Worten, in der README einen Abschnitt mit den ersten Schritten zu ergänzen.",
+      "why": "Eine klare Zielbeschreibung führt zu einem nachvollziehbaren Plan; die Formulierung selbst darfst du frei wählen.",
+      "helpLevels": [
+        "Schreibe in die Eingabezeile, was inhaltlich entstehen soll.",
+        "Formuliere eine Bitte, die den Einstieg in der README ergänzt.",
+        "Die Eingabezeile wird hervorgehoben. Schreibe dort sinngemäß „Ergänze in der README einen Abschnitt mit den ersten Schritten“ und bestätige die Eingabe."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "ai.prompt.submitted",
+        "match": {
+          "proposalId": "readme-installation"
+        }
+      },
+      "highlightTarget": "claude.prompt.input",
+      "highlightTooltip": "Hier beschreibst du das Ziel in natürlicher Sprache.",
+      "successMessage": "Der Agent hat dein Ziel verstanden und einen Arbeitsplan vorgelegt."
+    },
+    {
+      "id": "inspect-proposed-change",
+      "title": "Vorschlag ansehen, bevor er wirkt",
+      "description": "Der Agent hat noch nichts geändert. Er zeigt zuerst, welche Datei er wie anpassen möchte.",
+      "instruction": "Sieh dir den Änderungsvorschlag an und prüfe, welche Datei betroffen ist.",
+      "why": "Zwischen Vorschlag und Wirkung liegt bewusst ein Prüfschritt; nur so bleibt die Entscheidung bei dir.",
+      "helpLevels": [
+        "Der Vorschlag steht unter dem Arbeitsplan und ist zunächst zugeklappt.",
+        "Öffne den Änderungsvorschlag und lies die genannte Zieldatei.",
+        "Der Änderungsvorschlag wird hervorgehoben. Klappe ihn dort auf und prüfe, dass als Zieldatei README.md genannt ist."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "file.opened",
+            "match": {
+              "path": "README.md",
+              "proposalId": "readme-installation"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "claude.changes.viewed",
+            "includes": "readme-installation"
+          }
+        ]
+      },
+      "highlightTarget": "claude.diff",
+      "highlightTooltip": "Vorgeschlagener neuer Inhalt – noch nicht übernommen.",
+      "successMessage": "Der Vorschlag betrifft README.md und wartet auf deine Entscheidung."
+    },
+    {
+      "id": "approve-proposed-change",
+      "title": "Änderung bewusst freigeben",
+      "description": "Erst mit deiner Freigabe wird aus dem Vorschlag ein tatsächlicher Dateizustand. Ohne Freigabe bliebe alles unverändert.",
+      "instruction": "Gib die vorgeschlagene Änderung an README.md frei.",
+      "why": "Die Freigabe ist der Punkt, an dem du die Verantwortung für den Arbeitsstand ausdrücklich übernimmst.",
+      "helpLevels": [
+        "Zur Entscheidung stehen Freigeben und Ablehnen bereit.",
+        "Wähle die Freigabe für den Vorschlag zu README.md.",
+        "Die Freigabe wird hervorgehoben. Bestätige dort die Änderung an README.md, damit der neue Abschnitt wirklich in der Datei landet."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "claude.changes.applied",
+        "includes": "readme-installation"
+      },
+      "highlightTarget": "claude.approval.approve",
+      "highlightTooltip": "Erst hier wird die Änderung wirksam.",
+      "successMessage": "README.md enthält jetzt den Abschnitt „Erste Schritte“ – freigegeben durch dich."
+    }
+  ]
+}

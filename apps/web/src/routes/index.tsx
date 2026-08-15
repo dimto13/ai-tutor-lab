@@ -163,6 +163,25 @@ const toolTrainings: TrainingCardModel[] = [
       },
     ],
   },
+  {
+    id: "cli-agents",
+    scenarioId: null,
+    title: "CLI-Agenten kennenlernen",
+    description:
+      "Erster Einstieg in einen Agenten auf der Kommandozeile: eine Sitzung starten, ein Ziel in eigenen Worten formulieren, den Arbeitsplan lesen und über eine vorgeschlagene Änderung selbst entscheiden.",
+    icon: Terminal,
+    available: true,
+    label: "CLI Agent · Guided",
+    modes: [
+      {
+        scenarioId: "claude-code-basics.guided",
+        label: "Guided",
+        description: "Vorschlag prüfen und bewusst freigeben",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+    ],
+  },
 ];
 
 const workflowTrainings: TrainingCardModel[] = [
@@ -268,15 +287,6 @@ const workflowTrainings: TrainingCardModel[] = [
 ];
 
 const otherTrainings: TrainingCardModel[] = [
-  {
-    id: "cli-agents",
-    scenarioId: null,
-    title: "CLI-Agenten kennenlernen",
-    description: "Agenten im Terminal steuern, Aufgaben delegieren und Ergebnisse prüfen.",
-    icon: Terminal,
-    available: false,
-    label: "CLI Agent",
-  },
   {
     id: "m365-copilot",
     scenarioId: null,

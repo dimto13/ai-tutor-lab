@@ -1,7 +1,9 @@
 import { useEffect } from "react";
+import { claudeCodeRuntime } from "@/runtime/claudeCodeRuntime";
 import { sourceControlPlatformRuntime } from "@/runtime/sourceControlPlatformRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { useTraining } from "@/state/trainingStore";
+import { ClaudeCodeWorkspace } from "./ClaudeCodeWorkspace";
 import { SourceControlPlatformWorkspace } from "./SourceControlPlatformWorkspace";
 import { Workspace } from "./Workspace";
 
@@ -14,6 +16,9 @@ const snapshotVscode: RuntimeSnapshotReader = () => vscodeRuntime.snapshot();
 const subscribeSourceControlState: RuntimeStateSubscription = (handler) =>
   sourceControlPlatformRuntime.subscribeState((_state, reason) => handler(reason));
 const snapshotSourceControl: RuntimeSnapshotReader = () => sourceControlPlatformRuntime.snapshot();
+const subscribeClaudeCodeState: RuntimeStateSubscription = (handler) =>
+  claudeCodeRuntime.subscribeState((_state, reason) => handler(reason));
+const snapshotClaudeCode: RuntimeSnapshotReader = () => claudeCodeRuntime.snapshot();
 
 function useRuntimePersistence(
   runtimeId: string,
@@ -76,10 +81,18 @@ function PersistedSourceControlPlatformWorkspace() {
   return <SourceControlPlatformWorkspace />;
 }
 
+function PersistedClaudeCodeWorkspace() {
+  useRuntimePersistence(claudeCodeRuntime.id, subscribeClaudeCodeState, snapshotClaudeCode);
+  return <ClaudeCodeWorkspace />;
+}
+
 export function RuntimeWorkspace() {
   const { scenario } = useTraining();
   if (scenario.environment?.runtimeAdapterId === sourceControlPlatformRuntime.id) {
     return <PersistedSourceControlPlatformWorkspace />;
+  }
+  if (scenario.environment?.runtimeAdapterId === claudeCodeRuntime.id) {
+    return <PersistedClaudeCodeWorkspace />;
   }
   return <PersistedVscodeWorkspace />;
 }

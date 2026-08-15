@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "language": "de",
+  "technologyConcepts": {
+    "cli_agent": [
+      "cli_agent.session",
+      "cli_agent.transcript",
+      "cli_agent.prompt",
+      "cli_agent.plan",
+      "cli_agent.proposed_change",
+      "cli_agent.permission",
+      "cli_agent.workspace"
+    ]
+  },
+  "concepts": [
+    {
+      "key": "cli_agent.session",
+      "term": "Agentensitzung",
+      "aliases": ["Sitzung", "CLI-Sitzung"],
+      "simple": "Eine Agentensitzung ist ein laufendes Gespräch mit einem KI-Agenten im Terminal. Sie merkt sich den bisherigen Verlauf und das Arbeitsverzeichnis.",
+      "advanced": "Eine Agentensitzung bündelt Verlauf, Arbeitsverzeichnis und Modellwahl zu einem Kontext. Alle Aktionen des Agenten werden dieser Sitzung zugeordnet, wodurch Nachvollziehbarkeit und Wiederaufnahme möglich bleiben.",
+      "uiTargets": ["claude.session.header"]
+    },
+    {
+      "key": "cli_agent.transcript",
+      "term": "Verlauf",
+      "aliases": ["Transcript", "Sitzungsverlauf"],
+      "simple": "Der Verlauf zeigt untereinander, was du gefragt hast und was der Agent geantwortet oder getan hat.",
+      "advanced": "Der Verlauf ist die chronologische Protokollspur einer Sitzung aus Nutzereingaben, Agentenantworten und Systemmeldungen. Er ist die Grundlage dafür, eine Agentenentscheidung im Nachhinein zu prüfen.",
+      "uiTargets": ["claude.transcript"]
+    },
+    {
+      "key": "cli_agent.prompt",
+      "term": "Eingabeaufforderung",
+      "aliases": ["Prompt", "Anweisung"],
+      "simple": "Die Eingabeaufforderung ist die Zeile, in die du dem Agenten in eigenen Worten sagst, was er tun soll.",
+      "advanced": "Ein Prompt beschreibt das Ziel in natürlicher Sprache statt in Befehlssyntax. Der Agent leitet daraus Arbeitsschritte und Werkzeugaufrufe ab; präzise Zielangaben verringern Fehlinterpretationen.",
+      "uiTargets": ["claude.prompt.input"]
+    },
+    {
+      "key": "cli_agent.plan",
+      "term": "Arbeitsplan",
+      "aliases": ["Plan", "Vorgehensvorschlag"],
+      "simple": "Der Arbeitsplan ist die Liste der Schritte, die der Agent vor der Umsetzung ankündigt.",
+      "advanced": "Ein Arbeitsplan macht die beabsichtigte Schrittfolge vor der Ausführung sichtbar. Er erlaubt eine Kurskorrektur, bevor Änderungen am Arbeitsverzeichnis entstehen.",
+      "uiTargets": ["claude.plan"]
+    },
+    {
+      "key": "cli_agent.proposed_change",
+      "term": "Änderungsvorschlag",
+      "aliases": ["Vorgeschlagene Änderung", "Diff"],
+      "simple": "Ein Änderungsvorschlag zeigt, was der Agent an einer Datei ändern möchte, bevor die Änderung wirklich passiert.",
+      "advanced": "Ein Änderungsvorschlag ist ein noch nicht angewendeter Bearbeitungsschritt mit Zieldatei und neuem Inhalt. Erst die Freigabe überführt ihn in den tatsächlichen Dateizustand.",
+      "uiTargets": ["claude.diff"]
+    },
+    {
+      "key": "cli_agent.permission",
+      "term": "Freigabe",
+      "aliases": ["Berechtigung", "Bestätigung"],
+      "simple": "Vor einer Änderung fragt der Agent nach. Du entscheidest, ob er sie ausführen darf oder nicht.",
+      "advanced": "Die Freigabe ist der bewusste Kontrollpunkt zwischen Vorschlag und Wirkung. Sie hält die Verantwortung für Änderungen bei der Person und verhindert, dass ein Agent unbemerkt in den Arbeitsstand eingreift.",
+      "uiTargets": ["claude.approval.approve", "claude.approval.reject"]
+    },
+    {
+      "key": "cli_agent.workspace",
+      "term": "Arbeitsverzeichnis",
+      "aliases": ["Working Directory", "Projektverzeichnis"],
+      "simple": "Das Arbeitsverzeichnis ist der Ordner, in dem der Agent arbeitet. Nur dessen Dateien sieht und ändert er.",
+      "advanced": "Das Arbeitsverzeichnis begrenzt den Wirkungsbereich einer Agentensitzung. Es bestimmt, welche Dateien als Kontext gelesen und welche durch freigegebene Änderungen geschrieben werden können.",
+      "uiTargets": ["claude.workspace.files"]
+    }
+  ]
+}

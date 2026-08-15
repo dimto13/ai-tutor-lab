@@ -141,6 +141,26 @@
       "id": "explain_clone_fork_remote",
       "title": "Clone, Fork und Remote erklären",
       "description": "Lokale Kopie, serverseitige Repository-Kopie und gespeicherte Remote-Adresse voneinander unterscheiden."
+    },
+    {
+      "id": "start_cli_agent_session",
+      "title": "Agentensitzung starten und einordnen",
+      "description": "Eine Sitzung mit einem Agenten auf der Kommandozeile starten und erkennen, welches Arbeitsverzeichnis dabei den Wirkungsbereich festlegt."
+    },
+    {
+      "id": "instruct_agent_in_natural_language",
+      "title": "Einem Agenten ein Ziel in eigenen Worten geben",
+      "description": "Ein Arbeitsziel in natürlicher Sprache formulieren, statt eine Befehlssyntax auswendig zu lernen, und den daraus abgeleiteten Arbeitsplan lesen."
+    },
+    {
+      "id": "inspect_agent_change_proposal",
+      "title": "Änderungsvorschlag vor der Übernahme prüfen",
+      "description": "Erkennen, dass ein Agent Änderungen zunächst nur vorschlägt, und den Vorschlag mit Zieldatei und neuem Inhalt vor der Entscheidung ansehen."
+    },
+    {
+      "id": "decide_on_agent_change",
+      "title": "Über eine vorgeschlagene Änderung entscheiden",
+      "description": "Eine vorgeschlagene Änderung bewusst freigeben oder ablehnen und dabei die Verantwortung für den Arbeitsstand behalten."
     }
   ]
 }

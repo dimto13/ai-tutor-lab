@@ -90,7 +90,8 @@
       "id": "claude-code@1.x",
       "productId": "claude-code",
       "version": "1.x",
-      "capabilities": ["terminal", "chat", "agent_mode"]
+      "capabilities": ["terminal", "chat", "agent_mode"],
+      "runtimeAdapterIds": ["claude-code-cli-simulator"]
     },
     {
       "id": "github@simulated-2026-08",
@@ -147,6 +148,12 @@
       "integrationId": "artifact-preview-in-vscode",
       "kind": "simulator",
       "capabilities": ["artifact_preview"]
+    },
+    {
+      "id": "claude-code-cli-simulator",
+      "productId": "claude-code",
+      "kind": "simulator",
+      "capabilities": ["terminal", "chat", "agent_mode"]
     }
   ]
 }
