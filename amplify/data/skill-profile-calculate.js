@@ -50,6 +50,10 @@ function roundPoints(points) {
   return Math.round(points * 100) / 100;
 }
 
+function scenarioVersionKey(scenarioId, scenarioVersion) {
+  return `${scenarioId}@${scenarioVersion}`;
+}
+
 export function request() {
   return { payload: {} };
 }
@@ -61,15 +65,35 @@ export function response(ctx) {
   }
 
   const scenarioTechnology = technologyByScenario();
-  const profiles = {};
+  const eligibleScenarioVersionKeys = {};
+  const eligibleChallengeKeysByTechnology = {};
+  const sourceRevisionByTechnology = {};
+
   for (const technologyId of Object.keys(TECHNOLOGY_SCENARIOS)) {
-    profiles[technologyId] = {
-      technologyId,
-      points: 0,
-      eligibleChallengeKeys: {},
-      sourceRevision: 0,
-    };
+    eligibleChallengeKeysByTechnology[technologyId] = {};
+    sourceRevisionByTechnology[technologyId] = 0;
   }
+
+  for (const run of ctx.stash.skillScenarioRuns || []) {
+    const technologyId = scenarioTechnology[run.scenarioId];
+    if (!technologyId) continue;
+    if (typeof run.sourceRevision === "number") {
+      sourceRevisionByTechnology[technologyId] = Math.max(
+        sourceRevisionByTechnology[technologyId],
+        run.sourceRevision,
+      );
+    }
+    if (run.evidenceEligible !== true) continue;
+
+    const evidenceKey = scenarioVersionKey(run.scenarioId, run.scenarioVersion);
+    eligibleScenarioVersionKeys[evidenceKey] = true;
+    if (run.mode === "challenge") {
+      eligibleChallengeKeysByTechnology[technologyId][evidenceKey] = true;
+    }
+  }
+
+  const pointsByTechnology = {};
+  for (const technologyId of Object.keys(TECHNOLOGY_SCENARIOS)) pointsByTechnology[technologyId] = 0;
 
   for (const event of ctx.stash.skillScoreEvents || []) {
     const technologyId = scenarioTechnology[event.scenarioId];
@@ -77,32 +101,26 @@ export function response(ctx) {
     if (typeof event.pointsDelta !== "number" || !Number.isFinite(event.pointsDelta)) {
       util.error("Score event contains invalid points", "SkillProfileEvidenceError");
     }
-    const profile = profiles[technologyId];
-    profile.points += event.pointsDelta;
     if (typeof event.sourceRevision === "number") {
-      profile.sourceRevision = Math.max(profile.sourceRevision, event.sourceRevision);
+      sourceRevisionByTechnology[technologyId] = Math.max(
+        sourceRevisionByTechnology[technologyId],
+        event.sourceRevision,
+      );
     }
-  }
 
-  for (const run of ctx.stash.skillScenarioRuns || []) {
-    const technologyId = scenarioTechnology[run.scenarioId];
-    if (!technologyId) continue;
-    const profile = profiles[technologyId];
-    if (typeof run.sourceRevision === "number") {
-      profile.sourceRevision = Math.max(profile.sourceRevision, run.sourceRevision);
-    }
-    if (run.mode === "challenge" && run.evidenceEligible === true) {
-      const challengeKey = `${run.scenarioId}@${run.scenarioVersion}`;
-      profile.eligibleChallengeKeys[challengeKey] = true;
+    const evidenceKey = scenarioVersionKey(event.scenarioId, event.scenarioVersion);
+    if (eligibleScenarioVersionKeys[evidenceKey] === true) {
+      pointsByTechnology[technologyId] += event.pointsDelta;
     }
   }
 
   const calculatedAt = util.time.nowEpochMilliSeconds();
   const result = [];
   for (const technologyId of Object.keys(TECHNOLOGY_SCENARIOS)) {
-    const profile = profiles[technologyId];
-    const eligibleChallengeCount = Object.keys(profile.eligibleChallengeKeys).length;
-    const points = roundPoints(profile.points);
+    const eligibleChallengeCount = Object.keys(
+      eligibleChallengeKeysByTechnology[technologyId],
+    ).length;
+    const points = roundPoints(pointsByTechnology[technologyId]);
     result.push({
       tenantId: subject.tenantId,
       userId: subject.userId,
@@ -110,7 +128,7 @@ export function response(ctx) {
       points,
       level: resolveLevel(points, eligibleChallengeCount),
       eligibleChallengeCount,
-      sourceRevision: profile.sourceRevision,
+      sourceRevision: sourceRevisionByTechnology[technologyId],
       calculatedAt,
     });
   }
