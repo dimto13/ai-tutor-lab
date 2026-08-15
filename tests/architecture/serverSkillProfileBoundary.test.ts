@@ -36,7 +36,10 @@ test("SkillProfile cannot be directly mutated and is exposed as an owner-derived
   const modelBlock = schemaMemberBlock(source, "SkillProfile");
   const queryBlock = schemaMemberBlock(source, "listMySkillProfiles");
 
-  assert.match(modelBlock, /disableOperations\(\[["']queries["'], ["']mutations["'], ["']subscriptions["']\]\)/);
+  assert.match(
+    modelBlock,
+    /disableOperations\(\[["']queries["'], ["']mutations["'], ["']subscriptions["']\]\)/,
+  );
   assert.match(modelBlock, /level:\s*a\.ref\(["']SkillLevel["']\)\.required\(\)/);
   assert.match(modelBlock, /eligibleChallengeCount:\s*a\.integer\(\)\.required\(\)/);
 
@@ -64,13 +67,15 @@ test("skill evidence loaders use authenticated owner indexes and never scan", as
   assert.doesNotMatch(runSource, /operation:\s*["']Scan["']/);
 });
 
-test("competence projection gates practitioner evidence on eligible challenges and ignores self-assessment", async () => {
+test("competence projection requires eligible run evidence for points and challenge gates", async () => {
   const source = await readFile(calculateUrl, "utf8");
 
+  assert.match(source, /run\.evidenceEligible !== true/);
+  assert.match(source, /eligibleScenarioVersionKeys\[evidenceKey\] = true/);
   assert.match(source, /run\.mode === ["']challenge["']/);
-  assert.match(source, /run\.evidenceEligible === true/);
+  assert.match(source, /eligibleScenarioVersionKeys\[evidenceKey\] === true/);
+  assert.match(source, /pointsByTechnology\[technologyId\] \+= event\.pointsDelta/);
   assert.match(source, /eligibleChallengeCount < 1/);
-  assert.match(source, /event\.pointsDelta/);
   assert.doesNotMatch(source, /selfAssessedAiLevel/);
   assert.doesNotMatch(source, /UserPreferences/);
   assert.doesNotMatch(source, /provider/i);
