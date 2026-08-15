@@ -1,3 +1,5 @@
+/// <reference path="./js-yaml.d.ts" />
+
 import { load as loadYaml } from "js-yaml";
 import { z } from "zod";
 
