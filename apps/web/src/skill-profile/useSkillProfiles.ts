@@ -40,7 +40,9 @@ export function useSkillProfiles(): SkillProfilesState {
         if (cancelled) return;
         setProfiles([]);
         setStatus("error");
-        setError(reason instanceof Error ? reason.message : "Kompetenzprofil konnte nicht geladen werden");
+        setError(
+          reason instanceof Error ? reason.message : "Kompetenzprofil konnte nicht geladen werden",
+        );
       });
 
     return () => {
