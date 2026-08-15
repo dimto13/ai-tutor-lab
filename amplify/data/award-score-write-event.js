@@ -73,10 +73,11 @@ function roundScorePoints(points) {
 
 function highestHintLevels(payload, stepIds) {
   const highest = {};
-  const hintUsage = Array.isArray(payload.hintUsage) ? payload.hintUsage : [];
+  const hintUsage =
+    payload.hintUsage && typeof payload.hintUsage.length === "number" ? payload.hintUsage : [];
 
   for (const usage of hintUsage) {
-    if (!usage || typeof usage !== "object" || Array.isArray(usage)) {
+    if (!usage || typeof usage !== "object") {
       util.error("Training hint evidence is invalid", "ScoreEligibilityError");
     }
     if (typeof usage.stepId !== "string" || usage.stepId.length === 0) {
@@ -196,7 +197,7 @@ export function request(ctx) {
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   const event = ctx.result;
-  const breakdown = event.metadata?.breakdown;
+  const breakdown = event && event.metadata ? event.metadata.breakdown : null;
   if (!event || !breakdown) {
     util.error("Persisted score event is invalid", "ScorePersistenceError");
   }
