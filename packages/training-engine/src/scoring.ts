@@ -196,8 +196,7 @@ export function classifyScenarioRunEvidence(input: ScenarioRunEvidenceInput): Sc
     };
   }
 
-  const fastRunThresholdMs =
-    input.estimatedMinutes * 60_000 * input.fastRunThresholdRatio;
+  const fastRunThresholdMs = input.estimatedMinutes * 60_000 * input.fastRunThresholdRatio;
   const suspectFast = durationMs < fastRunThresholdMs;
   return {
     durationMs,
