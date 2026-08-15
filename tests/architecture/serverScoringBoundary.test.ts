@@ -23,9 +23,18 @@ function blockBetween(source: string, startMarker: string, endMarker: string): s
   return source.slice(start, end);
 }
 
+function schemaMemberBlock(source: string, memberName: string): string {
+  const startMarker = `  ${memberName}:`;
+  const start = source.indexOf(startMarker);
+  assert.notEqual(start, -1, `Missing schema marker ${startMarker}`);
+  const schemaEnd = source.indexOf("\n});", start + startMarker.length);
+  assert.notEqual(schemaEnd, -1, "Missing Amplify schema terminator");
+  return source.slice(start, schemaEnd);
+}
+
 test("public score award input cannot set owner, version or points", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
-  const awardBlock = blockBetween(source, "  awardScenarioScore:", "  listMyScoreEvents:");
+  const awardBlock = schemaMemberBlock(source, "awardScenarioScore");
   const argumentStart = awardBlock.indexOf(".arguments({");
   const returnStart = awardBlock.indexOf(".returns(");
   assert.ok(argumentStart >= 0 && returnStart > argumentStart);
