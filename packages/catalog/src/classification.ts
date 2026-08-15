@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- js-yaml ships no declarations; keep the local load() surface narrow for every workspace consumer.
 /// <reference path="./js-yaml.d.ts" />
 
 import { load as loadYaml } from "js-yaml";
