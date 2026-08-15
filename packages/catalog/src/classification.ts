@@ -135,10 +135,7 @@ export function parseClassificationSchemeYaml(source: string): ClassificationSch
   return parseClassificationSchemeDocument(raw);
 }
 
-export function getClassificationLevelRank(
-  scheme: ClassificationScheme,
-  levelId: string,
-): number {
+export function getClassificationLevelRank(scheme: ClassificationScheme, levelId: string): number {
   const rank = scheme.levels.findIndex((level) => level.id === levelId);
   if (rank < 0) {
     throw new Error(`Unknown classification level: ${levelId}`);
@@ -184,9 +181,7 @@ export function classifyByIndicators(
   const baseLevelId = resolveHighestMinimumLevel(scheme, triggeredIndicatorIds);
   const baseRank = getClassificationLevelRank(scheme, baseLevelId);
   const uncertain = options.uncertain === true;
-  const resolvedRank = uncertain
-    ? Math.min(baseRank + 1, scheme.levels.length - 1)
-    : baseRank;
+  const resolvedRank = uncertain ? Math.min(baseRank + 1, scheme.levels.length - 1) : baseRank;
   const levelId = scheme.levels[resolvedRank].id;
 
   return {
