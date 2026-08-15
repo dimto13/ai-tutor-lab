@@ -33,7 +33,9 @@ export function getGuidedConceptHighlightServerSnapshot(): GuidedConceptHighligh
   return null;
 }
 
-export function subscribeGuidedConceptHighlight(listener: GuidedConceptHighlightListener): () => void {
+export function subscribeGuidedConceptHighlight(
+  listener: GuidedConceptHighlightListener,
+): () => void {
   conceptHighlightListeners.add(listener);
   return () => conceptHighlightListeners.delete(listener);
 }
