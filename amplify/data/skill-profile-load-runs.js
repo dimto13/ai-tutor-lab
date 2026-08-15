@@ -30,6 +30,13 @@ export function request(ctx) {
 
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
+  if (ctx.result && ctx.result.nextToken) {
+    util.error(
+      "Skill profile run evidence exceeds the projection window",
+      "SkillProfileEvidenceWindowError",
+    );
+  }
+
   const subject = ctx.stash.skillSubject;
   const items = ctx.result && ctx.result.items ? ctx.result.items : [];
 
