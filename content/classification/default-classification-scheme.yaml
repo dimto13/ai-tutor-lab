@@ -1,0 +1,39 @@
+{
+  "classificationScheme": {
+    "tenantId": "default",
+    "levels": [
+      { "id": "public", "label": "Öffentlich" },
+      { "id": "internal", "label": "Intern" },
+      { "id": "confidential", "label": "Vertraulich" },
+      { "id": "strictly_confidential", "label": "Streng vertraulich" }
+    ],
+    "indicators": [
+      {
+        "id": "personal_data",
+        "label": "Personenbezogene Daten",
+        "minLevel": "confidential"
+      },
+      {
+        "id": "customer_contract_data",
+        "label": "Kundendaten mit Vertragsbezug",
+        "minLevel": "confidential"
+      },
+      {
+        "id": "salary_data",
+        "label": "Gehalts-/HR-Daten",
+        "minLevel": "strictly_confidential"
+      },
+      {
+        "id": "marking_internal",
+        "label": "Kennzeichnung intern",
+        "minLevel": "internal"
+      }
+    ],
+    "aiPolicy": [
+      { "tool": "m365-copilot-tenant", "maxLevel": "confidential" },
+      { "tool": "public-ai-chat", "maxLevel": "public" },
+      { "tool": "github-copilot", "maxLevel": "internal" }
+    ],
+    "defaultOnUncertainty": "escalate"
+  }
+}
