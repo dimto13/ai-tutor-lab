@@ -31,6 +31,20 @@ Die Hilfestufen verwenden weiterhin die bestehende `helpPolicy.ts` als fachliche
 Solange das Szenario keine eigenen Step-Weights besitzt, wird der Bonus gleichmäßig auf die effektiven
 Guided-Schritte verteilt.
 
+## Scoring-Katalog
+
+Die fachlichen Werte `scenarioId`, `mode`, `scenarioVersion` und `points` der aktuell wertbaren
+Szenarien stehen deklarativ in `content/scoring/scenario-score-catalog.json`.
+
+Die APPSYNC_JS-Laufzeit liest zur Request-Laufzeit keine Repository-Dateien. Deshalb enthält der
+Score-Resolver eine deploybare Spiegelung dieses Katalogs. `tests/architecture/scoringCatalog.test.ts`
+vergleicht beide Repräsentationen exakt und lässt CI bei jeder Abweichung fehlschlagen. Änderungen an
+Punkten oder Szenario-Versionen beginnen damit im deklarativen Katalog und müssen bewusst in den
+Server-Mirror übernommen werden.
+
+`scenarioVersion` ist eine fachliche Scoring-/Content-Version und ausdrücklich **nicht**
+`Scenario.environment.version`; letztere bezeichnet die Produkt-/Runtime-Version.
+
 ## Vertrauensgrenze
 
 ```text
@@ -109,12 +123,9 @@ und versucht ihn nach einem Reconnect erneut. Er berechnet niemals lokale Ersatz
 
 ## Szenario-Versionen
 
-Der Scoring-Adapter besitzt für die aktuell produktiv registrierten Szenarien eine explizite
-`scenarioVersion` (`"1"`). Diese Version ist **nicht** `Scenario.environment.version`; letztere bezeichnet
-die Produkt-/Runtime-Version und hat eine andere Semantik.
-
-Eine neue fachliche Szenario-Version muss in einem späteren Anti-Gaming-/Content-Schritt bewusst erhöht
-werden. Erst dadurch wird dasselbe Szenario erneut punktefähig. Das ist der Anschluss an #32 / AITP-61.
+Der Scoring-Katalog registriert für die aktuell produktiven Szenarien die erste explizite
+`scenarioVersion` (`"1"`). Eine neue fachliche Szenario-Version muss bewusst im Katalog erhöht werden.
+Erst dadurch wird dasselbe Szenario erneut punktefähig. Das ist der Anschluss an #32 / AITP-61.
 
 ## Sicherheitsinvarianten
 
@@ -126,3 +137,4 @@ werden. Erst dadurch wird dasselbe Szenario erneut punktefähig. Das ist der Ans
 6. Generierte CRUD-Operationen der ScoreEvent-Tabelle bleiben deaktiviert.
 7. Cloud-SDKs bleiben im Web ausschließlich unter `adapters/`.
 8. Die UI zeigt Serverergebnisse und besitzt keinen autoritativen Punkte-Fallback.
+9. Katalog und deploybare AppSync-Spiegelung müssen im Architekturtest identisch sein.
