@@ -51,7 +51,7 @@ test("SkillProfile cannot be directly mutated and is exposed as an owner-derived
   assert.doesNotMatch(queryBlock, /dataSource:\s*a\.ref\(["']SkillProfile["']\)/);
 });
 
-test("skill evidence loaders use authenticated owner indexes and never scan", async () => {
+test("skill evidence loaders use authenticated owner indexes, never scan and reject truncation", async () => {
   const [scoreSource, runSource] = await Promise.all([
     readFile(loadScoresUrl, "utf8"),
     readFile(loadRunsUrl, "utf8"),
@@ -60,10 +60,14 @@ test("skill evidence loaders use authenticated owner indexes and never scan", as
   assert.match(scoreSource, /identity\.sub/);
   assert.match(scoreSource, /personal:\$\{identity\.sub\}/);
   assert.match(scoreSource, /index:\s*["']scoreEventsByOwnerTime["']/);
+  assert.match(scoreSource, /ctx\.result\.nextToken/);
+  assert.match(scoreSource, /SkillProfileEvidenceWindowError/);
   assert.doesNotMatch(scoreSource, /operation:\s*["']Scan["']/);
 
   assert.match(runSource, /index:\s*["']scenarioRunsByOwnerTime["']/);
   assert.match(runSource, /ctx\.stash\.skillSubject/);
+  assert.match(runSource, /ctx\.result\.nextToken/);
+  assert.match(runSource, /SkillProfileEvidenceWindowError/);
   assert.doesNotMatch(runSource, /operation:\s*["']Scan["']/);
 });
 
