@@ -55,7 +55,11 @@ const schemaMembers = [
   "RuntimeSnapshotEnvelope",
   "UserProfileEnvelope",
   "UserPreferencesEnvelope",
+  "ScoreEventEnvelope",
+  "ScoreAwardEnvelope",
   ...clientOperations,
+  "awardScenarioScore",
+  "listMyScoreEvents",
 ] as const;
 
 const disabledGeneratedOperationsPattern =
