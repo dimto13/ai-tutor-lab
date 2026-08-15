@@ -7,3 +7,4 @@ package-lock.json
 bun.lock
 routeTree.gen.ts
 .claude/settings.local.json
+content/classification/default-classification-scheme.yaml
