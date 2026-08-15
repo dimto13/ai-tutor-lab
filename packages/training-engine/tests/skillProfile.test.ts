@@ -44,13 +44,7 @@ test("Proficient requires both points and challenge evidence", () => {
 
 test("rejects reordered or non-increasing threshold policies", () => {
   assert.throws(
-    () =>
-      assertSkillThresholds([
-        thresholds[0],
-        thresholds[2],
-        thresholds[1],
-        thresholds[3],
-      ]),
+    () => assertSkillThresholds([thresholds[0], thresholds[2], thresholds[1], thresholds[3]]),
     /must follow/,
   );
   assert.throws(
