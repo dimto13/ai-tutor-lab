@@ -64,11 +64,7 @@ test("every expected classification is reproduced by the shared ClassificationSc
 
     assert.equal(actual.levelId, document.expected.levelId, document.id);
     assert.deepEqual(actual.aiDecisions, document.expected.aiDecisions, document.id);
-    assert.equal(
-      actual.requiresHumanReview,
-      document.expected.requiresHumanReview,
-      document.id,
-    );
+    assert.equal(actual.requiresHumanReview, document.expected.requiresHumanReview, document.id);
   }
 });
 
@@ -96,12 +92,14 @@ test("boundary cases exercise both false-positive avoidance and uncertainty esca
 
   assert.ok(
     boundaryCases.some(
-      (document) => document.id === "boundary-placeholder-template" && document.expected.levelId === "internal",
+      (document) =>
+        document.id === "boundary-placeholder-template" && document.expected.levelId === "internal",
     ),
   );
   assert.ok(
     boundaryCases.some(
-      (document) => document.id === "boundary-public-role-no-name" && document.expected.levelId === "public",
+      (document) =>
+        document.id === "boundary-public-role-no-name" && document.expected.levelId === "public",
     ),
   );
   assert.ok(
