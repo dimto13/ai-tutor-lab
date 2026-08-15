@@ -27,8 +27,8 @@ export function CompetencyMatrix() {
           </h2>
           <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
             Gemessene Praxis je Technologie. Punkte und Stufen entstehen ausschließlich aus
-            serverseitig bestätigten Trainingsdaten; die persönliche Selbsteinschätzung bleibt
-            davon getrennt.
+            serverseitig bestätigten Trainingsdaten; die persönliche Selbsteinschätzung bleibt davon
+            getrennt.
           </p>
         </div>
         <ProfileStatus status={state.status} error={state.error} />
@@ -61,7 +61,10 @@ function ProfileStatus({ status, error }: { status: SkillProfilesStatus; error: 
   }
   if (status === "error") {
     return (
-      <span className="max-w-md text-right text-xs text-muted-foreground" title={error ?? undefined}>
+      <span
+        className="max-w-md text-right text-xs text-muted-foreground"
+        title={error ?? undefined}
+      >
         Kompetenzprofil konnte nicht geladen werden
       </span>
     );
