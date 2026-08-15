@@ -304,6 +304,54 @@ export function TrainingProvider({
     };
   }, [progress, hydrated, persistence]);
 
+  useEffect(() => {
+    if (!hydrated || !persistence) return;
+    let cancelled = false;
+
+    const handleOnline = () => {
+      void persistence
+        .synchronizeAfterReconnect(scenarioRuntimes.map((runtime) => runtime.id))
+        .then(async ({ session, runtimeRestores }) => {
+          if (cancelled) return;
+
+          if (session) {
+            setProgress(session);
+            setVisibleHelpLevel(activeHelpLevel(session));
+            setFeedback(null);
+          }
+
+          for (const restore of runtimeRestores) {
+            if (cancelled) return;
+            const runtime = scenarioRuntimes.find(
+              (candidate) => candidate.id === restore.runtimeId,
+            );
+            if (!runtime) continue;
+
+            try {
+              if (restore.snapshot === null) {
+                if (!runtime.reset) continue;
+                runtime.reset();
+              } else {
+                await runtime.restore(restore.snapshot);
+              }
+              persistence.markRuntimeSnapshotRestored(restore.runtimeId);
+            } catch {
+              // Keep writes blocked until a later successful restore of the server-authoritative state.
+            }
+          }
+        })
+        .catch(() => {
+          // The browser may report online before the remote persistence endpoint is reachable.
+        });
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [hydrated, persistence, scenarioRuntimes]);
+
   const markChallengeTimedOut = useCallback(() => {
     setProgress((current) => timeoutChallenge(current, scenario));
   }, [scenario]);
