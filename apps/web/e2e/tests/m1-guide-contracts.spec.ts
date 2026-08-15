@@ -167,7 +167,7 @@ test("Guided: nach drei Fehlversuchen wird Hilfe aktiv angeboten und je Schritt 
   ).toBeVisible();
 });
 
-test("Guided: Fehlversuche werden gezählt, verändern aber die aktuelle Punktzahl nicht", async ({
+test("Guided: Fehlversuche werden gezählt, lokale E2E-Wertung bleibt nicht autoritativ", async ({
   page,
 }) => {
   await reachCreateFileStep(page);
@@ -190,6 +190,9 @@ test("Guided: Fehlversuche werden gezählt, verändern aber die aktuelle Punktza
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   const pointsMetric = page.getByText("Punkte", { exact: true }).locator("..");
   const mistakesMetric = page.getByText("Fehlversuche", { exact: true }).locator("..");
-  await expect(pointsMetric.getByText("100", { exact: true })).toBeVisible();
+  await expect(pointsMetric.getByText("—", { exact: true })).toBeVisible();
   await expect(mistakesMetric.getByText("1", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(/Im lokalen Trainingsmodus werden bewusst keine autoritativen Punkte vergeben/),
+  ).toBeVisible();
 });
