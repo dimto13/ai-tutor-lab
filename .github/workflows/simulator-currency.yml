@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - ".github/simulator-currency.json"
+      - ".github/workflows/simulator-currency.yml"
 
 permissions:
   contents: read
@@ -32,7 +33,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies reproducibly
-        run: npm ci --install-strategy=nested
+        run: npm ci
 
       - name: Validate policy and synchronize due work
         run: node --experimental-strip-types scripts/check-simulator-currency.ts --sync
