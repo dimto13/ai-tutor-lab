@@ -138,9 +138,7 @@ export function createScoreAwardId(identity: ScoreAwardIdentity): string {
   assertNonEmptyId(identity.scenarioVersion, "scenarioVersion");
 
   const tenantPart =
-    identity.subject.tenantId === null
-      ? "n"
-      : `s:${encodeURIComponent(identity.subject.tenantId)}`;
+    identity.subject.tenantId === null ? "n" : `s:${encodeURIComponent(identity.subject.tenantId)}`;
 
   return [
     "score-award:v1",
