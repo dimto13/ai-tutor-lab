@@ -53,6 +53,7 @@ export interface ScoreAwardIdentity {
 export interface CreateScoreEventInput extends ScoreAwardIdentity, ScenarioScoreInput {
   sessionId: string;
   occurredAt: number;
+  sourceRevision?: number;
 }
 
 /** Append-only, auditable record for one awarded scenario/version. */
@@ -69,6 +70,7 @@ export interface ScoreEvent {
   occurredAt: number;
   points: number;
   breakdown: ScenarioScoreBreakdown;
+  sourceRevision?: number;
 }
 
 export interface AppendScoreEventResult {
@@ -77,12 +79,24 @@ export interface AppendScoreEventResult {
 }
 
 /**
- * Cloud-neutral persistence port for the later server adapter.
- * Implementations MUST atomically enforce uniqueness by `event.deduplicationKey` and return the
- * already persisted event with `created: false` when the same award is retried.
+ * Cloud-neutral persistence port. Implementations MUST atomically enforce uniqueness by
+ * `event.deduplicationKey` and return the already persisted event with `created: false` when the
+ * same award is retried.
  */
 export interface ScoreEventLedger {
   appendOnce(event: ScoreEvent): Promise<AppendScoreEventResult>;
+}
+
+/** Minimal command accepted by the application. Points, version and identity are server-owned. */
+export interface ScenarioScoreAwardRequest {
+  scenarioId: string;
+  mode: TrainingMode;
+}
+
+/** Cloud-neutral application port for authoritative scenario scoring and ledger reads. */
+export interface ScenarioScoreService {
+  awardScenario(request: ScenarioScoreAwardRequest): Promise<AppendScoreEventResult>;
+  listScoreEvents(limit?: number): Promise<ScoreEvent[]>;
 }
 
 export function calculateScenarioScore(input: ScenarioScoreInput): ScenarioScoreBreakdown {
@@ -131,27 +145,31 @@ export function calculateScenarioScore(input: ScenarioScoreInput): ScenarioScore
   };
 }
 
+function identityPart(value: string | null): string {
+  return value === null ? "n" : `s${value.length}:${value}`;
+}
+
 /** Stable retry/deduplication ID scoped to learner + scenario + scenario version. */
 export function createScoreAwardId(identity: ScoreAwardIdentity): string {
   assertTrainingSubject(identity.subject);
   assertNonEmptyId(identity.scenarioId, "scenarioId");
   assertNonEmptyId(identity.scenarioVersion, "scenarioVersion");
 
-  const tenantPart =
-    identity.subject.tenantId === null ? "n" : `s:${encodeURIComponent(identity.subject.tenantId)}`;
-
   return [
     "score-award:v1",
-    tenantPart,
-    `u:${encodeURIComponent(identity.subject.userId)}`,
-    `s:${encodeURIComponent(identity.scenarioId)}`,
-    `v:${encodeURIComponent(identity.scenarioVersion)}`,
+    `t:${identityPart(identity.subject.tenantId)}`,
+    `u:${identityPart(identity.subject.userId)}`,
+    `s:${identityPart(identity.scenarioId)}`,
+    `v:${identityPart(identity.scenarioVersion)}`,
   ].join("|");
 }
 
 export function createScoreEvent(input: CreateScoreEventInput): ScoreEvent {
   assertNonEmptyId(input.sessionId, "sessionId");
   assertFiniteNonNegative(input.occurredAt, "occurredAt");
+  if (input.sourceRevision !== undefined) {
+    assertNonNegativeInteger(input.sourceRevision, "sourceRevision");
+  }
 
   const id = createScoreAwardId(input);
   const breakdown = calculateScenarioScore(input);
@@ -168,6 +186,7 @@ export function createScoreEvent(input: CreateScoreEventInput): ScoreEvent {
     occurredAt: input.occurredAt,
     points: breakdown.awardedPoints,
     breakdown,
+    ...(input.sourceRevision === undefined ? {} : { sourceRevision: input.sourceRevision }),
   };
 }
 
