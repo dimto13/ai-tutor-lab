@@ -18,6 +18,11 @@ export interface SkillProfileProjection extends SkillLevelEvidence {
   calculatedAt: number;
 }
 
+/** Cloud-neutral application port for authoritative technology competence projections. */
+export interface SkillProfileService {
+  listSkillProfiles(): Promise<SkillProfileProjection[]>;
+}
+
 /**
  * Resolves the highest level supported by measured evidence. The policy is supplied by the
  * application/content layer so the generic training engine does not own product or program thresholds.
