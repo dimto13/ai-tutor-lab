@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
+import { Route as KompetenzRouteImport } from './routes/kompetenz'
 import { Route as WillkommenRouteImport } from './routes/willkommen'
 import { Route as TrainingScenarioIdRouteImport } from './routes/training.$scenarioId'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const AnmeldenRoute = AnmeldenRouteImport.update({
   id: '/anmelden',
   path: '/anmelden',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KompetenzRoute = KompetenzRouteImport.update({
+  id: '/kompetenz',
+  path: '/kompetenz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WillkommenRoute = WillkommenRouteImport.update({
@@ -38,12 +44,14 @@ const TrainingScenarioIdRoute = TrainingScenarioIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/anmelden' | '/willkommen' | '/training/$scenarioId'
+  fullPaths: '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/anmelden' | '/willkommen' | '/training/$scenarioId'
-  id: '__root__' | '/' | '/anmelden' | '/willkommen' | '/training/$scenarioId'
+  to: '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
+  id: '__root__' | '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnmeldenRoute: typeof AnmeldenRoute
+  KompetenzRoute: typeof KompetenzRoute
   WillkommenRoute: typeof WillkommenRoute
   TrainingScenarioIdRoute: typeof TrainingScenarioIdRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/anmelden'
       fullPath: '/anmelden'
       preLoaderRoute: typeof AnmeldenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kompetenz': {
+      id: '/kompetenz'
+      path: '/kompetenz'
+      fullPath: '/kompetenz'
+      preLoaderRoute: typeof KompetenzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/willkommen': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnmeldenRoute: AnmeldenRoute,
+  KompetenzRoute: KompetenzRoute,
   WillkommenRoute: WillkommenRoute,
   TrainingScenarioIdRoute: TrainingScenarioIdRoute,
 }
