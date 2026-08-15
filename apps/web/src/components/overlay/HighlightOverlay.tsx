@@ -1,5 +1,13 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { getRuntimeAdapterForTarget } from "@/runtime";
+import { useTraining } from "@/state/trainingStore";
+import { getGlossaryConceptForTarget } from "@/lib/glossary";
+import {
+  getGuidedConceptHighlight,
+  getGuidedConceptHighlightServerSnapshot,
+  requestGuidedConceptHighlight,
+  subscribeGuidedConceptHighlight,
+} from "./guidedConceptHighlight";
 
 interface Rect {
   top: number;
@@ -8,10 +16,49 @@ interface Rect {
   height: number;
 }
 
+function unionRects(rects: DOMRect[]): Rect | null {
+  if (rects.length === 0) return null;
+
+  const padding = 6;
+  const viewportInset = 2;
+  const left = Math.max(viewportInset, Math.min(...rects.map((rect) => rect.left)) - padding);
+  const top = Math.max(viewportInset, Math.min(...rects.map((rect) => rect.top)) - padding);
+  const right = Math.min(
+    window.innerWidth - viewportInset,
+    Math.max(...rects.map((rect) => rect.right)) + padding,
+  );
+  const bottom = Math.min(
+    window.innerHeight - viewportInset,
+    Math.max(...rects.map((rect) => rect.bottom)) + padding,
+  );
+
+  return {
+    top,
+    left,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  };
+}
+
+function sameRect(left: Rect | null, right: Rect | null): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.top === right.top &&
+    left.left === right.left &&
+    left.width === right.width &&
+    left.height === right.height
+  );
+}
+
 /**
  * Spotlight overlay: dims everything except the target element (four dim panes),
  * so the highlighted element stays fully clickable. The semantic target is
  * resolved by the runtime environment; scenarios never know DOM selectors.
+ *
+ * Guided explanation steps and glossary interactions may temporarily group all
+ * currently visible semantic targets of one concept. This is presentation only:
+ * no RuntimeEvent is emitted and training validation/progress is untouched.
  */
 export function HighlightOverlay({
   targetId,
@@ -26,43 +73,63 @@ export function HighlightOverlay({
   tooltip?: string | undefined;
   strong?: boolean | undefined;
 }) {
+  const { scenario, progress } = useTraining();
   const [rect, setRect] = useState<Rect | null>(null);
+  const conceptFocus = useSyncExternalStore(
+    subscribeGuidedConceptHighlight,
+    getGuidedConceptHighlight,
+    getGuidedConceptHighlightServerSnapshot,
+  );
+  const activeStep = scenario.steps.find((step) => step.id === progress.activeStepId);
+
+  useEffect(() => {
+    requestGuidedConceptHighlight(null);
+    return () => requestGuidedConceptHighlight(null);
+  }, [activeStep?.id]);
+
+  const explanationConcept = useMemo(() => {
+    if (activeStep?.stepType !== "explanation" || !targetId) return null;
+    return getGlossaryConceptForTarget(targetId);
+  }, [activeStep?.stepType, targetId]);
+
+  const targetIds = useMemo(() => {
+    const conceptTargets = conceptFocus?.targetIds ?? explanationConcept?.uiTargets ?? [];
+    if (conceptTargets.length > 0) return [...new Set(conceptTargets)];
+    return targetId ? [targetId] : [];
+  }, [conceptFocus, explanationConcept, targetId]);
+
+  const targetResolvers = useMemo(
+    () =>
+      targetIds.map((currentTargetId) => ({
+        targetId: currentTargetId,
+        runtime: runtimeAdapterId
+          ? getRuntimeAdapterForTarget(
+              currentTargetId,
+              runtimeAdapterId,
+              integrationRuntimeAdapterIds,
+            )
+          : undefined,
+      })),
+    [targetIds, runtimeAdapterId, integrationRuntimeAdapterIds],
+  );
 
   useLayoutEffect(() => {
-    if (!targetId || !runtimeAdapterId) {
-      setRect(null);
-      return;
-    }
-    const runtime = getRuntimeAdapterForTarget(
-      targetId,
-      runtimeAdapterId,
-      integrationRuntimeAdapterIds,
-    );
-    if (!runtime) {
+    if (targetResolvers.length === 0 || !runtimeAdapterId) {
       setRect(null);
       return;
     }
 
     let frame = 0;
     const measure = () => {
-      const resolved = runtime.resolveTarget(targetId);
-      if (!resolved) {
-        setRect(null);
-        return;
+      const resolvedRects: DOMRect[] = [];
+      for (const resolver of targetResolvers) {
+        const resolved = resolver.runtime?.resolveTarget(resolver.targetId);
+        if (resolved && resolved.width > 0 && resolved.height > 0) resolvedRects.push(resolved);
       }
-      const padding = 6;
-      const viewportInset = 2;
-      const left = Math.max(viewportInset, resolved.left - padding);
-      const top = Math.max(viewportInset, resolved.top - padding);
-      const right = Math.min(window.innerWidth - viewportInset, resolved.right + padding);
-      const bottom = Math.min(window.innerHeight - viewportInset, resolved.bottom + padding);
-      setRect({
-        top,
-        left,
-        width: Math.max(0, right - left),
-        height: Math.max(0, bottom - top),
-      });
+      const nextRect = unionRects(resolvedRects);
+      setRect((currentRect) => (sameRect(currentRect, nextRect) ? currentRect : nextRect));
     };
+
     measure();
     const loop = () => {
       measure();
@@ -70,7 +137,7 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetId, runtimeAdapterId, integrationRuntimeAdapterIds]);
+  }, [targetResolvers, runtimeAdapterId]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -79,6 +146,9 @@ export function HighlightOverlay({
 
   if (!rect) return null;
   const dim = strong ? "bg-black/60" : "bg-black/35";
+  const effectiveTooltip = conceptFocus
+    ? `${conceptFocus.term}: zugehöriger Bereich in der Oberfläche.`
+    : tooltip;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
@@ -100,6 +170,7 @@ export function HighlightOverlay({
       />
       <div
         data-testid="highlight-frame"
+        data-highlight-concept={conceptFocus?.conceptKey ?? explanationConcept?.key}
         className={`absolute rounded-md ring-2 ring-ring ${strong ? "animate-pulse" : ""}`}
         style={{
           top: rect.top,
@@ -110,7 +181,7 @@ export function HighlightOverlay({
             "0 0 0 1px var(--ring), 0 0 24px 4px color-mix(in oklab, var(--ring) 45%, transparent)",
         }}
       />
-      {tooltip && visible ? (
+      {effectiveTooltip && visible ? (
         <div
           className="absolute max-w-64 rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
           style={{
@@ -122,7 +193,7 @@ export function HighlightOverlay({
             maxWidth: "calc(100vw - 24px)",
           }}
         >
-          {tooltip}
+          {effectiveTooltip}
         </div>
       ) : null}
     </div>
