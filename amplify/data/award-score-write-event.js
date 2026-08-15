@@ -48,7 +48,7 @@ function scoreDefinition(ctx) {
 }
 
 function identityPart(value) {
-  return `s${value.length}:${value}`;
+  return value === null ? "n" : `s${value.length}:${value}`;
 }
 
 function scoreAwardId(subject, scenarioId, scenarioVersion) {
@@ -62,9 +62,11 @@ function scoreAwardId(subject, scenarioId, scenarioVersion) {
 }
 
 function scoreOwnerKey(subject) {
-  return ["score-owner:v1", util.base64Encode(subject.tenantId), util.base64Encode(subject.userId)].join(
-    ".",
-  );
+  return [
+    "score-owner:v1",
+    util.base64Encode(subject.storageTenantId),
+    util.base64Encode(subject.userId),
+  ].join(".");
 }
 
 function roundScorePoints(points) {
@@ -158,7 +160,7 @@ export function request(ctx) {
   const occurredAt = util.time.nowEpochMilliSeconds();
   const values = {
     ownerKey: scoreOwnerKey(subject),
-    tenantId: subject.tenantId,
+    tenantId: subject.storageTenantId,
     userId: subject.userId,
     scenarioId: ctx.args.scenarioId,
     scenarioVersion: definition.version,
@@ -206,7 +208,7 @@ export function response(ctx) {
     created: event.appendToken === ctx.stash.scoreAppendToken,
     event: {
       id: ctx.stash.scoreAwardId,
-      tenantId: event.tenantId,
+      tenantId: ctx.stash.scoreSubject.tenantId,
       userId: event.userId,
       scenarioId: event.scenarioId,
       scenarioVersion: event.scenarioVersion,
