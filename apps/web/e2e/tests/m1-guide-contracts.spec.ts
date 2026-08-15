@@ -117,7 +117,9 @@ test("Guided: nach drei Fehlversuchen wird Hilfe aktiv angeboten und je Schritt 
     ),
   ).toBeVisible();
   await expect(
-    page.getByText(/Bei einer serverseitigen Wertung wird dieser Abzug beim Abschluss berücksichtigt\./),
+    page.getByText(
+      /Bei einer serverseitigen Wertung wird dieser Abzug beim Abschluss berücksichtigt\./,
+    ),
   ).toBeVisible();
 
   for (const filename of ["wrong-1.py", "wrong-2.py", "wrong-3.py"]) {
