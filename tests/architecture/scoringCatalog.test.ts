@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const catalogUrl = new URL("../../content/scoring/scenario-score-catalog.json", import.meta.url);
-const resolverUrl = new URL("../../amplify/data/award-score-write-event.js", import.meta.url);
+const scoreResolverUrl = new URL("../../amplify/data/award-score-write-event.js", import.meta.url);
+const runResolverUrl = new URL("../../amplify/data/award-score-write-run.js", import.meta.url);
 const trainingStoreUrl = new URL("../../apps/web/src/state/trainingStore.tsx", import.meta.url);
 
 interface ScoreDefinition {
@@ -11,38 +12,74 @@ interface ScoreDefinition {
   mode: "explore" | "guided" | "challenge";
   version: string;
   points: number;
+  estimatedMinutes: number;
+  fastRunThresholdRatio: number | null;
 }
 
-function compareDefinitions(left: ScoreDefinition, right: ScoreDefinition): number {
+interface RunDefinition {
+  id: string;
+  mode: ScoreDefinition["mode"];
+  version: string;
+  estimatedMinutes: number;
+  fastRunThresholdRatio: number | null;
+}
+
+function compareDefinitions(left: { id: string }, right: { id: string }): number {
   return left.id.localeCompare(right.id);
 }
 
-function resolverDefinitions(source: string): ScoreDefinition[] {
+function ratioValue(raw: string): number | null {
+  return raw === "null" ? null : Number(raw);
+}
+
+function scoreResolverDefinitions(source: string): ScoreDefinition[] {
   const pattern =
-    /^\s*"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*points:\s*(\d+(?:\.\d+)?)\s*\},?\s*$/gm;
+    /"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*points:\s*(\d+(?:\.\d+)?),\s*estimatedMinutes:\s*(\d+(?:\.\d+)?),\s*fastRunThresholdRatio:\s*(null|\d+(?:\.\d+)?)\s*\}/g;
   const definitions: ScoreDefinition[] = [];
 
   for (const match of source.matchAll(pattern)) {
-    const [, id, mode, version, points] = match;
-    if (!id || !mode || !version || !points) continue;
+    const [, id, mode, version, points, estimatedMinutes, ratio] = match;
+    if (!id || !mode || !version || !points || !estimatedMinutes || !ratio) continue;
     definitions.push({
       id,
       mode: mode as ScoreDefinition["mode"],
       version,
       points: Number(points),
+      estimatedMinutes: Number(estimatedMinutes),
+      fastRunThresholdRatio: ratioValue(ratio),
     });
   }
   return definitions.sort(compareDefinitions);
 }
 
-test("declarative scoring catalog is valid and exactly mirrored by the AppSync resolver", async () => {
-  const [catalogSource, resolverSource] = await Promise.all([
+function runResolverDefinitions(source: string): RunDefinition[] {
+  const pattern =
+    /"([^"]+)":\s*\{\s*mode:\s*"(explore|guided|challenge)",\s*version:\s*"([^"]+)",\s*estimatedMinutes:\s*(\d+(?:\.\d+)?),\s*fastRunThresholdRatio:\s*(null|\d+(?:\.\d+)?)\s*\}/g;
+  const definitions: RunDefinition[] = [];
+
+  for (const match of source.matchAll(pattern)) {
+    const [, id, mode, version, estimatedMinutes, ratio] = match;
+    if (!id || !mode || !version || !estimatedMinutes || !ratio) continue;
+    definitions.push({
+      id,
+      mode: mode as RunDefinition["mode"],
+      version,
+      estimatedMinutes: Number(estimatedMinutes),
+      fastRunThresholdRatio: ratioValue(ratio),
+    });
+  }
+  return definitions.sort(compareDefinitions);
+}
+
+test("declarative scoring and anti-gaming catalog is mirrored by both AppSync resolvers", async () => {
+  const [catalogSource, scoreResolverSource, runResolverSource] = await Promise.all([
     readFile(catalogUrl, "utf8"),
-    readFile(resolverUrl, "utf8"),
+    readFile(scoreResolverUrl, "utf8"),
+    readFile(runResolverUrl, "utf8"),
   ]);
   const parsed = JSON.parse(catalogSource) as { schemaVersion?: unknown; scenarios?: unknown };
 
-  assert.equal(parsed.schemaVersion, 1);
+  assert.equal(parsed.schemaVersion, 2);
   assert.ok(Array.isArray(parsed.scenarios), "scoring catalog must contain a scenario list");
   const catalog = parsed.scenarios as ScoreDefinition[];
   assert.ok(catalog.length > 0, "scoring catalog must not be empty");
@@ -62,16 +99,48 @@ test("declarative scoring catalog is valid and exactly mirrored by the AppSync r
     assert.ok(definition.version.length > 0);
     assert.equal(typeof definition.points, "number");
     assert.ok(Number.isFinite(definition.points) && definition.points > 0);
+    assert.equal(typeof definition.estimatedMinutes, "number");
+    assert.ok(Number.isFinite(definition.estimatedMinutes) && definition.estimatedMinutes > 0);
+    assert.ok(
+      definition.fastRunThresholdRatio === null ||
+        (Number.isFinite(definition.fastRunThresholdRatio) &&
+          definition.fastRunThresholdRatio > 0 &&
+          definition.fastRunThresholdRatio <= 1),
+    );
   }
 
-  assert.deepEqual(resolverDefinitions(resolverSource), [...catalog].sort(compareDefinitions));
+  const sortedCatalog = [...catalog].sort(compareDefinitions);
+  assert.deepEqual(scoreResolverDefinitions(scoreResolverSource), sortedCatalog);
+  assert.deepEqual(
+    runResolverDefinitions(runResolverSource),
+    sortedCatalog.map(({ points: _points, ...definition }) => definition),
+  );
 });
 
-test("training store has no browser-side authoritative score calculation", async () => {
+test("normal scenarios use the 25 percent fast-run rule while timed speed challenges may opt out", async () => {
+  const catalogSource = await readFile(catalogUrl, "utf8");
+  const parsed = JSON.parse(catalogSource) as { scenarios: ScoreDefinition[] };
+
+  for (const definition of parsed.scenarios) {
+    if (definition.id === "vscode-shortcuts.challenge") {
+      assert.equal(definition.fastRunThresholdRatio, null);
+      continue;
+    }
+    assert.equal(
+      definition.fastRunThresholdRatio,
+      0.25,
+      `${definition.id} must use the default 25 percent fast-run threshold`,
+    );
+  }
+});
+
+test("training store has no browser-side authoritative score or anti-gaming calculation", async () => {
   const source = await readFile(trainingStoreUrl, "utf8");
 
   assert.doesNotMatch(source, /\bearnedPoints\b/);
   assert.doesNotMatch(source, /\bscoreMultiplier\b/);
   assert.doesNotMatch(source, /modeMultiplier\s*=/);
   assert.doesNotMatch(source, /scenario\.points\s*\?\?/);
+  assert.doesNotMatch(source, /suspect_fast/);
+  assert.doesNotMatch(source, /fastRunThreshold/);
 });
