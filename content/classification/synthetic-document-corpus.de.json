@@ -1,0 +1,589 @@
+{
+  "corpus": {
+    "id": "aitp-123-synthetic-documents-de",
+    "locale": "de-DE",
+    "allEntitiesAndNumbersFictional": true,
+    "syntheticMarker": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]",
+    "documents": [
+      {
+        "id": "press-release-launch",
+        "title": "Pressemitteilung Produktstart",
+        "documentType": "press_release",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nDie fiktive Nordstern Robotics GmbH stellt am 18. Oktober ihr neues Trainingsportal NovaLearn vor. Der Listenpreis beträgt 79 Euro pro Monat.",
+        "features": [
+          {
+            "description": "Zur Veröffentlichung bestimmter Pressetext",
+            "evidence": "Pressemitteilung zum Produktstart"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [],
+          "uncertain": false,
+          "levelId": "public",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": true,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "website-faq",
+        "title": "Öffentliche FAQ",
+        "documentType": "website_faq",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nFrage: Wie erreiche ich den Support der erfundenen Klarblick Systems AG? Antwort: über das öffentliche Kontaktformular auf der Produktseite.",
+        "features": [
+          {
+            "description": "Öffentlich bestimmter Website-Inhalt",
+            "evidence": "öffentliche FAQ"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [],
+          "uncertain": false,
+          "levelId": "public",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": true,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "public-job-ad",
+        "title": "Öffentliche Stellenausschreibung",
+        "documentType": "job_ad",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nDie erfundene Elbwerk Digital GmbH sucht zwei Software-Trainer für den Standort Falkenheim. Bewerbungen erfolgen über das öffentliche Karriereportal.",
+        "features": [
+          {
+            "description": "Öffentliche Stellenausschreibung ohne personenbezogene Bewerberdaten",
+            "evidence": "sucht zwei Software-Trainer"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [],
+          "uncertain": false,
+          "levelId": "public",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": true,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "internal-meeting-note",
+        "title": "Interne Meeting-Notiz",
+        "documentType": "meeting_note",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nINTERN. Im Projekt Orion wurde für Sprint 14 beschlossen, die Testumgebung bis zum 23. November zu aktualisieren. Es werden keine Personen genannt.",
+        "features": [
+          {
+            "description": "Dokument ist ausdrücklich intern gekennzeichnet",
+            "evidence": "INTERN",
+            "indicatorId": "marking_internal"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "marking_internal"
+          ],
+          "uncertain": false,
+          "levelId": "internal",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "internal-project-plan",
+        "title": "Interner Projektplan",
+        "documentType": "project_plan",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nINTERN. Die erfundene Westbogen Analytics GmbH plant drei Pilotphasen mit insgesamt 12 Testarbeitsplätzen und einem internen Review am 6. Dezember.",
+        "features": [
+          {
+            "description": "Dokument ist ausdrücklich intern gekennzeichnet",
+            "evidence": "INTERN",
+            "indicatorId": "marking_internal"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "marking_internal"
+          ],
+          "uncertain": false,
+          "levelId": "internal",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "source-code-excerpt",
+        "title": "Quellcode-Auszug",
+        "documentType": "source_code",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nINTERN. Beispiel aus dem fiktiven Projekt Atlas: function buildDemoToken(seed) { return `demo-${seed}-47`; } // nur Trainingscode",
+        "features": [
+          {
+            "description": "Interner Quellcode-Auszug",
+            "evidence": "INTERN",
+            "indicatorId": "marking_internal"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "marking_internal"
+          ],
+          "uncertain": false,
+          "levelId": "internal",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "support-ticket",
+        "title": "Support-Ticket mit Kontaktdaten",
+        "documentType": "support_ticket",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nTicket 4821: Die erfundene Kundin Jana Winter, jana.winter@example.invalid, meldet einen Fehler beim Login in das fiktive Portal.",
+        "features": [
+          {
+            "description": "Name und E-Mail einer identifizierbaren Person",
+            "evidence": "Jana Winter, jana.winter@example.invalid",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "customer-contract",
+        "title": "Kundenvertrag",
+        "documentType": "customer_contract",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nVertrag 771 zwischen der erfundenen Nordquell Consulting GmbH und der erfundenen Kundin Mira Feld. Vertragswert: 24.600 Euro, Laufzeit 18 Monate.",
+        "features": [
+          {
+            "description": "Kundenspezifische Vertragsdaten",
+            "evidence": "Vertrag 771 ... Vertragswert",
+            "indicatorId": "customer_contract_data"
+          },
+          {
+            "description": "Name einer Vertragspartei",
+            "evidence": "Mira Feld",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "customer_contract_data",
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "org-chart",
+        "title": "Organigramm mit Personennamen",
+        "documentType": "org_chart",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nOrganigramm der erfundenen Heliospark GmbH: Geschäftsleitung – Nils Morgen; Produkt – Ava Dorn; Support – Timo Falk.",
+        "features": [
+          {
+            "description": "Namentliche Zuordnung von Personen zu Rollen",
+            "evidence": "Nils Morgen; Ava Dorn; Timo Falk",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "sales-offer",
+        "title": "Kundenspezifisches Angebot",
+        "documentType": "sales_offer",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nAngebot 2047 für die erfundene Blauhain Logistik GmbH: 36 Schulungslizenzen zu insgesamt 8.964 Euro, gültig bis 31. Januar.",
+        "features": [
+          {
+            "description": "Kundenspezifische Angebots- und Vertragsdaten",
+            "evidence": "Angebot 2047 für ... Blauhain Logistik GmbH",
+            "indicatorId": "customer_contract_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "customer_contract_data"
+          ],
+          "uncertain": false,
+          "levelId": "confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "travel-expense",
+        "title": "Reisekostenabrechnung",
+        "documentType": "expense_report",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nReisekosten der erfundenen Mitarbeiterin Leni Baum: Bahnfahrt 148 Euro, Hotel 219 Euro, Kostenstelle 4317.",
+        "features": [
+          {
+            "description": "Personenbezogene Abrechnung",
+            "evidence": "Mitarbeiterin Leni Baum",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "salary-list",
+        "title": "Gehaltsliste",
+        "documentType": "salary_list",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nGehaltsliste: erfundene Mitarbeitende Oskar Licht – 5.840 Euro brutto; Nele Sturm – 6.120 Euro brutto.",
+        "features": [
+          {
+            "description": "Gehaltsdaten",
+            "evidence": "5.840 Euro brutto; 6.120 Euro brutto",
+            "indicatorId": "salary_data"
+          },
+          {
+            "description": "Namentlich zugeordnete Personaldaten",
+            "evidence": "Oskar Licht; Nele Sturm",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "salary_data",
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "strictly_confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": false,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "hr-bonus-note",
+        "title": "HR-Bonusentscheidung",
+        "documentType": "hr_note",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nHR: Der erfundene Mitarbeiter Levin Stern erhält für das fiktive Geschäftsjahr einen Bonus von 7.350 Euro.",
+        "features": [
+          {
+            "description": "Vergütungsinformation",
+            "evidence": "Bonus von 7.350 Euro",
+            "indicatorId": "salary_data"
+          },
+          {
+            "description": "Namentliche Zuordnung",
+            "evidence": "Levin Stern",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "salary_data",
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "strictly_confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": false,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "payroll-export",
+        "title": "Lohnabrechnungs-Export",
+        "documentType": "payroll_export",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nPayroll-Datensatz 2026-09: Personalnummer 88014, fiktives Monatsbrutto 4.975 Euro, fiktive Abzüge 1.423 Euro.",
+        "features": [
+          {
+            "description": "Lohn- und Gehaltsdaten",
+            "evidence": "Monatsbrutto 4.975 Euro",
+            "indicatorId": "salary_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "salary_data"
+          ],
+          "uncertain": false,
+          "levelId": "strictly_confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": false,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "board-compensation",
+        "title": "Vergütungsübersicht Geschäftsleitung",
+        "documentType": "compensation_report",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nVergütungsübersicht der erfundenen Zinnwald Software AG: fiktive Jahresvergütung Position A 143.000 Euro, Position B 128.000 Euro.",
+        "features": [
+          {
+            "description": "Vergütungsdaten",
+            "evidence": "Jahresvergütung ... 143.000 Euro",
+            "indicatorId": "salary_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "salary_data"
+          ],
+          "uncertain": false,
+          "levelId": "strictly_confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": false,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        }
+      },
+      {
+        "id": "boundary-single-person-in-internal-note",
+        "title": "Grenzfall: interne Notiz mit einem Personennamen",
+        "documentType": "meeting_note",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nINTERN. Bitte den fiktiven Ansprechpartner Erik Tal zum Termin am 11. Februar hinzufügen.",
+        "features": [
+          {
+            "description": "Interne Kennzeichnung",
+            "evidence": "INTERN",
+            "indicatorId": "marking_internal"
+          },
+          {
+            "description": "Ein einzelner Personenname reicht für personenbezogene Daten",
+            "evidence": "Erik Tal",
+            "indicatorId": "personal_data"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "marking_internal",
+            "personal_data"
+          ],
+          "uncertain": false,
+          "levelId": "confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": false
+        },
+        "boundaryCase": {
+          "rationale": "Obwohl nur ein einzelner Name vorkommt, löst personenbezogene Information die höhere Mindeststufe Vertraulich aus."
+        }
+      },
+      {
+        "id": "boundary-placeholder-template",
+        "title": "Grenzfall: interne Vorlage mit Platzhalter",
+        "documentType": "template",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nINTERN. Vorlage: Ansprechpartner <NAME>, E-Mail <EMAIL>, Vertragsnummer <NUMMER>. Die Platzhalter enthalten keine reale oder fiktiv konkrete Person.",
+        "features": [
+          {
+            "description": "Interne Kennzeichnung",
+            "evidence": "INTERN",
+            "indicatorId": "marking_internal"
+          },
+          {
+            "description": "Bloße Platzhalter sind keine personenbezogenen Daten",
+            "evidence": "<NAME>, <EMAIL>"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "marking_internal"
+          ],
+          "uncertain": false,
+          "levelId": "internal",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        },
+        "boundaryCase": {
+          "rationale": "Struktur für Personendaten allein löst personal_data nicht aus, solange nur Platzhalter ohne konkrete Person enthalten sind."
+        }
+      },
+      {
+        "id": "boundary-public-role-no-name",
+        "title": "Grenzfall: öffentliche Rollenangabe ohne Namen",
+        "documentType": "public_notice",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nÖffentliche Information: Für Fragen ist die Rolle „Leitung Produktschulung“ zuständig. Es wird kein Name und keine individuelle Kontaktadresse veröffentlicht.",
+        "features": [
+          {
+            "description": "Rolle ohne identifizierbare Person",
+            "evidence": "Leitung Produktschulung"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [],
+          "uncertain": false,
+          "levelId": "public",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": true,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        },
+        "boundaryCase": {
+          "rationale": "Eine abstrakte Rolle ohne identifizierbare Person ist kein personenbezogenes Datum."
+        }
+      },
+      {
+        "id": "boundary-generic-contract-template",
+        "title": "Grenzfall: generische Vertragsvorlage",
+        "documentType": "contract_template",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nINTERN. Vertragsvorlage: Kunde <FIRMA>, Menge <ANZAHL>, Preis <BETRAG>, Laufzeit <MONATE>. Keine kundenspezifischen Werte sind eingesetzt.",
+        "features": [
+          {
+            "description": "Interne Kennzeichnung",
+            "evidence": "INTERN",
+            "indicatorId": "marking_internal"
+          },
+          {
+            "description": "Nur generische Vertragsplatzhalter, keine Kundendaten",
+            "evidence": "<FIRMA>, <ANZAHL>, <BETRAG>"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "marking_internal"
+          ],
+          "uncertain": false,
+          "levelId": "internal",
+          "aiDecisions": {
+            "m365-copilot-tenant": true,
+            "public-ai-chat": false,
+            "github-copilot": true
+          },
+          "requiresHumanReview": false
+        },
+        "boundaryCase": {
+          "rationale": "Eine leere Vertragsvorlage enthält noch keine kundenspezifischen Vertragsdaten und bleibt wegen der Kennzeichnung Intern."
+        }
+      },
+      {
+        "id": "boundary-ambiguous-ticket",
+        "title": "Grenzfall: unsicheres Support-Ticket",
+        "documentType": "support_ticket",
+        "synthetic": true,
+        "content": "[SYNTHETISCH – alle Namen, Firmen und Zahlen erfunden]\nTicket 992: „Frau Sommer aus Team 7 kann das Portal nicht öffnen.“ Der Name kann eine konkrete Person bezeichnen, die Identität ist im Ausschnitt aber nicht sicher auflösbar.",
+        "features": [
+          {
+            "description": "Potenziell personenbezogener Name",
+            "evidence": "Frau Sommer",
+            "indicatorId": "personal_data"
+          },
+          {
+            "description": "Kontext reicht für eine sichere automatische Einordnung nicht aus",
+            "evidence": "Identität ... nicht sicher auflösbar"
+          }
+        ],
+        "expected": {
+          "indicatorIds": [
+            "personal_data"
+          ],
+          "uncertain": true,
+          "levelId": "strictly_confidential",
+          "aiDecisions": {
+            "m365-copilot-tenant": false,
+            "public-ai-chat": false,
+            "github-copilot": false
+          },
+          "requiresHumanReview": true
+        },
+        "boundaryCase": {
+          "rationale": "Der Indikator personal_data ergibt Vertraulich; die dokumentierte Unsicherheit eskaliert gemäß Scheme auf Streng vertraulich und verlangt Human Review."
+        }
+      }
+    ]
+  }
+}
