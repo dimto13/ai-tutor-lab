@@ -91,9 +91,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "marking_internal"
-          ],
+          "indicatorIds": ["marking_internal"],
           "uncertain": false,
           "levelId": "internal",
           "aiDecisions": {
@@ -118,9 +116,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "marking_internal"
-          ],
+          "indicatorIds": ["marking_internal"],
           "uncertain": false,
           "levelId": "internal",
           "aiDecisions": {
@@ -145,9 +141,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "marking_internal"
-          ],
+          "indicatorIds": ["marking_internal"],
           "uncertain": false,
           "levelId": "internal",
           "aiDecisions": {
@@ -172,9 +166,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "personal_data"
-          ],
+          "indicatorIds": ["personal_data"],
           "uncertain": false,
           "levelId": "confidential",
           "aiDecisions": {
@@ -204,10 +196,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "customer_contract_data",
-            "personal_data"
-          ],
+          "indicatorIds": ["customer_contract_data", "personal_data"],
           "uncertain": false,
           "levelId": "confidential",
           "aiDecisions": {
@@ -232,9 +221,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "personal_data"
-          ],
+          "indicatorIds": ["personal_data"],
           "uncertain": false,
           "levelId": "confidential",
           "aiDecisions": {
@@ -259,9 +246,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "customer_contract_data"
-          ],
+          "indicatorIds": ["customer_contract_data"],
           "uncertain": false,
           "levelId": "confidential",
           "aiDecisions": {
@@ -286,9 +271,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "personal_data"
-          ],
+          "indicatorIds": ["personal_data"],
           "uncertain": false,
           "levelId": "confidential",
           "aiDecisions": {
@@ -318,10 +301,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "salary_data",
-            "personal_data"
-          ],
+          "indicatorIds": ["salary_data", "personal_data"],
           "uncertain": false,
           "levelId": "strictly_confidential",
           "aiDecisions": {
@@ -351,10 +331,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "salary_data",
-            "personal_data"
-          ],
+          "indicatorIds": ["salary_data", "personal_data"],
           "uncertain": false,
           "levelId": "strictly_confidential",
           "aiDecisions": {
@@ -379,9 +356,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "salary_data"
-          ],
+          "indicatorIds": ["salary_data"],
           "uncertain": false,
           "levelId": "strictly_confidential",
           "aiDecisions": {
@@ -406,9 +381,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "salary_data"
-          ],
+          "indicatorIds": ["salary_data"],
           "uncertain": false,
           "levelId": "strictly_confidential",
           "aiDecisions": {
@@ -438,10 +411,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "marking_internal",
-            "personal_data"
-          ],
+          "indicatorIds": ["marking_internal", "personal_data"],
           "uncertain": false,
           "levelId": "confidential",
           "aiDecisions": {
@@ -473,9 +443,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "marking_internal"
-          ],
+          "indicatorIds": ["marking_internal"],
           "uncertain": false,
           "levelId": "internal",
           "aiDecisions": {
@@ -534,9 +502,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "marking_internal"
-          ],
+          "indicatorIds": ["marking_internal"],
           "uncertain": false,
           "levelId": "internal",
           "aiDecisions": {
@@ -568,9 +534,7 @@
           }
         ],
         "expected": {
-          "indicatorIds": [
-            "personal_data"
-          ],
+          "indicatorIds": ["personal_data"],
           "uncertain": true,
           "levelId": "strictly_confidential",
           "aiDecisions": {
