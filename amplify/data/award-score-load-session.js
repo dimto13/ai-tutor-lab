@@ -81,7 +81,7 @@ export function response(ctx) {
   }
 
   const payload = row.payload;
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+  if (!payload || typeof payload !== "object") {
     util.error("Training session payload is invalid", "ScoreEligibilityError");
   }
   if (payload.scenarioId !== ctx.args.scenarioId || payload.mode !== ctx.args.mode) {
@@ -97,7 +97,7 @@ export function response(ctx) {
 
   if (ctx.args.mode === "guided") {
     const statuses = payload.statuses;
-    if (!statuses || typeof statuses !== "object" || Array.isArray(statuses)) {
+    if (!statuses || typeof statuses !== "object" || typeof statuses.length === "number") {
       util.error("Guided training state has no valid step statuses", "ScoreEligibilityError");
     }
     const stepIds = Object.keys(statuses);
@@ -113,7 +113,10 @@ export function response(ctx) {
   }
 
   if (ctx.args.mode === "explore") {
-    if (!Array.isArray(payload.exploredTargets) || payload.exploredTargets.length === 0) {
+    if (!payload.exploredTargets || typeof payload.exploredTargets.length !== "number") {
+      util.error("Explore training has invalid exploration evidence", "ScoreEligibilityError");
+    }
+    if (payload.exploredTargets.length === 0) {
       util.error("Explore training has no completed exploration evidence", "ScoreEligibilityError");
     }
   }
