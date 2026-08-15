@@ -5,7 +5,12 @@
     { "id": "copilot-basics.challenge", "mode": "challenge", "version": "1", "points": 180 },
     { "id": "copilot-basics.explore", "mode": "explore", "version": "1", "points": 70 },
     { "id": "copilot-basics.guided", "mode": "guided", "version": "1", "points": 140 },
-    { "id": "developer-workflow-basics.challenge", "mode": "challenge", "version": "1", "points": 220 },
+    {
+      "id": "developer-workflow-basics.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 220
+    },
     { "id": "developer-workflow-basics.explore", "mode": "explore", "version": "1", "points": 80 },
     { "id": "git-basics", "mode": "guided", "version": "1", "points": 160 },
     { "id": "html-page-workflow.challenge", "mode": "challenge", "version": "1", "points": 280 },
@@ -14,9 +19,24 @@
     { "id": "research-workflow.challenge", "mode": "challenge", "version": "1", "points": 260 },
     { "id": "research-workflow.explore", "mode": "explore", "version": "1", "points": 80 },
     { "id": "research-workflow.guided", "mode": "guided", "version": "1", "points": 170 },
-    { "id": "source-control-platform-basics.challenge", "mode": "challenge", "version": "1", "points": 220 },
-    { "id": "source-control-platform-basics.explore", "mode": "explore", "version": "1", "points": 60 },
-    { "id": "source-control-platform-basics.guided", "mode": "guided", "version": "1", "points": 140 },
+    {
+      "id": "source-control-platform-basics.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 220
+    },
+    {
+      "id": "source-control-platform-basics.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 60
+    },
+    {
+      "id": "source-control-platform-basics.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 140
+    },
     { "id": "vscode-basics.challenge", "mode": "challenge", "version": "1", "points": 100 },
     { "id": "vscode-basics.explore", "mode": "explore", "version": "1", "points": 100 },
     { "id": "vscode-basics.guided", "mode": "guided", "version": "1", "points": 100 },
