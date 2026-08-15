@@ -177,9 +177,9 @@ test("self-assessed AI level is a user preference and not a measured skill field
   assert.doesNotMatch(skillBlock, /selfAssessedAiLevel/);
 });
 
-test("score and credential models have no client mutation handler in the persistence slice", async () => {
+test("credential models remain unavailable as client data sources until their authoritative services exist", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
-  for (const model of ["ScoreEvent", "SkillProfile", "Attestation"]) {
+  for (const model of ["SkillProfile", "Attestation"]) {
     assert.doesNotMatch(
       source,
       new RegExp(`dataSource:\\s*a\\.ref\\(["']${model}["']\\)`),
