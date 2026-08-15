@@ -48,12 +48,7 @@ export function assertSkillThresholds(thresholds: readonly SkillLevelThreshold[]
     throw new Error("Skill level policy must define exactly four levels");
   }
 
-  const expectedOrder: SkillLevel[] = [
-    "novice",
-    "advanced_beginner",
-    "practitioner",
-    "proficient",
-  ];
+  const expectedOrder: SkillLevel[] = ["novice", "advanced_beginner", "practitioner", "proficient"];
   let previousPoints = -1;
   for (let index = 0; index < thresholds.length; index += 1) {
     const threshold = thresholds[index];
