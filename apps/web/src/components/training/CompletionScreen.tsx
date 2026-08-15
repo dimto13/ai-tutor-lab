@@ -1,10 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Award, RotateCcw, ArrowRight, LayoutGrid, CheckCircle2, ExternalLink } from "lucide-react";
+import { SCORE_MODE_MULTIPLIER } from "@ai-train-lab/training-engine";
 import { useTraining } from "@/state/trainingStore";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
+import { useScenarioScoreAward } from "@/scoring/useScenarioScoreAward";
 
 export function CompletionScreen() {
-  const { scenario, mode, progress, restart, earnedPoints, scoreMultiplier } = useTraining();
+  const { scenario, mode, progress, restart } = useTraining();
+  const score = useScenarioScoreAward(scenario.id, mode, progress.finishedAt);
   const minutes = Math.max(
     1,
     Math.round((((progress.finishedAt ?? Date.now()) - progress.startedAt) / 60000) * 10) / 10,
@@ -17,6 +20,16 @@ export function CompletionScreen() {
       : mode === "challenge"
         ? "erfüllt"
         : `${scenario.steps.length} von ${scenario.steps.length}`;
+  const pointsValue =
+    score.status === "ready" && score.result
+      ? score.result.created
+        ? String(score.result.event.points)
+        : "0 neu"
+      : score.status === "pending"
+        ? "wird geprüft"
+        : score.status === "error"
+          ? "ausstehend"
+          : "—";
 
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background p-8">
@@ -33,8 +46,8 @@ export function CompletionScreen() {
           {[
             { label: unitLabel, value: unitValue },
             { label: "Dauer", value: `${minutes} Min.` },
-            { label: "Modus", value: `${mode} ×${scoreMultiplier}` },
-            { label: "Punkte", value: String(earnedPoints) },
+            { label: "Modus", value: `${mode} ×${SCORE_MODE_MULTIPLIER[mode]}` },
+            { label: "Punkte", value: pointsValue },
           ].map((metric) => (
             <div key={metric.label} className="rounded-lg border border-border bg-panel p-3">
               <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -54,6 +67,57 @@ export function CompletionScreen() {
             <dd className="mt-1 text-sm font-medium text-foreground">{progress.mistakes}</dd>
           </div>
         </dl>
+
+        {score.status === "ready" && score.result ? (
+          <div className="mt-4 rounded-xl border border-border bg-panel p-4 text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
+              Serverwertung · Szenario-Version {score.result.event.scenarioVersion}
+            </p>
+            {score.result.created ? (
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                Basis {score.result.event.breakdown.basePoints} + Bonus{" "}
+                {score.result.event.breakdown.bonusPoints} − Hinweisabzug{" "}
+                {score.result.event.breakdown.bonusDeductionPoints}, anschließend ×
+                {score.result.event.breakdown.modeMultiplier}. Vergeben:{" "}
+                <span className="font-medium text-foreground">{score.result.event.points} Punkte</span>.
+              </p>
+            ) : (
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                Diese Szenario-Version wurde bereits gewertet. Der aktuelle Durchlauf bleibt als
+                Übung möglich, erzeugt aber keine weiteren Punkte. Das bestehende Ledger-Ereignis
+                bleibt unverändert bei {score.result.event.points} Punkten.
+              </p>
+            )}
+          </div>
+        ) : null}
+
+        {score.status === "pending" ? (
+          <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+            Der Abschluss wird serverseitig geprüft und dem Punkte-Ledger zugeordnet.
+          </p>
+        ) : null}
+
+        {score.status === "error" ? (
+          <div className="mt-4 rounded-xl border border-border bg-panel p-4 text-left">
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              Der Trainingabschluss ist gespeichert, die Serverwertung konnte aber noch nicht
+              bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet.
+            </p>
+            <button
+              type="button"
+              onClick={score.retry}
+              className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-ring"
+            >
+              Serverwertung erneut prüfen
+            </button>
+          </div>
+        ) : null}
+
+        {score.status === "unavailable" ? (
+          <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+            Im lokalen Trainingsmodus werden bewusst keine autoritativen Punkte vergeben.
+          </p>
+        ) : null}
 
         {mode === "challenge" && scenario.solutionComparison?.length ? (
           <div className="mt-6 rounded-xl border border-border bg-panel p-4 text-left">
