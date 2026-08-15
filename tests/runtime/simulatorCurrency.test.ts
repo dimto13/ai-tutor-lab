@@ -15,7 +15,7 @@ test("simulator currency policy maps every product review to real scenarios and 
   assert.equal(context.policy.cadenceMonths, 6);
   assert.deepEqual(
     context.policy.products.map((product) => product.runtimeAdapterId),
-    ["vscode-simulator", "github-copilot-vscode-simulator"],
+    ["vscode-simulator", "github-copilot-vscode-simulator", "claude-code-cli-simulator"],
   );
   assert.doesNotThrow(() => validateScenarioMappings(context.policy, context.scenarios));
 });
@@ -40,7 +40,7 @@ test("due product reviews become fully classified Epic sub-issue plans", async (
     "2026-08-09",
   );
 
-  assert.equal(plan.length, 2);
+  assert.equal(plan.length, input.products.length);
   for (const issue of plan) {
     assert.equal(issue.kind, "review");
     assert.equal(issue.epicIssue, 83);
