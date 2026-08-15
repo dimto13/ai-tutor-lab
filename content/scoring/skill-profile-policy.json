@@ -34,11 +34,7 @@
     },
     {
       "technologyId": "ai_coding_assistant",
-      "scenarioIds": [
-        "copilot-basics.explore",
-        "copilot-basics.guided",
-        "copilot-basics.challenge"
-      ]
+      "scenarioIds": ["copilot-basics.explore", "copilot-basics.guided", "copilot-basics.challenge"]
     },
     {
       "technologyId": "cli_agent",
