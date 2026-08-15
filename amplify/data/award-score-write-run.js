@@ -136,7 +136,14 @@ function identityPart(value) {
   return value === null ? "n" : `s${value.length}:${value}`;
 }
 
-function scenarioRunId(subject, scenarioId, scenarioVersion, startedAt, finishedAt, sourceRevision) {
+function scenarioRunId(
+  subject,
+  scenarioId,
+  scenarioVersion,
+  startedAt,
+  finishedAt,
+  sourceRevision,
+) {
   return [
     "scenario-run:v1",
     `t:${identityPart(subject.tenantId)}`,
