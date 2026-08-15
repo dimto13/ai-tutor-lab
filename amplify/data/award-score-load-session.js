@@ -86,7 +86,10 @@ export function response(ctx) {
     util.error("Training session payload is invalid", "ScoreEligibilityError");
   }
   if (payload.scenarioId !== ctx.args.scenarioId || payload.mode !== ctx.args.mode) {
-    util.error("Training session payload does not match the score request", "ScoreEligibilityError");
+    util.error(
+      "Training session payload does not match the score request",
+      "ScoreEligibilityError",
+    );
   }
   if (typeof payload.finishedAt !== "number" || payload.finishedAt <= 0) {
     util.error("Only completed training sessions can be scored", "ScoreEligibilityError");
