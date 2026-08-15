@@ -61,7 +61,9 @@ async function expectSpotlightAround(spotlight: Locator, target: Locator): Promi
     .toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
 }
 
-test("Guided: Grundbegriffe zeigen sofort und interaktiv ihre VS-Code-Bereiche", async ({ page }) => {
+test("Guided: Grundbegriffe zeigen sofort und interaktiv ihre VS-Code-Bereiche", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/training/vscode-basics.guided");
   await waitForTrainingReady(page);
@@ -79,7 +81,9 @@ test("Guided: Grundbegriffe zeigen sofort und interaktiv ihre VS-Code-Bereiche",
   );
 
   const sideBarConcept = page
-    .getByRole("button", { name: "Side Bar: Begriffserklärung öffnen und in der Oberfläche zeigen" })
+    .getByRole("button", {
+      name: "Side Bar: Begriffserklärung öffnen und in der Oberfläche zeigen",
+    })
     .first();
   await sideBarConcept.click();
   await expect(spotlight).toHaveAttribute("data-highlight-concept", "vscode.side_bar");
