@@ -95,11 +95,7 @@ test("completion UI consumes server result and has no local fallback score", asy
   assert.doesNotMatch(completionSource, /scenario\.points/);
   assert.match(completionSource, /keine lokalen Ersatzpunkte/);
 
-  const mutationCall = blockBetween(
-    adapterSource,
-    "client.mutations.awardScenarioScore({",
-    "});",
-  );
+  const mutationCall = blockBetween(adapterSource, "client.mutations.awardScenarioScore({", "});");
   assert.match(mutationCall, /scenarioId:\s*request\.scenarioId/);
   assert.match(mutationCall, /mode:\s*request\.mode/);
   assert.doesNotMatch(mutationCall, /points/);
