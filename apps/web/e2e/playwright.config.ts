@@ -14,7 +14,7 @@ export default defineConfig({
     ? [["line"], ["html", { outputFolder: "playwright-report", open: "never" }]]
     : "list",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: "http://127.0.0.1:3001",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -26,8 +26,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm --prefix .. run dev:local -- --port 4173 --strictPort",
-    url: "http://127.0.0.1:4173",
+    command: "npm --prefix .. run dev:local",
+    url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
