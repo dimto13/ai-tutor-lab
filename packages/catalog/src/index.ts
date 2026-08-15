@@ -17,6 +17,7 @@ export {
   classificationSchemeSchema,
   classifyByIndicators,
   getClassificationLevelRank,
+  getClassificationLevelsInRankOrder,
   isAiToolAllowed,
   parseClassificationScheme,
   parseClassificationSchemeDocument,
