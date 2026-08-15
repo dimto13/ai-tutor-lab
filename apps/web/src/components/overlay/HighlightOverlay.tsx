@@ -1,10 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { getRuntimeAdapterForTarget } from "@/runtime";
 import { useTraining } from "@/state/trainingStore";
 import { getGlossaryConceptForTarget } from "@/lib/glossary";
 import {
-  GUIDED_CONCEPT_HIGHLIGHT_EVENT,
-  type GuidedConceptHighlightDetail,
+  getGuidedConceptHighlight,
+  getGuidedConceptHighlightServerSnapshot,
+  requestGuidedConceptHighlight,
+  subscribeGuidedConceptHighlight,
 } from "./guidedConceptHighlight";
 
 interface Rect {
@@ -38,6 +40,17 @@ function unionRects(rects: DOMRect[]): Rect | null {
   };
 }
 
+function sameRect(left: Rect | null, right: Rect | null): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.top === right.top &&
+    left.left === right.left &&
+    left.width === right.width &&
+    left.height === right.height
+  );
+}
+
 /**
  * Spotlight overlay: dims everything except the target element (four dim panes),
  * so the highlighted element stays fully clickable. The semantic target is
@@ -62,20 +75,16 @@ export function HighlightOverlay({
 }) {
   const { scenario, progress } = useTraining();
   const [rect, setRect] = useState<Rect | null>(null);
-  const [conceptFocus, setConceptFocus] = useState<GuidedConceptHighlightDetail | null>(null);
+  const conceptFocus = useSyncExternalStore(
+    subscribeGuidedConceptHighlight,
+    getGuidedConceptHighlight,
+    getGuidedConceptHighlightServerSnapshot,
+  );
   const activeStep = scenario.steps.find((step) => step.id === progress.activeStepId);
 
   useEffect(() => {
-    const handleConceptHighlight = (event: Event) => {
-      const customEvent = event as CustomEvent<GuidedConceptHighlightDetail | null>;
-      setConceptFocus(customEvent.detail ?? null);
-    };
-    window.addEventListener(GUIDED_CONCEPT_HIGHLIGHT_EVENT, handleConceptHighlight);
-    return () => window.removeEventListener(GUIDED_CONCEPT_HIGHLIGHT_EVENT, handleConceptHighlight);
-  }, []);
-
-  useEffect(() => {
-    setConceptFocus(null);
+    requestGuidedConceptHighlight(null);
+    return () => requestGuidedConceptHighlight(null);
   }, [activeStep?.id]);
 
   const explanationConcept = useMemo(() => {
@@ -89,8 +98,23 @@ export function HighlightOverlay({
     return targetId ? [targetId] : [];
   }, [conceptFocus, explanationConcept, targetId]);
 
+  const targetResolvers = useMemo(
+    () =>
+      targetIds.map((currentTargetId) => ({
+        targetId: currentTargetId,
+        runtime: runtimeAdapterId
+          ? getRuntimeAdapterForTarget(
+              currentTargetId,
+              runtimeAdapterId,
+              integrationRuntimeAdapterIds,
+            )
+          : undefined,
+      })),
+    [targetIds, runtimeAdapterId, integrationRuntimeAdapterIds],
+  );
+
   useLayoutEffect(() => {
-    if (targetIds.length === 0 || !runtimeAdapterId) {
+    if (targetResolvers.length === 0 || !runtimeAdapterId) {
       setRect(null);
       return;
     }
@@ -98,16 +122,12 @@ export function HighlightOverlay({
     let frame = 0;
     const measure = () => {
       const resolvedRects: DOMRect[] = [];
-      for (const currentTargetId of targetIds) {
-        const runtime = getRuntimeAdapterForTarget(
-          currentTargetId,
-          runtimeAdapterId,
-          integrationRuntimeAdapterIds,
-        );
-        const resolved = runtime?.resolveTarget(currentTargetId);
+      for (const resolver of targetResolvers) {
+        const resolved = resolver.runtime?.resolveTarget(resolver.targetId);
         if (resolved && resolved.width > 0 && resolved.height > 0) resolvedRects.push(resolved);
       }
-      setRect(unionRects(resolvedRects));
+      const nextRect = unionRects(resolvedRects);
+      setRect((currentRect) => (sameRect(currentRect, nextRect) ? currentRect : nextRect));
     };
 
     measure();
@@ -117,7 +137,7 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetIds, runtimeAdapterId, integrationRuntimeAdapterIds]);
+  }, [targetResolvers, runtimeAdapterId]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
