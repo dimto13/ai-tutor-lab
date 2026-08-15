@@ -48,10 +48,7 @@ test("corpus schema rejects broken synthetic-data invariants", async () => {
   assert.ok(firstDocument);
   assert.ok(secondDocument);
   secondDocument.id = firstDocument.id;
-  assert.throws(
-    () => parseSyntheticDocumentCorpus(duplicateId),
-    /duplicate synthetic document id/,
-  );
+  assert.throws(() => parseSyntheticDocumentCorpus(duplicateId), /duplicate synthetic document id/);
 
   const missingMarker = structuredClone(valid);
   const markerDocument = missingMarker.corpus.documents[0];
@@ -109,7 +106,11 @@ test("all corpus references exist in the shared ClassificationScheme", async () 
       }
     }
     assert.ok(knownLevelIds.has(document.expected.levelId), document.id);
-    assert.deepEqual(Object.keys(document.expected.aiDecisions).sort(), configuredTools, document.id);
+    assert.deepEqual(
+      Object.keys(document.expected.aiDecisions).sort(),
+      configuredTools,
+      document.id,
+    );
   }
 });
 
