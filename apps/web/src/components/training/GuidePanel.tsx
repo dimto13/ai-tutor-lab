@@ -194,8 +194,8 @@ function GuidedGuide() {
             {helpLevel < 3 ? (
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
                 Vor Abruf: Für Hilfe {nextHelpLevel} ist ein Abzug von {nextHelpDeduction} % auf den
-                Schrittbonus vorgesehen. Die angezeigten Gesamtpunkte berücksichtigen diesen Abzug
-                derzeit noch nicht. Fehlversuche selbst kosten keine Punkte.
+                Schrittbonus vorgesehen. Bei einer serverseitigen Wertung wird dieser Abzug beim
+                Abschluss berücksichtigt. Fehlversuche selbst kosten keine Punkte.
               </p>
             ) : (
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
