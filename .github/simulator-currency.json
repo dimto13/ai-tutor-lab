@@ -103,6 +103,24 @@
           "status": "resolved"
         }
       ]
+    },
+    {
+      "productId": "claude-code",
+      "displayName": "Claude Code",
+      "runtimeAdapterId": "claude-code-cli-simulator",
+      "version": "2026-08",
+      "owner": "dimto13",
+      "lastReviewedAt": "2026-08-15",
+      "nextReviewAt": "2027-02-15",
+      "scenarioIds": ["claude-code-basics.guided"],
+      "checklist": [
+        "Start der interaktiven Sitzung, Arbeitsverzeichnis, Transcript und Prompt-Eingabe mit der aktuellen Claude-Code-CLI vergleichen.",
+        "Datei- und Shell-Aktionen sowie das Berechtigungsmodell für Lesen, Änderungen und Befehle gegen das aktuelle Produktverhalten prüfen.",
+        "Vorschlags-, Diff-, Freigabe- und Ablehnungsdarstellung samt semantischen Highlight-Zielen auf Produktnähe prüfen.",
+        "Sitzungsfortsetzung, Resume-Verhalten und Bezeichnungen des Sitzungszustands gegen die aktuelle CLI prüfen.",
+        "Lerntexte, Glossar und Szenario auf veraltete Begriffe oder nicht mehr zutreffende Interaktionen prüfen."
+      ],
+      "deviations": []
     }
   ]
 }
