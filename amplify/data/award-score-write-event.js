@@ -24,6 +24,7 @@ const SCENARIO_SCORE_DEFINITIONS = {
   "developer-workflow-basics.explore": { mode: "explore", version: "1", points: 80 },
   "git-basics": { mode: "guided", version: "1", points: 160 },
   "developer-workflow-basics.challenge": { mode: "challenge", version: "1", points: 220 },
+  "claude-code-basics.guided": { mode: "guided", version: "1", points: 60 },
   "copilot-basics.explore": { mode: "explore", version: "1", points: 70 },
   "copilot-basics.guided": { mode: "guided", version: "1", points: 140 },
   "copilot-basics.challenge": { mode: "challenge", version: "1", points: 180 },
