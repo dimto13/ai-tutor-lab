@@ -26,14 +26,15 @@ function caller(ctx) {
 
   return {
     userId: identity.sub,
-    tenantId: tenantId || `personal:${identity.sub}`,
+    tenantId,
+    storageTenantId: tenantId || `personal:${identity.sub}`,
   };
 }
 
 function sessionId(subject, scenarioId, mode) {
   return [
     "session",
-    util.base64Encode(subject.tenantId),
+    util.base64Encode(subject.storageTenantId),
     util.base64Encode(subject.userId),
     util.base64Encode(scenarioId),
     mode,
@@ -72,7 +73,7 @@ export function response(ctx) {
 
   const subject = ctx.stash.scoreSubject;
   if (
-    row.tenantId !== subject.tenantId ||
+    row.tenantId !== subject.storageTenantId ||
     row.userId !== subject.userId ||
     row.scenarioId !== ctx.args.scenarioId ||
     row.mode !== ctx.args.mode
