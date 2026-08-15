@@ -1,15 +1,19 @@
+import { load as loadYaml } from "js-yaml";
 import { z } from "zod";
+
+const classificationIdPattern = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 const classificationIdSchema = z
   .string()
   .trim()
   .min(1)
-  .regex(/^[a-z0-9][a-z0-9._-]*$/i, "must be a stable identifier");
+  .regex(classificationIdPattern, "must be a stable identifier");
 
 export const classificationLevelSchema = z
   .object({
     id: classificationIdSchema,
     label: z.string().trim().min(1),
+    rank: z.number().int().nonnegative(),
   })
   .strict();
 
@@ -39,6 +43,7 @@ export const classificationSchemeSchema = z
   .strict()
   .superRefine((scheme, ctx) => {
     const levelIds = new Set<string>();
+    const levelRanks = new Set<number>();
     scheme.levels.forEach((level, index) => {
       if (levelIds.has(level.id)) {
         ctx.addIssue({
@@ -48,6 +53,15 @@ export const classificationSchemeSchema = z
         });
       }
       levelIds.add(level.id);
+
+      if (levelRanks.has(level.rank)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `duplicate level rank: ${level.rank}`,
+          path: ["levels", index, "rank"],
+        });
+      }
+      levelRanks.add(level.rank);
     });
 
     const indicatorIds = new Set<string>();
@@ -118,51 +132,59 @@ export function parseClassificationSchemeDocument(raw: unknown): ClassificationS
   return classificationSchemeDocumentSchema.parse(raw);
 }
 
-/**
- * Classification schemes are stored as YAML 1.2 using its JSON-compatible subset.
- * This keeps authoring deterministic and dependency-free while remaining valid YAML.
- */
 export function parseClassificationSchemeYaml(source: string): ClassificationSchemeDocument {
   let raw: unknown;
   try {
-    raw = JSON.parse(source);
+    raw = loadYaml(source);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Classification scheme YAML must use the JSON-compatible YAML 1.2 profile: ${detail}`,
-    );
+    throw new Error(`Invalid classification scheme YAML: ${detail}`);
   }
   return parseClassificationSchemeDocument(raw);
 }
 
 export function getClassificationLevelRank(scheme: ClassificationScheme, levelId: string): number {
-  const rank = scheme.levels.findIndex((level) => level.id === levelId);
-  if (rank < 0) {
+  const level = scheme.levels.find((candidate) => candidate.id === levelId);
+  if (!level) {
     throw new Error(`Unknown classification level: ${levelId}`);
   }
-  return rank;
+  return level.rank;
+}
+
+export function getClassificationLevelsInRankOrder(
+  scheme: ClassificationScheme,
+): ClassificationLevel[] {
+  return [...scheme.levels].sort((left, right) => left.rank - right.rank);
 }
 
 export function resolveHighestMinimumLevel(
   scheme: ClassificationScheme,
   indicatorIds: readonly string[],
 ): string {
+  const orderedLevels = getClassificationLevelsInRankOrder(scheme);
+  let selectedLevel = orderedLevels[0];
+  if (!selectedLevel) {
+    throw new Error("Classification scheme must contain at least one level");
+  }
+
   const indicatorsById = new Map(scheme.indicators.map((indicator) => [indicator.id, indicator]));
-  let highestRank = 0;
+  const levelsById = new Map(scheme.levels.map((level) => [level.id, level]));
 
   for (const indicatorId of new Set(indicatorIds)) {
     const indicator = indicatorsById.get(indicatorId);
     if (!indicator) {
       throw new Error(`Unknown classification indicator: ${indicatorId}`);
     }
-    highestRank = Math.max(highestRank, getClassificationLevelRank(scheme, indicator.minLevel));
+    const candidateLevel = levelsById.get(indicator.minLevel);
+    if (!candidateLevel) {
+      throw new Error(`Unknown classification level: ${indicator.minLevel}`);
+    }
+    if (candidateLevel.rank > selectedLevel.rank) {
+      selectedLevel = candidateLevel;
+    }
   }
 
-  const highestLevel = scheme.levels[highestRank];
-  if (!highestLevel) {
-    throw new Error("Classification scheme must contain at least one level");
-  }
-  return highestLevel.id;
+  return selectedLevel.id;
 }
 
 export function isAiToolAllowed(
@@ -183,10 +205,15 @@ export function classifyByIndicators(
 ): ClassificationDecision {
   const triggeredIndicatorIds = [...new Set(indicatorIds)];
   const baseLevelId = resolveHighestMinimumLevel(scheme, triggeredIndicatorIds);
-  const baseRank = getClassificationLevelRank(scheme, baseLevelId);
+  const orderedLevels = getClassificationLevelsInRankOrder(scheme);
+  const baseIndex = orderedLevels.findIndex((level) => level.id === baseLevelId);
+  if (baseIndex < 0) {
+    throw new Error(`Unknown classification level: ${baseLevelId}`);
+  }
+
   const uncertain = options.uncertain === true;
-  const resolvedRank = uncertain ? Math.min(baseRank + 1, scheme.levels.length - 1) : baseRank;
-  const level = scheme.levels[resolvedRank];
+  const resolvedIndex = uncertain ? Math.min(baseIndex + 1, orderedLevels.length - 1) : baseIndex;
+  const level = orderedLevels[resolvedIndex];
   if (!level) {
     throw new Error("Classification scheme must contain at least one level");
   }
