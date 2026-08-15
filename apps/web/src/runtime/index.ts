@@ -1,4 +1,5 @@
 import { artifactPreviewRuntime } from "./artifactPreviewRuntime.ts";
+import { claudeCodeRuntime } from "./claudeCodeRuntime.ts";
 import { copilotRuntime } from "./copilotRuntime.ts";
 import { getRuntimeReferenceDefinition } from "./referenceCatalog.ts";
 import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime.ts";
@@ -29,6 +30,12 @@ export type {
   SourceControlPlatformAdapter,
   SourceControlPlatformState,
 } from "./sourceControlPlatformRuntime.ts";
+export type {
+  ClaudeCodeChangeProposal,
+  ClaudeCodeRuntimeAdapter,
+  ClaudeCodeSeed,
+  ClaudeCodeState,
+} from "./claudeCodeRuntime.ts";
 
 interface CopilotSnapshotEnvelope {
   kind: "copilot-prompt-context-v1";
@@ -111,6 +118,7 @@ const runtimes: Record<string, RuntimeAdapter> = {
   [registeredCopilotRuntime.id]: registeredCopilotRuntime,
   [artifactPreviewRuntime.id]: artifactPreviewRuntime,
   [sourceControlPlatformRuntime.id]: sourceControlPlatformRuntime,
+  [claudeCodeRuntime.id]: claudeCodeRuntime,
 };
 
 export function getRuntimeAdapter(runtimeAdapterId: string | undefined): RuntimeAdapter | null {

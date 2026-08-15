@@ -18,6 +18,7 @@ import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-wo
 import sourceControlPlatformExploreRaw from "../../../../content/scenarios/source-control-platform-basics.explore.json";
 import sourceControlPlatformGuidedRaw from "../../../../content/scenarios/source-control-platform-basics.guided.json";
 import sourceControlPlatformChallengeRaw from "../../../../content/scenarios/source-control-platform-basics.challenge.json";
+import claudeCodeBasicsGuidedRaw from "../../../../content/scenarios/claude-code-basics.guided.json";
 
 const vscodeExploreScenario = parseScenario(vscodeExploreRaw);
 const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
@@ -39,6 +40,7 @@ const [researchWorkflowExploreScenario, researchWorkflowChallengeScenario] =
 const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
 const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
 const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
+const claudeCodeBasicsGuidedScenario = parseScenario(claudeCodeBasicsGuidedRaw);
 
 const scenarios: Record<string, Scenario> = {
   [vscodeExploreScenario.id]: vscodeExploreScenario,
@@ -61,6 +63,7 @@ const scenarios: Record<string, Scenario> = {
   [sourceControlPlatformExploreScenario.id]: sourceControlPlatformExploreScenario,
   [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
   [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,
+  [claudeCodeBasicsGuidedScenario.id]: claudeCodeBasicsGuidedScenario,
 };
 
 export function getScenario(scenarioId: string): Scenario | null {
