@@ -2,6 +2,29 @@ import rawCatalog from "../../../content/catalog/technology-catalog.json" with {
 import { parseTechnologyCatalog } from "./schema.ts";
 
 export type {
+  AiToolPolicy,
+  ClassificationDecision,
+  ClassificationIndicator,
+  ClassificationLevel,
+  ClassificationScheme,
+  ClassificationSchemeDocument,
+} from "./classification.ts";
+export {
+  aiToolPolicySchema,
+  classificationIndicatorSchema,
+  classificationLevelSchema,
+  classificationSchemeDocumentSchema,
+  classificationSchemeSchema,
+  classifyByIndicators,
+  getClassificationLevelRank,
+  getClassificationLevelsInRankOrder,
+  isAiToolAllowed,
+  parseClassificationScheme,
+  parseClassificationSchemeDocument,
+  parseClassificationSchemeYaml,
+  resolveHighestMinimumLevel,
+} from "./classification.ts";
+export type {
   CatalogEnvironmentReference,
   CatalogEnvironmentValidationIssue,
   CatalogIntegrationReference,
