@@ -9,10 +9,7 @@ test("score award id uses the same length-prefixed identity contract as the serv
     scenarioVersion: "3",
   });
 
-  assert.equal(
-    id,
-    "score-award:v1|t:s8:tenant|a|u:s6:user:1|s:s20:vscode-basics.guided|v:s1:3",
-  );
+  assert.equal(id, "score-award:v1|t:s8:tenant|a|u:s6:user:1|s:s20:vscode-basics.guided|v:s1:3");
 });
 
 test("score event retains the authoritative source revision for audit", () => {
