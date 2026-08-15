@@ -79,7 +79,10 @@ export function CompletionScreen() {
                 {score.result.event.breakdown.bonusPoints} − Hinweisabzug{" "}
                 {score.result.event.breakdown.bonusDeductionPoints}, anschließend ×
                 {score.result.event.breakdown.modeMultiplier}. Vergeben:{" "}
-                <span className="font-medium text-foreground">{score.result.event.points} Punkte</span>.
+                <span className="font-medium text-foreground">
+                  {score.result.event.points} Punkte
+                </span>
+                .
               </p>
             ) : (
               <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
