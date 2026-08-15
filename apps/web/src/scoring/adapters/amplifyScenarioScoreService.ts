@@ -85,7 +85,8 @@ function scoreEvent(value: unknown): ScoreEvent {
   const type = stringValue(source["eventType"], "eventType");
   if (type !== SCORE_EVENT_TYPE) throw new Error(`Unsupported score event type: ${type}`);
   const id = stringValue(source["id"], "id");
-  const tenantId = stringValue(source["tenantId"], "tenantId");
+  const userId = stringValue(source["userId"], "userId");
+  const persistedTenantId = stringValue(source["tenantId"], "tenantId");
   const sourceRevision = finiteNumber(source["sourceRevision"], "sourceRevision");
   if (!Number.isInteger(sourceRevision) || sourceRevision < 1) {
     throw new Error("Score event sourceRevision is invalid");
@@ -97,8 +98,8 @@ function scoreEvent(value: unknown): ScoreEvent {
     deduplicationKey: id,
     type: SCORE_EVENT_TYPE,
     subject: {
-      userId: stringValue(source["userId"], "userId"),
-      tenantId,
+      userId,
+      tenantId: id.startsWith("score-award:v1|t:n|") ? null : persistedTenantId,
     },
     scenarioId: stringValue(source["scenarioId"], "scenarioId"),
     scenarioVersion: stringValue(source["scenarioVersion"], "scenarioVersion"),
