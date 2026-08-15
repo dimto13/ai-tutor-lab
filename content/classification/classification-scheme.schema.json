@@ -19,10 +19,11 @@
     "classificationLevel": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "label"],
+      "required": ["id", "label", "rank"],
       "properties": {
         "id": { "$ref": "#/$defs/stableId" },
-        "label": { "type": "string", "minLength": 1 }
+        "label": { "type": "string", "minLength": 1 },
+        "rank": { "type": "integer", "minimum": 0 }
       }
     },
     "indicator": {
