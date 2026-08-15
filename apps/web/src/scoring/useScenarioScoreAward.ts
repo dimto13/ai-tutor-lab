@@ -39,6 +39,7 @@ export function useScenarioScoreAward(
       setError(null);
       return;
     }
+    const activeService = service;
     if (finishedAt === null) {
       setStatus("idle");
       setResult(null);
@@ -70,7 +71,7 @@ export function useScenarioScoreAward(
       setStatus("pending");
       setError(null);
 
-      void service
+      void activeService
         .awardScenario({ scenarioId, mode })
         .then((award) => {
           if (cancelled) return;
