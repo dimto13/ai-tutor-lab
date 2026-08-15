@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "scenarios": [
     { "id": "artifact-preview-foundation.guided", "mode": "guided", "version": "1", "points": 40 },
+    { "id": "claude-code-basics.guided", "mode": "guided", "version": "1", "points": 60 },
     { "id": "copilot-basics.challenge", "mode": "challenge", "version": "1", "points": 180 },
     { "id": "copilot-basics.explore", "mode": "explore", "version": "1", "points": 70 },
     { "id": "copilot-basics.guided", "mode": "guided", "version": "1", "points": 140 },
