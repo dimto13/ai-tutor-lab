@@ -4,6 +4,7 @@ export * from "./eventBus.ts";
 export * from "./helpPolicy.ts";
 export * from "./learningPreferences.ts";
 export * from "./persistence.ts";
+export * from "./scoring.ts";
 export * from "./stateMachine.ts";
 export * from "./trainingProgress.ts";
 export * from "./validation.ts";

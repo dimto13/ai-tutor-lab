@@ -44,6 +44,14 @@ async function attachCalculatorContext(page: Page) {
   );
 }
 
+async function expectLocalScoreUnavailable(page: Page) {
+  const pointsMetric = page.getByText("Punkte", { exact: true }).locator("..");
+  await expect(pointsMetric.getByText("—", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(/Im lokalen Trainingsmodus werden bewusst keine autoritativen Punkte vergeben/),
+  ).toBeVisible();
+}
+
 test("ein abgeschlossener nutzergebundener Legacy-Fortschritt bleibt nach neuen optionalen Schritten abgeschlossen", async ({
   page,
 }) => {
@@ -73,7 +81,7 @@ test("ein abgeschlossener nutzergebundener Legacy-Fortschritt bleibt nach neuen 
   await openCopilotScenario(page);
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(page.getByText("14 von 14", { exact: true })).toBeVisible();
-  await expect(page.getByText("140", { exact: true })).toBeVisible();
+  await expectLocalScoreUnavailable(page);
   await expect(page.getByRole("button", { name: "Grundbegriffe überspringen" })).toHaveCount(0);
 });
 
@@ -177,7 +185,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await clickCurrentConceptButton(page);
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
-  await expect(page.getByText("140", { exact: true })).toBeVisible();
+  await expectLocalScoreUnavailable(page);
 });
 
 test("Einsteiger können Grundbegriffe lesen und direkt im Guide nachschlagen", async ({ page }) => {

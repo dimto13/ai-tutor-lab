@@ -47,7 +47,7 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehäng
   );
   await copilotPrompt.press("Enter");
   await expect(page.getByText(/add\(a, b\)-Funktion/)).toBeVisible();
-  await expect(page.getByText(/notes\.txt.*nicht.*Commit/)).toBeVisible();
+  await expect(page.getByText(/notes\.txt.*aus.*Commit.*heraus/)).toBeVisible();
   await expect(page.getByText(/Simulierte Copilot-Antwort/)).toHaveCount(0);
 
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(

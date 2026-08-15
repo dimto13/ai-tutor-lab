@@ -47,8 +47,6 @@ const CHALLENGE_TIMEOUT_MESSAGE =
 const validatorRegistry = createDefaultValidatorRegistry();
 
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
-const modeMultiplier = (mode: TrainingMode) =>
-  mode === "explore" ? 0.5 : mode === "challenge" ? 2 : 1;
 
 function stateKey(scenario: Scenario, subject: TrainingSubjectRef): TrainingStateKey {
   return {
@@ -101,8 +99,6 @@ interface TrainingContextValue {
   isReady: boolean;
   feedback: { kind: "success" | "error"; message: string } | null;
   helpLevel: number;
-  scoreMultiplier: number;
-  earnedPoints: number;
   challengeOutcome: ChallengeOutcome | null;
   challengeRemainingSeconds: number | null;
   revealHelp: () => void;
@@ -566,8 +562,6 @@ export function TrainingProvider({
     const activeStepIndex = progress.activeStepId
       ? scenario.steps.findIndex((step) => step.id === progress.activeStepId)
       : scenario.steps.length;
-    const scoreMultiplier = modeMultiplier(mode);
-    const basePoints = scenario.points ?? Math.max(scenario.steps.length * 10, 10);
 
     return {
       scenario,
@@ -581,8 +575,6 @@ export function TrainingProvider({
       isReady: hydrated,
       feedback: effectiveFeedback,
       helpLevel: visibleHelpLevel,
-      scoreMultiplier,
-      earnedPoints: Math.round(basePoints * scoreMultiplier),
       challengeOutcome: progress.challengeOutcome,
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       revealHelp: () => {
