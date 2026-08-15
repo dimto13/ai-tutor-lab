@@ -5,6 +5,7 @@ export const schema = a.schema({
   SelfAssessedAiLevel: a.enum(["beginner", "intermediate", "advanced"]),
   StepStatus: a.enum(["NOT_STARTED", "ACTIVE", "VALIDATION_FAILED", "COMPLETED", "SKIPPED"]),
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
+  ScenarioRunEvidenceStatus: a.enum(["eligible", "suspect_fast", "unassessed"]),
 
   UserProfile: a
     .model({
@@ -101,6 +102,32 @@ export const schema = a.schema({
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
 
+  ScenarioRun: a
+    .model({
+      ownerKey: a.string().required(),
+      tenantId: a.string().required(),
+      userId: a.string().required(),
+      scenarioId: a.string().required(),
+      scenarioVersion: a.string().required(),
+      sessionId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      startedAt: a.float().required(),
+      finishedAt: a.float().required(),
+      durationMs: a.float().required(),
+      estimatedMinutes: a.float(),
+      fastRunThresholdRatio: a.float(),
+      fastRunThresholdMs: a.float(),
+      evidenceStatus: a.ref("ScenarioRunEvidenceStatus").required(),
+      evidenceEligible: a.boolean().required(),
+      sourceRevision: a.integer().required(),
+      appendToken: a.string().required(),
+    })
+    .secondaryIndexes((index) => [
+      index("ownerKey").sortKeys(["finishedAt"]).name("scenarioRunsByOwnerTime"),
+    ])
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
   ScoreEvent: a
     .model({
       ownerKey: a.string().required(),
@@ -190,6 +217,25 @@ export const schema = a.schema({
     selfAssessedAiLevel: a.ref("SelfAssessedAiLevel"),
     revision: a.integer().required(),
     updatedAt: a.float().required(),
+  }),
+
+  ScenarioRunEnvelope: a.customType({
+    id: a.id().required(),
+    tenantId: a.string().required(),
+    userId: a.string().required(),
+    scenarioId: a.string().required(),
+    scenarioVersion: a.string().required(),
+    sessionId: a.string().required(),
+    mode: a.ref("TrainingMode").required(),
+    startedAt: a.float().required(),
+    finishedAt: a.float().required(),
+    durationMs: a.float().required(),
+    estimatedMinutes: a.float(),
+    fastRunThresholdRatio: a.float(),
+    fastRunThresholdMs: a.float(),
+    evidenceStatus: a.ref("ScenarioRunEvidenceStatus").required(),
+    evidenceEligible: a.boolean().required(),
+    sourceRevision: a.integer().required(),
   }),
 
   ScoreEventEnvelope: a.customType({
@@ -367,10 +413,26 @@ export const schema = a.schema({
         entry: "./award-score-load-session.js",
       }),
       a.handler.custom({
+        dataSource: a.ref("ScenarioRun"),
+        entry: "./award-score-write-run.js",
+      }),
+      a.handler.custom({
         dataSource: a.ref("ScoreEvent"),
         entry: "./award-score-write-event.js",
       }),
     ]),
+
+  listMyScenarioRuns: a
+    .query()
+    .arguments({ limit: a.integer() })
+    .returns(a.ref("ScenarioRunEnvelope").array())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("ScenarioRun"),
+        entry: "./list-scenario-runs.js",
+      }),
+    ),
 
   listMyScoreEvents: a
     .query()
