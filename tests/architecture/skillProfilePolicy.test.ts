@@ -75,7 +75,9 @@ test("skill profile policy covers every technology and only registered scoring s
   );
 
   const expectedTechnologyIds = technologyCatalog.technologies.map(({ id }) => id).sort();
-  const configuredTechnologyIds = policy.technologies.map(({ technologyId }) => technologyId).sort();
+  const configuredTechnologyIds = policy.technologies
+    .map(({ technologyId }) => technologyId)
+    .sort();
   assert.deepEqual(configuredTechnologyIds, expectedTechnologyIds);
 
   const scoringIds = new Set(scoringCatalog.scenarios.map(({ id }) => id));
@@ -83,7 +85,10 @@ test("skill profile policy covers every technology and only registered scoring s
   for (const technology of policy.technologies) {
     for (const scenarioId of technology.scenarioIds) {
       assert.ok(scoringIds.has(scenarioId), `${scenarioId} must be registered for server scoring`);
-      assert.ok(!assignedScenarioIds.has(scenarioId), `${scenarioId} is assigned to multiple technologies`);
+      assert.ok(
+        !assignedScenarioIds.has(scenarioId),
+        `${scenarioId} is assigned to multiple technologies`,
+      );
       assignedScenarioIds.add(scenarioId);
     }
   }
