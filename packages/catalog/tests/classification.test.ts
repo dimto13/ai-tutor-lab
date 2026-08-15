@@ -24,6 +24,10 @@ async function loadDefaultScheme() {
   return parseClassificationSchemeYaml(source).classificationScheme;
 }
 
+function assertExactKeys(value: Record<string, unknown>, expectedKeys: readonly string[]) {
+  assert.deepEqual(Object.keys(value).sort(), [...expectedKeys].sort());
+}
+
 test("default classification scheme supports normal commented YAML", async () => {
   const scheme = await loadDefaultScheme();
 
@@ -39,26 +43,41 @@ test("default classification scheme supports normal commented YAML", async () =>
   assert.equal(scheme.defaultOnUncertainty, "escalate");
 });
 
-test("classification JSON schema declares the same required document contract", async () => {
+test("default YAML, JSON schema and runtime schema stay synchronized", async () => {
+  const source = await readFile(defaultSchemeUrl, "utf8");
+  const document = parseClassificationSchemeYaml(source);
   const jsonSchema = JSON.parse(await readFile(jsonSchemaUrl, "utf8")) as {
     $schema: string;
     required: string[];
     $defs: {
+      stableId: { pattern: string };
       classificationLevel: { required: string[] };
+      indicator: { required: string[] };
+      aiToolPolicy: { required: string[] };
       classificationScheme: { required: string[] };
     };
   };
 
   assert.equal(jsonSchema.$schema, "https://json-schema.org/draft/2020-12/schema");
-  assert.deepEqual(jsonSchema.required, ["classificationScheme"]);
-  assert.deepEqual(jsonSchema.$defs.classificationLevel.required, ["id", "label", "rank"]);
-  assert.deepEqual(jsonSchema.$defs.classificationScheme.required, [
-    "tenantId",
-    "levels",
-    "indicators",
-    "aiPolicy",
-    "defaultOnUncertainty",
-  ]);
+  assert.equal(jsonSchema.$defs.stableId.pattern, "^[A-Za-z0-9][A-Za-z0-9._-]*$");
+  assertExactKeys(document as unknown as Record<string, unknown>, jsonSchema.required);
+  assertExactKeys(
+    document.classificationScheme as unknown as Record<string, unknown>,
+    jsonSchema.$defs.classificationScheme.required,
+  );
+
+  for (const level of document.classificationScheme.levels) {
+    assertExactKeys(level as unknown as Record<string, unknown>, jsonSchema.$defs.classificationLevel.required);
+  }
+  for (const indicator of document.classificationScheme.indicators) {
+    assertExactKeys(
+      indicator as unknown as Record<string, unknown>,
+      jsonSchema.$defs.indicator.required,
+    );
+  }
+  for (const policy of document.classificationScheme.aiPolicy) {
+    assertExactKeys(policy as unknown as Record<string, unknown>, jsonSchema.$defs.aiToolPolicy.required);
+  }
 });
 
 test("highest minimum level wins when multiple indicators trigger", async () => {
