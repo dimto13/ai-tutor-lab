@@ -208,7 +208,7 @@ export function response(ctx) {
     created: event.appendToken === ctx.stash.scoreAppendToken,
     event: {
       id: ctx.stash.scoreAwardId,
-      tenantId: ctx.stash.scoreSubject.tenantId,
+      tenantId: event.tenantId,
       userId: event.userId,
       scenarioId: event.scenarioId,
       scenarioVersion: event.scenarioVersion,
