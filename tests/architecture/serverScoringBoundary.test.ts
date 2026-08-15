@@ -4,7 +4,9 @@ import test from "node:test";
 
 const dataResourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
 const loadResolverUrl = new URL("../../amplify/data/award-score-load-session.js", import.meta.url);
+const runResolverUrl = new URL("../../amplify/data/award-score-write-run.js", import.meta.url);
 const writeResolverUrl = new URL("../../amplify/data/award-score-write-event.js", import.meta.url);
+const listRunResolverUrl = new URL("../../amplify/data/list-scenario-runs.js", import.meta.url);
 const listResolverUrl = new URL("../../amplify/data/list-score-events.js", import.meta.url);
 const completionScreenUrl = new URL(
   "../../apps/web/src/components/training/CompletionScreen.tsx",
@@ -32,7 +34,7 @@ function schemaMemberBlock(source: string, memberName: string): string {
   return source.slice(start, schemaEnd);
 }
 
-test("public score award input cannot set owner, version or points", async () => {
+test("public score award input cannot set owner, version, points or anti-gaming evidence", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
   const awardBlock = schemaMemberBlock(source, "awardScenarioScore");
   const argumentStart = awardBlock.indexOf(".arguments({");
@@ -46,15 +48,32 @@ test("public score award input cannot set owner, version or points", async () =>
   assert.doesNotMatch(argumentsBlock, /\bscenarioVersion\s*:/);
   assert.doesNotMatch(argumentsBlock, /\buserId\s*:/);
   assert.doesNotMatch(argumentsBlock, /\btenantId\s*:/);
+  assert.doesNotMatch(argumentsBlock, /estimatedMinutes/);
+  assert.doesNotMatch(argumentsBlock, /fastRunThreshold/);
+  assert.doesNotMatch(argumentsBlock, /evidenceStatus/);
   assert.match(awardBlock, /award-score-load-session\.js/);
+  assert.match(awardBlock, /award-score-write-run\.js/);
   assert.match(awardBlock, /award-score-write-event\.js/);
 });
 
-test("server derives identity, requires completed persisted state and appends score once", async () => {
-  const [loadSource, writeSource] = await Promise.all([
+test("server persists every completed run before awarding scenario-version points once", async () => {
+  const [resourceSource, loadSource, runSource, writeSource] = await Promise.all([
+    readFile(dataResourceUrl, "utf8"),
     readFile(loadResolverUrl, "utf8"),
+    readFile(runResolverUrl, "utf8"),
     readFile(writeResolverUrl, "utf8"),
   ]);
+
+  const awardBlock = schemaMemberBlock(resourceSource, "awardScenarioScore");
+  assert.ok(
+    awardBlock.indexOf("award-score-load-session.js") <
+      awardBlock.indexOf("award-score-write-run.js"),
+  );
+  assert.ok(
+    awardBlock.indexOf("award-score-write-run.js") <
+      awardBlock.indexOf("award-score-write-event.js"),
+  );
+  assert.match(awardBlock, /dataSource:\s*a\.ref\(["']ScenarioRun["']\)/);
 
   assert.match(loadSource, /identity\.sub/);
   assert.match(loadSource, /personal:\$\{identity\.sub\}/);
@@ -62,6 +81,22 @@ test("server derives identity, requires completed persisted state and appends sc
   assert.match(loadSource, /consistentRead:\s*true/);
   assert.match(loadSource, /payload\.finishedAt/);
   assert.match(loadSource, /payload\.challengeOutcome\s*!==\s*["']passed["']/);
+
+  assert.match(runSource, /payload\.startedAt/);
+  assert.match(runSource, /payload\.finishedAt/);
+  assert.match(runSource, /definition\.estimatedMinutes\s*\*\s*60_000/);
+  assert.match(runSource, /definition\.fastRunThresholdRatio/);
+  assert.match(runSource, /durationMs\s*<\s*fastRunThresholdMs/);
+  assert.match(runSource, /["']suspect_fast["']/);
+  assert.match(runSource, /evidenceEligible:\s*!suspectFast/);
+  assert.match(runSource, /sourceRevision:\s*session\.revision/);
+  assert.match(runSource, /attribute_not_exists\(id\)/);
+  assert.match(runSource, /startedAt/);
+  assert.match(runSource, /finishedAt/);
+  assert.match(runSource, /sourceRevision/);
+  assert.doesNotMatch(runSource, /ctx\.args\.estimatedMinutes/);
+  assert.doesNotMatch(runSource, /ctx\.args\.fastRunThreshold/);
+  assert.doesNotMatch(runSource, /ctx\.args\.evidenceStatus/);
 
   assert.match(writeSource, /const SCORE_BASE_PERCENT = 70/);
   assert.match(writeSource, /const SCORE_BONUS_PERCENT = 30/);
@@ -79,20 +114,28 @@ test("server derives identity, requires completed persisted state and appends sc
   assert.doesNotMatch(writeSource, /ctx\.args\.scenarioVersion/);
 });
 
-test("score ledger reads remain scoped to the authenticated owner index", async () => {
-  const [resourceSource, listSource] = await Promise.all([
+test("score and run ledger reads remain scoped to authenticated owner indexes", async () => {
+  const [resourceSource, listRunSource, listSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
+    readFile(listRunResolverUrl, "utf8"),
     readFile(listResolverUrl, "utf8"),
   ]);
 
   assert.match(resourceSource, /name\(["']scoreEventsByOwnerTime["']\)/);
+  assert.match(resourceSource, /name\(["']scenarioRunsByOwnerTime["']\)/);
+
+  assert.match(listRunSource, /identity\.sub/);
+  assert.match(listRunSource, /index:\s*["']scenarioRunsByOwnerTime["']/);
+  assert.match(listRunSource, /scanIndexForward:\s*false/);
+  assert.doesNotMatch(listRunSource, /operation:\s*["']Scan["']/);
+
   assert.match(listSource, /identity\.sub/);
   assert.match(listSource, /index:\s*["']scoreEventsByOwnerTime["']/);
   assert.match(listSource, /scanIndexForward:\s*false/);
   assert.doesNotMatch(listSource, /operation:\s*["']Scan["']/);
 });
 
-test("completion UI consumes server result and has no local fallback score", async () => {
+test("completion UI consumes server result and explains point-free repeat runs", async () => {
   const [completionSource, adapterSource] = await Promise.all([
     readFile(completionScreenUrl, "utf8"),
     readFile(scoreAdapterUrl, "utf8"),
@@ -103,6 +146,8 @@ test("completion UI consumes server result and has no local fallback score", asy
   assert.doesNotMatch(completionSource, /earnedPoints/);
   assert.doesNotMatch(completionSource, /scenario\.points/);
   assert.match(completionSource, /keine lokalen Ersatzpunkte/);
+  assert.match(completionSource, /bereits gewertet/);
+  assert.match(completionSource, /keine weiteren Punkte/);
 
   const mutationCall = blockBetween(adapterSource, "client.mutations.awardScenarioScore({", "});");
   assert.match(mutationCall, /scenarioId:\s*request\.scenarioId/);
@@ -111,4 +156,6 @@ test("completion UI consumes server result and has no local fallback score", asy
   assert.doesNotMatch(mutationCall, /scenarioVersion/);
   assert.doesNotMatch(mutationCall, /userId/);
   assert.doesNotMatch(mutationCall, /tenantId/);
+  assert.doesNotMatch(mutationCall, /estimatedMinutes/);
+  assert.doesNotMatch(mutationCall, /evidenceStatus/);
 });

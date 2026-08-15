@@ -7,6 +7,7 @@ export const SCORE_BONUS_PERCENT = 30 as const;
 export const SCORE_POINT_PRECISION = 2 as const;
 export const SCORE_EVENT_SCHEMA_VERSION = 1 as const;
 export const SCORE_EVENT_TYPE = "scenario.score.awarded" as const;
+export const FAST_RUN_THRESHOLD_RATIO = 0.25 as const;
 
 export const SCORE_MODE_MULTIPLIER = {
   explore: 0.5,
@@ -41,6 +42,28 @@ export interface ScenarioScoreBreakdown {
   awardedPoints: number;
   failedAttempts: number;
   highestHintLevelByStep: Readonly<Record<string, HelpLevel>>;
+}
+
+export type ScenarioRunEvidenceStatus = "eligible" | "suspect_fast" | "unassessed";
+
+/**
+ * Server-owned timing policy for one completed run. A null estimate or threshold explicitly
+ * disables timing-based evidence eligibility for scenarios where speed is part of the task itself.
+ */
+export interface ScenarioRunEvidenceInput {
+  startedAt: number;
+  finishedAt: number;
+  estimatedMinutes: number | null;
+  fastRunThresholdRatio: number | null;
+}
+
+export interface ScenarioRunEvidence {
+  durationMs: number;
+  estimatedMinutes: number | null;
+  fastRunThresholdRatio: number | null;
+  fastRunThresholdMs: number | null;
+  status: ScenarioRunEvidenceStatus;
+  evidenceEligible: boolean;
 }
 
 /** The identity that may produce points at most once. Mode and session are deliberately excluded. */
@@ -145,6 +168,46 @@ export function calculateScenarioScore(input: ScenarioScoreInput): ScenarioScore
   };
 }
 
+export function classifyScenarioRunEvidence(input: ScenarioRunEvidenceInput): ScenarioRunEvidence {
+  assertFiniteNonNegative(input.startedAt, "startedAt");
+  assertFiniteNonNegative(input.finishedAt, "finishedAt");
+  if (input.finishedAt < input.startedAt) {
+    throw new Error("finishedAt must be greater than or equal to startedAt");
+  }
+  if (input.estimatedMinutes !== null) {
+    assertFinitePositive(input.estimatedMinutes, "estimatedMinutes");
+  }
+  if (input.fastRunThresholdRatio !== null) {
+    assertFinitePositive(input.fastRunThresholdRatio, "fastRunThresholdRatio");
+    if (input.fastRunThresholdRatio > 1) {
+      throw new Error("fastRunThresholdRatio must be less than or equal to 1");
+    }
+  }
+
+  const durationMs = input.finishedAt - input.startedAt;
+  if (input.estimatedMinutes === null || input.fastRunThresholdRatio === null) {
+    return {
+      durationMs,
+      estimatedMinutes: input.estimatedMinutes,
+      fastRunThresholdRatio: input.fastRunThresholdRatio,
+      fastRunThresholdMs: null,
+      status: "unassessed",
+      evidenceEligible: false,
+    };
+  }
+
+  const fastRunThresholdMs = input.estimatedMinutes * 60_000 * input.fastRunThresholdRatio;
+  const suspectFast = durationMs < fastRunThresholdMs;
+  return {
+    durationMs,
+    estimatedMinutes: input.estimatedMinutes,
+    fastRunThresholdRatio: input.fastRunThresholdRatio,
+    fastRunThresholdMs,
+    status: suspectFast ? "suspect_fast" : "eligible",
+    evidenceEligible: !suspectFast,
+  };
+}
+
 function identityPart(value: string | null): string {
   return value === null ? "n" : `s${value.length}:${value}`;
 }
@@ -218,6 +281,12 @@ function assertNonEmptyId(value: string, fieldName: string): void {
 function assertFiniteNonNegative(value: number, fieldName: string): void {
   if (!Number.isFinite(value) || value < 0) {
     throw new Error(`${fieldName} must be a finite non-negative number`);
+  }
+}
+
+function assertFinitePositive(value: number, fieldName: string): void {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${fieldName} must be a finite positive number`);
   }
 }
 

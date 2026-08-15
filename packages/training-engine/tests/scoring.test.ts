@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   calculateScenarioScore,
+  classifyScenarioRunEvidence,
   createScoreAwardId,
   createScoreEvent,
+  FAST_RUN_THRESHOLD_RATIO,
   SCORE_MODE_MULTIPLIER,
 } from "../src/scoring.ts";
 
@@ -86,6 +88,70 @@ test("failed attempts are auditable but never reduce points", () => {
 
   assert.equal(withFailures.failedAttempts, 7);
   assert.equal(withFailures.awardedPoints, withoutFailures.awardedPoints);
+});
+
+test("marks runs below 25 percent of estimated time as suspect_fast", () => {
+  const evidence = classifyScenarioRunEvidence({
+    startedAt: 1_000,
+    finishedAt: 150_999,
+    estimatedMinutes: 10,
+    fastRunThresholdRatio: FAST_RUN_THRESHOLD_RATIO,
+  });
+
+  assert.equal(evidence.durationMs, 149_999);
+  assert.equal(evidence.fastRunThresholdMs, 150_000);
+  assert.equal(evidence.status, "suspect_fast");
+  assert.equal(evidence.evidenceEligible, false);
+});
+
+test("accepts a run exactly at the fast-run threshold", () => {
+  const evidence = classifyScenarioRunEvidence({
+    startedAt: 1_000,
+    finishedAt: 151_000,
+    estimatedMinutes: 10,
+    fastRunThresholdRatio: FAST_RUN_THRESHOLD_RATIO,
+  });
+
+  assert.equal(evidence.durationMs, 150_000);
+  assert.equal(evidence.fastRunThresholdMs, 150_000);
+  assert.equal(evidence.status, "eligible");
+  assert.equal(evidence.evidenceEligible, true);
+});
+
+test("keeps timing-disabled scenarios explicitly unassessed", () => {
+  const evidence = classifyScenarioRunEvidence({
+    startedAt: 1_000,
+    finishedAt: 20_000,
+    estimatedMinutes: 2,
+    fastRunThresholdRatio: null,
+  });
+
+  assert.equal(evidence.fastRunThresholdMs, null);
+  assert.equal(evidence.status, "unassessed");
+  assert.equal(evidence.evidenceEligible, false);
+});
+
+test("rejects invalid timing evidence", () => {
+  assert.throws(
+    () =>
+      classifyScenarioRunEvidence({
+        startedAt: 5_000,
+        finishedAt: 4_999,
+        estimatedMinutes: 10,
+        fastRunThresholdRatio: FAST_RUN_THRESHOLD_RATIO,
+      }),
+    /finishedAt must be greater than or equal to startedAt/,
+  );
+  assert.throws(
+    () =>
+      classifyScenarioRunEvidence({
+        startedAt: 0,
+        finishedAt: 1,
+        estimatedMinutes: 10,
+        fastRunThresholdRatio: 1.1,
+      }),
+    /less than or equal to 1/,
+  );
 });
 
 test("score award identity is stable for a learner and scenario version", () => {
