@@ -49,12 +49,17 @@ async function finishGuidedScenarioFromEditor(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 }
 
-test("Guided-Recovery: falsche Datei wird auf Step-Snapshot zurückgesetzt und Training kann abschließen", async ({
+test("Guided-Recovery: falsche Datei bleibt nach Reload recoverbar und Training kann abschließen", async ({
   page,
 }) => {
   await reachCreateFileStep(page);
 
   await createFile(page, "wrong.py");
+  await expectGuidedStep(page, 9, "Datei erstellen");
+  await expect(page.getByTestId("guided-recovery")).toContainText("Fehlversuch bleibt dokumentiert");
+
+  await page.reload();
+  await waitForTrainingReady(page);
   await expectGuidedStep(page, 9, "Datei erstellen");
   const recovery = page.getByTestId("guided-recovery");
   await expect(recovery).toContainText("Fehlversuch bleibt dokumentiert");
