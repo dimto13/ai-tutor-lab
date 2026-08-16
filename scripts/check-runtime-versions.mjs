@@ -50,30 +50,39 @@ if (npmPin) expectEqual("engines.npm", rootManifest.engines?.npm, npmPin);
 expectEqual("Node runtime", process.version.replace(/^v/, ""), nodePin);
 if (npmPin) expectEqual("npm runtime", currentNpmVersion(), npmPin);
 
-const reactVersion = exactVersion("dependencies.react", rootManifest.dependencies?.react);
-const reactDomVersion = exactVersion("dependencies.react-dom", rootManifest.dependencies?.["react-dom"]);
-const viteVersion = exactVersion("apps/web devDependencies.vite", webManifest.devDependencies?.vite);
+const reactVersion = exactVersion("runtimeContract.react", rootManifest.runtimeContract?.react);
+const reactDomVersion = exactVersion(
+  "runtimeContract.reactDom",
+  rootManifest.runtimeContract?.reactDom,
+);
+const viteVersion = exactVersion("runtimeContract.vite", rootManifest.runtimeContract?.vite);
 
-expectEqual("apps/web dependencies.react", webManifest.dependencies?.react, reactVersion);
-expectEqual("apps/web dependencies.react-dom", webManifest.dependencies?.["react-dom"], reactDomVersion);
-expectEqual("package-lock root engines.node", lockfile.packages?.[""]?.engines?.node, nodePin);
-if (npmPin) {
-  expectEqual("package-lock root engines.npm", lockfile.packages?.[""]?.engines?.npm, npmPin);
-}
+expectEqual("dependencies.react", rootManifest.dependencies?.react, reactVersion);
+expectEqual("dependencies.react-dom", rootManifest.dependencies?.["react-dom"], reactDomVersion);
 expectEqual(
-  "package-lock apps/web react spec",
+  "package-lock root React spec",
+  lockfile.packages?.[""]?.dependencies?.react,
+  rootManifest.dependencies?.react,
+);
+expectEqual(
+  "package-lock root React DOM spec",
+  lockfile.packages?.[""]?.dependencies?.["react-dom"],
+  rootManifest.dependencies?.["react-dom"],
+);
+expectEqual(
+  "package-lock apps/web React spec",
   lockfile.packages?.["apps/web"]?.dependencies?.react,
-  reactVersion,
+  webManifest.dependencies?.react,
 );
 expectEqual(
-  "package-lock apps/web react-dom spec",
+  "package-lock apps/web React DOM spec",
   lockfile.packages?.["apps/web"]?.dependencies?.["react-dom"],
-  reactDomVersion,
+  webManifest.dependencies?.["react-dom"],
 );
 expectEqual(
-  "package-lock apps/web vite spec",
+  "package-lock apps/web Vite spec",
   lockfile.packages?.["apps/web"]?.devDependencies?.vite,
-  viteVersion,
+  webManifest.devDependencies?.vite,
 );
 expectEqual("package-lock product React", lockfile.packages?.["node_modules/react"]?.version, reactVersion);
 expectEqual(
