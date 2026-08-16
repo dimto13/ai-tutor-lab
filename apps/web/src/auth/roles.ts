@@ -13,19 +13,13 @@ export type ApplicationPermission = (typeof applicationPermissions)[number];
 
 export const roleGroupPrefix = "role:";
 
-export const rolePermissions: Readonly<
-  Record<ApplicationRole, readonly ApplicationPermission[]>
-> = {
-  learner: ["training.use"],
-  author: ["training.use", "content.author"],
-  trainer: ["training.use", "tenant.reporting.aggregate"],
-  tenant_admin: [
-    "training.use",
-    "content.author",
-    "tenant.reporting.aggregate",
-    "tenant.admin",
-  ],
-};
+export const rolePermissions: Readonly<Record<ApplicationRole, readonly ApplicationPermission[]>> =
+  {
+    learner: ["training.use"],
+    author: ["training.use", "content.author"],
+    trainer: ["training.use", "tenant.reporting.aggregate"],
+    tenant_admin: ["training.use", "content.author", "tenant.reporting.aggregate", "tenant.admin"],
+  };
 
 export function isApplicationRole(value: string): value is ApplicationRole {
   return applicationRoles.some((role) => role === value);
