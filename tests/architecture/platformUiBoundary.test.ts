@@ -7,6 +7,23 @@ const trainingRouteUrl = new URL(
   "../../apps/web/src/routes/training.$scenarioId.tsx",
   import.meta.url,
 );
+const guidePanelUrl = new URL(
+  "../../apps/web/src/components/training/GuidePanel.tsx",
+  import.meta.url,
+);
+const tutorChatUrl = new URL(
+  "../../apps/web/src/components/tutor/TutorChat.tsx",
+  import.meta.url,
+);
+const completionScreenUrl = new URL(
+  "../../apps/web/src/components/training/CompletionScreen.tsx",
+  import.meta.url,
+);
+const feedbackCaptureUrl = new URL(
+  "../../apps/web/src/components/feedback/FeedbackCapture.tsx",
+  import.meta.url,
+);
+const accountMenuUrl = new URL("../../apps/web/src/auth/AccountMenu.tsx", import.meta.url);
 const vscodeWorkspaceUrl = new URL(
   "../../apps/web/src/components/workspace/Workspace.tsx",
   import.meta.url,
@@ -33,15 +50,32 @@ const platformTokens = [
   "ring",
 ] as const;
 
+const hardcodedNeutralColor = /(?:bg|text|border)-(?:white|black)(?:\/\d+)?/;
+
 test("platform UI reuses the central CSS token system without leaking into runtimes", async () => {
-  const [styles, trainingRoute, vscodeWorkspace, claudeWorkspace, highlightOverlay] =
-    await Promise.all([
-      readFile(stylesUrl, "utf8"),
-      readFile(trainingRouteUrl, "utf8"),
-      readFile(vscodeWorkspaceUrl, "utf8"),
-      readFile(claudeWorkspaceUrl, "utf8"),
-      readFile(highlightOverlayUrl, "utf8"),
-    ]);
+  const [
+    styles,
+    trainingRoute,
+    guidePanel,
+    tutorChat,
+    completionScreen,
+    feedbackCapture,
+    accountMenu,
+    vscodeWorkspace,
+    claudeWorkspace,
+    highlightOverlay,
+  ] = await Promise.all([
+    readFile(stylesUrl, "utf8"),
+    readFile(trainingRouteUrl, "utf8"),
+    readFile(guidePanelUrl, "utf8"),
+    readFile(tutorChatUrl, "utf8"),
+    readFile(completionScreenUrl, "utf8"),
+    readFile(feedbackCaptureUrl, "utf8"),
+    readFile(accountMenuUrl, "utf8"),
+    readFile(vscodeWorkspaceUrl, "utf8"),
+    readFile(claudeWorkspaceUrl, "utf8"),
+    readFile(highlightOverlayUrl, "utf8"),
+  ]);
 
   for (const token of platformTokens) {
     assert.match(styles, new RegExp(`--platform-${token}:\\s*oklch\\(`));
@@ -62,6 +96,17 @@ test("platform UI reuses the central CSS token system without leaking into runti
     "guide",
   ]) {
     assert.match(trainingRoute, new RegExp(`data-platform-ui=["']${surface}["']`));
+  }
+
+  for (const [name, source] of [
+    ["training route", trainingRoute],
+    ["guide panel", guidePanel],
+    ["tutor chat", tutorChat],
+    ["completion screen", completionScreen],
+    ["feedback capture", feedbackCapture],
+    ["account menu", accountMenu],
+  ] as const) {
+    assert.doesNotMatch(source, hardcodedNeutralColor, `${name} must use semantic color tokens`);
   }
 
   assert.doesNotMatch(vscodeWorkspace, /platform-(?:ui|accent|surface|border|ring)/);
