@@ -85,7 +85,8 @@ function TimedChallengeBriefing({
 
   return (
     <div
-      className={`flex min-h-screen flex-col bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
+      data-platform-ui="challenge-briefing"
+      className={`platform-ui flex min-h-screen flex-col bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
       aria-busy={!isReady}
     >
       <p role="status" aria-live="polite" className="sr-only">
@@ -221,7 +222,10 @@ function TrainingLayout() {
         {isReady ? "Training bereit" : "Training wird geladen"}
       </p>
 
-      <header className="flex h-12 min-w-0 shrink-0 items-center gap-2 border-b border-border bg-panel px-2 sm:gap-3 sm:px-4">
+      <header
+        data-platform-ui="meta-navigation"
+        className="platform-ui flex h-12 min-w-0 shrink-0 items-center gap-2 border-b border-border bg-panel px-2 sm:gap-3 sm:px-4"
+      >
         <Link
           to="/"
           aria-label="AI Training Lab – zurück zum Dashboard"
@@ -302,7 +306,10 @@ function TrainingLayout() {
       mode === "challenge" &&
       scenario.timeLimitSeconds !== undefined &&
       mobileSurface === "workspace" ? (
-        <div className="flex shrink-0 items-center gap-2 border-b border-warning/30 bg-warning/10 px-3 py-2 lg:hidden">
+        <div
+          data-platform-ui="mobile-challenge-status"
+          className="platform-ui flex shrink-0 items-center gap-2 border-b border-warning/30 bg-warning/10 px-3 py-2 lg:hidden"
+        >
           <Target className="h-4 w-4 shrink-0 text-warning" />
           <p className="min-w-0 flex-1 truncate text-[12px] text-foreground">
             <span className="font-semibold">Aufgabe:</span> {challengeGoal?.instruction}
@@ -321,7 +328,9 @@ function TrainingLayout() {
       ) : null}
 
       {isFinished ? (
-        <CompletionScreen />
+        <div data-platform-ui="completion" className="platform-ui contents">
+          <CompletionScreen />
+        </div>
       ) : (
         <div className="flex min-h-0 flex-1">
           <div
@@ -330,7 +339,8 @@ function TrainingLayout() {
             <RuntimeWorkspace key={scenario.id} />
           </div>
           <div
-            className={`${mobileSurface === "guide" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 lg:flex lg:flex-none`}
+            data-platform-ui="guide"
+            className={`platform-ui ${mobileSurface === "guide" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 lg:flex lg:flex-none`}
           >
             <GuidePanel />
           </div>
