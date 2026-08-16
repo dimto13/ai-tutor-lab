@@ -44,61 +44,53 @@ export function GuidedStepNavigation() {
       <nav
         data-testid="guided-step-navigation"
         data-platform-ui="guided-step-navigation"
-        className="platform-ui shrink-0 border-b border-border bg-panel px-2 py-2 sm:px-4"
-        aria-label="Guided-Schritte"
+        className="platform-ui shrink-0 border-b border-border bg-background px-2 py-1.5 sm:px-4"
+        aria-label="Guided-Schritte und Wiederholung"
         aria-busy={guidedNavigationPending}
       >
         <section
           data-testid="tutor-meta-layer"
-          className="mb-2 flex flex-col gap-2 rounded-lg border border-accent/35 bg-card px-3 py-2 sm:flex-row sm:items-center"
+          className="mb-1.5 flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground"
           aria-label="Tutor-Ebene der Lernplattform"
         >
-          <div className="flex min-w-0 flex-1 items-start gap-2">
-            <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
-              <Bot className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
-                Tutor-Ebene · Lernplattform
-              </p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                {displayedStep && displayedStepNumber
-                  ? `Schritt ${displayedStepNumber} · ${displayedStep.title}. `
-                  : ""}
-                Diese Plattformführung erklärt und lenkt deine Aufmerksamkeit. Handlungen selbst
-                führst du im simulierten Werkzeug aus.
-              </p>
-            </div>
-          </div>
-
+          <Bot className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+          <p className="min-w-0 flex-1 truncate">
+            <span className="font-semibold text-foreground">Tutor-Ebene</span>
+            {displayedStep && displayedStepNumber
+              ? ` · Schritt ${displayedStepNumber}: ${displayedStep.title}`
+              : ""}
+          </p>
           <div
-            className="flex shrink-0 flex-wrap items-center gap-1.5"
+            className="flex shrink-0 items-center gap-1"
             role="group"
-            aria-label="Tutorführung"
+            aria-label="Sekundäre Tutorführung und Wiederholung"
           >
             <button
               type="button"
+              data-learning-role="replay-navigation"
               disabled={!previousStepId || guidedNavigationPending}
               onClick={() => previousStepId && void navigateToGuidedStep(previousStepId)}
-              className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background/60 px-2 text-[11px] font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex h-7 items-center gap-0.5 rounded-md border border-border bg-card/60 px-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Tutorführung zurück"
             >
-              <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              <ChevronLeft className="h-3 w-3" aria-hidden="true" />
               Zurück
             </button>
             <button
               type="button"
+              data-learning-role="replay-navigation"
               disabled={!nextStepId || guidedNavigationPending}
               onClick={() => nextStepId && void navigateToGuidedStep(nextStepId)}
-              className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background/60 px-2 text-[11px] font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex h-7 items-center gap-0.5 rounded-md border border-border bg-card/60 px-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Tutorführung weiter"
             >
               Weiter
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              <ChevronRight className="h-3 w-3" aria-hidden="true" />
             </button>
             {displayedStep?.highlightTarget ? (
               <button
                 type="button"
+                data-learning-role="optional-help"
                 onClick={() =>
                   requestTutorAttention(
                     [displayedStep.highlightTarget!],
@@ -106,11 +98,11 @@ export function GuidedStepNavigation() {
                       `Relevanter Bereich für „${displayedStep.title}“.`,
                   )
                 }
-                className="inline-flex h-8 items-center gap-1 rounded-md border border-accent/45 bg-accent/10 px-2 text-[11px] font-semibold text-foreground transition-colors hover:bg-accent/15 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card/60 px-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Im Werkzeug zeigen"
               >
-                <Focus className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-                Im Werkzeug zeigen
+                <Focus className="h-3 w-3 text-accent" aria-hidden="true" />
+                <span className="hidden sm:inline">Ziel zeigen</span>
               </button>
             ) : null}
           </div>
@@ -118,7 +110,7 @@ export function GuidedStepNavigation() {
 
         {isGuidedReplay ? (
           <div
-            className="mb-2 flex items-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[11px] text-foreground"
+            className="mb-1.5 flex items-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[11px] text-foreground"
             role="note"
             aria-live="polite"
           >
@@ -130,7 +122,7 @@ export function GuidedStepNavigation() {
           </div>
         ) : null}
 
-        <ol className="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5" aria-label="Schrittfolge">
+        <ol className="flex min-w-0 gap-1 overflow-x-auto pb-0.5" aria-label="Schrittfolge">
           {scenario.steps.map((step, index) => {
             const status = progress.statuses[step.id] ?? "NOT_STARTED";
             const isDisplayed = step.id === displayedStepId;
@@ -155,29 +147,30 @@ export function GuidedStepNavigation() {
                 <button
                   type="button"
                   data-testid={`guided-step-navigation-${step.id}`}
+                  data-learning-role="replay-navigation"
                   disabled={!isReachable || guidedNavigationPending}
                   aria-current={isDisplayed ? "step" : undefined}
                   aria-label={label}
                   aria-describedby={titleId}
                   onClick={() => void navigateToGuidedStep(step.id)}
-                  className={`inline-flex h-8 max-w-[12rem] items-center gap-1.5 rounded-md border px-2 text-[11px] transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel disabled:cursor-not-allowed disabled:opacity-45 ${
+                  className={`inline-flex h-7 max-w-[10rem] items-center gap-1 rounded-md border px-1.5 text-[10px] transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-35 ${
                     isDisplayed
-                      ? "border-accent/60 bg-accent/10 font-semibold text-foreground"
+                      ? "border-border bg-card font-semibold text-foreground"
                       : isReachable
-                        ? "border-border bg-card text-muted-foreground hover:border-ring hover:text-foreground"
-                        : "border-border/70 bg-muted/40 text-muted-foreground"
+                        ? "border-border/80 bg-card/60 text-muted-foreground hover:border-ring hover:text-foreground"
+                        : "border-border/60 bg-muted/30 text-muted-foreground"
                   }`}
                 >
                   {isDisplayed || isFurthest ? (
-                    <CircleDot className="h-3.5 w-3.5 shrink-0 text-accent" />
+                    <CircleDot className="h-3 w-3 shrink-0 text-accent" />
                   ) : isCompleted ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                    <CheckCircle2 className="h-3 w-3 shrink-0 text-success" />
                   ) : isSkipped ? (
-                    <SkipForward className="h-3.5 w-3.5 shrink-0" />
+                    <SkipForward className="h-3 w-3 shrink-0" />
                   ) : (
-                    <Circle className="h-3.5 w-3.5 shrink-0" />
+                    <Circle className="h-3 w-3 shrink-0" />
                   )}
-                  <span className="font-mono text-[10px]">{stepNumber}</span>
+                  <span className="font-mono text-[9px]">{stepNumber}</span>
                   <span id={titleId} className="truncate">
                     {step.title}
                   </span>
