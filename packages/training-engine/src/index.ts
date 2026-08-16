@@ -1,6 +1,7 @@
 export * from "./types.ts";
 export * from "./contentHierarchy.ts";
 export * from "./eventBus.ts";
+export * from "./guidedRecovery.ts";
 export * from "./helpPolicy.ts";
 export * from "./learningPreferences.ts";
 export * from "./persistence.ts";
