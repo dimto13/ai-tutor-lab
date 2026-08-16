@@ -209,7 +209,7 @@ function GuidedGuide() {
               className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs text-foreground transition-colors disabled:opacity-40 ${
                 shouldOfferHelp
                   ? "border-warning/60 bg-warning/10 hover:bg-warning/15"
-                  : "border-border hover:border-ring hover:bg-white/5"
+                  : "border-border hover:border-ring hover:bg-muted"
               }`}
             >
               <Lightbulb className="h-3.5 w-3.5 text-warning" />
@@ -463,7 +463,7 @@ function ChallengeGuide() {
         <button
           type="button"
           onClick={restart}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-ring hover:bg-white/5"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <RotateCcw className="h-4 w-4" /> Challenge neu starten
         </button>
