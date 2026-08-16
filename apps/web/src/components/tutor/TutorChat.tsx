@@ -69,32 +69,35 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           prominent ? "border-warning/60 bg-warning/10" : "border-border bg-background"
         }`}
       >
-        <button
-          type="button"
-          data-testid="tutor-chat-toggle"
-          aria-expanded="false"
-          aria-controls="tutor-chat-panel"
-          onClick={() => setOpen(true)}
-          className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-medium text-foreground transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-            prominent
-              ? "border-warning/60 bg-card hover:bg-muted"
-              : "border-border bg-card/70 hover:border-ring hover:bg-card"
-          }`}
-        >
-          <MessageCircle
-            className={`h-4 w-4 shrink-0 ${prominent ? "text-warning" : "text-accent"}`}
-            aria-hidden="true"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block">Tutor fragen</span>
-            {prominent ? (
-              <span className="block text-[10px] font-normal text-muted-foreground">
-                Zusätzliche Hilfe ist für diesen Schritt verfügbar.
-              </span>
-            ) : null}
-          </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        </button>
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            data-testid="tutor-chat-toggle"
+            aria-expanded="false"
+            aria-controls="tutor-chat-panel"
+            onClick={() => setOpen(true)}
+            className={`flex min-w-0 flex-1 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-medium text-foreground transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              prominent
+                ? "border-warning/60 bg-card hover:bg-muted"
+                : "border-border bg-card/70 hover:border-ring hover:bg-card"
+            }`}
+          >
+            <MessageCircle
+              className={`h-4 w-4 shrink-0 ${prominent ? "text-warning" : "text-accent"}`}
+              aria-hidden="true"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block">Tutor fragen</span>
+              {prominent ? (
+                <span className="block text-[10px] font-normal text-muted-foreground">
+                  Zusätzliche Hilfe ist für diesen Schritt verfügbar.
+                </span>
+              ) : null}
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          </button>
+          <FeedbackCapture source="tutor" compact />
+        </div>
       </div>
     );
   }
