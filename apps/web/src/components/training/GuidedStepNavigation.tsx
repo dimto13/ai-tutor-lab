@@ -64,7 +64,7 @@ export function GuidedStepNavigation() {
                 aria-label={label}
                 aria-describedby={titleId}
                 onClick={() => void navigateToGuidedStep(step.id)}
-                className={`inline-flex h-8 max-w-[12rem] items-center gap-1.5 rounded-md border px-2 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel disabled:cursor-not-allowed disabled:opacity-45 ${
+                className={`inline-flex h-8 max-w-[12rem] items-center gap-1.5 rounded-md border px-2 text-[11px] transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel disabled:cursor-not-allowed disabled:opacity-45 ${
                   isDisplayed
                     ? "border-accent/60 bg-accent/10 font-semibold text-foreground"
                     : isReachable
