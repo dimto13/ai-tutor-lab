@@ -87,25 +87,30 @@ export const test = base.extend<BrowserErrorFixtures>({
       for (const existingPage of context.pages()) attachPageListeners(existingPage);
       context.on("page", attachPageListeners);
 
+      let testFailure: unknown;
       try {
         await use();
-      } finally {
-        context.off("page", attachPageListeners);
-        for (const [monitoredPage, listeners] of pageListeners) {
-          monitoredPage.off("pageerror", listeners.onPageError);
-          monitoredPage.off("console", listeners.onConsole);
-        }
-
-        const unexpectedErrors = observedErrors.filter((event) => !isAllowedBrowserError(event));
-        if (unexpectedErrors.length > 0) {
-          const diagnostics = formatBrowserErrors(unexpectedErrors);
-          await testInfo.attach("browser-errors", {
-            body: diagnostics,
-            contentType: "text/plain",
-          });
-          throw new Error(diagnostics);
-        }
+      } catch (error) {
+        testFailure = error;
       }
+
+      context.off("page", attachPageListeners);
+      for (const [monitoredPage, listeners] of pageListeners) {
+        monitoredPage.off("pageerror", listeners.onPageError);
+        monitoredPage.off("console", listeners.onConsole);
+      }
+
+      const unexpectedErrors = observedErrors.filter((event) => !isAllowedBrowserError(event));
+      if (unexpectedErrors.length > 0) {
+        const diagnostics = formatBrowserErrors(unexpectedErrors);
+        await testInfo.attach("browser-errors", {
+          body: diagnostics,
+          contentType: "text/plain",
+        });
+        throw new Error(diagnostics);
+      }
+
+      if (testFailure !== undefined) throw testFailure;
     },
     { auto: true },
   ],
