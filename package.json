@@ -7,6 +7,11 @@
     "npm": "10.9.8"
   },
   "packageManager": "npm@10.9.8",
+  "runtimeContract": {
+    "react": "19.2.8",
+    "reactDom": "19.2.8",
+    "vite": "8.2.1"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
