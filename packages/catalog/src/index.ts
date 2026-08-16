@@ -2,6 +2,19 @@ import rawCatalog from "../../../content/catalog/technology-catalog.json" with {
 import { parseTechnologyCatalog } from "./schema.ts";
 
 export type {
+  SyntheticDocument,
+  SyntheticDocumentCorpus,
+  SyntheticDocumentExpected,
+  SyntheticDocumentFeature,
+} from "./classification-corpus.ts";
+export {
+  parseSyntheticDocumentCorpus,
+  syntheticDocumentCorpusSchema,
+  syntheticDocumentExpectedSchema,
+  syntheticDocumentFeatureSchema,
+  syntheticDocumentSchema,
+} from "./classification-corpus.ts";
+export type {
   AiToolPolicy,
   ClassificationDecision,
   ClassificationIndicator,
