@@ -34,7 +34,11 @@ export function TutorChat() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    listRef.current?.scrollTo({
+      top: listRef.current.scrollHeight,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
   }, [messages]);
 
   const send = (text: string) => {
@@ -50,7 +54,10 @@ export function TutorChat() {
   };
 
   return (
-    <div className="flex max-h-[46%] min-h-[250px] flex-col border-t border-border">
+    <div
+      data-platform-ui="tutor-chat"
+      className="flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
+    >
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Bot className="h-4 w-4 text-accent" /> KI-Tutor
         <div className="ml-auto flex items-center gap-2">
@@ -98,7 +105,7 @@ export function TutorChat() {
             <button
               key={suggestion}
               onClick={() => send(suggestion)}
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground motion-reduce:transition-none"
             >
               {suggestion}
             </button>
@@ -116,7 +123,7 @@ export function TutorChat() {
         <button
           onClick={() => send(input)}
           aria-label="Senden"
-          className="rounded-md bg-accent px-2.5 py-2 text-accent-foreground transition-opacity hover:opacity-90"
+          className="rounded-md bg-accent px-2.5 py-2 text-accent-foreground transition-opacity hover:opacity-90 motion-reduce:transition-none"
         >
           <Send className="h-4 w-4" />
         </button>

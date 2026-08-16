@@ -41,7 +41,11 @@ export function useTutorContext(): TutorContext {
     const completedStepIds = scenario.steps
       .filter((step) => progress.statuses[step.id] === "COMPLETED")
       .map((step) => step.id);
-    const currentStep = scenario.steps.find((step) => step.id === progress.activeStepId) ?? null;
+
+    // #231 exposes visibleProgress through useTraining(). During replay its
+    // activeStepId is the displayed/replayed step while the canonical
+    // furthest-reached progress remains owned by the Guided navigation layer.
+    const displayedStep = scenario.steps.find((step) => step.id === progress.activeStepId) ?? null;
 
     return {
       scenario: {
@@ -51,7 +55,7 @@ export function useTutorContext(): TutorContext {
         ...(scenario.learningObjectives ? { learningObjectives: scenario.learningObjectives } : {}),
       },
       mode,
-      currentStep,
+      currentStep: displayedStep,
       completedStepIds,
       recentEvents,
       hintUsage: progress.hintsUsed,

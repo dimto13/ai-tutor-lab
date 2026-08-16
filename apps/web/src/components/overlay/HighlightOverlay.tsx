@@ -153,7 +153,7 @@ export function HighlightOverlay({
   return (
     <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
       <div
-        className={`absolute left-0 right-0 top-0 ${dim} transition-opacity`}
+        className={`absolute left-0 right-0 top-0 ${dim} transition-opacity motion-reduce:transition-none`}
         style={{ height: rect.top }}
       />
       <div
@@ -170,8 +170,11 @@ export function HighlightOverlay({
       />
       <div
         data-testid="highlight-frame"
+        data-highlight-kind="guided"
         data-highlight-concept={conceptFocus?.conceptKey ?? explanationConcept?.key}
-        className={`absolute rounded-md ring-2 ring-ring ${strong ? "animate-pulse" : ""}`}
+        className={`absolute rounded-md ring-2 ring-ring ${
+          strong ? "animate-pulse motion-reduce:animate-none" : ""
+        }`}
         style={{
           top: rect.top,
           left: rect.left,
