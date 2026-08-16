@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures/browser-error-guard";
 
 test("authenticated shell persists account settings and protects the email display", async ({
   page,
