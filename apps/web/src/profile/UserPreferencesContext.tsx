@@ -11,6 +11,10 @@ import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
 import { createApplicationUserPreferencesRepository } from "./applicationUserPreferencesRepository";
 import {
+  reportUserPreferencesFailure,
+  userPreferencesOperationError,
+} from "./userPreferencesErrors";
+import {
   UserPreferencesConflictError,
   type UserPreferencesRecord,
   type UserPreferencesRepository,
@@ -31,12 +35,6 @@ const repository = createApplicationUserPreferencesRepository();
 
 function subjectForSession(userId: string, tenantId: string | null): UserPreferencesSubject {
   return { userId, tenantId };
-}
-
-function messageOf(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Die Lernpräferenzen konnten nicht gespeichert werden.";
 }
 
 function valueWithAiLevel(
@@ -81,9 +79,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setPreferences(loaded);
         setStatus("ready");
       } catch (cause) {
+        reportUserPreferencesFailure("load", cause);
+        const operationError = userPreferencesOperationError("load", cause);
         setPreferences(null);
         setStatus("error");
-        setError(messageOf(cause));
+        setError(operationError.message);
       }
     },
     [subject],
@@ -111,12 +111,14 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           await load();
           throw new Error(
             "Die Lernpräferenzen wurden zwischenzeitlich geändert. Der aktuelle Stand wurde neu geladen.",
+            { cause },
           );
         }
-        const message = messageOf(cause);
-        setError(message);
+        reportUserPreferencesFailure("save", cause);
+        const operationError = userPreferencesOperationError("save", cause);
+        setError(operationError.message);
         setStatus("error");
-        throw new Error(message);
+        throw operationError;
       }
     },
     [load, preferences, subject],
