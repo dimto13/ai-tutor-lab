@@ -73,7 +73,7 @@ export function TutorChat() {
               className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                 message.role === "tutor"
                   ? "bg-accent/15 text-accent"
-                  : "bg-white/10 text-foreground"
+                  : "bg-muted text-foreground"
               }`}
             >
               {message.role === "tutor" ? (
