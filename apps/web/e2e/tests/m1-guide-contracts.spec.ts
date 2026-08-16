@@ -90,9 +90,11 @@ test("Guided: irrelevante Events bleiben still und onFailure markiert das konfig
 
   await createFile(page, "wrong.py");
   await expect(
-    page.getByText("Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", {
-      exact: true,
-    }),
+    page
+      .getByTestId("guided-orientation")
+      .getByText("Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", {
+        exact: true,
+      }),
   ).toBeVisible();
   await expectSpotlightAround(
     page.getByTestId("highlight-frame"),
