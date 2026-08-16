@@ -45,6 +45,20 @@ Dasselbe Verhalten gilt interaktiv für im Guide dargestellte Glossarbegriffe: �
 
 **Wichtig:** Ein Konzept-Highlight ist reine Orientierung. Es löst keine Runtime-Aktion aus, zählt nicht als Versuch und kann einen Handlungsschritt nicht abschließen.
 
+## Transiente handlungsrelevante Produktoberflächen
+
+Ein semantisches Aktionsziel kann eine transiente Produktoberfläche öffnen, auf der die eigentliche Folgehandlung stattfindet, zum Beispiel ein Menü, Submenü, eine Command Palette oder einen Dialog. Solche Flächen gehören weiterhin vollständig zum simulierten Produkt und dürfen nicht durch Plattform-Chrome verdeckt werden.
+
+Dafür gilt folgende Boundary:
+
+- Ein `RuntimeAdapter` kann optional über `resolveTransientActionRegions()` die aktuell sichtbaren, handlungsrelevanten Rechtecke seiner Produktoberfläche beschreiben.
+- Produktspezifische DOM-Kenntnis bleibt ausschließlich im konkreten Runtime-Adapter. `HighlightOverlay` und `TutorAttentionOverlay` erhalten nur Rechtecke und kennen weder VS-Code-Selektoren noch konkrete Menüeinträge.
+- Adapter ohne diese optionale Fähigkeit funktionieren unverändert.
+- Beide Plattform-Overlays verwenden dieselbe reine Platzierungslogik: bevorzugt unterhalb des Anchors, danach oberhalb und seitlich; wenn keine Position vollständig frei ist, gewinnt die Position mit der kleinsten Überschneidung. Die gewählte Position bleibt innerhalb des Viewports.
+- Die Kollisionsvermeidung ist reine Präsentationslogik. Sie emittiert keine Runtime-Events und verändert weder Validation noch Fortschritt, Replay oder Recovery.
+
+Damit bleibt der semantische `highlightTarget` stabil, während das Overlay auf eine nach dem Öffnen neu sichtbare, produktseitige Handlungsfläche reagieren kann.
+
 ## Sichtbarkeit und Fallback
 
 Ein semantischer Zielbereich kann nur markiert werden, wenn er in der aktuellen Produktoberfläche tatsächlich sichtbar ist. Sind von einem Konzept mehrere `uiTargets` sichtbar, werden deren Rechtecke zu einem gemeinsamen Fokus zusammengeführt. Noch nicht geöffnete Bereiche werden nicht künstlich als erledigte Runtime-Aktion geöffnet.

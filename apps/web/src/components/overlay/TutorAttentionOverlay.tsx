@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { getRuntimeAdapterForTarget } from "@/runtime";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { getRuntimeAdapterForTarget, getRuntimeAdapters } from "@/runtime";
 import { useTraining } from "@/state/trainingStore";
 import {
   clearTutorAttention,
@@ -7,17 +7,17 @@ import {
   getTutorAttentionServerSnapshot,
   subscribeTutorAttention,
 } from "./tutorAttention";
+import {
+  placeOverlayTooltip,
+  type OverlayPlacement,
+  type OverlayRect,
+  type OverlaySize,
+} from "./overlayPlacement";
 
 const ATTENTION_DURATION_MS = 2400;
+const TUTOR_TOOLTIP_FALLBACK_SIZE: OverlaySize = { width: 288, height: 72 };
 
-interface Rect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
-function unionRects(rects: DOMRect[]): Rect | null {
+function unionRects(rects: DOMRect[]): OverlayRect | null {
   if (rects.length === 0) return null;
 
   const padding = 8;
@@ -41,7 +41,11 @@ function unionRects(rects: DOMRect[]): Rect | null {
   };
 }
 
-function sameRect(left: Rect | null, right: Rect | null): boolean {
+function toOverlayRect(rect: DOMRect): OverlayRect {
+  return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+}
+
+function sameRect(left: OverlayRect | null, right: OverlayRect | null): boolean {
   if (left === right) return true;
   if (!left || !right) return false;
   return (
@@ -50,6 +54,17 @@ function sameRect(left: Rect | null, right: Rect | null): boolean {
     left.width === right.width &&
     left.height === right.height
   );
+}
+
+function sameRects(left: readonly OverlayRect[], right: readonly OverlayRect[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((rect, index) => sameRect(rect, right[index] ?? null))
+  );
+}
+
+function sameSize(left: OverlaySize, right: OverlaySize): boolean {
+  return left.width === right.width && left.height === right.height;
 }
 
 /**
@@ -70,7 +85,10 @@ export function TutorAttentionOverlay({
     getTutorAttention,
     getTutorAttentionServerSnapshot,
   );
-  const [rect, setRect] = useState<Rect | null>(null);
+  const [rect, setRect] = useState<OverlayRect | null>(null);
+  const [transientRegions, setTransientRegions] = useState<OverlayRect[]>([]);
+  const [tooltipSize, setTooltipSize] = useState<OverlaySize>(TUTOR_TOOLTIP_FALLBACK_SIZE);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const targetResolvers = useMemo(
     () =>
@@ -81,6 +99,10 @@ export function TutorAttentionOverlay({
           : null,
       })),
     [attention, runtimeAdapterId, integrationRuntimeAdapterIds],
+  );
+  const runtimes = useMemo(
+    () => getRuntimeAdapters(runtimeAdapterId, integrationRuntimeAdapterIds),
+    [runtimeAdapterId, integrationRuntimeAdapterIds],
   );
 
   useEffect(() => {
@@ -98,6 +120,7 @@ export function TutorAttentionOverlay({
   useLayoutEffect(() => {
     if (!attention || targetResolvers.length === 0 || !runtimeAdapterId) {
       setRect(null);
+      setTransientRegions([]);
       return;
     }
 
@@ -112,6 +135,21 @@ export function TutorAttentionOverlay({
       }
       const nextRect = unionRects(resolvedRects);
       setRect((currentRect) => (sameRect(currentRect, nextRect) ? currentRect : nextRect));
+
+      const nextTransientRegions = runtimes.flatMap((runtime) =>
+        (runtime.resolveTransientActionRegions?.() ?? [])
+          .filter((region) => region.width > 0 && region.height > 0)
+          .map(toOverlayRect),
+      );
+      setTransientRegions((currentRegions) =>
+        sameRects(currentRegions, nextTransientRegions) ? currentRegions : nextTransientRegions,
+      );
+
+      const measuredTooltip = tooltipRef.current?.getBoundingClientRect();
+      if (measuredTooltip && measuredTooltip.width > 0 && measuredTooltip.height > 0) {
+        const nextSize = { width: measuredTooltip.width, height: measuredTooltip.height };
+        setTooltipSize((currentSize) => (sameSize(currentSize, nextSize) ? currentSize : nextSize));
+      }
     };
 
     measure();
@@ -121,15 +159,19 @@ export function TutorAttentionOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [attention, targetResolvers, runtimeAdapterId]);
+  }, [attention, targetResolvers, runtimes, runtimeAdapterId]);
 
-  if (!attention || !rect) return null;
+  const placement = useMemo<OverlayPlacement | null>(() => {
+    if (!rect || typeof window === "undefined") return null;
+    return placeOverlayTooltip({
+      anchor: rect,
+      tooltip: tooltipSize,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      avoid: transientRegions,
+    });
+  }, [rect, tooltipSize, transientRegions]);
 
-  const tooltipTop = Math.min(rect.top + rect.height + 10, window.innerHeight - 84);
-  const tooltipLeft =
-    rect.left > window.innerWidth * 0.62
-      ? Math.max(12, rect.left - 292)
-      : Math.max(12, Math.min(rect.left, window.innerWidth - 304));
+  if (!attention || !rect || !placement) return null;
 
   return (
     <>
@@ -152,10 +194,13 @@ export function TutorAttentionOverlay({
           }}
         />
         <div
+          ref={tooltipRef}
+          data-testid="tutor-attention-tooltip"
+          data-placement-side={placement.side}
           className="absolute max-w-[18rem] rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
           style={{
-            top: tooltipTop,
-            left: tooltipLeft,
+            top: placement.top,
+            left: placement.left,
             maxWidth: "calc(100vw - 24px)",
           }}
         >
