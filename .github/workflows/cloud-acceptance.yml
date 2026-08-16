@@ -44,7 +44,10 @@ jobs:
       - name: Node.js einrichten
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
+
+      - name: Gepinnte Runtime-Toolchain pruefen
+        run: node scripts/check-runtime-versions.mjs --toolchain-only
 
       - name: AWS-Kontonummer in Logs maskieren
         # Dies ist ein oeffentliches Repository, seine Workflow-Logs sind oeffentlich lesbar.

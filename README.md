@@ -44,16 +44,25 @@ Pull Request.
 
 ## Lokale Entwicklung
 
-Voraussetzung: Node.js 22 und npm. Mit `nvm` wird die im Repository hinterlegte
-Node-Version über `.nvmrc` ausgewählt.
+Der Beta-Entwicklungsstand ist auf **Node.js 22.23.2** und **npm 10.9.8** festgelegt. `.nvmrc`
+ist die Node-SSOT; `package.json` hält denselben Node-/npm-Vertrag und die erwarteten
+Produkt-Runtime-Versionen fest. `.npmrc` erzwingt die Engines bereits beim Installieren.
+Node 26 gehört nicht zum unterstützten Beta-Entwicklungsstand.
 
 ```sh
 git clone https://github.com/dimto13/ai-tutor-lab.git
 cd ai-tutor-lab
+nvm install
 nvm use
+npm --version
 npm ci
+npm run check:runtime-versions
 npm run dev:local
 ```
+
+Der Runtime-Guard erwartet für die produktive Web-Auflösung React `19.2.8`, React DOM
+`19.2.8` und Vite `8.2.1`. Er prüft bewusst die Top-Level-Web-Runtime; verschachtelte
+Build-/Dev-Abhängigkeiten von Amplify sind kein alternativer Renderer-Vertrag.
 
 `dev:local` startet den Vite-Entwicklungsserver auf allen lokalen Netzwerk-Interfaces
 (`0.0.0.0`). Dadurch funktioniert sowohl der Zugriff auf demselben Rechner als auch — sofern
@@ -70,6 +79,7 @@ Bei späteren Änderungen am aktuellen Branch reicht normalerweise:
 
 ```sh
 git pull
+nvm use
 npm ci
 npm run dev:local
 ```
@@ -77,11 +87,12 @@ npm run dev:local
 Der Installationsschritt ist dabei nicht optional: Das Repository ist ein npm-Workspace, und
 `apps/web` bezieht `@ai-train-lab/*` über Symlinks in `node_modules/`. Kommt mit einem `git pull`
 ein neues Paket unter `packages/` dazu, fehlt dessen Symlink, bis erneut installiert wurde.
-`npm run dev`, `dev:local`, `build` und `build:dev` prüfen das vorab und brechen mit einem
-entsprechenden Hinweis ab, statt die fehlenden Links als Import-Fehler im Anwendungscode zu
-melden. Dieselbe Prüfung lässt sich einzeln aufrufen:
+`npm run dev`, `dev:local`, `build` und `build:dev` prüfen vorab sowohl den Runtime-Vertrag als
+auch die Workspace-Links und brechen mit einem Ursachenhinweis ab, statt Drift als
+Anwendungsfehler erscheinen zu lassen. Die Prüfungen lassen sich einzeln aufrufen:
 
 ```sh
+npm run check:runtime-versions
 npm run check:workspace-links
 ```
 

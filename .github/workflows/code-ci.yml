@@ -25,11 +25,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
+
+      - name: Verify pinned runtime toolchain
+        run: node scripts/check-runtime-versions.mjs --toolchain-only
 
       - name: Install dependencies reproducibly
         run: npm ci
+
+      - name: Verify beta runtime dependency contract
+        run: |
+          npm run check:runtime-versions
+          npm ls react react-dom vite
 
       - name: Verify Lovable tooling is absent
         run: |
@@ -79,6 +87,52 @@ jobs:
       - name: Amplify compute runtime smoke
         run: npm run validate:amplify-runtime
 
+      - name: Smoke local SSR runtime
+        run: |
+          set -euo pipefail
+          log="${RUNNER_TEMP}/dev-local.log"
+          setsid npm run dev:local >"${log}" 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill -- "-${server_pid}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=false
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 5 http://127.0.0.1:3001/ -o "${RUNNER_TEMP}/root.html"; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "${server_pid}" 2>/dev/null; then
+              cat "${log}"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          if [ "${ready}" != "true" ]; then
+            cat "${log}"
+            echo "Local dev server did not become ready."
+            exit 1
+          fi
+
+          curl -fsS --max-time 10 \
+            http://127.0.0.1:3001/training/vscode-basics.guided \
+            -o "${RUNNER_TEMP}/guided.html"
+          grep -Eiq '<!doctype html|<html' "${RUNNER_TEMP}/root.html"
+          grep -Eiq '<!doctype html|<html' "${RUNNER_TEMP}/guided.html"
+
+          if grep -Eiq \
+            'Invalid hook call|Cannot read properties of null.*use(State|Context|Effect|Memo|Ref)' \
+            "${log}"; then
+            cat "${log}"
+            echo "Known React SSR runtime error detected."
+            exit 1
+          fi
+
+          echo "dev:local SSR smoke OK: / and /training/vscode-basics.guided -> HTTP 200"
+
   e2e-training-modes:
     needs: validate
     runs-on: ubuntu-latest
@@ -90,11 +144,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
+
+      - name: Verify pinned runtime toolchain
+        run: node scripts/check-runtime-versions.mjs --toolchain-only
 
       - name: Install application dependencies
         run: npm ci
+
+      - name: Verify beta runtime dependency contract
+        run: npm run check:runtime-versions
 
       - name: Install pinned Playwright test runner
         run: npm install --prefix apps/web/e2e --package-lock=false --ignore-scripts --no-audit --no-fund

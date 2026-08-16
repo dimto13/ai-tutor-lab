@@ -3,23 +3,30 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.0.0"
+    "node": "22.23.2",
+    "npm": "10.9.8"
   },
-  "packageManager": "npm@10.9.2",
+  "packageManager": "npm@10.9.8",
+  "runtimeContract": {
+    "react": "19.2.8",
+    "reactDom": "19.2.8",
+    "vite": "8.2.1"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
     "prepare": "node scripts/setup-git-hooks.mjs",
+    "check:runtime-versions": "node scripts/check-runtime-versions.mjs",
     "check:workspace-links": "node scripts/check-workspace-links.mjs",
-    "predev": "npm run check:workspace-links",
+    "predev": "npm run check:runtime-versions && npm run check:workspace-links",
     "dev": "npm run dev -w @ai-train-lab/web",
-    "predev:local": "npm run check:workspace-links",
+    "predev:local": "npm run check:runtime-versions && npm run check:workspace-links",
     "dev:local": "npm run dev:local -w @ai-train-lab/web",
-    "prebuild": "npm run check:workspace-links",
+    "prebuild": "npm run check:runtime-versions && npm run check:workspace-links",
     "build": "npm run build:packages && npm run build -w @ai-train-lab/web && npm run validate:amplify-output",
-    "prebuild:dev": "npm run check:workspace-links",
+    "prebuild:dev": "npm run check:runtime-versions && npm run check:workspace-links",
     "build:dev": "npm run build:dev -w @ai-train-lab/web",
     "build:packages": "npm run build -w @ai-train-lab/training-engine && npm run build -w @ai-train-lab/runtime-core && npm run build -w @ai-train-lab/runtime-terminal-sim && npm run build -w @ai-train-lab/runtime-vscode-sim && npm run build -w @ai-train-lab/catalog",
     "preview": "npm run preview -w @ai-train-lab/web",
@@ -37,7 +44,7 @@
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
     "test:architecture": "node --experimental-strip-types --test tests/architecture/*.test.ts",
     "test:packages": "npm run test --workspaces --if-present",
-    "check": "npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run validate:amplify-schema && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run build",
+    "check": "npm run check:runtime-versions && npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run validate:amplify-schema && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run build",
     "lint": "eslint amplify apps packages scripts tests",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

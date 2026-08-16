@@ -116,7 +116,7 @@ for (const { name, linkTarget, directory } of misdirected) {
   lines.push("");
 }
 
-lines.push("Abhilfe:", "", "  npm ci --install-strategy=nested", "");
+lines.push("Abhilfe:", "", "  nvm use", "  npm ci", "");
 
 process.stderr.write(lines.join("\n"));
 process.exit(1);
