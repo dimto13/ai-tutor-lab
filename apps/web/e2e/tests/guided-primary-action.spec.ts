@@ -50,17 +50,20 @@ test("Guided startet mit geschlossenem Tutor; Öffnen und Schließen verändert 
   );
 });
 
-test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und hält Simulatoraktionen frei von Plattform-CTAs", async ({
+test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und bleibt ohne freien Tutor abschließbar", async ({
   page,
 }) => {
   await page.goto(guidedUrl);
   await ready(page);
 
-  const explanationPrimary = await expectOnePrimary(page, "platform");
-  await expect(explanationPrimary).toHaveAccessibleName("Grundbegriff verstanden");
-  await expect(page.getByRole("button", { name: "Grundbegriff verstanden" })).toBeInViewport();
+  for (let stepNumber = 1; stepNumber <= 6; stepNumber += 1) {
+    const primary = await expectOnePrimary(page, "platform");
+    await expect(primary).toHaveAccessibleName("Grundbegriff verstanden");
+    await expect(primary).toBeInViewport();
+    await primary.click();
+  }
 
-  await skipIntroductions(page);
+  await expectStep(page, 7, "Explorer öffnen");
   let primary = await expectOnePrimary(page, "runtime", "vscode.activityBar.explorer");
   await expect(primary).toHaveAccessibleName(
     /Primäre Aktion im simulierten Werkzeug: Öffne den Explorer/,
@@ -102,6 +105,7 @@ test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und hält S
   await expect(primary).toBeVisible();
 
   await expect(page.getByTestId("tutor-chat-collapsed")).toBeVisible();
+  await expect(page.getByTestId("tutor-chat-expanded")).toHaveCount(0);
   await page.getByRole("button", { name: "Output", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
