@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures/browser-error-guard";
 
 test("Feedback speichert Kontext lokal, übersteht Reload und lässt sich als JSON exportieren", async ({
   page,
