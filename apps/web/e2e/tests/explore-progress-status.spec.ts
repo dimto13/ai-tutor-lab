@@ -28,7 +28,9 @@ test("Explore: Oberflächenliste ist eine passive, semantische Statusanzeige", a
   await expect(firstRow).toContainText("Offen");
   expect(await firstRow.getAttribute("tabindex")).toBeNull();
   expect(await firstRow.evaluate((element) => element.tagName)).toBe("LI");
-  expect(await firstRow.evaluate((element) => getComputedStyle(element).cursor)).not.toBe("pointer");
+  expect(await firstRow.evaluate((element) => getComputedStyle(element).cursor)).not.toBe(
+    "pointer",
+  );
   expect((await firstRow.getAttribute("class")) ?? "").not.toContain("hover:");
 
   await expect(list.locator('[data-explore-status="open"]')).toHaveCount(rowCount);
