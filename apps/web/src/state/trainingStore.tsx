@@ -416,9 +416,7 @@ export function TrainingProvider({
 
   useEffect(() => {
     if (!hydrated || mode !== "guided") return;
-    setStateRecovery((current) =>
-      current?.stepId === progress.activeStepId ? current : null,
-    );
+    setStateRecovery((current) => (current?.stepId === progress.activeStepId ? current : null));
     const frame = window.requestAnimationFrame(() => {
       void evaluateGuidedRecoveryStateRules();
     });
@@ -572,7 +570,8 @@ export function TrainingProvider({
       setVisibleHelpLevel(activeHelpLevel(progressRef.current));
       setFeedback({
         kind: "success",
-        message: "Der Schritt ist wieder in einem passenden Arbeitszustand. Du kannst hier weitermachen.",
+        message:
+          "Der Schritt ist wieder in einem passenden Arbeitszustand. Du kannst hier weitermachen.",
       });
       void evaluateGuidedRecoveryStateRules();
     } catch {
