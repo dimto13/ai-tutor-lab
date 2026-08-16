@@ -69,6 +69,16 @@
   --color-warning: var(--warning);
   --color-tutor: var(--tutor);
   --color-tutor-foreground: var(--tutor-foreground);
+  --color-platform-background: var(--platform-background);
+  --color-platform-surface: var(--platform-surface);
+  --color-platform-surface-raised: var(--platform-surface-raised);
+  --color-platform-foreground: var(--platform-foreground);
+  --color-platform-muted-foreground: var(--platform-muted-foreground);
+  --color-platform-border: var(--platform-border);
+  --color-platform-input: var(--platform-input);
+  --color-platform-accent: var(--platform-accent);
+  --color-platform-accent-foreground: var(--platform-accent-foreground);
+  --color-platform-ring: var(--platform-ring);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
@@ -123,6 +133,22 @@
   --sidebar-accent-foreground: oklch(0.94 0.006 250);
   --sidebar-border: oklch(0.31 0.016 258);
   --sidebar-ring: oklch(0.66 0.15 250);
+
+  /*
+   * Platform layer. These tokens are deliberately independent from every
+   * simulated product palette. Apply them through .platform-ui so RuntimeAdapter
+   * surfaces keep their authentic product styling.
+   */
+  --platform-background: oklch(0.17 0.025 310);
+  --platform-surface: oklch(0.22 0.03 310);
+  --platform-surface-raised: oklch(0.265 0.035 310);
+  --platform-foreground: oklch(0.96 0.01 310);
+  --platform-muted-foreground: oklch(0.72 0.025 310);
+  --platform-border: oklch(0.55 0.05 310);
+  --platform-input: oklch(0.29 0.035 310);
+  --platform-accent: oklch(0.72 0.18 315);
+  --platform-accent-foreground: oklch(0.17 0.04 315);
+  --platform-ring: oklch(0.78 0.16 315);
 }
 
 .dark {
@@ -160,6 +186,50 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+
+  --platform-background: oklch(0.17 0.025 310);
+  --platform-surface: oklch(0.22 0.03 310);
+  --platform-surface-raised: oklch(0.265 0.035 310);
+  --platform-foreground: oklch(0.96 0.01 310);
+  --platform-muted-foreground: oklch(0.72 0.025 310);
+  --platform-border: oklch(0.55 0.05 310);
+  --platform-input: oklch(0.29 0.035 310);
+  --platform-accent: oklch(0.72 0.18 315);
+  --platform-accent-foreground: oklch(0.17 0.04 315);
+  --platform-ring: oklch(0.78 0.16 315);
+}
+
+.platform-ui {
+  --background: var(--platform-background);
+  --foreground: var(--platform-foreground);
+  --card: var(--platform-surface-raised);
+  --card-foreground: var(--platform-foreground);
+  --popover: var(--platform-surface-raised);
+  --popover-foreground: var(--platform-foreground);
+  --primary: var(--platform-accent);
+  --primary-foreground: var(--platform-accent-foreground);
+  --secondary: var(--platform-surface-raised);
+  --secondary-foreground: var(--platform-foreground);
+  --muted: var(--platform-surface-raised);
+  --muted-foreground: var(--platform-muted-foreground);
+  --accent: var(--platform-accent);
+  --accent-foreground: var(--platform-accent-foreground);
+  --border: var(--platform-border);
+  --input: var(--platform-input);
+  --ring: var(--platform-ring);
+  --editor: var(--platform-input);
+  --panel: var(--platform-surface);
+  --activity: var(--platform-background);
+  --terminal: var(--platform-background);
+  --statusbar: var(--platform-surface);
+  --sidebar: var(--platform-surface);
+  --sidebar-foreground: var(--platform-foreground);
+  --sidebar-primary: var(--platform-accent);
+  --sidebar-primary-foreground: var(--platform-accent-foreground);
+  --sidebar-accent: var(--platform-surface-raised);
+  --sidebar-accent-foreground: var(--platform-foreground);
+  --sidebar-border: var(--platform-border);
+  --sidebar-ring: var(--platform-ring);
 }
 
 @layer base {
