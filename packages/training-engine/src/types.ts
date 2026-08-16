@@ -145,6 +145,40 @@ export type Validation =
       of: Validation;
     };
 
+export type GuidedRecoveryStrategy = "runtime_repair" | "step_snapshot";
+
+/** Opaque semantic command. Only a concrete runtime adapter interprets `type` and `payload`. */
+export interface RuntimeRecoveryCommand {
+  type: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface GuidedRecoveryAction {
+  id: string;
+  strategy: GuidedRecoveryStrategy;
+  /** Short learner-facing explanation of why recovery is offered. */
+  message: string;
+  /** Learner-facing primary action, for example "Korrigieren". */
+  label: string;
+  /** Optional explicit target runtime; defaults to the scenario's primary runtime. */
+  runtimeAdapterId?: string;
+  /** Required for runtime_repair, omitted for deterministic step_snapshot restore. */
+  command?: RuntimeRecoveryCommand;
+}
+
+export interface GuidedRecoveryStateRule {
+  /** Declarative condition that identifies an invalid runtime state for the active step. */
+  when: Validation;
+  action: GuidedRecoveryAction;
+}
+
+export interface GuidedRecoveryPolicy {
+  /** Recovery offered after a counted near-miss validation. */
+  onValidationFailure?: GuidedRecoveryAction;
+  /** Recovery derived from runtime state, including after persisted restore/reload. */
+  stateRules?: GuidedRecoveryStateRule[];
+}
+
 export interface StepFailureFeedback {
   /** Learner-facing message for a relevant action that did not satisfy the step. */
   message: string;
@@ -182,6 +216,8 @@ export interface TrainingStep {
   highlightTooltip?: string;
   /** Declarative feedback for a relevant, but incorrect, learner action. */
   onFailure?: StepFailureFeedback;
+  /** Generic Guided recovery policy. Runtime-specific commands stay opaque to the engine. */
+  recovery?: GuidedRecoveryPolicy;
   successMessage: string;
   /** Optional content can be skipped through an explicit learner choice. */
   optional?: boolean;

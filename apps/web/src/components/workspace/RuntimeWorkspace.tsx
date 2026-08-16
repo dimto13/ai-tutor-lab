@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { claudeCodeRuntime } from "@/runtime/claudeCodeRuntime";
 import { sourceControlPlatformRuntime } from "@/runtime/sourceControlPlatformRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
@@ -25,13 +25,22 @@ function useRuntimePersistence(
   subscribeState: RuntimeStateSubscription,
   snapshot: RuntimeSnapshotReader,
 ): void {
-  const { isReady, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
+  const {
+    isReady,
+    mode,
+    progress,
+    ensureGuidedRecoveryCheckpoint,
+    persistRuntimeSnapshot,
+    restoreRuntimeSnapshot,
+  } = useTraining();
+  const [runtimeReady, setRuntimeReady] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
 
     let active = true;
     let persistenceReady = false;
+    setRuntimeReady(false);
     const unsubscribe = subscribeState((reason) => {
       if (!active || !persistenceReady || reason === "mount" || reason === "restore") return;
       void snapshot().then((currentSnapshot) => {
@@ -47,13 +56,17 @@ function useRuntimePersistence(
           return restoreRuntimeSnapshot(runtimeId);
         })
         .finally(() => {
-          if (active) persistenceReady = true;
+          if (active) {
+            persistenceReady = true;
+            setRuntimeReady(true);
+          }
         });
     });
 
     return () => {
       active = false;
       persistenceReady = false;
+      setRuntimeReady(false);
       window.cancelAnimationFrame(frame);
       unsubscribe();
     };
@@ -64,6 +77,27 @@ function useRuntimePersistence(
     runtimeId,
     snapshot,
     subscribeState,
+  ]);
+
+  useEffect(() => {
+    if (!runtimeReady || mode !== "guided" || !progress.activeStepId) return;
+    let active = true;
+    const frame = window.requestAnimationFrame(() => {
+      void snapshot().then((currentSnapshot) => {
+        if (active) void ensureGuidedRecoveryCheckpoint(runtimeId, currentSnapshot);
+      });
+    });
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [
+    runtimeReady,
+    mode,
+    progress.activeStepId,
+    ensureGuidedRecoveryCheckpoint,
+    runtimeId,
+    snapshot,
   ]);
 }
 

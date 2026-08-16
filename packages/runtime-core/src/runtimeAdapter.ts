@@ -1,4 +1,9 @@
-import type { RuntimeSeed, TrainingEvent, UiTargetRef } from "@ai-train-lab/training-engine";
+import type {
+  RuntimeRecoveryCommand,
+  RuntimeSeed,
+  TrainingEvent,
+  UiTargetRef,
+} from "@ai-train-lab/training-engine";
 
 export type RuntimeCapability =
   | "filesystem"
@@ -19,6 +24,15 @@ export interface RuntimeSurfaceDescription {
   conceptKey?: string;
 }
 
+export interface RuntimeStateChange {
+  /** Open reason vocabulary so concrete runtimes can expose lifecycle/mutation signals. */
+  reason: string;
+}
+
+export interface RuntimeRecoveryResult {
+  status: "repaired" | "unsupported";
+}
+
 /**
  * Boundary between training logic and an interactive product runtime.
  *
@@ -35,11 +49,15 @@ export interface RuntimeAdapter {
   unmount(): Promise<void>;
 
   subscribe(handler: (event: TrainingEvent) => void): () => void;
+  /** Optional product-neutral signal used to re-evaluate declarative state recovery rules. */
+  subscribeStateChange?(handler: (change: RuntimeStateChange) => void): () => void;
   query<T = unknown>(selector: string): Promise<T>;
   resolveTarget(ref: UiTargetRef): DOMRect | null;
   describeSurface(): RuntimeSurfaceDescription[];
   snapshot(): Promise<unknown>;
   restore(snapshot: unknown): Promise<void>;
+  /** Optional semantic repair command interpreted only by the concrete runtime adapter. */
+  recover?(command: RuntimeRecoveryCommand): Promise<RuntimeRecoveryResult>;
 
   /** Transitional simulator helper until session restore owns reset semantics. */
   reset?(): void;

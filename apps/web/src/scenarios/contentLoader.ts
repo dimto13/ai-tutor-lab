@@ -85,6 +85,57 @@ export const validationSchema: z.ZodType<Validation> = z.lazy(
     ]) as z.ZodType<Validation>,
 );
 
+const recoveryCommandSchema = z
+  .object({
+    type: z.string().min(1),
+    payload: z.record(z.unknown()).optional(),
+  })
+  .strict();
+
+const recoveryActionSchema = z
+  .object({
+    id: z.string().min(1),
+    strategy: z.enum(["runtime_repair", "step_snapshot"]),
+    message: z.string().min(1),
+    label: z.string().min(1),
+    runtimeAdapterId: z.string().min(1).optional(),
+    command: recoveryCommandSchema.optional(),
+  })
+  .strict()
+  .superRefine((action, ctx) => {
+    if (action.strategy === "runtime_repair" && !action.command) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "runtime_repair recovery requires a semantic command",
+        path: ["command"],
+      });
+    }
+    if (action.strategy === "step_snapshot" && action.command) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "step_snapshot recovery must not define a runtime command",
+        path: ["command"],
+      });
+    }
+  });
+
+const recoveryPolicySchema = z
+  .object({
+    onValidationFailure: recoveryActionSchema.optional(),
+    stateRules: z
+      .array(
+        z
+          .object({
+            when: validationSchema,
+            action: recoveryActionSchema,
+          })
+          .strict(),
+      )
+      .min(1)
+      .optional(),
+  })
+  .strict();
+
 const stepSchema = z.object({
   id: z.string().min(1),
   stepType: z.enum(["action", "explanation"]).optional(),
@@ -105,6 +156,7 @@ const stepSchema = z.object({
     })
     .strict()
     .optional(),
+  recovery: recoveryPolicySchema.optional(),
   successMessage: z.string(),
   optional: z.boolean().optional(),
   exactTextValidation: z.boolean().optional(),
@@ -135,10 +187,10 @@ const introductionLibrarySchema = z
           path: ["steps", index],
         });
       }
-      if (step.validation || step.expectedEvent) {
+      if (step.validation || step.expectedEvent || step.recovery) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "shared introduction steps must not define RuntimeEvent validation",
+          message: "shared introduction steps must not define RuntimeEvent validation or recovery",
           path: ["steps", index],
         });
       }
@@ -243,6 +295,12 @@ export const scenarioSchema = z
   })
   .superRefine((scenario, ctx) => {
     const ids = new Set<string>();
+    const runtimeIds = [
+      scenario.environment?.runtimeAdapterId,
+      ...(scenario.environment?.integrations?.map(({ runtimeAdapterId }) => runtimeAdapterId) ??
+        []),
+    ].filter((id): id is string => Boolean(id));
+
     scenario.steps.forEach((step, index) => {
       if (ids.has(step.id)) {
         ctx.addIssue({
@@ -260,6 +318,29 @@ export const scenarioSchema = z
           path: ["steps", index],
         });
       }
+      if (
+        step.recovery &&
+        ((scenario.mode ?? "guided") !== "guided" || step.stepType === "explanation")
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "recovery is only valid for actionable guided steps",
+          path: ["steps", index, "recovery"],
+        });
+      }
+      const recoveryActions = [
+        ...(step.recovery?.onValidationFailure ? [step.recovery.onValidationFailure] : []),
+        ...(step.recovery?.stateRules?.map(({ action }) => action) ?? []),
+      ];
+      recoveryActions.forEach((action) => {
+        if (action.runtimeAdapterId && !runtimeIds.includes(action.runtimeAdapterId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `recovery runtime ${action.runtimeAdapterId} is not part of the scenario environment`,
+            path: ["steps", index, "recovery"],
+          });
+        }
+      });
     });
 
     const sharedRefs = scenario.audience?.introductionStepRefs ?? [];
@@ -298,11 +379,6 @@ export const scenarioSchema = z
       });
     }
 
-    const runtimeIds = [
-      scenario.environment?.runtimeAdapterId,
-      ...(scenario.environment?.integrations?.map(({ runtimeAdapterId }) => runtimeAdapterId) ??
-        []),
-    ].filter((id): id is string => Boolean(id));
     if (new Set(runtimeIds).size !== runtimeIds.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

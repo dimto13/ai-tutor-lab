@@ -114,6 +114,14 @@
         "message": "Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.",
         "markTarget": "vscode.explorer.tree"
       },
+      "recovery": {
+        "onValidationFailure": {
+          "id": "restore-create-file-entry",
+          "strategy": "step_snapshot",
+          "message": "Der Dateizustand passt nicht mehr zu diesem Schritt. Stelle den Schritt wieder her; dein Fehlversuch bleibt dokumentiert.",
+          "label": "Schritt wiederherstellen"
+        }
+      },
       "successMessage": "notiz.txt wurde erstellt und im Editor geöffnet."
     },
     {
@@ -154,6 +162,33 @@
       },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Bearbeite notiz.txt, erkenne den ungespeicherten Zustand am Punkt im Tab und speichere anschließend mit Strg+S beziehungsweise Cmd+S.",
+      "recovery": {
+        "stateRules": [
+          {
+            "when": {
+              "kind": "not",
+              "of": {
+                "kind": "state",
+                "selector": "editor.activeFile",
+                "equals": "notiz.txt"
+              }
+            },
+            "action": {
+              "id": "reactivate-training-file",
+              "strategy": "runtime_repair",
+              "message": "notiz.txt ist nicht mehr im Editor aktiv. Du kannst die Datei direkt wieder in den Arbeitszustand dieses Schritts holen.",
+              "label": "Korrigieren",
+              "runtimeAdapterId": "vscode-simulator",
+              "command": {
+                "type": "editor.activate-file",
+                "payload": {
+                  "filename": "notiz.txt"
+                }
+              }
+            }
+          }
+        ]
+      },
       "successMessage": "Text korrekt gespeichert. Die Ungespeichert-Markierung ist verschwunden."
     },
     {

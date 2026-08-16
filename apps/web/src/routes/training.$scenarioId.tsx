@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   Monitor,
+  RotateCcw,
   Target,
 } from "lucide-react";
 import { AccountMenu } from "@/auth/AccountMenu";
@@ -191,6 +192,8 @@ function TrainingLayout() {
     feedback,
     helpLevel,
     challengeRemainingSeconds,
+    recovery,
+    performGuidedRecovery,
   } = useTraining();
   const [highlightsOn, setHighlightsOn] = useState(true);
   const [mobileSurface, setMobileSurface] = useState<"workspace" | "guide">("workspace");
@@ -301,6 +304,30 @@ function TrainingLayout() {
           </Link>
         </div>
       </header>
+
+      {!isFinished && mode === "guided" && recovery ? (
+        <div
+          data-testid="guided-recovery"
+          data-platform-ui="guided-recovery"
+          className="platform-ui flex shrink-0 flex-col gap-2 border-b border-warning/40 bg-warning/10 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4"
+          role="region"
+          aria-label="Schritt wiederherstellen"
+          aria-live="polite"
+        >
+          <div className="flex min-w-0 flex-1 items-start gap-2">
+            <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <p className="text-[12px] leading-relaxed text-foreground">{recovery.message}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void performGuidedRecovery()}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-warning/60 bg-background/70 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-background"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            {recovery.label}
+          </button>
+        </div>
+      ) : null}
 
       {!isFinished &&
       mode === "challenge" &&
