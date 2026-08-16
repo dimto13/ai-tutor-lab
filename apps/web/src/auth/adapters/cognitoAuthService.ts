@@ -1,5 +1,5 @@
 import type { AuthService, AuthSession, SignInResult, SignUpResult } from "../authService";
-import { parseApplicationRolesFromGroups } from "../roles";
+import { parseApplicationRolesFromGroups } from "../roles.ts";
 import {
   createAmplifyCognitoClient,
   type AmplifyCognitoClientOptions,
