@@ -56,7 +56,7 @@ export function TutorChat() {
   return (
     <div
       data-platform-ui="tutor-chat"
-      className="flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
+      className="platform-ui flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
     >
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <Bot className="h-4 w-4 text-accent" /> KI-Tutor
@@ -118,7 +118,7 @@ export function TutorChat() {
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={(event) => event.key === "Enter" && send(input)}
           placeholder="Frage an den Tutor…"
-          className="flex-1 rounded-md border border-border bg-editor px-3 py-2 text-[13px] text-foreground outline-none focus:border-ring"
+          className="flex-1 rounded-md border border-border bg-input px-3 py-2 text-[13px] text-foreground outline-none focus:border-ring"
         />
         <button
           onClick={() => send(input)}
