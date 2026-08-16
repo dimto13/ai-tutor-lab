@@ -17,8 +17,19 @@ async function openFileMenu(page: Page): Promise<void> {
   await page.getByRole("button", { name: "File", exact: true }).click();
 }
 
+async function openTerminalMenu(page: Page): Promise<void> {
+  await page.locator('[data-highlight="vscode.menu.terminal"]').click();
+}
+
+function terminalPanelTab(page: Page) {
+  return page.locator('[data-highlight="vscode.panel.terminal"]');
+}
+
 async function expectExploreTargetDone(page: Page, label: string): Promise<void> {
-  const row = page.getByText(label, { exact: true }).locator("..");
+  const row = page.getByRole("listitem").filter({
+    has: page.getByText(label, { exact: true }),
+  });
+  await expect(row).toHaveCount(1);
   await expect(row.locator("svg")).toHaveClass(/text-success/);
 }
 
@@ -71,7 +82,7 @@ test("Explore: frischer VS-Code-Walkthrough erreicht über sichtbare Fachaktione
   await page.getByRole("menuitem", { name: /Open Workspace from File\.\.\./ }).click();
   await expectProgress(page, 20);
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  await openTerminalMenu(page);
   await page
     .getByRole("menuitem", { name: /New Terminal/ })
     .first()
@@ -120,7 +131,7 @@ test("Explore: Terminal → New Terminal erschließt semantisch das Terminal-Pan
 }) => {
   await openExplore(page);
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  await openTerminalMenu(page);
   await page
     .getByRole("menuitem", { name: /New Terminal/ })
     .first()
@@ -139,7 +150,7 @@ test("Explore: direkter Terminal-Panel-Tab erschließt denselben Terminal-Zustan
   await page.getByRole("menuitem", { name: "Problems", exact: true }).click();
   await expectProgress(page, 2);
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  await terminalPanelTab(page).click();
   await expect(page.getByRole("textbox", { name: "Terminal-Eingabe" })).toBeVisible();
   await expectProgress(page, 3);
 });
@@ -147,14 +158,14 @@ test("Explore: direkter Terminal-Panel-Tab erschließt denselben Terminal-Zustan
 test("Explore: äquivalente Terminal-Einstiege zählen das Ziel nur einmal", async ({ page }) => {
   await openExplore(page);
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  await openTerminalMenu(page);
   await page
     .getByRole("menuitem", { name: /New Terminal/ })
     .first()
     .click();
   await expectProgress(page, 2);
 
-  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  await terminalPanelTab(page).click();
   await expectProgress(page, 2);
 
   await page.getByRole("button", { name: "View", exact: true }).click();
