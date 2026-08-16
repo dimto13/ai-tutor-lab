@@ -3,7 +3,9 @@ import { expect, test, type Page } from "@playwright/test";
 const guidedUrl = "/training/vscode-basics.guided";
 
 async function ready(page: Page): Promise<void> {
-  await expect(page.getByRole("status")).toHaveText("Training bereit");
+  await expect(page.locator('p[role="status"]').filter({ hasText: "Training bereit" })).toHaveText(
+    "Training bereit",
+  );
 }
 
 async function expectStep(page: Page, number: number, title: string): Promise<void> {
