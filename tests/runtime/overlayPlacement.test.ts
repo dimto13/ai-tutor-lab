@@ -51,8 +51,9 @@ test("overlay placement: moves sideways when bottom and top are blocked", () => 
   assert.equal(placement.overlapArea, 0);
 });
 
-test("overlay placement: chooses the smallest overlap when every direction is blocked", () => {
+test("overlay placement: chooses the smallest geometric overlap without double-counting nested blockers", () => {
   const anchor = rect(200, 200, 40, 40);
+  const duplicatedLeftBlocker = rect(200, 90, 20, 20);
   const placement = placeOverlayTooltip({
     anchor,
     tooltip,
@@ -60,8 +61,9 @@ test("overlay placement: chooses the smallest overlap when every direction is bl
     avoid: [
       rect(250, 200, 100, 60),
       rect(130, 200, 100, 60),
-      rect(200, 250, 100, 60),
-      rect(200, 90, 20, 20),
+      rect(200, 250, 20, 30),
+      duplicatedLeftBlocker,
+      duplicatedLeftBlocker,
     ],
   });
 
