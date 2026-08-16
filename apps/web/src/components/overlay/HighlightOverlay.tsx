@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { getRuntimeAdapterForTarget, getRuntimeAdapters } from "@/runtime";
 import { useTraining } from "@/state/trainingStore";
 import { getGlossaryConceptForTarget } from "@/lib/glossary";
