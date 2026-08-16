@@ -1,9 +1,11 @@
+import type { ApplicationRole } from "./roles";
+
 export interface UserIdentity {
   userId: string;
   tenantId: string | null;
   email: string | null;
   displayName: string | null;
-  roles: readonly string[];
+  roles: readonly ApplicationRole[];
 }
 
 export interface AuthSession {
