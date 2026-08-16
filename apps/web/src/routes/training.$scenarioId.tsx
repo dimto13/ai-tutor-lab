@@ -305,7 +305,8 @@ function TrainingLayout() {
         <div
           data-testid="guided-recovery"
           className="flex shrink-0 flex-col gap-2 border-b border-warning/40 bg-warning/10 px-3 py-2.5 sm:flex-row sm:items-center sm:px-4"
-          role="status"
+          role="region"
+          aria-label="Schritt wiederherstellen"
           aria-live="polite"
         >
           <div className="flex min-w-0 flex-1 items-start gap-2">
