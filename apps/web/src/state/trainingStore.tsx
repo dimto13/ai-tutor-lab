@@ -246,8 +246,7 @@ export function TrainingProvider({
     [scenario],
   );
   const guidedNavigationCoordinator = useMemo(
-    () =>
-      persistence ? new GuidedNavigationCoordinator(persistence, scenarioRuntimes) : null,
+    () => (persistence ? new GuidedNavigationCoordinator(persistence, scenarioRuntimes) : null),
     [persistence, scenarioRuntimes],
   );
 
@@ -464,13 +463,7 @@ export function TrainingProvider({
       void evaluateGuidedRecoveryStateRules();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [
-    hydrated,
-    mode,
-    progress.activeStepId,
-    guidedReplayStepId,
-    evaluateGuidedRecoveryStateRules,
-  ]);
+  }, [hydrated, mode, progress.activeStepId, guidedReplayStepId, evaluateGuidedRecoveryStateRules]);
 
   useEffect(() => {
     if (!hydrated || !persistence) return;
@@ -617,15 +610,13 @@ export function TrainingProvider({
         guidedNavigationBusyRef.current = false;
         setGuidedNavigationPending(false);
       }
-    }, [mode, guidedNavigationCoordinator, evaluateGuidedRecoveryStateRules]);
+    },
+    [mode, guidedNavigationCoordinator, evaluateGuidedRecoveryStateRules],
+  );
 
   const navigateToGuidedStep = useCallback(
     async (targetStepId: string) => {
-      if (
-        mode !== "guided" ||
-        !guidedNavigationCoordinator ||
-        guidedNavigationBusyRef.current
-      ) {
+      if (mode !== "guided" || !guidedNavigationCoordinator || guidedNavigationBusyRef.current) {
         return;
       }
 
@@ -663,7 +654,9 @@ export function TrainingProvider({
         guidedNavigationBusyRef.current = false;
         setGuidedNavigationPending(false);
       }
-    }, [mode, guidedNavigationCoordinator, scenario, finishGuidedReplay]);
+    },
+    [mode, guidedNavigationCoordinator, scenario, finishGuidedReplay],
+  );
 
   const performGuidedRecovery = useCallback(async () => {
     if (mode !== "guided" || !persistence || guidedReplayStepIdRef.current) return;
@@ -921,7 +914,11 @@ export function TrainingProvider({
           ? challengeComplete
           : guidedCompleted === scenario.steps.length;
     const visibleProgress = guidedReplayStepId
-      ? ({ ...progress, activeStepId: guidedReplayStepId } satisfies TrainingSession)
+      ? ({
+          ...progress,
+          activeStepId: guidedReplayStepId,
+          activeStepMistakes: 0,
+        } satisfies TrainingSession)
       : progress;
     const activeStepIndex = visibleProgress.activeStepId
       ? scenario.steps.findIndex((step) => step.id === visibleProgress.activeStepId)
