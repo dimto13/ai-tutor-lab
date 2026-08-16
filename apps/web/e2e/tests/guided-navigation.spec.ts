@@ -26,7 +26,9 @@ async function reachStepTen(page: Page): Promise<void> {
   await expectStep(page, 10, "Datei bearbeiten und speichern");
 }
 
-test("replay restores the target runtime and returns to the furthest reached state", async ({ page }) => {
+test("replay restores the target runtime and returns to the furthest reached state", async ({
+  page,
+}) => {
   await reachStepTen(page);
   await expect(
     page.getByRole("button", {
@@ -53,7 +55,9 @@ test("replay restores the target runtime and returns to the furthest reached sta
   await expect(page.getByRole("textbox", { name: "Editor-Inhalt" })).toHaveValue("Zwischenstand");
 });
 
-test("reload during replay keeps replay focus and later reached steps remain selectable", async ({ page }) => {
+test("reload during replay keeps replay focus and later reached steps remain selectable", async ({
+  page,
+}) => {
   await reachStepTen(page);
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Rückkehrzustand");
 
