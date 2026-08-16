@@ -73,8 +73,10 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           <button
             type="button"
             data-testid="tutor-chat-toggle"
+            aria-label="Tutor fragen"
             aria-expanded="false"
             aria-controls="tutor-chat-panel"
+            aria-describedby={prominent ? "tutor-chat-help-hint" : undefined}
             onClick={() => setOpen(true)}
             className={`flex min-w-0 flex-1 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-medium text-foreground transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               prominent
@@ -89,7 +91,10 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
             <span className="min-w-0 flex-1">
               <span className="block">Tutor fragen</span>
               {prominent ? (
-                <span className="block text-[10px] font-normal text-muted-foreground">
+                <span
+                  id="tutor-chat-help-hint"
+                  className="block text-[10px] font-normal text-muted-foreground"
+                >
                   Zusätzliche Hilfe ist für diesen Schritt verfügbar.
                 </span>
               ) : null}
