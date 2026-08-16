@@ -204,7 +204,7 @@ export function CompletionScreen() {
           </button>
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-ring hover:bg-white/5"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-ring hover:bg-muted"
           >
             <LayoutGrid className="h-4 w-4" /> Zur Übersicht
           </Link>
