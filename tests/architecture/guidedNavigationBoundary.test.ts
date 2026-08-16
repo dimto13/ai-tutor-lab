@@ -23,5 +23,5 @@ test("guided navigation keeps runtime product semantics out of the engine and co
   assert.match(engineSource, /status.*=== "COMPLETED"/s);
   assert.doesNotMatch(engineSource, /score|award|points|restore\(|snapshot\(/i);
   assert.match(coordinatorSource, /runtime\.snapshot\(\)/);
-  assert.match(coordinatorSource, /runtime\.restore\(checkpoint\.snapshot\)/);
+  assert.match(coordinatorSource, /runtime\.restore\(snapshot\)/);
 });
