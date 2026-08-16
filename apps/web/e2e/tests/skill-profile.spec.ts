@@ -6,7 +6,7 @@ test("competence page lists every technology without synthesizing local skill va
   await page.goto("/kompetenz");
 
   await expect(page.getByRole("heading", { name: "Mein Kompetenzprofil" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Kompetenzprofil" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kompetenzprofil", exact: true })).toBeVisible();
   await expect(page.getByText("Im lokalen Modus nicht autoritativ verfügbar")).toBeVisible();
 
   for (const technology of [
