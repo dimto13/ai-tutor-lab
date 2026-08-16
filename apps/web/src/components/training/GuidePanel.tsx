@@ -378,22 +378,55 @@ function ExploreGuide() {
         </div>
       )}
 
-      <div className="mt-5">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-5" data-testid="explore-surface-progress">
+        <p
+          id="explore-surface-progress-title"
+          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
           Oberflächen
         </p>
-        <ul className="space-y-1.5">
+        <p
+          id="explore-surface-progress-hint"
+          className="mt-1 mb-3 text-[12px] leading-relaxed text-muted-foreground"
+        >
+          Diese Liste zeigt nur deinen Erkundungsfortschritt. Interagiere direkt im Simulator, um
+          weitere Oberflächen zu erkunden.
+        </p>
+        <ul
+          data-testid="explore-surface-status-list"
+          aria-labelledby="explore-surface-progress-title"
+          aria-describedby="explore-surface-progress-hint"
+          className="space-y-1.5"
+        >
           {surface.map((item) => {
             const done = progress.exploredTargets.includes(item.ref);
             return (
-              <li key={item.ref} className="flex items-center gap-2 text-[12.5px]">
+              <li
+                key={item.ref}
+                data-testid="explore-surface-status"
+                data-explore-status={done ? "completed" : "open"}
+                className="flex min-w-0 items-start gap-2 text-[12.5px]"
+              >
                 {done ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                  <CheckCircle2
+                    className="mt-0.5 h-4 w-4 shrink-0 text-success"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <Circle className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  <Circle
+                    className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50"
+                    aria-hidden="true"
+                  />
                 )}
-                <span className={done ? "text-muted-foreground" : "text-foreground"}>
+                <span
+                  className={`min-w-0 flex-1 break-words ${done ? "text-muted-foreground" : "text-foreground"}`}
+                >
                   {item.label}
+                </span>
+                <span
+                  className={`shrink-0 text-[11px] font-medium ${done ? "text-success" : "text-muted-foreground"}`}
+                >
+                  {done ? "Erledigt" : "Offen"}
                 </span>
               </li>
             );
