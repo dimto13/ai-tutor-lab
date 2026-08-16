@@ -316,6 +316,20 @@ function resetLastCommit(command: string): VscodeTerminalExecution | null {
   };
 }
 
+const SEMANTIC_RUNTIME_EVIDENCE_TARGETS = new Set([
+  "vscode.primarySideBar",
+  "vscode.workspace.context",
+  "vscode.editor",
+  "vscode.panel.terminal",
+  "vscode.panel.problems",
+  "vscode.panel.output",
+  "vscode.statusBar",
+]);
+
+function emitSurfaceEvidence(...refs: string[]): void {
+  for (const ref of refs) baseVscodeRuntime.inspect(ref);
+}
+
 export const vscodeRuntime = {
   ...baseVscodeRuntime,
 
@@ -340,6 +354,26 @@ export const vscodeRuntime = {
   subscribeState(handler: RuntimeStateListener): () => void {
     workflowStateListeners.add(handler);
     return () => workflowStateListeners.delete(handler);
+  },
+
+  inspect(ref: string): void {
+    if (SEMANTIC_RUNTIME_EVIDENCE_TARGETS.has(ref)) return;
+    baseVscodeRuntime.inspect(ref);
+  },
+
+  setWorkspace(mode: "folder" | "workspace", folders: string[]): void {
+    baseVscodeRuntime.setWorkspace(mode, folders);
+    emitSurfaceEvidence("vscode.primarySideBar", "vscode.workspace.context", "vscode.statusBar");
+  },
+
+  setActiveFile(filename: string | null): void {
+    baseVscodeRuntime.setActiveFile(filename);
+    if (filename) emitSurfaceEvidence("vscode.editor");
+  },
+
+  setActivePanel(panel: "terminal" | "problems" | "output" | null): void {
+    baseVscodeRuntime.setActivePanel(panel);
+    if (panel) emitSurfaceEvidence(`vscode.panel.${panel}`);
   },
 
   reset(): void {
