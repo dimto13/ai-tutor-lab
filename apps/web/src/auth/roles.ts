@@ -13,7 +13,9 @@ export type ApplicationPermission = (typeof applicationPermissions)[number];
 
 export const roleGroupPrefix = "role:";
 
-export const rolePermissions: Readonly<Record<ApplicationRole, readonly ApplicationPermission[]>> = {
+export const rolePermissions: Readonly<
+  Record<ApplicationRole, readonly ApplicationPermission[]>
+> = {
   learner: ["training.use"],
   author: ["training.use", "content.author"],
   trainer: ["training.use", "tenant.reporting.aggregate"],
@@ -37,7 +39,9 @@ export function isApplicationRole(value: string): value is ApplicationRole {
  * application role. Unknown `role:*` groups fail closed instead of silently granting
  * or guessing access.
  */
-export function parseApplicationRolesFromGroups(groups: readonly string[]): readonly ApplicationRole[] {
+export function parseApplicationRolesFromGroups(
+  groups: readonly string[],
+): readonly ApplicationRole[] {
   const selected = new Set<ApplicationRole>();
 
   for (const group of groups) {
