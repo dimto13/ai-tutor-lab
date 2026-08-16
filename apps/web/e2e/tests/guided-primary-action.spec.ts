@@ -65,9 +65,8 @@ test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und bleibt 
 
   await expectStep(page, 7, "Explorer öffnen");
   let primary = await expectOnePrimary(page, "runtime", "vscode.activityBar.explorer");
-  await expect(primary).toHaveAccessibleName(
-    /Primäre Aktion im simulierten Werkzeug: Öffne den Explorer/,
-  );
+  await expect(primary).toHaveAccessibleName("Primäre nächste Lernaktion im simulierten Werkzeug");
+  await expect(primary).toContainText("Öffne den Explorer");
   await expect(page.locator('[data-primary-action-kind="platform"]')).toHaveCount(0);
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
@@ -157,7 +156,7 @@ test("Primäraktion ist per Tastatur ausführbar und Reduced Motion deaktiviert 
   await primary.focus();
   await expect(primary).toBeFocused();
   await page.keyboard.press("Enter");
-  await expectStep(page, 2, "Primary Side Bar einordnen");
+  await expectStep(page, 2, "Side Bar einordnen");
 
   const tutorToggle = page.getByTestId("tutor-chat-toggle");
   await expect
