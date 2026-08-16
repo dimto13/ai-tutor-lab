@@ -1,4 +1,4 @@
-import { expect, test as base, type ConsoleMessage } from "@playwright/test";
+import { expect, test as base, type ConsoleMessage, type Page } from "@playwright/test";
 
 type BrowserErrorType = "pageerror" | "console.error";
 
@@ -45,38 +45,56 @@ type BrowserErrorFixtures = {
   browserErrorGuard: void;
 };
 
+type PageListeners = {
+  onPageError: (error: Error) => void;
+  onConsole: (message: ConsoleMessage) => void;
+};
+
 export const test = base.extend<BrowserErrorFixtures>({
   browserErrorGuard: [
-    async ({ page }, use, testInfo) => {
+    async ({ context, page }, use, testInfo) => {
       const observedErrors: BrowserErrorEvent[] = [];
+      const pageListeners = new Map<Page, PageListeners>();
 
-      const onPageError = (error: Error) => {
-        observedErrors.push({
-          type: "pageerror",
-          pageUrl: page.url(),
-          text: error.stack ?? error.message,
-        });
+      const attachPageListeners = (monitoredPage: Page) => {
+        if (pageListeners.has(monitoredPage)) return;
+
+        const onPageError = (error: Error) => {
+          observedErrors.push({
+            type: "pageerror",
+            pageUrl: monitoredPage.url(),
+            text: error.stack ?? error.message,
+          });
+        };
+
+        const onConsole = (message: ConsoleMessage) => {
+          if (message.type() !== "error") return;
+          const location = message.location();
+          observedErrors.push({
+            type: "console.error",
+            pageUrl: monitoredPage.url(),
+            sourceUrl: location.url || undefined,
+            text: message.text(),
+          });
+        };
+
+        monitoredPage.on("pageerror", onPageError);
+        monitoredPage.on("console", onConsole);
+        pageListeners.set(monitoredPage, { onPageError, onConsole });
       };
 
-      const onConsole = (message: ConsoleMessage) => {
-        if (message.type() !== "error") return;
-        const location = message.location();
-        observedErrors.push({
-          type: "console.error",
-          pageUrl: page.url(),
-          sourceUrl: location.url || undefined,
-          text: message.text(),
-        });
-      };
-
-      page.on("pageerror", onPageError);
-      page.on("console", onConsole);
+      attachPageListeners(page);
+      for (const existingPage of context.pages()) attachPageListeners(existingPage);
+      context.on("page", attachPageListeners);
 
       try {
         await use();
       } finally {
-        page.off("pageerror", onPageError);
-        page.off("console", onConsole);
+        context.off("page", attachPageListeners);
+        for (const [monitoredPage, listeners] of pageListeners) {
+          monitoredPage.off("pageerror", listeners.onPageError);
+          monitoredPage.off("console", listeners.onConsole);
+        }
 
         const unexpectedErrors = observedErrors.filter((event) => !isAllowedBrowserError(event));
         if (unexpectedErrors.length > 0) {
