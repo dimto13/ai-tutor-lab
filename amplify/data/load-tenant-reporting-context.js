@@ -38,7 +38,7 @@ function caller(ctx) {
     }
 
     if (!group.startsWith(ROLE_GROUP_PREFIX)) continue;
-    if (!KNOWN_ROLE_GROUPS.includes(group)) {
+    if (KNOWN_ROLE_GROUPS.indexOf(group) === -1) {
       util.error("Unknown application role membership", "RoleMembershipError");
     }
     if (group === "role:tenant_admin") reportingRole = "tenant_admin";
