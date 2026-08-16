@@ -159,6 +159,24 @@ function GuidedGuide() {
             </div>
           </div>
         )}
+
+        <div
+          className="mt-2 rounded-md border border-border bg-card/70 px-2.5 py-2 text-[11px] leading-relaxed"
+          aria-live="polite"
+        >
+          <span className="font-semibold text-muted-foreground">Rückmeldung: </span>
+          <span
+            className={
+              feedback?.kind === "success"
+                ? "text-success"
+                : feedback?.kind === "error"
+                  ? "text-destructive"
+                  : "text-muted-foreground"
+            }
+          >
+            {feedback?.message ?? "Noch keine Aktion geprüft."}
+          </span>
+        </div>
       </section>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
@@ -187,26 +205,6 @@ function GuidedGuide() {
               {showWhy ? "Weniger" : "Mehr"}
             </button>
           </div>
-        </div>
-
-        <div
-          className="mt-3 rounded-lg border border-border bg-card p-3 text-[12px] leading-relaxed"
-          aria-live="polite"
-        >
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Rückmeldung
-          </p>
-          <p
-            className={`mt-1 ${
-              feedback?.kind === "success"
-                ? "text-success"
-                : feedback?.kind === "error"
-                  ? "text-destructive"
-                  : "text-muted-foreground"
-            }`}
-          >
-            {feedback?.message ?? "Noch keine Aktion geprüft."}
-          </p>
         </div>
 
         {!isExplanation ? (
