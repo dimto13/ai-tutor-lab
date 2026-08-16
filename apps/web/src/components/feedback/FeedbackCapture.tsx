@@ -65,7 +65,7 @@ export function FeedbackCapture({
         className={
           compact
             ? "inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] font-normal normal-case tracking-normal text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
-            : "inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-ring hover:bg-white/5"
+            : "inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-ring hover:bg-muted"
         }
       >
         <MessageSquarePlus className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
@@ -77,7 +77,7 @@ export function FeedbackCapture({
           role="dialog"
           aria-modal="true"
           aria-label="Feedback geben"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
         >
           <div className="w-full max-w-lg rounded-xl border border-border bg-panel p-4 text-left shadow-2xl">
             <div className="flex items-start gap-3">
@@ -92,7 +92,7 @@ export function FeedbackCapture({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Feedback schließen"
-                className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
