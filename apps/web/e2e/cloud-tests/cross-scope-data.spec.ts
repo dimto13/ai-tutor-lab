@@ -119,9 +119,10 @@ async function graphQLResult<T>(
           value.split(".").length === 3,
       );
       tokenEntries.sort(([leftKey], [rightKey]) => {
-        if (leftKey.endsWith(".accessToken") && rightKey.endsWith(".idToken")) return -1;
-        if (leftKey.endsWith(".idToken") && rightKey.endsWith(".accessToken")) return 1;
-        return 0;
+        const leftRank = leftKey.endsWith(".accessToken") ? 0 : 1;
+        const rightRank = rightKey.endsWith(".accessToken") ? 0 : 1;
+        const rankDifference = leftRank - rightRank;
+        return rankDifference === 0 ? leftKey.localeCompare(rightKey) : rankDifference;
       });
       if (tokenEntries.length === 0) {
         throw new Error("Authenticated Cognito session token was not found in browser storage.");
@@ -416,48 +417,52 @@ test("preferences, scenario runs and score events stay isolated across users and
   const primaryAccount = credentials("CLOUD_TEST");
   const peerAccount = credentials("CLOUD_TEST_PEER");
   const otherTenantAccount = credentials("CLOUD_TEST_OTHER_TENANT");
+  const contexts: BrowserContext[] = [];
 
-  const primary = await signedInPage(browser, baseURL, primaryAccount);
-  const primaryPreferences = await savePreferenceMarker(primary.page, marker, "primary");
-  const primaryEvidence = await preparePrimaryScoreEvidence(primary.page, marker);
-  expect(primaryEvidence.state.userId).toBe(primaryPreferences.userId);
-  expect(primaryEvidence.state.tenantId).toBe(primaryPreferences.tenantId);
+  try {
+    const primary = await signedInPage(browser, baseURL, primaryAccount);
+    contexts.push(primary.context);
+    const primaryPreferences = await savePreferenceMarker(primary.page, marker, "primary");
+    const primaryEvidence = await preparePrimaryScoreEvidence(primary.page, marker);
+    expect(primaryEvidence.state.userId).toBe(primaryPreferences.userId);
+    expect(primaryEvidence.state.tenantId).toBe(primaryPreferences.tenantId);
 
-  const peer = await signedInPage(browser, baseURL, peerAccount);
-  const peerBefore = await loadPreferences(peer.page);
-  expect(peerBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
-  const peerPreferences = await savePreferenceMarker(peer.page, marker, "peer");
-  expect(peerPreferences.tenantId).toBe(primaryPreferences.tenantId);
-  expect(peerPreferences.userId).not.toBe(primaryPreferences.userId);
-  await assertNoForeignEvidence(
-    peer.page,
-    peerPreferences.userId,
-    primaryEvidence.run.id,
-    primaryEvidence.award.event.id,
-  );
-  const primaryAfterPeerWrite = await loadPreferences(primary.page);
-  expect(primaryAfterPeerWrite?.accessibility).toEqual(primaryPreferences.accessibility);
-  await peer.context.close();
+    const peer = await signedInPage(browser, baseURL, peerAccount);
+    contexts.push(peer.context);
+    const peerBefore = await loadPreferences(peer.page);
+    expect(peerBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
+    const peerPreferences = await savePreferenceMarker(peer.page, marker, "peer");
+    expect(peerPreferences.tenantId).toBe(primaryPreferences.tenantId);
+    expect(peerPreferences.userId).not.toBe(primaryPreferences.userId);
+    await assertNoForeignEvidence(
+      peer.page,
+      peerPreferences.userId,
+      primaryEvidence.run.id,
+      primaryEvidence.award.event.id,
+    );
+    const primaryAfterPeerWrite = await loadPreferences(primary.page);
+    expect(primaryAfterPeerWrite?.accessibility).toEqual(primaryPreferences.accessibility);
 
-  const otherTenant = await signedInPage(browser, baseURL, otherTenantAccount);
-  const otherTenantBefore = await loadPreferences(otherTenant.page);
-  expect(otherTenantBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
-  const otherTenantPreferences = await savePreferenceMarker(
-    otherTenant.page,
-    marker,
-    "other-tenant",
-  );
-  expect(otherTenantPreferences.tenantId).not.toBe(primaryPreferences.tenantId);
-  expect(otherTenantPreferences.userId).not.toBe(primaryPreferences.userId);
-  await assertNoForeignEvidence(
-    otherTenant.page,
-    otherTenantPreferences.userId,
-    primaryEvidence.run.id,
-    primaryEvidence.award.event.id,
-  );
-  const primaryAfterOtherTenantWrite = await loadPreferences(primary.page);
-  expect(primaryAfterOtherTenantWrite?.accessibility).toEqual(primaryPreferences.accessibility);
-
-  await otherTenant.context.close();
-  await primary.context.close();
+    const otherTenant = await signedInPage(browser, baseURL, otherTenantAccount);
+    contexts.push(otherTenant.context);
+    const otherTenantBefore = await loadPreferences(otherTenant.page);
+    expect(otherTenantBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
+    const otherTenantPreferences = await savePreferenceMarker(
+      otherTenant.page,
+      marker,
+      "other-tenant",
+    );
+    expect(otherTenantPreferences.tenantId).not.toBe(primaryPreferences.tenantId);
+    expect(otherTenantPreferences.userId).not.toBe(primaryPreferences.userId);
+    await assertNoForeignEvidence(
+      otherTenant.page,
+      otherTenantPreferences.userId,
+      primaryEvidence.run.id,
+      primaryEvidence.award.event.id,
+    );
+    const primaryAfterOtherTenantWrite = await loadPreferences(primary.page);
+    expect(primaryAfterOtherTenantWrite?.accessibility).toEqual(primaryPreferences.accessibility);
+  } finally {
+    await Promise.allSettled(contexts.map((context) => context.close()));
+  }
 });
