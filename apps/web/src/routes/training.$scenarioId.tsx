@@ -254,7 +254,7 @@ function TrainingLayout() {
               : `Schritt ${Math.min(stepNumber, scenario.steps.length)} von ${scenario.steps.length}`}
         </span>
         <div className="hidden w-40 shrink-0 items-center gap-2 xl:flex">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-accent transition-all"
               style={{ width: `${percent}%` }}
@@ -294,7 +294,7 @@ function TrainingLayout() {
           <Link
             to="/"
             aria-label="Training verlassen"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:border-ring hover:bg-white/5 xl:w-auto xl:gap-1.5 xl:px-2.5"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:border-ring hover:bg-muted xl:w-auto xl:gap-1.5 xl:px-2.5"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span className="hidden text-[12px] xl:inline">Training verlassen</span>
