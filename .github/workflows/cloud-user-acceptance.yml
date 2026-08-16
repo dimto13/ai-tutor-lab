@@ -38,7 +38,10 @@ jobs:
       - name: Node.js einrichten
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
+
+      - name: Gepinnte Runtime-Toolchain pruefen
+        run: node scripts/check-runtime-versions.mjs --toolchain-only
 
       - name: Testkonfiguration pruefen
         env:
@@ -50,6 +53,7 @@ jobs:
           CLOUD_TEST_OTHER_TENANT_EMAIL: ${{ secrets.CLOUD_TEST_OTHER_TENANT_EMAIL }}
           CLOUD_TEST_OTHER_TENANT_PASSWORD: ${{ secrets.CLOUD_TEST_OTHER_TENANT_PASSWORD }}
           CLOUD_TEST_PERSONAL_EMAIL: ${{ secrets.CLOUD_TEST_PERSONAL_EMAIL }}
+          CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
           CLOUD_TEST_PERSONAL_PASSWORD: ${{ secrets.CLOUD_TEST_PERSONAL_PASSWORD }}
         run: |
           set -euo pipefail
