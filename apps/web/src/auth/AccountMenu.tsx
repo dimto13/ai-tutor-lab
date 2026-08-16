@@ -83,7 +83,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           onClick={openSettings}
           aria-label="Einstellungen öffnen"
           title="Einstellungen"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-white/5"
+          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <Settings className="h-3.5 w-3.5" />
           <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Einstellungen</span>
@@ -93,7 +93,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           onClick={() => void auth.signOut().catch(() => undefined)}
           aria-label="Abmelden"
           title="Abmelden"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-white/5"
+          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <LogOut className="h-3.5 w-3.5" />
           <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Abmelden</span>
@@ -102,7 +102,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
       {settingsOpen ? (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm"
           role="presentation"
         >
           <section
@@ -127,7 +127,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 type="button"
                 onClick={closeSettings}
                 aria-label="Einstellungen schließen"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -167,7 +167,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                         onClick={() => setEmailVisible((visible) => !visible)}
                         aria-label={emailVisible ? "E-Mail verbergen" : "E-Mail anzeigen"}
                         aria-pressed={emailVisible}
-                        className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-white/5"
+                        className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
                       >
                         {emailVisible ? (
                           <EyeOff className="h-3.5 w-3.5" />
