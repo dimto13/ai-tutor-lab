@@ -91,7 +91,7 @@ function GuidedGuide() {
         data-testid="guided-orientation"
         data-platform-ui="guided-primary-action"
         className="platform-ui shrink-0 border-b border-border bg-background p-3 sm:p-4"
-        aria-labelledby="guided-current-step-title"
+        aria-label="Aktueller Lernauftrag"
       >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Dein nächster Schritt · {stepNumber} von {scenario.steps.length}
@@ -140,7 +140,7 @@ function GuidedGuide() {
             data-primary-target={step.highlightTarget ?? ""}
             className="mt-3 rounded-lg border border-accent/45 bg-card p-3"
             role="group"
-            aria-label={`Primäre Aktion im simulierten Werkzeug: ${step.instruction}`}
+            aria-label="Primäre nächste Lernaktion im simulierten Werkzeug"
           >
             <div className="flex items-start gap-2">
               <Target className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
@@ -225,8 +225,9 @@ function GuidedGuide() {
             </p>
             {helpLevel < 3 ? (
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-                Hilfe {nextHelpLevel} reduziert den möglichen Schrittbonus um {nextHelpDeduction} %.
-                Fehlversuche selbst kosten keine Punkte.
+                Vor Abruf: Für Hilfe {nextHelpLevel} ist ein Abzug von {nextHelpDeduction} % auf den
+                Schrittbonus vorgesehen. Bei einer serverseitigen Wertung wird dieser Abzug beim
+                Abschluss berücksichtigt. Fehlversuche selbst kosten keine Punkte.
               </p>
             ) : (
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
