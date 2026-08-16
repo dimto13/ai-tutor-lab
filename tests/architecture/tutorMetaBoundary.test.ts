@@ -109,7 +109,10 @@ test("#281 keeps one explicit primary learning action and makes free chat presen
   assert.match(tutorChat, /aria-expanded="false"/);
   assert.match(tutorChat, /Tutor fragen/);
   assert.match(tutorChat, /Tutor schließen/);
-  assert.doesNotMatch(tutorChat, /useTraining|navigateToGuidedStep|completeExplanationStep|dispatch|emit\(/);
+  assert.doesNotMatch(
+    tutorChat,
+    /useTraining|navigateToGuidedStep|completeExplanationStep|dispatch|emit\(/,
+  );
 
   assert.match(guidedNavigation, /data-learning-role="replay-navigation"/);
   assert.match(guidedNavigation, /data-learning-role="optional-help"/);
