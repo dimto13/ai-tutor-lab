@@ -2,10 +2,18 @@ name: Cloud User Acceptance
 
 # Zustandsbasierte E2E-Abnahme gegen die reale Amplify-Anwendung.
 #
-# Dieser Workflow hat keinerlei AWS-IAM-Rechte. Er benutzt ausschliesslich ein dediziertes
-# Cognito-Testkonto und die oeffentliche Web-App. Der Test veraendert Profil/Praeferenzen des
-# Testkontos temporaer, prueft den Zustand in einem frischen Browserkontext und stellt ihn danach
-# soweit moeglich wieder her. Infrastruktur und Deployments werden nicht veraendert.
+# Dieser Workflow hat keinerlei AWS-IAM-Rechte. Er benutzt ausschliesslich dedizierte
+# Cognito-Testkonten und die oeffentliche Web-App/AppSync-Grenze. Die Konten muessen vorab
+# wie folgt provisioniert sein:
+# - CLOUD_TEST_*: Primaernutzer in Tenant A
+# - CLOUD_TEST_PEER_*: zweiter Nutzer in demselben Tenant A
+# - CLOUD_TEST_OTHER_TENANT_*: Nutzer in Tenant B
+# - CLOUD_TEST_PERSONAL_*: Nutzer ohne tenant:* Cognito-Gruppe
+#
+# Testdaten werden unter stabilen cloud-acceptance-* Scenario-IDs aktualisiert. Fuer den
+# Scoring-Smoke wird die dedizierte Testidentitaet gegen vscode-shortcuts.challenge verwendet;
+# die Score-Engine selbst stellt sicher, dass pro Nutzer/Scenario-Version hoechstens ein Award
+# entstehen kann. Infrastruktur und Deployments werden nicht veraendert.
 
 on:
   workflow_dispatch:
@@ -22,7 +30,7 @@ jobs:
     name: Cognito + AppSync Cross-Device
     runs-on: ubuntu-latest
     environment: cloud-acceptance
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -37,20 +45,33 @@ jobs:
           CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
           CLOUD_TEST_EMAIL: ${{ secrets.CLOUD_TEST_EMAIL }}
           CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
+          CLOUD_TEST_PEER_EMAIL: ${{ secrets.CLOUD_TEST_PEER_EMAIL }}
+          CLOUD_TEST_PEER_PASSWORD: ${{ secrets.CLOUD_TEST_PEER_PASSWORD }}
+          CLOUD_TEST_OTHER_TENANT_EMAIL: ${{ secrets.CLOUD_TEST_OTHER_TENANT_EMAIL }}
+          CLOUD_TEST_OTHER_TENANT_PASSWORD: ${{ secrets.CLOUD_TEST_OTHER_TENANT_PASSWORD }}
+          CLOUD_TEST_PERSONAL_EMAIL: ${{ secrets.CLOUD_TEST_PERSONAL_EMAIL }}
+          CLOUD_TEST_PERSONAL_PASSWORD: ${{ secrets.CLOUD_TEST_PERSONAL_PASSWORD }}
         run: |
           set -euo pipefail
           if [ -z "${CLOUD_BASE_URL}" ]; then
             echo "::error::Environment-Variable AMPLIFY_BASE_URL fehlt."
             exit 1
           fi
-          if [ -z "${CLOUD_TEST_EMAIL}" ]; then
-            echo "::error::Environment-Secret CLOUD_TEST_EMAIL fehlt."
-            exit 1
-          fi
-          if [ -z "${CLOUD_TEST_PASSWORD}" ]; then
-            echo "::error::Environment-Secret CLOUD_TEST_PASSWORD fehlt."
-            exit 1
-          fi
+          for name in \
+            CLOUD_TEST_EMAIL \
+            CLOUD_TEST_PASSWORD \
+            CLOUD_TEST_PEER_EMAIL \
+            CLOUD_TEST_PEER_PASSWORD \
+            CLOUD_TEST_OTHER_TENANT_EMAIL \
+            CLOUD_TEST_OTHER_TENANT_PASSWORD \
+            CLOUD_TEST_PERSONAL_EMAIL \
+            CLOUD_TEST_PERSONAL_PASSWORD
+          do
+            if [ -z "${!name}" ]; then
+              echo "::error::Environment-Secret ${name} fehlt."
+              exit 1
+            fi
+          done
 
       - name: Reale Client-Konfiguration pruefen
         env:
@@ -73,6 +94,12 @@ jobs:
           CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
           CLOUD_TEST_EMAIL: ${{ secrets.CLOUD_TEST_EMAIL }}
           CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
+          CLOUD_TEST_PEER_EMAIL: ${{ secrets.CLOUD_TEST_PEER_EMAIL }}
+          CLOUD_TEST_PEER_PASSWORD: ${{ secrets.CLOUD_TEST_PEER_PASSWORD }}
+          CLOUD_TEST_OTHER_TENANT_EMAIL: ${{ secrets.CLOUD_TEST_OTHER_TENANT_EMAIL }}
+          CLOUD_TEST_OTHER_TENANT_PASSWORD: ${{ secrets.CLOUD_TEST_OTHER_TENANT_PASSWORD }}
+          CLOUD_TEST_PERSONAL_EMAIL: ${{ secrets.CLOUD_TEST_PERSONAL_EMAIL }}
+          CLOUD_TEST_PERSONAL_PASSWORD: ${{ secrets.CLOUD_TEST_PERSONAL_PASSWORD }}
         run: |
           set -euo pipefail
           ./apps/web/e2e/node_modules/.bin/playwright test \
@@ -80,10 +107,14 @@ jobs:
           {
             echo "### Authentifizierte Cloud-Abnahme"
             echo ""
-            echo "- Cognito Passwort-Login: bestanden"
-            echo "- Profil/Praeferenz ueber AppSync geschrieben: bestanden"
-            echo "- Frischer Browserkontext sieht denselben Serverzustand: bestanden"
-            echo "- Logout: bestanden"
+            echo "- Cognito Passwort-Login/Logout: bestanden"
+            echo "- Profil/Praeferenz ueber AppSync + frischer Browserkontext: bestanden"
+            echo "- TrainingSession + RuntimeSnapshot im frischen Browserkontext identisch: bestanden"
+            echo "- Optimistic-Concurrency / stale revision wird abgewiesen: bestanden"
+            echo "- Score-Award pro Scenario-Version idempotent: bestanden"
+            echo "- Cross-User-Isolation im selben Tenant: bestanden"
+            echo "- Cross-Tenant-Isolation: bestanden"
+            echo "- personal:<sub>-Fallback ohne tenant:*-Gruppe: bestanden"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Screenshot bei Fehler hochladen
