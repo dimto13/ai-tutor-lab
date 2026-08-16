@@ -221,6 +221,12 @@ export const schema = a.schema({
     updatedAt: a.float().required(),
   }),
 
+  TenantReportingContext: a.customType({
+    tenantId: a.string().required(),
+    role: a.string().required(),
+    personSpecificAttemptAccess: a.boolean().required(),
+  }),
+
   ScenarioRunEnvelope: a.customType({
     id: a.id().required(),
     tenantId: a.string().required(),
@@ -409,6 +415,16 @@ export const schema = a.schema({
       a.handler.custom({
         dataSource: a.ref("UserPreferences"),
         entry: "./save-user-preferences.js",
+      }),
+    ),
+
+  loadTenantReportingContext: a
+    .query()
+    .returns(a.ref("TenantReportingContext"))
+    .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
+    .handler(
+      a.handler.custom({
+        entry: "./load-tenant-reporting-context.js",
       }),
     ),
 

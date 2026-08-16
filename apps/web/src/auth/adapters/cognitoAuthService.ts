@@ -1,4 +1,5 @@
 import type { AuthService, AuthSession, SignInResult, SignUpResult } from "../authService";
+import { parseApplicationRolesFromGroups } from "../roles.ts";
 import {
   createAmplifyCognitoClient,
   type AmplifyCognitoClientOptions,
@@ -16,7 +17,7 @@ function toAuthSession(
       tenantId: snapshot.tenantId,
       email: snapshot.email,
       displayName: snapshot.displayName,
-      roles: snapshot.roles,
+      roles: parseApplicationRolesFromGroups(snapshot.roles),
     },
     accessToken: snapshot.accessToken,
     expiresAt: snapshot.expiresAt,
