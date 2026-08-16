@@ -14,12 +14,7 @@ const cognitoAdapterUrl = new URL(
 );
 const rolePolicyUrl = new URL("../../apps/web/src/auth/roles.ts", import.meta.url);
 
-const roleGroups = [
-  "role:learner",
-  "role:author",
-  "role:trainer",
-  "role:tenant_admin",
-] as const;
+const roleGroups = ["role:learner", "role:author", "role:trainer", "role:tenant_admin"] as const;
 
 function definitionBlock(source: string, name: string, nextName: string): string {
   const start = source.indexOf(`  ${name}:`);
@@ -56,7 +51,11 @@ test("trainer reporting entry point is protected by server-side group authorizat
 
   assert.match(block, /allow\.groups\(\["role:trainer",\s*"role:tenant_admin"\]\)/);
   assert.doesNotMatch(block, /allow\.authenticated\(\)/);
-  assert.doesNotMatch(block, /\.arguments\(/, "tenant reporting context must accept no client scope");
+  assert.doesNotMatch(
+    block,
+    /\.arguments\(/,
+    "tenant reporting context must accept no client scope",
+  );
   assert.match(block, /entry:\s*"\.\/load-tenant-reporting-context\.js"/);
 });
 
