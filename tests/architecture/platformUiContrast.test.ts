@@ -36,8 +36,7 @@ function oklchToSrgb([lightness, chroma, hue]: Oklch): Rgb {
 
   return linear.map((channel) => {
     const clamped = Math.max(0, channel);
-    const encoded =
-      clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;
+    const encoded = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;
     return Math.min(1, Math.max(0, encoded));
   }) as unknown as Rgb;
 }
