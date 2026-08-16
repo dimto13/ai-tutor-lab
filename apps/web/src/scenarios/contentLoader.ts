@@ -297,7 +297,8 @@ export const scenarioSchema = z
     const ids = new Set<string>();
     const runtimeIds = [
       scenario.environment?.runtimeAdapterId,
-      ...(scenario.environment?.integrations?.map(({ runtimeAdapterId }) => runtimeAdapterId) ?? []),
+      ...(scenario.environment?.integrations?.map(({ runtimeAdapterId }) => runtimeAdapterId) ??
+        []),
     ].filter((id): id is string => Boolean(id));
 
     scenario.steps.forEach((step, index) => {
@@ -317,7 +318,10 @@ export const scenarioSchema = z
           path: ["steps", index],
         });
       }
-      if (step.recovery && ((scenario.mode ?? "guided") !== "guided" || step.stepType === "explanation")) {
+      if (
+        step.recovery &&
+        ((scenario.mode ?? "guided") !== "guided" || step.stepType === "explanation")
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "recovery is only valid for actionable guided steps",
