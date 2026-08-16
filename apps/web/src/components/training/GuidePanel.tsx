@@ -127,7 +127,8 @@ function GuidedGuide() {
                 onClick={skipOptionalSteps}
                 className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <SkipForward className="h-3.5 w-3.5" aria-hidden="true" /> Grundbegriffe überspringen
+                <SkipForward className="h-3.5 w-3.5" aria-hidden="true" /> Grundbegriffe
+                überspringen
               </button>
             ) : null}
           </div>
@@ -171,7 +172,9 @@ function GuidedGuide() {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Warum ist das wichtig?
               </p>
-              <p className={`mt-1 text-[12px] leading-relaxed text-muted-foreground ${showWhy ? "" : "line-clamp-2"}`}>
+              <p
+                className={`mt-1 text-[12px] leading-relaxed text-muted-foreground ${showWhy ? "" : "line-clamp-2"}`}
+              >
                 <GlossaryText conceptKeys={glossaryConceptKeys}>{rationale}</GlossaryText>
               </p>
             </div>
