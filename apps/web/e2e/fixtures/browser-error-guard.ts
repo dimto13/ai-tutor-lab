@@ -1,4 +1,4 @@
-import { expect, test as base } from "@playwright/test";
+import { expect, test as base, type ConsoleMessage } from "@playwright/test";
 
 type BrowserErrorType = "pageerror" | "console.error";
 
@@ -58,7 +58,7 @@ export const test = base.extend<BrowserErrorFixtures>({
         });
       };
 
-      const onConsole = (message: Parameters<Parameters<typeof page.on<"console">>[1]>[0]) => {
+      const onConsole = (message: ConsoleMessage) => {
         if (message.type() !== "error") return;
         const location = message.location();
         observedErrors.push({
