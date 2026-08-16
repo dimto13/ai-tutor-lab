@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures/browser-error-guard";
 
 test("competence page lists every technology without synthesizing local skill values", async ({
   page,
