@@ -10,7 +10,10 @@ const engineRecoveryUrl = new URL(
   "../../packages/training-engine/src/guidedRecovery.ts",
   import.meta.url,
 );
-const runtimeCoreUrl = new URL("../../packages/runtime-core/src/runtimeAdapter.ts", import.meta.url);
+const runtimeCoreUrl = new URL(
+  "../../packages/runtime-core/src/runtimeAdapter.ts",
+  import.meta.url,
+);
 const trainingStoreUrl = new URL("../../apps/web/src/state/trainingStore.tsx", import.meta.url);
 const vscodeScenarioUrl = new URL(
   "../../content/scenarios/vscode-basics.guided.json",
