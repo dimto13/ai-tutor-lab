@@ -14,7 +14,8 @@ function createContainer(): HTMLElement {
 function inspectedRefs(events: TrainingEvent[]): string[] {
   return events.flatMap((event) => {
     if (event.type !== "ui.element.inspected") return [];
-    if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) return [];
+    if (!event.payload || typeof event.payload !== "object" || Array.isArray(event.payload))
+      return [];
     const ref = (event.payload as Record<string, unknown>)["ref"];
     return typeof ref === "string" ? [ref] : [];
   });
@@ -34,7 +35,11 @@ test("Explore evidence comes from semantic VS Code actions, not mount, restore, 
   });
 
   try {
-    assert.deepEqual(inspectedRefs(events), [], "rendered seed state must not count as exploration");
+    assert.deepEqual(
+      inspectedRefs(events),
+      [],
+      "rendered seed state must not count as exploration",
+    );
 
     for (const ref of [
       "vscode.primarySideBar",
@@ -73,7 +78,11 @@ test("Explore evidence comes from semantic VS Code actions, not mount, restore, 
     const snapshot = await vscodeRuntime.snapshot();
     events.length = 0;
     await vscodeRuntime.restore(snapshot);
-    assert.deepEqual(inspectedRefs(events), [], "restoring visible state must not auto-complete targets");
+    assert.deepEqual(
+      inspectedRefs(events),
+      [],
+      "restoring visible state must not auto-complete targets",
+    );
   } finally {
     unsubscribe();
     await vscodeRuntime.unmount();
