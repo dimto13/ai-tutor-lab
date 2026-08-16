@@ -56,7 +56,9 @@ test("Guided-Recovery: falsche Datei bleibt nach Reload recoverbar und Training 
 
   await createFile(page, "wrong.py");
   await expectGuidedStep(page, 9, "Datei erstellen");
-  await expect(page.getByTestId("guided-recovery")).toContainText("Fehlversuch bleibt dokumentiert");
+  await expect(page.getByTestId("guided-recovery")).toContainText(
+    "Fehlversuch bleibt dokumentiert",
+  );
 
   await page.reload();
   await waitForTrainingReady(page);
