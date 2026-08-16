@@ -81,7 +81,8 @@ test("kleiner Viewport: Guide bleibt erreichbar, differenziert und ohne horizont
   await page.getByRole("button", { name: "Guide anzeigen" }).click();
   const guide = page.locator('[data-platform-ui="guide"]');
   await expect(guide).toBeVisible();
-  await expect(page.getByRole("button", { name: "Senden" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tutor fragen" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Senden" })).toHaveCount(0);
 
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,

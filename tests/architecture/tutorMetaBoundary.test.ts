@@ -67,16 +67,14 @@ test("Tutor attention stays semantic and adapter-neutral", async () => {
 });
 
 test("Tutor attention and Guided highlight remain visually distinct and motion-safe", async () => {
-  const [guidedNavigation, attentionOverlay, guidedHighlight, tutorChat, guidePanel] =
-    await Promise.all([
-      readFile(guidedNavigationUrl, "utf8"),
-      readFile(tutorAttentionOverlayUrl, "utf8"),
-      readFile(guidedHighlightUrl, "utf8"),
-      readFile(tutorChatUrl, "utf8"),
-      readFile(guidePanelUrl, "utf8"),
-    ]);
+  const [guidedNavigation, attentionOverlay, guidedHighlight, tutorChat] = await Promise.all([
+    readFile(guidedNavigationUrl, "utf8"),
+    readFile(tutorAttentionOverlayUrl, "utf8"),
+    readFile(guidedHighlightUrl, "utf8"),
+    readFile(tutorChatUrl, "utf8"),
+  ]);
 
-  assert.match(guidedNavigation, /Tutor-Ebene · Lernplattform/);
+  assert.match(guidedNavigation, /Tutor-Ebene/);
   assert.match(attentionOverlay, /data-attention-kind="tutor"/);
   assert.match(attentionOverlay, /className="platform-ui/);
   assert.match(attentionOverlay, /border-dashed border-accent/);
@@ -86,10 +84,37 @@ test("Tutor attention and Guided highlight remain visually distinct and motion-s
   assert.match(guidedHighlight, /bg-black\/35/);
   assert.match(guidedHighlight, /motion-reduce:animate-none/);
   assert.match(tutorChat, /prefers-reduced-motion:\s*reduce/);
-  assert.match(tutorChat, /className="platform-ui/);
+  assert.match(tutorChat, /platform-ui/);
   assert.match(tutorChat, /bg-input/);
   assert.doesNotMatch(tutorChat, /bg-editor/);
+});
 
-  assert.match(guidePanel, /<TutorChat\s*\/>/);
-  assert.doesNotMatch(tutorChat, /\b(?:collapsed|isOpen|openTutor)\b/);
+test("#281 keeps one explicit primary learning action and makes free chat presentation-only", async () => {
+  const [guidedNavigation, guidePanel, tutorChat] = await Promise.all([
+    readFile(guidedNavigationUrl, "utf8"),
+    readFile(guidePanelUrl, "utf8"),
+    readFile(tutorChatUrl, "utf8"),
+  ]);
+
+  assert.match(guidePanel, /data-primary-learning-action="true"/);
+  assert.match(guidePanel, /data-primary-action-kind="platform"/);
+  assert.match(guidePanel, /data-primary-action-kind="runtime"/);
+  assert.match(guidePanel, /data-primary-target=\{step\.highlightTarget \?\? ""\}/);
+  assert.match(guidePanel, /<TutorChat prominent=\{tutorProminent\} \/>/);
+  assert.match(guidePanel, /Boolean\(recovery\)/);
+  assert.match(guidePanel, /progress\.activeStepMistakes/);
+  assert.match(guidePanel, /helpLevel > 0/);
+
+  assert.match(tutorChat, /useState\(\(\) => mode !== "guided"\)/);
+  assert.match(tutorChat, /aria-expanded="false"/);
+  assert.match(tutorChat, /Tutor fragen/);
+  assert.match(tutorChat, /Tutor schließen/);
+  assert.doesNotMatch(
+    tutorChat,
+    /useTraining|navigateToGuidedStep|completeExplanationStep|dispatch|emit\(/,
+  );
+
+  assert.match(guidedNavigation, /data-learning-role="replay-navigation"/);
+  assert.match(guidedNavigation, /data-learning-role="optional-help"/);
+  assert.doesNotMatch(guidedNavigation, /data-primary-learning-action/);
 });

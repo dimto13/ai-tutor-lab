@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -23,7 +22,10 @@ import { getHelpBonusDeductionPercent } from "@/types/training";
 const FAILURES_PER_HELP_OFFER = 3;
 
 export function GuidePanel() {
-  const { mode } = useTraining();
+  const { mode, progress, helpLevel, recovery } = useTraining();
+  const tutorProminent =
+    mode === "guided" &&
+    (Boolean(recovery) || progress.activeStepMistakes >= FAILURES_PER_HELP_OFFER || helpLevel > 0);
 
   return (
     <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel lg:w-[380px] lg:flex-none lg:border-l">
@@ -34,7 +36,7 @@ export function GuidePanel() {
           {mode === "explore" ? <ExploreGuide /> : <ChallengeGuide />}
         </div>
       )}
-      <TutorChat />
+      <TutorChat prominent={tutorProminent} />
     </aside>
   );
 }
@@ -53,13 +55,6 @@ function GuidedGuide() {
   const [showWhy, setShowWhy] = useState(false);
   const stepIndex = step ? scenario.steps.findIndex((candidate) => candidate.id === step.id) : -1;
   const stepNumber = step ? stepIndex + 1 : scenario.steps.length;
-  const nextStep =
-    stepIndex >= 0
-      ? (scenario.steps.slice(stepIndex + 1).find((candidate) => {
-          const status = progress.statuses[candidate.id] ?? "NOT_STARTED";
-          return status !== "COMPLETED" && status !== "SKIPPED";
-        }) ?? null)
-      : null;
   const isExplanation = step?.stepType === "explanation";
   const isIntroduction = step
     ? (scenario.audience?.introductionStepIds?.includes(step.id) ?? false)
@@ -94,53 +89,93 @@ function GuidedGuide() {
     <>
       <section
         data-testid="guided-orientation"
-        className="shrink-0 border-b border-border bg-panel p-3"
-        aria-label="Orientierung im aktuellen Trainingsschritt"
+        data-platform-ui="guided-primary-action"
+        className="platform-ui shrink-0 border-b border-border bg-background p-3 sm:p-4"
+        aria-label="Aktueller Lernauftrag"
       >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Training Guide · Guided
+          Dein nächster Schritt · {stepNumber} von {scenario.steps.length}
         </p>
-        <h2 className="mt-1 text-sm font-semibold leading-snug text-foreground">
+        <h2
+          id="guided-current-step-title"
+          className="mt-1 text-sm font-semibold leading-snug text-foreground"
+        >
           Schritt {stepNumber} – {step.title}
         </h2>
 
-        <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] leading-snug">
-          <OrientationItem label="Wo bin ich?">
-            Schritt {stepNumber} von {scenario.steps.length}
-          </OrientationItem>
-          <OrientationItem label="Was kommt als Nächstes?">
-            {nextStep?.title ?? "Training abschließen"}
-          </OrientationItem>
-          <OrientationItem label="Was soll ich tun?" wide>
-            <GlossaryText conceptKeys={glossaryConceptKeys}>{step.instruction}</GlossaryText>
-          </OrientationItem>
-          <OrientationItem label="Warum?" wide>
-            <span className={showWhy ? "" : "line-clamp-2"}>
-              <GlossaryText conceptKeys={glossaryConceptKeys}>{rationale}</GlossaryText>
-            </span>
+        {isExplanation ? (
+          <div className="mt-3 rounded-lg border border-accent/45 bg-card p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
+              Primäre Aktion · Lernplattform
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-foreground">
+              <GlossaryText conceptKeys={glossaryConceptKeys}>{step.instruction}</GlossaryText>
+            </p>
             <button
               type="button"
-              onClick={() => setShowWhy((visible) => !visible)}
-              className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium text-accent"
+              data-testid="guided-primary-action"
+              data-primary-learning-action="true"
+              data-primary-action-kind="platform"
+              onClick={completeExplanationStep}
+              className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <HelpCircle className="h-3 w-3" />
-              {showWhy ? "Warum einklappen" : "Warum vollständig anzeigen"}
+              {isIntroduction ? "Grundbegriff verstanden" : "Konzept verstanden"}
             </button>
-          </OrientationItem>
-          <OrientationItem label="War meine Aktion erfolgreich?" wide>
-            <span
-              aria-live="polite"
-              className={
-                feedback?.kind === "success"
-                  ? "text-success"
-                  : feedback?.kind === "error"
-                    ? "text-destructive"
-                    : "text-muted-foreground"
-              }
-            >
-              {feedback?.message ?? "Noch keine Aktion geprüft."}
-            </span>
-          </OrientationItem>
+            {isIntroduction && step.optional ? (
+              <button
+                type="button"
+                onClick={skipOptionalSteps}
+                className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <SkipForward className="h-3.5 w-3.5" aria-hidden="true" /> Grundbegriffe
+                überspringen
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <div
+            data-testid="guided-primary-action"
+            data-primary-learning-action="true"
+            data-primary-action-kind="runtime"
+            data-primary-target={step.highlightTarget ?? ""}
+            className="mt-3 rounded-lg border border-accent/45 bg-card p-3"
+            role="group"
+            aria-label="Primäre nächste Lernaktion im simulierten Werkzeug"
+          >
+            <div className="flex items-start gap-2">
+              <Target className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
+                  Primäre Aktion · simuliertes Werkzeug
+                </p>
+                <p className="mt-1 text-[13px] font-medium leading-relaxed text-foreground">
+                  <GlossaryText conceptKeys={glossaryConceptKeys}>{step.instruction}</GlossaryText>
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                  Führe diese Aktion direkt im Werkzeug aus. Die Lernplattform löst sie nicht für
+                  dich aus.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div
+          className="mt-2 rounded-md border border-border bg-card/70 px-2.5 py-2 text-[11px] leading-relaxed"
+          aria-live="polite"
+        >
+          <span className="font-semibold text-muted-foreground">Rückmeldung: </span>
+          <span
+            className={
+              feedback?.kind === "success"
+                ? "text-success"
+                : feedback?.kind === "error"
+                  ? "text-destructive"
+                  : "text-muted-foreground"
+            }
+          >
+            {feedback?.message ?? "Noch keine Aktion geprüft."}
+          </span>
         </div>
       </section>
 
@@ -149,35 +184,30 @@ function GuidedGuide() {
           <GlossaryText conceptKeys={glossaryConceptKeys}>{step.description}</GlossaryText>
         </p>
 
-        <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
-            {isExplanation ? "Konzept" : "Deine Aufgabe"}
-          </p>
-          <p className="mt-1 text-[13.5px] leading-relaxed text-foreground">
-            <GlossaryText conceptKeys={glossaryConceptKeys}>{step.instruction}</GlossaryText>
-          </p>
-        </div>
-
-        {isExplanation ? (
-          <div className="mt-4 grid gap-2">
+        <div className="mt-3 rounded-lg border border-border bg-card p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Warum ist das wichtig?
+              </p>
+              <p
+                className={`mt-1 text-[12px] leading-relaxed text-muted-foreground ${showWhy ? "" : "line-clamp-2"}`}
+              >
+                <GlossaryText conceptKeys={glossaryConceptKeys}>{rationale}</GlossaryText>
+              </p>
+            </div>
             <button
               type="button"
-              onClick={completeExplanationStep}
-              className="w-full rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent/20"
+              onClick={() => setShowWhy((visible) => !visible)}
+              className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {isIntroduction ? "Grundbegriff verstanden" : "Konzept verstanden"}
+              <HelpCircle className="h-3 w-3" aria-hidden="true" />
+              {showWhy ? "Weniger" : "Mehr"}
             </button>
-            {isIntroduction && step.optional ? (
-              <button
-                type="button"
-                onClick={skipOptionalSteps}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
-              >
-                <SkipForward className="h-3.5 w-3.5" /> Grundbegriffe überspringen
-              </button>
-            ) : null}
           </div>
-        ) : (
+        </div>
+
+        {!isExplanation ? (
           <div className="mt-4 rounded-lg border border-border bg-card p-3">
             {shouldOfferHelp ? (
               <div
@@ -189,7 +219,7 @@ function GuidedGuide() {
               </div>
             ) : null}
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Hilfesystem
+              Optionaler Hinweis
             </p>
             {helpLevel < 3 ? (
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
@@ -206,13 +236,13 @@ function GuidedGuide() {
               type="button"
               onClick={revealHelp}
               disabled={helpLevel >= 3}
-              className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs text-foreground transition-colors disabled:opacity-40 ${
+              className={`mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs text-foreground transition-colors disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 shouldOfferHelp
                   ? "border-warning/60 bg-warning/10 hover:bg-warning/15"
                   : "border-border hover:border-ring hover:bg-muted"
               }`}
             >
-              <Lightbulb className="h-3.5 w-3.5 text-warning" />
+              <Lightbulb className="h-3.5 w-3.5 text-warning" aria-hidden="true" />
               {helpLevel >= 3
                 ? "Alle Hinweise gezeigt"
                 : shouldOfferHelp
@@ -220,7 +250,7 @@ function GuidedGuide() {
                   : `Hilfe ${nextHelpLevel} anzeigen`}
             </button>
           </div>
-        )}
+        ) : null}
 
         {!isExplanation && helpLevel > 0 ? (
           <ol className="mt-3 space-y-2">
@@ -240,11 +270,11 @@ function GuidedGuide() {
           </ol>
         ) : null}
 
-        <div className="mt-6">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Schulungsfortschritt
-          </p>
-          <ol className="space-y-1">
+        <details className="mt-5 rounded-lg border border-border bg-card p-3">
+          <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            Schulungsfortschritt anzeigen
+          </summary>
+          <ol className="mt-3 space-y-1">
             {scenario.steps.map((scenarioStep, index) => {
               const status = progress.statuses[scenarioStep.id] ?? "NOT_STARTED";
               return (
@@ -276,28 +306,9 @@ function GuidedGuide() {
               );
             })}
           </ol>
-        </div>
+        </details>
       </div>
     </>
-  );
-}
-
-function OrientationItem({
-  label,
-  wide = false,
-  children,
-}: {
-  label: string;
-  wide?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className={`rounded-md border border-border bg-card/60 p-2 ${wide ? "col-span-2" : ""}`}>
-      <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <div className="mt-0.5 text-[11px] text-foreground">{children}</div>
-    </div>
   );
 }
 
