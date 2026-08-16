@@ -53,6 +53,12 @@ export interface RuntimeAdapter {
   subscribeStateChange?(handler: (change: RuntimeStateChange) => void): () => void;
   query<T = unknown>(selector: string): Promise<T>;
   resolveTarget(ref: UiTargetRef): DOMRect | null;
+  /**
+   * Optional product-owned transient surfaces that currently contain a relevant
+   * user action (for example an open menu, palette or dialog). Platform overlays
+   * may avoid these rectangles without knowing the product's DOM structure.
+   */
+  resolveTransientActionRegions?(): readonly DOMRect[];
   describeSurface(): RuntimeSurfaceDescription[];
   snapshot(): Promise<unknown>;
   restore(snapshot: unknown): Promise<void>;
