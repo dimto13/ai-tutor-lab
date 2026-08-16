@@ -1,5 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { getRuntimeAdapterForTarget } from "@/runtime";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { getRuntimeAdapterForTarget, getRuntimeAdapters } from "@/runtime";
 import { useTraining } from "@/state/trainingStore";
 import { getGlossaryConceptForTarget } from "@/lib/glossary";
 import {
@@ -8,15 +15,16 @@ import {
   requestGuidedConceptHighlight,
   subscribeGuidedConceptHighlight,
 } from "./guidedConceptHighlight";
+import {
+  placeOverlayTooltip,
+  type OverlayPlacement,
+  type OverlayRect,
+  type OverlaySize,
+} from "./overlayPlacement";
 
-interface Rect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
+const HIGHLIGHT_TOOLTIP_FALLBACK_SIZE: OverlaySize = { width: 256, height: 72 };
 
-function unionRects(rects: DOMRect[]): Rect | null {
+function unionRects(rects: DOMRect[]): OverlayRect | null {
   if (rects.length === 0) return null;
 
   const padding = 6;
@@ -40,7 +48,11 @@ function unionRects(rects: DOMRect[]): Rect | null {
   };
 }
 
-function sameRect(left: Rect | null, right: Rect | null): boolean {
+function toOverlayRect(rect: DOMRect): OverlayRect {
+  return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+}
+
+function sameRect(left: OverlayRect | null, right: OverlayRect | null): boolean {
   if (left === right) return true;
   if (!left || !right) return false;
   return (
@@ -49,6 +61,17 @@ function sameRect(left: Rect | null, right: Rect | null): boolean {
     left.width === right.width &&
     left.height === right.height
   );
+}
+
+function sameRects(left: readonly OverlayRect[], right: readonly OverlayRect[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((rect, index) => sameRect(rect, right[index] ?? null))
+  );
+}
+
+function sameSize(left: OverlaySize, right: OverlaySize): boolean {
+  return left.width === right.width && left.height === right.height;
 }
 
 /**
@@ -74,7 +97,10 @@ export function HighlightOverlay({
   strong?: boolean | undefined;
 }) {
   const { scenario, progress } = useTraining();
-  const [rect, setRect] = useState<Rect | null>(null);
+  const [rect, setRect] = useState<OverlayRect | null>(null);
+  const [transientRegions, setTransientRegions] = useState<OverlayRect[]>([]);
+  const [tooltipSize, setTooltipSize] = useState<OverlaySize>(HIGHLIGHT_TOOLTIP_FALLBACK_SIZE);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const conceptFocus = useSyncExternalStore(
     subscribeGuidedConceptHighlight,
     getGuidedConceptHighlight,
@@ -112,10 +138,15 @@ export function HighlightOverlay({
       })),
     [targetIds, runtimeAdapterId, integrationRuntimeAdapterIds],
   );
+  const runtimes = useMemo(
+    () => getRuntimeAdapters(runtimeAdapterId, integrationRuntimeAdapterIds),
+    [runtimeAdapterId, integrationRuntimeAdapterIds],
+  );
 
   useLayoutEffect(() => {
     if (targetResolvers.length === 0 || !runtimeAdapterId) {
       setRect(null);
+      setTransientRegions([]);
       return;
     }
 
@@ -128,6 +159,21 @@ export function HighlightOverlay({
       }
       const nextRect = unionRects(resolvedRects);
       setRect((currentRect) => (sameRect(currentRect, nextRect) ? currentRect : nextRect));
+
+      const nextTransientRegions = runtimes.flatMap((runtime) =>
+        (runtime.resolveTransientActionRegions?.() ?? [])
+          .filter((region) => region.width > 0 && region.height > 0)
+          .map(toOverlayRect),
+      );
+      setTransientRegions((currentRegions) =>
+        sameRects(currentRegions, nextTransientRegions) ? currentRegions : nextTransientRegions,
+      );
+
+      const measuredTooltip = tooltipRef.current?.getBoundingClientRect();
+      if (measuredTooltip && measuredTooltip.width > 0 && measuredTooltip.height > 0) {
+        const nextSize = { width: measuredTooltip.width, height: measuredTooltip.height };
+        setTooltipSize((currentSize) => (sameSize(currentSize, nextSize) ? currentSize : nextSize));
+      }
     };
 
     measure();
@@ -137,12 +183,22 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetResolvers, runtimeAdapterId]);
+  }, [targetResolvers, runtimes, runtimeAdapterId]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     setVisible(Boolean(rect));
   }, [rect]);
+
+  const placement = useMemo<OverlayPlacement | null>(() => {
+    if (!rect || typeof window === "undefined") return null;
+    return placeOverlayTooltip({
+      anchor: rect,
+      tooltip: tooltipSize,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      avoid: transientRegions,
+    });
+  }, [rect, tooltipSize, transientRegions]);
 
   if (!rect) return null;
   const dim = strong ? "bg-black/60" : "bg-black/35";
@@ -184,15 +240,15 @@ export function HighlightOverlay({
             "0 0 0 1px var(--ring), 0 0 24px 4px color-mix(in oklab, var(--ring) 45%, transparent)",
         }}
       />
-      {effectiveTooltip && visible ? (
+      {effectiveTooltip && visible && placement ? (
         <div
+          ref={tooltipRef}
+          data-testid="highlight-tooltip"
+          data-placement-side={placement.side}
           className="absolute max-w-64 rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
           style={{
-            top: Math.min(rect.top + rect.height + 10, window.innerHeight - 90),
-            left:
-              rect.left > window.innerWidth * 0.62
-                ? Math.max(12, rect.left - 268)
-                : Math.max(12, Math.min(rect.left, window.innerWidth - 280)),
+            top: placement.top,
+            left: placement.left,
             maxWidth: "calc(100vw - 24px)",
           }}
         >
