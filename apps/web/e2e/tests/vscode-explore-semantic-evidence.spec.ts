@@ -72,7 +72,10 @@ test("Explore: frischer VS-Code-Walkthrough erreicht über sichtbare Fachaktione
   await expectProgress(page, 20);
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
-  await page.getByRole("menuitem", { name: /New Terminal/ }).first().click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
   await expectProgress(page, 21);
 
   await page.getByRole("button", { name: "Problems", exact: true }).click();
@@ -112,17 +115,24 @@ test("Explore: Workspace-Kontext zählt über File → Open Workspace und nicht 
   await expectProgress(page, 5);
 });
 
-test("Explore: Terminal → New Terminal erschließt semantisch das Terminal-Panel", async ({ page }) => {
+test("Explore: Terminal → New Terminal erschließt semantisch das Terminal-Panel", async ({
+  page,
+}) => {
   await openExplore(page);
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
-  await page.getByRole("menuitem", { name: /New Terminal/ }).first().click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
 
   await expect(page.getByRole("textbox", { name: "Terminal-Eingabe" })).toBeVisible();
   await expectProgress(page, 2);
 });
 
-test("Explore: direkter Terminal-Panel-Tab erschließt denselben Terminal-Zustand", async ({ page }) => {
+test("Explore: direkter Terminal-Panel-Tab erschließt denselben Terminal-Zustand", async ({
+  page,
+}) => {
   await openExplore(page);
 
   await page.getByRole("button", { name: "View", exact: true }).click();
@@ -138,7 +148,10 @@ test("Explore: äquivalente Terminal-Einstiege zählen das Ziel nur einmal", asy
   await openExplore(page);
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
-  await page.getByRole("menuitem", { name: /New Terminal/ }).first().click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
   await expectProgress(page, 2);
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
