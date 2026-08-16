@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bot, Send, User } from "lucide-react";
+import { Bot, ChevronDown, MessageCircle, Send, User } from "lucide-react";
 import { findGlossaryConcept } from "@/lib/glossary";
 import { answerDeterministically } from "@/tutor/deterministicTutor";
 import { useTutorContext } from "@/tutor/tutorContext";
@@ -17,9 +17,10 @@ const SUGGESTIONS = [
   "Unterschied Git und GitHub?",
 ];
 
-export function TutorChat() {
+export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const tutorContext = useTutorContext();
   const { mode } = tutorContext;
+  const [open, setOpen] = useState(() => mode !== "guided");
   const [messages, setMessages] = useState<Message[]>(() =>
     mode === "challenge"
       ? []
@@ -34,12 +35,17 @@ export function TutorChat() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setOpen(mode !== "guided");
+  }, [mode, tutorContext.scenarioId]);
+
+  useEffect(() => {
+    if (!open) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     listRef.current?.scrollTo({
       top: listRef.current.scrollHeight,
       behavior: reducedMotion ? "auto" : "smooth",
     });
-  }, [messages]);
+  }, [messages, open]);
 
   const send = (text: string) => {
     const question = text.trim();
@@ -53,18 +59,72 @@ export function TutorChat() {
     ]);
   };
 
+  if (!open) {
+    return (
+      <div
+        data-platform-ui="tutor-chat"
+        data-testid="tutor-chat-collapsed"
+        data-tutor-prominent={prominent ? "true" : "false"}
+        className={`platform-ui shrink-0 border-t p-2.5 ${
+          prominent ? "border-warning/60 bg-warning/10" : "border-border bg-background"
+        }`}
+      >
+        <button
+          type="button"
+          data-testid="tutor-chat-toggle"
+          aria-expanded="false"
+          aria-controls="tutor-chat-panel"
+          onClick={() => setOpen(true)}
+          className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-medium text-foreground transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            prominent
+              ? "border-warning/60 bg-card hover:bg-muted"
+              : "border-border bg-card/70 hover:border-ring hover:bg-card"
+          }`}
+        >
+          <MessageCircle
+            className={`h-4 w-4 shrink-0 ${prominent ? "text-warning" : "text-accent"}`}
+            aria-hidden="true"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block">Tutor fragen</span>
+            {prominent ? (
+              <span className="block text-[10px] font-normal text-muted-foreground">
+                Zusätzliche Hilfe ist für diesen Schritt verfügbar.
+              </span>
+            ) : null}
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
+      id="tutor-chat-panel"
       data-platform-ui="tutor-chat"
+      data-testid="tutor-chat-expanded"
       className="platform-ui flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
     >
       <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        <Bot className="h-4 w-4 text-accent" /> KI-Tutor
+        <Bot className="h-4 w-4 text-accent" aria-hidden="true" /> KI-Tutor
         <div className="ml-auto flex items-center gap-2">
           {mode === "challenge" ? (
             <span className="normal-case font-normal tracking-normal">nur auf Anfrage</span>
           ) : null}
           <FeedbackCapture source="tutor" compact />
+          {mode === "guided" ? (
+            <button
+              type="button"
+              aria-label="Tutor schließen"
+              aria-expanded="true"
+              aria-controls="tutor-chat-panel"
+              onClick={() => setOpen(false)}
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[11px] font-medium normal-case tracking-normal text-foreground transition-colors hover:border-ring hover:bg-muted motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Einklappen
+            </button>
+          ) : null}
         </div>
       </div>
       <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3">
