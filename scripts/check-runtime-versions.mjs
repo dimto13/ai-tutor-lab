@@ -41,7 +41,9 @@ const packageManagerMatch = rootManifest.packageManager?.match(/^npm@(\d+\.\d+\.
 
 exactVersion(".nvmrc", nodePin);
 if (!packageManagerMatch) {
-  errors.push(`packageManager: npm@<exakte Version> erwartet, gefunden ${rootManifest.packageManager}`);
+  errors.push(
+    `packageManager: npm@<exakte Version> erwartet, gefunden ${rootManifest.packageManager}`,
+  );
 }
 const npmPin = packageManagerMatch?.[1];
 
@@ -84,22 +86,38 @@ expectEqual(
   lockfile.packages?.["apps/web"]?.devDependencies?.vite,
   webManifest.devDependencies?.vite,
 );
-expectEqual("package-lock product React", lockfile.packages?.["node_modules/react"]?.version, reactVersion);
+expectEqual(
+  "package-lock product React",
+  lockfile.packages?.["node_modules/react"]?.version,
+  reactVersion,
+);
 expectEqual(
   "package-lock product React DOM",
   lockfile.packages?.["node_modules/react-dom"]?.version,
   reactDomVersion,
 );
-expectEqual("package-lock product Vite", lockfile.packages?.["node_modules/vite"]?.version, viteVersion);
+expectEqual(
+  "package-lock product Vite",
+  lockfile.packages?.["node_modules/vite"]?.version,
+  viteVersion,
+);
 
 if (!toolchainOnly) {
-  expectEqual("installed product React", readJson("node_modules/react/package.json").version, reactVersion);
+  expectEqual(
+    "installed product React",
+    readJson("node_modules/react/package.json").version,
+    reactVersion,
+  );
   expectEqual(
     "installed product React DOM",
     readJson("node_modules/react-dom/package.json").version,
     reactDomVersion,
   );
-  expectEqual("installed product Vite", readJson("node_modules/vite/package.json").version, viteVersion);
+  expectEqual(
+    "installed product Vite",
+    readJson("node_modules/vite/package.json").version,
+    viteVersion,
+  );
 }
 
 if (errors.length > 0) {
