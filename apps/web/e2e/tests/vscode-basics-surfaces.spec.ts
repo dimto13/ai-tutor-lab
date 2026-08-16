@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "../fixtures/browser-error-guard";
 
 async function openExplore(page: Page): Promise<void> {
   await page.goto("/training/vscode-basics.explore");

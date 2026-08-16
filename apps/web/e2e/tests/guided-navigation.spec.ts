@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "../fixtures/browser-error-guard";
 
 const guidedUrl = "/training/vscode-basics.guided";
 

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "../fixtures/browser-error-guard";
 
 const scenarioUrl = "/training/artifact-preview-foundation.guided";
 
