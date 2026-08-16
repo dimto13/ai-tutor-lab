@@ -130,6 +130,40 @@ test("bestehende Hilfe-Eskalation hebt den Tutor-Einstieg hervor, ohne ihn autom
   await expect(page.getByTestId("tutor-chat-expanded")).toHaveCount(0);
 });
 
+test("Recovery wird zur einzigen sichtbaren Primäraktion und gibt danach den Schrittauftrag wieder frei", async ({
+  page,
+}) => {
+  await page.goto(guidedUrl);
+  await ready(page);
+  await skipIntroductions(page);
+
+  await page.getByRole("button", { name: "Explorer", exact: true }).click();
+  await page.getByRole("button", { name: "File", exact: true }).click();
+  await page.getByRole("menuitem", { name: /Open Folder\.\.\./ }).click();
+  await expectStep(page, 9, "Datei erstellen");
+
+  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
+  await page.getByPlaceholder("dateiname.ext").fill("wrong.py");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
+
+  const recovery = page.getByTestId("guided-recovery");
+  await expect(recovery).toBeVisible();
+  const visiblePrimary = page.locator('[data-primary-learning-action="true"]:visible');
+  await expect(visiblePrimary).toHaveCount(1);
+  await expect(visiblePrimary).toHaveAttribute("data-primary-action-kind", "platform");
+  await expect(visiblePrimary).toHaveAttribute("data-testid", "guided-recovery-primary-action");
+  await expect(visiblePrimary).toHaveAccessibleName("Schritt wiederherstellen");
+  await expect(page.getByTestId("guided-primary-action")).toBeHidden();
+  await expect(page.getByTestId("tutor-chat-collapsed")).toHaveAttribute(
+    "data-tutor-prominent",
+    "true",
+  );
+
+  await visiblePrimary.click();
+  await expect(page.getByTestId("guided-recovery")).toHaveCount(0);
+  await expectOnePrimary(page, "runtime", "vscode.explorer.newFile");
+});
+
 test("kleiner Viewport hält Primäraktion und Tutor-Einstieg ohne horizontales Überlaufen erreichbar", async ({
   page,
 }) => {
