@@ -53,7 +53,9 @@ test("Guided: primäre nächste Lernaktion bleibt ohne Panel-Scroll sichtbar", a
 
   const orientation = page.getByTestId("guided-orientation");
   await expect(orientation).toBeVisible();
-  await expect(orientation.getByText("Dein nächster Schritt · 7 von 13", { exact: true })).toBeVisible();
+  await expect(
+    orientation.getByText("Dein nächster Schritt · 7 von 13", { exact: true }),
+  ).toBeVisible();
   await expectGuidedStep(page, 7, "Explorer öffnen");
 
   const primary = page.locator('[data-primary-learning-action="true"]');
