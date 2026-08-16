@@ -442,7 +442,11 @@ test("preferences, scenario runs and score events stay isolated across users and
   const otherTenant = await signedInPage(browser, baseURL, otherTenantAccount);
   const otherTenantBefore = await loadPreferences(otherTenant.page);
   expect(otherTenantBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
-  const otherTenantPreferences = await savePreferenceMarker(otherTenant.page, marker, "other-tenant");
+  const otherTenantPreferences = await savePreferenceMarker(
+    otherTenant.page,
+    marker,
+    "other-tenant",
+  );
   expect(otherTenantPreferences.tenantId).not.toBe(primaryPreferences.tenantId);
   expect(otherTenantPreferences.userId).not.toBe(primaryPreferences.userId);
   await assertNoForeignEvidence(
