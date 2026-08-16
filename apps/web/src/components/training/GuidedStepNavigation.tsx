@@ -2,13 +2,8 @@ import { CheckCircle2, Circle, CircleDot, RotateCcw, SkipForward } from "lucide-
 import { useTraining } from "@/state/trainingStore";
 
 export function GuidedStepNavigation() {
-  const {
-    scenario,
-    progress,
-    isGuidedReplay,
-    guidedNavigationPending,
-    navigateToGuidedStep,
-  } = useTraining();
+  const { scenario, progress, isGuidedReplay, guidedNavigationPending, navigateToGuidedStep } =
+    useTraining();
 
   const furthestStepId =
     scenario.steps.find((step) => {
