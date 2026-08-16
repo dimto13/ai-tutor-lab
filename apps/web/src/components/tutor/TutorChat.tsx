@@ -36,7 +36,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
 
   useEffect(() => {
     setOpen(mode !== "guided");
-  }, [mode, tutorContext.scenarioId]);
+  }, [mode, tutorContext.scenario.id]);
 
   useEffect(() => {
     if (!open) return;
