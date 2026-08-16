@@ -544,27 +544,40 @@ export function TrainingProvider({
       stateRecovery?.stepId === stepId ? stateRecovery.action : validationFailureRecovery;
     if (!action) return;
 
+    const recoveryStillTargetsStep = () => {
+      const latest = progressRef.current;
+      return latest.finishedAt === null && latest.activeStepId === stepId;
+    };
+
     try {
       if (action.strategy === "runtime_repair") {
         const runtimeId = action.runtimeAdapterId ?? scenario.environment?.runtimeAdapterId;
         const runtime = getRuntimeAdapter(runtimeId);
         if (!runtime?.recover || !action.command) throw new Error("Recovery command unsupported");
         const result = await runtime.recover(action.command);
+        if (!recoveryStillTargetsStep()) return;
         if (result.status !== "repaired") throw new Error("Recovery command unsupported");
-        await persistence.saveRuntimeSnapshot(runtime.id, await runtime.snapshot());
+        const snapshot = await runtime.snapshot();
+        if (!recoveryStillTargetsStep()) return;
+        await persistence.saveRuntimeSnapshot(runtime.id, snapshot);
+        if (!recoveryStillTargetsStep()) return;
       } else {
         for (const runtime of scenarioRuntimes) {
           const checkpoint = parseGuidedRecoveryCheckpoint(
             await persistence.loadRuntimeSnapshot(guidedRecoveryCheckpointRuntimeId(runtime.id)),
           );
+          if (!recoveryStillTargetsStep()) return;
           if (!checkpoint || checkpoint.stepId !== stepId) {
             throw new Error("Recovery checkpoint unavailable");
           }
           await runtime.restore(checkpoint.snapshot);
+          if (!recoveryStillTargetsStep()) return;
           await persistence.saveRuntimeSnapshot(runtime.id, checkpoint.snapshot);
+          if (!recoveryStillTargetsStep()) return;
         }
       }
 
+      if (!recoveryStillTargetsStep()) return;
       setProgress((session) => resumeGuidedStepAfterRecovery(session, stepId));
       setStateRecovery(null);
       setVisibleHelpLevel(activeHelpLevel(progressRef.current));
@@ -575,6 +588,7 @@ export function TrainingProvider({
       });
       void evaluateGuidedRecoveryStateRules();
     } catch {
+      if (!recoveryStillTargetsStep()) return;
       setFeedback({
         kind: "error",
         message:
