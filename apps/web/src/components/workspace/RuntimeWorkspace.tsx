@@ -27,8 +27,10 @@ function useRuntimePersistence(
 ): void {
   const {
     isReady,
+    isGuidedReplay,
     mode,
     progress,
+    ensureGuidedNavigationCheckpoints,
     ensureGuidedRecoveryCheckpoint,
     persistRuntimeSnapshot,
     restoreRuntimeSnapshot,
@@ -80,11 +82,15 @@ function useRuntimePersistence(
   ]);
 
   useEffect(() => {
-    if (!runtimeReady || mode !== "guided" || !progress.activeStepId) return;
+    if (!runtimeReady || mode !== "guided" || !progress.activeStepId || isGuidedReplay) {
+      return;
+    }
     let active = true;
     const frame = window.requestAnimationFrame(() => {
       void snapshot().then((currentSnapshot) => {
-        if (active) void ensureGuidedRecoveryCheckpoint(runtimeId, currentSnapshot);
+        if (!active) return;
+        void ensureGuidedRecoveryCheckpoint(runtimeId, currentSnapshot);
+        void ensureGuidedNavigationCheckpoints();
       });
     });
     return () => {
@@ -95,6 +101,8 @@ function useRuntimePersistence(
     runtimeReady,
     mode,
     progress.activeStepId,
+    isGuidedReplay,
+    ensureGuidedNavigationCheckpoints,
     ensureGuidedRecoveryCheckpoint,
     runtimeId,
     snapshot,

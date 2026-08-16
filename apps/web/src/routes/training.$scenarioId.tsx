@@ -16,6 +16,7 @@ import { AccountMenu } from "@/auth/AccountMenu";
 import { TrainingProvider, useTraining } from "@/state/trainingStore";
 import { RuntimeWorkspace } from "@/components/workspace/RuntimeWorkspace";
 import { GuidePanel } from "@/components/training/GuidePanel";
+import { GuidedStepNavigation } from "@/components/training/GuidedStepNavigation";
 import { CompletionScreen } from "@/components/training/CompletionScreen";
 import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
 
@@ -304,6 +305,8 @@ function TrainingLayout() {
           </Link>
         </div>
       </header>
+
+      {!isFinished && mode === "guided" ? <GuidedStepNavigation /> : null}
 
       {!isFinished && mode === "guided" && recovery ? (
         <div
