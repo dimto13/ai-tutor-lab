@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "../fixtures/browser-error-guard";
 
 async function waitUntilReady(page: Page) {
   await expect(page.getByRole("status")).toContainText("Training bereit");
