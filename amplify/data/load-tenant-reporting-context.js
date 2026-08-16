@@ -2,12 +2,7 @@ import { util } from "@aws-appsync/utils";
 
 const TENANT_GROUP_PREFIX = "tenant:";
 const ROLE_GROUP_PREFIX = "role:";
-const KNOWN_ROLE_GROUPS = [
-  "role:learner",
-  "role:author",
-  "role:trainer",
-  "role:tenant_admin",
-];
+const KNOWN_ROLE_GROUPS = ["role:learner", "role:author", "role:trainer", "role:tenant_admin"];
 
 function caller(ctx) {
   const identity = ctx.identity;
