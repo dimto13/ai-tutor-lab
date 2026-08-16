@@ -121,6 +121,12 @@ test("bestehende Hilfe-Eskalation hebt den Tutor-Einstieg hervor, ohne ihn autom
   await page.getByRole("button", { name: "Hilfe 1 anzeigen" }).click();
   await expect(collapsedTutor).toHaveAttribute("data-tutor-prominent", "true");
   await expect(collapsedTutor).toContainText("Zusätzliche Hilfe ist für diesen Schritt verfügbar.");
+  const tutorToggle = page.getByTestId("tutor-chat-toggle");
+  await expect(tutorToggle).toHaveAccessibleName("Tutor fragen");
+  await expect(tutorToggle).toHaveAttribute("aria-describedby", "tutor-chat-help-hint");
+  await expect(page.locator("#tutor-chat-help-hint")).toHaveText(
+    "Zusätzliche Hilfe ist für diesen Schritt verfügbar.",
+  );
   await expect(page.getByTestId("tutor-chat-expanded")).toHaveCount(0);
 });
 
