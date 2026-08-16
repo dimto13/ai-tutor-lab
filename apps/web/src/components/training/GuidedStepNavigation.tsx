@@ -23,7 +23,7 @@ export function GuidedStepNavigation() {
       {isGuidedReplay ? (
         <div
           className="mb-2 flex items-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[11px] text-foreground"
-          role="status"
+          role="note"
           aria-live="polite"
         >
           <RotateCcw className="h-3.5 w-3.5 shrink-0 text-accent" />
@@ -42,15 +42,17 @@ export function GuidedStepNavigation() {
           const isCompleted = status === "COMPLETED";
           const isSkipped = status === "SKIPPED";
           const isReachable = isCompleted || isFurthest;
+          const stepNumber = index + 1;
+          const titleId = `guided-step-navigation-title-${step.id}`;
           const label = isDisplayed
-            ? `Schritt ${index + 1} geöffnet: ${step.title}`
+            ? `Trainingsschritt ${stepNumber} geöffnet`
             : isFurthest
-              ? `Zum aktuellen Schritt ${index + 1}: ${step.title}`
+              ? `Zum aktuellen Trainingsschritt ${stepNumber}`
               : isCompleted
-                ? `Schritt ${index + 1} wiederholen: ${step.title}`
+                ? `Trainingsschritt ${stepNumber} wiederholen`
                 : isSkipped
-                  ? `Schritt ${index + 1} wurde übersprungen und ist nicht navigierbar: ${step.title}`
-                  : `Schritt ${index + 1} noch nicht erreichbar: ${step.title}`;
+                  ? `Trainingsschritt ${stepNumber} übersprungen`
+                  : `Trainingsschritt ${stepNumber} noch nicht erreichbar`;
 
           return (
             <li key={step.id} className="shrink-0">
@@ -60,6 +62,7 @@ export function GuidedStepNavigation() {
                 disabled={!isReachable || guidedNavigationPending}
                 aria-current={isDisplayed ? "step" : undefined}
                 aria-label={label}
+                aria-describedby={titleId}
                 onClick={() => void navigateToGuidedStep(step.id)}
                 className={`inline-flex h-8 max-w-[12rem] items-center gap-1.5 rounded-md border px-2 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel disabled:cursor-not-allowed disabled:opacity-45 ${
                   isDisplayed
@@ -78,8 +81,10 @@ export function GuidedStepNavigation() {
                 ) : (
                   <Circle className="h-3.5 w-3.5 shrink-0" />
                 )}
-                <span className="font-mono text-[10px]">{index + 1}</span>
-                <span className="truncate">{step.title}</span>
+                <span className="font-mono text-[10px]">{stepNumber}</span>
+                <span id={titleId} className="truncate">
+                  {step.title}
+                </span>
               </button>
             </li>
           );
