@@ -1,7 +1,7 @@
 import type { RuntimeAdapter } from "@ai-train-lab/runtime-core";
 import { canNavigateToGuidedStep } from "@ai-train-lab/training-engine";
 import type { Scenario, TrainingSession } from "@ai-train-lab/training-engine";
-import { TrainingStatePersistence } from "./trainingStatePersistence";
+import type { TrainingStatePersistence } from "./trainingStatePersistence";
 
 const GUIDED_NAVIGATION_VERSION = 1 as const;
 const GUIDED_NAVIGATION_STATE_RUNTIME_ID = "guided-navigation::state";
@@ -180,7 +180,7 @@ export class GuidedNavigationCoordinator {
   }
 
   async reset(stepIds: readonly string[]): Promise<void> {
-    await this.deleteReplayState();
+    await this.deleteReplayState().catch(() => undefined);
     for (const runtime of this.runtimes) {
       await this.persistence
         .deleteRuntimeSnapshot(returnCheckpointRuntimeId(runtime.id))
@@ -245,8 +245,6 @@ export class GuidedNavigationCoordinator {
   }
 
   private async deleteReplayState(): Promise<void> {
-    await this.persistence
-      .deleteRuntimeSnapshot(GUIDED_NAVIGATION_STATE_RUNTIME_ID)
-      .catch(() => undefined);
+    await this.persistence.deleteRuntimeSnapshot(GUIDED_NAVIGATION_STATE_RUNTIME_ID);
   }
 }
