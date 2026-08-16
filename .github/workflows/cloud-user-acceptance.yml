@@ -53,7 +53,6 @@ jobs:
           CLOUD_TEST_OTHER_TENANT_EMAIL: ${{ secrets.CLOUD_TEST_OTHER_TENANT_EMAIL }}
           CLOUD_TEST_OTHER_TENANT_PASSWORD: ${{ secrets.CLOUD_TEST_OTHER_TENANT_PASSWORD }}
           CLOUD_TEST_PERSONAL_EMAIL: ${{ secrets.CLOUD_TEST_PERSONAL_EMAIL }}
-          CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
           CLOUD_TEST_PERSONAL_PASSWORD: ${{ secrets.CLOUD_TEST_PERSONAL_PASSWORD }}
         run: |
           set -euo pipefail
