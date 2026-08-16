@@ -86,6 +86,9 @@ test("Tutor attention and Guided highlight remain visually distinct and motion-s
   assert.match(guidedHighlight, /bg-black\/35/);
   assert.match(guidedHighlight, /motion-reduce:animate-none/);
   assert.match(tutorChat, /prefers-reduced-motion:\s*reduce/);
+  assert.match(tutorChat, /className="platform-ui/);
+  assert.match(tutorChat, /bg-input/);
+  assert.doesNotMatch(tutorChat, /bg-editor/);
 
   assert.match(guidePanel, /<TutorChat\s*\/>/);
   assert.doesNotMatch(tutorChat, /\b(?:collapsed|isOpen|openTutor)\b/);
