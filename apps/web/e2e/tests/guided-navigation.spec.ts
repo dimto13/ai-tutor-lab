@@ -32,12 +32,12 @@ test("replay restores the target runtime and returns to the furthest reached sta
   await reachStepTen(page);
   await expect(
     page.getByRole("button", {
-      name: "Schritt 11 noch nicht erreichbar: Panel und seine Views unterscheiden",
+      name: "Trainingsschritt 11 noch nicht erreichbar",
     }),
   ).toBeDisabled();
 
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Zwischenstand");
-  const replay = page.getByRole("button", { name: "Schritt 9 wiederholen: Datei erstellen" });
+  const replay = page.getByRole("button", { name: "Trainingsschritt 9 wiederholen" });
   await replay.focus();
   await replay.press("Enter");
   await expectStep(page, 9, "Datei erstellen");
@@ -61,17 +61,15 @@ test("reload during replay keeps replay focus and later reached steps remain sel
   await reachStepTen(page);
   await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Rückkehrzustand");
 
-  await page.getByRole("button", { name: "Schritt 7 wiederholen: Explorer öffnen" }).click();
+  await page.getByRole("button", { name: "Trainingsschritt 7 wiederholen" }).click();
   await expectStep(page, 7, "Explorer öffnen");
   await page.reload();
   await ready(page);
   await expectStep(page, 7, "Explorer öffnen");
 
-  await page.getByRole("button", { name: "Schritt 9 wiederholen: Datei erstellen" }).click();
+  await page.getByRole("button", { name: "Trainingsschritt 9 wiederholen" }).click();
   await expectStep(page, 9, "Datei erstellen");
-  await page
-    .getByRole("button", { name: "Zum aktuellen Schritt 10: Datei bearbeiten und speichern" })
-    .click();
+  await page.getByRole("button", { name: "Zum aktuellen Trainingsschritt 10" }).click();
   await expectStep(page, 10, "Datei bearbeiten und speichern");
   await expect(page.getByRole("textbox", { name: "Editor-Inhalt" })).toHaveValue("Rückkehrzustand");
 
