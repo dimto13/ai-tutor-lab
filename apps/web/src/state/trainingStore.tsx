@@ -22,12 +22,14 @@ import {
   recordHintUsage,
   recordLastAction,
   recordMistake,
+  resumeGuidedStepAfterRecovery,
   skipConsecutiveOptionalSteps,
   timeoutChallenge,
 } from "@ai-train-lab/training-engine";
 import type {
   ChallengeOutcome,
   EngineValidationResult,
+  GuidedRecoveryAction,
   Scenario,
   TrainingEvent,
   TrainingMode,
@@ -44,7 +46,19 @@ import { TrainingStatePersistence } from "./trainingStatePersistence";
 
 const CHALLENGE_TIMEOUT_MESSAGE =
   "Zeit abgelaufen. Diese Challenge ist beendet und muss neu gestartet werden.";
+const GUIDED_RECOVERY_CHECKPOINT_VERSION = 1 as const;
 const validatorRegistry = createDefaultValidatorRegistry();
+
+interface GuidedRecoveryCheckpoint {
+  version: typeof GUIDED_RECOVERY_CHECKPOINT_VERSION;
+  stepId: string;
+  snapshot: unknown;
+}
+
+interface ActiveGuidedRecovery {
+  stepId: string;
+  action: GuidedRecoveryAction;
+}
 
 const modeOf = (scenario: Scenario): TrainingMode => scenario.mode ?? "guided";
 
@@ -66,6 +80,27 @@ function createPersistence(
     stateKey(scenario, subject),
     scenario,
   );
+}
+
+function guidedRecoveryCheckpointRuntimeId(runtimeId: string): string {
+  return `${runtimeId}::guided-recovery-checkpoint`;
+}
+
+function parseGuidedRecoveryCheckpoint(value: unknown): GuidedRecoveryCheckpoint | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Partial<GuidedRecoveryCheckpoint>;
+  if (
+    candidate.version !== GUIDED_RECOVERY_CHECKPOINT_VERSION ||
+    typeof candidate.stepId !== "string" ||
+    !Object.prototype.hasOwnProperty.call(candidate, "snapshot")
+  ) {
+    return null;
+  }
+  return {
+    version: GUIDED_RECOVERY_CHECKPOINT_VERSION,
+    stepId: candidate.stepId,
+    snapshot: candidate.snapshot,
+  };
 }
 
 function progressPercent(scenario: Scenario, progress: TrainingSession): number {
@@ -101,12 +136,15 @@ interface TrainingContextValue {
   helpLevel: number;
   challengeOutcome: ChallengeOutcome | null;
   challengeRemainingSeconds: number | null;
+  recovery: GuidedRecoveryAction | null;
   revealHelp: () => void;
   resetHelp: () => void;
   completeExplanationStep: () => void;
   skipOptionalSteps: () => void;
   restart: () => void;
   registerMistake: (message: string) => void;
+  performGuidedRecovery: () => Promise<void>;
+  ensureGuidedRecoveryCheckpoint: (runtimeId: string, snapshot: unknown) => Promise<void>;
   persistRuntimeSnapshot: (runtimeId: string, snapshot: unknown) => void;
   restoreRuntimeSnapshot: (runtimeId: string) => Promise<boolean>;
 }
@@ -184,6 +222,7 @@ export function TrainingProvider({
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
   const [visibleHelpLevel, setVisibleHelpLevel] = useState(0);
   const [challengeRemainingSeconds, setChallengeRemainingSeconds] = useState<number | null>(null);
+  const [stateRecovery, setStateRecovery] = useState<ActiveGuidedRecovery | null>(null);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -239,11 +278,68 @@ export function TrainingProvider({
         setProgress(freshProgress);
         setVisibleHelpLevel(0);
         setFeedback(null);
+        setStateRecovery(null);
       }
       return false;
     },
     [mode, persistence, scenario, scenarioRuntimes, subject],
   );
+
+  const ensureGuidedRecoveryCheckpoint = useCallback(
+    async (runtimeId: string, snapshot: unknown) => {
+      if (mode !== "guided" || !persistence) return;
+      if (!scenarioRuntimes.some((runtime) => runtime.id === runtimeId)) return;
+
+      const stepId = progressRef.current.activeStepId;
+      if (!stepId) return;
+      const step = scenario.steps.find((candidate) => candidate.id === stepId);
+      if (!step?.recovery) return;
+
+      const checkpointId = guidedRecoveryCheckpointRuntimeId(runtimeId);
+      try {
+        const existing = parseGuidedRecoveryCheckpoint(
+          await persistence.loadRuntimeSnapshot(checkpointId),
+        );
+        if (existing?.stepId === stepId) return;
+        await persistence.saveRuntimeSnapshot(checkpointId, {
+          version: GUIDED_RECOVERY_CHECKPOINT_VERSION,
+          stepId,
+          snapshot,
+        } satisfies GuidedRecoveryCheckpoint);
+      } catch {
+        // The active training remains usable; recovery UI is only offered when its checkpoint works.
+      }
+    },
+    [mode, persistence, scenario, scenarioRuntimes],
+  );
+
+  const evaluateGuidedRecoveryStateRules = useCallback(async () => {
+    if (mode !== "guided") {
+      setStateRecovery(null);
+      return;
+    }
+
+    const current = progressRef.current;
+    const stepId = current.activeStepId;
+    const step = scenario.steps.find((candidate) => candidate.id === stepId);
+    if (!stepId || !step?.recovery?.stateRules?.length) {
+      setStateRecovery(null);
+      return;
+    }
+
+    for (const rule of step.recovery.stateRules) {
+      const result = await validateDeclarative(rule.when, scenario);
+      if (progressRef.current.activeStepId !== stepId) return;
+      if (result.outcome === "pass") {
+        setStateRecovery({ stepId, action: rule.action });
+        return;
+      }
+    }
+
+    setStateRecovery((currentRecovery) =>
+      currentRecovery?.stepId === stepId ? null : currentRecovery,
+    );
+  }, [mode, scenario]);
 
   useEffect(() => {
     let cancelled = false;
@@ -258,6 +354,7 @@ export function TrainingProvider({
         setProgress(session);
         setVisibleHelpLevel(activeHelpLevel(session));
         setFeedback(null);
+        setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setHydrated(true);
       })
@@ -267,6 +364,7 @@ export function TrainingProvider({
         setProgress(freshProgress);
         setVisibleHelpLevel(0);
         setFeedback(null);
+        setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setHydrated(true);
       });
@@ -301,6 +399,33 @@ export function TrainingProvider({
   }, [progress, hydrated, persistence]);
 
   useEffect(() => {
+    if (!hydrated || mode !== "guided") return;
+    const unsubscribes = scenarioRuntimes.flatMap((runtime) => {
+      if (!runtime.subscribeStateChange) return [];
+      return [
+        runtime.subscribeStateChange(({ reason }) => {
+          if (reason === "mount") return;
+          void evaluateGuidedRecoveryStateRules();
+        }),
+      ];
+    });
+    return () => {
+      for (const unsubscribe of unsubscribes) unsubscribe();
+    };
+  }, [hydrated, mode, scenarioRuntimes, evaluateGuidedRecoveryStateRules]);
+
+  useEffect(() => {
+    if (!hydrated || mode !== "guided") return;
+    setStateRecovery((current) =>
+      current?.stepId === progress.activeStepId ? current : null,
+    );
+    const frame = window.requestAnimationFrame(() => {
+      void evaluateGuidedRecoveryStateRules();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [hydrated, mode, progress.activeStepId, evaluateGuidedRecoveryStateRules]);
+
+  useEffect(() => {
     if (!hydrated || !persistence) return;
     let cancelled = false;
 
@@ -314,6 +439,7 @@ export function TrainingProvider({
             setProgress(session);
             setVisibleHelpLevel(activeHelpLevel(session));
             setFeedback(null);
+            setStateRecovery(null);
           }
 
           for (const restore of runtimeRestores) {
@@ -335,6 +461,7 @@ export function TrainingProvider({
               // Keep writes blocked until a later successful restore of the server-authoritative state.
             }
           }
+          if (!cancelled) void evaluateGuidedRecoveryStateRules();
         })
         .catch(() => {
           // The browser may report online before the remote persistence endpoint is reachable.
@@ -346,7 +473,7 @@ export function TrainingProvider({
       cancelled = true;
       window.removeEventListener("online", handleOnline);
     };
-  }, [hydrated, persistence, scenarioRuntimes]);
+  }, [hydrated, persistence, scenarioRuntimes, evaluateGuidedRecoveryStateRules]);
 
   const markChallengeTimedOut = useCallback(() => {
     setProgress((current) => timeoutChallenge(current, scenario));
@@ -398,9 +525,71 @@ export function TrainingProvider({
       setProgress((current) => completeTrainingStep(current, scenario, stepId));
       setVisibleHelpLevel(0);
       setFeedback({ kind: "success", message: successMessage });
+      setStateRecovery(null);
     },
     [scenario],
   );
+
+  const performGuidedRecovery = useCallback(async () => {
+    if (mode !== "guided" || !persistence) return;
+    const current = progressRef.current;
+    const stepId = current.activeStepId;
+    if (!stepId) return;
+    const step = scenario.steps.find((candidate) => candidate.id === stepId);
+    if (!step) return;
+
+    const validationFailureRecovery =
+      current.statuses[stepId] === "VALIDATION_FAILED"
+        ? step.recovery?.onValidationFailure
+        : undefined;
+    const action =
+      stateRecovery?.stepId === stepId ? stateRecovery.action : validationFailureRecovery;
+    if (!action) return;
+
+    try {
+      if (action.strategy === "runtime_repair") {
+        const runtimeId = action.runtimeAdapterId ?? scenario.environment?.runtimeAdapterId;
+        const runtime = getRuntimeAdapter(runtimeId);
+        if (!runtime?.recover || !action.command) throw new Error("Recovery command unsupported");
+        const result = await runtime.recover(action.command);
+        if (result.status !== "repaired") throw new Error("Recovery command unsupported");
+        await persistence.saveRuntimeSnapshot(runtime.id, await runtime.snapshot());
+      } else {
+        for (const runtime of scenarioRuntimes) {
+          const checkpoint = parseGuidedRecoveryCheckpoint(
+            await persistence.loadRuntimeSnapshot(guidedRecoveryCheckpointRuntimeId(runtime.id)),
+          );
+          if (!checkpoint || checkpoint.stepId !== stepId) {
+            throw new Error("Recovery checkpoint unavailable");
+          }
+          await runtime.restore(checkpoint.snapshot);
+          await persistence.saveRuntimeSnapshot(runtime.id, checkpoint.snapshot);
+        }
+      }
+
+      setProgress((session) => resumeGuidedStepAfterRecovery(session, stepId));
+      setStateRecovery(null);
+      setVisibleHelpLevel(activeHelpLevel(progressRef.current));
+      setFeedback({
+        kind: "success",
+        message: "Der Schritt ist wieder in einem passenden Arbeitszustand. Du kannst hier weitermachen.",
+      });
+      void evaluateGuidedRecoveryStateRules();
+    } catch {
+      setFeedback({
+        kind: "error",
+        message:
+          "Der Schritt konnte nicht automatisch wiederhergestellt werden. Versuche die Wiederherstellung bitte erneut.",
+      });
+    }
+  }, [
+    mode,
+    persistence,
+    scenario,
+    scenarioRuntimes,
+    stateRecovery,
+    evaluateGuidedRecoveryStateRules,
+  ]);
 
   useEffect(() => {
     if (scenarioRuntimes.length === 0) return;
@@ -494,6 +683,7 @@ export function TrainingProvider({
 
       if (result.outcome === "pass") {
         setVisibleHelpLevel(0);
+        setStateRecovery(null);
         setFeedback({ kind: "success", message: step.successMessage });
         return;
       }
@@ -562,6 +752,13 @@ export function TrainingProvider({
     const activeStepIndex = progress.activeStepId
       ? scenario.steps.findIndex((step) => step.id === progress.activeStepId)
       : scenario.steps.length;
+    const activeStep = scenario.steps.find((step) => step.id === progress.activeStepId);
+    const validationRecovery =
+      activeStep && progress.statuses[activeStep.id] === "VALIDATION_FAILED"
+        ? (activeStep.recovery?.onValidationFailure ?? null)
+        : null;
+    const recovery =
+      stateRecovery?.stepId === progress.activeStepId ? stateRecovery.action : validationRecovery;
 
     return {
       scenario,
@@ -577,6 +774,7 @@ export function TrainingProvider({
       helpLevel: visibleHelpLevel,
       challengeOutcome: progress.challengeOutcome,
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
+      recovery,
       revealHelp: () => {
         if (mode !== "guided" || visibleHelpLevel >= 3) return;
         const stepId = progressRef.current.activeStepId;
@@ -601,6 +799,7 @@ export function TrainingProvider({
         if (!step?.optional) return;
         setProgress((session) => skipConsecutiveOptionalSteps(session, scenario));
         setVisibleHelpLevel(0);
+        setStateRecovery(null);
         setFeedback({
           kind: "success",
           message: "Grundbegriffe übersprungen. Du kannst sie jederzeit über das Glossar öffnen.",
@@ -610,17 +809,23 @@ export function TrainingProvider({
         for (const runtime of scenarioRuntimes) {
           if (persistence) {
             void persistence.deleteRuntimeSnapshot(runtime.id).catch(() => undefined);
+            void persistence
+              .deleteRuntimeSnapshot(guidedRecoveryCheckpointRuntimeId(runtime.id))
+              .catch(() => undefined);
           }
           runtime.reset?.();
         }
         setProgress(newSession(scenario, subject));
         setVisibleHelpLevel(0);
         setFeedback(null);
+        setStateRecovery(null);
       },
       registerMistake: (message: string) => {
         setProgress((current) => recordMistake(current));
         if (mode !== "explore") setFeedback({ kind: "error", message });
       },
+      performGuidedRecovery,
+      ensureGuidedRecoveryCheckpoint,
       persistRuntimeSnapshot,
       restoreRuntimeSnapshot,
     };
@@ -636,6 +841,9 @@ export function TrainingProvider({
     scenarioRuntimes,
     subject,
     persistence,
+    stateRecovery,
+    performGuidedRecovery,
+    ensureGuidedRecoveryCheckpoint,
     persistRuntimeSnapshot,
     restoreRuntimeSnapshot,
   ]);
