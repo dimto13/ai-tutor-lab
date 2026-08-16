@@ -319,10 +319,16 @@ function TrainingLayout() {
         >
           <div className="flex min-w-0 flex-1 items-start gap-2">
             <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-            <p className="text-[12px] leading-relaxed text-foreground">{recovery.message}</p>
+            <p id="guided-recovery-message" className="text-[12px] leading-relaxed text-foreground">
+              {recovery.message}
+            </p>
           </div>
           <button
             type="button"
+            data-testid="guided-recovery-primary-action"
+            data-primary-learning-action="true"
+            data-primary-action-kind="platform"
+            aria-describedby="guided-recovery-message"
             onClick={() => void performGuidedRecovery()}
             className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-warning/60 bg-background/70 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-background"
           >
@@ -370,7 +376,7 @@ function TrainingLayout() {
           </div>
           <div
             data-platform-ui="guide"
-            className={`platform-ui ${mobileSurface === "guide" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 lg:flex lg:flex-none`}
+            className={`platform-ui ${mobileSurface === "guide" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 lg:flex lg:flex-none ${recovery ? "[&_[data-primary-learning-action=true]]:hidden" : ""}`}
           >
             <GuidePanel />
           </div>
