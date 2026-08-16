@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "levels": [
+    {
+      "id": "novice",
+      "minPoints": 0,
+      "requiresEligibleChallenge": false
+    },
+    {
+      "id": "advanced_beginner",
+      "minPoints": 1,
+      "requiresEligibleChallenge": false
+    },
+    {
+      "id": "practitioner",
+      "minPoints": 200,
+      "requiresEligibleChallenge": true
+    },
+    {
+      "id": "proficient",
+      "minPoints": 500,
+      "requiresEligibleChallenge": true
+    }
+  ],
+  "technologies": [
+    {
+      "technologyId": "ide",
+      "scenarioIds": [
+        "vscode-basics.explore",
+        "vscode-basics.guided",
+        "vscode-basics.challenge",
+        "vscode-shortcuts.challenge"
+      ]
+    },
+    {
+      "technologyId": "ai_coding_assistant",
+      "scenarioIds": ["copilot-basics.explore", "copilot-basics.guided", "copilot-basics.challenge"]
+    },
+    {
+      "technologyId": "cli_agent",
+      "scenarioIds": ["claude-code-basics.guided"]
+    },
+    {
+      "technologyId": "source_control",
+      "scenarioIds": [
+        "source-control-platform-basics.explore",
+        "source-control-platform-basics.guided",
+        "source-control-platform-basics.challenge"
+      ]
+    },
+    {
+      "technologyId": "artifact_preview",
+      "scenarioIds": ["artifact-preview-foundation.guided"]
+    }
+  ]
+}

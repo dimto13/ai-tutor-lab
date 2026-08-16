@@ -6,6 +6,7 @@ export const schema = a.schema({
   StepStatus: a.enum(["NOT_STARTED", "ACTIVE", "VALIDATION_FAILED", "COMPLETED", "SKIPPED"]),
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
   ScenarioRunEvidenceStatus: a.enum(["eligible", "suspect_fast", "unassessed"]),
+  SkillLevel: a.enum(["novice", "advanced_beginner", "practitioner", "proficient"]),
 
   UserProfile: a
     .model({
@@ -155,8 +156,9 @@ export const schema = a.schema({
       tenantId: a.string().required(),
       userId: a.string().required(),
       technologyId: a.string().required(),
-      points: a.integer().required(),
-      level: a.string(),
+      points: a.float().required(),
+      level: a.ref("SkillLevel").required(),
+      eligibleChallengeCount: a.integer().required(),
       sourceRevision: a.integer().required(),
       calculatedAt: a.float().required(),
     })
@@ -256,6 +258,17 @@ export const schema = a.schema({
   ScoreAwardEnvelope: a.customType({
     created: a.boolean().required(),
     event: a.ref("ScoreEventEnvelope").required(),
+  }),
+
+  SkillProfileEnvelope: a.customType({
+    tenantId: a.string().required(),
+    userId: a.string().required(),
+    technologyId: a.string().required(),
+    points: a.float().required(),
+    level: a.ref("SkillLevel").required(),
+    eligibleChallengeCount: a.integer().required(),
+    sourceRevision: a.integer().required(),
+    calculatedAt: a.float().required(),
   }),
 
   loadTrainingState: a
@@ -419,6 +432,24 @@ export const schema = a.schema({
       a.handler.custom({
         dataSource: a.ref("ScoreEvent"),
         entry: "./award-score-write-event.js",
+      }),
+    ]),
+
+  listMySkillProfiles: a
+    .query()
+    .returns(a.ref("SkillProfileEnvelope").array())
+    .authorization((allow) => [allow.authenticated()])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("ScoreEvent"),
+        entry: "./skill-profile-load-score-events.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("ScenarioRun"),
+        entry: "./skill-profile-load-runs.js",
+      }),
+      a.handler.custom({
+        entry: "./skill-profile-calculate.js",
       }),
     ]),
 
