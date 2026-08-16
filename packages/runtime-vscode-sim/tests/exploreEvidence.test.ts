@@ -75,6 +75,15 @@ test("Explore evidence comes from semantic VS Code actions, not mount, restore, 
       "vscode.panel.output",
     ]);
 
+    events.length = 0;
+    vscodeRuntime.setActiveFile(null);
+    vscodeRuntime.setActivePanel(null);
+    assert.deepEqual(
+      inspectedRefs(events),
+      [],
+      "closing editor or panel must not count as Explore evidence",
+    );
+
     const snapshot = await vscodeRuntime.snapshot();
     events.length = 0;
     await vscodeRuntime.restore(snapshot);
