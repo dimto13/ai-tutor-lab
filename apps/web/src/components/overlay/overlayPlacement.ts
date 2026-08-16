@@ -124,13 +124,7 @@ export function placeOverlayTooltip({
   ];
 
   const candidates = rawCandidates.map((candidate) => {
-    const rect = clampToViewport(
-      candidate.top,
-      candidate.left,
-      tooltip,
-      viewport,
-      viewportInset,
-    );
+    const rect = clampToViewport(candidate.top, candidate.left, tooltip, viewport, viewportInset);
     return {
       ...candidate,
       top: rect.top,
