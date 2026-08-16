@@ -38,12 +38,16 @@ test("Guided startet mit geschlossenem Tutor; Öffnen und Schließen verändert 
   await page.getByTestId("tutor-chat-toggle").click();
   await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
   await expectStep(page, 1, "Activity Bar einordnen");
-  expect(await page.locator('[aria-current="step"]').getAttribute("data-testid")).toBe(activeTestId);
+  expect(await page.locator('[aria-current="step"]').getAttribute("data-testid")).toBe(
+    activeTestId,
+  );
 
   await page.getByRole("button", { name: "Tutor schließen" }).click();
   await expect(page.getByTestId("tutor-chat-collapsed")).toBeVisible();
   await expectStep(page, 1, "Activity Bar einordnen");
-  expect(await page.locator('[aria-current="step"]').getAttribute("data-testid")).toBe(activeTestId);
+  expect(await page.locator('[aria-current="step"]').getAttribute("data-testid")).toBe(
+    activeTestId,
+  );
 });
 
 test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und hält Simulatoraktionen frei von Plattform-CTAs", async ({
@@ -85,7 +89,10 @@ test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und hält S
   await expectOnePrimary(page, "runtime", "vscode.menu.terminal");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
-  await page.getByRole("menuitem", { name: /New Terminal/ }).first().click();
+  await page
+    .getByRole("menuitem", { name: /New Terminal/ })
+    .first()
+    .click();
   await expectStep(page, 12, "Problems-View verwenden");
   await expectOnePrimary(page, "runtime", "vscode.panel.problems");
 
@@ -150,6 +157,8 @@ test("Primäraktion ist per Tastatur ausführbar und Reduced Motion deaktiviert 
 
   const tutorToggle = page.getByTestId("tutor-chat-toggle");
   await expect
-    .poll(() => tutorToggle.evaluate((element) => window.getComputedStyle(element).transitionProperty))
+    .poll(() =>
+      tutorToggle.evaluate((element) => window.getComputedStyle(element).transitionProperty),
+    )
     .toBe("none");
 });
