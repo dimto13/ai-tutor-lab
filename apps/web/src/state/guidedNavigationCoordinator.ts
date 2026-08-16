@@ -23,6 +23,11 @@ interface GuidedReturnCheckpoint {
   snapshot: unknown;
 }
 
+interface RuntimeSnapshot {
+  runtime: RuntimeAdapter;
+  snapshot: unknown;
+}
+
 function stepCheckpointRuntimeId(runtimeId: string, stepId: string): string {
   return `${runtimeId}::guided-step-checkpoint::${encodeURIComponent(stepId)}`;
 }
@@ -114,10 +119,8 @@ export class GuidedNavigationCoordinator {
   }
 
   async enterReplay(targetStepId: string, returnStepId: string): Promise<void> {
-    const returnSnapshots = await Promise.all(
-      this.runtimes.map(async (runtime) => ({ runtime, snapshot: await runtime.snapshot() })),
-    );
-    for (const { runtime, snapshot } of returnSnapshots) {
+    const beforeNavigation = await this.captureRuntimeSnapshots();
+    for (const { runtime, snapshot } of beforeNavigation) {
       const slot = returnCheckpointRuntimeId(runtime.id);
       await this.persistence.loadRuntimeSnapshot(slot);
       await this.persistence.saveRuntimeSnapshot(slot, {
@@ -126,13 +129,25 @@ export class GuidedNavigationCoordinator {
         snapshot,
       } satisfies GuidedReturnCheckpoint);
     }
-    await this.restoreStep(targetStepId);
-    await this.persistReplayStep(targetStepId);
+
+    try {
+      await this.restoreStep(targetStepId);
+      await this.persistReplayStep(targetStepId);
+    } catch (error) {
+      await this.rollbackRuntimeSnapshots(beforeNavigation);
+      throw error;
+    }
   }
 
   async switchReplay(targetStepId: string): Promise<void> {
-    await this.restoreStep(targetStepId);
-    await this.persistReplayStep(targetStepId);
+    const beforeNavigation = await this.captureRuntimeSnapshots();
+    try {
+      await this.restoreStep(targetStepId);
+      await this.persistReplayStep(targetStepId);
+    } catch (error) {
+      await this.rollbackRuntimeSnapshots(beforeNavigation);
+      throw error;
+    }
   }
 
   async returnToFurthest(returnStepId: string): Promise<void> {
@@ -144,17 +159,19 @@ export class GuidedNavigationCoordinator {
         if (!checkpoint || checkpoint.returnStepId !== returnStepId) {
           throw new Error(`Guided return checkpoint unavailable for ${runtime.id}`);
         }
-        return { runtime, checkpoint };
+        return { runtime, snapshot: checkpoint.snapshot } satisfies RuntimeSnapshot;
       }),
     );
+    const beforeReturn = await this.captureRuntimeSnapshots();
 
-    for (const { runtime, checkpoint } of checkpoints) {
-      await runtime.restore(checkpoint.snapshot);
-      await this.persistence.loadRuntimeSnapshot(runtime.id);
-      await this.persistence.saveRuntimeSnapshot(runtime.id, checkpoint.snapshot);
+    try {
+      await this.restoreRuntimeSnapshots(checkpoints);
+      await this.deleteReplayState();
+    } catch (error) {
+      await this.rollbackRuntimeSnapshots(beforeReturn);
+      throw error;
     }
 
-    await this.deleteReplayState();
     for (const { runtime } of checkpoints) {
       await this.persistence
         .deleteRuntimeSnapshot(returnCheckpointRuntimeId(runtime.id))
@@ -176,6 +193,12 @@ export class GuidedNavigationCoordinator {
     }
   }
 
+  private async captureRuntimeSnapshots(): Promise<RuntimeSnapshot[]> {
+    return Promise.all(
+      this.runtimes.map(async (runtime) => ({ runtime, snapshot: await runtime.snapshot() })),
+    );
+  }
+
   private async restoreStep(stepId: string): Promise<void> {
     const checkpoints = await Promise.all(
       this.runtimes.map(async (runtime) => {
@@ -185,15 +208,32 @@ export class GuidedNavigationCoordinator {
         if (!checkpoint || checkpoint.stepId !== stepId) {
           throw new Error(`Guided step checkpoint unavailable for ${runtime.id}/${stepId}`);
         }
-        return { runtime, checkpoint };
+        return { runtime, snapshot: checkpoint.snapshot } satisfies RuntimeSnapshot;
       }),
     );
+    await this.restoreRuntimeSnapshots(checkpoints);
+  }
 
-    for (const { runtime, checkpoint } of checkpoints) {
-      await runtime.restore(checkpoint.snapshot);
+  private async restoreRuntimeSnapshots(snapshots: readonly RuntimeSnapshot[]): Promise<void> {
+    for (const { runtime, snapshot } of snapshots) {
+      await runtime.restore(snapshot);
       await this.persistence.loadRuntimeSnapshot(runtime.id);
-      await this.persistence.saveRuntimeSnapshot(runtime.id, checkpoint.snapshot);
+      await this.persistence.saveRuntimeSnapshot(runtime.id, snapshot);
     }
+  }
+
+  private async rollbackRuntimeSnapshots(snapshots: readonly RuntimeSnapshot[]): Promise<void> {
+    await Promise.all(
+      snapshots.map(async ({ runtime, snapshot }) => {
+        try {
+          await runtime.restore(snapshot);
+          await this.persistence.loadRuntimeSnapshot(runtime.id);
+          await this.persistence.saveRuntimeSnapshot(runtime.id, snapshot);
+        } catch {
+          // Keep rolling back the remaining runtimes; the original transition error stays authoritative.
+        }
+      }),
+    );
   }
 
   private async persistReplayStep(stepId: string): Promise<void> {
