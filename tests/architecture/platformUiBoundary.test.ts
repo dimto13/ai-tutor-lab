@@ -11,10 +11,7 @@ const guidePanelUrl = new URL(
   "../../apps/web/src/components/training/GuidePanel.tsx",
   import.meta.url,
 );
-const tutorChatUrl = new URL(
-  "../../apps/web/src/components/tutor/TutorChat.tsx",
-  import.meta.url,
-);
+const tutorChatUrl = new URL("../../apps/web/src/components/tutor/TutorChat.tsx", import.meta.url);
 const completionScreenUrl = new URL(
   "../../apps/web/src/components/training/CompletionScreen.tsx",
   import.meta.url,
