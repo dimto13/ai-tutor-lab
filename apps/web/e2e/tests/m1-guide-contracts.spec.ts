@@ -45,7 +45,7 @@ async function expectSpotlightAround(spotlight: Locator, target: Locator): Promi
     .toEqual({ x: 0, y: 0 });
 }
 
-test("Guided: fünf Orientierungsfragen bleiben ohne Panel-Scroll sichtbar", async ({ page }) => {
+test("Guided: primäre nächste Lernaktion bleibt ohne Panel-Scroll sichtbar", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(guidedUrl);
   await waitForTrainingReady(page);
@@ -53,19 +53,15 @@ test("Guided: fünf Orientierungsfragen bleiben ohne Panel-Scroll sichtbar", asy
 
   const orientation = page.getByTestId("guided-orientation");
   await expect(orientation).toBeVisible();
-  for (const label of [
-    "Wo bin ich?",
-    "Was soll ich tun?",
-    "Warum?",
-    "War meine Aktion erfolgreich?",
-    "Was kommt als Nächstes?",
-  ]) {
-    await expect(orientation.getByText(label, { exact: true })).toBeVisible();
-  }
-  await expect(orientation.getByText(/Die Activity Bar wählt den Hauptbereich aus/)).toBeVisible();
-  await expect(
-    orientation.getByText("Einen Ordner als Arbeitskontext öffnen", { exact: true }),
-  ).toBeVisible();
+  await expect(orientation.getByText("Dein nächster Schritt · 7 von 13", { exact: true })).toBeVisible();
+  await expectGuidedStep(page, 7, "Explorer öffnen");
+
+  const primary = page.locator('[data-primary-learning-action="true"]');
+  await expect(primary).toHaveCount(1);
+  await expect(primary).toHaveAttribute("data-primary-action-kind", "runtime");
+  await expect(primary).toHaveAttribute("data-primary-target", "vscode.activityBar.explorer");
+  await expect(primary).toContainText("Öffne den Explorer");
+  await expect(page.locator('[data-primary-action-kind="platform"]')).toHaveCount(0);
 
   const box = await orientation.boundingBox();
   expect(box).not.toBeNull();
@@ -73,16 +69,14 @@ test("Guided: fünf Orientierungsfragen bleiben ohne Panel-Scroll sichtbar", asy
   expect(box!.y + box!.height).toBeLessThanOrEqual(720);
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
-  await expect(
-    orientation.getByText(/Explorer geöffnet\. Activity Bar und Primary Side Bar/),
-  ).toBeVisible({ timeout: 300 });
+  await expectGuidedStep(page, 8, "Einen Ordner als Arbeitskontext öffnen");
+  await expect(primary).toHaveAttribute("data-primary-target", "vscode.menu.file");
 });
 
 test("Guided: irrelevante Events bleiben still und onFailure markiert das konfigurierte Ziel", async ({
   page,
 }) => {
   await reachCreateFileStep(page);
-  const orientation = page.getByTestId("guided-orientation");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
   await page
@@ -90,16 +84,13 @@ test("Guided: irrelevante Events bleiben still und onFailure markiert das konfig
     .first()
     .click();
   await expectGuidedStep(page, 9, "Datei erstellen");
-  await expect(orientation.getByText("Noch keine Aktion geprüft.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Noch keine Aktion geprüft.", { exact: true })).toBeVisible();
 
   await createFile(page, "wrong.py");
   await expect(
-    orientation.getByText(
-      "Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.",
-      {
-        exact: true,
-      },
-    ),
+    page.getByText("Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expectSpotlightAround(
     page.getByTestId("highlight-frame"),
