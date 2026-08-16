@@ -82,12 +82,7 @@ function useRuntimePersistence(
   ]);
 
   useEffect(() => {
-    if (
-      !runtimeReady ||
-      mode !== "guided" ||
-      !progress.activeStepId ||
-      isGuidedReplay
-    ) {
+    if (!runtimeReady || mode !== "guided" || !progress.activeStepId || isGuidedReplay) {
       return;
     }
     let active = true;
