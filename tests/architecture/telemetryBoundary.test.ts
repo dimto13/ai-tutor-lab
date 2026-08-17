@@ -12,10 +12,7 @@ const policyResolverUrl = new URL(
   import.meta.url,
 );
 const queryResolverUrl = new URL("../../amplify/data/load-training-analytics.js", import.meta.url);
-const pipelineUrl = new URL(
-  "../../apps/web/src/telemetry/telemetryPipeline.ts",
-  import.meta.url,
-);
+const pipelineUrl = new URL("../../apps/web/src/telemetry/telemetryPipeline.ts", import.meta.url);
 
 test("telemetry ingestion accepts canonical events but no client owner fields", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
@@ -39,7 +36,10 @@ test("telemetry resolvers derive tenant from Cognito without a stable user pseud
     readFile(writeResolverUrl, "utf8"),
   ]);
 
-  assert.match(schemaSource, /TelemetryPseudonymizationMode: a\.enum\(\["SESSION", "ANONYMOUS"\]\)/);
+  assert.match(
+    schemaSource,
+    /TelemetryPseudonymizationMode: a\.enum\(\["SESSION", "ANONYMOUS"\]\)/,
+  );
   assert.match(policySource, /identity\.sub/);
   assert.match(policySource, /tenant:/);
   assert.doesNotMatch(policySource, /ctx\.args\.userId/);
