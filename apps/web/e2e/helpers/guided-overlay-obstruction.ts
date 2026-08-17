@@ -55,25 +55,28 @@ export function platformOverlayChrome(page: Page): readonly PlatformOverlayChrom
 }
 
 async function describeHitTestAtCenter(page: Page, box: Box): Promise<string> {
-  return page.evaluate(({ x, y }) => {
-    const element = document.elementFromPoint(x, y);
-    if (!element) return "none";
+  return page.evaluate(
+    ({ x, y }) => {
+      const element = document.elementFromPoint(x, y);
+      if (!element) return "none";
 
-    const role = element.getAttribute("role");
-    const ariaLabel = element.getAttribute("aria-label");
-    const testId = element.getAttribute("data-testid");
-    return [
-      element.tagName.toLowerCase(),
-      role ? `role=${role}` : null,
-      ariaLabel ? `aria-label=${ariaLabel}` : null,
-      testId ? `data-testid=${testId}` : null,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }, {
-    x: box.x + box.width / 2,
-    y: box.y + box.height / 2,
-  });
+      const role = element.getAttribute("role");
+      const ariaLabel = element.getAttribute("aria-label");
+      const testId = element.getAttribute("data-testid");
+      return [
+        element.tagName.toLowerCase(),
+        role ? `role=${role}` : null,
+        ariaLabel ? `aria-label=${ariaLabel}` : null,
+        testId ? `data-testid=${testId}` : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    },
+    {
+      x: box.x + box.width / 2,
+      y: box.y + box.height / 2,
+    },
+  );
 }
 
 async function measureObstructions(
@@ -138,13 +141,10 @@ export async function expectGuidedActionTargetUnobstructed(
 
   const overlays = options.overlays ?? platformOverlayChrome(page);
   await expect
-    .poll(
-      async () => formatObstructions(await measureObstructions(page, target, overlays)),
-      {
-        message: `Guided-Ziel "${target.name}" muss gegenüber sichtbarer Plattform-Overlay-Chrome 0 px² Überschneidung haben.`,
-        timeout: options.timeoutMs ?? 2_000,
-        intervals: [0, 50, 100, 250],
-      },
-    )
+    .poll(async () => formatObstructions(await measureObstructions(page, target, overlays)), {
+      message: `Guided-Ziel "${target.name}" muss gegenüber sichtbarer Plattform-Overlay-Chrome 0 px² Überschneidung haben.`,
+      timeout: options.timeoutMs ?? 2_000,
+      intervals: [0, 50, 100, 250],
+    })
     .toBe("");
 }
