@@ -96,11 +96,6 @@ function pseudonymizationMode(value: unknown): TelemetryPseudonymizationMode {
   throw new Error("Telemetry pseudonymization mode is invalid");
 }
 
-function isoTimestamp(value: number): string {
-  if (!Number.isFinite(value)) throw new Error("Training analytics time bound is invalid");
-  return new Date(value).toISOString();
-}
-
 export function createAmplifyTelemetryEventWriterWithClient(
   client: ReturnType<typeof generateClient<Schema>>,
 ): TelemetryEventWriter {
@@ -128,8 +123,8 @@ export function createAmplifyTrainingAnalyticsServiceWithClient(
     async loadScenarioMetrics(query) {
       const result = await client.queries.loadTrainingAnalytics({
         scenarioId: query.scenarioId,
-        ...(query.from === undefined ? {} : { from: isoTimestamp(query.from) }),
-        ...(query.to === undefined ? {} : { to: isoTimestamp(query.to) }),
+        ...(query.from === undefined ? {} : { from: query.from }),
+        ...(query.to === undefined ? {} : { to: query.to }),
       });
       if (result.errors?.length) throw new Error(errorText(result.errors));
       return scenarioAnalytics(result.data);
