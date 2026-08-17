@@ -32,12 +32,14 @@ test("telemetry ingestion accepts canonical events but no client owner fields", 
   assert.match(block, /TrainingTelemetryEvent/);
 });
 
-test("telemetry resolvers derive tenant and subject from Cognito and persist no raw userId", async () => {
-  const [policySource, writeSource] = await Promise.all([
+test("telemetry resolvers derive tenant from Cognito without a stable user pseudonym", async () => {
+  const [schemaSource, policySource, writeSource] = await Promise.all([
+    readFile(dataResourceUrl, "utf8"),
     readFile(policyResolverUrl, "utf8"),
     readFile(writeResolverUrl, "utf8"),
   ]);
 
+  assert.match(schemaSource, /TelemetryPseudonymizationMode: a\.enum\(\["SESSION", "ANONYMOUS"\]\)/);
   assert.match(policySource, /identity\.sub/);
   assert.match(policySource, /tenant:/);
   assert.doesNotMatch(policySource, /ctx\.args\.userId/);
@@ -45,13 +47,15 @@ test("telemetry resolvers derive tenant and subject from Cognito and persist no 
 
   assert.match(writeSource, /telemetrySubject/);
   assert.match(writeSource, /subjectKey/);
-  assert.match(writeSource, /util\.base64Encode\(subject\.userId\)/);
+  assert.match(writeSource, /"anonymous:v1"/);
+  assert.match(writeSource, /session:v1:/);
+  assert.doesNotMatch(writeSource, /base64Encode\(subject\.userId\)/);
   assert.doesNotMatch(writeSource, /attributeValues:[\s\S]*userId\s*:/);
   assert.doesNotMatch(writeSource, /ctx\.args\.userId/);
   assert.doesNotMatch(writeSource, /ctx\.args\.tenantId/);
 });
 
-test("analytics query is tenant scoped, aggregate only and cohort protected", async () => {
+test("analytics query is tenant scoped, aggregate only, exact and cohort protected", async () => {
   const [schemaSource, resolverSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
     readFile(queryResolverUrl, "utf8"),
@@ -67,6 +71,10 @@ test("analytics query is tenant scoped, aggregate only and cohort protected", as
   assert.match(resolverSource, /MIN_REPORTING_COHORT\s*=\s*3/);
   assert.match(resolverSource, /cohortSuppressed/);
   assert.match(resolverSource, /tenantScenarioKey/);
+  assert.match(resolverSource, /analyticsReferenceEpochSeconds/);
+  assert.match(resolverSource, /parseISO8601ToEpochMilliSeconds/);
+  assert.match(resolverSource, /TrainingAnalyticsRangeTooLarge/);
+  assert.match(resolverSource, /ctx\.result\.nextToken/);
   assert.doesNotMatch(resolverSource, /subjectKey\s*:/);
 });
 
