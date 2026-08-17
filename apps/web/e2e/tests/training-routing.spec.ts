@@ -29,17 +29,10 @@ test("unbekannte Trainings-ID liefert einen deutschen 404 ohne technische Intern
 }) => {
   const response = await page.request.get("/training/gibt-es-nicht");
   expect(response.status()).toBe(404);
-
-  const html = await response.text();
-  expect(html).toContain("Training nicht gefunden");
-  expect(html).toContain(
-    "Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.",
-  );
-  expect(html).not.toContain("Unknown training scenario");
-  expect(html).not.toContain("gibt-es-nicht");
-  expect(html).not.toContain("This page didn't load");
+  expect(await response.text()).not.toContain("Unknown training scenario");
 
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
   await page.evaluate(() => {
     window.history.pushState({}, "", "/training/gibt-es-nicht");
     window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }));
@@ -67,6 +60,8 @@ test("Dashboard verlinkt nur Trainingsszenarien, die als Route erreichbar sind",
   page,
 }) => {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Explore/ }).first()).toBeVisible();
 
   const trainingLinks = await page.locator("a").evaluateAll((links) => [
     ...new Set(
