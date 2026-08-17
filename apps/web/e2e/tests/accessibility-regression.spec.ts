@@ -22,14 +22,22 @@ test.describe("Accessibility regressions", () => {
     await accessibility.check("public landing /willkommen");
   });
 
-  test("sign-in entry /anmelden has no unapproved axe violations", async ({
+  test("anonymous sign-in page /anmelden has no unapproved axe violations", async ({
     page,
     accessibility,
   }) => {
-    await page.goto("/anmelden");
+    await page.goto("/");
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
+    await page.getByRole("button", { name: "Abmelden" }).click();
+    await expect(page).toHaveURL(/\/willkommen$/);
 
-    await accessibility.check("sign-in entry /anmelden");
+    await page.goto("/anmelden");
+    await expect(page).toHaveURL(/\/anmelden$/);
+    await expect(page.getByRole("heading", { name: "AI Training Lab" })).toBeVisible();
+    await expect(page.getByLabel("E-Mail")).toBeVisible();
+    await expect(page.getByLabel("Passwort")).toBeVisible();
+
+    await accessibility.check("anonymous sign-in page /anmelden");
   });
 
   test("competency profile /kompetenz has no unapproved axe violations", async ({
