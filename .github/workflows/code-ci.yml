@@ -214,10 +214,6 @@ jobs:
           # credentials, so use the application's supported local auth adapter
           # while still producing the real production-mode Nitro/Amplify artifact.
           VITE_AUTH_MODE: local
-          # TEMPORARY #309 negative proof: RootComponent emits this console.error
-          # only after browser hydration. Remove both this flag and the temporary
-          # source branch once the production-artifact job proves it fails hard.
-          VITE_E2E_PRODUCTION_ARTIFACT_NEGATIVE_PROOF: "1"
         run: npm run build
 
       - name: Verify Amplify compute HTTP runtime
