@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "../fixtures/browser-error-guard";
+import { expectGuidedActionTargetUnobstructed } from "../helpers/guided-overlay-obstruction";
 
 async function ready(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
@@ -8,20 +9,17 @@ async function expectStep(page: Page, number: number, title: string): Promise<vo
   await expect(page.getByRole("heading", { name: `Schritt ${number} – ${title}` })).toBeVisible();
 }
 
-async function intersectionArea(left: Locator, right: Locator): Promise<number | null> {
-  const [leftBox, rightBox] = await Promise.all([left.boundingBox(), right.boundingBox()]);
-  if (!leftBox || !rightBox) return null;
-  const width = Math.max(
-    0,
-    Math.min(leftBox.x + leftBox.width, rightBox.x + rightBox.width) -
-      Math.max(leftBox.x, rightBox.x),
-  );
-  const height = Math.max(
-    0,
-    Math.min(leftBox.y + leftBox.height, rightBox.y + rightBox.height) -
-      Math.max(leftBox.y, rightBox.y),
-  );
-  return width * height;
+async function expectInsideViewport(page: Page, locator: Locator): Promise<void> {
+  const box = await locator.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  if (!box || !viewport) return;
+
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
 }
 
 async function reachOpenTerminal(page: Page): Promise<void> {
@@ -32,8 +30,16 @@ async function reachOpenTerminal(page: Page): Promise<void> {
 
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await expectStep(page, 8, "Einen Ordner als Arbeitskontext öffnen");
+
   await page.getByRole("button", { name: "File", exact: true }).click();
-  await page.getByRole("menuitem", { name: /Open Folder\.\.\./ }).click();
+  const fileMenu = page.getByRole("menu", { name: "File menu" });
+  const openFolder = fileMenu.getByRole("menuitem", { name: /Open Folder\.\.\./ });
+  await expect(fileMenu).toBeVisible();
+  await expectGuidedActionTargetUnobstructed(page, {
+    name: "File → Open Folder…",
+    locator: openFolder,
+  });
+  await openFolder.click();
   await expectStep(page, 9, "Datei erstellen");
 
   await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
@@ -48,7 +54,7 @@ async function reachOpenTerminal(page: Page): Promise<void> {
   await expectStep(page, 11, "Panel und seine Views unterscheiden");
 }
 
-test("Guided: Spotlight-Tooltip lässt Terminal → New Terminal vollständig frei", async ({
+test("Guided: handlungsrelevante transiente Ziele bleiben frei von Plattform-Overlays", async ({
   page,
 }) => {
   await reachOpenTerminal(page);
@@ -58,26 +64,48 @@ test("Guided: Spotlight-Tooltip lässt Terminal → New Terminal vollständig fr
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
   const terminalMenu = page.getByRole("menu", { name: "Terminal menu" });
-  const newTerminal = terminalMenu.getByRole("menuitem", { name: /New Terminal/ }).first();
+  const newTerminal = terminalMenu.getByRole("menuitem", { name: /^New Terminal/ }).first();
   await expect(terminalMenu).toBeVisible();
   await expect(newTerminal).toBeVisible();
   await expect(newTerminal).toBeInViewport();
-  await expect(tooltip).toBeVisible();
+  await expectGuidedActionTargetUnobstructed(page, {
+    name: "Terminal → New Terminal",
+    locator: newTerminal,
+  });
+  await expectInsideViewport(page, newTerminal);
 
-  await expect.poll(() => intersectionArea(tooltip, terminalMenu)).toBe(0);
+  const profileEntry = terminalMenu.getByRole("menuitem", { name: /New Terminal with Profile/ });
+  await profileEntry.hover();
+  const profileSubmenu = page.getByRole("menu", { name: "New Terminal with Profile submenu" });
+  await expect(profileSubmenu).toBeVisible();
+  await expectGuidedActionTargetUnobstructed(page, {
+    name: "Terminal → New Terminal with Profile submenu",
+    locator: profileSubmenu,
+  });
 
-  const itemBox = await newTerminal.boundingBox();
-  const viewport = page.viewportSize();
-  expect(itemBox).not.toBeNull();
-  expect(viewport).not.toBeNull();
-  if (itemBox && viewport) {
-    expect(itemBox.x).toBeGreaterThanOrEqual(0);
-    expect(itemBox.y).toBeGreaterThanOrEqual(0);
-    expect(itemBox.x + itemBox.width).toBeLessThanOrEqual(viewport.width);
-    expect(itemBox.y + itemBox.height).toBeLessThanOrEqual(viewport.height);
-  }
+  await page.getByRole("button", { name: "View", exact: true }).click();
+  const viewMenu = page.getByRole("menu", { name: "View menu" });
+  await viewMenu.getByRole("menuitem", { name: /Command Palette\.\.\./ }).click();
+  const commandPalette = page.getByRole("dialog", { name: "Command Palette" });
+  await expect(commandPalette).toBeVisible();
+  await expectGuidedActionTargetUnobstructed(page, {
+    name: "Command Palette dialog",
+    locator: commandPalette,
+  });
+  await page.getByLabel("Command Palette-Eingabe").press("Escape");
+  await expect(commandPalette).toBeHidden();
 
-  await newTerminal.click();
+  await page.getByRole("button", { name: "Terminal", exact: true }).click();
+  const reopenedTerminalMenu = page.getByRole("menu", { name: "Terminal menu" });
+  const reopenedNewTerminal = reopenedTerminalMenu
+    .getByRole("menuitem", { name: /^New Terminal/ })
+    .first();
+  await expectGuidedActionTargetUnobstructed(page, {
+    name: "Terminal → New Terminal",
+    locator: reopenedNewTerminal,
+  });
+  await reopenedNewTerminal.click();
+
   await expectStep(page, 12, "Problems-View verwenden");
   await expect(page.getByLabel("Terminal-Eingabe")).toBeVisible();
 });
