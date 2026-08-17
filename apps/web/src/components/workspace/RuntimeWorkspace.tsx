@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { classificationRuntime } from "@/runtime/classificationRuntime";
 import { claudeCodeRuntime } from "@/runtime/claudeCodeRuntime";
 import { sourceControlPlatformRuntime } from "@/runtime/sourceControlPlatformRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { useTraining } from "@/state/trainingStore";
+import { ClassificationWorkspace } from "./ClassificationWorkspace";
 import { ClaudeCodeWorkspace } from "./ClaudeCodeWorkspace";
 import { SourceControlPlatformWorkspace } from "./SourceControlPlatformWorkspace";
 import { Workspace } from "./Workspace";
@@ -130,6 +132,9 @@ function PersistedClaudeCodeWorkspace() {
 
 export function RuntimeWorkspace() {
   const { scenario } = useTraining();
+  if (scenario.environment?.runtimeAdapterId === classificationRuntime.id) {
+    return <ClassificationWorkspace />;
+  }
   if (scenario.environment?.runtimeAdapterId === sourceControlPlatformRuntime.id) {
     return <PersistedSourceControlPlatformWorkspace />;
   }
