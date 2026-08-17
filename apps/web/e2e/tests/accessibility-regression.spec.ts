@@ -9,7 +9,7 @@ test.describe("Accessibility regressions", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
 
-    await accessibility.check("dashboard / ");
+    await accessibility.check("dashboard /");
   });
 
   test("public landing /willkommen has no unapproved axe violations", async ({
