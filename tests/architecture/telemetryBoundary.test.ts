@@ -17,13 +17,6 @@ const pipelineUrl = new URL(
   import.meta.url,
 );
 
-function operationBlock(source: string, operation: string): string {
-  const start = source.indexOf(`  ${operation}:`);
-  assert.notEqual(start, -1, `${operation} must exist`);
-  const next = source.indexOf("\n  ", start + operation.length + 4);
-  return source.slice(start, next === -1 ? source.length : next);
-}
-
 test("telemetry ingestion accepts canonical events but no client owner fields", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
   const start = source.indexOf("  appendTrainingTelemetryEvent:");
