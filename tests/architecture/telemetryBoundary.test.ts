@@ -49,6 +49,7 @@ test("telemetry resolvers derive tenant from Cognito without a stable user pseud
   assert.match(writeSource, /subjectKey/);
   assert.match(writeSource, /"anonymous:v1"/);
   assert.match(writeSource, /session:v1:/);
+  assert.match(writeSource, /parseISO8601ToEpochMilliSeconds/);
   assert.doesNotMatch(writeSource, /base64Encode\(subject\.userId\)/);
   assert.doesNotMatch(writeSource, /attributeValues:[\s\S]*userId\s*:/);
   assert.doesNotMatch(writeSource, /ctx\.args\.userId/);
@@ -60,10 +61,16 @@ test("analytics query is tenant scoped, aggregate only, exact and cohort protect
     readFile(dataResourceUrl, "utf8"),
     readFile(queryResolverUrl, "utf8"),
   ]);
+  const eventModelStart = schemaSource.indexOf("  TrainingTelemetryEvent:");
+  const eventModelEnd = schemaSource.indexOf("\n  TrainingStateEnvelope:", eventModelStart);
+  const eventModelBlock = schemaSource.slice(eventModelStart, eventModelEnd);
   const queryStart = schemaSource.indexOf("  loadTrainingAnalytics:");
   const queryEnd = schemaSource.indexOf("\n  awardScenarioScore:", queryStart);
   const queryBlock = schemaSource.slice(queryStart, queryEnd);
 
+  assert.match(eventModelBlock, /occurredAt:\s*a\.float\(\)\.required\(\)/);
+  assert.match(queryBlock, /from:\s*a\.float\(\)/);
+  assert.match(queryBlock, /to:\s*a\.float\(\)/);
   assert.match(queryBlock, /role:trainer/);
   assert.match(queryBlock, /role:tenant_admin/);
   assert.doesNotMatch(queryBlock, /\buserId\s*:/);
@@ -72,7 +79,7 @@ test("analytics query is tenant scoped, aggregate only, exact and cohort protect
   assert.match(resolverSource, /cohortSuppressed/);
   assert.match(resolverSource, /tenantScenarioKey/);
   assert.match(resolverSource, /analyticsReferenceEpochSeconds/);
-  assert.match(resolverSource, /parseISO8601ToEpochMilliSeconds/);
+  assert.match(resolverSource, /epochMilliSecondsToSeconds/);
   assert.match(resolverSource, /TrainingAnalyticsRangeTooLarge/);
   assert.match(resolverSource, /ctx\.result\.nextToken/);
   assert.doesNotMatch(resolverSource, /subjectKey\s*:/);
