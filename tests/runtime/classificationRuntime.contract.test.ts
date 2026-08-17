@@ -110,6 +110,7 @@ defineRuntimeAdapterContractTests("classificationRuntime", () => {
       selector: "classification.level.selected",
       expectedRestoredValue: "internal",
       prepare: () => {
+        void classificationRuntime.mount(createContainer(), runtimeSeed);
         classificationRuntime.viewDocument(testDocument.id);
         classificationRuntime.markIndicator("internal_marker");
         classificationRuntime.selectLevel("internal");
