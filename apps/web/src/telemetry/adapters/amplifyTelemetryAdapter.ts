@@ -77,10 +77,7 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
   }
   const source = value as Record<string, unknown>;
   if (!Array.isArray(source["steps"])) throw new Error("Training analytics steps is invalid");
-  if (
-    typeof source["cohortSuppressed"] !== "boolean" ||
-    typeof source["truncated"] !== "boolean"
-  ) {
+  if (typeof source["cohortSuppressed"] !== "boolean" || typeof source["truncated"] !== "boolean") {
     throw new Error("Training analytics privacy metadata is invalid");
   }
   return {
@@ -143,7 +140,9 @@ export function createAmplifyTrainingAnalyticsServiceWithClient(
       return pseudonymizationMode(result.data?.pseudonymizationMode);
     },
     async savePseudonymizationMode(mode) {
-      const result = await client.mutations.saveTenantTelemetryPolicy({ pseudonymizationMode: mode });
+      const result = await client.mutations.saveTenantTelemetryPolicy({
+        pseudonymizationMode: mode,
+      });
       if (result.errors?.length) throw new Error(errorText(result.errors));
       if (result.data?.pseudonymizationMode !== mode) {
         throw new Error("Telemetry pseudonymization policy was not persisted");
