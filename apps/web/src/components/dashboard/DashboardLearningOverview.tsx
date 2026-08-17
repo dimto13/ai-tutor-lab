@@ -12,6 +12,7 @@ import { createApplicationTrainingStateRepository } from "@/persistence/applicat
 import { getScenario, getScenarioIds } from "@/scenarios";
 import { useSkillProfiles, type SkillProfilesState } from "@/skill-profile/useSkillProfiles";
 import {
+  dashboardStarterScenarioIds,
   selectPrimaryDashboardAction,
   shouldWaitForDashboardRecommendation,
   sortResumeCandidates,
@@ -28,8 +29,8 @@ const levelLabels: Record<SkillLevel, string> = {
 
 type ResumeLoadStatus = "loading" | "ready" | "error";
 
-function trainingCandidates(): DashboardTrainingCandidate[] {
-  return getScenarioIds().flatMap((scenarioId) => {
+function trainingCandidates(scenarioIds: readonly string[]): DashboardTrainingCandidate[] {
+  return scenarioIds.flatMap((scenarioId) => {
     const scenario = getScenario(scenarioId);
     if (!scenario) return [];
 
@@ -58,7 +59,8 @@ function trainingCandidates(): DashboardTrainingCandidate[] {
   });
 }
 
-const candidates = trainingCandidates();
+const allCandidates = trainingCandidates(getScenarioIds());
+const recommendationCandidates = trainingCandidates(dashboardStarterScenarioIds);
 
 export function DashboardLearningOverview() {
   const auth = useAuth();
@@ -95,7 +97,7 @@ export function DashboardLearningOverview() {
     const repository = createApplicationTrainingStateRepository();
 
     void Promise.all(
-      candidates.map(async (candidate) => {
+      allCandidates.map(async (candidate) => {
         const scenario = getScenario(candidate.scenarioId);
         if (!scenario) return { resume: null, failed: false };
 
@@ -154,7 +156,7 @@ export function DashboardLearningOverview() {
     ? null
     : selectPrimaryDashboardAction({
         resumable,
-        trainingCandidates: candidates,
+        trainingCandidates: recommendationCandidates,
         authoritativeProfiles: skillProfiles.status === "ready" ? skillProfiles.profiles : null,
       });
   const otherResumable = resumable.filter(
