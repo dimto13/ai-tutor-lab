@@ -6,7 +6,7 @@ const TELEMETRY_OUTBOX_PREFIX = "ai-training-lab.telemetry-outbox.v1";
 function storageKey(subject: TrainingSubjectRef): string {
   return [
     TELEMETRY_OUTBOX_PREFIX,
-    encodeURIComponent(subject.tenantId),
+    encodeURIComponent(subject.tenantId ?? "personal"),
     encodeURIComponent(subject.userId),
   ].join(":");
 }
