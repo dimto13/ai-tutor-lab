@@ -282,7 +282,8 @@ export function ClassificationWorkspace() {
                     id="ai-tool"
                     value={state.aiTool ?? ""}
                     onChange={(event) => {
-                      if (event.target.value) classificationRuntime.selectAiTool(event.target.value);
+                      if (event.target.value)
+                        classificationRuntime.selectAiTool(event.target.value);
                     }}
                     className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-xs text-foreground"
                   >
