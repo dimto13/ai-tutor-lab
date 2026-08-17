@@ -375,6 +375,7 @@ export interface ScenarioLearningAnalytics {
   sessionsStarted: number;
   sessionsCompleted: number;
   abandonmentCount: number;
+  averageDurationMs: number | null;
   cohortSuppressed: boolean;
   truncated: boolean;
   steps: StepLearningMetric[];
