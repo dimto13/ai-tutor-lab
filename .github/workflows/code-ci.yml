@@ -184,8 +184,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3002
-      AMPLIFY_COMPUTE_PORT: "3002"
+      # The generated Amplify Hosting compute wrapper currently binds to port 3000;
+      # this is the same origin contract exercised by scripts/smoke-amplify-runtime.mjs.
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+      AMPLIFY_COMPUTE_PORT: "3000"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
