@@ -214,6 +214,10 @@ jobs:
           # credentials, so use the application's supported local auth adapter
           # while still producing the real production-mode Nitro/Amplify artifact.
           VITE_AUTH_MODE: local
+          # TEMPORARY #309 negative proof: RootComponent emits this console.error
+          # only after browser hydration. Remove both this flag and the temporary
+          # source branch once the production-artifact job proves it fails hard.
+          VITE_E2E_PRODUCTION_ARTIFACT_NEGATIVE_PROOF: "1"
         run: npm run build
 
       - name: Verify Amplify compute HTTP runtime
@@ -224,40 +228,6 @@ jobs:
 
       - name: Install Chromium
         run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
-
-      # TEMPORARY #309 negative proof. This step is intentionally removed after
-      # CI demonstrates that the production-artifact browser job catches it.
-      - name: TEMPORARY inject production bundle browser error proof
-        run: |
-          node --input-type=module <<'NODE'
-          import { appendFile, readdir } from "node:fs/promises";
-          import { resolve } from "node:path";
-
-          const staticRoot = resolve("apps/web/.amplify-hosting/static");
-          const browserBundles = [];
-
-          async function collect(directory) {
-            for (const entry of await readdir(directory, { withFileTypes: true })) {
-              const path = resolve(directory, entry.name);
-              if (entry.isDirectory()) {
-                await collect(path);
-              } else if (/\.(?:js|mjs)$/.test(entry.name)) {
-                browserBundles.push(path);
-              }
-            }
-          }
-
-          await collect(staticRoot);
-          if (browserBundles.length === 0) {
-            throw new Error(`No browser JavaScript bundles found below ${staticRoot}`);
-          }
-
-          for (const bundle of browserBundles) {
-            await appendFile(bundle, '\nconsole.error("E2E_PRODUCTION_ARTIFACT_NEGATIVE_PROOF");\n');
-          }
-
-          console.log(`Injected negative proof into ${browserBundles.length} built browser bundle(s).`);
-          NODE
 
       - name: Run critical E2E against Amplify compute artifact
         run: |
