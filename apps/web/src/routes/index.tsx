@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AccountMenu } from "@/auth/AccountMenu";
+import { DashboardLearningOverview } from "@/components/dashboard/DashboardLearningOverview";
 import { useStoredProgressPercent } from "@/state/trainingStore";
 
 export const Route = createFileRoute("/")({
@@ -316,10 +317,19 @@ function Dashboard() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Meine Trainings</h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Lerne Werkzeuge zuerst einzeln kennen und wende sie danach in gemeinsamen Workflows an. So
-          bleiben Bedienwissen, Fachbegriffe und das Zusammenspiel der Tools klar voneinander
-          getrennt.
+          Sieh zuerst, was du bereits nachgewiesen hast und wo du exakt weiterarbeiten kannst. Den
+          vollständigen Trainingskatalog findest du darunter für die gezielte Auswahl weiterer
+          Lernmodule.
         </p>
+
+        <DashboardLearningOverview />
+
+        <div className="mt-12 border-t border-border pt-8">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">Alle Trainings</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            Lerne Werkzeuge einzeln kennen und wende sie anschließend in gemeinsamen Workflows an.
+          </p>
+        </div>
 
         <TrainingSection
           title="Werkzeuge einzeln kennenlernen"
@@ -358,7 +368,7 @@ function TrainingSection({
         <h2 className="text-base font-semibold text-foreground">{title}</h2>
         <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{description}</p>
       </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {trainings.map((training) => (
           <TrainingCard key={training.id} training={training} />
         ))}
@@ -371,12 +381,12 @@ function TrainingCard({ training }: { training: TrainingCardModel }) {
   const Icon = training.icon;
 
   return (
-    <article className="flex flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:border-ring/60">
-      <div className="flex items-center gap-2">
+    <article className="min-w-0 flex flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:border-ring/60">
+      <div className="flex min-w-0 items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent/15">
           <Icon className="h-4 w-4 text-accent" />
         </span>
-        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <span className="min-w-0 break-words text-[11px] uppercase tracking-wider text-muted-foreground">
           {training.label ?? (training.steps ? `${training.steps} Schritte` : "Training")}
         </span>
         {training.steps ? (
@@ -413,7 +423,7 @@ function ModeAction({ mode }: { mode: TrainingModeOption }) {
     <Link
       to="/training/$scenarioId"
       params={{ scenarioId: mode.scenarioId }}
-      className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-ring hover:bg-white/5"
+      className="flex min-w-0 items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-ring hover:bg-white/5"
     >
       <Icon className="h-4 w-4 shrink-0 text-accent" />
       <span className="min-w-0 flex-1">
