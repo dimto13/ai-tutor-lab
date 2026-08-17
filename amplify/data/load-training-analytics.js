@@ -151,48 +151,49 @@ export function response(ctx) {
     }
 
     const sessionId = item.sessionId;
-    if (typeof sessionId !== "string" || sessionId.length === 0) continue;
-    let session = sessions[sessionId];
-    if (!session) {
-      session = { started: false, completed: false, lastStepId: null, lastReceivedAt: 0 };
-      sessions[sessionId] = session;
-    }
-    if (
-      typeof item.receivedAtEpochSeconds === "number" &&
-      item.receivedAtEpochSeconds > session.lastReceivedAt
-    ) {
-      session.lastReceivedAt = item.receivedAtEpochSeconds;
-    }
-
-    const payload = item.payload && typeof item.payload === "object" ? item.payload : {};
-    const stepId = typeof item.stepId === "string" && item.stepId.length > 0 ? item.stepId : null;
-
-    if (item.eventType === "analytics.session.started") session.started = true;
-    if (item.eventType === "analytics.session.completed") {
-      session.completed = true;
-      if (typeof payload.durationMs === "number" && payload.durationMs >= 0) {
-        scenarioDurationTotalMs += payload.durationMs;
-        scenarioDurationCount += 1;
+    if (typeof sessionId === "string" && sessionId.length > 0) {
+      let session = sessions[sessionId];
+      if (!session) {
+        session = { started: false, completed: false, lastStepId: null, lastReceivedAt: 0 };
+        sessions[sessionId] = session;
       }
-    }
-    if (item.eventType === "analytics.step.started" && stepId) {
-      session.lastStepId = stepId;
-      stepMetric(steps, stepId);
-    }
-    if (item.eventType === "analytics.hint.used" && stepId) {
-      stepMetric(steps, stepId).hintUsageCount += 1;
-    }
-    if (item.eventType === "analytics.attempt.recorded" && stepId && payload.outcome !== "pass") {
-      const metric = stepMetric(steps, stepId);
-      const pattern = failurePattern(payload);
-      metric.failedAttemptCount += 1;
-      metric.failurePatterns[pattern] = (metric.failurePatterns[pattern] || 0) + 1;
-    }
-    if (item.eventType === "analytics.step.completed" && stepId) {
-      const metric = stepMetric(steps, stepId);
-      if (typeof payload.durationMs === "number" && payload.durationMs >= 0) {
-        metric.durationTotalMs += payload.durationMs;
-        metric.durationCount += 1;
+      if (
+        typeof item.receivedAtEpochSeconds === "number" &&
+        item.receivedAtEpochSeconds > session.lastReceivedAt
+      ) {
+        session.lastReceivedAt = item.receivedAtEpochSeconds;
+      }
+
+      const payload = item.payload && typeof item.payload === "object" ? item.payload : {};
+      const stepId = typeof item.stepId === "string" && item.stepId.length > 0 ? item.stepId : null;
+
+      if (item.eventType === "analytics.session.started") session.started = true;
+      if (item.eventType === "analytics.session.completed") {
+        session.completed = true;
+        if (typeof payload.durationMs === "number" && payload.durationMs >= 0) {
+          scenarioDurationTotalMs += payload.durationMs;
+          scenarioDurationCount += 1;
+        }
+      }
+      if (item.eventType === "analytics.step.started" && stepId) {
+        session.lastStepId = stepId;
+        stepMetric(steps, stepId);
+      }
+      if (item.eventType === "analytics.hint.used" && stepId) {
+        stepMetric(steps, stepId).hintUsageCount += 1;
+      }
+      if (item.eventType === "analytics.attempt.recorded" && stepId && payload.outcome !== "pass") {
+        const metric = stepMetric(steps, stepId);
+        const pattern = failurePattern(payload);
+        metric.failedAttemptCount += 1;
+        metric.failurePatterns[pattern] = (metric.failurePatterns[pattern] || 0) + 1;
+      }
+      if (item.eventType === "analytics.step.completed" && stepId) {
+        const metric = stepMetric(steps, stepId);
+        if (typeof payload.durationMs === "number" && payload.durationMs >= 0) {
+          metric.durationTotalMs += payload.durationMs;
+          metric.durationCount += 1;
+        }
       }
     }
   }
@@ -202,18 +203,17 @@ export function response(ctx) {
   let abandonmentCount = 0;
   for (const sessionId of Object.keys(sessions)) {
     const session = sessions[sessionId];
-    if (!session.started) continue;
-    sessionsStarted += 1;
-    if (session.completed) {
-      sessionsCompleted += 1;
-      continue;
-    }
-    if (
-      session.lastReceivedAt > 0 &&
-      referenceTime - session.lastReceivedAt >= ABANDONMENT_AFTER_SECONDS
-    ) {
-      abandonmentCount += 1;
-      if (session.lastStepId) stepMetric(steps, session.lastStepId).abandonmentCount += 1;
+    if (session.started) {
+      sessionsStarted += 1;
+      if (session.completed) {
+        sessionsCompleted += 1;
+      } else if (
+        session.lastReceivedAt > 0 &&
+        referenceTime - session.lastReceivedAt >= ABANDONMENT_AFTER_SECONDS
+      ) {
+        abandonmentCount += 1;
+        if (session.lastStepId) stepMetric(steps, session.lastStepId).abandonmentCount += 1;
+      }
     }
   }
 
