@@ -119,6 +119,47 @@ test("BufferedTelemetrySink quarantines permanent rejects without blocking later
   );
 });
 
+test("BufferedTelemetrySink preserves events recorded while a flush is in flight", async () => {
+  const outbox = new MemoryOutbox();
+  const delivered: string[] = [];
+  let releaseFirst!: () => void;
+  let markFirstStarted!: () => void;
+  const firstBlocked = new Promise<void>((resolve) => {
+    releaseFirst = resolve;
+  });
+  const firstStarted = new Promise<void>((resolve) => {
+    markFirstStarted = resolve;
+  });
+  const writer: TelemetryEventWriter = {
+    async write(candidate) {
+      delivered.push(candidate.id);
+      if (candidate.id === "event-1") {
+        markFirstStarted();
+        await firstBlocked;
+      }
+    },
+  };
+  const sink = new BufferedTelemetrySink(outbox, writer, [], {
+    async sleep() {
+      assert.fail("no retry expected");
+    },
+  });
+
+  sink.record(event("event-1"));
+  await firstStarted;
+  sink.record(event("event-2"));
+  assert.deepEqual(
+    outbox.events.map((queued) => queued.id),
+    ["event-1", "event-2"],
+  );
+
+  releaseFirst();
+  await sink.flush();
+
+  assert.deepEqual(delivered, ["event-1", "event-2"]);
+  assert.deepEqual(outbox.events, []);
+});
+
 function session(overrides: Partial<TrainingSession> = {}): TrainingSession {
   return {
     id: "scenario-a",
