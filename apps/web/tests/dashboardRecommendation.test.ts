@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { SkillProfileProjection } from "@ai-train-lab/training-engine";
 import {
+  dashboardStarterScenarioIds,
   selectPrimaryDashboardAction,
   shouldWaitForDashboardRecommendation,
   sortResumeCandidates,
@@ -33,6 +34,14 @@ const candidates: DashboardTrainingCandidate[] = [
     learningLayer: "tool",
     technologyId: "ide",
     technologyName: "IDE",
+  },
+  {
+    scenarioId: "claude-code-basics.guided",
+    title: "Claude Code – Vorschlag prüfen und freigeben",
+    mode: "guided",
+    learningLayer: "ai_workflow",
+    technologyId: "cli_agent",
+    technologyName: "CLI Agent",
   },
   {
     scenarioId: "developer-workflow-basics.challenge",
@@ -70,6 +79,16 @@ function resume(scenarioId: string, title: string, updatedAt: number): Dashboard
     activeStepTitle: "Nächster gespeicherter Schritt",
   };
 }
+
+test("dashboard starter catalog includes CLI agent but not cross-tool workflow training", () => {
+  assert.equal(dashboardStarterScenarioIds.includes("claude-code-basics.guided"), true);
+  assert.equal(
+    dashboardStarterScenarioIds.includes(
+      "git-basics" as (typeof dashboardStarterScenarioIds)[number],
+    ),
+    false,
+  );
+});
 
 test("recommendation waits for competency data only when no resumable training exists", () => {
   assert.equal(
@@ -145,11 +164,28 @@ test("authoritative competency levels choose the least demonstrated tool area de
       profile("ide", "practitioner"),
       profile("source_control", "advanced_beginner"),
       profile("ai_coding_assistant", "novice"),
+      profile("cli_agent", "practitioner"),
     ],
   });
 
   assert.equal(action?.kind, "start");
   assert.equal(action?.scenarioId, "copilot-basics.guided");
+});
+
+test("CLI-agent competency can select Claude Code although its scenario is an AI workflow", () => {
+  const action = selectPrimaryDashboardAction({
+    resumable: [],
+    trainingCandidates: candidates,
+    authoritativeProfiles: [
+      profile("ide", "proficient"),
+      profile("source_control", "proficient"),
+      profile("ai_coding_assistant", "proficient"),
+      profile("cli_agent", "novice"),
+    ],
+  });
+
+  assert.equal(action?.kind, "start");
+  assert.equal(action?.scenarioId, "claude-code-basics.guided");
 });
 
 test("missing authoritative technology evidence outranks an already confirmed novice level", () => {
