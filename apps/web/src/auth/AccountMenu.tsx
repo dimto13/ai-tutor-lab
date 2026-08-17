@@ -265,7 +265,12 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || preferences.status === "loading" || !draftName.trim()}
+                  disabled={
+                    saving ||
+                    profile.status === "loading" ||
+                    preferences.status === "loading" ||
+                    !draftName.trim()
+                  }
                   className="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {saving ? "Speichern …" : "Speichern"}

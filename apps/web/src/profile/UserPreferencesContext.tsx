@@ -10,6 +10,7 @@ import {
 import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
 import { createApplicationUserPreferencesRepository } from "./applicationUserPreferencesRepository";
+import { expectedRevisionForWrite } from "./revisionGuard";
 import {
   reportUserPreferencesFailure,
   userPreferencesOperationError,
@@ -97,12 +98,18 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     async (level: SelfAssessedAiLevel) => {
       if (!subject) throw new Error("Kein angemeldeter Nutzer vorhanden.");
 
+      const expectedRevision = expectedRevisionForWrite(
+        status,
+        preferences,
+        "Die Lernpräferenzen wurden noch nicht geladen. Bitte versuche es erneut.",
+      );
+
       setError(null);
       try {
         const saved = await repository.save(
           subject,
           valueWithAiLevel(preferences, level),
-          preferences?.revision ?? null,
+          expectedRevision,
         );
         setPreferences(saved);
         setStatus("ready");
@@ -121,7 +128,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         throw operationError;
       }
     },
-    [load, preferences, subject],
+    [load, preferences, status, subject],
   );
 
   const selfAssessedAiLevel = preferences?.selfAssessedAiLevel ?? null;
