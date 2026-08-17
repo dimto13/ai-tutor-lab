@@ -227,7 +227,7 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
   return {
     id: CLASSIFICATION_RUNTIME_DEFINITION.id,
     productId: CLASSIFICATION_RUNTIME_DEFINITION.productId,
-    capabilities: [] as const,
+    capabilities: ["artifact_preview"] as const,
 
     async mount(container, seed) {
       const nextInitialState = initialState(seed);
