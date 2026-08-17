@@ -1,12 +1,13 @@
 import { generateClient } from "aws-amplify/data";
 import type { TrainingEvent } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
-import type {
-  ScenarioLearningAnalytics,
-  StepLearningMetric,
-  TelemetryEventWriter,
-  TelemetryPseudonymizationMode,
-  TrainingAnalyticsService,
+import {
+  TelemetryDeliveryError,
+  type ScenarioLearningAnalytics,
+  type StepLearningMetric,
+  type TelemetryEventWriter,
+  type TelemetryPseudonymizationMode,
+  type TrainingAnalyticsService,
 } from "../telemetryPipeline";
 
 function errorText(errors: unknown): string {
@@ -94,7 +95,7 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
 }
 
 function pseudonymizationMode(value: unknown): TelemetryPseudonymizationMode {
-  if (value === "SESSION" || value === "STABLE_SUBJECT") return value;
+  if (value === "SESSION" || value === "ANONYMOUS") return value;
   throw new Error("Telemetry pseudonymization mode is invalid");
 }
 
@@ -109,8 +110,12 @@ export function createAmplifyTelemetryEventWriterWithClient(
   return {
     async write(event: TrainingEvent) {
       const result = await client.mutations.appendTrainingTelemetryEvent({ event });
-      if (result.errors?.length) throw new Error(errorText(result.errors));
-      if (result.data !== true) throw new Error("Telemetry event was not acknowledged");
+      if (result.errors?.length) {
+        throw new TelemetryDeliveryError(errorText(result.errors), false);
+      }
+      if (result.data !== true) {
+        throw new TelemetryDeliveryError("Telemetry event was not acknowledged", false);
+      }
     },
   };
 }
