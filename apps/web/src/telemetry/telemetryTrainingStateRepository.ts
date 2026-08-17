@@ -8,13 +8,16 @@ import { TrainingTelemetryRecorder } from "./telemetryPipeline";
 
 export type TelemetrySinkFactory = (subject: TrainingSubjectRef) => TelemetrySink;
 
+const MAX_SUBJECT_RECORDERS = 8;
+
 function subjectKey(subject: TrainingSubjectRef): string {
   return `${subject.tenantId}\u0000${subject.userId}`;
 }
 
 /**
  * Application-layer decorator: the persisted TrainingSession stays authoritative while its
- * transitions are mirrored into the existing TrainingEvent/TelemetrySink pipeline.
+ * transitions are mirrored into the existing TrainingEvent/TelemetrySink pipeline. The subject
+ * recorder cache is bounded because authenticated SPAs can survive multiple sign-in cycles.
  */
 export class TelemetryTrainingStateRepository implements TrainingStateRepository {
   private readonly recorders = new Map<string, TrainingTelemetryRecorder>();
@@ -64,10 +67,19 @@ export class TelemetryTrainingStateRepository implements TrainingStateRepository
 
   private recorderFor(subject: TrainingSubjectRef): TrainingTelemetryRecorder {
     const key = subjectKey(subject);
-    let recorder = this.recorders.get(key);
-    if (!recorder) {
-      recorder = new TrainingTelemetryRecorder(this.sinkFactory(subject));
-      this.recorders.set(key, recorder);
+    const existing = this.recorders.get(key);
+    if (existing) {
+      this.recorders.delete(key);
+      this.recorders.set(key, existing);
+      return existing;
+    }
+
+    const recorder = new TrainingTelemetryRecorder(this.sinkFactory(subject));
+    this.recorders.set(key, recorder);
+    while (this.recorders.size > MAX_SUBJECT_RECORDERS) {
+      const oldest = this.recorders.keys().next();
+      if (oldest.done) break;
+      this.recorders.delete(oldest.value);
     }
     return recorder;
   }
