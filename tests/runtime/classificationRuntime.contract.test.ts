@@ -134,7 +134,9 @@ defineRuntimeAdapterContractTests("classificationRuntime", () => {
 test("classificationRuntime: emits semantic document, indicator, level and AI-decision events without document content", async () => {
   const runtime = createClassificationRuntime();
   const events: Array<{ type: string; payload: unknown }> = [];
-  const unsubscribe = runtime.subscribe((event) => events.push({ type: event.type, payload: event.payload }));
+  const unsubscribe = runtime.subscribe((event) =>
+    events.push({ type: event.type, payload: event.payload }),
+  );
   await runtime.mount(createContainer(), runtimeSeed);
 
   try {
@@ -172,7 +174,9 @@ test("classificationRuntime: loads the existing declarative scheme and synthetic
     "../../content/classification/synthetic-document-corpus.de.json",
     import.meta.url,
   );
-  const scheme = parseClassificationSchemeYaml(await readFile(schemeUrl, "utf8")).classificationScheme;
+  const scheme = parseClassificationSchemeYaml(
+    await readFile(schemeUrl, "utf8"),
+  ).classificationScheme;
   const corpus = parseSyntheticDocumentCorpus(JSON.parse(await readFile(corpusUrl, "utf8")));
   const document = corpus.corpus.documents.find((entry) => entry.id === "internal-meeting-note");
   assert.ok(document);
@@ -205,7 +209,10 @@ test("classificationRuntime: browser content composition references declarative 
     "../../apps/web/src/runtime/classificationRuntimeContent.ts",
     import.meta.url,
   );
-  const runtimeUrl = new URL("../../apps/web/src/runtime/classificationRuntime.ts", import.meta.url);
+  const runtimeUrl = new URL(
+    "../../apps/web/src/runtime/classificationRuntime.ts",
+    import.meta.url,
+  );
   const [contentLoader, runtimeSource] = await Promise.all([
     readFile(contentLoaderUrl, "utf8"),
     readFile(runtimeUrl, "utf8"),
@@ -213,5 +220,8 @@ test("classificationRuntime: browser content composition references declarative 
 
   assert.match(contentLoader, /content\/classification\/synthetic-document-corpus\.de\.json/);
   assert.match(contentLoader, /content\/classification\/default-classification-scheme\.yaml\?raw/);
-  assert.doesNotMatch(runtimeSource, /Pressemitteilung Produktstart|Personenbezogene Daten|Gehalts-/);
+  assert.doesNotMatch(
+    runtimeSource,
+    /Pressemitteilung Produktstart|Personenbezogene Daten|Gehalts-/,
+  );
 });
