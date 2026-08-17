@@ -1,4 +1,5 @@
 import { artifactPreviewRuntime } from "./artifactPreviewRuntime.ts";
+import { classificationRuntime } from "./classificationRuntime.ts";
 import { claudeCodeRuntime } from "./claudeCodeRuntime.ts";
 import { copilotRuntime } from "./copilotRuntime.ts";
 import { getRuntimeReferenceDefinition } from "./referenceCatalog.ts";
@@ -26,6 +27,10 @@ export type {
   PreviewArtifact,
   TableArtifact,
 } from "./artifactPreviewContent.ts";
+export type {
+  ClassificationRuntimeAdapter,
+  ClassificationSimulatorState,
+} from "./classificationRuntime.ts";
 export type {
   SourceControlPlatformAdapter,
   SourceControlPlatformState,
@@ -119,6 +124,7 @@ const runtimes: Record<string, RuntimeAdapter> = {
   [artifactPreviewRuntime.id]: artifactPreviewRuntime,
   [sourceControlPlatformRuntime.id]: sourceControlPlatformRuntime,
   [claudeCodeRuntime.id]: claudeCodeRuntime,
+  [classificationRuntime.id]: classificationRuntime,
 };
 
 export function getRuntimeAdapter(runtimeAdapterId: string | undefined): RuntimeAdapter | null {
