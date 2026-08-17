@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SCORE_MODE_MULTIPLIER } from "@ai-train-lab/training-engine";
 import {
@@ -19,10 +19,16 @@ import { GuidePanel } from "@/components/training/GuidePanel";
 import { GuidedStepNavigation } from "@/components/training/GuidedStepNavigation";
 import { CompletionScreen } from "@/components/training/CompletionScreen";
 import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
+import { getScenario } from "@/scenarios";
 
 const DESKTOP_LAYOUT_MEDIA_QUERY = "(min-width: 64rem)";
 
 export const Route = createFileRoute("/training/$scenarioId")({
+  loader: ({ params: { scenarioId } }) => {
+    if (getScenario(scenarioId)) return;
+    console.warn(`[training-route] Unbekannte Szenario-ID: ${scenarioId}`);
+    throw notFound();
+  },
   head: () => ({
     meta: [
       { title: "Interaktives Training – AI Training Lab" },
@@ -39,7 +45,33 @@ export const Route = createFileRoute("/training/$scenarioId")({
     ],
   }),
   component: TrainingRoute,
+  notFoundComponent: TrainingNotFound,
 });
+
+function TrainingNotFound() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+      <section
+        aria-labelledby="training-not-found-title"
+        className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-xl"
+      >
+        <p className="text-sm font-semibold text-accent">404</p>
+        <h1 id="training-not-found-title" className="mt-2 text-xl font-semibold text-foreground">
+          Training nicht gefunden
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Zurück zur Trainingsübersicht
+        </Link>
+      </section>
+    </main>
+  );
+}
 
 function TrainingRoute() {
   const { scenarioId } = Route.useParams();
