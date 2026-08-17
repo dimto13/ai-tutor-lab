@@ -32,11 +32,9 @@ function callerTenant(ctx) {
 }
 
 function tenantScenarioKey(tenantId, scenarioId) {
-  return [
-    "telemetry-scenario:v1",
-    util.base64Encode(tenantId),
-    util.base64Encode(scenarioId),
-  ].join(".");
+  return ["telemetry-scenario:v1", util.base64Encode(tenantId), util.base64Encode(scenarioId)].join(
+    ".",
+  );
 }
 
 function requireScenarioId(ctx) {
@@ -133,7 +131,10 @@ export function response(ctx) {
 
   for (const item of items) {
     if (item.tenantId !== tenantId || item.scenarioId !== scenarioId) {
-      util.error("Telemetry query escaped authenticated tenant scope", "TrainingAnalyticsScopeError");
+      util.error(
+        "Telemetry query escaped authenticated tenant scope",
+        "TrainingAnalyticsScopeError",
+      );
     }
 
     const sessionId = item.sessionId;
