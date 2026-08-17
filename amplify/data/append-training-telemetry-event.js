@@ -101,8 +101,8 @@ export function request(ctx) {
 
   const pseudonymizationMode = ctx.stash.telemetryPseudonymizationMode;
   const subjectKey =
-    pseudonymizationMode === "STABLE_SUBJECT"
-      ? `subject:v1:${util.base64Encode(subject.userId)}`
+    pseudonymizationMode === "ANONYMOUS"
+      ? "anonymous:v1"
       : `session:v1:${util.base64Encode(sessionId)}`;
   const tenantScenarioKey = [
     "telemetry-scenario:v1",
