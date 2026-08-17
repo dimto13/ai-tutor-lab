@@ -92,7 +92,9 @@ export function request(ctx) {
   if (event.source !== "learning-analytics") {
     util.error("Unsupported telemetry event source", "TelemetryEventError");
   }
-  const occurredAt = requiredString(event.timestamp, "event.timestamp");
+  const occurredAt = util.time.parseISO8601ToEpochMilliSeconds(
+    requiredString(event.timestamp, "event.timestamp"),
+  );
   const sessionId = requiredString(event.sessionId, "event.sessionId");
   const payload = sanitizedPayload(event);
   if (requiresStep(eventType) && typeof payload.stepId !== "string") {
