@@ -35,12 +35,12 @@ export interface RetryScheduler {
 }
 
 export class TelemetryDeliveryError extends Error {
-  constructor(
-    message: string,
-    readonly retryable: boolean,
-  ) {
+  readonly retryable: boolean;
+
+  constructor(message: string, retryable: boolean) {
     super(message);
     this.name = "TelemetryDeliveryError";
+    this.retryable = retryable;
   }
 }
 
@@ -60,13 +60,22 @@ const defaultRetryScheduler: RetryScheduler = {
  */
 export class BufferedTelemetrySink implements TelemetrySink {
   private flushPromise: Promise<void> | null = null;
+  private readonly outbox: TelemetryOutbox;
+  private readonly writer: TelemetryEventWriter;
+  private readonly retryDelaysMs: readonly number[];
+  private readonly scheduler: RetryScheduler;
 
   constructor(
-    private readonly outbox: TelemetryOutbox,
-    private readonly writer: TelemetryEventWriter,
-    private readonly retryDelaysMs: readonly number[] = [250, 1_000, 5_000],
-    private readonly scheduler: RetryScheduler = defaultRetryScheduler,
-  ) {}
+    outbox: TelemetryOutbox,
+    writer: TelemetryEventWriter,
+    retryDelaysMs: readonly number[] = [250, 1_000, 5_000],
+    scheduler: RetryScheduler = defaultRetryScheduler,
+  ) {
+    this.outbox = outbox;
+    this.writer = writer;
+    this.retryDelaysMs = retryDelaysMs;
+    this.scheduler = scheduler;
+  }
 
   record(event: TrainingEvent): void {
     const queued = this.outbox.load();
