@@ -13,6 +13,7 @@ import { getScenario, getScenarioIds } from "@/scenarios";
 import { useSkillProfiles, type SkillProfilesState } from "@/skill-profile/useSkillProfiles";
 import {
   selectPrimaryDashboardAction,
+  shouldWaitForDashboardRecommendation,
   sortResumeCandidates,
   type DashboardResumeCandidate,
   type DashboardTrainingCandidate,
@@ -144,18 +145,25 @@ export function DashboardLearningOverview() {
     };
   }, [auth.status, subject]);
 
-  const primaryAction = selectPrimaryDashboardAction({
-    resumable,
-    trainingCandidates: candidates,
-    authoritativeProfiles: skillProfiles.status === "ready" ? skillProfiles.profiles : null,
+  const recommendationLoading = shouldWaitForDashboardRecommendation({
+    resumeLoading: resumeStatus === "loading",
+    hasResumable: resumable.length > 0,
+    skillProfilesLoading: skillProfiles.status === "loading",
   });
+  const primaryAction = recommendationLoading
+    ? null
+    : selectPrimaryDashboardAction({
+        resumable,
+        trainingCandidates: candidates,
+        authoritativeProfiles: skillProfiles.status === "ready" ? skillProfiles.profiles : null,
+      });
   const otherResumable = resumable.filter(
     (candidate) =>
       primaryAction?.kind !== "resume" || candidate.scenarioId !== primaryAction.scenarioId,
   );
 
   return (
-    <div className="mt-8 space-y-6" data-dashboard-overview-ready={resumeStatus !== "loading"}>
+    <div className="mt-8 space-y-6" data-dashboard-overview-ready={!recommendationLoading}>
       <section aria-labelledby="dashboard-competency-heading">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -189,9 +197,9 @@ export function DashboardLearningOverview() {
           </p>
         </div>
 
-        {resumeStatus === "loading" ? (
+        {recommendationLoading ? (
           <div className="mt-4 rounded-xl border border-border bg-card p-5" role="status">
-            <p className="text-sm text-muted-foreground">Gespeicherte Trainings werden geprüft …</p>
+            <p className="text-sm text-muted-foreground">Nächster Schritt wird ermittelt …</p>
           </div>
         ) : primaryAction ? (
           <article className="mt-4 rounded-xl border border-ring/60 bg-card p-5 shadow-sm">
