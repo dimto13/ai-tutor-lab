@@ -19,6 +19,7 @@ type BrowserErrorAllowance = {
   type: BrowserErrorType;
   text: RegExp;
   sourceUrl?: RegExp;
+  allowMissingSourceUrl?: boolean;
   pagePath?: RegExp;
   reason: string;
 };
@@ -36,9 +37,11 @@ const browserErrorAllowlist: readonly BrowserErrorAllowance[] = [
     type: "console.error",
     pagePath:
       /^\/training\/(?:artifact-preview-foundation\.guided|html-page-workflow\.(?:explore|guided|challenge))$/,
+    sourceUrl: /^about:srcdoc#?$/,
+    allowMissingSourceUrl: true,
     text: /^Blocked script execution in 'about:srcdoc#?' because the document's frame is sandboxed and the 'allow-scripts' permission is not set\.$/,
     reason:
-      "Chromium emits this exact diagnostic when Playwright observes the intentionally script-disabled artifact-preview srcdoc sandbox. Artifact HTML validation independently rejects script tags; this exception is limited to the artifact-preview training routes and the exact sandbox message.",
+      "Chromium emits this exact diagnostic when Playwright observes the intentionally script-disabled artifact-preview srcdoc sandbox. Artifact HTML validation independently rejects script tags; this exception is limited to the artifact-preview training routes, the exact sandbox message and an about:srcdoc source when Chromium reports one.",
   },
 ];
 
@@ -54,7 +57,11 @@ function isAllowedBrowserError(event: BrowserErrorEvent): boolean {
   return browserErrorAllowlist.some((allowance) => {
     if (allowance.type !== event.type || !allowance.text.test(event.text)) return false;
     if (allowance.sourceUrl) {
-      if (event.sourceUrl === undefined || !allowance.sourceUrl.test(event.sourceUrl)) return false;
+      if (event.sourceUrl === undefined) {
+        if (!allowance.allowMissingSourceUrl) return false;
+      } else if (!allowance.sourceUrl.test(event.sourceUrl)) {
+        return false;
+      }
     }
     if (allowance.pagePath && !allowance.pagePath.test(pagePath(event.pageUrl))) return false;
     return true;
