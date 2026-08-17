@@ -9,22 +9,27 @@ export const CLASSIFICATION_RUNTIME_DEFINITION = {
     {
       ref: "classification.document.list",
       label: "Synthetische Dokumente",
+      conceptKey: "classification.document",
     },
     {
       ref: "classification.document.preview",
       label: "Dokumentvorschau",
+      conceptKey: "classification.document",
     },
     {
       ref: "classification.indicators",
       label: "Klassifizierungsmerkmale",
+      conceptKey: "classification.indicators",
     },
     {
       ref: "classification.levels",
       label: "Klassifizierungsstufen",
+      conceptKey: "classification.level",
     },
     {
       ref: "classification.aiDecision",
       label: "Entscheidung zur KI-Nutzung",
+      conceptKey: "classification.ai_policy",
     },
   ],
   querySelectors: [
