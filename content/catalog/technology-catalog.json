@@ -19,6 +19,10 @@
     {
       "id": "artifact_preview",
       "name": "Artifact Preview"
+    },
+    {
+      "id": "document_classification",
+      "name": "Document Classification"
     }
   ],
   "providers": [
@@ -69,6 +73,12 @@
       "providerId": "ai-train-lab",
       "technologyId": "artifact_preview",
       "name": "Artifact Preview"
+    },
+    {
+      "id": "classification",
+      "providerId": "ai-train-lab",
+      "technologyId": "document_classification",
+      "name": "Classification Simulator"
     }
   ],
   "productVersions": [
@@ -106,6 +116,13 @@
       "version": "1.x",
       "capabilities": ["artifact_preview"],
       "runtimeAdapterIds": ["artifact-preview-simulator"]
+    },
+    {
+      "id": "classification@1.x",
+      "productId": "classification",
+      "version": "1.x",
+      "capabilities": ["artifact_preview"],
+      "runtimeAdapterIds": ["classification-simulator"]
     }
   ],
   "integrations": [
@@ -154,6 +171,12 @@
       "productId": "claude-code",
       "kind": "simulator",
       "capabilities": ["terminal", "chat", "agent_mode"]
+    },
+    {
+      "id": "classification-simulator",
+      "productId": "classification",
+      "kind": "simulator",
+      "capabilities": ["artifact_preview"]
     }
   ]
 }
