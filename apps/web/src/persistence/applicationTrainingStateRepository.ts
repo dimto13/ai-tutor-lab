@@ -1,4 +1,6 @@
 import type { TrainingStateRepository } from "@ai-train-lab/training-engine";
+import { createApplicationTelemetrySink } from "@/telemetry/applicationTelemetry";
+import { TelemetryTrainingStateRepository } from "@/telemetry/telemetryTrainingStateRepository";
 import { createBrowserOfflineTrainingStateStore } from "./adapters/localStorageOfflineTrainingStateStore";
 import { createBrowserTrainingStateRepository } from "./adapters/localStorageTrainingStateRepository";
 import { MigratingTrainingStateRepository } from "./migratingTrainingStateRepository";
@@ -50,7 +52,8 @@ function createLazyRemoteRepository(): TrainingStateRepository {
  * Composition root for durable training state. Local development/E2E use the browser repository.
  * Authenticated production keeps the remote repository authoritative, retains the owned browser
  * repository as a one-way legacy migration source, and adds a separate browser cache/outbox for
- * revisionsafe offline work and reconnect synchronization.
+ * revisionsafe offline work and reconnect synchronization. Learning telemetry decorates only this
+ * authenticated path and therefore reuses the same subject boundary without changing engine logic.
  */
 export function createApplicationTrainingStateRepository(): TrainingStateRepository {
   const localRepository = createBrowserTrainingStateRepository();
@@ -60,8 +63,12 @@ export function createApplicationTrainingStateRepository(): TrainingStateReposit
     createLazyRemoteRepository(),
     localRepository,
   );
-  return new OfflineBufferedTrainingStateRepository(
+  const offlineBufferedRepository = new OfflineBufferedTrainingStateRepository(
     remoteWithMigration,
     createBrowserOfflineTrainingStateStore(),
+  );
+  return new TelemetryTrainingStateRepository(
+    offlineBufferedRepository,
+    createApplicationTelemetrySink,
   );
 }
