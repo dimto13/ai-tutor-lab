@@ -99,9 +99,7 @@ export class BufferedTelemetrySink implements TelemetrySink {
         } catch (error) {
           if (error instanceof TelemetryDeliveryError && !error.retryable) {
             this.outbox.deadLetter(event, error.message);
-            this.outbox.save(
-              this.outbox.load().filter((candidate) => candidate.id !== event.id),
-            );
+            this.outbox.save(this.outbox.load().filter((candidate) => candidate.id !== event.id));
             deadLettered = true;
             break;
           }
