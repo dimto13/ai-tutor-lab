@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type {
-  TelemetrySink,
-  TrainingEvent,
-  TrainingSession,
-} from "@ai-train-lab/training-engine";
+import type { TelemetrySink, TrainingEvent, TrainingSession } from "@ai-train-lab/training-engine";
 import {
   BufferedTelemetrySink,
   TelemetryDeliveryError,
@@ -88,7 +84,10 @@ test("BufferedTelemetrySink never drops an event after retry exhaustion", async 
   await sink.flush();
 
   assert.deepEqual(delays, [5, 15]);
-  assert.deepEqual(outbox.events.map((queued) => queued.id), ["event-2"]);
+  assert.deepEqual(
+    outbox.events.map((queued) => queued.id),
+    ["event-2"],
+  );
   assert.deepEqual(outbox.deadLetters, []);
 });
 
@@ -114,7 +113,10 @@ test("BufferedTelemetrySink quarantines permanent rejects without blocking later
 
   assert.deepEqual(delivered, ["valid"]);
   assert.deepEqual(outbox.events, []);
-  assert.deepEqual(outbox.deadLetters.map((record) => record.event.id), ["invalid"]);
+  assert.deepEqual(
+    outbox.deadLetters.map((record) => record.event.id),
+    ["invalid"],
+  );
 });
 
 function session(overrides: Partial<TrainingSession> = {}): TrainingSession {
