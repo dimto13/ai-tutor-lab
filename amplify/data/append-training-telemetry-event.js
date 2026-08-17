@@ -45,17 +45,17 @@ function sanitizedPayload(event) {
     result.stepId = requiredString(payload.stepId, "stepId");
   }
   if (payload.hintLevel !== undefined && payload.hintLevel !== null) {
-    if (
-      typeof payload.hintLevel !== "number" ||
-      payload.hintLevel < 1 ||
-      payload.hintLevel > 3
-    ) {
+    if (typeof payload.hintLevel !== "number" || payload.hintLevel < 1 || payload.hintLevel > 3) {
       util.error("hintLevel must be between 1 and 3", "TelemetryEventError");
     }
     result.hintLevel = payload.hintLevel;
   }
   if (payload.outcome !== undefined && payload.outcome !== null) {
-    if (payload.outcome !== "pass" && payload.outcome !== "fail" && payload.outcome !== "near-miss") {
+    if (
+      payload.outcome !== "pass" &&
+      payload.outcome !== "fail" &&
+      payload.outcome !== "near-miss"
+    ) {
       util.error("Unsupported attempt outcome", "TelemetryEventError");
     }
     result.outcome = payload.outcome;
