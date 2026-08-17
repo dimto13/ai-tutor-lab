@@ -53,6 +53,20 @@ export const starterTechnologyPriority = [
   "artifact_preview",
 ] as const;
 
+/**
+ * Guided trainings which the existing dashboard presents as standalone tool foundations.
+ * This is recommendation/catalog policy, not SkillProfile evidence mapping. In particular,
+ * Claude Code is intentionally included although its scenario learning layer is `ai_workflow`:
+ * its catalog product is the CLI-agent technology and the authoritative SkillProfile remains
+ * the source for that technology's demonstrated level.
+ */
+export const dashboardStarterScenarioIds = [
+  "vscode-basics.guided",
+  "source-control-platform-basics.guided",
+  "copilot-basics.guided",
+  "claude-code-basics.guided",
+] as const;
+
 function technologyPriority(technologyId: string | null): number {
   const index = starterTechnologyPriority.indexOf(
     technologyId as (typeof starterTechnologyPriority)[number],
@@ -116,20 +130,17 @@ export function selectPrimaryDashboardAction({
     };
   }
 
-  const toolGuidedCandidates = trainingCandidates.filter(
-    (candidate) =>
-      candidate.mode === "guided" &&
-      candidate.learningLayer === "tool" &&
-      candidate.technologyId !== null,
+  const guidedCandidates = trainingCandidates.filter(
+    (candidate) => candidate.mode === "guided" && candidate.technologyId !== null,
   );
-  if (toolGuidedCandidates.length === 0) return null;
+  if (guidedCandidates.length === 0) return null;
 
   const profilesByTechnology =
     authoritativeProfiles === null
       ? null
       : new Map(authoritativeProfiles.map((profile) => [profile.technologyId, profile]));
 
-  const ordered = [...toolGuidedCandidates].sort((left, right) => {
+  const ordered = [...guidedCandidates].sort((left, right) => {
     if (profilesByTechnology) {
       const leftProfile = left.technologyId
         ? profilesByTechnology.get(left.technologyId)
