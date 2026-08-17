@@ -132,7 +132,8 @@ function parseRuntimeState(value: unknown): ClassificationSimulatorState {
     throw new TypeError("Invalid classification snapshot");
   }
   const candidate = value as Record<string, unknown>;
-  const scheme = candidate["scheme"] === null ? null : parseClassificationScheme(candidate["scheme"]);
+  const scheme =
+    candidate["scheme"] === null ? null : parseClassificationScheme(candidate["scheme"]);
   const documents = syntheticDocumentSchema.array().parse(candidate["documents"]);
   const activeDocumentId = candidate["activeDocumentId"];
   if (
@@ -166,7 +167,9 @@ function parseRuntimeState(value: unknown): ClassificationSimulatorState {
     candidate["markedIndicatorIds"],
     "markedIndicatorIds",
   );
-  if (!markedIndicatorIds.every((id) => scheme?.indicators.some((indicator) => indicator.id === id))) {
+  if (
+    !markedIndicatorIds.every((id) => scheme?.indicators.some((indicator) => indicator.id === id))
+  ) {
     throw new TypeError("Invalid classification snapshot markedIndicatorIds");
   }
 
