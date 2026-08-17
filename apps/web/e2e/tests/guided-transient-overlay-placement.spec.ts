@@ -13,7 +13,8 @@ async function expectInsideViewport(page: Page, locator: Locator): Promise<void>
   const box = await locator.boundingBox();
   const viewport = page.viewportSize();
   if (!box) throw new Error("Guided-Ziel besitzt keine Boundingbox für den Viewport-Nachweis.");
-  if (!viewport) throw new Error("Playwright-Viewport ist für den Guided-Nachweis nicht verfügbar.");
+  if (!viewport)
+    throw new Error("Playwright-Viewport ist für den Guided-Nachweis nicht verfügbar.");
 
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.y).toBeGreaterThanOrEqual(0);
