@@ -16,12 +16,14 @@ const rolePolicyUrl = new URL("../../apps/web/src/auth/roles.ts", import.meta.ur
 
 const roleGroups = ["role:learner", "role:author", "role:trainer", "role:tenant_admin"] as const;
 
-function definitionBlock(source: string, name: string, nextName: string): string {
+function definitionBlock(source: string, name: string): string {
   const start = source.indexOf(`  ${name}:`);
   assert.notEqual(start, -1, `${name} must exist in Amplify Data schema`);
-  const end = source.indexOf(`  ${nextName}:`, start + name.length + 3);
-  assert.ok(end > start, `${nextName} must follow ${name}`);
-  return source.slice(start, end);
+  const remainder = source.slice(start + name.length + 3);
+  const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
+  const end =
+    nextDefinition >= 0 ? start + name.length + 3 + nextDefinition : source.indexOf("\n});", start);
+  return source.slice(start, end >= 0 ? end : source.length);
 }
 
 test("Cognito defines the four application roles as server-managed groups", async () => {
@@ -47,7 +49,7 @@ test("provider groups are normalized before they enter cloud-neutral UserIdentit
 
 test("trainer reporting entry point is protected by server-side group authorization", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
-  const block = definitionBlock(source, "loadTenantReportingContext", "awardScenarioScore");
+  const block = definitionBlock(source, "loadTenantReportingContext");
 
   assert.match(block, /allow\.groups\(\["role:trainer",\s*"role:tenant_admin"\]\)/);
   assert.doesNotMatch(block, /allow\.authenticated\(\)/);
@@ -76,12 +78,8 @@ test("reporting resolver derives tenant and role from signed identity only", asy
 
 test("trainer roles do not unlock person-specific failed-attempt records", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
-  const attemptBlock = definitionBlock(source, "Attempt", "ScenarioRun");
-  const reportingTypeBlock = definitionBlock(
-    source,
-    "TenantReportingContext",
-    "ScenarioRunEnvelope",
-  );
+  const attemptBlock = definitionBlock(source, "Attempt");
+  const reportingTypeBlock = definitionBlock(source, "TenantReportingContext");
 
   assert.match(
     attemptBlock,

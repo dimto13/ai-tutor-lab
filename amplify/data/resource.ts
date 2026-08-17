@@ -7,6 +7,7 @@ export const schema = a.schema({
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
   ScenarioRunEvidenceStatus: a.enum(["eligible", "suspect_fast", "unassessed"]),
   SkillLevel: a.enum(["novice", "advanced_beginner", "practitioner", "proficient"]),
+  TelemetryPseudonymizationMode: a.enum(["SESSION", "ANONYMOUS"]),
 
   UserProfile: a
     .model({
@@ -178,6 +179,37 @@ export const schema = a.schema({
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
 
+  TenantTelemetryPolicy: a
+    .model({
+      tenantId: a.string().required(),
+      pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+      updatedAt: a.float().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
+  TrainingTelemetryEvent: a
+    .model({
+      tenantId: a.string().required(),
+      tenantScenarioKey: a.string().required(),
+      subjectKey: a.string().required(),
+      eventId: a.string().required(),
+      source: a.string().required(),
+      eventType: a.string().required(),
+      occurredAt: a.float().required(),
+      receivedAtEpochSeconds: a.float().required(),
+      sessionId: a.string().required(),
+      scenarioId: a.string().required(),
+      mode: a.ref("TrainingMode").required(),
+      stepId: a.string(),
+      payload: a.json().required(),
+    })
+    .secondaryIndexes((index) => [
+      index("tenantScenarioKey").sortKeys(["occurredAt"]).name("telemetryByTenantScenarioTime"),
+    ])
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
   TrainingStateEnvelope: a.customType({
     tenantId: a.string().required(),
     userId: a.string().required(),
@@ -225,6 +257,21 @@ export const schema = a.schema({
     tenantId: a.string().required(),
     role: a.string().required(),
     personSpecificAttemptAccess: a.boolean().required(),
+  }),
+
+  TenantTelemetryPolicyEnvelope: a.customType({
+    pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+  }),
+
+  ScenarioLearningAnalytics: a.customType({
+    scenarioId: a.string().required(),
+    sessionsStarted: a.integer().required(),
+    sessionsCompleted: a.integer().required(),
+    abandonmentCount: a.integer().required(),
+    averageDurationMs: a.float(),
+    cohortSuppressed: a.boolean().required(),
+    truncated: a.boolean().required(),
+    steps: a.json().required(),
   }),
 
   ScenarioRunEnvelope: a.customType({
@@ -425,6 +472,63 @@ export const schema = a.schema({
     .handler(
       a.handler.custom({
         entry: "./load-tenant-reporting-context.js",
+      }),
+    ),
+
+  appendTrainingTelemetryEvent: a
+    .mutation()
+    .arguments({ event: a.json().required() })
+    .returns(a.boolean())
+    .authorization((allow) => [allow.authenticated()])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TenantTelemetryPolicy"),
+        entry: "./telemetry-load-policy-for-write.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./append-training-telemetry-event.js",
+      }),
+    ]),
+
+  loadTenantTelemetryPolicy: a
+    .query()
+    .returns(a.ref("TenantTelemetryPolicyEnvelope"))
+    .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("TenantTelemetryPolicy"),
+        entry: "./load-tenant-telemetry-policy.js",
+      }),
+    ),
+
+  saveTenantTelemetryPolicy: a
+    .mutation()
+    .arguments({
+      pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+    })
+    .returns(a.ref("TenantTelemetryPolicyEnvelope"))
+    .authorization((allow) => [allow.groups(["role:tenant_admin"])])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("TenantTelemetryPolicy"),
+        entry: "./save-tenant-telemetry-policy.js",
+      }),
+    ),
+
+  loadTrainingAnalytics: a
+    .query()
+    .arguments({
+      scenarioId: a.string().required(),
+      from: a.float(),
+      to: a.float(),
+    })
+    .returns(a.ref("ScenarioLearningAnalytics"))
+    .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./load-training-analytics.js",
       }),
     ),
 

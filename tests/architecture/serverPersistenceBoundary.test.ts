@@ -45,36 +45,16 @@ const clientOperations = Object.keys(clientOperationDataSources) as Array<
   keyof typeof clientOperationDataSources
 >;
 
-const schemaMembers = [
-  "TrainingMode",
-  "SelfAssessedAiLevel",
-  "StepStatus",
-  "AttemptOutcome",
-  ...serverOwnedModels,
-  "TrainingStateEnvelope",
-  "RuntimeSnapshotEnvelope",
-  "UserProfileEnvelope",
-  "UserPreferencesEnvelope",
-  "ScoreEventEnvelope",
-  "ScoreAwardEnvelope",
-  ...clientOperations,
-  "awardScenarioScore",
-  "listMyScoreEvents",
-] as const;
-
 const disabledGeneratedOperationsPattern =
   /\.disableOperations\(\s*\[\s*["']queries["']\s*,\s*["']mutations["']\s*,\s*["']subscriptions["']\s*,?\s*\]\s*\)/;
 
 function definitionBlock(source: string, name: string): string {
   const start = source.indexOf(`  ${name}:`);
   assert.notEqual(start, -1, `${name} must exist in Amplify Data schema`);
-
-  const currentIndex = schemaMembers.indexOf(name as (typeof schemaMembers)[number]);
-  const laterStarts = schemaMembers
-    .slice(currentIndex + 1)
-    .map((candidate) => source.indexOf(`  ${candidate}:`, start + name.length + 3))
-    .filter((position) => position > start);
-  const end = laterStarts.length > 0 ? Math.min(...laterStarts) : source.indexOf("\n});", start);
+  const remainder = source.slice(start + name.length + 3);
+  const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
+  const end =
+    nextDefinition >= 0 ? start + name.length + 3 + nextDefinition : source.indexOf("\n});", start);
   return source.slice(start, end >= 0 ? end : source.length);
 }
 
