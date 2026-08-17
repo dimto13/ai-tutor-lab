@@ -85,6 +85,7 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
     sessionsStarted: nonNegativeNumber(source["sessionsStarted"], "sessionsStarted"),
     sessionsCompleted: nonNegativeNumber(source["sessionsCompleted"], "sessionsCompleted"),
     abandonmentCount: nonNegativeNumber(source["abandonmentCount"], "abandonmentCount"),
+    averageDurationMs: optionalDuration(source["averageDurationMs"]),
     cohortSuppressed: source["cohortSuppressed"],
     truncated: source["truncated"],
     steps: source["steps"].map(stepMetric),
