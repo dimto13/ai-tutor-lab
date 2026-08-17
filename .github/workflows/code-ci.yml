@@ -208,6 +208,12 @@ jobs:
         run: npm run check:runtime-versions
 
       - name: Build Amplify production artifact
+        env:
+          # Amplify Hosting normally runs `ampx pipeline-deploy` first and writes
+          # Cognito outputs into apps/web/public. #309 intentionally has no cloud
+          # credentials, so use the application's supported local auth adapter
+          # while still producing the real production-mode Nitro/Amplify artifact.
+          VITE_AUTH_MODE: local
         run: npm run build
 
       - name: Verify Amplify compute HTTP runtime
