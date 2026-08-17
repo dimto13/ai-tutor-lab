@@ -3,6 +3,7 @@ import test from "node:test";
 import type { SkillProfileProjection } from "@ai-train-lab/training-engine";
 import {
   selectPrimaryDashboardAction,
+  shouldWaitForDashboardRecommendation,
   sortResumeCandidates,
   type DashboardResumeCandidate,
   type DashboardTrainingCandidate,
@@ -69,6 +70,44 @@ function resume(scenarioId: string, title: string, updatedAt: number): Dashboard
     activeStepTitle: "Nächster gespeicherter Schritt",
   };
 }
+
+test("recommendation waits for competency data only when no resumable training exists", () => {
+  assert.equal(
+    shouldWaitForDashboardRecommendation({
+      resumeLoading: false,
+      hasResumable: false,
+      skillProfilesLoading: true,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldWaitForDashboardRecommendation({
+      resumeLoading: false,
+      hasResumable: true,
+      skillProfilesLoading: true,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldWaitForDashboardRecommendation({
+      resumeLoading: false,
+      hasResumable: false,
+      skillProfilesLoading: false,
+    }),
+    false,
+  );
+});
+
+test("recommendation always waits while the resume scan is still running", () => {
+  assert.equal(
+    shouldWaitForDashboardRecommendation({
+      resumeLoading: true,
+      hasResumable: false,
+      skillProfilesLoading: false,
+    }),
+    true,
+  );
+});
 
 test("an unfinished training always wins over a new competency-based start", () => {
   const action = selectPrimaryDashboardAction({
