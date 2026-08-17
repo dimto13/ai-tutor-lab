@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "../fixtures/browser-error-guard";
 
 async function ready(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");

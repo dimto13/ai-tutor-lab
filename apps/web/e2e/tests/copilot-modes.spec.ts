@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures/browser-error-guard";
 
 test("Copilot-Kachel bietet Explore, Guided und Challenge", async ({ page }) => {
   await page.goto("/");

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures/browser-error-guard";
 
 test("Guided eskaliert Orientierung zu exakter Aktion und starkem Highlight", async ({ page }) => {
   await page.goto("/training/vscode-basics.guided");
