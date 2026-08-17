@@ -1,0 +1,38 @@
+{
+  "language": "de",
+  "technologyConcepts": {},
+  "concepts": [
+    {
+      "key": "classification.document",
+      "term": "Klassifizierungsdokument",
+      "aliases": ["Dokumentvorschau", "Trainingsdokument"],
+      "simple": "Ein Klassifizierungsdokument ist ein synthetisches Trainingsdokument, an dem du Schutzmerkmale erkennst und eine passende Einstufung übst.",
+      "advanced": "Das Trainingsdokument ist die fachliche Eingabe des Klassifizierungsablaufs. Im Simulator stammen Inhalte ausschließlich aus dem deklarativen synthetischen Dokumentkorpus und werden nicht in Runtime-Events übernommen.",
+      "uiTargets": []
+    },
+    {
+      "key": "classification.indicators",
+      "term": "Klassifizierungsmerkmal",
+      "aliases": ["Merkmal", "Schutzmerkmal"],
+      "simple": "Klassifizierungsmerkmale sind Hinweise im Dokument, die für die Schutzstufe relevant sind, zum Beispiel personenbezogene Daten oder interne Kennzeichnungen.",
+      "advanced": "Merkmale werden über das mandantenkonfigurierbare Klassifizierungsschema definiert. Sie referenzieren eine Mindeststufe und dienen als nachvollziehbare Evidenz für die Einstufungsentscheidung.",
+      "uiTargets": []
+    },
+    {
+      "key": "classification.level",
+      "term": "Klassifizierungsstufe",
+      "aliases": ["Schutzstufe", "Einstufung"],
+      "simple": "Die Klassifizierungsstufe beschreibt, wie schützenswert ein Dokument ist und welche Regeln deshalb gelten.",
+      "advanced": "Klassifizierungsstufen sind im Tenant-Schema geordnet. Ihre Rangfolge verbindet erkannte Merkmale mit Schutzanforderungen und bildet die Grundlage für nachgelagerte Nutzungsregeln.",
+      "uiTargets": []
+    },
+    {
+      "key": "classification.ai_policy",
+      "term": "KI-Nutzungsregel",
+      "aliases": ["KI-Policy", "KI-Nutzungsentscheidung"],
+      "simple": "Die KI-Nutzungsregel legt fest, bis zu welcher Klassifizierungsstufe ein bestimmtes KI-Werkzeug verwendet werden darf.",
+      "advanced": "Die KI-Policy ist Teil des mandantenkonfigurierbaren Klassifizierungsschemas. Sie ordnet jedem freigegebenen Werkzeug eine maximal zulässige Schutzstufe zu; die Nutzerentscheidung kann dagegen geprüft werden, ohne Dokumentinhalt in Events zu übertragen.",
+      "uiTargets": []
+    }
+  ]
+}
