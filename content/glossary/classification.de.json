@@ -1,6 +1,13 @@
 {
   "language": "de",
-  "technologyConcepts": {},
+  "technologyConcepts": {
+    "document_classification": [
+      "classification.document",
+      "classification.indicators",
+      "classification.level",
+      "classification.ai_policy"
+    ]
+  },
   "concepts": [
     {
       "key": "classification.document",
