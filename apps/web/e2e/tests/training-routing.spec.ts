@@ -32,9 +32,12 @@ test("unbekannte Trainings-ID liefert einen deutschen 404 ohne technische Intern
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Training nicht gefunden" })).toBeVisible();
   await expect(
-    page.getByText("Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.", {
-      exact: true,
-    }),
+    page.getByText(
+      "Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Zurück zur Trainingsübersicht" })).toHaveAttribute(
     "href",
@@ -50,13 +53,15 @@ test("Dashboard verlinkt nur Trainingsszenarien, die als Route erreichbar sind",
 }) => {
   await page.goto("/");
 
-  const trainingLinks = await page.locator('a[href^="/training/"]').evaluateAll((links) => [
-    ...new Set(
-      links
-        .map((link) => link.getAttribute("href"))
-        .filter((href): href is string => typeof href === "string"),
-    ),
-  ]);
+  const trainingLinks = await page
+    .locator('a[href^="/training/"]')
+    .evaluateAll((links) => [
+      ...new Set(
+        links
+          .map((link) => link.getAttribute("href"))
+          .filter((href): href is string => typeof href === "string"),
+      ),
+    ]);
 
   expect(trainingLinks.length).toBeGreaterThan(0);
   for (const href of trainingLinks) {
