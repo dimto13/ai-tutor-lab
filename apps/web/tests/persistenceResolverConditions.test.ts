@@ -38,9 +38,7 @@ test("revision-protected persistence resolvers use explicit object-shaped condit
     assert.match(source, new RegExp(`expression: "${expressionName} = :expectedRevision"`));
     assert.match(
       source,
-      new RegExp(
-        `expressionNames: \\{ "${expressionName}": "${revisionAttribute}" \\}`,
-      ),
+      new RegExp(`expressionNames: \\{ "${expressionName}": "${revisionAttribute}" \\}`),
     );
     assert.match(
       source,
