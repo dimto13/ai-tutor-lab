@@ -76,7 +76,10 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
   }
   const source = value as Record<string, unknown>;
   if (!Array.isArray(source["steps"])) throw new Error("Training analytics steps is invalid");
-  if (typeof source["cohortSuppressed"] !== "boolean" || typeof source["truncated"] !== "boolean") {
+  if (
+    typeof source["cohortSuppressed"] !== "boolean" ||
+    typeof source["truncated"] !== "boolean"
+  ) {
     throw new Error("Training analytics privacy metadata is invalid");
   }
   return {
@@ -93,6 +96,11 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
 function pseudonymizationMode(value: unknown): TelemetryPseudonymizationMode {
   if (value === "SESSION" || value === "STABLE_SUBJECT") return value;
   throw new Error("Telemetry pseudonymization mode is invalid");
+}
+
+function isoTimestamp(value: number): string {
+  if (!Number.isFinite(value)) throw new Error("Training analytics time bound is invalid");
+  return new Date(value).toISOString();
 }
 
 export function createAmplifyTelemetryEventWriterWithClient(
@@ -118,8 +126,8 @@ export function createAmplifyTrainingAnalyticsServiceWithClient(
     async loadScenarioMetrics(query) {
       const result = await client.queries.loadTrainingAnalytics({
         scenarioId: query.scenarioId,
-        ...(query.from === undefined ? {} : { from: query.from }),
-        ...(query.to === undefined ? {} : { to: query.to }),
+        ...(query.from === undefined ? {} : { from: isoTimestamp(query.from) }),
+        ...(query.to === undefined ? {} : { to: isoTimestamp(query.to) }),
       });
       if (result.errors?.length) throw new Error(errorText(result.errors));
       return scenarioAnalytics(result.data);
