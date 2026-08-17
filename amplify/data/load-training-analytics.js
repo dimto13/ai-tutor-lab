@@ -44,27 +44,29 @@ function requireScenarioId(ctx) {
   return ctx.args.scenarioId;
 }
 
+function optionalEpochMillis(value, name) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "number" || value < 0) {
+    util.error(`${name} must be non-negative epoch milliseconds`, "TrainingAnalyticsError");
+  }
+  return value;
+}
+
 function referenceEpochSeconds(to) {
   const now = util.time.nowEpochSeconds();
-  if (!to) return now;
-  const requested = util.time.epochMilliSecondsToSeconds(
-    util.time.parseISO8601ToEpochMilliSeconds(to),
-  );
+  if (to === null) return now;
+  const requested = util.time.epochMilliSecondsToSeconds(to);
   return requested < now ? requested : now;
 }
 
 export function request(ctx) {
   const tenantId = callerTenant(ctx);
   const scenarioId = requireScenarioId(ctx);
-  const from = ctx.args.from;
-  const to = ctx.args.to;
-  if (from !== undefined && from !== null && (typeof from !== "string" || from.length === 0)) {
-    util.error("from must be an ISO timestamp", "TrainingAnalyticsError");
+  const from = optionalEpochMillis(ctx.args.from, "from");
+  const to = optionalEpochMillis(ctx.args.to, "to");
+  if (from !== null && to !== null && from > to) {
+    util.error("from must be before to", "TrainingAnalyticsError");
   }
-  if (to !== undefined && to !== null && (typeof to !== "string" || to.length === 0)) {
-    util.error("to must be an ISO timestamp", "TrainingAnalyticsError");
-  }
-  if (from && to && from > to) util.error("from must be before to", "TrainingAnalyticsError");
 
   ctx.stash.analyticsTenantId = tenantId;
   ctx.stash.analyticsScenarioId = scenarioId;
@@ -72,14 +74,14 @@ export function request(ctx) {
 
   const values = { ":tenantScenarioKey": tenantScenarioKey(tenantId, scenarioId) };
   let expression = "tenantScenarioKey = :tenantScenarioKey";
-  if (from && to) {
+  if (from !== null && to !== null) {
     expression += " AND occurredAt BETWEEN :from AND :to";
     values[":from"] = from;
     values[":to"] = to;
-  } else if (from) {
+  } else if (from !== null) {
     expression += " AND occurredAt >= :from";
     values[":from"] = from;
-  } else if (to) {
+  } else if (to !== null) {
     expression += " AND occurredAt <= :to";
     values[":to"] = to;
   }
