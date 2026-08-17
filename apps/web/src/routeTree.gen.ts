@@ -65,10 +65,17 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
+  fullPaths:
+    '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
-  id: '__root__' | '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
+  id:
+    | '__root__'
+    | '/'
+    | '/anmelden'
+    | '/kompetenz'
+    | '/willkommen'
+    | '/training/$scenarioId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
