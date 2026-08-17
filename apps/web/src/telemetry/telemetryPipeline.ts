@@ -110,6 +110,10 @@ function eventTimestamp(timestampMs: number): string {
   return new Date(timestampMs).toISOString();
 }
 
+function telemetrySessionId(session: TrainingSession): string {
+  return `${session.id}:${session.startedAt}`;
+}
+
 function createLearningEvent(
   session: TrainingSession,
   type: LearningTelemetryEventType,
@@ -117,12 +121,13 @@ function createLearningEvent(
   timestampMs: number,
   payload: LearningEventPayload,
 ): TrainingEvent<LearningEventPayload> {
+  const sessionId = telemetrySessionId(session);
   return {
-    id: `analytics:${session.id}:${eventKey}`,
+    id: `analytics:${sessionId}:${eventKey}`,
     source: LEARNING_TELEMETRY_SOURCE,
     type,
     timestamp: eventTimestamp(timestampMs),
-    sessionId: session.id,
+    sessionId,
     payload,
   };
 }
@@ -155,7 +160,8 @@ export class TrainingTelemetryRecorder {
   }
 
   recordSession(session: TrainingSession, now = Date.now()): void {
-    const previous = this.previousSessions.get(session.id);
+    const runId = telemetrySessionId(session);
+    const previous = this.previousSessions.get(runId);
     const basePayload = { scenarioId: session.scenarioId, mode: session.mode } as const;
 
     if (!previous) {
@@ -170,7 +176,7 @@ export class TrainingTelemetryRecorder {
       );
 
       if (session.activeStepId && isPristineSession(session)) {
-        this.stepStartedAt.set(`${session.id}:${session.activeStepId}`, session.startedAt);
+        this.stepStartedAt.set(`${runId}:${session.activeStepId}`, session.startedAt);
         this.publish(
           createLearningEvent(
             session,
@@ -185,7 +191,7 @@ export class TrainingTelemetryRecorder {
       for (const usage of session.hintUsage) this.publishHint(session, usage);
       for (const attempt of session.attempts) this.publishAttempt(session, attempt);
       if (session.finishedAt !== null) this.publishSessionCompleted(session, session.finishedAt);
-      this.previousSessions.set(session.id, session);
+      this.previousSessions.set(runId, session);
       return;
     }
 
@@ -206,7 +212,7 @@ export class TrainingTelemetryRecorder {
         previousStatus !== "COMPLETED" &&
         previousStatus !== "SKIPPED"
       ) {
-        const startedAt = this.stepStartedAt.get(`${session.id}:${stepId}`);
+        const startedAt = this.stepStartedAt.get(`${runId}:${stepId}`);
         this.publish(
           createLearningEvent(
             session,
@@ -224,7 +230,7 @@ export class TrainingTelemetryRecorder {
     }
 
     if (session.activeStepId && session.activeStepId !== previous.activeStepId) {
-      this.stepStartedAt.set(`${session.id}:${session.activeStepId}`, now);
+      this.stepStartedAt.set(`${runId}:${session.activeStepId}`, now);
       this.publish(
         createLearningEvent(
           session,
@@ -240,7 +246,7 @@ export class TrainingTelemetryRecorder {
       this.publishSessionCompleted(session, session.finishedAt);
     }
 
-    this.previousSessions.set(session.id, session);
+    this.previousSessions.set(runId, session);
   }
 
   private publishHint(session: TrainingSession, usage: TrainingSession["hintUsage"][number]): void {
