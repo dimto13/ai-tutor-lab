@@ -31,6 +31,14 @@ function optionalDuration(value) {
   return value;
 }
 
+function optionalActionType(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string" || value.length === 0 || value.length > 128) {
+    util.error("actionType must be a bounded non-empty string", "TelemetryEventError");
+  }
+  return value;
+}
+
 function sanitizedPayload(event) {
   const payload = event.payload;
   if (!payload || typeof payload !== "object" || typeof payload.length === "number") {
@@ -60,6 +68,8 @@ function sanitizedPayload(event) {
     }
     result.outcome = payload.outcome;
   }
+  const actionType = optionalActionType(payload.actionType);
+  if (actionType !== null) result.actionType = actionType;
   const durationMs = optionalDuration(payload.durationMs);
   if (durationMs !== null) result.durationMs = durationMs;
   return result;
