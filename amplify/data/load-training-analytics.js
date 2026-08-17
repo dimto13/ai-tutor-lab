@@ -46,6 +46,15 @@ function requireScenarioId(ctx) {
   return ctx.args.scenarioId;
 }
 
+function referenceEpochSeconds(to) {
+  const now = util.time.nowEpochSeconds();
+  if (!to) return now;
+  const requested = util.time.epochMilliSecondsToSeconds(
+    util.time.parseISO8601ToEpochMilliSeconds(to),
+  );
+  return requested < now ? requested : now;
+}
+
 export function request(ctx) {
   const tenantId = callerTenant(ctx);
   const scenarioId = requireScenarioId(ctx);
@@ -61,6 +70,7 @@ export function request(ctx) {
 
   ctx.stash.analyticsTenantId = tenantId;
   ctx.stash.analyticsScenarioId = scenarioId;
+  ctx.stash.analyticsReferenceEpochSeconds = referenceEpochSeconds(to);
 
   const values = { ":tenantScenarioKey": tenantScenarioKey(tenantId, scenarioId) };
   let expression = "tenantScenarioKey = :tenantScenarioKey";
@@ -107,8 +117,16 @@ function stepMetric(steps, stepId) {
 
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
+  if (ctx.result && ctx.result.nextToken) {
+    util.error(
+      "Analytics range exceeds the exact aggregation limit; narrow the from/to window",
+      "TrainingAnalyticsRangeTooLarge",
+    );
+  }
+
   const tenantId = ctx.stash.analyticsTenantId;
   const scenarioId = ctx.stash.analyticsScenarioId;
+  const referenceTime = ctx.stash.analyticsReferenceEpochSeconds;
   const items = ctx.result && ctx.result.items ? ctx.result.items : [];
   const sessions = {};
   const steps = {};
@@ -163,7 +181,6 @@ export function response(ctx) {
   let sessionsStarted = 0;
   let sessionsCompleted = 0;
   let abandonmentCount = 0;
-  const now = util.time.nowEpochSeconds();
   for (const sessionId of Object.keys(sessions)) {
     const session = sessions[sessionId];
     if (!session.started) continue;
@@ -172,7 +189,10 @@ export function response(ctx) {
       sessionsCompleted += 1;
       continue;
     }
-    if (session.lastReceivedAt > 0 && now - session.lastReceivedAt >= ABANDONMENT_AFTER_SECONDS) {
+    if (
+      session.lastReceivedAt > 0 &&
+      referenceTime - session.lastReceivedAt >= ABANDONMENT_AFTER_SECONDS
+    ) {
       abandonmentCount += 1;
       if (session.lastStepId) stepMetric(steps, session.lastStepId).abandonmentCount += 1;
     }
@@ -205,7 +225,7 @@ export function response(ctx) {
     sessionsCompleted: cohortSuppressed ? 0 : sessionsCompleted,
     abandonmentCount: cohortSuppressed ? 0 : abandonmentCount,
     cohortSuppressed,
-    truncated: Boolean(ctx.result && ctx.result.nextToken),
+    truncated: false,
     steps: resultSteps,
   };
 }
