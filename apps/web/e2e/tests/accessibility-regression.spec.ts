@@ -31,13 +31,14 @@ test.describe("Accessibility regressions", () => {
     await page.getByRole("button", { name: "Abmelden" }).click();
     await expect(page).toHaveURL(/\/willkommen$/);
 
-    await page.goto("/anmelden");
+    await page.getByRole("link", { name: "Anmelden" }).click();
     await expect(page).toHaveURL(/\/anmelden$/);
     await expect(page.getByRole("heading", { name: "AI Training Lab" })).toBeVisible();
     await expect(page.getByLabel("E-Mail")).toBeVisible();
     await expect(page.getByLabel("Passwort")).toBeVisible();
 
     await accessibility.check("anonymous sign-in page /anmelden");
+    await expect(page).toHaveURL(/\/anmelden$/);
   });
 
   test("competency profile /kompetenz has no unapproved axe violations", async ({
