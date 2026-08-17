@@ -38,6 +38,18 @@ function itemId(subject) {
   );
 }
 
+function revisionCondition(expectedRevision) {
+  if (expectedRevision === null || expectedRevision === undefined) {
+    return { expression: "attribute_not_exists(id)" };
+  }
+
+  return {
+    expression: "#profileVersion = :expectedRevision",
+    expressionNames: { "#profileVersion": "profileVersion" },
+    expressionValues: util.dynamodb.toMapValues({ ":expectedRevision": expectedRevision }),
+  };
+}
+
 export function request(ctx) {
   const subject = caller(ctx);
   const expectedRevision = ctx.args.expectedRevision;
@@ -51,16 +63,11 @@ export function request(ctx) {
     profileVersion: revision,
   };
 
-  const condition =
-    expectedRevision === null || expectedRevision === undefined
-      ? { expression: "attribute_not_exists(id)" }
-      : util.transform.toDynamoDBConditionExpression({ profileVersion: { eq: expectedRevision } });
-
   return {
     operation: "PutItem",
     key: util.dynamodb.toMapValues({ id: itemId(subject) }),
     attributeValues: util.dynamodb.toMapValues(values),
-    condition,
+    condition: revisionCondition(expectedRevision),
   };
 }
 
