@@ -48,9 +48,7 @@ function matchingException(
   const target = serializedTarget(node);
   return accessibilityExceptions.find(
     (exception) =>
-      exception.ruleId === ruleId &&
-      exception.route.test(route) &&
-      exception.target === target,
+      exception.ruleId === ruleId && exception.route.test(route) && exception.target === target,
   );
 }
 
