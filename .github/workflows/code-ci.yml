@@ -178,3 +178,100 @@ jobs:
             apps/web/e2e/test-results
           if-no-files-found: ignore
           retention-days: 7
+
+  e2e-production-artifact:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # The generated Amplify Hosting compute wrapper currently binds to port 3000;
+      # this is the same origin contract exercised by scripts/smoke-amplify-runtime.mjs.
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+      AMPLIFY_COMPUTE_PORT: "3000"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Verify pinned runtime toolchain
+        run: node scripts/check-runtime-versions.mjs --toolchain-only
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Verify beta runtime dependency contract
+        run: npm run check:runtime-versions
+
+      - name: Build Amplify production artifact
+        env:
+          # Amplify Hosting normally runs `ampx pipeline-deploy` first and writes
+          # Cognito outputs into apps/web/public. #309 intentionally has no cloud
+          # credentials, so use the application's supported local auth adapter
+          # while still producing the real production-mode Nitro/Amplify artifact.
+          VITE_AUTH_MODE: local
+        run: npm run build
+
+      - name: Verify Amplify compute HTTP runtime
+        run: npm run validate:amplify-runtime
+
+      - name: Install pinned Playwright test runner
+        run: npm install --prefix apps/web/e2e --package-lock=false --ignore-scripts --no-audit --no-fund
+
+      - name: Install Chromium
+        run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run critical E2E against Amplify compute artifact
+        run: |
+          set -euo pipefail
+          compute_dir="apps/web/.amplify-hosting/compute/default"
+          compute_log="${RUNNER_TEMP}/amplify-compute-production-artifact.log"
+
+          setsid sh -c 'cd "$1" && exec env HOST=127.0.0.1 PORT="$2" node server.js' \
+            _ "${compute_dir}" "${AMPLIFY_COMPUTE_PORT}" >"${compute_log}" 2>&1 &
+          server_pid=$!
+
+          cleanup() {
+            kill -- "-${server_pid}" 2>/dev/null || kill "${server_pid}" 2>/dev/null || true
+            wait "${server_pid}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl -fsS --max-time 5 "${PLAYWRIGHT_BASE_URL}/" -o "${RUNNER_TEMP}/production-artifact-root.html"; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "${server_pid}" 2>/dev/null; then
+              cat "${compute_log}"
+              echo "Amplify compute server exited before browser E2E readiness."
+              exit 1
+            fi
+            sleep 0.5
+          done
+
+          if [ "${ready}" != "true" ]; then
+            cat "${compute_log}"
+            echo "Amplify compute server did not become ready at ${PLAYWRIGHT_BASE_URL}."
+            exit 1
+          fi
+
+          echo "Amplify compute artifact ready at ${PLAYWRIGHT_BASE_URL}; running critical production subset."
+          npm test --prefix apps/web/e2e -- --config=playwright.production-artifact.config.ts
+
+      - name: Upload production-artifact Playwright diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-production-artifact-diagnostics
+          path: |
+            apps/web/e2e/playwright-report-production-artifact
+            apps/web/e2e/test-results-production-artifact
+            ${{ runner.temp }}/amplify-compute-production-artifact.log
+          if-no-files-found: ignore
+          retention-days: 7
