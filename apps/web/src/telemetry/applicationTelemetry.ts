@@ -1,4 +1,8 @@
-import type { TelemetrySink, TrainingEvent, TrainingSubjectRef } from "@ai-train-lab/training-engine";
+import type {
+  TelemetrySink,
+  TrainingEvent,
+  TrainingSubjectRef,
+} from "@ai-train-lab/training-engine";
 import { createLocalStorageTelemetryOutbox } from "./adapters/localStorageTelemetryOutbox";
 import {
   BufferedTelemetrySink,
