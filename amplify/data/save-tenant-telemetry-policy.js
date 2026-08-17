@@ -33,7 +33,7 @@ function policyId(tenantId) {
 export function request(ctx) {
   const tenantId = callerTenant(ctx);
   const mode = ctx.args.pseudonymizationMode;
-  if (mode !== "SESSION" && mode !== "STABLE_SUBJECT") {
+  if (mode !== "SESSION" && mode !== "ANONYMOUS") {
     util.error("Unsupported telemetry pseudonymization mode", "TelemetryPolicyError");
   }
 
