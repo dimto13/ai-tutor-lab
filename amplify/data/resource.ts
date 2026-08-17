@@ -205,9 +205,7 @@ export const schema = a.schema({
       payload: a.json().required(),
     })
     .secondaryIndexes((index) => [
-      index("tenantScenarioKey")
-        .sortKeys(["occurredAt"])
-        .name("telemetryByTenantScenarioTime"),
+      index("tenantScenarioKey").sortKeys(["occurredAt"]).name("telemetryByTenantScenarioTime"),
     ])
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
