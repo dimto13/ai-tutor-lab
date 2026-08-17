@@ -196,7 +196,7 @@ export const schema = a.schema({
       eventId: a.string().required(),
       source: a.string().required(),
       eventType: a.string().required(),
-      occurredAt: a.string().required(),
+      occurredAt: a.float().required(),
       receivedAtEpochSeconds: a.float().required(),
       sessionId: a.string().required(),
       scenarioId: a.string().required(),
@@ -519,8 +519,8 @@ export const schema = a.schema({
     .query()
     .arguments({
       scenarioId: a.string().required(),
-      from: a.string(),
-      to: a.string(),
+      from: a.float(),
+      to: a.float(),
     })
     .returns(a.ref("ScenarioLearningAnalytics"))
     .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
