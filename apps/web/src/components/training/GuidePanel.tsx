@@ -33,7 +33,7 @@ export function GuidePanel() {
         <GuidedGuide />
       ) : (
         <div
-          className="min-h-0 flex-1 overflow-y-auto p-4"
+          className="min-h-0 flex-1 overflow-y-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           role="region"
           aria-label={mode === "explore" ? "Explore-Guide" : "Challenge-Guide"}
           tabIndex={0}
