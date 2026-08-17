@@ -69,7 +69,14 @@ function isAllowedBrowserError(event: BrowserErrorEvent): boolean {
 }
 
 function currentRoutes(context: BrowserContext): string[] {
-  return [...new Set(context.pages().filter((page) => !page.isClosed()).map((page) => page.url()))];
+  return [
+    ...new Set(
+      context
+        .pages()
+        .filter((page) => !page.isClosed())
+        .map((page) => page.url()),
+    ),
+  ];
 }
 
 function formatBrowserErrors(
