@@ -27,17 +27,27 @@ const registeredScenarioIds = [
 test("unbekannte Trainings-ID liefert einen deutschen 404 ohne technische Interna", async ({
   page,
 }) => {
-  const response = await page.goto("/training/gibt-es-nicht");
+  const response = await page.request.get("/training/gibt-es-nicht");
+  expect(response.status()).toBe(404);
 
-  expect(response?.status()).toBe(404);
+  const html = await response.text();
+  expect(html).toContain("Training nicht gefunden");
+  expect(html).toContain("Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.");
+  expect(html).not.toContain("Unknown training scenario");
+  expect(html).not.toContain("gibt-es-nicht");
+  expect(html).not.toContain("This page didn't load");
+
+  await page.goto("/");
+  await page.evaluate(() => {
+    window.history.pushState({}, "", "/training/gibt-es-nicht");
+    window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }));
+  });
+
   await expect(page.getByRole("heading", { name: "Training nicht gefunden" })).toBeVisible();
   await expect(
-    page.getByText(
-      "Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.",
-      {
-        exact: true,
-      },
-    ),
+    page.getByText("Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Zurück zur Trainingsübersicht" })).toHaveAttribute(
     "href",
@@ -53,15 +63,15 @@ test("Dashboard verlinkt nur Trainingsszenarien, die als Route erreichbar sind",
 }) => {
   await page.goto("/");
 
-  const trainingLinks = await page
-    .locator('a[href^="/training/"]')
-    .evaluateAll((links) => [
-      ...new Set(
-        links
-          .map((link) => link.getAttribute("href"))
-          .filter((href): href is string => typeof href === "string"),
-      ),
-    ]);
+  const trainingLinks = await page.locator("a").evaluateAll((links) => [
+    ...new Set(
+      links
+        .map((link) => link.getAttribute("href"))
+        .filter((href): href is string => typeof href === "string")
+        .map((href) => new URL(href, window.location.href).pathname)
+        .filter((path) => path.startsWith("/training/")),
+    ),
+  ]);
 
   expect(trainingLinks.length).toBeGreaterThan(0);
   for (const href of trainingLinks) {
@@ -78,6 +88,6 @@ test("alle aktuell registrierten Trainingsszenarien liefern HTTP 200", async ({ 
 });
 
 test("eine komplett unbekannte allgemeine Route bleibt HTTP 404", async ({ page }) => {
-  const response = await page.goto("/diese-route-gibt-es-nicht");
-  expect(response?.status()).toBe(404);
+  const response = await page.request.get("/diese-route-gibt-es-nicht");
+  expect(response.status()).toBe(404);
 });
