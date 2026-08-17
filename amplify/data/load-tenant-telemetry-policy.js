@@ -43,6 +43,6 @@ export function response(ctx) {
   const row = ctx.result;
   return {
     pseudonymizationMode:
-      row && row.pseudonymizationMode === "STABLE_SUBJECT" ? "STABLE_SUBJECT" : "SESSION",
+      row && row.pseudonymizationMode === "ANONYMOUS" ? "ANONYMOUS" : "SESSION",
   };
 }
