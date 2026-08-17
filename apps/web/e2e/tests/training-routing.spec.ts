@@ -32,7 +32,9 @@ test("unbekannte Trainings-ID liefert einen deutschen 404 ohne technische Intern
 
   const html = await response.text();
   expect(html).toContain("Training nicht gefunden");
-  expect(html).toContain("Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.");
+  expect(html).toContain(
+    "Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.",
+  );
   expect(html).not.toContain("Unknown training scenario");
   expect(html).not.toContain("gibt-es-nicht");
   expect(html).not.toContain("This page didn't load");
@@ -45,9 +47,12 @@ test("unbekannte Trainings-ID liefert einen deutschen 404 ohne technische Intern
 
   await expect(page.getByRole("heading", { name: "Training nicht gefunden" })).toBeVisible();
   await expect(
-    page.getByText("Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.", {
-      exact: true,
-    }),
+    page.getByText(
+      "Das angeforderte Training wurde nicht gefunden oder ist nicht mehr verfügbar.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Zurück zur Trainingsübersicht" })).toHaveAttribute(
     "href",
