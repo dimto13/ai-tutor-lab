@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { test as browserErrorTest } from "./browser-error-guard";
+import { test as browserErrorTest, type Page } from "./browser-error-guard";
 
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"] as const;
 
@@ -73,7 +73,7 @@ function formatViolations(state: string, route: string, violations: AxeViolation
 }
 
 async function scanAccessibility(
-  page: Parameters<typeof AxeBuilder>[0]["page"],
+  page: Page,
   state: string,
   attach: (name: string, options: { body: string; contentType: string }) => Promise<void>,
 ): Promise<void> {
