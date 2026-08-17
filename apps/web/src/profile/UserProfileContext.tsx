@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useAuth } from "@/auth/AuthContext";
 import { createApplicationUserProfileRepository } from "./applicationUserProfileRepository";
+import { expectedRevisionForWrite } from "./revisionGuard";
 import {
   UserProfileConflictError,
   type UserProfileRecord,
@@ -86,13 +87,15 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       if (!normalized) throw new Error("Bitte gib einen Namen ein.");
       if (normalized.length > 80) throw new Error("Der Name darf höchstens 80 Zeichen lang sein.");
 
+      const expectedRevision = expectedRevisionForWrite(
+        status,
+        profile,
+        "Das Profil wurde noch nicht geladen. Bitte versuche es erneut.",
+      );
+
       setError(null);
       try {
-        const saved = await repository.save(
-          subject,
-          { displayName: normalized },
-          profile?.revision ?? null,
-        );
+        const saved = await repository.save(subject, { displayName: normalized }, expectedRevision);
         setProfile(saved);
         setStatus("ready");
       } catch (cause) {
@@ -108,7 +111,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         throw new Error(message);
       }
     },
-    [load, profile?.revision, subject],
+    [load, profile, status, subject],
   );
 
   const displayName =
