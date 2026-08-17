@@ -19,10 +19,6 @@
     {
       "id": "artifact_preview",
       "name": "Artifact Preview"
-    },
-    {
-      "id": "document_classification",
-      "name": "Document Classification"
     }
   ],
   "providers": [
@@ -77,7 +73,7 @@
     {
       "id": "classification",
       "providerId": "ai-train-lab",
-      "technologyId": "document_classification",
+      "technologyId": "artifact_preview",
       "name": "Classification Simulator"
     }
   ],
