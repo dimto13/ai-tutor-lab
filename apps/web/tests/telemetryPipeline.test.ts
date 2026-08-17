@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { TelemetrySink, TrainingEvent, TrainingSession } from "@ai-train-lab/training-engine";
+import type {
+  TelemetrySink,
+  TrainingEvent,
+  TrainingSession,
+} from "@ai-train-lab/training-engine";
 import {
   BufferedTelemetrySink,
+  TelemetryDeliveryError,
   TrainingTelemetryRecorder,
   learningTelemetryEventType,
   type RetryScheduler,
@@ -12,6 +17,7 @@ import {
 
 class MemoryOutbox implements TelemetryOutbox {
   events: TrainingEvent[] = [];
+  deadLetters: Array<{ event: TrainingEvent; reason: string }> = [];
 
   load(): TrainingEvent[] {
     return [...this.events];
@@ -19,6 +25,10 @@ class MemoryOutbox implements TelemetryOutbox {
 
   save(events: readonly TrainingEvent[]): void {
     this.events = [...events];
+  }
+
+  deadLetter(event: TrainingEvent, reason: string): void {
+    this.deadLetters.push({ event, reason });
   }
 }
 
@@ -79,6 +89,32 @@ test("BufferedTelemetrySink never drops an event after retry exhaustion", async 
 
   assert.deepEqual(delays, [5, 15]);
   assert.deepEqual(outbox.events.map((queued) => queued.id), ["event-2"]);
+  assert.deepEqual(outbox.deadLetters, []);
+});
+
+test("BufferedTelemetrySink quarantines permanent rejects without blocking later events", async () => {
+  const outbox = new MemoryOutbox();
+  const delivered: string[] = [];
+  const writer: TelemetryEventWriter = {
+    async write(candidate) {
+      if (candidate.id === "invalid") {
+        throw new TelemetryDeliveryError("server validation rejected event", false);
+      }
+      delivered.push(candidate.id);
+    },
+  };
+  const sink = new BufferedTelemetrySink(outbox, writer, [5, 15], {
+    async sleep() {
+      assert.fail("permanent rejects must not be retried");
+    },
+  });
+
+  outbox.save([event("invalid"), event("valid")]);
+  await sink.flush();
+
+  assert.deepEqual(delivered, ["valid"]);
+  assert.deepEqual(outbox.events, []);
+  assert.deepEqual(outbox.deadLetters.map((record) => record.event.id), ["invalid"]);
 });
 
 function session(overrides: Partial<TrainingSession> = {}): TrainingSession {
