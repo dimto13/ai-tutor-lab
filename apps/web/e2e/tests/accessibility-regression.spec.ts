@@ -5,6 +5,8 @@ async function waitForTrainingReady(page: Page): Promise<void> {
 }
 
 test.describe("Accessibility regressions", () => {
+  test.describe.configure({ retries: 0 });
+
   test("dashboard / has no unapproved axe violations", async ({ page, accessibility }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
