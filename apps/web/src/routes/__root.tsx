@@ -136,6 +136,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    if (import.meta.env["VITE_E2E_PRODUCTION_ARTIFACT_NEGATIVE_PROOF"] === "1") {
+      console.error("E2E_PRODUCTION_ARTIFACT_NEGATIVE_PROOF");
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider service={authService}>
