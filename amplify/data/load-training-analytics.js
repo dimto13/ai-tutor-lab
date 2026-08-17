@@ -115,6 +115,15 @@ function stepMetric(steps, stepId) {
   return metric;
 }
 
+function failurePattern(payload) {
+  const outcome =
+    payload.outcome === "fail" || payload.outcome === "near-miss" ? payload.outcome : "unknown";
+  if (typeof payload.actionType === "string" && payload.actionType.length > 0) {
+    return `${payload.actionType}:${outcome}`;
+  }
+  return outcome;
+}
+
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   if (ctx.result && ctx.result.nextToken) {
@@ -130,6 +139,8 @@ export function response(ctx) {
   const items = ctx.result && ctx.result.items ? ctx.result.items : [];
   const sessions = {};
   const steps = {};
+  let scenarioDurationTotalMs = 0;
+  let scenarioDurationCount = 0;
 
   for (const item of items) {
     if (item.tenantId !== tenantId || item.scenarioId !== scenarioId) {
@@ -157,7 +168,13 @@ export function response(ctx) {
     const stepId = typeof item.stepId === "string" && item.stepId.length > 0 ? item.stepId : null;
 
     if (item.eventType === "analytics.session.started") session.started = true;
-    if (item.eventType === "analytics.session.completed") session.completed = true;
+    if (item.eventType === "analytics.session.completed") {
+      session.completed = true;
+      if (typeof payload.durationMs === "number" && payload.durationMs >= 0) {
+        scenarioDurationTotalMs += payload.durationMs;
+        scenarioDurationCount += 1;
+      }
+    }
     if (item.eventType === "analytics.step.started" && stepId) {
       session.lastStepId = stepId;
       stepMetric(steps, stepId);
@@ -167,8 +184,7 @@ export function response(ctx) {
     }
     if (item.eventType === "analytics.attempt.recorded" && stepId && payload.outcome !== "pass") {
       const metric = stepMetric(steps, stepId);
-      const pattern =
-        payload.outcome === "fail" || payload.outcome === "near-miss" ? payload.outcome : "unknown";
+      const pattern = failurePattern(payload);
       metric.failedAttemptCount += 1;
       metric.failurePatterns[pattern] = (metric.failurePatterns[pattern] || 0) + 1;
     }
@@ -227,6 +243,10 @@ export function response(ctx) {
     sessionsStarted,
     sessionsCompleted: cohortSuppressed ? 0 : sessionsCompleted,
     abandonmentCount: cohortSuppressed ? 0 : abandonmentCount,
+    averageDurationMs:
+      cohortSuppressed || scenarioDurationCount === 0
+        ? null
+        : scenarioDurationTotalMs / scenarioDurationCount,
     cohortSuppressed,
     truncated: false,
     steps: resultSteps,
