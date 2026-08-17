@@ -7,7 +7,7 @@ export const schema = a.schema({
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
   ScenarioRunEvidenceStatus: a.enum(["eligible", "suspect_fast", "unassessed"]),
   SkillLevel: a.enum(["novice", "advanced_beginner", "practitioner", "proficient"]),
-  TelemetryPseudonymizationMode: a.enum(["SESSION", "STABLE_SUBJECT"]),
+  TelemetryPseudonymizationMode: a.enum(["SESSION", "ANONYMOUS"]),
 
   UserProfile: a
     .model({
@@ -479,7 +479,7 @@ export const schema = a.schema({
   appendTrainingTelemetryEvent: a
     .mutation()
     .arguments({ event: a.json().required() })
-    .returns(a.boolean().required())
+    .returns(a.boolean())
     .authorization((allow) => [allow.authenticated()])
     .handler([
       a.handler.custom({
