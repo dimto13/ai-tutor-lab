@@ -216,7 +216,9 @@ export function ClassificationWorkspace() {
                 >
                   <div className="flex items-center gap-2">
                     <Bot className="h-4 w-4 text-accent" />
-                    <h2 className="text-sm font-semibold text-foreground">KI-Nutzung entscheiden</h2>
+                    <h2 className="text-sm font-semibold text-foreground">
+                      KI-Nutzung entscheiden
+                    </h2>
                   </div>
                   <label className="mt-3 block text-[11px] text-muted-foreground" htmlFor="ai-tool">
                     KI-Werkzeug
