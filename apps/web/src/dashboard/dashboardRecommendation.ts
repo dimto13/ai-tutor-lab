@@ -73,6 +73,18 @@ function levelLabel(level: SkillLevel): string {
   }
 }
 
+export function shouldWaitForDashboardRecommendation({
+  resumeLoading,
+  hasResumable,
+  skillProfilesLoading,
+}: {
+  resumeLoading: boolean;
+  hasResumable: boolean;
+  skillProfilesLoading: boolean;
+}): boolean {
+  return resumeLoading || (!hasResumable && skillProfilesLoading);
+}
+
 export function sortResumeCandidates(
   resumable: readonly DashboardResumeCandidate[],
 ): DashboardResumeCandidate[] {
