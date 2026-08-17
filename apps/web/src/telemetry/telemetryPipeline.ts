@@ -23,6 +23,7 @@ export type LearningTelemetryEventType =
 export interface TelemetryOutbox {
   load(): TrainingEvent[];
   save(events: readonly TrainingEvent[]): void;
+  deadLetter(event: TrainingEvent, reason: string): void;
 }
 
 export interface TelemetryEventWriter {
@@ -31,6 +32,16 @@ export interface TelemetryEventWriter {
 
 export interface RetryScheduler {
   sleep(delayMs: number): Promise<void>;
+}
+
+export class TelemetryDeliveryError extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+    this.name = "TelemetryDeliveryError";
+  }
 }
 
 const defaultRetryScheduler: RetryScheduler = {
@@ -43,8 +54,9 @@ const defaultRetryScheduler: RetryScheduler = {
  * Durable TelemetrySink for the canonical TrainingEvent contract.
  *
  * record() writes to the local outbox before starting delivery. Delivery is ordered and an event
- * is removed only after the remote writer acknowledges it. A temporary transport failure therefore
- * cannot discard events, while injected retry delays make reconnect behaviour deterministic in tests.
+ * is removed only after remote acknowledgement. Temporary transport failures therefore cannot
+ * discard events. Explicit permanent server rejections are moved to the durable dead-letter store
+ * so one invalid event cannot block later valid events.
  */
 export class BufferedTelemetrySink implements TelemetrySink {
   private flushPromise: Promise<void> | null = null;
@@ -78,18 +90,28 @@ export class BufferedTelemetrySink implements TelemetrySink {
       if (!event) return;
 
       let delivered = false;
+      let deadLettered = false;
       for (let attempt = 0; attempt <= this.retryDelaysMs.length; attempt += 1) {
         try {
           await this.writer.write(event);
           delivered = true;
           break;
-        } catch {
+        } catch (error) {
+          if (error instanceof TelemetryDeliveryError && !error.retryable) {
+            this.outbox.deadLetter(event, error.message);
+            this.outbox.save(
+              this.outbox.load().filter((candidate) => candidate.id !== event.id),
+            );
+            deadLettered = true;
+            break;
+          }
           const delay = this.retryDelaysMs[attempt];
           if (delay === undefined) break;
           await this.scheduler.sleep(delay);
         }
       }
 
+      if (deadLettered) continue;
       if (!delivered) return;
       this.outbox.save(this.outbox.load().filter((candidate) => candidate.id !== event.id));
     }
@@ -308,7 +330,7 @@ export class TrainingTelemetryRecorder {
   }
 }
 
-export type TelemetryPseudonymizationMode = "SESSION" | "STABLE_SUBJECT";
+export type TelemetryPseudonymizationMode = "SESSION" | "ANONYMOUS";
 
 export interface FailurePatternMetric {
   pattern: string;
