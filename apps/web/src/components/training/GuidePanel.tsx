@@ -32,7 +32,12 @@ export function GuidePanel() {
       {mode === "guided" ? (
         <GuidedGuide />
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto p-4"
+          role="region"
+          aria-label={mode === "explore" ? "Explore-Guide" : "Challenge-Guide"}
+          tabIndex={0}
+        >
           {mode === "explore" ? <ExploreGuide /> : <ChallengeGuide />}
         </div>
       )}
