@@ -42,7 +42,6 @@ export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   const row = ctx.result;
   return {
-    pseudonymizationMode:
-      row && row.pseudonymizationMode === "ANONYMOUS" ? "ANONYMOUS" : "SESSION",
+    pseudonymizationMode: row && row.pseudonymizationMode === "ANONYMOUS" ? "ANONYMOUS" : "SESSION",
   };
 }
