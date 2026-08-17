@@ -54,29 +54,27 @@ export function platformOverlayChrome(page: Page): readonly PlatformOverlayChrom
   ];
 }
 
-async function describeHitTestAtCenter(page: Page, box: Box): Promise<string> {
-  return page.evaluate(
-    ({ x, y }) => {
-      const element = document.elementFromPoint(x, y);
-      if (!element) return "none";
+async function describeHitTestAtCenter(target: Locator): Promise<string> {
+  return target.evaluate((targetElement) => {
+    const targetRect = targetElement.getBoundingClientRect();
+    const element = document.elementFromPoint(
+      targetRect.left + targetRect.width / 2,
+      targetRect.top + targetRect.height / 2,
+    );
+    if (!element) return "none";
 
-      const role = element.getAttribute("role");
-      const ariaLabel = element.getAttribute("aria-label");
-      const testId = element.getAttribute("data-testid");
-      return [
-        element.tagName.toLowerCase(),
-        role ? `role=${role}` : null,
-        ariaLabel ? `aria-label=${ariaLabel}` : null,
-        testId ? `data-testid=${testId}` : null,
-      ]
-        .filter(Boolean)
-        .join(" ");
-    },
-    {
-      x: box.x + box.width / 2,
-      y: box.y + box.height / 2,
-    },
-  );
+    const role = element.getAttribute("role");
+    const ariaLabel = element.getAttribute("aria-label");
+    const testId = element.getAttribute("data-testid");
+    return [
+      element.tagName.toLowerCase(),
+      role ? `role=${role}` : null,
+      ariaLabel ? `aria-label=${ariaLabel}` : null,
+      testId ? `data-testid=${testId}` : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  });
 }
 
 async function measureObstructions(
@@ -96,7 +94,7 @@ async function measureObstructions(
     throw new Error(`Guided-Ziel "${target.name}" besitzt keine sichtbare Boundingbox.`);
   }
 
-  const hitTest = await describeHitTestAtCenter(page, targetBox);
+  const hitTest = await describeHitTestAtCenter(target.locator);
   const measurements: ObstructionMeasurement[] = [];
 
   for (const overlay of overlays) {
