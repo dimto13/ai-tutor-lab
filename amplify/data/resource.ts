@@ -268,6 +268,7 @@ export const schema = a.schema({
     sessionsStarted: a.integer().required(),
     sessionsCompleted: a.integer().required(),
     abandonmentCount: a.integer().required(),
+    averageDurationMs: a.float(),
     cohortSuppressed: a.boolean().required(),
     truncated: a.boolean().required(),
     steps: a.json().required(),
