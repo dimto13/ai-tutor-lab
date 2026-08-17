@@ -135,8 +135,8 @@ type AccessibilityFixtures = {
 };
 
 export const test = browserErrorTest.extend<AccessibilityFixtures>({
-  accessibility: async ({ page }, use, testInfo) => {
-    await use({
+  accessibility: async ({ page }, provide, testInfo) => {
+    await provide({
       check: (state) =>
         scanAccessibility(page, state, (name, options) => testInfo.attach(name, options)),
     });
