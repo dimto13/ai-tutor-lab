@@ -19,6 +19,27 @@ const EMPTY_STATE: ClassificationSimulatorState = {
   aiDecisions: {},
 };
 
+function ExploreInspectButton({
+  targetRef,
+  label,
+  onInspect,
+}: {
+  targetRef: string;
+  label: string;
+  onInspect: (targetRef: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onInspect(targetRef)}
+      className="rounded border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      aria-label={`${label} erkunden`}
+    >
+      Erkunden
+    </button>
+  );
+}
+
 export function ClassificationWorkspace() {
   const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
   const [state, setState] = useState<ClassificationSimulatorState>(EMPTY_STATE);
@@ -50,8 +71,8 @@ export function ClassificationWorkspace() {
     };
   }, [persistRuntimeSnapshot, restoreRuntimeSnapshot, runtimeSeed]);
 
-  const inspect = (ref: string) => {
-    if (mode === "explore") classificationRuntime.inspect(ref);
+  const inspect = (targetRef: string) => {
+    if (mode === "explore") classificationRuntime.inspect(targetRef);
   };
 
   const activeDocument =
@@ -86,12 +107,20 @@ export function ClassificationWorkspace() {
         <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)]">
           <aside
             data-highlight="classification.document.list"
-            onClick={() => inspect("classification.document.list")}
             className="min-h-0 overflow-y-auto border-r border-border bg-panel p-3"
           >
-            <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Dokumente
-            </p>
+            <div className="flex items-center justify-between gap-2 px-2 pb-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Dokumente
+              </p>
+              {mode === "explore" ? (
+                <ExploreInspectButton
+                  targetRef="classification.document.list"
+                  label="Dokumentliste"
+                  onInspect={inspect}
+                />
+              ) : null}
+            </div>
             <div className="space-y-1">
               {state.documents.map((document) => (
                 <button
@@ -122,11 +151,19 @@ export function ClassificationWorkspace() {
             <div className="mx-auto grid max-w-5xl gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
               <section
                 data-highlight="classification.document.preview"
-                onClick={() => inspect("classification.document.preview")}
                 className="min-w-0 rounded-lg border border-border bg-card p-5"
               >
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <FileText className="h-4 w-4" /> Dokumentvorschau
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <FileText className="h-4 w-4" /> Dokumentvorschau
+                  </div>
+                  {mode === "explore" ? (
+                    <ExploreInspectButton
+                      targetRef="classification.document.preview"
+                      label="Dokumentvorschau"
+                      onInspect={inspect}
+                    />
+                  ) : null}
                 </div>
                 {activeDocument ? (
                   <>
@@ -148,12 +185,20 @@ export function ClassificationWorkspace() {
               <div className="space-y-4">
                 <section
                   data-highlight="classification.indicators"
-                  onClick={() => inspect("classification.indicators")}
                   className="rounded-lg border border-border bg-card p-4"
                 >
-                  <div className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-accent" />
-                    <h2 className="text-sm font-semibold text-foreground">Merkmale markieren</h2>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-accent" />
+                      <h2 className="text-sm font-semibold text-foreground">Merkmale markieren</h2>
+                    </div>
+                    {mode === "explore" ? (
+                      <ExploreInspectButton
+                        targetRef="classification.indicators"
+                        label="Klassifizierungsmerkmale"
+                        onInspect={inspect}
+                      />
+                    ) : null}
                   </div>
                   <div className="mt-3 space-y-2">
                     {state.scheme.indicators.map((indicator) => {
@@ -163,10 +208,7 @@ export function ClassificationWorkspace() {
                           key={indicator.id}
                           type="button"
                           aria-pressed={marked}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            classificationRuntime.markIndicator(indicator.id, !marked);
-                          }}
+                          onClick={() => classificationRuntime.markIndicator(indicator.id, !marked)}
                           className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-xs ${
                             marked
                               ? "border-accent bg-accent/10 text-foreground"
@@ -183,20 +225,25 @@ export function ClassificationWorkspace() {
 
                 <section
                   data-highlight="classification.levels"
-                  onClick={() => inspect("classification.levels")}
                   className="rounded-lg border border-border bg-card p-4"
                 >
-                  <h2 className="text-sm font-semibold text-foreground">Stufe auswählen</h2>
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold text-foreground">Stufe auswählen</h2>
+                    {mode === "explore" ? (
+                      <ExploreInspectButton
+                        targetRef="classification.levels"
+                        label="Klassifizierungsstufen"
+                        onInspect={inspect}
+                      />
+                    ) : null}
+                  </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {orderedLevels.map((level) => (
                       <button
                         key={level.id}
                         type="button"
                         aria-pressed={state.selectedLevelId === level.id}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          classificationRuntime.selectLevel(level.id);
-                        }}
+                        onClick={() => classificationRuntime.selectLevel(level.id)}
                         className={`rounded-md border px-2 py-2 text-xs ${
                           state.selectedLevelId === level.id
                             ? "border-accent bg-accent/10 text-foreground"
@@ -211,14 +258,22 @@ export function ClassificationWorkspace() {
 
                 <section
                   data-highlight="classification.aiDecision"
-                  onClick={() => inspect("classification.aiDecision")}
                   className="rounded-lg border border-border bg-card p-4"
                 >
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-accent" />
-                    <h2 className="text-sm font-semibold text-foreground">
-                      KI-Nutzung entscheiden
-                    </h2>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4 text-accent" />
+                      <h2 className="text-sm font-semibold text-foreground">
+                        KI-Nutzung entscheiden
+                      </h2>
+                    </div>
+                    {mode === "explore" ? (
+                      <ExploreInspectButton
+                        targetRef="classification.aiDecision"
+                        label="KI-Nutzungsentscheidung"
+                        onInspect={inspect}
+                      />
+                    ) : null}
                   </div>
                   <label className="mt-3 block text-[11px] text-muted-foreground" htmlFor="ai-tool">
                     KI-Werkzeug
@@ -226,10 +281,16 @@ export function ClassificationWorkspace() {
                   <select
                     id="ai-tool"
                     value={state.aiTool ?? ""}
-                    onClick={(event) => event.stopPropagation()}
-                    onChange={(event) => classificationRuntime.selectAiTool(event.target.value)}
+                    onChange={(event) => {
+                      if (event.target.value) classificationRuntime.selectAiTool(event.target.value);
+                    }}
                     className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-xs text-foreground"
                   >
+                    {state.aiTool === null ? (
+                      <option value="" disabled>
+                        KI-Werkzeug auswählen
+                      </option>
+                    ) : null}
                     {state.scheme.aiPolicy.map((policy) => (
                       <option key={policy.tool} value={policy.tool}>
                         {policy.tool}
@@ -241,8 +302,7 @@ export function ClassificationWorkspace() {
                       type="button"
                       aria-pressed={selectedDecision === true}
                       disabled={!state.aiTool}
-                      onClick={(event) => {
-                        event.stopPropagation();
+                      onClick={() => {
                         if (state.aiTool) classificationRuntime.setAiDecision(state.aiTool, true);
                       }}
                       className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-xs text-foreground hover:bg-white/5 disabled:opacity-40"
@@ -253,8 +313,7 @@ export function ClassificationWorkspace() {
                       type="button"
                       aria-pressed={selectedDecision === false}
                       disabled={!state.aiTool}
-                      onClick={(event) => {
-                        event.stopPropagation();
+                      onClick={() => {
                         if (state.aiTool) classificationRuntime.setAiDecision(state.aiTool, false);
                       }}
                       className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-xs text-foreground hover:bg-white/5 disabled:opacity-40"
