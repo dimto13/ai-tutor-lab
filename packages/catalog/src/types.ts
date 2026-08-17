@@ -6,7 +6,8 @@ export type TechnologyId =
   | "cli_agent"
   | "office_assistant"
   | "ai_chat"
-  | "artifact_preview";
+  | "artifact_preview"
+  | "document_classification";
 
 export type Capability =
   | "filesystem"
