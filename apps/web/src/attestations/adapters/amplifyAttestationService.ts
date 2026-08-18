@@ -54,7 +54,8 @@ function stringArray(value: unknown, fieldName: string): string[] {
     throw new Error(`Attestation ${fieldName} is invalid`);
   }
   const result = value.map((entry, index) => stringValue(entry, `${fieldName}[${index}]`));
-  if (new Set(result).size !== result.length) throw new Error(`Attestation ${fieldName} is invalid`);
+  if (new Set(result).size !== result.length)
+    throw new Error(`Attestation ${fieldName} is invalid`);
   return result;
 }
 
@@ -170,7 +171,9 @@ export function createAmplifyAttestationServiceWithClient(
 ): AttestationService {
   return {
     async issueChallenge(request): Promise<AttestationIssueResult> {
-      const result = await client.mutations.issueChallengeAttestation({ scenarioId: request.scenarioId });
+      const result = await client.mutations.issueChallengeAttestation({
+        scenarioId: request.scenarioId,
+      });
       if (result.errors?.length) throw new Error(errorText(result.errors));
       if (!result.data) throw new Error("Server returned no attestation issue result");
       return issueResult(result.data);
