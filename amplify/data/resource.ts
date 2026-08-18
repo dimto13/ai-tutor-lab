@@ -606,12 +606,12 @@ export const schema = a.schema({
         entry: "./telemetry-load-policy-for-write.js",
       }),
       a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryEvent"),
-        entry: "./append-training-telemetry-event.js",
-      }),
-      a.handler.custom({
         dataSource: a.ref("TrainingTelemetryDeletionPointer"),
         entry: "./write-telemetry-deletion-pointer.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./append-training-telemetry-event.js",
       }),
     ]),
 
