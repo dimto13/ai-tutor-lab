@@ -119,7 +119,8 @@ export async function validateClassification(
     }
   }
 
-  if (!requiredAiEntries.every(([tool]) => Object.hasOwn(progress.aiDecisions, tool))) return IGNORE;
+  if (!requiredAiEntries.every(([tool]) => Object.hasOwn(progress.aiDecisions, tool)))
+    return IGNORE;
   return PASS;
 }
 
@@ -185,7 +186,10 @@ function parseValidationState(value: unknown): ClassificationValidationStateView
     };
   }
 
-  if (levels.length !== scheme["levels"].length || indicators.length !== scheme["indicators"].length) {
+  if (
+    levels.length !== scheme["levels"].length ||
+    indicators.length !== scheme["indicators"].length
+  ) {
     return null;
   }
 
