@@ -107,7 +107,9 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div
+        className={`flex items-center gap-1.5 ${compact ? "min-w-0 shrink" : "shrink-0"}`}
+      >
         <span
           className={`${compact ? "hidden 2xl:inline" : "hidden sm:inline"} max-w-52 truncate text-xs text-muted-foreground`}
           title={profile.displayName}
@@ -128,9 +130,12 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
               ? `Eigene KI-Erfahrung: ${effectiveAiLevelLabel}`
               : aiLevelNavigationValue
           }
-          className="inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-default disabled:opacity-60"
+          className={`inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-default disabled:opacity-60 ${compact ? "min-w-0 shrink" : "shrink-0"}`}
         >
-          <span aria-hidden="true" className="whitespace-nowrap">
+          <span
+            aria-hidden="true"
+            className={`whitespace-nowrap ${compact ? "min-w-0 overflow-hidden text-ellipsis" : ""}`}
+          >
             {compact ? (
               <>
                 <span className="2xl:hidden">KI: </span>
@@ -147,7 +152,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           onClick={(event) => openSettings({ returnFocusTo: event.currentTarget })}
           aria-label="Einstellungen öffnen"
           title="Einstellungen"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <Settings className="h-3.5 w-3.5" />
           <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Einstellungen</span>
@@ -157,7 +162,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           onClick={() => void auth.signOut().catch(() => undefined)}
           aria-label="Abmelden"
           title="Abmelden"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <LogOut className="h-3.5 w-3.5" />
           <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Abmelden</span>
