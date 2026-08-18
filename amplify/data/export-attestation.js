@@ -95,9 +95,9 @@ function csvContent(row, expired) {
 function ascii(value) {
   const text = String(value);
   let result = "";
-  for (let index = 0; index < text.length; index += 1) {
-    const code = text.charCodeAt(index);
-    result += code >= 32 && code <= 126 ? text[index] : "?";
+  for (const char of text) {
+    const code = char.charCodeAt(0);
+    result += code >= 32 && code <= 126 ? char : "?";
   }
   return result;
 }
@@ -135,19 +135,19 @@ function pdfLines(row, expired) {
 
 function pdfStream(lines) {
   const commands = ["BT", "/F1 15 Tf", "72 760 Td"];
-  for (let index = 0; index < lines.length; index += 1) {
+  let index = 0;
+  for (const line of lines) {
     if (index === 1) commands.push("/F1 10 Tf");
-    commands.push(`(${pdfText(lines[index])}) Tj`);
+    commands.push(`(${pdfText(line)}) Tj`);
     commands.push("0 -22 Td");
+    index += 1;
   }
   commands.push("ET");
   return commands.join("\n");
 }
 
 function pad10(value) {
-  let text = String(value);
-  while (text.length < 10) text = `0${text}`;
-  return text;
+  return `0000000000${String(value)}`.slice(-10);
 }
 
 function pdfContent(row, expired) {
@@ -161,15 +161,17 @@ function pdfContent(row, expired) {
   ];
   let pdf = "%PDF-1.4\n";
   const offsets = [0];
-  for (let index = 0; index < objects.length; index += 1) {
+  let objectNumber = 1;
+  for (const object of objects) {
     offsets.push(pdf.length);
-    pdf += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
+    pdf += `${objectNumber} 0 obj\n${object}\nendobj\n`;
+    objectNumber += 1;
   }
   const xrefOffset = pdf.length;
   pdf += `xref\n0 ${objects.length + 1}\n`;
   pdf += "0000000000 65535 f \n";
-  for (let index = 1; index < offsets.length; index += 1) {
-    pdf += `${pad10(offsets[index])} 00000 n \n`;
+  for (const offset of offsets.slice(1)) {
+    pdf += `${pad10(offset)} 00000 n \n`;
   }
   pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
   return pdf;
@@ -178,9 +180,8 @@ function pdfContent(row, expired) {
 function safeFilename(value) {
   const source = ascii(value);
   let result = "";
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    const code = source.charCodeAt(index);
+  for (const char of source) {
+    const code = char.charCodeAt(0);
     const allowed =
       (code >= 48 && code <= 57) ||
       (code >= 65 && code <= 90) ||
