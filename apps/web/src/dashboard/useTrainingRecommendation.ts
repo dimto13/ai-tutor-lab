@@ -203,9 +203,7 @@ export function useTrainingRecommendation({
   const recommendationLoading = baseRecommendationLoading || freshnessPending;
   const primaryAction =
     recommendationLoading ||
-    (freshEvidenceRequired &&
-      !freshEvidenceObserved &&
-      basePrimaryAction?.kind !== "resume")
+    (freshEvidenceRequired && !freshEvidenceObserved && basePrimaryAction?.kind !== "resume")
       ? null
       : basePrimaryAction;
 
