@@ -111,7 +111,7 @@
       "helpLevels": [
         "Prüfe sowohl die Personennamen als auch die Vergütungswerte.",
         "Markiere „Personenbezogene Daten“ und „Gehalts-/HR-Daten“; maßgeblich ist die höhere Mindeststufe.",
-        "Wähle Streng vertraulich und untersage im Standardschema alle drei KI-Werkzeuge."
+        "Markiere „Personenbezogene Daten“ und „Gehalts-/HR-Daten“, wähle danach Streng vertraulich und stelle m365-copilot-tenant, public-ai-chat und github-copilot jeweils auf Nicht zulassen."
       ],
       "validation": {
         "kind": "classification",
