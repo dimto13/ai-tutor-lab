@@ -1,9 +1,6 @@
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../../../../../amplify/data/resource";
-import type {
-  TelemetryDeletionPage,
-  TelemetryRetentionPort,
-} from "../telemetryRetention";
+import type { TelemetryDeletionPage, TelemetryRetentionPort } from "../telemetryRetention";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data telemetry retention error";
@@ -48,7 +45,9 @@ export function createAmplifyTelemetryRetentionPortWithClient(
       return { rawEventRetentionDays: retentionDays(result.data?.rawEventRetentionDays) };
     },
     async saveRawEventRetentionDays(days) {
-      const result = await client.mutations.saveTenantTelemetryPolicy({ rawEventRetentionDays: days });
+      const result = await client.mutations.saveTenantTelemetryPolicy({
+        rawEventRetentionDays: days,
+      });
       if (result.errors?.length) throw new Error(errorText(result.errors));
       if (result.data?.rawEventRetentionDays !== days) {
         throw new Error("Telemetry retention policy was not persisted");
