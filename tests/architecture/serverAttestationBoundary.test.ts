@@ -64,7 +64,11 @@ test("Attestation is server-owned, versioned and indexed without generated CRUD"
     "signingStatus",
     "appendToken",
   ]) {
-    assert.match(block, new RegExp(`${requiredField}:\\s*a\\.`), `${requiredField} must be persisted`);
+    assert.match(
+      block,
+      new RegExp(`${requiredField}:\\s*a\\.`),
+      `${requiredField} must be persisted`,
+    );
   }
   assert.match(block, /learningObjectiveIds:\s*a\.string\(\)\.array\(\)\.required\(\)/);
   assert.match(block, /name\(["']attestationsByOwnerTime["']\)/);
@@ -124,7 +128,10 @@ test("challenge and ScenarioRun evidence are re-used rather than re-scored", asy
   assert.match(loadSession, /definition\.learningObjectiveIds/);
   assert.match(loadSession, /definition\.scenarioVersion/);
   assert.match(loadSession, /definition\.productVersion/);
-  assert.doesNotMatch(loadSession, /ctx\.args\.(tenantId|userId|learningObjective|scenarioVersion|product)/);
+  assert.doesNotMatch(
+    loadSession,
+    /ctx\.args\.(tenantId|userId|learningObjective|scenarioVersion|product)/,
+  );
 
   assert.match(loadRun, /operation:\s*["']GetItem["']/);
   assert.match(loadRun, /consistentRead:\s*true/);
@@ -188,13 +195,19 @@ test("owner-scoped list/export operations cannot accept a foreign tenant or user
   const mutationEnd = adapterSource.indexOf("});", mutationStart);
   const mutation = adapterSource.slice(mutationStart, mutationEnd);
   assert.match(mutation, /scenarioId:\s*request\.scenarioId/);
-  assert.doesNotMatch(mutation, /tenantId|userId|learningObjective|scenarioVersion|productVersion|evidence/);
+  assert.doesNotMatch(
+    mutation,
+    /tenantId|userId|learningObjective|scenarioVersion|productVersion|evidence/,
+  );
 });
 
 test("expired attestations stay queryable and produce a recertification recommendation", async () => {
   const listSource = await readFile(listUrl, "utf8");
   assert.match(listSource, /now\s*>=\s*row\.validUntil/);
-  assert.match(listSource, /validityStatus:\s*expired\s*\?\s*["']expired["']\s*:\s*["']valid["']/);
+  assert.match(
+    listSource,
+    /validityStatus:\s*expired\s*\?\s*["']expired["']\s*:\s*["']valid["']/,
+  );
   assert.match(listSource, /recertificationRecommended:\s*expired/);
   assert.doesNotMatch(listSource, /DeleteItem|validUntil\s*<\s*now.*filter/);
 });
@@ -235,8 +248,8 @@ test("cryptographic signing is an explicit external boundary, never Base64 or a 
 
 test("generic attestation implementation contains no module-specific classification path", async () => {
   const sources = await Promise.all(
-    [domainUrl, generatorUrl, loadRunUrl, writeUrl, listUrl, exportUrl, adapterUrl, hookUrl].map((url) =>
-      readFile(url, "utf8"),
+    [domainUrl, generatorUrl, loadRunUrl, writeUrl, listUrl, exportUrl, adapterUrl, hookUrl].map(
+      (url) => readFile(url, "utf8"),
     ),
   );
   for (const source of sources) assert.doesNotMatch(source, /classification/i);
