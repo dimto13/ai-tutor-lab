@@ -16,7 +16,6 @@ import {
 } from "./dashboardRecommendation";
 import {
   allDashboardTrainingCandidates,
-  buildDashboardTrainingCandidates,
   recommendationCandidatesExcluding,
 } from "./dashboardRecommendationContext";
 import {
@@ -31,9 +30,13 @@ export type ResumeLoadStatus = "loading" | "ready" | "error";
 export function useTrainingRecommendation({
   excludeStartScenarioId,
   skillProfilesRefreshKey,
+  skillProfilesFreshnessBaseline,
+  freshnessTechnologyId,
 }: {
   excludeStartScenarioId?: string;
   skillProfilesRefreshKey?: unknown;
+  skillProfilesFreshnessBaseline?: readonly SkillProfileProjection[] | null;
+  freshnessTechnologyId?: string | null;
 } = {}) {
   const auth = useAuth();
   const [profileRefreshAttempt, setProfileRefreshAttempt] = useState(0);
@@ -42,7 +45,6 @@ export function useTrainingRecommendation({
     [profileRefreshAttempt, skillProfilesRefreshKey],
   );
   const skillProfiles = useSkillProfiles(effectiveSkillProfilesRefreshKey);
-  const lastReadyProfilesRef = useRef<SkillProfileProjection[] | null>(null);
   const freshnessBaselineRef = useRef<SkillProfileProjection[] | null>(null);
   const previousRefreshKeyRef = useRef(skillProfilesRefreshKey);
   const subject = useMemo<TrainingSubjectRef | null>(() => {
@@ -52,33 +54,32 @@ export function useTrainingRecommendation({
       tenantId: auth.session.identity.tenantId,
     };
   }, [auth.session]);
-  const refreshTechnologyId = useMemo(
-    () =>
-      excludeStartScenarioId
-        ? (buildDashboardTrainingCandidates([excludeStartScenarioId])[0]?.technologyId ?? null)
-        : null,
-    [excludeStartScenarioId],
-  );
   const [resumeStatus, setResumeStatus] = useState<ResumeLoadStatus>("loading");
   const [resumable, setResumable] = useState<DashboardResumeCandidate[]>([]);
 
   useEffect(() => {
     if (Object.is(previousRefreshKeyRef.current, skillProfilesRefreshKey)) return;
 
-    freshnessBaselineRef.current = requiresFreshRecommendationEvidence(skillProfilesRefreshKey)
-      ? lastReadyProfilesRef.current
-        ? [...lastReadyProfilesRef.current]
-        : null
-      : null;
+    freshnessBaselineRef.current =
+      requiresFreshRecommendationEvidence(skillProfilesRefreshKey) && skillProfilesFreshnessBaseline
+        ? [...skillProfilesFreshnessBaseline]
+        : null;
     previousRefreshKeyRef.current = skillProfilesRefreshKey;
     setProfileRefreshAttempt(0);
-  }, [skillProfilesRefreshKey]);
+  }, [skillProfilesFreshnessBaseline, skillProfilesRefreshKey]);
 
   useEffect(() => {
-    if (skillProfiles.status === "ready") {
-      lastReadyProfilesRef.current = skillProfiles.profiles;
+    if (
+      !requiresFreshRecommendationEvidence(skillProfilesRefreshKey) ||
+      freshnessBaselineRef.current !== null ||
+      !skillProfilesFreshnessBaseline
+    ) {
+      return;
     }
-  }, [skillProfiles]);
+
+    freshnessBaselineRef.current = [...skillProfilesFreshnessBaseline];
+    setProfileRefreshAttempt((current) => current + 1);
+  }, [skillProfilesFreshnessBaseline, skillProfilesRefreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,10 +164,11 @@ export function useTrainingRecommendation({
       materialSkillProfileEvidenceChanged(
         freshnessBaselineRef.current,
         skillProfiles.profiles,
-        refreshTechnologyId,
+        freshnessTechnologyId,
       ));
   const canRetryFreshEvidence =
     freshEvidenceRequired &&
+    freshnessBaselineRef.current !== null &&
     !freshEvidenceObserved &&
     resumable.length === 0 &&
     skillProfiles.status !== "loading" &&
@@ -186,7 +188,9 @@ export function useTrainingRecommendation({
     freshEvidenceRequired &&
     !freshEvidenceObserved &&
     resumable.length === 0 &&
-    (skillProfiles.status === "loading" || canRetryFreshEvidence);
+    (freshnessBaselineRef.current === null ||
+      skillProfiles.status === "loading" ||
+      canRetryFreshEvidence);
 
   const baseRecommendationLoading = shouldWaitForDashboardRecommendation({
     resumeLoading: resumeStatus === "loading",
