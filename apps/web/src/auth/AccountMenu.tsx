@@ -107,9 +107,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-      <div
-        className={`flex items-center gap-1.5 ${compact ? "min-w-0 shrink" : "shrink-0"}`}
-      >
+      <div className={`flex items-center gap-1.5 ${compact ? "min-w-0 shrink" : "shrink-0"}`}>
         <span
           className={`${compact ? "hidden 2xl:inline" : "hidden sm:inline"} max-w-52 truncate text-xs text-muted-foreground`}
           title={profile.displayName}
