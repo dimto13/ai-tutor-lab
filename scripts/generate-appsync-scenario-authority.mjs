@@ -6,8 +6,7 @@ import { format as formatCode, resolveConfig } from "prettier";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scoringCatalogPath = resolve(root, "content/scoring/scenario-score-catalog.json");
 const scenariosDir = resolve(root, "content/scenarios");
-const prettierConfig =
-  (await resolveConfig(resolve(root, "amplify/data/resource.ts"))) ?? {};
+const prettierConfig = (await resolveConfig(resolve(root, "amplify/data/resource.ts"))) ?? {};
 
 const outputs = [
   {
