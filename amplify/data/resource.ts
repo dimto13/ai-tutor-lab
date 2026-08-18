@@ -7,6 +7,9 @@ export const schema = a.schema({
   AttemptOutcome: a.enum(["PASS", "FAIL", "NEAR_MISS"]),
   ScenarioRunEvidenceStatus: a.enum(["eligible", "suspect_fast", "unassessed"]),
   SkillLevel: a.enum(["novice", "advanced_beginner", "practitioner", "proficient"]),
+  AttestationValidityStatus: a.enum(["valid", "expired"]),
+  AttestationSigningStatus: a.enum(["signed", "external_signature_required"]),
+  AttestationExportFormat: a.enum(["PDF", "CSV"]),
   TelemetryPseudonymizationMode: a.enum(["SESSION", "ANONYMOUS"]),
 
   UserProfile: a
@@ -168,14 +171,31 @@ export const schema = a.schema({
 
   Attestation: a
     .model({
+      ownerKey: a.string().required(),
       tenantId: a.string().required(),
       userId: a.string().required(),
-      learningObjectiveId: a.string().required(),
+      scenarioId: a.string().required(),
+      scenarioVersion: a.string().required(),
+      productId: a.string().required(),
+      productVersion: a.string().required(),
+      learningObjectiveIds: a.string().array().required(),
+      learningObjectiveId: a.string(),
       issuedAt: a.float().required(),
-      validUntil: a.float(),
+      validUntil: a.float().required(),
       sourceRevision: a.integer().required(),
-      evidence: a.json(),
+      scenarioRunId: a.string().required(),
+      sessionId: a.string().required(),
+      evidence: a.json().required(),
+      provenance: a.json().required(),
+      signingStatus: a.ref("AttestationSigningStatus").required(),
+      signingAlgorithm: a.string(),
+      signingKeyId: a.string(),
+      signature: a.string(),
+      appendToken: a.string().required(),
     })
+    .secondaryIndexes((index) => [
+      index("ownerKey").sortKeys(["issuedAt"]).name("attestationsByOwnerTime"),
+    ])
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
 
@@ -322,6 +342,48 @@ export const schema = a.schema({
     eligibleChallengeCount: a.integer().required(),
     sourceRevision: a.integer().required(),
     calculatedAt: a.float().required(),
+  }),
+
+  AttestationEnvelope: a.customType({
+    id: a.id().required(),
+    tenantId: a.string().required(),
+    userId: a.string().required(),
+    scenarioId: a.string().required(),
+    scenarioVersion: a.string().required(),
+    productId: a.string().required(),
+    productVersion: a.string().required(),
+    learningObjectiveIds: a.string().array().required(),
+    issuedAt: a.float().required(),
+    validUntil: a.float().required(),
+    sourceRevision: a.integer().required(),
+    scenarioRunId: a.string().required(),
+    sessionId: a.string().required(),
+    evidence: a.json().required(),
+    provenance: a.json().required(),
+    signingStatus: a.ref("AttestationSigningStatus").required(),
+    signingAlgorithm: a.string(),
+    signingKeyId: a.string(),
+    signature: a.string(),
+    validityStatus: a.ref("AttestationValidityStatus").required(),
+    recertificationRecommended: a.boolean().required(),
+  }),
+
+  AttestationIssueEnvelope: a.customType({
+    created: a.boolean().required(),
+    reason: a.string().required(),
+    attestation: a.ref("AttestationEnvelope"),
+  }),
+
+  AttestationExportEnvelope: a.customType({
+    attestationId: a.id().required(),
+    format: a.ref("AttestationExportFormat").required(),
+    filename: a.string().required(),
+    mimeType: a.string().required(),
+    contentBase64: a.string().required(),
+    signingStatus: a.ref("AttestationSigningStatus").required(),
+    signingAlgorithm: a.string(),
+    signingKeyId: a.string(),
+    signature: a.string(),
   }),
 
   loadTrainingState: a
@@ -547,13 +609,60 @@ export const schema = a.schema({
       }),
       a.handler.custom({
         dataSource: a.ref("ScenarioRun"),
-        entry: "./award-score-write-run.js",
+        entry: "./award-score-write-run.generated.js",
       }),
       a.handler.custom({
         dataSource: a.ref("ScoreEvent"),
-        entry: "./award-score-write-event.js",
+        entry: "./award-score-write-event.generated.js",
       }),
     ]),
+
+  issueChallengeAttestation: a
+    .mutation()
+    .arguments({ scenarioId: a.string().required() })
+    .returns(a.ref("AttestationIssueEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TrainingSession"),
+        entry: "./issue-attestation-load-session.generated.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("ScenarioRun"),
+        entry: "./issue-attestation-load-run.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("Attestation"),
+        entry: "./issue-attestation-write.js",
+      }),
+    ]),
+
+  listMyAttestations: a
+    .query()
+    .arguments({ limit: a.integer() })
+    .returns(a.ref("AttestationEnvelope").array())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("Attestation"),
+        entry: "./list-attestations.js",
+      }),
+    ),
+
+  exportMyAttestation: a
+    .query()
+    .arguments({
+      attestationId: a.id().required(),
+      format: a.ref("AttestationExportFormat").required(),
+    })
+    .returns(a.ref("AttestationExportEnvelope"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("Attestation"),
+        entry: "./export-attestation.js",
+      }),
+    ),
 
   listMySkillProfiles: a
     .query()

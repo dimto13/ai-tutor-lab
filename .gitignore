@@ -27,6 +27,9 @@ amplify_outputs*
 amplifyconfiguration*
 .npm/
 
+# Generated AppSync scenario authority mirrors
+amplify/data/*.generated.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
