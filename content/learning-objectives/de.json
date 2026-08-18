@@ -161,6 +161,26 @@
       "id": "decide_on_agent_change",
       "title": "Über eine vorgeschlagene Änderung entscheiden",
       "description": "Eine vorgeschlagene Änderung bewusst freigeben oder ablehnen und dabei die Verantwortung für den Arbeitsstand behalten."
+    },
+    {
+      "id": "identify_classification_indicators",
+      "title": "Klassifizierungsmerkmale sicher erkennen",
+      "description": "In einem Dokument die tatsächlich relevanten Schutzmerkmale erkennen und von neutralen oder nur ähnlich aussehenden Angaben unterscheiden."
+    },
+    {
+      "id": "choose_classification_level",
+      "title": "Dokumente nachvollziehbar klassifizieren",
+      "description": "Aus den erkannten Merkmalen die erforderliche Klassifizierungsstufe ableiten und die fachliche Entscheidung begründen."
+    },
+    {
+      "id": "decide_ai_usage_by_classification",
+      "title": "KI-Nutzung aus der Klassifizierung ableiten",
+      "description": "Für unterschiedliche KI-Werkzeuge anhand der Klassifizierungsstufe bewusst entscheiden, ob ihre Nutzung zulässig ist."
+    },
+    {
+      "id": "apply_uncertainty_escalation",
+      "title": "Bei Unsicherheit höher einstufen",
+      "description": "Die Regel „Im Zweifel höher einstufen“ auf Grenzfälle anwenden und erkennen, wann eine Unsicherheit eine höhere Schutzstufe und menschliche Prüfung erfordert."
     }
   ]
 }
