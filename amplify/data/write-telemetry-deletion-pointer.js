@@ -18,11 +18,7 @@ function ownerKey(subject) {
 }
 
 function rawEventId(tenantId, eventId) {
-  return [
-    "telemetry-event:v1",
-    util.base64Encode(tenantId),
-    util.base64Encode(eventId),
-  ].join(".");
+  return ["telemetry-event:v1", util.base64Encode(tenantId), util.base64Encode(eventId)].join(".");
 }
 
 export function request(ctx) {
