@@ -8,6 +8,7 @@ const ALLOWED_TYPES = [
   "analytics.step.completed",
   "analytics.session.completed",
 ];
+const SECONDS_PER_DAY = 24 * 60 * 60;
 
 function requiredString(value, name) {
   if (typeof value !== "string" || value.length === 0) {
@@ -84,10 +85,22 @@ function requiresStep(eventType) {
   );
 }
 
+function ownerKey(subject) {
+  return [
+    "telemetry-owner:v1",
+    util.base64Encode(subject.tenantId),
+    util.base64Encode(subject.userId),
+  ].join(".");
+}
+
 export function request(ctx) {
   const subject = ctx.stash.telemetrySubject;
   if (!subject || typeof subject.userId !== "string" || typeof subject.tenantId !== "string") {
     util.unauthorized();
+  }
+  const retentionDays = ctx.stash.telemetryRawEventRetentionDays;
+  if (typeof retentionDays !== "number" || retentionDays < 1 || retentionDays % 1 !== 0) {
+    util.error("Telemetry retention policy is invalid", "TelemetryPolicyError");
   }
 
   const event = ctx.args.event;
@@ -126,6 +139,7 @@ export function request(ctx) {
     util.base64Encode(subject.tenantId),
     util.base64Encode(eventId),
   ].join(".");
+  const receivedAtEpochSeconds = util.time.nowEpochSeconds();
 
   return {
     operation: "PutItem",
@@ -133,12 +147,14 @@ export function request(ctx) {
     attributeValues: util.dynamodb.toMapValues({
       tenantId: subject.tenantId,
       tenantScenarioKey,
+      ownerKey: ownerKey(subject),
       subjectKey,
       eventId,
       source: event.source,
       eventType,
       occurredAt,
-      receivedAtEpochSeconds: util.time.nowEpochSeconds(),
+      receivedAtEpochSeconds,
+      expiresAtEpochSeconds: receivedAtEpochSeconds + retentionDays * SECONDS_PER_DAY,
       sessionId,
       scenarioId: payload.scenarioId,
       mode: payload.mode,
