@@ -40,7 +40,7 @@ async function scenarioMap(): Promise<Map<string, ScenarioContent>> {
   return result;
 }
 
-test("generated attestation authority mirrors every scored challenge objective and product version", async () => {
+test("generated attestation authority mirrors every active scored challenge objective and product version", async () => {
   const [catalogSource, generatedSource, scenarios] = await Promise.all([
     readFile(catalogUrl, "utf8"),
     readFile(generatedResolverUrl, "utf8"),
@@ -52,12 +52,13 @@ test("generated attestation authority mirrors every scored challenge objective a
   };
   assert.equal(catalog.schemaVersion, 2);
 
-  const challenges = catalog.scenarios.filter((definition) => definition.mode === "challenge");
-  assert.ok(challenges.length > 0, "at least one challenge must be attestable");
-  for (const definition of challenges) {
-    const scenario = scenarios.get(definition.id);
-    assert.ok(scenario, `missing scenario content for ${definition.id}`);
-    assert.equal(scenario.mode, "challenge");
+  const catalogById = new Map(catalog.scenarios.map((definition) => [definition.id, definition]));
+  const activeChallenges = [...scenarios.values()].filter((scenario) => scenario.mode === "challenge");
+  assert.ok(activeChallenges.length > 0, "at least one active challenge must be attestable");
+  for (const scenario of activeChallenges) {
+    const definition = catalogById.get(scenario.id);
+    assert.ok(definition, `${scenario.id} requires a scoring definition for ScenarioRun evidence`);
+    assert.equal(definition.mode, "challenge");
     assert.equal(scenario.points, definition.points, `${definition.id} points must stay authoritative`);
     assert.equal(
       scenario.estimatedMinutes,
@@ -94,13 +95,17 @@ test("generated attestation authority mirrors every scored challenge objective a
   }
 });
 
-test("non-challenge scenarios are not present in attestation authority", async () => {
-  const [catalogSource, generatedSource] = await Promise.all([
+test("non-challenge and stale scoring definitions are not attestable", async () => {
+  const [catalogSource, generatedSource, scenarios] = await Promise.all([
     readFile(catalogUrl, "utf8"),
     readFile(generatedResolverUrl, "utf8"),
+    scenarioMap(),
   ]);
   const catalog = JSON.parse(catalogSource) as { scenarios: ScoringDefinition[] };
-  for (const definition of catalog.scenarios.filter((entry) => entry.mode !== "challenge")) {
-    assert.doesNotMatch(generatedSource, new RegExp(`${JSON.stringify(definition.id)}\\s*:`));
+  for (const definition of catalog.scenarios) {
+    const activeChallenge = definition.mode === "challenge" && scenarios.has(definition.id);
+    if (!activeChallenge) {
+      assert.doesNotMatch(generatedSource, new RegExp(`${JSON.stringify(definition.id)}\\s*:`));
+    }
   }
 });
