@@ -1,22 +1,18 @@
 import { util } from "@aws-appsync/utils";
 
-const ITEM_INDEX = 7;
+const SLOT = 3;
 
 export function request(ctx) {
-  const ids = ctx.stash.telemetryDeletionIds || [];
-  const id = ids[ITEM_INDEX];
-  ctx.stash.telemetryDeletionCurrentExists = typeof id === "string";
+  const targets = ctx.stash.telemetryDeletionTargets || [];
+  const target = targets[SLOT];
   return {
-    operation: typeof id === "string" ? "DeleteItem" : "GetItem",
-    key: util.dynamodb.toMapValues({ id: id || "telemetry-delete-noop:v1" }),
+    operation: target ? "DeleteItem" : "GetItem",
+    key: util.dynamodb.toMapValues({ id: target ? target.pointerId : "telemetry-delete-noop:v1" }),
   };
 }
 
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
-  if (ctx.stash.telemetryDeletionCurrentExists) {
-    ctx.stash.telemetryDeletionCount += 1;
-  }
   return {
     deletedCount: ctx.stash.telemetryDeletionCount,
     complete: !ctx.stash.telemetryDeletionHasMore,
