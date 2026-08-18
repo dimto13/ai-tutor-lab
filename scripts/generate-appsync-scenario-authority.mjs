@@ -184,7 +184,7 @@ function generatedDefinitionBody(definitions, projection, attestableOnly) {
 }
 
 function replaceDefinition(source, constant, body) {
-  const pattern = new RegExp(`const ${constant} = \\{[\\s\\S]*?\\n\\};`);
+  const pattern = new RegExp(`const ${constant} = \\{[\\s\\S]*?\\};`);
   if (!pattern.test(source)) throw new Error(`Template does not define ${constant}`);
   return source.replace(pattern, `const ${constant} = {\n${body}\n};`);
 }
