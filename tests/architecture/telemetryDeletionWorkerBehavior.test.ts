@@ -4,7 +4,6 @@ import { createTelemetryDeletionHandler } from "../../amplify/functions/telemetr
 
 const RAW_TABLE = "raw-telemetry";
 const POINTER_TABLE = "telemetry-deletion-pointers";
-const POINTER_INDEX = "telemetryDeletionByOwnerTime";
 const TENANT_ID = "tenant-a";
 const USER_ID = "user-a";
 
@@ -18,7 +17,6 @@ function ownerKey(): string {
 
 function pointer(index: number, tenantId = TENANT_ID) {
   return {
-    id: { S: `pointer-${index}` },
     tenantId: { S: tenantId },
     ownerKey: { S: ownerKey() },
     rawEventId: { S: `raw-${index}` },
@@ -55,7 +53,6 @@ function batchTable(input: Record<string, unknown>): string {
 function configureEnvironment(): void {
   process.env["TELEMETRY_RAW_EVENT_TABLE_NAME"] = RAW_TABLE;
   process.env["TELEMETRY_DELETION_POINTER_TABLE_NAME"] = POINTER_TABLE;
-  process.env["TELEMETRY_DELETION_POINTER_INDEX_NAME"] = POINTER_INDEX;
 }
 
 function identityEvent() {
@@ -66,7 +63,7 @@ function identityEvent() {
   };
 }
 
-test("server telemetry deletion paginates every owner pointer and removes raw data first", async () => {
+test("server telemetry deletion strongly paginates every owner pointer and removes raw data first", async () => {
   configureEnvironment();
   let queryCount = 0;
   const writeTables: string[] = [];
@@ -76,11 +73,12 @@ test("server telemetry deletion paginates every owner pointer and removes raw da
     if (name === "QueryCommand") {
       queryCount += 1;
       assert.equal(input["TableName"], POINTER_TABLE);
-      assert.equal(input["IndexName"], POINTER_INDEX);
+      assert.equal(input["ConsistentRead"], true);
+      assert.equal(input["IndexName"], undefined);
       const values = input["ExpressionAttributeValues"] as Record<string, { S?: string }>;
       assert.equal(values[":ownerKey"]?.S, ownerKey());
       return queryCount === 1
-        ? { Items: [pointer(1)], LastEvaluatedKey: { id: { S: "pointer-1" } } }
+        ? { Items: [pointer(1)], LastEvaluatedKey: { ownerKey: { S: ownerKey() } } }
         : { Items: [pointer(2)] };
     }
     if (name === "BatchWriteItemCommand") {
