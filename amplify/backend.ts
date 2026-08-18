@@ -90,10 +90,6 @@ backend.telemetryDeletionWorker.addEnvironment(
   "TELEMETRY_DELETION_POINTER_TABLE_NAME",
   deletionPointerTable.tableName,
 );
-backend.telemetryDeletionWorker.addEnvironment(
-  "TELEMETRY_DELETION_POINTER_INDEX_NAME",
-  "telemetryDeletionByOwnerTime",
-);
 
 new EventSourceMapping(Stack.of(rawTelemetryTable), "TelemetryAggregateProjectionStream", {
   target: projectorLambda,
