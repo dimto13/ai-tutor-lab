@@ -69,7 +69,10 @@ export interface ChallengeAttestationRequest {
 export interface AttestationService {
   issueChallenge(request: ChallengeAttestationRequest): Promise<AttestationIssueResult>;
   listAttestations(limit?: number): Promise<AttestationView[]>;
-  exportAttestation(attestationId: string, format: AttestationExportFormat): Promise<AttestationExport>;
+  exportAttestation(
+    attestationId: string,
+    format: AttestationExportFormat,
+  ): Promise<AttestationExport>;
 }
 
 /**
@@ -100,7 +103,8 @@ function identityPart(value: string | null): string {
 }
 
 function assertNonEmpty(value: string, field: string): void {
-  if (value.length === 0 || value !== value.trim()) throw new Error(`${field} must be a non-empty id`);
+  if (value.length === 0 || value !== value.trim())
+    throw new Error(`${field} must be a non-empty id`);
 }
 
 export function normalizeLearningObjectiveIds(ids: readonly string[]): string[] {
@@ -141,7 +145,8 @@ export function createAttestationId(input: AttestationIdentityInput): string {
 
 /** Add 12 calendar months with end-of-month clamping (for example leap-day -> 28 February). */
 export function calculateAttestationValidUntil(issuedAt: number): number {
-  if (!Number.isFinite(issuedAt) || issuedAt < 0) throw new Error("issuedAt must be a valid epoch ms");
+  if (!Number.isFinite(issuedAt) || issuedAt < 0)
+    throw new Error("issuedAt must be a valid epoch ms");
   const issued = new Date(issuedAt);
   if (Number.isNaN(issued.getTime())) throw new Error("issuedAt must be a valid epoch ms");
 
@@ -202,7 +207,9 @@ export function canonicalAttestationSigningPayload(attestation: CompetenceAttest
       sourceRevision: attestation.evidence.sourceRevision,
       challengeOutcome: attestation.evidence.challengeOutcome,
       evidenceStatus: attestation.evidence.evidenceStatus,
-      learningObjectiveIds: normalizeLearningObjectiveIds(attestation.evidence.learningObjectiveIds),
+      learningObjectiveIds: normalizeLearningObjectiveIds(
+        attestation.evidence.learningObjectiveIds,
+      ),
     },
   });
 }
