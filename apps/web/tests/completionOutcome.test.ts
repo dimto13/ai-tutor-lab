@@ -202,7 +202,7 @@ test("new authoritative evidence can leave the competency level unchanged", () =
     scoreResult: award(true, 200),
     baseline: skillState("ready", [profile({ level: "novice", points: 0, calculatedAt: 100 })]),
     current: skillState("ready", [
-      profile({ level: "novice", points: 50, sourceRevision: 2, calculatedAt: 300 }),
+      profile({ level: "novice", points: 100, sourceRevision: 2, calculatedAt: 300 }),
     ]),
   });
 
@@ -210,6 +210,28 @@ test("new authoritative evidence can leave the competency level unchanged", () =
   if (presentation.kind !== "changed") return;
   assert.equal(presentation.changes[0]?.levelChanged, false);
   assert.equal(presentation.changes[0]?.pointsChanged, true);
+});
+
+test("unrelated or partial projected changes stay pending until this award is visible", () => {
+  const presentation = completionCompetencyPresentation({
+    scoreStatus: "ready",
+    scoreResult: award(true, 200),
+    baseline: skillState("ready", [
+      profile({ technologyId: "ide", points: 0, calculatedAt: 100 }),
+      profile({ technologyId: "source_control", points: 0, calculatedAt: 100 }),
+    ]),
+    current: skillState("ready", [
+      profile({ technologyId: "ide", points: 50, sourceRevision: 2, calculatedAt: 300 }),
+      profile({
+        technologyId: "source_control",
+        points: 100,
+        sourceRevision: 2,
+        calculatedAt: 300,
+      }),
+    ]),
+  });
+
+  assert.equal(presentation.kind, "projection_pending");
 });
 
 test("unchanged immediate projection stays pending after a newly created award", () => {
