@@ -2,7 +2,8 @@ import { util } from "@aws-appsync/utils";
 
 function subject(ctx) {
   const identity = ctx.identity;
-  if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0) util.unauthorized();
+  if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0)
+    util.unauthorized();
   const groups = identity.groups || [];
   let tenantId = null;
   for (const group of groups) {
