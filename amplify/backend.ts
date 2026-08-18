@@ -1,5 +1,6 @@
 import { defineBackend } from "@aws-amplify/backend";
 import { Stack } from "aws-cdk-lib";
+import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
 import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
@@ -32,6 +33,9 @@ const projectionReceiptCfnTable = requiredResource(
   amplifyDynamoDbTables["TrainingTelemetryProjectionReceipt"],
   "TrainingTelemetryProjectionReceipt CfnTable",
 );
+rawTelemetryCfnTable.streamSpecification = {
+  streamViewType: StreamViewType.NEW_IMAGE,
+};
 for (const table of [rawTelemetryCfnTable, deletionPointerCfnTable, projectionReceiptCfnTable]) {
   table.timeToLiveAttribute = {
     attributeName: "expiresAtEpochSeconds",
