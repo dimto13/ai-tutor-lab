@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppendScoreEventResult, TrainingMode } from "@ai-train-lab/training-engine";
 import { createApplicationAttestationService } from "../attestations/applicationAttestationService";
 import { createApplicationScenarioScoreService } from "./applicationScenarioScoreService";
@@ -12,10 +12,19 @@ export interface ScenarioScoreAwardState {
   retry: () => void;
 }
 
+interface RememberedScoreAward {
+  completionKey: string;
+  award: AppendScoreEventResult;
+}
+
 const MAX_AUTOMATIC_ATTEMPTS = 5;
 
 function online(): boolean {
   return typeof navigator === "undefined" || navigator.onLine;
+}
+
+function completionKey(scenarioId: string, mode: TrainingMode, finishedAt: number): string {
+  return `${scenarioId}\u0000${mode}\u0000${finishedAt}`;
 }
 
 export function useScenarioScoreAward(
@@ -25,6 +34,7 @@ export function useScenarioScoreAward(
 ): ScenarioScoreAwardState {
   const service = useMemo(() => createApplicationScenarioScoreService(), []);
   const attestationService = useMemo(() => createApplicationAttestationService(), []);
+  const rememberedAward = useRef<RememberedScoreAward | null>(null);
   const [retryToken, setRetryToken] = useState(0);
   const [status, setStatus] = useState<ScenarioScoreAwardStatus>(service ? "idle" : "unavailable");
   const [result, setResult] = useState<AppendScoreEventResult | null>(null);
@@ -36,6 +46,7 @@ export function useScenarioScoreAward(
 
   useEffect(() => {
     if (!service) {
+      rememberedAward.current = null;
       setStatus("unavailable");
       setResult(null);
       setError(null);
@@ -44,10 +55,16 @@ export function useScenarioScoreAward(
     const activeService = service;
     const activeAttestationService = attestationService;
     if (finishedAt === null) {
+      rememberedAward.current = null;
       setStatus("idle");
       setResult(null);
       setError(null);
       return;
+    }
+
+    const activeCompletionKey = completionKey(scenarioId, mode, finishedAt);
+    if (rememberedAward.current?.completionKey !== activeCompletionKey) {
+      rememberedAward.current = null;
     }
 
     let cancelled = false;
@@ -67,6 +84,16 @@ export function useScenarioScoreAward(
       timer = window.setTimeout(run, delay);
     }
 
+    async function awardOnce(): Promise<AppendScoreEventResult> {
+      const remembered = rememberedAward.current;
+      if (remembered?.completionKey === activeCompletionKey) return remembered.award;
+
+      const award = await activeService.awardScenario({ scenarioId, mode });
+      rememberedAward.current = { completionKey: activeCompletionKey, award };
+      if (!cancelled) setResult(award);
+      return award;
+    }
+
     function run(): void {
       if (cancelled) return;
       clearTimer();
@@ -74,8 +101,7 @@ export function useScenarioScoreAward(
       setStatus("pending");
       setError(null);
 
-      void activeService
-        .awardScenario({ scenarioId, mode })
+      void awardOnce()
         .then(async (award) => {
           if (mode === "challenge" && activeAttestationService) {
             await activeAttestationService.issueChallenge({ scenarioId });
@@ -103,7 +129,8 @@ export function useScenarioScoreAward(
       run();
     }
 
-    setResult(null);
+    const remembered = rememberedAward.current;
+    setResult(remembered?.completionKey === activeCompletionKey ? remembered.award : null);
     run();
     if (typeof window !== "undefined") window.addEventListener("online", handleOnline);
 
