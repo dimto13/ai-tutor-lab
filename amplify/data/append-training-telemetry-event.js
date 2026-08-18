@@ -133,9 +133,6 @@ export function request(ctx) {
   ].join(".");
   const receivedAtEpochSeconds = util.time.nowEpochSeconds();
   const expiresAtEpochSeconds = receivedAtEpochSeconds + retentionDays * SECONDS_PER_DAY;
-  ctx.stash.telemetryRawEventId = id;
-  ctx.stash.telemetryRawEventOccurredAt = occurredAt;
-  ctx.stash.telemetryRawEventExpiresAtEpochSeconds = expiresAtEpochSeconds;
 
   return {
     operation: "PutItem",
