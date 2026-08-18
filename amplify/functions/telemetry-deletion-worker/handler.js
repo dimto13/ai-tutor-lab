@@ -1,6 +1,3 @@
-import { BatchWriteItemCommand, DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
-
-const client = new DynamoDBClient({});
 const BATCH_WRITE_LIMIT = 25;
 const MAX_UNPROCESSED_RETRIES = 8;
 
@@ -62,6 +59,14 @@ function requiredStringAttribute(item, name) {
   return value;
 }
 
+function queryDescriptor(input) {
+  return { type: "query", input };
+}
+
+function batchWriteDescriptor(input) {
+  return { type: "batchWrite", input };
+}
+
 async function loadDeletionTargets(subject, send) {
   const tableName = requiredEnvironment("TELEMETRY_DELETION_POINTER_TABLE_NAME");
   const expectedOwnerKey = ownerKey(subject);
@@ -70,7 +75,7 @@ async function loadDeletionTargets(subject, send) {
 
   do {
     const result = await send(
-      new QueryCommand({
+      queryDescriptor({
         TableName: tableName,
         KeyConditionExpression: "ownerKey = :ownerKey",
         ExpressionAttributeValues: { ":ownerKey": { S: expectedOwnerKey } },
@@ -110,7 +115,7 @@ async function deleteBatch(tableName, keys, send) {
   let pending = keys.map((key) => ({ DeleteRequest: { Key: key } }));
   for (let attempt = 0; pending.length > 0; attempt += 1) {
     const result = await send(
-      new BatchWriteItemCommand({
+      batchWriteDescriptor({
         RequestItems: { [tableName]: pending },
       }),
     );
@@ -161,4 +166,29 @@ export function createTelemetryDeletionHandler(send) {
   };
 }
 
-export const handler = createTelemetryDeletionHandler((command) => client.send(command));
+let awsSenderPromise;
+
+async function awsSender() {
+  if (!awsSenderPromise) {
+    awsSenderPromise = import("@aws-sdk/client-dynamodb").then(
+      ({ BatchWriteItemCommand, DynamoDBClient, QueryCommand }) => {
+        const client = new DynamoDBClient({});
+        return (descriptor) => {
+          if (descriptor.type === "query") {
+            return client.send(new QueryCommand(descriptor.input));
+          }
+          if (descriptor.type === "batchWrite") {
+            return client.send(new BatchWriteItemCommand(descriptor.input));
+          }
+          throw new Error("Unsupported telemetry deletion DynamoDB command");
+        };
+      },
+    );
+  }
+  return awsSenderPromise;
+}
+
+export async function handler(event) {
+  const send = await awsSender();
+  return createTelemetryDeletionHandler(send)(event);
+}
