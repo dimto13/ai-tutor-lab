@@ -4,8 +4,14 @@ import test from "node:test";
 
 const dataResourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
 const loadResolverUrl = new URL("../../amplify/data/award-score-load-session.js", import.meta.url);
-const runResolverUrl = new URL("../../amplify/data/award-score-write-run.js", import.meta.url);
-const writeResolverUrl = new URL("../../amplify/data/award-score-write-event.js", import.meta.url);
+const runResolverUrl = new URL(
+  "../../amplify/data/award-score-write-run.generated.js",
+  import.meta.url,
+);
+const writeResolverUrl = new URL(
+  "../../amplify/data/award-score-write-event.generated.js",
+  import.meta.url,
+);
 const listRunResolverUrl = new URL("../../amplify/data/list-scenario-runs.js", import.meta.url);
 const listResolverUrl = new URL("../../amplify/data/list-score-events.js", import.meta.url);
 const completionScreenUrl = new URL(
@@ -29,9 +35,12 @@ function schemaMemberBlock(source: string, memberName: string): string {
   const startMarker = `  ${memberName}:`;
   const start = source.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing schema marker ${startMarker}`);
+  const remainder = source.slice(start + startMarker.length);
+  const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
   const schemaEnd = source.indexOf("\n});", start + startMarker.length);
   assert.notEqual(schemaEnd, -1, "Missing Amplify schema terminator");
-  return source.slice(start, schemaEnd);
+  const end = nextDefinition >= 0 ? start + startMarker.length + nextDefinition : schemaEnd;
+  return source.slice(start, end);
 }
 
 test("public score award input cannot set owner, version, points or anti-gaming evidence", async () => {
@@ -52,8 +61,8 @@ test("public score award input cannot set owner, version, points or anti-gaming 
   assert.doesNotMatch(argumentsBlock, /fastRunThreshold/);
   assert.doesNotMatch(argumentsBlock, /evidenceStatus/);
   assert.match(awardBlock, /award-score-load-session\.js/);
-  assert.match(awardBlock, /award-score-write-run\.js/);
-  assert.match(awardBlock, /award-score-write-event\.js/);
+  assert.match(awardBlock, /award-score-write-run\.generated\.js/);
+  assert.match(awardBlock, /award-score-write-event\.generated\.js/);
 });
 
 test("server persists every completed run before awarding scenario-version points once", async () => {
@@ -67,11 +76,11 @@ test("server persists every completed run before awarding scenario-version point
   const awardBlock = schemaMemberBlock(resourceSource, "awardScenarioScore");
   assert.ok(
     awardBlock.indexOf("award-score-load-session.js") <
-      awardBlock.indexOf("award-score-write-run.js"),
+      awardBlock.indexOf("award-score-write-run.generated.js"),
   );
   assert.ok(
-    awardBlock.indexOf("award-score-write-run.js") <
-      awardBlock.indexOf("award-score-write-event.js"),
+    awardBlock.indexOf("award-score-write-run.generated.js") <
+      awardBlock.indexOf("award-score-write-event.generated.js"),
   );
   assert.match(awardBlock, /dataSource:\s*a\.ref\(["']ScenarioRun["']\)/);
 
