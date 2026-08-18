@@ -1,7 +1,4 @@
-import type {
-  ClassificationValidationSpec,
-  EngineValidationResult,
-} from "./types.ts";
+import type { ClassificationValidationSpec, EngineValidationResult } from "./types.ts";
 import type { ValidationContext, ValidatorSpec } from "./validation.ts";
 
 interface ClassificationLevelView {
@@ -45,7 +42,8 @@ export async function validateClassification(
   const progress = state.documentProgress[spec.documentId];
   if (!progress?.selectedLevelId) return IGNORE;
   const requiredAiEntries = Object.entries(spec.expectedAiDecisions);
-  if (!requiredAiEntries.every(([tool]) => Object.hasOwn(progress.aiDecisions, tool))) return IGNORE;
+  if (!requiredAiEntries.every(([tool]) => Object.hasOwn(progress.aiDecisions, tool)))
+    return IGNORE;
 
   const expectedIndicators = new Set(spec.expectedIndicatorIds);
   const actualIndicators = new Set(progress.markedIndicatorIds);
@@ -129,10 +127,17 @@ function parseValidationState(value: unknown): ClassificationValidationStateView
   const viewedDocumentIds = value["viewedDocumentIds"];
   const scheme = value["scheme"];
   const documentProgress = value["documentProgress"];
-  if (!Array.isArray(viewedDocumentIds) || !viewedDocumentIds.every((id) => typeof id === "string")) {
+  if (
+    !Array.isArray(viewedDocumentIds) ||
+    !viewedDocumentIds.every((id) => typeof id === "string")
+  ) {
     return null;
   }
-  if (!isRecord(scheme) || !Array.isArray(scheme["levels"]) || !Array.isArray(scheme["indicators"])) {
+  if (
+    !isRecord(scheme) ||
+    !Array.isArray(scheme["levels"]) ||
+    !Array.isArray(scheme["indicators"])
+  ) {
     return null;
   }
   if (!isRecord(documentProgress)) return null;
@@ -183,7 +188,9 @@ function parseValidationState(value: unknown): ClassificationValidationStateView
 }
 
 function indicatorLabel(state: ClassificationValidationStateView, indicatorId: string): string {
-  return state.scheme.indicators.find((indicator) => indicator.id === indicatorId)?.label ?? indicatorId;
+  return (
+    state.scheme.indicators.find((indicator) => indicator.id === indicatorId)?.label ?? indicatorId
+  );
 }
 
 function levelLabel(state: ClassificationValidationStateView, levelId: string): string {
