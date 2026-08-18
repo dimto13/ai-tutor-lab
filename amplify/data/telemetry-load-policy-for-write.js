@@ -1,5 +1,7 @@
 import { util } from "@aws-appsync/utils";
 
+const DEFAULT_RAW_EVENT_RETENTION_DAYS = 90;
+
 function caller(ctx) {
   const identity = ctx.identity;
   if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0) {
@@ -34,6 +36,12 @@ function policyId(tenantId) {
   return `telemetry-policy:v1:${util.base64Encode(tenantId)}`;
 }
 
+function retentionDays(row) {
+  const value = row && row.rawEventRetentionDays;
+  if (typeof value === "number" && value >= 1 && value % 1 === 0) return value;
+  return DEFAULT_RAW_EVENT_RETENTION_DAYS;
+}
+
 export function request(ctx) {
   const subject = caller(ctx);
   ctx.stash.telemetrySubject = subject;
@@ -48,6 +56,8 @@ export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   const row = ctx.result;
   const mode = row && row.pseudonymizationMode === "ANONYMOUS" ? "ANONYMOUS" : "SESSION";
+  const days = retentionDays(row);
   ctx.stash.telemetryPseudonymizationMode = mode;
-  return row;
+  ctx.stash.telemetryRawEventRetentionDays = days;
+  return { pseudonymizationMode: mode, rawEventRetentionDays: days };
 }

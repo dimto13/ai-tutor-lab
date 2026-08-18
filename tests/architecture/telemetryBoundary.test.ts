@@ -7,6 +7,10 @@ const writeResolverUrl = new URL(
   "../../amplify/data/append-training-telemetry-event.js",
   import.meta.url,
 );
+const lifecycleResolverUrl = new URL(
+  "../../amplify/data/write-telemetry-deletion-pointer.js",
+  import.meta.url,
+);
 const policyResolverUrl = new URL(
   "../../amplify/data/telemetry-load-policy-for-write.js",
   import.meta.url,
@@ -30,9 +34,10 @@ test("telemetry ingestion accepts canonical events but no client owner fields", 
 });
 
 test("telemetry resolvers derive tenant from Cognito without a stable user pseudonym", async () => {
-  const [schemaSource, policySource, writeSource] = await Promise.all([
+  const [schemaSource, policySource, lifecycleSource, writeSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
     readFile(policyResolverUrl, "utf8"),
+    readFile(lifecycleResolverUrl, "utf8"),
     readFile(writeResolverUrl, "utf8"),
   ]);
 
@@ -45,11 +50,18 @@ test("telemetry resolvers derive tenant from Cognito without a stable user pseud
   assert.doesNotMatch(policySource, /ctx\.args\.userId/);
   assert.doesNotMatch(policySource, /ctx\.args\.tenantId/);
 
+  assert.match(lifecycleSource, /parseISO8601ToEpochMilliSeconds/);
+  assert.match(lifecycleSource, /telemetryRawEventOccurredAt/);
+  assert.match(lifecycleSource, /telemetryRawEventExpiresAtEpochSeconds/);
+  assert.doesNotMatch(lifecycleSource, /ctx\.args\.userId/);
+  assert.doesNotMatch(lifecycleSource, /ctx\.args\.tenantId/);
+
   assert.match(writeSource, /telemetrySubject/);
   assert.match(writeSource, /subjectKey/);
   assert.match(writeSource, /"anonymous:v1"/);
   assert.match(writeSource, /session:v1:/);
-  assert.match(writeSource, /parseISO8601ToEpochMilliSeconds/);
+  assert.match(writeSource, /telemetryRawEventOccurredAt/);
+  assert.match(writeSource, /telemetryRawEventExpiresAtEpochSeconds/);
   assert.doesNotMatch(writeSource, /base64Encode\(subject\.userId\)/);
   assert.doesNotMatch(writeSource, /attributeValues:[\s\S]*userId\s*:/);
   assert.doesNotMatch(writeSource, /ctx\.args\.userId/);
