@@ -53,13 +53,19 @@ test("generated attestation authority mirrors every active scored challenge obje
   assert.equal(catalog.schemaVersion, 2);
 
   const catalogById = new Map(catalog.scenarios.map((definition) => [definition.id, definition]));
-  const activeChallenges = [...scenarios.values()].filter((scenario) => scenario.mode === "challenge");
+  const activeChallenges = [...scenarios.values()].filter(
+    (scenario) => scenario.mode === "challenge",
+  );
   assert.ok(activeChallenges.length > 0, "at least one active challenge must be attestable");
   for (const scenario of activeChallenges) {
     const definition = catalogById.get(scenario.id);
     assert.ok(definition, `${scenario.id} requires a scoring definition for ScenarioRun evidence`);
     assert.equal(definition.mode, "challenge");
-    assert.equal(scenario.points, definition.points, `${definition.id} points must stay authoritative`);
+    assert.equal(
+      scenario.points,
+      definition.points,
+      `${definition.id} points must stay authoritative`,
+    );
     assert.equal(
       scenario.estimatedMinutes,
       definition.estimatedMinutes,
@@ -70,8 +76,15 @@ test("generated attestation authority mirrors every active scored challenge obje
     assert.ok(scenario.environment?.version);
 
     const definitionStart = generatedSource.indexOf(`${JSON.stringify(definition.id)}:`);
-    assert.notEqual(definitionStart, -1, `${definition.id} must exist in generated attestation authority`);
-    const nextDefinition = generatedSource.indexOf("\n  \"", definitionStart + definition.id.length + 4);
+    assert.notEqual(
+      definitionStart,
+      -1,
+      `${definition.id} must exist in generated attestation authority`,
+    );
+    const nextDefinition = generatedSource.indexOf(
+      '\n  "',
+      definitionStart + definition.id.length + 4,
+    );
     const block = generatedSource.slice(
       definitionStart,
       nextDefinition >= 0 ? nextDefinition : generatedSource.indexOf("\n};", definitionStart),
