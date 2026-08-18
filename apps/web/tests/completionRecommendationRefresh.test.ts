@@ -13,6 +13,7 @@ import {
 } from "../src/completion/completionOutcome.ts";
 import {
   materialSkillProfileEvidenceChanged,
+  recommendationMinimumPointsDelta,
   requiresFreshRecommendationEvidence,
 } from "../src/dashboard/recommendationProfileFreshness.ts";
 import { scoredTechnologyIdForScenario } from "../src/skill-profile/skillProfilePolicy.ts";
@@ -130,18 +131,30 @@ test("existing award does not require a pre-award freshness baseline", () => {
 });
 
 test("a new award and an existing award produce distinct stable SkillProfile refresh keys", () => {
+  const createdAward = award(1234);
+  const existingAward = award(1234, false);
   assert.equal(completionRecommendationRefreshKey("pending", null), "pending");
-  assert.equal(completionRecommendationRefreshKey("ready", award(1234)), "ready:1234:created");
   assert.equal(
-    completionRecommendationRefreshKey("ready", award(1234, false)),
-    "ready:1234:existing",
+    completionRecommendationRefreshKey("ready", createdAward),
+    `ready:1234:${createdAward.event.points}:created`,
+  );
+  assert.equal(
+    completionRecommendationRefreshKey("ready", existingAward),
+    `ready:1234:${existingAward.event.points}:existing`,
   );
 });
 
 test("only a newly created award requires material fresh evidence before a competency recommendation", () => {
-  assert.equal(requiresFreshRecommendationEvidence("ready:1234:created"), true);
-  assert.equal(requiresFreshRecommendationEvidence("ready:1234:existing"), false);
+  const result = award(1234);
+  const refreshKey = completionRecommendationRefreshKey("ready", result);
+  assert.equal(requiresFreshRecommendationEvidence(refreshKey), true);
+  assert.equal(recommendationMinimumPointsDelta(refreshKey), result.event.points);
+  assert.equal(
+    requiresFreshRecommendationEvidence(completionRecommendationRefreshKey("ready", award(1234, false))),
+    false,
+  );
   assert.equal(requiresFreshRecommendationEvidence("pending"), false);
+  assert.equal(recommendationMinimumPointsDelta("pending"), null);
 });
 
 test("a sourceRevision-only refresh is not accepted as fresh competency evidence", () => {
@@ -169,6 +182,15 @@ test("material evidence must change for the completed technology, not merely els
     materialSkillProfileEvidenceChanged(before, completedTechnologyUpdated, "ide"),
     true,
   );
+});
+
+test("freshness requires the awarded point delta, not an unrelated smaller point change", () => {
+  const before = [profile({ technologyId: "ide", points: 100, sourceRevision: 1 })];
+  const partial = [profile({ technologyId: "ide", points: 150, sourceRevision: 2 })];
+  const complete = [profile({ technologyId: "ide", points: 200, sourceRevision: 3 })];
+
+  assert.equal(materialSkillProfileEvidenceChanged(before, partial, "ide", 100), false);
+  assert.equal(materialSkillProfileEvidenceChanged(before, complete, "ide", 100), true);
 });
 
 test("freshness technology comes from the canonical SkillProfile scoring policy", () => {
