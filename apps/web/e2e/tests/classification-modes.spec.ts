@@ -12,15 +12,15 @@ type ClassificationCase = {
 };
 
 async function chooseAiDecisions(page: Page, decisions: Record<AiTool, boolean>) {
-  const tool = page.getByLabel("KI-Werkzeug");
+  const tool = page.getByRole("combobox", { name: "KI-Werkzeug" });
   for (const aiTool of aiTools) {
     await tool.selectOption(aiTool);
-    await page
-      .getByRole("button", {
-        name: decisions[aiTool] ? "Zulassen" : "Nicht zulassen",
-        exact: true,
-      })
-      .click();
+    const decision = page.getByRole("button", {
+      name: decisions[aiTool] ? "Zulassen" : "Nicht zulassen",
+      exact: true,
+    });
+    await decision.click();
+    await expect(decision).toHaveAttribute("aria-pressed", "true");
   }
 }
 
@@ -28,9 +28,13 @@ async function classifyDocument(page: Page, classification: ClassificationCase) 
   await page.getByRole("button", { name: new RegExp(classification.title) }).click();
   for (const indicator of classification.indicators) {
     const button = page.getByRole("button", { name: indicator, exact: true });
-    if ((await button.getAttribute("aria-pressed")) !== "true") await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "true");
   }
-  await page.getByRole("button", { name: classification.level, exact: true }).click();
+  const level = page.getByRole("button", { name: classification.level, exact: true });
+  await level.click();
+  await expect(level).toHaveAttribute("aria-pressed", "true");
   await chooseAiDecisions(page, classification.ai);
 }
 
