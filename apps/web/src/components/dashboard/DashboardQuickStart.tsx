@@ -2,12 +2,14 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, RotateCcw, Sparkles } from "lucide-react";
 import type { SelfAssessedAiLevel, TrainingMode } from "@ai-train-lab/training-engine";
+import type {
+  DashboardPrimaryAction,
+  DashboardResumeCandidate,
+} from "@/dashboard/dashboardRecommendation";
 import {
   selectCalibratedDashboardRecommendation,
   type DashboardLearningGoal,
-  type DashboardPrimaryAction,
-  type DashboardResumeCandidate,
-} from "@/dashboard/dashboardRecommendation";
+} from "@/dashboard/dashboardQuickStartRecommendation";
 import { allDashboardTrainingCandidates } from "@/dashboard/dashboardRecommendationContext";
 import type { ResumeLoadStatus } from "@/dashboard/useTrainingRecommendation";
 import { aiLevelLabel } from "@/profile/aiLevelOptions";
