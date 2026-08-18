@@ -62,7 +62,7 @@ function requiredStringAttribute(item, name) {
   return value;
 }
 
-async function loadDeletionTargets(subject) {
+async function loadDeletionTargets(subject, send) {
   const tableName = requiredEnvironment("TELEMETRY_DELETION_POINTER_TABLE_NAME");
   const indexName = requiredEnvironment("TELEMETRY_DELETION_POINTER_INDEX_NAME");
   const expectedOwnerKey = ownerKey(subject);
@@ -70,7 +70,7 @@ async function loadDeletionTargets(subject) {
   let exclusiveStartKey;
 
   do {
-    const result = await client.send(
+    const result = await send(
       new QueryCommand({
         TableName: tableName,
         IndexName: indexName,
@@ -110,10 +110,10 @@ function sleep(delayMs) {
   return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
-async function deleteBatch(tableName, ids) {
+async function deleteBatch(tableName, ids, send) {
   let pending = ids.map((id) => ({ DeleteRequest: { Key: { id: { S: id } } } }));
   for (let attempt = 0; pending.length > 0; attempt += 1) {
-    const result = await client.send(
+    const result = await send(
       new BatchWriteItemCommand({
         RequestItems: { [tableName]: pending },
       }),
@@ -127,33 +127,39 @@ async function deleteBatch(tableName, ids) {
   }
 }
 
-async function deleteItems(tableName, ids) {
+async function deleteItems(tableName, ids, send) {
   for (const batch of chunks(ids, BATCH_WRITE_LIMIT)) {
-    await deleteBatch(tableName, batch);
+    await deleteBatch(tableName, batch, send);
   }
 }
 
-export const handler = async (event) => {
-  const subject = caller(event);
-  const targets = await loadDeletionTargets(subject);
-  if (targets.length === 0) return { deletedCount: 0, complete: true };
+export function createTelemetryDeletionHandler(send) {
+  return async (event) => {
+    const subject = caller(event);
+    const targets = await loadDeletionTargets(subject, send);
+    if (targets.length === 0) return { deletedCount: 0, complete: true };
 
-  const rawTableName = requiredEnvironment("TELEMETRY_RAW_EVENT_TABLE_NAME");
-  const pointerTableName = requiredEnvironment("TELEMETRY_DELETION_POINTER_TABLE_NAME");
+    const rawTableName = requiredEnvironment("TELEMETRY_RAW_EVENT_TABLE_NAME");
+    const pointerTableName = requiredEnvironment("TELEMETRY_DELETION_POINTER_TABLE_NAME");
 
-  // Preserve every ownership pointer until all raw records have been removed. If the invocation
-  // fails before or during this phase, the pointers remain and a retry can deterministically resume.
-  await deleteItems(
-    rawTableName,
-    targets.map((target) => target.rawEventId),
-  );
+    // Preserve every ownership pointer until all raw records have been removed. If the invocation
+    // fails before or during this phase, the pointers remain and a retry can deterministically resume.
+    await deleteItems(
+      rawTableName,
+      targets.map((target) => target.rawEventId),
+      send,
+    );
 
-  // Pointer deletion is intentionally second. Partial pointer deletion is also retry-safe because
-  // raw deletes are idempotent; any remaining pointers continue to identify unfinished cleanup.
-  await deleteItems(
-    pointerTableName,
-    targets.map((target) => target.pointerId),
-  );
+    // Pointer deletion is intentionally second. Partial pointer deletion is also retry-safe because
+    // raw deletes are idempotent; any remaining pointers continue to identify unfinished cleanup.
+    await deleteItems(
+      pointerTableName,
+      targets.map((target) => target.pointerId),
+      send,
+    );
 
-  return { deletedCount: targets.length, complete: true };
-};
+    return { deletedCount: targets.length, complete: true };
+  };
+}
+
+export const handler = createTelemetryDeletionHandler((command) => client.send(command));
