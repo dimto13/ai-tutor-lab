@@ -1,4 +1,5 @@
 export * from "./types.ts";
+export * from "./attestation.ts";
 export * from "./contentHierarchy.ts";
 export * from "./eventBus.ts";
 export * from "./guidedNavigation.ts";

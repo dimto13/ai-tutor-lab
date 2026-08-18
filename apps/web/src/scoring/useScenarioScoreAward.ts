@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppendScoreEventResult, TrainingMode } from "@ai-train-lab/training-engine";
+import { createApplicationAttestationService } from "../attestations/applicationAttestationService";
 import { createApplicationScenarioScoreService } from "./applicationScenarioScoreService";
 
 export type ScenarioScoreAwardStatus = "idle" | "unavailable" | "pending" | "ready" | "error";
@@ -23,6 +24,7 @@ export function useScenarioScoreAward(
   finishedAt: number | null,
 ): ScenarioScoreAwardState {
   const service = useMemo(() => createApplicationScenarioScoreService(), []);
+  const attestationService = useMemo(() => createApplicationAttestationService(), []);
   const [retryToken, setRetryToken] = useState(0);
   const [status, setStatus] = useState<ScenarioScoreAwardStatus>(service ? "idle" : "unavailable");
   const [result, setResult] = useState<AppendScoreEventResult | null>(null);
@@ -40,6 +42,7 @@ export function useScenarioScoreAward(
       return;
     }
     const activeService = service;
+    const activeAttestationService = attestationService;
     if (finishedAt === null) {
       setStatus("idle");
       setResult(null);
@@ -73,6 +76,12 @@ export function useScenarioScoreAward(
 
       void activeService
         .awardScenario({ scenarioId, mode })
+        .then(async (award) => {
+          if (mode === "challenge" && activeAttestationService) {
+            await activeAttestationService.issueChallenge({ scenarioId });
+          }
+          return award;
+        })
         .then((award) => {
           if (cancelled) return;
           setResult(award);
@@ -103,7 +112,7 @@ export function useScenarioScoreAward(
       clearTimer();
       if (typeof window !== "undefined") window.removeEventListener("online", handleOnline);
     };
-  }, [finishedAt, mode, retryToken, scenarioId, service]);
+  }, [attestationService, finishedAt, mode, retryToken, scenarioId, service]);
 
   return { status, result, error, retry };
 }
