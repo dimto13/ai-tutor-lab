@@ -241,9 +241,7 @@ export const schema = a.schema({
       occurredAt: a.float().required(),
       expiresAtEpochSeconds: a.float().required(),
     })
-    .secondaryIndexes((index) => [
-      index("ownerKey").sortKeys(["occurredAt"]).name("telemetryDeletionByOwnerTime"),
-    ])
+    .identifier(["ownerKey", "rawEventId"])
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
 
