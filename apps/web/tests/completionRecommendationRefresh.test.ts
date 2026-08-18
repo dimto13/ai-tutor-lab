@@ -150,7 +150,9 @@ test("only a newly created award requires material fresh evidence before a compe
   assert.equal(requiresFreshRecommendationEvidence(refreshKey), true);
   assert.equal(recommendationMinimumPointsDelta(refreshKey), result.event.points);
   assert.equal(
-    requiresFreshRecommendationEvidence(completionRecommendationRefreshKey("ready", award(1234, false))),
+    requiresFreshRecommendationEvidence(
+      completionRecommendationRefreshKey("ready", award(1234, false)),
+    ),
     false,
   );
   assert.equal(requiresFreshRecommendationEvidence("pending"), false);
@@ -195,7 +197,10 @@ test("freshness requires the awarded point delta, not an unrelated smaller point
 
 test("freshness technology comes from the canonical SkillProfile scoring policy", () => {
   assert.equal(scoredTechnologyIdForScenario("vscode-basics.challenge"), "ide");
-  assert.equal(scoredTechnologyIdForScenario("artifact-preview-foundation.guided"), "artifact_preview");
+  assert.equal(
+    scoredTechnologyIdForScenario("artifact-preview-foundation.guided"),
+    "artifact_preview",
+  );
   assert.equal(scoredTechnologyIdForScenario("not-a-scenario"), null);
 });
 
