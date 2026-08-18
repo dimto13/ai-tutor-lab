@@ -28,6 +28,7 @@ import {
   useScenarioScoreAward,
   type ScenarioScoreAwardStatus,
 } from "@/scoring/useScenarioScoreAward";
+import { scoredTechnologyIdForScenario } from "@/skill-profile/skillProfilePolicy";
 import { useSkillProfiles, type SkillProfilesState } from "@/skill-profile/useSkillProfiles";
 import { useTraining } from "@/state/trainingStore";
 
@@ -48,11 +49,24 @@ function technologyName(technologyId: string): string {
 export function CompletionScreen() {
   const { scenario, mode, progress, restart, completedCount } = useTraining();
   const competencyBaseline = useSkillProfiles();
-  const score = useScenarioScoreAward(scenario.id, mode, progress.finishedAt);
+  const scoreFinishedAt = competencyBaseline.status === "loading" ? null : progress.finishedAt;
+  const score = useScenarioScoreAward(scenario.id, mode, scoreFinishedAt);
   const recommendationRefreshKey = completionRecommendationRefreshKey(score.status, score.result);
+  const recommendationFreshnessBaseline =
+    competencyBaseline.status === "ready" &&
+    (score.status !== "ready" ||
+      !score.result?.created ||
+      (competencyBaseline.profiles.length > 0 &&
+        competencyBaseline.profiles.every(
+          (profile) => profile.calculatedAt < score.result!.event.occurredAt,
+        )))
+      ? competencyBaseline.profiles
+      : null;
   const recommendation = useTrainingRecommendation({
     excludeStartScenarioId: scenario.id,
     skillProfilesRefreshKey: recommendationRefreshKey,
+    skillProfilesFreshnessBaseline: recommendationFreshnessBaseline,
+    freshnessTechnologyId: scoredTechnologyIdForScenario(scenario.id),
   });
   const recommendationLoading = shouldWaitForCompletionRecommendation(
     score.status,
