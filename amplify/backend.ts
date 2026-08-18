@@ -5,6 +5,7 @@ import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
+import { telemetryDeletionWorker } from "./functions/telemetry-deletion-worker/resource";
 
 function requiredResource<T>(resource: T | undefined, name: string): T {
   if (resource === undefined) throw new Error(`Missing generated backend resource: ${name}`);
@@ -15,6 +16,7 @@ const backend = defineBackend({
   auth,
   data,
   telemetryAggregateProjector,
+  telemetryDeletionWorker,
 });
 
 const { cfnIdentityPool } = backend.auth.resources.cfnResources;
@@ -47,6 +49,10 @@ const rawTelemetryTable = requiredResource(
   backend.data.resources.tables["TrainingTelemetryEvent"],
   "TrainingTelemetryEvent table",
 );
+const deletionPointerTable = requiredResource(
+  backend.data.resources.tables["TrainingTelemetryDeletionPointer"],
+  "TrainingTelemetryDeletionPointer table",
+);
 const aggregateTable = requiredResource(
   backend.data.resources.tables["TrainingTelemetryAggregate"],
   "TrainingTelemetryAggregate table",
@@ -60,6 +66,7 @@ const rawTelemetryStreamArn = requiredResource(
   "TrainingTelemetryEvent stream ARN",
 );
 const projectorLambda = backend.telemetryAggregateProjector.resources.lambda;
+const deletionLambda = backend.telemetryDeletionWorker.resources.lambda;
 
 aggregateTable.grantReadWriteData(projectorLambda);
 projectionReceiptTable.grantReadWriteData(projectorLambda);
@@ -73,9 +80,24 @@ backend.telemetryAggregateProjector.addEnvironment(
   projectionReceiptTable.tableName,
 );
 
+rawTelemetryTable.grantReadWriteData(deletionLambda);
+deletionPointerTable.grantReadWriteData(deletionLambda);
+backend.telemetryDeletionWorker.addEnvironment(
+  "TELEMETRY_RAW_EVENT_TABLE_NAME",
+  rawTelemetryTable.tableName,
+);
+backend.telemetryDeletionWorker.addEnvironment(
+  "TELEMETRY_DELETION_POINTER_TABLE_NAME",
+  deletionPointerTable.tableName,
+);
+backend.telemetryDeletionWorker.addEnvironment(
+  "TELEMETRY_DELETION_POINTER_INDEX_NAME",
+  "telemetryDeletionByOwnerTime",
+);
+
 new EventSourceMapping(Stack.of(rawTelemetryTable), "TelemetryAggregateProjectionStream", {
   target: projectorLambda,
   eventSourceArn: rawTelemetryStreamArn,
-  startingPosition: StartingPosition.LATEST,
+  startingPosition: StartingPosition.TRIM_HORIZON,
   reportBatchItemFailures: true,
 });
