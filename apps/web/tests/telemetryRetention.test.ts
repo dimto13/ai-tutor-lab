@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   TelemetryRetentionService,
-  type TelemetryDeletionPage,
+  type TelemetryDeletionResult,
   type TelemetryRetentionPort,
 } from "../src/telemetry/telemetryRetention.ts";
 
 class MemoryRetentionPort implements TelemetryRetentionPort {
   rawEventRetentionDays = 90;
-  deletionPages: TelemetryDeletionPage[] = [];
+  deletionResult: TelemetryDeletionResult = { deletedCount: 0, complete: true };
+  deletionCalls = 0;
 
   async loadRetentionPolicy() {
     return { rawEventRetentionDays: this.rawEventRetentionDays };
@@ -18,10 +19,9 @@ class MemoryRetentionPort implements TelemetryRetentionPort {
     this.rawEventRetentionDays = days;
   }
 
-  async deleteMyRawTelemetryPage() {
-    const page = this.deletionPages.shift();
-    if (!page) throw new Error("missing deletion page");
-    return page;
+  async deleteMyRawTelemetry() {
+    this.deletionCalls += 1;
+    return this.deletionResult;
   }
 }
 
@@ -37,22 +37,20 @@ test("TelemetryRetentionService persists tenant raw-event retention through its 
   await assert.rejects(() => service.saveRawEventRetentionDays(1.5), /positive integer/);
 });
 
-test("TelemetryRetentionService drains every raw telemetry page for account closure", async () => {
+test("TelemetryRetentionService delegates account closure to one complete server deletion", async () => {
   const port = new MemoryRetentionPort();
-  port.deletionPages = [
-    { deletedCount: 8, complete: false },
-    { deletedCount: 5, complete: true },
-  ];
+  port.deletionResult = { deletedCount: 13, complete: true };
   const service = new TelemetryRetentionService(port);
 
   assert.equal(await service.deleteForAccountClosure(), 13);
-  assert.deepEqual(port.deletionPages, []);
+  assert.equal(port.deletionCalls, 1);
 });
 
-test("TelemetryRetentionService fails closed when paginated deletion stops making progress", async () => {
+test("TelemetryRetentionService fails closed when the server does not confirm complete deletion", async () => {
   const port = new MemoryRetentionPort();
-  port.deletionPages = [{ deletedCount: 0, complete: false }];
+  port.deletionResult = { deletedCount: 8, complete: false };
   const service = new TelemetryRetentionService(port);
 
-  await assert.rejects(() => service.deleteForAccountClosure(), /made no progress/);
+  await assert.rejects(() => service.deleteForAccountClosure(), /incomplete or invalid/);
+  assert.equal(port.deletionCalls, 1);
 });
