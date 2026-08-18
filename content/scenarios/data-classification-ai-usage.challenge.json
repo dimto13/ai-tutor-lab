@@ -164,7 +164,7 @@
       "helpLevels": [
         "Arbeite Dokument für Dokument: Merkmale → Stufe → KI-Nutzung.",
         "Kontrolliere bei mehreren Merkmalen immer, welches die höchste Mindeststufe fordert.",
-        "Vergiss den unsicheren Grenzfall nicht: Wenn Personenbezug Vertraulich ergibt und Unsicherheit dokumentiert ist, eskaliert das Standardschema auf Streng vertraulich."
+        "Öffne den unsicheren Support-Ticket-Grenzfall, markiere Personenbezogene Daten, wähle wegen der dokumentierten Unsicherheit Streng vertraulich und stelle anschließend alle drei KI-Werkzeuge auf Nicht zulassen."
       ],
       "successMessage": "Alle zehn Dokumente sind fachlich korrekt klassifiziert und die KI-Nutzungsentscheidungen stimmen."
     }
