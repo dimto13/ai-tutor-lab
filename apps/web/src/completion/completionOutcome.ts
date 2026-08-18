@@ -39,7 +39,9 @@ export function completionRecommendationRefreshKey(
   status: CompletionScoreAwardStatus,
   result: AppendScoreEventResult | null,
 ): string {
-  return status === "ready" && result ? `ready:${result.event.occurredAt}` : status;
+  return status === "ready" && result
+    ? `ready:${result.event.occurredAt}:${result.created ? "created" : "existing"}`
+    : status;
 }
 
 export function shouldWaitForCompletionRecommendation(
@@ -110,7 +112,9 @@ function profileChanges(
     const evidenceRevisionChanged = before?.sourceRevision !== after?.sourceRevision;
     const evidenceCountChanged = before?.eligibleChallengeCount !== after?.eligibleChallengeCount;
 
-    if (!levelChanged && !pointsChanged && !evidenceRevisionChanged && !evidenceCountChanged) {
+    // `sourceRevision` can advance when the run GSI becomes visible before the score-event GSI.
+    // A revision-only change is therefore not yet a trustworthy competency delta.
+    if (!levelChanged && !pointsChanged && !evidenceCountChanged) {
       return [];
     }
 
