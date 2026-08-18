@@ -16,7 +16,9 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const effectiveAiLevelLabel = aiLevelLabel(effectiveAiLevel);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftName, setDraftName] = useState(profile.displayName);
-  const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel>(effectiveAiLevel);
+  const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel | null>(
+    preferences.selfAssessedAiLevel,
+  );
   const [emailVisible, setEmailVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -27,10 +29,10 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   useEffect(() => {
     if (!settingsOpen) {
       setDraftName(profile.displayName);
-      setDraftAiLevel(effectiveAiLevel);
+      setDraftAiLevel(preferences.selfAssessedAiLevel);
       setEmailVisible(false);
     }
-  }, [effectiveAiLevel, profile.displayName, settingsOpen]);
+  }, [preferences.selfAssessedAiLevel, profile.displayName, settingsOpen]);
 
   useEffect(() => {
     if (!settingsOpen || !focusAiLevelOnOpenRef.current) return;
@@ -45,7 +47,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   const email = auth.session?.identity.email ?? profile.profile?.email ?? null;
   const displayedEmail = email ? (emailVisible ? email : maskEmailAddress(email)) : null;
-  const draftRecommendation = contentRecommendationForAiLevel(draftAiLevel);
+  const draftRecommendation = draftAiLevel ? contentRecommendationForAiLevel(draftAiLevel) : null;
 
   function openSettings({
     focusAiLevel = false,
@@ -55,7 +57,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     returnFocusTo?: HTMLButtonElement | null;
   } = {}) {
     setDraftName(profile.displayName);
-    setDraftAiLevel(effectiveAiLevel);
+    setDraftAiLevel(preferences.selfAssessedAiLevel);
     setEmailVisible(false);
     setSaveError(null);
     focusAiLevelOnOpenRef.current = focusAiLevel;
@@ -80,7 +82,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
       if (draftName.trim() !== profile.displayName.trim()) {
         await profile.saveDisplayName(draftName);
       }
-      if (draftAiLevel !== effectiveAiLevel) {
+      if (draftAiLevel && draftAiLevel !== preferences.selfAssessedAiLevel) {
         await preferences.saveSelfAssessedAiLevel(draftAiLevel);
       }
       closeSettings();
@@ -246,6 +248,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 <div className="mt-3 space-y-2">
                   {AI_LEVEL_OPTIONS.map((option) => {
                     const selected = draftAiLevel === option.value;
+                    const focusTarget = selected || (!draftAiLevel && option.value === effectiveAiLevel);
                     return (
                       <label
                         key={option.value}
@@ -256,7 +259,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                         }`}
                       >
                         <input
-                          ref={selected ? aiLevelInputRef : undefined}
+                          ref={focusTarget ? aiLevelInputRef : undefined}
                           type="radio"
                           name="self-assessed-ai-level"
                           value={option.value}
@@ -277,20 +280,26 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                   })}
                 </div>
 
-                <div
-                  data-testid="ai-level-recommendation"
-                  className="mt-3 rounded-lg border border-accent/40 bg-accent/10 p-3"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
-                    Empfehlung für deinen Einstieg
+                {draftRecommendation ? (
+                  <div
+                    data-testid="ai-level-recommendation"
+                    className="mt-3 rounded-lg border border-accent/40 bg-accent/10 p-3"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
+                      Empfehlung für deinen Einstieg
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-foreground">
+                      {draftRecommendation.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {draftRecommendation.reason}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                    Wähle eine Stufe, um eine passende Einstiegsempfehlung zu sehen.
                   </p>
-                  <p className="mt-1 text-sm font-medium text-foreground">
-                    {draftRecommendation.title}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    {draftRecommendation.reason}
-                  </p>
-                </div>
+                )}
               </fieldset>
 
               {saveError || profile.error || preferences.error ? (
