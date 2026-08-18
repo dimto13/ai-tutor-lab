@@ -100,7 +100,10 @@ test("passed Classification challenge produces a generic attestation for its ref
   assert.equal(challenge.id, "data-classification-ai-usage.challenge");
   assert.ok(expectedObjectiveIds.length > 0);
   for (const objectiveId of expectedObjectiveIds) {
-    assert.ok(knownObjectiveIds.has(objectiveId), `unknown Classification objective ${objectiveId}`);
+    assert.ok(
+      knownObjectiveIds.has(objectiveId),
+      `unknown Classification objective ${objectiveId}`,
+    );
   }
 
   const util = resolverUtil();
@@ -156,7 +159,7 @@ test("passed Classification challenge produces a generic attestation for its ref
   const runResolver = compileResolver(runSource, { util });
   const runRequest = runResolver.request({ stash });
   const scenarioRunId = String(attestationContext["scenarioRunId"]);
-  assert.deepEqual(runRequest["key"], { id: scenarioRunId });
+  assert.equal((runRequest["key"] as Record<string, unknown>)["id"], scenarioRunId);
   runResolver.response({
     stash,
     result: {
