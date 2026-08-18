@@ -42,6 +42,8 @@ export const CLASSIFICATION_RUNTIME_DEFINITION = {
     "classification.ai.decision",
     "classification.ai.decisions",
     "classification.ai.policyAllowed",
+    "classification.documents.progress",
+    "classification.validation.state",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 
