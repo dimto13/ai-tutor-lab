@@ -1,6 +1,6 @@
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../../../../../amplify/data/resource";
-import type { TelemetryDeletionPage, TelemetryRetentionPort } from "../telemetryRetention";
+import type { TelemetryDeletionResult, TelemetryRetentionPort } from "../telemetryRetention";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data telemetry retention error";
@@ -22,7 +22,7 @@ function retentionDays(value: unknown): number {
   return value;
 }
 
-function deletionPage(value: unknown): TelemetryDeletionPage {
+function deletionResult(value: unknown): TelemetryDeletionResult {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("Telemetry deletion result is invalid");
   }
@@ -53,10 +53,10 @@ export function createAmplifyTelemetryRetentionPortWithClient(
         throw new Error("Telemetry retention policy was not persisted");
       }
     },
-    async deleteMyRawTelemetryPage() {
+    async deleteMyRawTelemetry() {
       const result = await client.mutations.deleteMyPersonalTelemetry();
       if (result.errors?.length) throw new Error(errorText(result.errors));
-      return deletionPage(result.data);
+      return deletionResult(result.data);
     },
   };
 }
