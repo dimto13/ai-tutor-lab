@@ -130,6 +130,8 @@ test("long-lived telemetry projection contains aggregate metrics but no user or 
   assert.match(aggregateBlock, /stepDurationTotalMs/);
   assert.doesNotMatch(aggregateBlock, /userId|sessionId|subjectKey|eventId|payload/);
   assert.match(projectorSource, /TransactWriteItemsCommand/);
+  assert.match(projectorSource, /GetItemCommand/);
+  assert.match(projectorSource, /projectionReceiptExists/);
   assert.match(projectorSource, /attribute_not_exists\(id\)/);
   assert.match(projectorSource, /telemetry-projection-receipt:v1/);
   assert.doesNotMatch(projectorSource, /ownerKey|userId|sessionId|subjectKey/);
