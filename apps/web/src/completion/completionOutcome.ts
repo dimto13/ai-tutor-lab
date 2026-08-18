@@ -3,6 +3,7 @@ import type {
   SkillLevel,
   SkillProfileProjection,
 } from "@ai-train-lab/training-engine";
+import skillProfilePolicy from "../../../../content/scoring/skill-profile-policy.json" with { type: "json" };
 
 export type CompletionScoreAwardStatus = "idle" | "unavailable" | "pending" | "ready" | "error";
 
@@ -98,6 +99,13 @@ function sameLevel(left: SkillLevel | undefined, right: SkillLevel | undefined):
   return left === right;
 }
 
+function scoredTechnologyIdForScenario(scenarioId: string): string | null {
+  for (const technology of skillProfilePolicy.technologies) {
+    if (technology.scenarioIds.includes(scenarioId)) return technology.technologyId;
+  }
+  return null;
+}
+
 function baselinePredatesAward(
   baseline: CompletionSkillProfilesSnapshot,
   awardOccurredAt: number,
@@ -117,7 +125,7 @@ function correlatedAwardChange({
 }: {
   baseline: readonly SkillProfileProjection[];
   current: readonly SkillProfileProjection[];
-  scoringTechnologyId: string | null | undefined;
+  scoringTechnologyId: string | null;
   awardedPoints: number;
 }): SkillProfileChange | null {
   if (!scoringTechnologyId || awardedPoints <= 0) return null;
@@ -140,13 +148,11 @@ export function completionCompetencyPresentation({
   scoreResult,
   baseline,
   current,
-  scoringTechnologyId,
 }: {
   scoreStatus: CompletionScoreAwardStatus;
   scoreResult: AppendScoreEventResult | null;
   baseline: CompletionSkillProfilesSnapshot;
   current: CompletionSkillProfilesSnapshot | null;
-  scoringTechnologyId?: string | null;
 }): CompletionCompetencyPresentation {
   if (scoreStatus === "unavailable") return { kind: "unavailable" };
   if (scoreStatus === "error") return { kind: "score_error" };
@@ -167,7 +173,7 @@ export function completionCompetencyPresentation({
   const change = correlatedAwardChange({
     baseline: baseline.profiles,
     current: current.profiles,
-    scoringTechnologyId,
+    scoringTechnologyId: scoredTechnologyIdForScenario(scoreResult.event.scenarioId),
     awardedPoints: scoreResult.event.points,
   });
   if (!change) return { kind: "projection_pending" };
