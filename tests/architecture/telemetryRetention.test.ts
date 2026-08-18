@@ -52,9 +52,10 @@ test("raw telemetry retention defaults to 90 days and is stamped server-side", a
 
   assert.match(policyBlock, /rawEventRetentionDays:\s*a\.integer\(\)/);
   assert.match(policySource, /DEFAULT_RAW_EVENT_RETENTION_DAYS\s*=\s*90/);
-  assert.match(writerSource, /telemetryRawEventRetentionDays/);
+  assert.match(writerSource, /telemetryRawEventExpiresAtEpochSeconds/);
   assert.match(writerSource, /expiresAtEpochSeconds/);
   assert.doesNotMatch(writerSource, /ctx\.args\.rawEventRetentionDays/);
+  assert.doesNotMatch(writerSource, /nowEpochSeconds/);
   assert.match(rawBlock, /expiresAtEpochSeconds:\s*a\.float\(\)\.required\(\)/);
   assert.doesNotMatch(rawBlock, /ownerKey|userId/);
   assert.match(backendSource, /TrainingTelemetryEvent/);
@@ -93,7 +94,10 @@ test("stable account-deletion ownership is isolated from raw telemetry and index
   assert.match(pointerSource, /telemetry-deletion-owner:v1/);
   assert.match(pointerSource, /base64Encode\(subject\.userId\)/);
   assert.match(pointerSource, /function rawEventId/);
-  assert.doesNotMatch(pointerSource, /telemetryRawEventId|telemetryRawEventOccurredAt/);
+  assert.match(pointerSource, /ctx\.stash\.telemetryRawEventId = rawId/);
+  assert.match(pointerSource, /ctx\.stash\.telemetryRawEventExpiresAtEpochSeconds/);
+  assert.match(writerSource, /ctx\.stash\.telemetryRawEventId/);
+  assert.match(writerSource, /ctx\.stash\.telemetryRawEventExpiresAtEpochSeconds/);
   assert.ok(pointerPosition >= 0 && rawPosition >= 0 && pointerPosition < rawPosition);
   assert.doesNotMatch(pointerSource, /attributeValues:[\s\S]*\buserId\s*:/);
   assert.match(pointerBlock, /rawEventId:\s*a\.string\(\)\.required\(\)/);
