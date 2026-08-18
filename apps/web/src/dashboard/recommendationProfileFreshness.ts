@@ -8,7 +8,8 @@ export function requiresFreshRecommendationEvidence(refreshKey: unknown): boolea
 }
 
 export function recommendationMinimumPointsDelta(refreshKey: unknown): number | null {
-  if (!requiresFreshRecommendationEvidence(refreshKey) || typeof refreshKey !== "string") return null;
+  if (!requiresFreshRecommendationEvidence(refreshKey) || typeof refreshKey !== "string")
+    return null;
   const segments = refreshKey.split(":");
   const points = Number(segments.at(-2));
   return Number.isFinite(points) && points > 0 ? points : null;
