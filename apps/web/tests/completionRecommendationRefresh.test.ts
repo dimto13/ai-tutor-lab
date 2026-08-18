@@ -91,7 +91,10 @@ test("material evidence must change for the completed technology, not merely els
   ];
 
   assert.equal(materialSkillProfileEvidenceChanged(before, unrelatedOnly, "ide"), false);
-  assert.equal(materialSkillProfileEvidenceChanged(before, completedTechnologyUpdated, "ide"), true);
+  assert.equal(
+    materialSkillProfileEvidenceChanged(before, completedTechnologyUpdated, "ide"),
+    true,
+  );
 });
 
 test("completion waits for the refreshed SkillProfile before exposing a follow-up action", () => {
