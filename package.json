@@ -17,7 +17,8 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "node scripts/setup-git-hooks.mjs",
+    "prepare": "node scripts/setup-git-hooks.mjs && node scripts/generate-appsync-scenario-authority.mjs",
+    "generate:appsync-scenario-authority": "node scripts/generate-appsync-scenario-authority.mjs",
     "check:runtime-versions": "node scripts/check-runtime-versions.mjs",
     "check:workspace-links": "node scripts/check-workspace-links.mjs",
     "predev": "npm run check:runtime-versions && npm run check:workspace-links",
