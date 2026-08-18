@@ -8,7 +8,6 @@ const ALLOWED_TYPES = [
   "analytics.step.completed",
   "analytics.session.completed",
 ];
-const SECONDS_PER_DAY = 24 * 60 * 60;
 
 function requiredString(value, name) {
   if (typeof value !== "string" || value.length === 0) {
@@ -90,10 +89,6 @@ export function request(ctx) {
   if (!subject || typeof subject.userId !== "string" || typeof subject.tenantId !== "string") {
     util.unauthorized();
   }
-  const retentionDays = ctx.stash.telemetryRawEventRetentionDays;
-  if (typeof retentionDays !== "number" || retentionDays < 1 || retentionDays % 1 !== 0) {
-    util.error("Telemetry retention policy is invalid", "TelemetryPolicyError");
-  }
 
   const event = ctx.args.event;
   if (!event || typeof event !== "object" || typeof event.length === "number") {
@@ -107,13 +102,23 @@ export function request(ctx) {
   if (event.source !== "learning-analytics") {
     util.error("Unsupported telemetry event source", "TelemetryEventError");
   }
-  const occurredAt = util.time.parseISO8601ToEpochMilliSeconds(
-    requiredString(event.timestamp, "event.timestamp"),
-  );
   const sessionId = requiredString(event.sessionId, "event.sessionId");
   const payload = sanitizedPayload(event);
   if (requiresStep(eventType) && typeof payload.stepId !== "string") {
     util.error("stepId is required for this telemetry event", "TelemetryEventError");
+  }
+
+  const id = ctx.stash.telemetryRawEventId;
+  const occurredAt = ctx.stash.telemetryRawEventOccurredAt;
+  const receivedAtEpochSeconds = ctx.stash.telemetryRawEventReceivedAtEpochSeconds;
+  const expiresAtEpochSeconds = ctx.stash.telemetryRawEventExpiresAtEpochSeconds;
+  if (
+    typeof id !== "string" ||
+    typeof occurredAt !== "number" ||
+    typeof receivedAtEpochSeconds !== "number" ||
+    typeof expiresAtEpochSeconds !== "number"
+  ) {
+    util.error("Telemetry lifecycle state is invalid", "TelemetryDeletionError");
   }
 
   const pseudonymizationMode = ctx.stash.telemetryPseudonymizationMode;
@@ -126,13 +131,6 @@ export function request(ctx) {
     util.base64Encode(subject.tenantId),
     util.base64Encode(payload.scenarioId),
   ].join(".");
-  const id = [
-    "telemetry-event:v1",
-    util.base64Encode(subject.tenantId),
-    util.base64Encode(eventId),
-  ].join(".");
-  const receivedAtEpochSeconds = util.time.nowEpochSeconds();
-  const expiresAtEpochSeconds = receivedAtEpochSeconds + retentionDays * SECONDS_PER_DAY;
 
   return {
     operation: "PutItem",
