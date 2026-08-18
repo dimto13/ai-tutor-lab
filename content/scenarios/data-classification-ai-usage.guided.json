@@ -162,7 +162,8 @@
       "classification.document",
       "classification.indicators",
       "classification.level",
-      "classification.ai_policy"
+      "classification.ai_policy",
+      "github.copilot"
     ]
   }
 }
