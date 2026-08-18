@@ -1,4 +1,8 @@
-import { DynamoDBClient, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  GetItemCommand,
+  TransactWriteItemsCommand,
+} from "@aws-sdk/client-dynamodb";
 
 const client = new DynamoDBClient({});
 const RECEIPT_TTL_SECONDS = 2 * 24 * 60 * 60;
@@ -196,6 +200,18 @@ function aggregateUpdate(image, contribution) {
   };
 }
 
+async function projectionReceiptExists(receiptId) {
+  const result = await client.send(
+    new GetItemCommand({
+      TableName: requiredEnvironment("TELEMETRY_PROJECTION_RECEIPT_TABLE_NAME"),
+      Key: { id: { S: receiptId } },
+      ProjectionExpression: "id",
+      ConsistentRead: true,
+    }),
+  );
+  return Boolean(result.Item?.id?.S);
+}
+
 async function projectRecord(record) {
   if (record.eventName !== "INSERT" || !record.dynamodb?.NewImage) return;
   const contribution = contributionFor(record.dynamodb.NewImage);
@@ -223,7 +239,12 @@ async function projectRecord(record) {
       }),
     );
   } catch (error) {
-    if (error?.name === "TransactionCanceledException") return;
+    if (
+      error?.name === "TransactionCanceledException" &&
+      (await projectionReceiptExists(receiptId))
+    ) {
+      return;
+    }
     throw error;
   }
 }
