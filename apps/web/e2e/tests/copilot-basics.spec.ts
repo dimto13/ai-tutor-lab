@@ -19,7 +19,9 @@ const guidedStorageKey =
 
 async function openCopilotScenario(page: Page) {
   await page.goto("/training/copilot-basics.guided");
-  await expect(page.getByRole("status")).toContainText("Training bereit");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
   await expect(
     page.getByRole("banner").getByText("GitHub Copilot – Grundlagen", { exact: true }),
   ).toBeVisible();
