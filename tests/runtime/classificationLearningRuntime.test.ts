@@ -96,7 +96,10 @@ test("classification learning runtime retains independent end states across docu
       "classification.validation.state",
     );
     const serializedValidationState = JSON.stringify(validationState);
-    assert.doesNotMatch(serializedValidationState, /Alex Beispiel|Freigegebene öffentliche Information/);
+    assert.doesNotMatch(
+      serializedValidationState,
+      /Alex Beispiel|Freigegebene öffentliche Information/,
+    );
     assert.deepEqual(validationState["viewedDocumentIds"], ["confidential-doc", "public-doc"]);
 
     const snapshot = await runtime.snapshot();
