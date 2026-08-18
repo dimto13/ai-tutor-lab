@@ -65,7 +65,10 @@ function definitionFor(ctx) {
   }
   const definition = ATTESTATION_DEFINITIONS[scenarioId];
   if (!definition || definition.mode !== "challenge") {
-    util.error("Scenario is not registered for challenge attestation", "AttestationDefinitionError");
+    util.error(
+      "Scenario is not registered for challenge attestation",
+      "AttestationDefinitionError",
+    );
   }
   if (
     !definition.learningObjectiveIds ||
