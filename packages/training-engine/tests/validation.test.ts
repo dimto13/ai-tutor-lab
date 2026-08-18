@@ -135,6 +135,60 @@ test("classification validator checks semantic end state and names a missed indi
   assert.equal(passed.outcome, "pass");
 });
 
+test("classification validator reports a wrong AI decision before all tools are answered", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const validation: Validation = {
+    kind: "classification",
+    selector: "classification.validation.state",
+    documentId: "support-ticket",
+    expectedIndicatorIds: ["personal_data"],
+    expectedLevelId: "confidential",
+    expectedAiDecisions: {
+      "m365-copilot-tenant": true,
+      "public-ai-chat": false,
+      "github-copilot": false,
+    },
+  };
+  const result = await registry.validate(validation, {
+    query: async () => ({
+      viewedDocumentIds: ["support-ticket"],
+      scheme: {
+        levels: [{ id: "confidential", label: "Vertraulich", rank: 20 }],
+        indicators: [{ id: "personal_data", label: "Personenbezogene Daten" }],
+      },
+      documentProgress: {
+        "support-ticket": {
+          markedIndicatorIds: ["personal_data"],
+          selectedLevelId: "confidential",
+          aiDecisions: { "public-ai-chat": true },
+        },
+      },
+    }),
+  });
+
+  assert.equal(result.outcome, "near-miss");
+  assert.match(result.message ?? "", /public-ai-chat/);
+  assert.match(result.message ?? "", /nicht zulässig/);
+});
+
+test("classification validator keeps missing runtime state silent but rejects malformed non-null state", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const validation: Validation = {
+    kind: "classification",
+    selector: "classification.validation.state",
+    documentId: "support-ticket",
+    expectedIndicatorIds: [],
+    expectedLevelId: "public",
+    expectedAiDecisions: { "public-ai-chat": true },
+  };
+
+  assert.equal((await registry.validate(validation, { query: async () => undefined })).outcome, "ignore");
+  await assert.rejects(
+    () => registry.validate(validation, { query: async () => ({ viewedDocumentIds: [] }) }),
+    /Invalid classification validation state/,
+  );
+});
+
 test("classification validator explains the explicit uncertainty escalation rule", async () => {
   const registry = createDefaultValidatorRegistry();
   const validation: Validation = {
