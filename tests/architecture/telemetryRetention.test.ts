@@ -122,16 +122,19 @@ test("account telemetry deletion is one server-controlled, owner-scoped and retr
   assert.match(deletionBlock, /allow\.authenticated\(\)/);
   assert.match(deletionBlock, /a\.handler\.function\(telemetryDeletionWorker\)/);
   assert.doesNotMatch(deletionBlock, /delete-my-telemetry-page|delete-my-telemetry-item/);
+  assert.match(workerSource, /createTelemetryDeletionHandler/);
   assert.match(workerSource, /event\?\.identity/);
   assert.match(workerSource, /cognito:groups/);
   assert.match(workerSource, /tenant:/);
   assert.match(workerSource, /QueryCommand/);
   assert.match(workerSource, /telemetryDeletionByOwnerTime|TELEMETRY_DELETION_POINTER_INDEX_NAME/);
   assert.doesNotMatch(workerSource, /event\.arguments\.(?:userId|tenantId)/);
-  assert.match(workerSource, /const targets = await loadDeletionTargets\(subject\)/);
-  const rawDeletePosition = workerSource.indexOf("await deleteItems(\n    rawTableName");
-  const pointerDeletePosition = workerSource.indexOf("await deleteItems(\n    pointerTableName");
-  assert.ok(rawDeletePosition >= 0 && pointerDeletePosition > rawDeletePosition);
+  assert.match(workerSource, /const targets = await loadDeletionTargets\(subject, send\)/);
+  const rawDeleteMatch = /await deleteItems\(\s*rawTableName/.exec(workerSource);
+  const pointerDeleteMatch = /await deleteItems\(\s*pointerTableName/.exec(workerSource);
+  assert.ok(
+    rawDeleteMatch && pointerDeleteMatch && pointerDeleteMatch.index > rawDeleteMatch.index,
+  );
   assert.match(workerSource, /return \{ deletedCount: targets\.length, complete: true \}/);
   assert.match(backendSource, /rawTelemetryTable\.grantReadWriteData\(deletionLambda\)/);
   assert.match(backendSource, /deletionPointerTable\.grantReadWriteData\(deletionLambda\)/);
