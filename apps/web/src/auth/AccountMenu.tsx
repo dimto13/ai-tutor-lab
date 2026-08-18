@@ -134,14 +134,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             aria-hidden="true"
             className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
           >
-            {compact ? (
-              <>
-                <span className="2xl:hidden">KI: </span>
-                <span className="hidden 2xl:inline">KI-Level: </span>
-              </>
-            ) : (
-              "KI-Level: "
-            )}
+            {compact ? "KI: " : "KI-Level: "}
             {aiLevelNavigationValue}
           </span>
         </button>
