@@ -46,6 +46,10 @@ export function request(ctx) {
   const rawId = rawEventId(subject.tenantId, eventId);
   const receivedAtEpochSeconds = util.time.nowEpochSeconds();
   const expiresAtEpochSeconds = receivedAtEpochSeconds + retentionDays * SECONDS_PER_DAY;
+  ctx.stash.telemetryRawEventId = rawId;
+  ctx.stash.telemetryRawEventOccurredAt = occurredAt;
+  ctx.stash.telemetryRawEventReceivedAtEpochSeconds = receivedAtEpochSeconds;
+  ctx.stash.telemetryRawEventExpiresAtEpochSeconds = expiresAtEpochSeconds;
 
   const id = [
     "telemetry-deletion-pointer:v1",
