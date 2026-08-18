@@ -1,31 +1,37 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "../fixtures/browser-error-guard";
 
 const aiTools = ["m365-copilot-tenant", "public-ai-chat", "github-copilot"] as const;
+type AiTool = (typeof aiTools)[number];
 
 type ClassificationCase = {
   title: string;
   indicators: string[];
   level: string;
-  ai: Record<(typeof aiTools)[number], boolean>;
+  ai: Record<AiTool, boolean>;
 };
 
-async function classifyDocument(
-  page: Parameters<typeof test>[0] extends never ? never : any,
-  classification: ClassificationCase,
-) {
+async function chooseAiDecisions(page: Page, decisions: Record<AiTool, boolean>) {
+  const tool = page.getByLabel("KI-Werkzeug");
+  for (const aiTool of aiTools) {
+    await tool.selectOption(aiTool);
+    await page
+      .getByRole("button", {
+        name: decisions[aiTool] ? "Zulassen" : "Nicht zulassen",
+        exact: true,
+      })
+      .click();
+  }
+}
+
+async function classifyDocument(page: Page, classification: ClassificationCase) {
   await page.getByRole("button", { name: new RegExp(classification.title) }).click();
   for (const indicator of classification.indicators) {
     const button = page.getByRole("button", { name: indicator, exact: true });
     if ((await button.getAttribute("aria-pressed")) !== "true") await button.click();
   }
   await page.getByRole("button", { name: classification.level, exact: true }).click();
-  const tool = page.getByLabel("KI-Werkzeug");
-  for (const aiTool of aiTools) {
-    await tool.selectOption(aiTool);
-    await page
-      .getByRole("button", { name: classification.ai[aiTool] ? "Zulassen" : "Nicht zulassen", exact: true })
-      .click();
-  }
+  await chooseAiDecisions(page, classification.ai);
 }
 
 test("Classification Explore vermittelt Merkmale, Stufen und KI-Nutzung", async ({ page }) => {
@@ -46,7 +52,9 @@ test("Classification Explore vermittelt Merkmale, Stufen und KI-Nutzung", async 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("Classification Guided bearbeitet fünf Beispiele und liefert fachliche near-miss Hinweise", async ({ page }) => {
+test("Classification Guided bearbeitet fünf Beispiele und liefert fachliche near-miss Hinweise", async ({
+  page,
+}) => {
   await page.goto("/training/data-classification-ai-usage.guided");
   await expect(page.getByRole("status")).toContainText("Training bereit");
 
@@ -63,29 +71,22 @@ test("Classification Guided bearbeitet fünf Beispiele und liefert fachliche nea
 
   await page.getByRole("button", { name: /Interne Meeting-Notiz/ }).click();
   await page.getByRole("button", { name: "Intern", exact: true }).click();
-  const tool = page.getByLabel("KI-Werkzeug");
-  for (const [aiTool, allowed] of [
-    ["m365-copilot-tenant", true],
-    ["public-ai-chat", false],
-    ["github-copilot", true],
-  ] as const) {
-    await tool.selectOption(aiTool);
-    await page.getByRole("button", { name: allowed ? "Zulassen" : "Nicht zulassen", exact: true }).click();
-  }
+  await chooseAiDecisions(page, {
+    "m365-copilot-tenant": true,
+    "public-ai-chat": false,
+    "github-copilot": true,
+  });
   await expect(page.getByText(/Merkmal „Kennzeichnung intern“ wurde übersehen/)).toBeVisible();
   await page.getByRole("button", { name: "Kennzeichnung intern", exact: true }).click();
 
   await page.getByRole("button", { name: /Support-Ticket mit Kontaktdaten/ }).click();
   await page.getByRole("button", { name: "Personenbezogene Daten", exact: true }).click();
   await page.getByRole("button", { name: "Intern", exact: true }).click();
-  for (const [aiTool, allowed] of [
-    ["m365-copilot-tenant", true],
-    ["public-ai-chat", false],
-    ["github-copilot", false],
-  ] as const) {
-    await tool.selectOption(aiTool);
-    await page.getByRole("button", { name: allowed ? "Zulassen" : "Nicht zulassen", exact: true }).click();
-  }
+  await chooseAiDecisions(page, {
+    "m365-copilot-tenant": true,
+    "public-ai-chat": false,
+    "github-copilot": false,
+  });
   await expect(page.getByText(/Aus den markierten Merkmalen folgt „Vertraulich“/)).toBeVisible();
   await page.getByRole("button", { name: "Vertraulich", exact: true }).click();
 
@@ -103,17 +104,20 @@ test("Classification Guided bearbeitet fünf Beispiele und liefert fachliche nea
   await page.getByRole("button", { name: /Grenzfall: unsicheres Support-Ticket/ }).click();
   await page.getByRole("button", { name: "Personenbezogene Daten", exact: true }).click();
   await page.getByRole("button", { name: "Vertraulich", exact: true }).click();
-  for (const aiTool of aiTools) {
-    await tool.selectOption(aiTool);
-    await page.getByRole("button", { name: "Nicht zulassen", exact: true }).click();
-  }
+  await chooseAiDecisions(page, {
+    "m365-copilot-tenant": false,
+    "public-ai-chat": false,
+    "github-copilot": false,
+  });
   await expect(page.getByText(/Im Zweifel höher einstufen/)).toBeVisible();
   await page.getByRole("button", { name: "Streng vertraulich", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("Classification Challenge validiert zehn fachliche Endzustände unabhängig von der Klickreihenfolge", async ({ page }) => {
+test("Classification Challenge validiert zehn fachliche Endzustände unabhängig von der Klickreihenfolge", async ({
+  page,
+}) => {
   await page.goto("/training/data-classification-ai-usage.challenge");
   await expect(page.getByRole("status")).toContainText("Training bereit");
 
