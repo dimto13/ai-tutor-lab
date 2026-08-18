@@ -47,7 +47,7 @@ export function completionRecommendationRefreshKey(
   result: AppendScoreEventResult | null,
 ): string {
   return status === "ready" && result
-    ? `ready:${result.event.occurredAt}:${result.created ? "created" : "existing"}`
+    ? `ready:${result.event.occurredAt}:${result.event.points}:${result.created ? "created" : "existing"}`
     : status;
 }
 
