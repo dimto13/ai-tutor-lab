@@ -76,7 +76,7 @@ test("tenant retention extends the existing telemetry policy instead of creating
   assert.equal((source.match(/^ {2}TenantTelemetryPolicy:\s*a/gm) || []).length, 1);
 });
 
-test("stable account-deletion ownership is isolated from raw telemetry and expires with it", async () => {
+test("stable account-deletion ownership is isolated from raw telemetry and indexed first", async () => {
   const [schemaSource, writerSource, pointerSource, backendSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
     readFile(rawWriterUrl, "utf8"),
@@ -84,12 +84,17 @@ test("stable account-deletion ownership is isolated from raw telemetry and expir
     readFile(backendUrl, "utf8"),
   ]);
   const pointerBlock = definitionBlock(schemaSource, "TrainingTelemetryDeletionPointer");
+  const appendBlock = definitionBlock(schemaSource, "appendTrainingTelemetryEvent");
+  const pointerPosition = appendBlock.indexOf("write-telemetry-deletion-pointer.js");
+  const rawPosition = appendBlock.indexOf("append-training-telemetry-event.js");
 
   assert.doesNotMatch(writerSource, /base64Encode\(subject\.userId\)/);
   assert.doesNotMatch(writerSource, /ownerKey/);
   assert.match(pointerSource, /telemetry-deletion-owner:v1/);
   assert.match(pointerSource, /base64Encode\(subject\.userId\)/);
-  assert.match(pointerSource, /telemetryRawEventId/);
+  assert.match(pointerSource, /function rawEventId/);
+  assert.doesNotMatch(pointerSource, /telemetryRawEventId|telemetryRawEventOccurredAt/);
+  assert.ok(pointerPosition >= 0 && rawPosition >= 0 && pointerPosition < rawPosition);
   assert.doesNotMatch(pointerSource, /attributeValues:[\s\S]*\buserId\s*:/);
   assert.match(pointerBlock, /rawEventId:\s*a\.string\(\)\.required\(\)/);
   assert.match(pointerBlock, /telemetryDeletionByOwnerTime/);
