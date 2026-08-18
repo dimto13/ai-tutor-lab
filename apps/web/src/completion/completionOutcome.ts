@@ -35,6 +35,13 @@ export function completionScorePresentation(
   return { value: "—", detail: "idle" };
 }
 
+export function completionScoreFinishedAt(
+  finishedAt: number | null,
+  baseline: CompletionSkillProfilesSnapshot,
+): number | null {
+  return baseline.status === "loading" ? null : finishedAt;
+}
+
 export function completionRecommendationRefreshKey(
   status: CompletionScoreAwardStatus,
   result: AppendScoreEventResult | null,
@@ -42,6 +49,16 @@ export function completionRecommendationRefreshKey(
   return status === "ready" && result
     ? `ready:${result.event.occurredAt}:${result.created ? "created" : "existing"}`
     : status;
+}
+
+export function completionRecommendationFreshnessBaseline(
+  status: CompletionScoreAwardStatus,
+  result: AppendScoreEventResult | null,
+  baseline: CompletionSkillProfilesSnapshot,
+): readonly SkillProfileProjection[] | null {
+  if (baseline.status !== "ready") return null;
+  if (status !== "ready" || !result?.created) return baseline.profiles;
+  return baselinePredatesAward(baseline, result.event.occurredAt) ? baseline.profiles : null;
 }
 
 export function shouldWaitForCompletionRecommendation(
