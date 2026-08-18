@@ -28,8 +28,7 @@ for (const modelName of [
 
 const rawTelemetryTable = backend.data.resources.tables["TrainingTelemetryEvent"];
 const aggregateTable = backend.data.resources.tables["TrainingTelemetryAggregate"];
-const projectionReceiptTable =
-  backend.data.resources.tables["TrainingTelemetryProjectionReceipt"];
+const projectionReceiptTable = backend.data.resources.tables["TrainingTelemetryProjectionReceipt"];
 const projectorLambda = backend.telemetryAggregateProjector.resources.lambda;
 
 aggregateTable.grantReadWriteData(projectorLambda);
