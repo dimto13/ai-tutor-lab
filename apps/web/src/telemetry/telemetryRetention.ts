@@ -2,7 +2,7 @@ export interface TenantTelemetryRetentionPolicy {
   rawEventRetentionDays: number;
 }
 
-export interface TelemetryDeletionPage {
+export interface TelemetryDeletionResult {
   deletedCount: number;
   complete: boolean;
 }
@@ -14,7 +14,7 @@ export interface TelemetryDeletionPage {
 export interface TelemetryRetentionPort {
   loadRetentionPolicy(): Promise<TenantTelemetryRetentionPolicy>;
   saveRawEventRetentionDays(days: number): Promise<void>;
-  deleteMyRawTelemetryPage(): Promise<TelemetryDeletionPage>;
+  deleteMyRawTelemetry(): Promise<TelemetryDeletionResult>;
 }
 
 function validRetentionDays(days: number): boolean {
@@ -45,20 +45,15 @@ export class TelemetryRetentionService {
 
   /**
    * Deletes all raw telemetry owned by the currently authenticated subject before account removal.
-   * Anonymous aggregate projections are intentionally outside this port and therefore survive.
+   * The port operation is deliberately one server-controlled request; browser-side pagination must
+   * never be responsible for completing personal-data deletion. Anonymous aggregate projections are
+   * intentionally outside this port and therefore survive.
    */
   async deleteForAccountClosure(): Promise<number> {
-    let deletedCount = 0;
-    while (true) {
-      const page = await this.port.deleteMyRawTelemetryPage();
-      if (!Number.isInteger(page.deletedCount) || page.deletedCount < 0) {
-        throw new Error("Telemetry deletion result is invalid");
-      }
-      deletedCount += page.deletedCount;
-      if (page.complete) return deletedCount;
-      if (page.deletedCount === 0) {
-        throw new Error("Telemetry deletion made no progress");
-      }
+    const result = await this.port.deleteMyRawTelemetry();
+    if (!Number.isInteger(result.deletedCount) || result.deletedCount < 0 || result.complete !== true) {
+      throw new Error("Telemetry deletion result is incomplete or invalid");
     }
+    return result.deletedCount;
   }
 }
