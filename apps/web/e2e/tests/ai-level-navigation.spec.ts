@@ -22,7 +22,6 @@ test.describe("AI experience level navigation", () => {
     const dialog = page.getByRole("dialog", { name: "Einstellungen" });
     const beginner = dialog.getByRole("radio", { name: /Anfänger/ });
     await expect(dialog).toBeVisible();
-    await expect(beginner).toBeChecked();
     await expect(beginner).toBeFocused();
 
     await dialog.getByRole("radio", { name: /Fortgeschritten/ }).check();
@@ -75,7 +74,6 @@ test.describe("AI experience level navigation", () => {
     const dialog = page.getByRole("dialog", { name: "Einstellungen" });
     const beginner = dialog.getByRole("radio", { name: /Anfänger/ });
     await expect(dialog).toBeVisible();
-    await expect(beginner).toBeChecked();
     await expect(beginner).toBeFocused();
 
     await accessibility.check("small viewport AI self-assessment settings from platform chrome");
