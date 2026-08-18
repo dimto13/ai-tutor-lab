@@ -107,6 +107,18 @@ export interface ValidationResult {
   message?: string;
 }
 
+export interface ClassificationValidationSpec {
+  kind: "classification";
+  /** Semantic RuntimeAdapter selector that returns classification-only state, never document content. */
+  selector: string;
+  documentId: string;
+  expectedIndicatorIds: string[];
+  expectedLevelId: string;
+  expectedAiDecisions: Record<string, boolean>;
+  /** Lower candidate that must be rejected by the explicit "im Zweifel höher einstufen" rule. */
+  uncertaintyEscalationFromLevelId?: string;
+}
+
 export type Validation =
   | {
       kind: "event";
@@ -126,6 +138,7 @@ export type Validation =
       excludes?: unknown;
       match?: Record<string, unknown>;
     }
+  | ClassificationValidationSpec
   | {
       kind: "sequence";
       of: Validation[];
