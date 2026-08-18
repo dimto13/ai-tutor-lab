@@ -204,10 +204,7 @@ test("owner-scoped list/export operations cannot accept a foreign tenant or user
 test("expired attestations stay queryable and produce a recertification recommendation", async () => {
   const listSource = await readFile(listUrl, "utf8");
   assert.match(listSource, /now\s*>=\s*row\.validUntil/);
-  assert.match(
-    listSource,
-    /validityStatus:\s*expired\s*\?\s*["']expired["']\s*:\s*["']valid["']/,
-  );
+  assert.match(listSource, /validityStatus:\s*expired\s*\?\s*["']expired["']\s*:\s*["']valid["']/);
   assert.match(listSource, /recertificationRecommended:\s*expired/);
   assert.doesNotMatch(listSource, /DeleteItem|validUntil\s*<\s*now.*filter/);
 });
