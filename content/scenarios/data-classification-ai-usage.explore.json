@@ -1,0 +1,57 @@
+{
+  "id": "data-classification-ai-usage.explore",
+  "moduleId": "data-classification-ai-usage",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "Datenklassifizierung & KI-Nutzung – Erkunden",
+  "description": "Erkunde an ausschließlich synthetischen Dokumenten, wie Merkmale, Schutzstufen und KI-Nutzungsregeln zusammenhängen. Die Grundregel für unklare Grenzfälle lautet ausdrücklich: Im Zweifel höher einstufen.",
+  "learningObjectives": [
+    "identify_classification_indicators",
+    "choose_classification_level",
+    "decide_ai_usage_by_classification",
+    "apply_uncertainty_escalation"
+  ],
+  "environment": {
+    "productId": "classification",
+    "version": "1.x",
+    "runtimeAdapterId": "classification-simulator",
+    "seed": {
+      "classificationSimulator": {
+        "activeDocumentId": "boundary-ambiguous-ticket"
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 70,
+  "exploreTargets": [
+    "classification.document.list",
+    "classification.document.preview",
+    "classification.indicators",
+    "classification.levels",
+    "classification.aiDecision"
+  ],
+  "steps": [
+    {
+      "id": "explore-classification-model",
+      "title": "Klassifizierung frei erkunden",
+      "description": "Untersuche Dokumentliste, Dokumentinhalt, Merkmale, Stufen und KI-Nutzungsentscheidung in beliebiger Reihenfolge.",
+      "instruction": "Öffne mehrere synthetische Dokumente. Erkunde alle fünf markierten Bereiche. Vergleiche insbesondere personenbezogene Daten, interne Kennzeichnungen und Gehaltsdaten mit den Stufen Öffentlich, Intern, Vertraulich und Streng vertraulich. Prüfe danach für verschiedene KI-Werkzeuge die zulässige Nutzung. Bei einem unklaren Grenzfall gilt: Im Zweifel höher einstufen.",
+      "rationale": "Klassifizierung ist keine Etikettenübung: Erst Merkmale erkennen, daraus die Schutzstufe ableiten und erst danach die KI-Nutzung entscheiden.",
+      "helpLevels": [
+        "Beginne mit Dokumentliste und Vorschau und suche nach konkreten Schutzmerkmalen.",
+        "Erkunde danach die Merkmals- und Stufenbereiche und vergleiche ihre Rangfolge.",
+        "Öffne zuletzt die KI-Nutzungsentscheidung und prüfe, wie sich eine höhere Stufe auf die erlaubten Werkzeuge auswirkt. Beim unsicheren Support-Ticket ist die höhere Stufe entscheidend."
+      ],
+      "successMessage": "Du hast den vollständigen Zusammenhang zwischen Dokumentmerkmalen, Klassifizierungsstufe und KI-Nutzung erkundet."
+    }
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "classification.document",
+      "classification.indicators",
+      "classification.level",
+      "classification.ai_policy"
+    ]
+  }
+}
