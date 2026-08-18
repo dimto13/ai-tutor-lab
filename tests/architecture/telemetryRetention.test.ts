@@ -16,10 +16,7 @@ const pointerWriterUrl = new URL(
   "../../amplify/data/write-telemetry-deletion-pointer.js",
   import.meta.url,
 );
-const deletionQueryUrl = new URL(
-  "../../amplify/data/delete-my-telemetry-page.js",
-  import.meta.url,
-);
+const deletionQueryUrl = new URL("../../amplify/data/delete-my-telemetry-page.js", import.meta.url);
 const retentionPortUrl = new URL(
   "../../apps/web/src/telemetry/telemetryRetention.ts",
   import.meta.url,
