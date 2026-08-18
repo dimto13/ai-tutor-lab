@@ -24,7 +24,7 @@ function compileResolver(
   let executable = source.replace(/^import[^\n]*\n/m, "");
   if (definitionSource !== undefined) {
     executable = executable.replace(
-      /const ATTESTATION_DEFINITIONS = \{[\s\S]*?\n\};/,
+      /const ATTESTATION_DEFINITIONS = \{[\s\S]*?\};/,
       `const ATTESTATION_DEFINITIONS = ${definitionSource};`,
     );
   }
@@ -152,7 +152,10 @@ test("challenge that is not passed cannot produce attestation context", async ()
 test("challenge authority with an incomplete objective set is rejected before persistence", async () => {
   const source = await readFile(sessionTemplateUrl, "utf8");
   const resolver = compileResolver(source, { util: baseUtil() }, attestationDefinition([]));
-  assert.throws(() => resolver.request(issueContext()), /Challenge has no authoritative learning objectives/);
+  assert.throws(
+    () => resolver.request(issueContext()),
+    /Challenge has no authoritative learning objectives/,
+  );
 });
 
 test("suspect or otherwise ineligible ScenarioRun exits before any Attestation write", async () => {
@@ -218,7 +221,10 @@ test("eligible run persists all objectives, audit evidence, twelve-month validit
   const first = resolver.request({ stash }) as Record<string, unknown>;
   const second = resolver.request({ stash }) as Record<string, unknown>;
   assert.equal(first["operation"], "PutItem");
-  assert.equal((first["condition"] as Record<string, unknown>)["expression"], "attribute_not_exists(id)");
+  assert.equal(
+    (first["condition"] as Record<string, unknown>)["expression"],
+    "attribute_not_exists(id)",
+  );
   assert.deepEqual(first["key"], second["key"], "retry must retain identical attestation id");
 
   const values = first["attributeValues"] as Record<string, unknown>;
@@ -265,10 +271,12 @@ test("different ScenarioRun and scenario/product versions produce distinct ident
     sourceRevision: 7,
     challengeOutcome: "passed",
   };
-  const id = (resolver.request({ stash: { ...common, attestationContext: context } })["key"] as Record<
-    string,
-    unknown
-  >)["id"];
+  const id = (
+    resolver.request({ stash: { ...common, attestationContext: context } })["key"] as Record<
+      string,
+      unknown
+    >
+  )["id"];
   for (const changed of [
     { ...context, scenarioRunId: "run-2" },
     { ...context, scenarioVersion: "4" },
