@@ -268,7 +268,9 @@ export const schema = a.schema({
       projectionUpdatedAt: a.float().required(),
     })
     .secondaryIndexes((index) => [
-      index("tenantScenarioKey").sortKeys(["bucketStart"]).name("telemetryAggregatesByScenarioTime"),
+      index("tenantScenarioKey")
+        .sortKeys(["bucketStart"])
+        .name("telemetryAggregatesByScenarioTime"),
     ])
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
