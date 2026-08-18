@@ -1,5 +1,5 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
-import { telemetryDeletionWorker } from "../functions/telemetry-deletion-worker/resource";
+import { telemetryDeletionWorker } from "../functions/telemetry-deletion-worker/resource.ts";
 
 export const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
