@@ -1,0 +1,181 @@
+{
+  "id": "data-classification-ai-usage.challenge",
+  "moduleId": "data-classification-ai-usage",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "Datenklassifizierung & KI-Nutzung – Challenge",
+  "description": "Klassifiziere zehn vorgegebene synthetische Dokumente selbstständig. Die Challenge bewertet die fachlichen Endzustände je Dokument – nicht die Reihenfolge deiner Klicks.",
+  "learningObjectives": [
+    "identify_classification_indicators",
+    "choose_classification_level",
+    "decide_ai_usage_by_classification",
+    "apply_uncertainty_escalation"
+  ],
+  "environment": {
+    "productId": "classification",
+    "version": "1.x",
+    "runtimeAdapterId": "classification-simulator",
+    "seed": {
+      "classificationSimulator": {
+        "activeDocumentId": "website-faq"
+      }
+    }
+  },
+  "estimatedMinutes": 20,
+  "points": 240,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "website-faq",
+        "expectedIndicatorIds": [],
+        "expectedLevelId": "public",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": true,
+          "github-copilot": true
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "internal-project-plan",
+        "expectedIndicatorIds": ["marking_internal"],
+        "expectedLevelId": "internal",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": true
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "source-code-excerpt",
+        "expectedIndicatorIds": ["marking_internal"],
+        "expectedLevelId": "internal",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": true
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "customer-contract",
+        "expectedIndicatorIds": ["customer_contract_data", "personal_data"],
+        "expectedLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "org-chart",
+        "expectedIndicatorIds": ["personal_data"],
+        "expectedLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "sales-offer",
+        "expectedIndicatorIds": ["customer_contract_data"],
+        "expectedLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "travel-expense",
+        "expectedIndicatorIds": ["personal_data"],
+        "expectedLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "hr-bonus-note",
+        "expectedIndicatorIds": ["salary_data", "personal_data"],
+        "expectedLevelId": "strictly_confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": false,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "boundary-placeholder-template",
+        "expectedIndicatorIds": ["marking_internal"],
+        "expectedLevelId": "internal",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": true
+        }
+      },
+      {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "boundary-ambiguous-ticket",
+        "expectedIndicatorIds": ["personal_data"],
+        "expectedLevelId": "strictly_confidential",
+        "uncertaintyEscalationFromLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": false,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Maßgeblich sind die tatsächlich erkannten Schutzmerkmale; bei mehreren Merkmalen gilt die höchste Mindeststufe.",
+    "Die KI-Nutzungsentscheidung wird erst nach der Klassifizierung aus der Werkzeug-Policy abgeleitet.",
+    "Beim unsicheren Support-Ticket gilt ausdrücklich: Im Zweifel höher einstufen. Personenbezug ergibt zunächst Vertraulich; die dokumentierte Unsicherheit eskaliert auf Streng vertraulich."
+  ],
+  "steps": [
+    {
+      "id": "challenge-classify-ten-documents",
+      "title": "Zehn Dokumente eigenständig klassifizieren",
+      "description": "Bearbeite genau diese zehn synthetischen Dokumente: Öffentliche FAQ, Interner Projektplan, Quellcode-Auszug, Kundenvertrag, Organigramm mit Personennamen, Kundenspezifisches Angebot, Reisekostenabrechnung, HR-Bonusentscheidung, Grenzfall: interne Vorlage mit Platzhalter und Grenzfall: unsicheres Support-Ticket.",
+      "instruction": "Du darfst die Dokumente in beliebiger Reihenfolge bearbeiten und jederzeit zurückkehren. Öffne jedes der zehn Dokumente, markiere alle und nur die relevanten Klassifizierungsmerkmale, wähle die fachlich erforderliche Stufe und entscheide für m365-copilot-tenant, public-ai-chat und github-copilot. Die Challenge besteht erst, wenn alle zehn gespeicherten Endzustände korrekt sind. Beim unsicheren Grenzfall gilt: Im Zweifel höher einstufen.",
+      "rationale": "Eine reale Klassifizierungsentscheidung wird durch den fachlichen Endzustand bestimmt, nicht durch eine vorgegebene Klickfolge.",
+      "helpLevels": [
+        "Arbeite Dokument für Dokument: Merkmale → Stufe → KI-Nutzung.",
+        "Kontrolliere bei mehreren Merkmalen immer, welches die höchste Mindeststufe fordert.",
+        "Vergiss den unsicheren Grenzfall nicht: Wenn Personenbezug Vertraulich ergibt und Unsicherheit dokumentiert ist, eskaliert das Standardschema auf Streng vertraulich."
+      ],
+      "successMessage": "Alle zehn Dokumente sind fachlich korrekt klassifiziert und die KI-Nutzungsentscheidungen stimmen."
+    }
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "classification.document",
+      "classification.indicators",
+      "classification.level",
+      "classification.ai_policy"
+    ]
+  }
+}
