@@ -21,6 +21,7 @@ import {
 import {
   materialSkillProfileEvidenceChanged,
   RECOMMENDATION_PROFILE_AUTO_REFRESH_ATTEMPTS,
+  recommendationMinimumPointsDelta,
   recommendationProfileRetryDelayMs,
   requiresFreshRecommendationEvidence,
 } from "./recommendationProfileFreshness";
@@ -157,6 +158,7 @@ export function useTrainingRecommendation({
   }, [auth.status, excludeStartScenarioId, subject]);
 
   const freshEvidenceRequired = requiresFreshRecommendationEvidence(skillProfilesRefreshKey);
+  const minimumPointsDelta = recommendationMinimumPointsDelta(skillProfilesRefreshKey);
   const freshEvidenceObserved =
     !freshEvidenceRequired ||
     (freshnessBaselineRef.current !== null &&
@@ -165,6 +167,7 @@ export function useTrainingRecommendation({
         freshnessBaselineRef.current,
         skillProfiles.profiles,
         freshnessTechnologyId,
+        minimumPointsDelta,
       ));
   const canRetryFreshEvidence =
     freshEvidenceRequired &&
