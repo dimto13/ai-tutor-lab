@@ -107,7 +107,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-      <div className={`flex items-center gap-1.5 ${compact ? "min-w-0 shrink" : "shrink-0"}`}>
+      <div className="flex min-w-0 shrink items-center gap-1.5">
         <span
           className={`${compact ? "hidden 2xl:inline" : "hidden sm:inline"} max-w-52 truncate text-xs text-muted-foreground`}
           title={profile.displayName}
@@ -128,11 +128,11 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
               ? `Eigene KI-Erfahrung: ${effectiveAiLevelLabel}`
               : aiLevelNavigationValue
           }
-          className={`inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-default disabled:opacity-60 ${compact ? "min-w-0 shrink" : "shrink-0"}`}
+          className="inline-flex h-8 min-w-0 shrink items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-default disabled:opacity-60"
         >
           <span
             aria-hidden="true"
-            className={`whitespace-nowrap ${compact ? "min-w-0 overflow-hidden text-ellipsis" : ""}`}
+            className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
           >
             {compact ? (
               <>
