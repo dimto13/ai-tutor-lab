@@ -131,8 +131,16 @@ async function authoritativeDefinitions() {
       throw new Error(`${id} estimatedMinutes differs from scenario content`);
     }
 
-    const environment = objectValue(scenario.environment, `${id}.environment`);
-    const learningObjectiveIds = stringArray(scenario.learningObjectives, `${id}.learningObjectives`);
+    let productId = null;
+    let productVersion = null;
+    let learningObjectiveIds = [];
+    if (mode === "challenge") {
+      const environment = objectValue(scenario.environment, `${id}.environment`);
+      productId = nonEmptyString(environment.productId, `${id}.environment.productId`);
+      productVersion = nonEmptyString(environment.version, `${id}.environment.version`);
+      learningObjectiveIds = stringArray(scenario.learningObjectives, `${id}.learningObjectives`);
+    }
+
     definitions.push({
       id,
       mode,
@@ -140,8 +148,8 @@ async function authoritativeDefinitions() {
       points,
       estimatedMinutes,
       fastRunThresholdRatio: ratio(definition.fastRunThresholdRatio, `${id}.fastRunThresholdRatio`),
-      productId: nonEmptyString(environment.productId, `${id}.environment.productId`),
-      productVersion: nonEmptyString(environment.version, `${id}.environment.version`),
+      productId,
+      productVersion,
       learningObjectiveIds,
     });
   }
@@ -155,9 +163,13 @@ function jsLiteral(value, indent = 2) {
 }
 
 function generatedDefinitionBody(definitions, projection, challengeOnly) {
-  const selected = challengeOnly ? definitions.filter((definition) => definition.mode === "challenge") : definitions;
+  const selected = challengeOnly
+    ? definitions.filter((definition) => definition.mode === "challenge")
+    : definitions;
   return selected
-    .map((definition) => `  ${JSON.stringify(definition.id)}: ${jsLiteral(projection(definition), 2)},`)
+    .map(
+      (definition) => `  ${JSON.stringify(definition.id)}: ${jsLiteral(projection(definition), 2)},`,
+    )
     .join("\n");
 }
 
