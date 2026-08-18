@@ -10,17 +10,17 @@
     {
       "id": "ask",
       "label": "Ask",
-      "description": "Fragen zum Code und zu technischen Konzepten beantworten, ohne autonom Änderungen auszuführen."
+      "description": "Fragen, Erklärungen und Analysen im Chat bearbeiten; passend, wenn du zuerst etwas verstehen oder einordnen willst."
     },
     {
       "id": "plan",
       "label": "Plan",
-      "description": "Einen detaillierten Implementierungsplan erstellen, bevor Code geändert wird."
+      "description": "Lösungsweg und Änderungsschritte zuerst strukturieren, damit du sie vor der Umsetzung prüfen kannst."
     },
     {
       "id": "agent",
       "label": "Agent",
-      "description": "Mehrstufige Aufgaben autonom bearbeiten, Dateien ändern und Werkzeuge verwenden."
+      "description": "Mehrstufige Aufgaben mit Änderungen und Werkzeugnutzung bearbeiten; Berechtigungen, Freigaben und Ergebnisprüfung bleiben Teil deiner Kontrolle."
     }
   ],
   "models": [
@@ -59,17 +59,22 @@
     {
       "kind": "official",
       "url": "https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide?tool=vscode",
-      "verifiedAt": "2026-08-09"
+      "verifiedAt": "2026-08-18"
     },
     {
       "kind": "official",
       "url": "https://docs.github.com/en/copilot/reference/ai-models/supported-models",
-      "verifiedAt": "2026-08-09"
+      "verifiedAt": "2026-08-18"
     },
     {
       "kind": "official",
       "url": "https://docs.github.com/en/copilot/concepts/models/auto-model-selection",
-      "verifiedAt": "2026-08-09"
+      "verifiedAt": "2026-08-18"
+    },
+    {
+      "kind": "official",
+      "url": "https://docs.github.com/en/copilot/concepts/billing",
+      "verifiedAt": "2026-08-18"
     }
   ]
 }
