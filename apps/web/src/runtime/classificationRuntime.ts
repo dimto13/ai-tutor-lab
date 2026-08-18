@@ -185,7 +185,9 @@ function validateDocumentProgress(
   scheme: ClassificationScheme | null,
   label: string,
 ): void {
-  if (!progress.markedIndicatorIds.every((id) => scheme?.indicators.some((entry) => entry.id === id))) {
+  if (
+    !progress.markedIndicatorIds.every((id) => scheme?.indicators.some((entry) => entry.id === id))
+  ) {
     throw new TypeError(`Invalid classification snapshot ${label}.markedIndicatorIds`);
   }
   if (
@@ -194,7 +196,10 @@ function validateDocumentProgress(
   ) {
     throw new TypeError(`Invalid classification snapshot ${label}.selectedLevelId`);
   }
-  if (progress.aiTool !== null && !scheme?.aiPolicy.some((policy) => policy.tool === progress.aiTool)) {
+  if (
+    progress.aiTool !== null &&
+    !scheme?.aiPolicy.some((policy) => policy.tool === progress.aiTool)
+  ) {
     throw new TypeError(`Invalid classification snapshot ${label}.aiTool`);
   }
   if (
@@ -231,7 +236,9 @@ function parseDocumentProgressRecord(
     const selectedLevelId = candidate["selectedLevelId"];
     const aiTool = candidate["aiTool"];
     if (selectedLevelId !== null && typeof selectedLevelId !== "string") {
-      throw new TypeError(`Invalid classification snapshot documentProgress.${documentId}.selectedLevelId`);
+      throw new TypeError(
+        `Invalid classification snapshot documentProgress.${documentId}.selectedLevelId`,
+      );
     }
     if (aiTool !== null && typeof aiTool !== "string") {
       throw new TypeError(`Invalid classification snapshot documentProgress.${documentId}.aiTool`);
@@ -469,7 +476,8 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
       const targetProgress =
         documentId === state.activeDocumentId
           ? currentProgress(state)
-          : (documentProgress[documentId] ?? emptyDocumentProgress(state.scheme?.aiPolicy[0]?.tool ?? null));
+          : (documentProgress[documentId] ??
+            emptyDocumentProgress(state.scheme?.aiPolicy[0]?.tool ?? null));
       documentProgress[documentId] = targetProgress;
       replaceState(
         {
