@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const corpus = JSON.parse(
-  await readFile(new URL("../../content/classification/synthetic-document-corpus.de.json", import.meta.url), "utf8"),
+  await readFile(
+    new URL("../../content/classification/synthetic-document-corpus.de.json", import.meta.url),
+    "utf8",
+  ),
 ) as {
   corpus: {
     allEntitiesAndNumbersFictional: boolean;
@@ -52,7 +55,9 @@ test("classification learning content uses five guided and ten challenge synthet
 
 test("uncertainty escalation is explicit learning content, not a test-only rule", async () => {
   const guided = JSON.stringify(await readScenario("data-classification-ai-usage.guided.json"));
-  const challenge = JSON.stringify(await readScenario("data-classification-ai-usage.challenge.json"));
+  const challenge = JSON.stringify(
+    await readScenario("data-classification-ai-usage.challenge.json"),
+  );
   const explore = JSON.stringify(await readScenario("data-classification-ai-usage.explore.json"));
 
   for (const content of [explore, guided, challenge]) {
@@ -71,7 +76,10 @@ test("scenario fixtures reference corpus ids instead of embedding document bodie
   const documentBodies = corpus.corpus.documents.map((document) => document.content);
 
   for (const scenarioName of scenarioNames) {
-    const source = await readFile(new URL(`../../content/scenarios/${scenarioName}`, import.meta.url), "utf8");
+    const source = await readFile(
+      new URL(`../../content/scenarios/${scenarioName}`, import.meta.url),
+      "utf8",
+    );
     for (const body of documentBodies) assert.equal(source.includes(body), false);
   }
 });
