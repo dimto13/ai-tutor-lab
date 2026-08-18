@@ -11,20 +11,32 @@ type ClassificationCase = {
   ai: Record<AiTool, boolean>;
 };
 
-async function chooseAiDecisions(page: Page, decisions: Record<AiTool, boolean>) {
+async function chooseAiDecisions(
+  page: Page,
+  decisions: Record<AiTool, boolean>,
+  allowCompletionAfterLastDecision = false,
+) {
   const tool = page.getByRole("combobox", { name: "KI-Werkzeug" });
-  for (const aiTool of aiTools) {
+  for (const [index, aiTool] of aiTools.entries()) {
     await tool.selectOption(aiTool);
     const decision = page.getByRole("button", {
       name: decisions[aiTool] ? "Zulassen" : "Nicht zulassen",
       exact: true,
     });
     await decision.click();
-    await expect(decision).toHaveAttribute("aria-pressed", "true");
+    if (allowCompletionAfterLastDecision && index === aiTools.length - 1) {
+      await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+    } else {
+      await expect(decision).toHaveAttribute("aria-pressed", "true");
+    }
   }
 }
 
-async function classifyDocument(page: Page, classification: ClassificationCase) {
+async function classifyDocument(
+  page: Page,
+  classification: ClassificationCase,
+  allowCompletionAfterLastDecision = false,
+) {
   await page.getByRole("button", { name: new RegExp(classification.title) }).click();
   for (const indicator of classification.indicators) {
     const button = page.getByRole("button", { name: indicator, exact: true });
@@ -35,7 +47,7 @@ async function classifyDocument(page: Page, classification: ClassificationCase) 
   const level = page.getByRole("button", { name: classification.level, exact: true });
   await level.click();
   await expect(level).toHaveAttribute("aria-pressed", "true");
-  await chooseAiDecisions(page, classification.ai);
+  await chooseAiDecisions(page, classification.ai, allowCompletionAfterLastDecision);
 }
 
 test("Classification Explore vermittelt Merkmale, Stufen und KI-Nutzung", async ({ page }) => {
@@ -113,7 +125,7 @@ test("Classification Guided bearbeitet fünf Beispiele und liefert fachliche nea
     "public-ai-chat": false,
     "github-copilot": false,
   });
-  await expect(page.getByText(/Im Zweifel höher einstufen/)).toBeVisible();
+  await expect(page.getByText(/^Im Zweifel höher einstufen:/)).toBeVisible();
   await page.getByRole("button", { name: "Streng vertraulich", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
@@ -229,8 +241,9 @@ test("Classification Challenge validiert zehn fachliche Endzustände unabhängig
   ];
 
   for (const [index, classification] of cases.entries()) {
-    await classifyDocument(page, classification);
-    if (index < cases.length - 1) {
+    const isLast = index === cases.length - 1;
+    await classifyDocument(page, classification, isLast);
+    if (!isLast) {
       await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
     }
   }
