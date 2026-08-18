@@ -1,3 +1,4 @@
+import { validateClassification } from "./classificationValidation.ts";
 import type {
   EngineValidationResult,
   TrainingEvent,
@@ -50,6 +51,7 @@ export function createDefaultValidatorRegistry(): ValidatorRegistry {
   return new ValidatorRegistry()
     .register("event", validateEvent)
     .register("state", validateState)
+    .register("classification", validateClassification)
     .register("sequence", validateSequence)
     .register("all", validateAll)
     .register("any", validateAny)
