@@ -64,7 +64,6 @@ function requiredStringAttribute(item, name) {
 
 async function loadDeletionTargets(subject, send) {
   const tableName = requiredEnvironment("TELEMETRY_DELETION_POINTER_TABLE_NAME");
-  const indexName = requiredEnvironment("TELEMETRY_DELETION_POINTER_INDEX_NAME");
   const expectedOwnerKey = ownerKey(subject);
   const targets = [];
   let exclusiveStartKey;
@@ -73,11 +72,11 @@ async function loadDeletionTargets(subject, send) {
     const result = await send(
       new QueryCommand({
         TableName: tableName,
-        IndexName: indexName,
         KeyConditionExpression: "ownerKey = :ownerKey",
         ExpressionAttributeValues: { ":ownerKey": { S: expectedOwnerKey } },
-        ProjectionExpression: "id, tenantId, ownerKey, rawEventId",
+        ProjectionExpression: "tenantId, ownerKey, rawEventId",
         ExclusiveStartKey: exclusiveStartKey,
+        ConsistentRead: true,
       }),
     );
 
@@ -87,15 +86,12 @@ async function loadDeletionTargets(subject, send) {
       if (tenantId !== subject.tenantId || persistedOwnerKey !== expectedOwnerKey) {
         throw new Error("Telemetry deletion query escaped authenticated owner scope");
       }
-      targets.push({
-        pointerId: requiredStringAttribute(item, "id"),
-        rawEventId: requiredStringAttribute(item, "rawEventId"),
-      });
+      targets.push({ rawEventId: requiredStringAttribute(item, "rawEventId") });
     }
     exclusiveStartKey = result.LastEvaluatedKey;
   } while (exclusiveStartKey);
 
-  return targets;
+  return { expectedOwnerKey, targets };
 }
 
 function chunks(values, size) {
@@ -110,8 +106,8 @@ function sleep(delayMs) {
   return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
-async function deleteBatch(tableName, ids, send) {
-  let pending = ids.map((id) => ({ DeleteRequest: { Key: { id: { S: id } } } }));
+async function deleteBatch(tableName, keys, send) {
+  let pending = keys.map((key) => ({ DeleteRequest: { Key: key } }));
   for (let attempt = 0; pending.length > 0; attempt += 1) {
     const result = await send(
       new BatchWriteItemCommand({
@@ -127,8 +123,8 @@ async function deleteBatch(tableName, ids, send) {
   }
 }
 
-async function deleteItems(tableName, ids, send) {
-  for (const batch of chunks(ids, BATCH_WRITE_LIMIT)) {
+async function deleteItems(tableName, keys, send) {
+  for (const batch of chunks(keys, BATCH_WRITE_LIMIT)) {
     await deleteBatch(tableName, batch, send);
   }
 }
@@ -136,7 +132,7 @@ async function deleteItems(tableName, ids, send) {
 export function createTelemetryDeletionHandler(send) {
   return async (event) => {
     const subject = caller(event);
-    const targets = await loadDeletionTargets(subject, send);
+    const { expectedOwnerKey, targets } = await loadDeletionTargets(subject, send);
     if (targets.length === 0) return { deletedCount: 0, complete: true };
 
     const rawTableName = requiredEnvironment("TELEMETRY_RAW_EVENT_TABLE_NAME");
@@ -146,7 +142,7 @@ export function createTelemetryDeletionHandler(send) {
     // fails before or during this phase, the pointers remain and a retry can deterministically resume.
     await deleteItems(
       rawTableName,
-      targets.map((target) => target.rawEventId),
+      targets.map((target) => ({ id: { S: target.rawEventId } })),
       send,
     );
 
@@ -154,7 +150,10 @@ export function createTelemetryDeletionHandler(send) {
     // raw deletes are idempotent; any remaining pointers continue to identify unfinished cleanup.
     await deleteItems(
       pointerTableName,
-      targets.map((target) => target.pointerId),
+      targets.map((target) => ({
+        ownerKey: { S: expectedOwnerKey },
+        rawEventId: { S: target.rawEventId },
+      })),
       send,
     );
 
