@@ -144,6 +144,8 @@ test("long-lived telemetry projection contains aggregate metrics but no user or 
   assert.match(projectorSource, /attribute_not_exists\(id\)/);
   assert.match(projectorSource, /telemetry-projection-receipt:v1/);
   assert.doesNotMatch(projectorSource, /ownerKey|userId|sessionId|subjectKey/);
+  assert.match(backendSource, /StreamViewType\.NEW_IMAGE/);
+  assert.match(backendSource, /streamSpecification/);
   assert.match(backendSource, /TelemetryAggregateProjectionStream/);
   assert.match(backendSource, /reportBatchItemFailures:\s*true/);
 });
