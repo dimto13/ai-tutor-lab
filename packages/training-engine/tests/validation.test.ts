@@ -182,7 +182,10 @@ test("classification validator keeps missing runtime state silent but rejects ma
     expectedAiDecisions: { "public-ai-chat": true },
   };
 
-  assert.equal((await registry.validate(validation, { query: async () => undefined })).outcome, "ignore");
+  assert.equal(
+    (await registry.validate(validation, { query: async () => undefined })).outcome,
+    "ignore",
+  );
   await assert.rejects(
     () => registry.validate(validation, { query: async () => ({ viewedDocumentIds: [] }) }),
     /Invalid classification validation state/,
