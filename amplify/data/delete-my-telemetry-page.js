@@ -55,7 +55,10 @@ export function response(ctx) {
   const targets = [];
   for (const item of items) {
     if (item.tenantId !== subject.tenantId || item.ownerKey !== expectedOwnerKey) {
-      util.error("Telemetry deletion query escaped authenticated owner scope", "TelemetryScopeError");
+      util.error(
+        "Telemetry deletion query escaped authenticated owner scope",
+        "TelemetryScopeError",
+      );
     }
     if (typeof item.id !== "string" || typeof item.rawEventId !== "string") {
       util.error("Telemetry deletion pointer is invalid", "TelemetryDeletionError");
