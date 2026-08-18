@@ -42,6 +42,30 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "data-classification-ai-usage.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 240,
+      "estimatedMinutes": 20,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "data-classification-ai-usage.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 70,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "data-classification-ai-usage.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 150,
+      "estimatedMinutes": 18,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "developer-workflow-basics.challenge",
       "mode": "challenge",
       "version": "1",
