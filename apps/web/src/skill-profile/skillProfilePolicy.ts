@@ -1,4 +1,4 @@
-import skillProfilePolicy from "../../../../content/scoring/skill-profile-policy.json";
+import skillProfilePolicy from "../../../../content/scoring/skill-profile-policy.json" with { type: "json" };
 
 export function scoredTechnologyIdForScenario(scenarioId: string): string | null {
   for (const technology of skillProfilePolicy.technologies) {
