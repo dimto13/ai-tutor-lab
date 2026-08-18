@@ -1,9 +1,9 @@
 import { Eye, EyeOff, LogOut, Settings, UserRound, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "./AuthContext";
 import { maskEmailAddress } from "./emailPrivacy";
-import { AI_LEVEL_OPTIONS } from "@/profile/aiLevelOptions";
+import { AI_LEVEL_OPTIONS, aiLevelLabel } from "@/profile/aiLevelOptions";
 import { contentRecommendationForAiLevel } from "@/profile/aiLevelRecommendation";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
@@ -12,6 +12,16 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const auth = useAuth();
   const profile = useUserProfile();
   const preferences = useUserPreferences();
+  const effectiveAiLevel =
+    preferences.status === "ready" ? (preferences.selfAssessedAiLevel ?? "beginner") : null;
+  const effectiveAiLevelLabel = effectiveAiLevel ? aiLevelLabel(effectiveAiLevel) : null;
+  const aiLevelNavigationValue =
+    effectiveAiLevelLabel ?? (preferences.status === "error" ? "nicht verfügbar" : "…");
+  const aiLevelNavigationLabel = effectiveAiLevelLabel
+    ? `Eigene KI-Erfahrung (Selbsteinschätzung): ${effectiveAiLevelLabel}. Ändern`
+    : preferences.status === "error"
+      ? "Eigene KI-Erfahrung (Selbsteinschätzung): derzeit nicht verfügbar"
+      : "Eigene KI-Erfahrung (Selbsteinschätzung) wird geladen";
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftName, setDraftName] = useState(profile.displayName);
   const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel | null>(
@@ -20,6 +30,9 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const [emailVisible, setEmailVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const aiLevelInputRef = useRef<HTMLInputElement | null>(null);
+  const focusAiLevelOnOpenRef = useRef(false);
+  const settingsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!settingsOpen) {
@@ -29,21 +42,44 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     }
   }, [preferences.selfAssessedAiLevel, profile.displayName, settingsOpen]);
 
+  useEffect(() => {
+    if (!settingsOpen || !focusAiLevelOnOpenRef.current) return;
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      aiLevelInputRef.current?.focus();
+      focusAiLevelOnOpenRef.current = false;
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [settingsOpen]);
+
   const email = auth.session?.identity.email ?? profile.profile?.email ?? null;
   const displayedEmail = email ? (emailVisible ? email : maskEmailAddress(email)) : null;
   const draftRecommendation = draftAiLevel ? contentRecommendationForAiLevel(draftAiLevel) : null;
 
-  function openSettings() {
+  function openSettings({
+    focusAiLevel = false,
+    returnFocusTo = null,
+  }: {
+    focusAiLevel?: boolean;
+    returnFocusTo?: HTMLButtonElement | null;
+  } = {}) {
     setDraftName(profile.displayName);
     setDraftAiLevel(preferences.selfAssessedAiLevel);
     setEmailVisible(false);
     setSaveError(null);
+    focusAiLevelOnOpenRef.current = focusAiLevel;
+    settingsReturnFocusRef.current = returnFocusTo;
     setSettingsOpen(true);
   }
 
   function closeSettings() {
+    const returnFocusTo = settingsReturnFocusRef.current;
     setEmailVisible(false);
     setSettingsOpen(false);
+    focusAiLevelOnOpenRef.current = false;
+    settingsReturnFocusRef.current = null;
+    window.requestAnimationFrame(() => returnFocusTo?.focus());
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -71,7 +107,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex min-w-0 shrink items-center gap-1.5">
         <span
           className={`${compact ? "hidden 2xl:inline" : "hidden sm:inline"} max-w-52 truncate text-xs text-muted-foreground`}
           title={profile.displayName}
@@ -80,10 +116,34 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
         </span>
         <button
           type="button"
-          onClick={openSettings}
+          data-testid="ai-level-navigation"
+          data-platform-ui="ai-level-navigation"
+          disabled={!effectiveAiLevel}
+          onClick={(event) =>
+            openSettings({ focusAiLevel: true, returnFocusTo: event.currentTarget })
+          }
+          aria-label={aiLevelNavigationLabel}
+          title={
+            effectiveAiLevelLabel
+              ? `Eigene KI-Erfahrung: ${effectiveAiLevelLabel}`
+              : aiLevelNavigationValue
+          }
+          className="inline-flex h-8 min-w-0 shrink items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-default disabled:opacity-60"
+        >
+          <span
+            aria-hidden="true"
+            className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+          >
+            {compact ? "KI: " : "KI-Level: "}
+            {aiLevelNavigationValue}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={(event) => openSettings({ returnFocusTo: event.currentTarget })}
           aria-label="Einstellungen öffnen"
           title="Einstellungen"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <Settings className="h-3.5 w-3.5" />
           <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Einstellungen</span>
@@ -93,7 +153,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           onClick={() => void auth.signOut().catch(() => undefined)}
           aria-label="Abmelden"
           title="Abmelden"
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
         >
           <LogOut className="h-3.5 w-3.5" />
           <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Abmelden</span>
@@ -188,7 +248,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
               <fieldset className="rounded-lg border border-border bg-background/35 p-4">
                 <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  KI-Erfahrungslevel
+                  KI-Erfahrung (Selbsteinschätzung)
                 </legend>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   Deine Selbsteinschätzung beeinflusst Empfehlungen und Erklärungstiefe. Sie ist
@@ -197,6 +257,8 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 <div className="mt-3 space-y-2">
                   {AI_LEVEL_OPTIONS.map((option) => {
                     const selected = draftAiLevel === option.value;
+                    const focusTarget =
+                      selected || (!draftAiLevel && option.value === effectiveAiLevel);
                     return (
                       <label
                         key={option.value}
@@ -207,6 +269,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                         }`}
                       >
                         <input
+                          ref={focusTarget ? aiLevelInputRef : undefined}
                           type="radio"
                           name="self-assessed-ai-level"
                           value={option.value}
