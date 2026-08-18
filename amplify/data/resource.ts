@@ -203,6 +203,7 @@ export const schema = a.schema({
     .model({
       tenantId: a.string().required(),
       pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+      rawEventRetentionDays: a.integer(),
       updatedAt: a.float().required(),
     })
     .authorization((allow) => [allow.authenticated()])
@@ -218,6 +219,7 @@ export const schema = a.schema({
       eventType: a.string().required(),
       occurredAt: a.float().required(),
       receivedAtEpochSeconds: a.float().required(),
+      expiresAtEpochSeconds: a.float().required(),
       sessionId: a.string().required(),
       scenarioId: a.string().required(),
       mode: a.ref("TrainingMode").required(),
@@ -227,6 +229,54 @@ export const schema = a.schema({
     .secondaryIndexes((index) => [
       index("tenantScenarioKey").sortKeys(["occurredAt"]).name("telemetryByTenantScenarioTime"),
     ])
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
+  TrainingTelemetryDeletionPointer: a
+    .model({
+      tenantId: a.string().required(),
+      ownerKey: a.string().required(),
+      rawEventId: a.string().required(),
+      occurredAt: a.float().required(),
+      expiresAtEpochSeconds: a.float().required(),
+    })
+    .secondaryIndexes((index) => [
+      index("ownerKey").sortKeys(["occurredAt"]).name("telemetryDeletionByOwnerTime"),
+    ])
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
+  TrainingTelemetryAggregate: a
+    .model({
+      tenantId: a.string().required(),
+      tenantScenarioKey: a.string().required(),
+      scenarioId: a.string().required(),
+      bucketStart: a.float().required(),
+      dimensionKey: a.string().required(),
+      stepId: a.string(),
+      failurePattern: a.string(),
+      sessionsStarted: a.integer(),
+      sessionsCompleted: a.integer(),
+      scenarioDurationTotalMs: a.float(),
+      scenarioDurationCount: a.integer(),
+      stepStartedCount: a.integer(),
+      stepCompletedCount: a.integer(),
+      stepDurationTotalMs: a.float(),
+      stepDurationCount: a.integer(),
+      hintUsageCount: a.integer(),
+      failedAttemptCount: a.integer(),
+      projectionUpdatedAt: a.float().required(),
+    })
+    .secondaryIndexes((index) => [
+      index("tenantScenarioKey").sortKeys(["bucketStart"]).name("telemetryAggregatesByScenarioTime"),
+    ])
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
+  TrainingTelemetryProjectionReceipt: a
+    .model({
+      expiresAtEpochSeconds: a.float().required(),
+    })
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
 
@@ -281,6 +331,12 @@ export const schema = a.schema({
 
   TenantTelemetryPolicyEnvelope: a.customType({
     pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+    rawEventRetentionDays: a.integer().required(),
+  }),
+
+  TelemetryDeletionPage: a.customType({
+    deletedCount: a.integer().required(),
+    complete: a.boolean().required(),
   }),
 
   ScenarioLearningAnalytics: a.customType({
@@ -551,6 +607,10 @@ export const schema = a.schema({
         dataSource: a.ref("TrainingTelemetryEvent"),
         entry: "./append-training-telemetry-event.js",
       }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
+        entry: "./write-telemetry-deletion-pointer.js",
+      }),
     ]),
 
   loadTenantTelemetryPolicy: a
@@ -560,23 +620,71 @@ export const schema = a.schema({
     .handler(
       a.handler.custom({
         dataSource: a.ref("TenantTelemetryPolicy"),
-        entry: "./load-tenant-telemetry-policy.js",
+        entry: "./telemetry-load-policy-for-write.js",
       }),
     ),
 
   saveTenantTelemetryPolicy: a
     .mutation()
     .arguments({
-      pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+      pseudonymizationMode: a.ref("TelemetryPseudonymizationMode"),
+      rawEventRetentionDays: a.integer(),
     })
     .returns(a.ref("TenantTelemetryPolicyEnvelope"))
     .authorization((allow) => [allow.groups(["role:tenant_admin"])])
-    .handler(
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TenantTelemetryPolicy"),
+        entry: "./telemetry-load-policy-for-write.js",
+      }),
       a.handler.custom({
         dataSource: a.ref("TenantTelemetryPolicy"),
         entry: "./save-tenant-telemetry-policy.js",
       }),
-    ),
+    ]),
+
+  deleteMyPersonalTelemetry: a
+    .mutation()
+    .returns(a.ref("TelemetryDeletionPage"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
+        entry: "./delete-my-telemetry-page.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./delete-my-telemetry-item-0.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
+        entry: "./delete-my-telemetry-item-1.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./delete-my-telemetry-item-2.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
+        entry: "./delete-my-telemetry-item-3.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./delete-my-telemetry-item-4.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
+        entry: "./delete-my-telemetry-item-5.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./delete-my-telemetry-item-6.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
+        entry: "./delete-my-telemetry-item-7.js",
+      }),
+    ]),
 
   loadTrainingAnalytics: a
     .query()
