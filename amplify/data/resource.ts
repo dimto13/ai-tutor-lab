@@ -1,4 +1,5 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
+import { telemetryDeletionWorker } from "../functions/telemetry-deletion-worker/resource";
 
 export const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
@@ -649,44 +650,7 @@ export const schema = a.schema({
     .mutation()
     .returns(a.ref("TelemetryDeletionPage"))
     .authorization((allow) => [allow.authenticated()])
-    .handler([
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
-        entry: "./delete-my-telemetry-page.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryEvent"),
-        entry: "./delete-my-telemetry-item-0.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
-        entry: "./delete-my-telemetry-item-1.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryEvent"),
-        entry: "./delete-my-telemetry-item-2.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
-        entry: "./delete-my-telemetry-item-3.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryEvent"),
-        entry: "./delete-my-telemetry-item-4.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
-        entry: "./delete-my-telemetry-item-5.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryEvent"),
-        entry: "./delete-my-telemetry-item-6.js",
-      }),
-      a.handler.custom({
-        dataSource: a.ref("TrainingTelemetryDeletionPointer"),
-        entry: "./delete-my-telemetry-item-7.js",
-      }),
-    ]),
+    .handler(a.handler.function(telemetryDeletionWorker)),
 
   loadTrainingAnalytics: a
     .query()
