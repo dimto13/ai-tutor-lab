@@ -248,7 +248,8 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 <div className="mt-3 space-y-2">
                   {AI_LEVEL_OPTIONS.map((option) => {
                     const selected = draftAiLevel === option.value;
-                    const focusTarget = selected || (!draftAiLevel && option.value === effectiveAiLevel);
+                    const focusTarget =
+                      selected || (!draftAiLevel && option.value === effectiveAiLevel);
                     return (
                       <label
                         key={option.value}
