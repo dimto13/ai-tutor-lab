@@ -98,8 +98,6 @@ function sameLevel(left: SkillLevel | undefined, right: SkillLevel | undefined):
   return left === right;
 }
 
-// A fetched profile is a valid before-state only when the server proves it predates the award.
-// Otherwise the completion UI stays fail-closed and never invents a competency delta.
 function baselinePredatesAward(
   baseline: CompletionSkillProfilesSnapshot,
   awardOccurredAt: number,
@@ -111,41 +109,30 @@ function baselinePredatesAward(
   );
 }
 
-function profileChanges(
-  baseline: readonly SkillProfileProjection[],
-  current: readonly SkillProfileProjection[],
-): SkillProfileChange[] {
-  const beforeByTechnology = new Map(baseline.map((profile) => [profile.technologyId, profile]));
-  const afterByTechnology = new Map(current.map((profile) => [profile.technologyId, profile]));
-  const technologyIds = [
-    ...new Set([...beforeByTechnology.keys(), ...afterByTechnology.keys()]),
-  ].sort();
+function correlatedAwardChange({
+  baseline,
+  current,
+  scoringTechnologyId,
+  awardedPoints,
+}: {
+  baseline: readonly SkillProfileProjection[];
+  current: readonly SkillProfileProjection[];
+  scoringTechnologyId: string | null | undefined;
+  awardedPoints: number;
+}): SkillProfileChange | null {
+  if (!scoringTechnologyId || awardedPoints <= 0) return null;
+  const before = baseline.find((profile) => profile.technologyId === scoringTechnologyId) ?? null;
+  const after = current.find((profile) => profile.technologyId === scoringTechnologyId) ?? null;
+  if (!before || !after || after.points + 0.001 < before.points + awardedPoints) return null;
 
-  return technologyIds.flatMap((technologyId) => {
-    const before = beforeByTechnology.get(technologyId) ?? null;
-    const after = afterByTechnology.get(technologyId) ?? null;
-    const levelChanged = !sameLevel(before?.level, after?.level);
-    const pointsChanged = before?.points !== after?.points;
-    const evidenceRevisionChanged = before?.sourceRevision !== after?.sourceRevision;
-    const evidenceCountChanged = before?.eligibleChallengeCount !== after?.eligibleChallengeCount;
-
-    // `sourceRevision` can advance when the run GSI becomes visible before the score-event GSI.
-    // A revision-only change is therefore not yet a trustworthy competency delta.
-    if (!levelChanged && !pointsChanged && !evidenceCountChanged) {
-      return [];
-    }
-
-    return [
-      {
-        technologyId,
-        before,
-        after,
-        levelChanged,
-        pointsChanged,
-        evidenceRevisionChanged,
-      },
-    ];
-  });
+  return {
+    technologyId: scoringTechnologyId,
+    before,
+    after,
+    levelChanged: !sameLevel(before.level, after.level),
+    pointsChanged: before.points !== after.points,
+    evidenceRevisionChanged: before.sourceRevision !== after.sourceRevision,
+  };
 }
 
 export function completionCompetencyPresentation({
@@ -153,11 +140,13 @@ export function completionCompetencyPresentation({
   scoreResult,
   baseline,
   current,
+  scoringTechnologyId,
 }: {
   scoreStatus: CompletionScoreAwardStatus;
   scoreResult: AppendScoreEventResult | null;
   baseline: CompletionSkillProfilesSnapshot;
   current: CompletionSkillProfilesSnapshot | null;
+  scoringTechnologyId?: string | null;
 }): CompletionCompetencyPresentation {
   if (scoreStatus === "unavailable") return { kind: "unavailable" };
   if (scoreStatus === "error") return { kind: "score_error" };
@@ -175,7 +164,12 @@ export function completionCompetencyPresentation({
     return { kind: "current_only", current: current.profiles };
   }
 
-  const changes = profileChanges(baseline.profiles, current.profiles);
-  if (changes.length === 0) return { kind: "projection_pending" };
-  return { kind: "changed", changes };
+  const change = correlatedAwardChange({
+    baseline: baseline.profiles,
+    current: current.profiles,
+    scoringTechnologyId,
+    awardedPoints: scoreResult.event.points,
+  });
+  if (!change) return { kind: "projection_pending" };
+  return { kind: "changed", changes: [change] };
 }
