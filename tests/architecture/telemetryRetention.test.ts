@@ -16,7 +16,10 @@ const pointerWriterUrl = new URL(
   "../../amplify/data/write-telemetry-deletion-pointer.js",
   import.meta.url,
 );
-const deletionQueryUrl = new URL("../../amplify/data/delete-my-telemetry-page.js", import.meta.url);
+const deletionWorkerUrl = new URL(
+  "../../amplify/functions/telemetry-deletion-worker/handler.js",
+  import.meta.url,
+);
 const retentionPortUrl = new URL(
   "../../apps/web/src/telemetry/telemetryRetention.ts",
   import.meta.url,
@@ -106,25 +109,37 @@ test("stable account-deletion ownership is isolated from raw telemetry and index
   assert.match(backendSource, /TrainingTelemetryDeletionPointer/);
 });
 
-test("account telemetry deletion derives owner scope from identity and accepts no client scope", async () => {
-  const [schemaSource, querySource] = await Promise.all([
+test("account telemetry deletion is one server-controlled, owner-scoped and retry-safe operation", async () => {
+  const [schemaSource, workerSource, backendSource, portSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
-    readFile(deletionQueryUrl, "utf8"),
+    readFile(deletionWorkerUrl, "utf8"),
+    readFile(backendUrl, "utf8"),
+    readFile(retentionPortUrl, "utf8"),
   ]);
   const deletionBlock = definitionBlock(schemaSource, "deleteMyPersonalTelemetry");
 
   assert.doesNotMatch(deletionBlock, /\.arguments\(/);
   assert.match(deletionBlock, /allow\.authenticated\(\)/);
-  assert.match(deletionBlock, /TrainingTelemetryDeletionPointer/);
-  assert.match(deletionBlock, /TrainingTelemetryEvent/);
-  assert.match(querySource, /identity\.sub/);
-  assert.match(querySource, /tenant:/);
-  assert.match(querySource, /telemetryDeletionByOwnerTime/);
-  assert.doesNotMatch(querySource, /ctx\.args\.userId/);
-  assert.doesNotMatch(querySource, /ctx\.args\.tenantId/);
+  assert.match(deletionBlock, /a\.handler\.function\(telemetryDeletionWorker\)/);
+  assert.doesNotMatch(deletionBlock, /delete-my-telemetry-page|delete-my-telemetry-item/);
+  assert.match(workerSource, /event\?\.identity/);
+  assert.match(workerSource, /cognito:groups/);
+  assert.match(workerSource, /tenant:/);
+  assert.match(workerSource, /QueryCommand/);
+  assert.match(workerSource, /telemetryDeletionByOwnerTime|TELEMETRY_DELETION_POINTER_INDEX_NAME/);
+  assert.doesNotMatch(workerSource, /event\.arguments\.(?:userId|tenantId)/);
+  assert.match(workerSource, /const targets = await loadDeletionTargets\(subject\)/);
+  const rawDeletePosition = workerSource.indexOf("await deleteItems(\n    rawTableName");
+  const pointerDeletePosition = workerSource.indexOf("await deleteItems(\n    pointerTableName");
+  assert.ok(rawDeletePosition >= 0 && pointerDeletePosition > rawDeletePosition);
+  assert.match(workerSource, /return \{ deletedCount: targets\.length, complete: true \}/);
+  assert.match(backendSource, /rawTelemetryTable\.grantReadWriteData\(deletionLambda\)/);
+  assert.match(backendSource, /deletionPointerTable\.grantReadWriteData\(deletionLambda\)/);
+  assert.doesNotMatch(portSource, /while\s*\(true\)|deleteMyRawTelemetryPage/);
+  assert.match(portSource, /deleteMyRawTelemetry\(\)/);
 });
 
-test("long-lived telemetry projection contains aggregate metrics but no user or session dimension", async () => {
+test("long-lived telemetry projection starts from trim horizon and contains no user dimension", async () => {
   const [schemaSource, projectorSource, backendSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
     readFile(aggregateProjectorUrl, "utf8"),
@@ -147,6 +162,8 @@ test("long-lived telemetry projection contains aggregate metrics but no user or 
   assert.match(backendSource, /StreamViewType\.NEW_IMAGE/);
   assert.match(backendSource, /streamSpecification/);
   assert.match(backendSource, /TelemetryAggregateProjectionStream/);
+  assert.match(backendSource, /StartingPosition\.TRIM_HORIZON/);
+  assert.doesNotMatch(backendSource, /StartingPosition\.LATEST/);
   assert.match(backendSource, /reportBatchItemFailures:\s*true/);
 });
 
