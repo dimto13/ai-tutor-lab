@@ -7,6 +7,13 @@ export function requiresFreshRecommendationEvidence(refreshKey: unknown): boolea
   return typeof refreshKey === "string" && refreshKey.endsWith(":created");
 }
 
+export function recommendationMinimumPointsDelta(refreshKey: unknown): number | null {
+  if (!requiresFreshRecommendationEvidence(refreshKey) || typeof refreshKey !== "string") return null;
+  const segments = refreshKey.split(":");
+  const points = Number(segments.at(-2));
+  return Number.isFinite(points) && points > 0 ? points : null;
+}
+
 function profileEvidenceChanged(
   before: SkillProfileProjection | undefined,
   after: SkillProfileProjection | undefined,
