@@ -80,7 +80,7 @@ test("tenant retention extends the existing telemetry policy instead of creating
   assert.equal((source.match(/^ {2}TenantTelemetryPolicy:\s*a/gm) || []).length, 1);
 });
 
-test("stable account-deletion ownership is isolated from raw telemetry and indexed first", async () => {
+test("stable account-deletion ownership is isolated from raw telemetry and keyed by owner", async () => {
   const [schemaSource, writerSource, pointerSource, backendSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
     readFile(rawWriterUrl, "utf8"),
@@ -99,17 +99,20 @@ test("stable account-deletion ownership is isolated from raw telemetry and index
   assert.match(pointerSource, /function rawEventId/);
   assert.match(pointerSource, /ctx\.stash\.telemetryRawEventId = rawId/);
   assert.match(pointerSource, /ctx\.stash\.telemetryRawEventExpiresAtEpochSeconds/);
+  assert.match(pointerSource, /key:\s*util\.dynamodb\.toMapValues\(\{\s*ownerKey:/);
+  assert.match(pointerSource, /rawEventId:\s*rawId/);
   assert.match(writerSource, /ctx\.stash\.telemetryRawEventId/);
   assert.match(writerSource, /ctx\.stash\.telemetryRawEventExpiresAtEpochSeconds/);
   assert.ok(pointerPosition >= 0 && rawPosition >= 0 && pointerPosition < rawPosition);
   assert.doesNotMatch(pointerSource, /attributeValues:[\s\S]*\buserId\s*:/);
   assert.match(pointerBlock, /rawEventId:\s*a\.string\(\)\.required\(\)/);
-  assert.match(pointerBlock, /telemetryDeletionByOwnerTime/);
+  assert.match(pointerBlock, /\.identifier\(\["ownerKey",\s*"rawEventId"\]\)/);
+  assert.doesNotMatch(pointerBlock, /secondaryIndexes|telemetryDeletionByOwnerTime/);
   assert.match(pointerBlock, /expiresAtEpochSeconds:\s*a\.float\(\)\.required\(\)/);
   assert.match(backendSource, /TrainingTelemetryDeletionPointer/);
 });
 
-test("account telemetry deletion is one server-controlled, owner-scoped and retry-safe operation", async () => {
+test("account telemetry deletion is one server-controlled, strongly scoped and retry-safe operation", async () => {
   const [schemaSource, workerSource, backendSource, portSource] = await Promise.all([
     readFile(dataResourceUrl, "utf8"),
     readFile(deletionWorkerUrl, "utf8"),
@@ -127,14 +130,20 @@ test("account telemetry deletion is one server-controlled, owner-scoped and retr
   assert.match(workerSource, /cognito:groups/);
   assert.match(workerSource, /tenant:/);
   assert.match(workerSource, /QueryCommand/);
-  assert.match(workerSource, /telemetryDeletionByOwnerTime|TELEMETRY_DELETION_POINTER_INDEX_NAME/);
+  assert.match(workerSource, /KeyConditionExpression:\s*"ownerKey = :ownerKey"/);
+  assert.match(workerSource, /ConsistentRead:\s*true/);
+  assert.doesNotMatch(workerSource, /IndexName|TELEMETRY_DELETION_POINTER_INDEX_NAME/);
   assert.doesNotMatch(workerSource, /event\.arguments\.(?:userId|tenantId)/);
-  assert.match(workerSource, /const targets = await loadDeletionTargets\(subject, send\)/);
+  assert.match(
+    workerSource,
+    /const \{ expectedOwnerKey, targets \} = await loadDeletionTargets\(subject, send\)/,
+  );
   const rawDeleteMatch = /await deleteItems\(\s*rawTableName/.exec(workerSource);
   const pointerDeleteMatch = /await deleteItems\(\s*pointerTableName/.exec(workerSource);
   assert.ok(
     rawDeleteMatch && pointerDeleteMatch && pointerDeleteMatch.index > rawDeleteMatch.index,
   );
+  assert.match(workerSource, /ownerKey:\s*\{ S: expectedOwnerKey \}/);
   assert.match(workerSource, /return \{ deletedCount: targets\.length, complete: true \}/);
   assert.match(backendSource, /rawTelemetryTable\.grantReadWriteData\(deletionLambda\)/);
   assert.match(backendSource, /deletionPointerTable\.grantReadWriteData\(deletionLambda\)/);
