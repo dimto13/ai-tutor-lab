@@ -47,18 +47,14 @@ export function request(ctx) {
   ctx.stash.telemetryRawEventReceivedAtEpochSeconds = receivedAtEpochSeconds;
   ctx.stash.telemetryRawEventExpiresAtEpochSeconds = expiresAtEpochSeconds;
 
-  const id = [
-    "telemetry-deletion-pointer:v1",
-    util.base64Encode(subject.tenantId),
-    util.base64Encode(rawId),
-  ].join(".");
   return {
     operation: "PutItem",
-    key: util.dynamodb.toMapValues({ id }),
-    attributeValues: util.dynamodb.toMapValues({
-      tenantId: subject.tenantId,
+    key: util.dynamodb.toMapValues({
       ownerKey: ownerKey(subject),
       rawEventId: rawId,
+    }),
+    attributeValues: util.dynamodb.toMapValues({
+      tenantId: subject.tenantId,
       occurredAt,
       expiresAtEpochSeconds,
     }),
