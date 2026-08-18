@@ -79,6 +79,105 @@ test("state validator queries runtime state declaratively", async () => {
   );
 });
 
+test("classification validator checks semantic end state and names a missed indicator", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const validation: Validation = {
+    kind: "classification",
+    selector: "classification.validation.state",
+    documentId: "support-ticket",
+    expectedIndicatorIds: ["personal_data"],
+    expectedLevelId: "confidential",
+    expectedAiDecisions: {
+      "m365-copilot-tenant": true,
+      "public-ai-chat": false,
+      "github-copilot": false,
+    },
+  };
+  const baseState = {
+    viewedDocumentIds: ["support-ticket"],
+    scheme: {
+      levels: [
+        { id: "public", label: "Öffentlich", rank: 0 },
+        { id: "internal", label: "Intern", rank: 10 },
+        { id: "confidential", label: "Vertraulich", rank: 20 },
+      ],
+      indicators: [{ id: "personal_data", label: "Personenbezogene Daten" }],
+    },
+    documentProgress: {
+      "support-ticket": {
+        markedIndicatorIds: [],
+        selectedLevelId: "confidential",
+        aiDecisions: {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": false,
+        },
+      },
+    },
+  };
+
+  const missed = await registry.validate(validation, { query: async () => baseState });
+  assert.equal(missed.outcome, "near-miss");
+  assert.match(missed.message ?? "", /Personenbezogene Daten/);
+  assert.match(missed.message ?? "", /übersehen/);
+
+  const passed = await registry.validate(validation, {
+    query: async () => ({
+      ...baseState,
+      documentProgress: {
+        "support-ticket": {
+          ...baseState.documentProgress["support-ticket"],
+          markedIndicatorIds: ["personal_data"],
+        },
+      },
+    }),
+  });
+  assert.equal(passed.outcome, "pass");
+});
+
+test("classification validator explains the explicit uncertainty escalation rule", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const validation: Validation = {
+    kind: "classification",
+    selector: "classification.validation.state",
+    documentId: "boundary-ambiguous-ticket",
+    expectedIndicatorIds: ["personal_data"],
+    expectedLevelId: "strictly_confidential",
+    uncertaintyEscalationFromLevelId: "confidential",
+    expectedAiDecisions: {
+      "m365-copilot-tenant": false,
+      "public-ai-chat": false,
+      "github-copilot": false,
+    },
+  };
+  const state = {
+    viewedDocumentIds: ["boundary-ambiguous-ticket"],
+    scheme: {
+      levels: [
+        { id: "confidential", label: "Vertraulich", rank: 20 },
+        { id: "strictly_confidential", label: "Streng vertraulich", rank: 30 },
+      ],
+      indicators: [{ id: "personal_data", label: "Personenbezogene Daten" }],
+    },
+    documentProgress: {
+      "boundary-ambiguous-ticket": {
+        markedIndicatorIds: ["personal_data"],
+        selectedLevelId: "confidential",
+        aiDecisions: {
+          "m365-copilot-tenant": false,
+          "public-ai-chat": false,
+          "github-copilot": false,
+        },
+      },
+    },
+  };
+
+  const result = await registry.validate(validation, { query: async () => state });
+  assert.equal(result.outcome, "near-miss");
+  assert.match(result.message ?? "", /Im Zweifel höher einstufen/);
+  assert.match(result.message ?? "", /Streng vertraulich/);
+});
+
 test("not validator inverts relevant declarative conditions and preserves ignore", async () => {
   const registry = createDefaultValidatorRegistry();
   const validation: Validation = {
