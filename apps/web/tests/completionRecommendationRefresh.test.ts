@@ -6,13 +6,16 @@ import {
   type SkillProfileProjection,
 } from "@ai-train-lab/training-engine";
 import {
+  completionRecommendationFreshnessBaseline,
   completionRecommendationRefreshKey,
+  completionScoreFinishedAt,
   shouldWaitForCompletionRecommendation,
 } from "../src/completion/completionOutcome.ts";
 import {
   materialSkillProfileEvidenceChanged,
   requiresFreshRecommendationEvidence,
 } from "../src/dashboard/recommendationProfileFreshness.ts";
+import { scoredTechnologyIdForScenario } from "../src/skill-profile/skillProfilePolicy.ts";
 
 function award(occurredAt: number, created = true): AppendScoreEventResult {
   return {
@@ -35,10 +38,12 @@ function profile({
   technologyId,
   points,
   sourceRevision,
+  calculatedAt = 1000 + sourceRevision,
 }: {
   technologyId: string;
   points: number;
   sourceRevision: number;
+  calculatedAt?: number;
 }): SkillProfileProjection {
   return {
     technologyId,
@@ -46,13 +51,82 @@ function profile({
     points,
     eligibleChallengeCount: 0,
     sourceRevision,
-    calculatedAt: 1000 + sourceRevision,
+    calculatedAt,
   };
 }
 
 test("completion keeps the next action pending while server scoring is unresolved", () => {
   assert.equal(shouldWaitForCompletionRecommendation("idle", null, false), true);
   assert.equal(shouldWaitForCompletionRecommendation("pending", null, false), true);
+});
+
+test("completion defers scoring until the initial SkillProfile baseline has settled", () => {
+  const finishedAt = 2000;
+  assert.equal(
+    completionScoreFinishedAt(finishedAt, { status: "loading", profiles: [], error: null }),
+    null,
+  );
+  assert.equal(
+    completionScoreFinishedAt(finishedAt, { status: "ready", profiles: [], error: null }),
+    finishedAt,
+  );
+  assert.equal(
+    completionScoreFinishedAt(finishedAt, { status: "error", profiles: [], error: "network" }),
+    finishedAt,
+  );
+  assert.equal(
+    completionScoreFinishedAt(finishedAt, { status: "unavailable", profiles: [], error: null }),
+    finishedAt,
+  );
+});
+
+test("created award accepts only a provably pre-award SkillProfile baseline", () => {
+  const result = award(2000);
+  const before = [
+    profile({ technologyId: "ide", points: 0, sourceRevision: 1, calculatedAt: 1500 }),
+  ];
+  const after = [
+    profile({ technologyId: "ide", points: 100, sourceRevision: 2, calculatedAt: 2500 }),
+  ];
+
+  assert.deepEqual(
+    completionRecommendationFreshnessBaseline("ready", result, {
+      status: "ready",
+      profiles: before,
+      error: null,
+    }),
+    before,
+  );
+  assert.equal(
+    completionRecommendationFreshnessBaseline("ready", result, {
+      status: "ready",
+      profiles: after,
+      error: null,
+    }),
+    null,
+  );
+  assert.equal(
+    completionRecommendationFreshnessBaseline("ready", result, {
+      status: "ready",
+      profiles: [],
+      error: null,
+    }),
+    null,
+  );
+});
+
+test("existing award does not require a pre-award freshness baseline", () => {
+  const current = [
+    profile({ technologyId: "ide", points: 100, sourceRevision: 2, calculatedAt: 2500 }),
+  ];
+  assert.deepEqual(
+    completionRecommendationFreshnessBaseline("ready", award(2000, false), {
+      status: "ready",
+      profiles: current,
+      error: null,
+    }),
+    current,
+  );
 });
 
 test("a new award and an existing award produce distinct stable SkillProfile refresh keys", () => {
@@ -95,6 +169,12 @@ test("material evidence must change for the completed technology, not merely els
     materialSkillProfileEvidenceChanged(before, completedTechnologyUpdated, "ide"),
     true,
   );
+});
+
+test("freshness technology comes from the canonical SkillProfile scoring policy", () => {
+  assert.equal(scoredTechnologyIdForScenario("vscode-basics.challenge"), "ide");
+  assert.equal(scoredTechnologyIdForScenario("artifact-preview-foundation.guided"), "artifact_preview");
+  assert.equal(scoredTechnologyIdForScenario("not-a-scenario"), null);
 });
 
 test("completion waits for the refreshed SkillProfile before exposing a follow-up action", () => {
