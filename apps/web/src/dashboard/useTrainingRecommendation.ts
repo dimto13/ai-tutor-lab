@@ -186,11 +186,10 @@ export function useTrainingRecommendation({
 
   const freshnessPending =
     freshEvidenceRequired &&
+    freshnessBaselineRef.current !== null &&
     !freshEvidenceObserved &&
     resumable.length === 0 &&
-    (freshnessBaselineRef.current === null ||
-      skillProfiles.status === "loading" ||
-      canRetryFreshEvidence);
+    (skillProfiles.status === "loading" || canRetryFreshEvidence);
 
   const baseRecommendationLoading = shouldWaitForDashboardRecommendation({
     resumeLoading: resumeStatus === "loading",
