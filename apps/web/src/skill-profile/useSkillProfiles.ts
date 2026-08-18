@@ -10,17 +10,19 @@ export interface SkillProfilesState {
   error: string | null;
 }
 
-export function useSkillProfiles(): SkillProfilesState {
+export function useSkillProfiles(refreshKey: unknown = 0): SkillProfilesState {
   const service = useMemo(() => createApplicationSkillProfileService(), []);
   const [status, setStatus] = useState<SkillProfilesStatus>(service ? "loading" : "unavailable");
   const [profiles, setProfiles] = useState<SkillProfileProjection[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [settledRefreshKey, setSettledRefreshKey] = useState<unknown>(refreshKey);
 
   useEffect(() => {
     if (!service) {
       setStatus("unavailable");
       setProfiles([]);
       setError(null);
+      setSettledRefreshKey(refreshKey);
       return;
     }
 
@@ -35,6 +37,7 @@ export function useSkillProfiles(): SkillProfilesState {
         setProfiles(result);
         setStatus("ready");
         setError(null);
+        setSettledRefreshKey(refreshKey);
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
@@ -43,12 +46,16 @@ export function useSkillProfiles(): SkillProfilesState {
         setError(
           reason instanceof Error ? reason.message : "Kompetenzprofil konnte nicht geladen werden",
         );
+        setSettledRefreshKey(refreshKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [service]);
+  }, [refreshKey, service]);
 
-  return { status, profiles, error };
+  const refreshPending = service !== null && !Object.is(settledRefreshKey, refreshKey);
+  return refreshPending
+    ? { status: "loading", profiles: [], error: null }
+    : { status, profiles, error };
 }
