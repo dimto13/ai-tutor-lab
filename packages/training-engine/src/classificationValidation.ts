@@ -36,14 +36,17 @@ export async function validateClassification(
 ): Promise<EngineValidationResult> {
   if (rawSpec.kind !== "classification" || !context.query) return IGNORE;
   const spec = rawSpec as ClassificationValidationSpec;
-  const state = parseValidationState(await context.query(spec.selector));
-  if (!state || !state.viewedDocumentIds.includes(spec.documentId)) return IGNORE;
+  const rawState = await context.query(spec.selector);
+  if (rawState === undefined || rawState === null) return IGNORE;
+  const state = parseValidationState(rawState);
+  if (!state) {
+    throw new TypeError(`Invalid classification validation state for selector: ${spec.selector}`);
+  }
+  if (!state.viewedDocumentIds.includes(spec.documentId)) return IGNORE;
 
   const progress = state.documentProgress[spec.documentId];
   if (!progress?.selectedLevelId) return IGNORE;
   const requiredAiEntries = Object.entries(spec.expectedAiDecisions);
-  if (!requiredAiEntries.every(([tool]) => Object.hasOwn(progress.aiDecisions, tool)))
-    return IGNORE;
 
   const expectedIndicators = new Set(spec.expectedIndicatorIds);
   const actualIndicators = new Set(progress.markedIndicatorIds);
@@ -97,6 +100,7 @@ export async function validateClassification(
   }
 
   for (const [tool, expectedAllowed] of requiredAiEntries) {
+    if (!Object.hasOwn(progress.aiDecisions, tool)) continue;
     const actualAllowed = progress.aiDecisions[tool];
     if (actualAllowed !== expectedAllowed) {
       return nearMiss(
@@ -115,6 +119,7 @@ export async function validateClassification(
     }
   }
 
+  if (!requiredAiEntries.every(([tool]) => Object.hasOwn(progress.aiDecisions, tool))) return IGNORE;
   return PASS;
 }
 
@@ -160,7 +165,7 @@ function parseValidationState(value: unknown): ClassificationValidationStateView
 
   const parsedProgress: Record<string, ClassificationDocumentProgressView> = {};
   for (const [documentId, candidate] of Object.entries(documentProgress)) {
-    if (!isRecord(candidate)) continue;
+    if (!isRecord(candidate)) return null;
     const markedIndicatorIds = candidate["markedIndicatorIds"];
     const selectedLevelId = candidate["selectedLevelId"];
     const aiDecisions = candidate["aiDecisions"];
@@ -171,13 +176,17 @@ function parseValidationState(value: unknown): ClassificationValidationStateView
       !isRecord(aiDecisions) ||
       !Object.values(aiDecisions).every((decision) => typeof decision === "boolean")
     ) {
-      continue;
+      return null;
     }
     parsedProgress[documentId] = {
       markedIndicatorIds: [...markedIndicatorIds],
       selectedLevelId,
       aiDecisions: { ...aiDecisions } as Record<string, boolean>,
     };
+  }
+
+  if (levels.length !== scheme["levels"].length || indicators.length !== scheme["indicators"].length) {
+    return null;
   }
 
   return {
