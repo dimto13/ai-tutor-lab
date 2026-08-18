@@ -1,9 +1,9 @@
 import { Eye, EyeOff, LogOut, Settings, UserRound, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "./AuthContext";
 import { maskEmailAddress } from "./emailPrivacy";
-import { AI_LEVEL_OPTIONS } from "@/profile/aiLevelOptions";
+import { AI_LEVEL_OPTIONS, aiLevelLabel } from "@/profile/aiLevelOptions";
 import { contentRecommendationForAiLevel } from "@/profile/aiLevelRecommendation";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
@@ -12,38 +12,64 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const auth = useAuth();
   const profile = useUserProfile();
   const preferences = useUserPreferences();
+  const effectiveAiLevel = preferences.selfAssessedAiLevel ?? "beginner";
+  const effectiveAiLevelLabel = aiLevelLabel(effectiveAiLevel);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftName, setDraftName] = useState(profile.displayName);
-  const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel | null>(
-    preferences.selfAssessedAiLevel,
-  );
+  const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel>(effectiveAiLevel);
   const [emailVisible, setEmailVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const aiLevelInputRef = useRef<HTMLInputElement | null>(null);
+  const focusAiLevelOnOpenRef = useRef(false);
+  const settingsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!settingsOpen) {
       setDraftName(profile.displayName);
-      setDraftAiLevel(preferences.selfAssessedAiLevel);
+      setDraftAiLevel(effectiveAiLevel);
       setEmailVisible(false);
     }
-  }, [preferences.selfAssessedAiLevel, profile.displayName, settingsOpen]);
+  }, [effectiveAiLevel, profile.displayName, settingsOpen]);
+
+  useEffect(() => {
+    if (!settingsOpen || !focusAiLevelOnOpenRef.current) return;
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      aiLevelInputRef.current?.focus();
+      focusAiLevelOnOpenRef.current = false;
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [settingsOpen]);
 
   const email = auth.session?.identity.email ?? profile.profile?.email ?? null;
   const displayedEmail = email ? (emailVisible ? email : maskEmailAddress(email)) : null;
-  const draftRecommendation = draftAiLevel ? contentRecommendationForAiLevel(draftAiLevel) : null;
+  const draftRecommendation = contentRecommendationForAiLevel(draftAiLevel);
 
-  function openSettings() {
+  function openSettings({
+    focusAiLevel = false,
+    returnFocusTo = null,
+  }: {
+    focusAiLevel?: boolean;
+    returnFocusTo?: HTMLButtonElement | null;
+  } = {}) {
     setDraftName(profile.displayName);
-    setDraftAiLevel(preferences.selfAssessedAiLevel);
+    setDraftAiLevel(effectiveAiLevel);
     setEmailVisible(false);
     setSaveError(null);
+    focusAiLevelOnOpenRef.current = focusAiLevel;
+    settingsReturnFocusRef.current = returnFocusTo;
     setSettingsOpen(true);
   }
 
   function closeSettings() {
+    const returnFocusTo = settingsReturnFocusRef.current;
     setEmailVisible(false);
     setSettingsOpen(false);
+    focusAiLevelOnOpenRef.current = false;
+    settingsReturnFocusRef.current = null;
+    window.requestAnimationFrame(() => returnFocusTo?.focus());
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -54,7 +80,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
       if (draftName.trim() !== profile.displayName.trim()) {
         await profile.saveDisplayName(draftName);
       }
-      if (draftAiLevel && draftAiLevel !== preferences.selfAssessedAiLevel) {
+      if (draftAiLevel !== effectiveAiLevel) {
         await preferences.saveSelfAssessedAiLevel(draftAiLevel);
       }
       closeSettings();
@@ -80,7 +106,30 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
         </span>
         <button
           type="button"
-          onClick={openSettings}
+          data-testid="ai-level-navigation"
+          data-platform-ui="ai-level-navigation"
+          onClick={(event) =>
+            openSettings({ focusAiLevel: true, returnFocusTo: event.currentTarget })
+          }
+          aria-label={`Eigene KI-Erfahrung (Selbsteinschätzung): ${effectiveAiLevelLabel}. Ändern`}
+          title={`Eigene KI-Erfahrung: ${effectiveAiLevelLabel}`}
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+        >
+          <span aria-hidden="true" className="whitespace-nowrap">
+            {compact ? (
+              <>
+                <span className="2xl:hidden">KI: </span>
+                <span className="hidden 2xl:inline">KI-Level: </span>
+              </>
+            ) : (
+              "KI-Level: "
+            )}
+            {effectiveAiLevelLabel}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={(event) => openSettings({ returnFocusTo: event.currentTarget })}
           aria-label="Einstellungen öffnen"
           title="Einstellungen"
           className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
@@ -188,7 +237,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
               <fieldset className="rounded-lg border border-border bg-background/35 p-4">
                 <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  KI-Erfahrungslevel
+                  KI-Erfahrung (Selbsteinschätzung)
                 </legend>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   Deine Selbsteinschätzung beeinflusst Empfehlungen und Erklärungstiefe. Sie ist
@@ -207,6 +256,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                         }`}
                       >
                         <input
+                          ref={selected ? aiLevelInputRef : undefined}
                           type="radio"
                           name="self-assessed-ai-level"
                           value={option.value}
@@ -227,26 +277,20 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                   })}
                 </div>
 
-                {draftRecommendation ? (
-                  <div
-                    data-testid="ai-level-recommendation"
-                    className="mt-3 rounded-lg border border-accent/40 bg-accent/10 p-3"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
-                      Empfehlung für deinen Einstieg
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-foreground">
-                      {draftRecommendation.title}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      {draftRecommendation.reason}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                    Wähle eine Stufe, um eine passende Einstiegsempfehlung zu sehen.
+                <div
+                  data-testid="ai-level-recommendation"
+                  className="mt-3 rounded-lg border border-accent/40 bg-accent/10 p-3"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
+                    Empfehlung für deinen Einstieg
                   </p>
-                )}
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    {draftRecommendation.title}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {draftRecommendation.reason}
+                  </p>
+                </div>
               </fieldset>
 
               {saveError || profile.error || preferences.error ? (
