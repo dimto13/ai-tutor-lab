@@ -73,7 +73,7 @@ test("tenant retention extends the existing telemetry policy instead of creating
   assert.match(saveBlock, /rawEventRetentionDays:\s*a\.integer\(\)/);
   assert.match(saveBlock, /telemetry-load-policy-for-write\.js/);
   assert.match(saveBlock, /save-tenant-telemetry-policy\.js/);
-  assert.equal((source.match(/^  TenantTelemetryPolicy:\s*a/gm) || []).length, 1);
+  assert.equal((source.match(/^ {2}TenantTelemetryPolicy:\s*a/gm) || []).length, 1);
 });
 
 test("stable account-deletion ownership is isolated from raw telemetry and expires with it", async () => {
