@@ -17,6 +17,7 @@ const EMPTY_STATE: ClassificationSimulatorState = {
   selectedLevelId: null,
   aiTool: null,
   aiDecisions: {},
+  documentProgress: {},
 };
 
 function ExploreInspectButton({

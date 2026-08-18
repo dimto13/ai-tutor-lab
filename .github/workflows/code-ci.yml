@@ -136,7 +136,7 @@ jobs:
   e2e-training-modes:
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -163,7 +163,7 @@ jobs:
         run: npx tsc --noEmit -p apps/web/e2e/tsconfig.cloud.json
 
       - name: Install Chromium
-        run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
+        run: ./apps/web/e2e/node_modules/.bin/playwright install chromium
 
       - name: Run training-mode smoke tests
         run: npm test --prefix apps/web/e2e

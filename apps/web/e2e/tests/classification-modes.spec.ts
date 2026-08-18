@@ -1,0 +1,252 @@
+import type { Page } from "@playwright/test";
+import { expect, test } from "../fixtures/browser-error-guard";
+
+const aiTools = ["m365-copilot-tenant", "public-ai-chat", "github-copilot"] as const;
+type AiTool = (typeof aiTools)[number];
+
+type ClassificationCase = {
+  title: string;
+  indicators: string[];
+  level: string;
+  ai: Record<AiTool, boolean>;
+};
+
+async function chooseAiDecisions(
+  page: Page,
+  decisions: Record<AiTool, boolean>,
+  allowCompletionAfterLastDecision = false,
+) {
+  const tool = page.getByRole("combobox", { name: "KI-Werkzeug" });
+  for (const [index, aiTool] of aiTools.entries()) {
+    await tool.selectOption(aiTool);
+    const decision = page.getByRole("button", {
+      name: decisions[aiTool] ? "Zulassen" : "Nicht zulassen",
+      exact: true,
+    });
+    await decision.click();
+    if (allowCompletionAfterLastDecision && index === aiTools.length - 1) {
+      await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+    } else {
+      await expect(decision).toHaveAttribute("aria-pressed", "true");
+    }
+  }
+}
+
+async function classifyDocument(
+  page: Page,
+  classification: ClassificationCase,
+  allowCompletionAfterLastDecision = false,
+) {
+  await page.getByRole("button", { name: new RegExp(classification.title) }).click();
+  for (const indicator of classification.indicators) {
+    const button = page.getByRole("button", { name: indicator, exact: true });
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+  }
+  const level = page.getByRole("button", { name: classification.level, exact: true });
+  await level.click();
+  await expect(level).toHaveAttribute("aria-pressed", "true");
+  await chooseAiDecisions(page, classification.ai, allowCompletionAfterLastDecision);
+}
+
+test("Classification Explore vermittelt Merkmale, Stufen und KI-Nutzung", async ({ page }) => {
+  await page.goto("/training/data-classification-ai-usage.explore");
+  await expect(page.getByRole("status")).toContainText("Training bereit");
+  await expect(page.getByText("ausschließlich synthetische Trainingsdokumente")).toBeVisible();
+
+  for (const label of [
+    "Dokumentliste erkunden",
+    "Dokumentvorschau erkunden",
+    "Klassifizierungsmerkmale erkunden",
+    "Klassifizierungsstufen erkunden",
+    "KI-Nutzungsentscheidung erkunden",
+  ]) {
+    await page.getByRole("button", { name: label }).click();
+  }
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
+test("Classification Guided bearbeitet fünf Beispiele und liefert fachliche near-miss Hinweise", async ({
+  page,
+}) => {
+  await page.goto("/training/data-classification-ai-usage.guided");
+  await expect(page.getByRole("status")).toContainText("Training bereit");
+
+  await classifyDocument(page, {
+    title: "Pressemitteilung Produktstart",
+    indicators: [],
+    level: "Öffentlich",
+    ai: {
+      "m365-copilot-tenant": true,
+      "public-ai-chat": true,
+      "github-copilot": true,
+    },
+  });
+
+  await page.getByRole("button", { name: /Interne Meeting-Notiz/ }).click();
+  await page.getByRole("button", { name: "Intern", exact: true }).click();
+  await chooseAiDecisions(page, {
+    "m365-copilot-tenant": true,
+    "public-ai-chat": false,
+    "github-copilot": true,
+  });
+  await expect(page.getByText(/Merkmal „Kennzeichnung intern“ wurde übersehen/)).toBeVisible();
+  await page.getByRole("button", { name: "Kennzeichnung intern", exact: true }).click();
+
+  await page.getByRole("button", { name: /Support-Ticket mit Kontaktdaten/ }).click();
+  await page.getByRole("button", { name: "Personenbezogene Daten", exact: true }).click();
+  await page.getByRole("button", { name: "Intern", exact: true }).click();
+  await chooseAiDecisions(page, {
+    "m365-copilot-tenant": true,
+    "public-ai-chat": false,
+    "github-copilot": false,
+  });
+  await expect(page.getByText(/Aus den markierten Merkmalen folgt „Vertraulich“/)).toBeVisible();
+  await page.getByRole("button", { name: "Vertraulich", exact: true }).click();
+
+  await classifyDocument(page, {
+    title: "Gehaltsliste",
+    indicators: ["Personenbezogene Daten", "Gehalts-/HR-Daten"],
+    level: "Streng vertraulich",
+    ai: {
+      "m365-copilot-tenant": false,
+      "public-ai-chat": false,
+      "github-copilot": false,
+    },
+  });
+
+  await page.getByRole("button", { name: /Grenzfall: unsicheres Support-Ticket/ }).click();
+  await page.getByRole("button", { name: "Personenbezogene Daten", exact: true }).click();
+  await page.getByRole("button", { name: "Vertraulich", exact: true }).click();
+  await chooseAiDecisions(page, {
+    "m365-copilot-tenant": false,
+    "public-ai-chat": false,
+    "github-copilot": false,
+  });
+  await expect(page.getByText(/^Im Zweifel höher einstufen:/)).toBeVisible();
+  await page.getByRole("button", { name: "Streng vertraulich", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
+test("Classification Challenge validiert zehn fachliche Endzustände unabhängig von der Klickreihenfolge", async ({
+  page,
+}) => {
+  await page.goto("/training/data-classification-ai-usage.challenge");
+  await expect(page.getByRole("status")).toContainText("Training bereit");
+
+  const cases: ClassificationCase[] = [
+    {
+      title: "Grenzfall: unsicheres Support-Ticket",
+      indicators: ["Personenbezogene Daten"],
+      level: "Streng vertraulich",
+      ai: {
+        "m365-copilot-tenant": false,
+        "public-ai-chat": false,
+        "github-copilot": false,
+      },
+    },
+    {
+      title: "Grenzfall: interne Vorlage mit Platzhalter",
+      indicators: ["Kennzeichnung intern"],
+      level: "Intern",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": true,
+      },
+    },
+    {
+      title: "HR-Bonusentscheidung",
+      indicators: ["Gehalts-/HR-Daten", "Personenbezogene Daten"],
+      level: "Streng vertraulich",
+      ai: {
+        "m365-copilot-tenant": false,
+        "public-ai-chat": false,
+        "github-copilot": false,
+      },
+    },
+    {
+      title: "Reisekostenabrechnung",
+      indicators: ["Personenbezogene Daten"],
+      level: "Vertraulich",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": false,
+      },
+    },
+    {
+      title: "Kundenspezifisches Angebot",
+      indicators: ["Kundendaten mit Vertragsbezug"],
+      level: "Vertraulich",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": false,
+      },
+    },
+    {
+      title: "Organigramm mit Personennamen",
+      indicators: ["Personenbezogene Daten"],
+      level: "Vertraulich",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": false,
+      },
+    },
+    {
+      title: "Kundenvertrag",
+      indicators: ["Kundendaten mit Vertragsbezug", "Personenbezogene Daten"],
+      level: "Vertraulich",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": false,
+      },
+    },
+    {
+      title: "Quellcode-Auszug",
+      indicators: ["Kennzeichnung intern"],
+      level: "Intern",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": true,
+      },
+    },
+    {
+      title: "Interner Projektplan",
+      indicators: ["Kennzeichnung intern"],
+      level: "Intern",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": false,
+        "github-copilot": true,
+      },
+    },
+    {
+      title: "Öffentliche FAQ",
+      indicators: [],
+      level: "Öffentlich",
+      ai: {
+        "m365-copilot-tenant": true,
+        "public-ai-chat": true,
+        "github-copilot": true,
+      },
+    },
+  ];
+
+  for (const [index, classification] of cases.entries()) {
+    const isLast = index === cases.length - 1;
+    await classifyDocument(page, classification, isLast);
+    if (!isLast) {
+      await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
+    }
+  }
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});

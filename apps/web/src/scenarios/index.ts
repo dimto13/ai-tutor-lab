@@ -19,6 +19,9 @@ import sourceControlPlatformExploreRaw from "../../../../content/scenarios/sourc
 import sourceControlPlatformGuidedRaw from "../../../../content/scenarios/source-control-platform-basics.guided.json";
 import sourceControlPlatformChallengeRaw from "../../../../content/scenarios/source-control-platform-basics.challenge.json";
 import claudeCodeBasicsGuidedRaw from "../../../../content/scenarios/claude-code-basics.guided.json";
+import dataClassificationExploreRaw from "../../../../content/scenarios/data-classification-ai-usage.explore.json";
+import dataClassificationGuidedRaw from "../../../../content/scenarios/data-classification-ai-usage.guided.json";
+import dataClassificationChallengeRaw from "../../../../content/scenarios/data-classification-ai-usage.challenge.json";
 
 const vscodeExploreScenario = parseScenario(vscodeExploreRaw);
 const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
@@ -41,6 +44,9 @@ const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatform
 const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
 const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
 const claudeCodeBasicsGuidedScenario = parseScenario(claudeCodeBasicsGuidedRaw);
+const dataClassificationExploreScenario = parseScenario(dataClassificationExploreRaw);
+const dataClassificationGuidedScenario = parseScenario(dataClassificationGuidedRaw);
+const dataClassificationChallengeScenario = parseScenario(dataClassificationChallengeRaw);
 
 const scenarios: Record<string, Scenario> = {
   [vscodeExploreScenario.id]: vscodeExploreScenario,
@@ -64,6 +70,9 @@ const scenarios: Record<string, Scenario> = {
   [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
   [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,
   [claudeCodeBasicsGuidedScenario.id]: claudeCodeBasicsGuidedScenario,
+  [dataClassificationExploreScenario.id]: dataClassificationExploreScenario,
+  [dataClassificationGuidedScenario.id]: dataClassificationGuidedScenario,
+  [dataClassificationChallengeScenario.id]: dataClassificationChallengeScenario,
 };
 
 export function getScenario(scenarioId: string): Scenario | null {

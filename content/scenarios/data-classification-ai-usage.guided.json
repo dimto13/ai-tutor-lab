@@ -1,0 +1,169 @@
+{
+  "id": "data-classification-ai-usage.guided",
+  "moduleId": "data-classification-ai-usage",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Datenklassifizierung & KI-Nutzung – Geführt",
+  "description": "Klassifiziere fünf synthetische Beispieldokumente. Erkenne die relevanten Merkmale, wähle die daraus folgende Schutzstufe und entscheide bewusst über die Nutzung aller konfigurierten KI-Werkzeuge.",
+  "learningObjectives": [
+    "identify_classification_indicators",
+    "choose_classification_level",
+    "decide_ai_usage_by_classification",
+    "apply_uncertainty_escalation"
+  ],
+  "environment": {
+    "productId": "classification",
+    "version": "1.x",
+    "runtimeAdapterId": "classification-simulator",
+    "seed": {
+      "classificationSimulator": {
+        "activeDocumentId": "press-release-launch"
+      }
+    }
+  },
+  "estimatedMinutes": 18,
+  "points": 150,
+  "steps": [
+    {
+      "id": "guided-public-press-release",
+      "title": "1. Öffentlichen Inhalt einordnen",
+      "description": "Die Pressemitteilung ist ausdrücklich zur Veröffentlichung bestimmt und enthält keine Schutzmerkmale des Schemas.",
+      "instruction": "Öffne „Pressemitteilung Produktstart“. Markiere nur tatsächlich relevante Merkmale, wähle die Schutzstufe und entscheide nacheinander für m365-copilot-tenant, public-ai-chat und github-copilot, ob die Nutzung zulässig ist.",
+      "rationale": "Auch eine niedrige Einstufung muss begründet sein: fehlende Schutzmerkmale und der veröffentlichte Zweck sind hier entscheidend.",
+      "helpLevels": [
+        "Prüfe zuerst, ob überhaupt eines der angebotenen Schutzmerkmale im Dokument vorkommt.",
+        "Ein zur Veröffentlichung bestimmter Text ohne Schutzmerkmal bleibt auf der niedrigsten Stufe.",
+        "Wähle Öffentlich und entscheide für alle drei KI-Werkzeuge anhand ihrer maximal zulässigen Stufe."
+      ],
+      "validation": {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "press-release-launch",
+        "expectedIndicatorIds": [],
+        "expectedLevelId": "public",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": true,
+          "github-copilot": true
+        }
+      },
+      "highlightTarget": "classification.document.preview",
+      "successMessage": "Richtig: Ohne Schutzmerkmal ist die synthetische Pressemitteilung Öffentlich; alle drei Werkzeuge sind für diese Stufe zulässig."
+    },
+    {
+      "id": "guided-internal-meeting-note",
+      "title": "2. Interne Kennzeichnung erkennen",
+      "description": "Eine explizite interne Kennzeichnung ist selbst ein Klassifizierungsmerkmal.",
+      "instruction": "Öffne „Interne Meeting-Notiz“. Markiere das relevante Merkmal, wähle die Stufe und entscheide für alle drei KI-Werkzeuge.",
+      "rationale": "Die Schutzstufe folgt aus dem stärksten erkannten Merkmal; hier reicht die interne Kennzeichnung für Intern.",
+      "helpLevels": [
+        "Achte auf die ausdrückliche Kennzeichnung am Anfang des Dokuments.",
+        "Markiere „Kennzeichnung intern“ und leite daraus die Mindeststufe ab.",
+        "Wähle Intern. Public AI Chat ist nur bis Öffentlich zulässig; die beiden anderen Werkzeuge erlauben mindestens Intern."
+      ],
+      "validation": {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "internal-meeting-note",
+        "expectedIndicatorIds": ["marking_internal"],
+        "expectedLevelId": "internal",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": true
+        }
+      },
+      "highlightTarget": "classification.indicators",
+      "successMessage": "Richtig: Die interne Kennzeichnung führt zu Intern; daraus ergeben sich unterschiedliche KI-Freigaben."
+    },
+    {
+      "id": "guided-personal-data",
+      "title": "3. Personenbezogene Daten bewerten",
+      "description": "Ein Name zusammen mit einer individuellen E-Mail-Adresse ist ein konkretes personenbezogenes Merkmal.",
+      "instruction": "Öffne „Support-Ticket mit Kontaktdaten“. Markiere die relevante Information, klassifiziere das Dokument und entscheide für alle drei KI-Werkzeuge.",
+      "rationale": "Ein scheinbar alltägliches Support-Ticket kann durch konkrete Kontaktdaten eine deutlich höhere Schutzstufe benötigen.",
+      "helpLevels": [
+        "Suche nach Informationen, die eine konkrete Person identifizierbar machen.",
+        "Markiere „Personenbezogene Daten“; dieses Merkmal hat die Mindeststufe Vertraulich.",
+        "Wähle Vertraulich. Nach dem Standardschema ist nur m365-copilot-tenant bis zu dieser Stufe zulässig."
+      ],
+      "validation": {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "support-ticket",
+        "expectedIndicatorIds": ["personal_data"],
+        "expectedLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": true,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      "highlightTarget": "classification.indicators",
+      "successMessage": "Richtig: Personenbezogene Kontaktdaten erfordern Vertraulich; die KI-Nutzung wird entsprechend eingeschränkt."
+    },
+    {
+      "id": "guided-salary-data",
+      "title": "4. Mehrere Schutzmerkmale zusammenführen",
+      "description": "Bei mehreren Merkmalen bestimmt das Merkmal mit der höchsten Mindeststufe die Einstufung.",
+      "instruction": "Öffne „Gehaltsliste“. Markiere alle relevanten Merkmale, wähle die erforderliche Stufe und entscheide für alle drei KI-Werkzeuge.",
+      "rationale": "Personenbezug allein reicht hier nicht: Gehaltsdaten verlangen im Standardschema die noch höhere Stufe Streng vertraulich.",
+      "helpLevels": [
+        "Prüfe sowohl die Personennamen als auch die Vergütungswerte.",
+        "Markiere „Personenbezogene Daten“ und „Gehalts-/HR-Daten“; maßgeblich ist die höhere Mindeststufe.",
+        "Markiere „Personenbezogene Daten“ und „Gehalts-/HR-Daten“, wähle danach Streng vertraulich und stelle m365-copilot-tenant, public-ai-chat und github-copilot jeweils auf Nicht zulassen."
+      ],
+      "validation": {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "salary-list",
+        "expectedIndicatorIds": ["salary_data", "personal_data"],
+        "expectedLevelId": "strictly_confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": false,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      "highlightTarget": "classification.levels",
+      "successMessage": "Richtig: Das strengste relevante Merkmal entscheidet; die Gehaltsliste ist Streng vertraulich."
+    },
+    {
+      "id": "guided-uncertainty-escalation",
+      "title": "5. Im Zweifel höher einstufen",
+      "description": "Der letzte Fall ist absichtlich mehrdeutig. Das Schema verlangt bei dokumentierter Unsicherheit eine Eskalation um eine Stufe.",
+      "instruction": "Öffne „Grenzfall: unsicheres Support-Ticket“. Markiere das potenziell personenbezogene Merkmal. Entscheide dich zwischen Vertraulich und Streng vertraulich und triff danach alle drei KI-Nutzungsentscheidungen. Wende ausdrücklich die Regel an: Im Zweifel höher einstufen.",
+      "rationale": "Der Personenbezug würde zunächst Vertraulich ergeben. Weil die Identität im Ausschnitt aber nicht sicher auflösbar ist, verlangt defaultOnUncertainty: escalate die nächste höhere Stufe und menschliche Prüfung.",
+      "helpLevels": [
+        "Der mögliche Personenbezug ist relevant, aber der Ausschnitt bleibt unsicher.",
+        "Personenbezogene Daten ergeben zunächst Vertraulich. Bei Unsicherheit wird gemäß Schema eine Stufe höher gegangen.",
+        "Markiere Personenbezogene Daten, wähle Streng vertraulich und untersage alle drei KI-Werkzeuge. Merksatz: Im Zweifel höher einstufen."
+      ],
+      "validation": {
+        "kind": "classification",
+        "selector": "classification.validation.state",
+        "documentId": "boundary-ambiguous-ticket",
+        "expectedIndicatorIds": ["personal_data"],
+        "expectedLevelId": "strictly_confidential",
+        "uncertaintyEscalationFromLevelId": "confidential",
+        "expectedAiDecisions": {
+          "m365-copilot-tenant": false,
+          "public-ai-chat": false,
+          "github-copilot": false
+        }
+      },
+      "highlightTarget": "classification.levels",
+      "successMessage": "Richtig: Im Zweifel höher einstufen. Die dokumentierte Unsicherheit eskaliert den Grenzfall auf Streng vertraulich."
+    }
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "classification.document",
+      "classification.indicators",
+      "classification.level",
+      "classification.ai_policy",
+      "github.copilot"
+    ]
+  }
+}
