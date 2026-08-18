@@ -78,4 +78,37 @@ test.describe("AI experience level navigation", () => {
 
     await accessibility.check("small viewport AI self-assessment settings from platform chrome");
   });
+
+  test("keeps a long AI level inside the timed challenge briefing on a small viewport", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const dashboardLevelNavigation = page.getByTestId("ai-level-navigation");
+    await expect(dashboardLevelNavigation).toContainText("KI-Level: Anfänger");
+    await dashboardLevelNavigation.click();
+
+    const dialog = page.getByRole("dialog", { name: "Einstellungen" });
+    await dialog.getByRole("radio", { name: /Fortgeschritten/ }).check();
+    await dialog.getByRole("button", { name: "Speichern" }).click();
+    await expect(dashboardLevelNavigation).toContainText("KI-Level: Fortgeschritten");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/training/vscode-shortcuts.challenge");
+    await waitForTrainingReady(page);
+
+    const briefing = page.locator('[data-platform-ui="challenge-briefing"]');
+    const levelNavigation = briefing.getByTestId("ai-level-navigation");
+    await expect(briefing).toBeVisible();
+    await expect(levelNavigation).toBeVisible();
+    await expect(levelNavigation).toContainText("KI: Fortgeschritten");
+    await expect(levelNavigation).toHaveAccessibleName(
+      "Eigene KI-Erfahrung (Selbsteinschätzung): Fortgeschritten. Ändern",
+    );
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(hasHorizontalOverflow).toBe(false);
+  });
 });
