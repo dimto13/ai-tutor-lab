@@ -114,6 +114,9 @@ export function response(ctx) {
   if (payload.scenarioId !== ctx.args.scenarioId || payload.mode !== "challenge") {
     util.error("Challenge session payload scope mismatch", "AttestationEligibilityError");
   }
+  if (typeof payload.id !== "string" || payload.id.length === 0) {
+    util.error("Challenge session has no audit id", "AttestationEligibilityError");
+  }
   if (typeof payload.finishedAt !== "number" || payload.finishedAt <= 0) {
     util.error("Challenge is not completed", "AttestationEligibilityError");
   }
