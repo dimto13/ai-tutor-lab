@@ -50,10 +50,7 @@ export function request(ctx) {
   ) {
     util.error("Unsupported telemetry pseudonymization mode", "TelemetryPolicyError");
   }
-  if (
-    (requestedMode === undefined || requestedMode === null) &&
-    requestedRetentionDays === null
-  ) {
+  if ((requestedMode === undefined || requestedMode === null) && requestedRetentionDays === null) {
     util.error("Telemetry policy update is empty", "TelemetryPolicyError");
   }
 
