@@ -69,11 +69,33 @@ const stateValidationSchema = z.object({
   match: z.record(z.unknown()).optional(),
 });
 
+const classificationValidationSchema = z
+  .object({
+    kind: z.literal("classification"),
+    selector: z.string().min(1),
+    documentId: z.string().min(1),
+    expectedIndicatorIds: z.array(z.string().min(1)),
+    expectedLevelId: z.string().min(1),
+    expectedAiDecisions: z.record(z.boolean()),
+    uncertaintyEscalationFromLevelId: z.string().min(1).optional(),
+  })
+  .strict()
+  .superRefine((validation, ctx) => {
+    if (Object.keys(validation.expectedAiDecisions).length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "classification validation requires at least one AI usage decision",
+        path: ["expectedAiDecisions"],
+      });
+    }
+  });
+
 export const validationSchema: z.ZodType<Validation> = z.lazy(
   () =>
     z.union([
       eventValidationSchema,
       stateValidationSchema,
+      classificationValidationSchema,
       z.object({
         kind: z.literal("sequence"),
         of: z.array(validationSchema).min(1),
