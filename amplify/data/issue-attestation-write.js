@@ -40,7 +40,8 @@ function validUntilIso(issuedIso) {
   return `${targetYear}-${month}-${day}${issuedIso.slice(10)}`;
 }
 
-function envelope(row, created) {
+function envelope(row, created, now) {
+  const expired = now >= row.validUntil;
   return {
     created,
     reason: created ? "issued" : "already_exists",
@@ -64,8 +65,8 @@ function envelope(row, created) {
       signingAlgorithm: row.signingAlgorithm,
       signingKeyId: row.signingKeyId,
       signature: row.signature,
-      validityStatus: "valid",
-      recertificationRecommended: false,
+      validityStatus: expired ? "expired" : "valid",
+      recertificationRecommended: expired,
     },
   };
 }
@@ -149,5 +150,9 @@ export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   const row = ctx.result;
   if (!row) util.error("Persisted attestation is invalid", "AttestationPersistenceError");
-  return envelope(row, row.appendToken === ctx.stash.attestationAppendToken);
+  return envelope(
+    row,
+    row.appendToken === ctx.stash.attestationAppendToken,
+    util.time.nowEpochMilliSeconds(),
+  );
 }
