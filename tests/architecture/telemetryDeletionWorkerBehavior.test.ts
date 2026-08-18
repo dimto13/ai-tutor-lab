@@ -23,19 +23,18 @@ function pointer(index: number, tenantId = TENANT_ID) {
   };
 }
 
-function nameOf(command: unknown): string {
-  if (!command || typeof command !== "object") throw new Error("Expected DynamoDB command");
-  const constructor = Reflect.get(command, "constructor");
-  const name = typeof constructor === "function" ? constructor.name : null;
-  if (typeof name !== "string") throw new Error("Expected command name");
-  return name;
+function typeOf(command: unknown): string {
+  if (!command || typeof command !== "object") throw new Error("Expected DynamoDB descriptor");
+  const type = Reflect.get(command, "type");
+  if (typeof type !== "string") throw new Error("Expected descriptor type");
+  return type;
 }
 
 function inputOf(command: unknown): Record<string, unknown> {
-  if (!command || typeof command !== "object") throw new Error("Expected DynamoDB command");
+  if (!command || typeof command !== "object") throw new Error("Expected DynamoDB descriptor");
   const input = Reflect.get(command, "input");
   if (!input || typeof input !== "object" || Array.isArray(input)) {
-    throw new Error("Expected command input");
+    throw new Error("Expected descriptor input");
   }
   return input as Record<string, unknown>;
 }
@@ -68,9 +67,9 @@ test("server telemetry deletion strongly paginates every owner pointer and remov
   let queryCount = 0;
   const writeTables: string[] = [];
   const send = async (command: unknown) => {
-    const name = nameOf(command);
+    const type = typeOf(command);
     const input = inputOf(command);
-    if (name === "QueryCommand") {
+    if (type === "query") {
       queryCount += 1;
       assert.equal(input["TableName"], POINTER_TABLE);
       assert.equal(input["ConsistentRead"], true);
@@ -81,11 +80,11 @@ test("server telemetry deletion strongly paginates every owner pointer and remov
         ? { Items: [pointer(1)], LastEvaluatedKey: { ownerKey: { S: ownerKey() } } }
         : { Items: [pointer(2)] };
     }
-    if (name === "BatchWriteItemCommand") {
+    if (type === "batchWrite") {
       writeTables.push(batchTable(input));
       return { UnprocessedItems: {} };
     }
-    throw new Error(`Unexpected command ${name}`);
+    throw new Error(`Unexpected descriptor ${type}`);
   };
 
   const handler = createTelemetryDeletionHandler(send);
@@ -98,16 +97,16 @@ test("server telemetry deletion keeps ownership pointers when raw deletion fails
   configureEnvironment();
   const writeTables: string[] = [];
   const send = async (command: unknown) => {
-    const name = nameOf(command);
+    const type = typeOf(command);
     const input = inputOf(command);
-    if (name === "QueryCommand") return { Items: [pointer(1)] };
-    if (name === "BatchWriteItemCommand") {
+    if (type === "query") return { Items: [pointer(1)] };
+    if (type === "batchWrite") {
       const table = batchTable(input);
       writeTables.push(table);
       if (table === RAW_TABLE) throw new Error("simulated raw failure");
       return { UnprocessedItems: {} };
     }
-    throw new Error(`Unexpected command ${name}`);
+    throw new Error(`Unexpected descriptor ${type}`);
   };
 
   const handler = createTelemetryDeletionHandler(send);
@@ -119,13 +118,13 @@ test("server telemetry deletion rejects cross-tenant pointers before any write",
   configureEnvironment();
   let writes = 0;
   const send = async (command: unknown) => {
-    const name = nameOf(command);
-    if (name === "QueryCommand") return { Items: [pointer(1, "tenant-b")] };
-    if (name === "BatchWriteItemCommand") {
+    const type = typeOf(command);
+    if (type === "query") return { Items: [pointer(1, "tenant-b")] };
+    if (type === "batchWrite") {
       writes += 1;
       return { UnprocessedItems: {} };
     }
-    throw new Error(`Unexpected command ${name}`);
+    throw new Error(`Unexpected descriptor ${type}`);
   };
 
   const handler = createTelemetryDeletionHandler(send);
