@@ -51,7 +51,11 @@ export class TelemetryRetentionService {
    */
   async deleteForAccountClosure(): Promise<number> {
     const result = await this.port.deleteMyRawTelemetry();
-    if (!Number.isInteger(result.deletedCount) || result.deletedCount < 0 || result.complete !== true) {
+    if (
+      !Number.isInteger(result.deletedCount) ||
+      result.deletedCount < 0 ||
+      result.complete !== true
+    ) {
       throw new Error("Telemetry deletion result is incomplete or invalid");
     }
     return result.deletedCount;
