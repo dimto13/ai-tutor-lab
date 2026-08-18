@@ -4,6 +4,13 @@ async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
+async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth,
+  );
+  expect(hasHorizontalOverflow).toBe(false);
+}
+
 test.describe("AI experience level navigation", () => {
   test.describe.configure({ retries: 0 });
 
@@ -63,10 +70,7 @@ test.describe("AI experience level navigation", () => {
       "Eigene KI-Erfahrung (Selbsteinschätzung): Anfänger. Ändern",
     );
 
-    const hasHorizontalOverflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth,
-    );
-    expect(hasHorizontalOverflow).toBe(false);
+    await expectNoHorizontalOverflow(page);
 
     await levelNavigation.focus();
     await page.keyboard.press("Enter");
@@ -79,7 +83,7 @@ test.describe("AI experience level navigation", () => {
     await accessibility.check("small viewport AI self-assessment settings from platform chrome");
   });
 
-  test("keeps a long AI level inside the timed challenge briefing on a small viewport", async ({
+  test("keeps a long AI level inside dashboard, competence and challenge headers on a small viewport", async ({
     page,
   }) => {
     await page.goto("/");
@@ -94,6 +98,20 @@ test.describe("AI experience level navigation", () => {
     await expect(dashboardLevelNavigation).toContainText("KI-Level: Fortgeschritten");
 
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(dashboardLevelNavigation).toHaveAccessibleName(
+      "Eigene KI-Erfahrung (Selbsteinschätzung): Fortgeschritten. Ändern",
+    );
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto("/kompetenz");
+    const competenceLevelNavigation = page.getByTestId("ai-level-navigation");
+    await expect(competenceLevelNavigation).toBeVisible();
+    await expect(competenceLevelNavigation).toContainText("KI-Level: Fortgeschritten");
+    await expect(competenceLevelNavigation).toHaveAccessibleName(
+      "Eigene KI-Erfahrung (Selbsteinschätzung): Fortgeschritten. Ändern",
+    );
+    await expectNoHorizontalOverflow(page);
+
     await page.goto("/training/vscode-shortcuts.challenge");
     await waitForTrainingReady(page);
 
@@ -105,10 +123,6 @@ test.describe("AI experience level navigation", () => {
     await expect(levelNavigation).toHaveAccessibleName(
       "Eigene KI-Erfahrung (Selbsteinschätzung): Fortgeschritten. Ändern",
     );
-
-    const hasHorizontalOverflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth,
-    );
-    expect(hasHorizontalOverflow).toBe(false);
+    await expectNoHorizontalOverflow(page);
   });
 });
