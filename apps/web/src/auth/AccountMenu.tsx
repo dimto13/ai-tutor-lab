@@ -12,8 +12,16 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const auth = useAuth();
   const profile = useUserProfile();
   const preferences = useUserPreferences();
-  const effectiveAiLevel = preferences.selfAssessedAiLevel ?? "beginner";
-  const effectiveAiLevelLabel = aiLevelLabel(effectiveAiLevel);
+  const effectiveAiLevel =
+    preferences.status === "ready" ? (preferences.selfAssessedAiLevel ?? "beginner") : null;
+  const effectiveAiLevelLabel = effectiveAiLevel ? aiLevelLabel(effectiveAiLevel) : null;
+  const aiLevelNavigationValue =
+    effectiveAiLevelLabel ?? (preferences.status === "error" ? "nicht verfügbar" : "…");
+  const aiLevelNavigationLabel = effectiveAiLevelLabel
+    ? `Eigene KI-Erfahrung (Selbsteinschätzung): ${effectiveAiLevelLabel}. Ändern`
+    : preferences.status === "error"
+      ? "Eigene KI-Erfahrung (Selbsteinschätzung): derzeit nicht verfügbar"
+      : "Eigene KI-Erfahrung (Selbsteinschätzung) wird geladen";
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftName, setDraftName] = useState(profile.displayName);
   const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel | null>(
@@ -110,12 +118,17 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           type="button"
           data-testid="ai-level-navigation"
           data-platform-ui="ai-level-navigation"
+          disabled={!effectiveAiLevel}
           onClick={(event) =>
             openSettings({ focusAiLevel: true, returnFocusTo: event.currentTarget })
           }
-          aria-label={`Eigene KI-Erfahrung (Selbsteinschätzung): ${effectiveAiLevelLabel}. Ändern`}
-          title={`Eigene KI-Erfahrung: ${effectiveAiLevelLabel}`}
-          className="inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+          aria-label={aiLevelNavigationLabel}
+          title={
+            effectiveAiLevelLabel
+              ? `Eigene KI-Erfahrung: ${effectiveAiLevelLabel}`
+              : aiLevelNavigationValue
+          }
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted disabled:cursor-default disabled:opacity-60"
         >
           <span aria-hidden="true" className="whitespace-nowrap">
             {compact ? (
@@ -126,7 +139,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             ) : (
               "KI-Level: "
             )}
-            {effectiveAiLevelLabel}
+            {aiLevelNavigationValue}
           </span>
         </button>
         <button
