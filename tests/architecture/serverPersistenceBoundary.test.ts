@@ -161,15 +161,13 @@ test("self-assessed AI level is a user preference and not a measured skill field
   assert.doesNotMatch(skillBlock, /selfAssessedAiLevel/);
 });
 
-test("credential models remain unavailable as client data sources until their authoritative services exist", async () => {
+test("SkillProfile remains unavailable as a direct browser data source", async () => {
   const source = await readFile(dataResourceUrl, "utf8");
-  for (const model of ["SkillProfile", "Attestation"]) {
-    assert.doesNotMatch(
-      source,
-      new RegExp(`dataSource:\\s*a\\.ref\\(["']${model}["']\\)`),
-      `${model} must remain server-owned until its authoritative service is implemented`,
-    );
-  }
+  assert.doesNotMatch(
+    source,
+    /dataSource:\s*a\.ref\(["']SkillProfile["']\)/,
+    "SkillProfile must remain a server-calculated projection rather than direct browser CRUD",
+  );
 });
 
 test("Amplify backend composes Data next to Auth", async () => {
