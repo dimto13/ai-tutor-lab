@@ -17,6 +17,13 @@ import type {
   RuntimeSurfaceDescription,
 } from "./runtimeAdapter.ts";
 
+export interface ClassificationDocumentProgress {
+  markedIndicatorIds: string[];
+  selectedLevelId: string | null;
+  aiTool: string | null;
+  aiDecisions: Record<string, boolean>;
+}
+
 export interface ClassificationSimulatorState {
   scheme: ClassificationScheme | null;
   documents: SyntheticDocument[];
@@ -26,6 +33,7 @@ export interface ClassificationSimulatorState {
   selectedLevelId: string | null;
   aiTool: string | null;
   aiDecisions: Record<string, boolean>;
+  documentProgress: Record<string, ClassificationDocumentProgress>;
 }
 
 export type ClassificationStateChangeReason = "mount" | "reset" | "mutation" | "restore";
@@ -54,6 +62,15 @@ function createIdentifier(prefix: string): string {
   return `${prefix}-${Date.now()}-${identifierSequence}`;
 }
 
+function emptyDocumentProgress(aiTool: string | null = null): ClassificationDocumentProgress {
+  return {
+    markedIndicatorIds: [],
+    selectedLevelId: null,
+    aiTool,
+    aiDecisions: {},
+  };
+}
+
 function emptyState(): ClassificationSimulatorState {
   return {
     scheme: null,
@@ -64,11 +81,46 @@ function emptyState(): ClassificationSimulatorState {
     selectedLevelId: null,
     aiTool: null,
     aiDecisions: {},
+    documentProgress: {},
   };
 }
 
 function cloneState(state: ClassificationSimulatorState): ClassificationSimulatorState {
   return structuredClone(state);
+}
+
+function currentProgress(state: ClassificationSimulatorState): ClassificationDocumentProgress {
+  return {
+    markedIndicatorIds: [...state.markedIndicatorIds],
+    selectedLevelId: state.selectedLevelId,
+    aiTool: state.aiTool,
+    aiDecisions: { ...state.aiDecisions },
+  };
+}
+
+function withActiveProgress(
+  state: ClassificationSimulatorState,
+  patch: Partial<ClassificationDocumentProgress>,
+): ClassificationSimulatorState {
+  const progress = { ...currentProgress(state), ...patch };
+  const activeDocumentId = state.activeDocumentId;
+  return {
+    ...state,
+    markedIndicatorIds: [...progress.markedIndicatorIds],
+    selectedLevelId: progress.selectedLevelId,
+    aiTool: progress.aiTool,
+    aiDecisions: { ...progress.aiDecisions },
+    documentProgress: activeDocumentId
+      ? {
+          ...state.documentProgress,
+          [activeDocumentId]: {
+            ...progress,
+            markedIndicatorIds: [...progress.markedIndicatorIds],
+            aiDecisions: { ...progress.aiDecisions },
+          },
+        }
+      : state.documentProgress,
+  };
 }
 
 function seedConfiguration(seed?: RuntimeSeed): Record<string, unknown> | null {
@@ -106,6 +158,7 @@ function initialState(seed?: RuntimeSeed): ClassificationSimulatorState {
     selectedLevelId: null,
     aiTool,
     aiDecisions: {},
+    documentProgress: {},
   };
 }
 
@@ -116,15 +169,86 @@ function parseStringArray(value: unknown, label: string): string[] {
   return [...value];
 }
 
-function parseBooleanRecord(value: unknown): Record<string, boolean> {
+function parseBooleanRecord(value: unknown, label = "aiDecisions"): Record<string, boolean> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new TypeError("Invalid classification snapshot aiDecisions");
+    throw new TypeError(`Invalid classification snapshot ${label}`);
   }
   const entries = Object.entries(value);
   if (!entries.every(([, decision]) => typeof decision === "boolean")) {
-    throw new TypeError("Invalid classification snapshot aiDecisions");
+    throw new TypeError(`Invalid classification snapshot ${label}`);
   }
   return Object.fromEntries(entries) as Record<string, boolean>;
+}
+
+function validateDocumentProgress(
+  progress: ClassificationDocumentProgress,
+  scheme: ClassificationScheme | null,
+  label: string,
+): void {
+  if (!progress.markedIndicatorIds.every((id) => scheme?.indicators.some((entry) => entry.id === id))) {
+    throw new TypeError(`Invalid classification snapshot ${label}.markedIndicatorIds`);
+  }
+  if (
+    progress.selectedLevelId !== null &&
+    !scheme?.levels.some((level) => level.id === progress.selectedLevelId)
+  ) {
+    throw new TypeError(`Invalid classification snapshot ${label}.selectedLevelId`);
+  }
+  if (progress.aiTool !== null && !scheme?.aiPolicy.some((policy) => policy.tool === progress.aiTool)) {
+    throw new TypeError(`Invalid classification snapshot ${label}.aiTool`);
+  }
+  if (
+    !Object.keys(progress.aiDecisions).every((tool) =>
+      scheme?.aiPolicy.some((policy) => policy.tool === tool),
+    )
+  ) {
+    throw new TypeError(`Invalid classification snapshot ${label}.aiDecisions`);
+  }
+}
+
+function parseDocumentProgressRecord(
+  value: unknown,
+  documents: SyntheticDocument[],
+  scheme: ClassificationScheme | null,
+): Record<string, ClassificationDocumentProgress> {
+  if (value === undefined) return {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new TypeError("Invalid classification snapshot documentProgress");
+  }
+  const result: Record<string, ClassificationDocumentProgress> = {};
+  for (const [documentId, rawProgress] of Object.entries(value)) {
+    if (!documents.some((document) => document.id === documentId)) {
+      throw new TypeError(`Invalid classification snapshot documentProgress.${documentId}`);
+    }
+    if (!rawProgress || typeof rawProgress !== "object" || Array.isArray(rawProgress)) {
+      throw new TypeError(`Invalid classification snapshot documentProgress.${documentId}`);
+    }
+    const candidate = rawProgress as Record<string, unknown>;
+    const markedIndicatorIds = parseStringArray(
+      candidate["markedIndicatorIds"],
+      `documentProgress.${documentId}.markedIndicatorIds`,
+    );
+    const selectedLevelId = candidate["selectedLevelId"];
+    const aiTool = candidate["aiTool"];
+    if (selectedLevelId !== null && typeof selectedLevelId !== "string") {
+      throw new TypeError(`Invalid classification snapshot documentProgress.${documentId}.selectedLevelId`);
+    }
+    if (aiTool !== null && typeof aiTool !== "string") {
+      throw new TypeError(`Invalid classification snapshot documentProgress.${documentId}.aiTool`);
+    }
+    const progress: ClassificationDocumentProgress = {
+      markedIndicatorIds,
+      selectedLevelId: selectedLevelId as string | null,
+      aiTool: aiTool as string | null,
+      aiDecisions: parseBooleanRecord(
+        candidate["aiDecisions"],
+        `documentProgress.${documentId}.aiDecisions`,
+      ),
+    };
+    validateDocumentProgress(progress, scheme, `documentProgress.${documentId}`);
+    result[documentId] = progress;
+  }
+  return result;
 }
 
 function parseRuntimeState(value: unknown): ClassificationSimulatorState {
@@ -167,10 +291,21 @@ function parseRuntimeState(value: unknown): ClassificationSimulatorState {
     candidate["markedIndicatorIds"],
     "markedIndicatorIds",
   );
-  if (
-    !markedIndicatorIds.every((id) => scheme?.indicators.some((indicator) => indicator.id === id))
-  ) {
-    throw new TypeError("Invalid classification snapshot markedIndicatorIds");
+  const activeProgress: ClassificationDocumentProgress = {
+    markedIndicatorIds,
+    selectedLevelId: selectedLevelId as string | null,
+    aiTool: aiTool as string | null,
+    aiDecisions: parseBooleanRecord(candidate["aiDecisions"]),
+  };
+  validateDocumentProgress(activeProgress, scheme, "activeProgress");
+
+  const documentProgress = parseDocumentProgressRecord(
+    candidate["documentProgress"],
+    documents,
+    scheme,
+  );
+  if (activeDocumentId && candidate["documentProgress"] === undefined) {
+    documentProgress[activeDocumentId as string] = activeProgress;
   }
 
   return {
@@ -181,7 +316,8 @@ function parseRuntimeState(value: unknown): ClassificationSimulatorState {
     markedIndicatorIds,
     selectedLevelId: selectedLevelId as string | null,
     aiTool: aiTool as string | null,
-    aiDecisions: parseBooleanRecord(candidate["aiDecisions"]),
+    aiDecisions: { ...activeProgress.aiDecisions },
+    documentProgress,
   };
 }
 
@@ -274,6 +410,17 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
         "classification.ai.decision": selectedAiDecision,
         "classification.ai.decisions": { ...state.aiDecisions },
         "classification.ai.policyAllowed": policyAllowed,
+        "classification.documents.progress": structuredClone(state.documentProgress),
+        "classification.validation.state": {
+          viewedDocumentIds: [...state.viewedDocumentIds],
+          scheme: state.scheme
+            ? {
+                levels: state.scheme.levels.map(({ id, label, rank }) => ({ id, label, rank })),
+                indicators: state.scheme.indicators.map(({ id, label }) => ({ id, label })),
+              }
+            : null,
+          documentProgress: structuredClone(state.documentProgress),
+        },
       };
       return Promise.resolve(values[selector] as T);
     },
@@ -315,14 +462,25 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
       const viewedDocumentIds = state.viewedDocumentIds.includes(documentId)
         ? state.viewedDocumentIds
         : [...state.viewedDocumentIds, documentId];
+      const documentProgress = { ...state.documentProgress };
+      if (state.activeDocumentId) {
+        documentProgress[state.activeDocumentId] = currentProgress(state);
+      }
+      const targetProgress =
+        documentId === state.activeDocumentId
+          ? currentProgress(state)
+          : (documentProgress[documentId] ?? emptyDocumentProgress(state.scheme?.aiPolicy[0]?.tool ?? null));
+      documentProgress[documentId] = targetProgress;
       replaceState(
         {
           ...state,
           activeDocumentId: documentId,
           viewedDocumentIds,
-          markedIndicatorIds: [],
-          selectedLevelId: null,
-          aiDecisions: {},
+          markedIndicatorIds: [...targetProgress.markedIndicatorIds],
+          selectedLevelId: targetProgress.selectedLevelId,
+          aiTool: targetProgress.aiTool,
+          aiDecisions: { ...targetProgress.aiDecisions },
+          documentProgress,
         },
         "mutation",
       );
@@ -340,7 +498,7 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
       const markedIndicatorIds = marked
         ? [...new Set([...state.markedIndicatorIds, indicatorId])]
         : state.markedIndicatorIds.filter((id) => id !== indicatorId);
-      replaceState({ ...state, markedIndicatorIds }, "mutation");
+      replaceState(withActiveProgress(state, { markedIndicatorIds }), "mutation");
       emit("indicator.marked", {
         documentId: state.activeDocumentId,
         indicatorId,
@@ -353,7 +511,7 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
       if (!scheme.levels.some((level) => level.id === levelId)) {
         throw new Error(`Unknown classification level: ${levelId}`);
       }
-      replaceState({ ...state, selectedLevelId: levelId }, "mutation");
+      replaceState(withActiveProgress(state, { selectedLevelId: levelId }), "mutation");
       emit("level.selected", {
         documentId: state.activeDocumentId,
         levelId,
@@ -365,7 +523,7 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
       if (!scheme.aiPolicy.some((policy) => policy.tool === tool)) {
         throw new Error(`Unknown AI tool policy: ${tool}`);
       }
-      replaceState({ ...state, aiTool: tool }, "mutation");
+      replaceState(withActiveProgress(state, { aiTool: tool }), "mutation");
     },
 
     setAiDecision(tool, allowed) {
@@ -374,11 +532,10 @@ export function createClassificationRuntime(): ClassificationRuntimeAdapter {
         throw new Error(`Unknown AI tool policy: ${tool}`);
       }
       replaceState(
-        {
-          ...state,
+        withActiveProgress(state, {
           aiTool: tool,
           aiDecisions: { ...state.aiDecisions, [tool]: allowed },
-        },
+        }),
         "mutation",
       );
       emit("ai.use.decided", {
