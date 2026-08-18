@@ -85,14 +85,6 @@ function requiresStep(eventType) {
   );
 }
 
-function ownerKey(subject) {
-  return [
-    "telemetry-owner:v1",
-    util.base64Encode(subject.tenantId),
-    util.base64Encode(subject.userId),
-  ].join(".");
-}
-
 export function request(ctx) {
   const subject = ctx.stash.telemetrySubject;
   if (!subject || typeof subject.userId !== "string" || typeof subject.tenantId !== "string") {
@@ -140,6 +132,10 @@ export function request(ctx) {
     util.base64Encode(eventId),
   ].join(".");
   const receivedAtEpochSeconds = util.time.nowEpochSeconds();
+  const expiresAtEpochSeconds = receivedAtEpochSeconds + retentionDays * SECONDS_PER_DAY;
+  ctx.stash.telemetryRawEventId = id;
+  ctx.stash.telemetryRawEventOccurredAt = occurredAt;
+  ctx.stash.telemetryRawEventExpiresAtEpochSeconds = expiresAtEpochSeconds;
 
   return {
     operation: "PutItem",
@@ -147,14 +143,13 @@ export function request(ctx) {
     attributeValues: util.dynamodb.toMapValues({
       tenantId: subject.tenantId,
       tenantScenarioKey,
-      ownerKey: ownerKey(subject),
       subjectKey,
       eventId,
       source: event.source,
       eventType,
       occurredAt,
       receivedAtEpochSeconds,
-      expiresAtEpochSeconds: receivedAtEpochSeconds + retentionDays * SECONDS_PER_DAY,
+      expiresAtEpochSeconds,
       sessionId,
       scenarioId: payload.scenarioId,
       mode: payload.mode,
