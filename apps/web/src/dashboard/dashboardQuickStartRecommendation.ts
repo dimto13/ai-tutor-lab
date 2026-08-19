@@ -7,11 +7,7 @@ import {
   type DashboardTrainingCandidate,
 } from "./dashboardRecommendation";
 
-export type DashboardLearningGoal =
-  | "learn_tool"
-  | "daily_confidence"
-  | "solve_task"
-  | "deepen";
+export type DashboardLearningGoal = "learn_tool" | "daily_confidence" | "solve_task" | "deepen";
 
 export interface DashboardQuickStartCalibration {
   goal: DashboardLearningGoal;
