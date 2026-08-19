@@ -1,11 +1,11 @@
 import type { SelfAssessedAiLevel, TrainingMode } from "@ai-train-lab/training-engine";
-import { aiLevelLabel } from "../profile/aiLevelOptions";
+import { aiLevelLabel } from "../profile/aiLevelOptions.ts";
 import {
   starterTechnologyPriority,
   type DashboardPrimaryAction,
   type DashboardResumeCandidate,
   type DashboardTrainingCandidate,
-} from "./dashboardRecommendation";
+} from "./dashboardRecommendation.ts";
 
 export type DashboardLearningGoal = "learn_tool" | "daily_confidence" | "solve_task" | "deepen";
 
