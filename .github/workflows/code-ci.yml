@@ -60,6 +60,9 @@ jobs:
       - name: Validate scenario content
         run: npm run validate:content
 
+      - name: Validate Attestation AppSync runtime
+        run: npm run validate:attestation-appsync
+
       - name: Lint
         run: npm run lint
 

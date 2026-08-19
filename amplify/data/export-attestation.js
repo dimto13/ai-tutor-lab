@@ -1,5 +1,11 @@
 import { util } from "@aws-appsync/utils";
 
+const PRINTABLE_ASCII =
+  " !\"#$%&'()*+,-./0123456789:;<=>?@" +
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`" +
+  "abcdefghijklmnopqrstuvwxyz{|}~";
+const SAFE_FILENAME_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+
 function caller(ctx) {
   const identity = ctx.identity;
   if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0)
@@ -37,7 +43,7 @@ function format(value) {
 }
 
 function csvCell(value) {
-  const text = value === null || value === undefined ? "" : String(value);
+  const text = value === null || value === undefined ? "" : `${value}`;
   return `"${text.split('"').join('""')}"`;
 }
 
@@ -93,11 +99,10 @@ function csvContent(row, expired) {
 }
 
 function ascii(value) {
-  const text = String(value);
+  const text = `${value}`;
   let result = "";
   for (const char of text) {
-    const code = char.charCodeAt(0);
-    result += code >= 32 && code <= 126 ? char : "?";
+    result += PRINTABLE_ASCII.indexOf(char) >= 0 ? char : "?";
   }
   return result;
 }
@@ -147,7 +152,7 @@ function pdfStream(lines) {
 }
 
 function pad10(value) {
-  return `0000000000${String(value)}`.slice(-10);
+  return `0000000000${value}`.slice(-10);
 }
 
 function pdfContent(row, expired) {
@@ -181,14 +186,7 @@ function safeFilename(value) {
   const source = ascii(value);
   let result = "";
   for (const char of source) {
-    const code = char.charCodeAt(0);
-    const allowed =
-      (code >= 48 && code <= 57) ||
-      (code >= 65 && code <= 90) ||
-      (code >= 97 && code <= 122) ||
-      char === "-" ||
-      char === "_";
-    result += allowed ? char : "-";
+    result += SAFE_FILENAME_CHARS.indexOf(char) >= 0 ? char : "-";
   }
   return result.length > 0 ? result : "attestation";
 }
