@@ -48,12 +48,19 @@ export default tseslint.config(
     },
   },
   {
-    // AppSync JS resolvers run in the restricted APPSYNC_JS runtime, not in Node. Unsupported
-    // syntax is rejected by AppSync at deploy time with an opaque "The code contains one or more
-    // errors", so it must fail here instead. The `base` preset covers the syntax-level rules; the
-    // additional rules in `recommended` need type information and are therefore not enabled.
+    // AppSync JS resolvers run in the restricted APPSYNC_JS runtime, not in Node. Use AWS' full
+    // recommended rules with a dedicated JavaScript-aware TypeScript project so unsupported
+    // methods and function-passing fail locally instead of during a real AppSync deployment.
+    ...appsync.configs.recommended,
     files: ["amplify/data/**/*.js"],
-    ...appsync.configs.base,
+    languageOptions: {
+      ...(appsync.configs.recommended.languageOptions ?? {}),
+      parserOptions: {
+        ...(appsync.configs.recommended.languageOptions?.parserOptions ?? {}),
+        project: "./amplify/data/tsconfig.eslint.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
   },
   {
     files: ["packages/**/*.{ts,tsx}"],
