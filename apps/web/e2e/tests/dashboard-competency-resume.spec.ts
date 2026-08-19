@@ -53,7 +53,9 @@ test("first-user dashboard calibrates one deterministic next action from goal, l
   const primary = page.locator('[data-primary-dashboard-action="true"]');
   await expect(primary).toHaveCount(1);
   await expect(primary).toHaveAttribute("href", "/training/vscode-basics.guided");
-  await expect(primary).toContainText("Als Nächstes starten: Visual Studio Code – Geführte Grundlagen");
+  await expect(primary).toContainText(
+    "Als Nächstes starten: Visual Studio Code – Geführte Grundlagen",
+  );
 
   const levelNavigation = page.getByTestId("ai-level-navigation");
   await levelNavigation.click();
@@ -66,7 +68,9 @@ test("first-user dashboard calibrates one deterministic next action from goal, l
   await page.getByRole("radio", { name: /^Challenge/ }).check();
   await expect(primary).toHaveCount(1);
   await expect(primary).toHaveAttribute("href", /\/training\/.+\.challenge$/);
-  await expect(page.getByText(/eine konkrete Aufgabe lösen.*Fortgeschritten.*Challenge/)).toBeVisible();
+  await expect(
+    page.getByText(/eine konkrete Aufgabe lösen.*Fortgeschritten.*Challenge/),
+  ).toBeVisible();
 
   await accessibility.check("calibrated dashboard quick start /");
 });
