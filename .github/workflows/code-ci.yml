@@ -81,6 +81,9 @@ jobs:
       - name: Architecture boundary tests
         run: npm run test:architecture
 
+      - name: Amplify function bundle smoke
+        run: npm run validate:amplify-function-bundles
+
       - name: Build
         run: npm run build
 
