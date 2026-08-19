@@ -99,14 +99,7 @@ export function DashboardQuickStart({
             },
           })
         : null,
-    [
-      basePrimaryAction,
-      effectiveAiLevel,
-      goal,
-      preferredMode,
-      recommendationLoading,
-      resumable,
-    ],
+    [basePrimaryAction, effectiveAiLevel, goal, preferredMode, recommendationLoading, resumable],
   );
 
   const otherResumable = resumable.filter(
@@ -289,8 +282,8 @@ export function DashboardQuickStart({
 
       {resumeStatus === "error" ? (
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground" role="status">
-          Einzelne gespeicherte Trainings konnten nicht gelesen werden. Verfügbare Arbeitsstände
-          und die Lernempfehlung bleiben nutzbar.
+          Einzelne gespeicherte Trainings konnten nicht gelesen werden. Verfügbare Arbeitsstände und
+          die Lernempfehlung bleiben nutzbar.
         </p>
       ) : null}
 
