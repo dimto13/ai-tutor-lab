@@ -27,7 +27,13 @@ for (const result of lintResults) {
 
 for (const filePath of resolverFiles) {
   const sourceText = await readFile(filePath, "utf8");
-  const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.ESNext, true, ts.ScriptKind.JS);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    sourceText,
+    ts.ScriptTarget.ESNext,
+    true,
+    ts.ScriptKind.JS,
+  );
 
   function visit(node) {
     if (
@@ -35,7 +41,9 @@ for (const filePath of resolverFiles) {
       ts.isIdentifier(node.expression) &&
       unsupportedGlobalConversions.has(node.expression.text)
     ) {
-      const location = sourceFile.getLineAndCharacterOfPosition(node.expression.getStart(sourceFile));
+      const location = sourceFile.getLineAndCharacterOfPosition(
+        node.expression.getStart(sourceFile),
+      );
       diagnostics.push({
         filePath,
         line: location.line + 1,
