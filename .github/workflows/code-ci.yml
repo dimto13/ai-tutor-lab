@@ -81,6 +81,9 @@ jobs:
       - name: Architecture boundary tests
         run: npm run test:architecture
 
+      - name: Amplify CloudFormation graph smoke
+        run: npm run validate:amplify-cloudformation-graph
+
       - name: Amplify function bundle smoke
         run: npm run validate:amplify-function-bundles
 
