@@ -71,6 +71,29 @@
   },
   "estimatedMinutes": 10,
   "points": 70,
+  "resources": [
+    {
+      "title": "VS Code Docs: Chat verwenden",
+      "description": "Offizielle Beschreibung von Chat-Eingabe, Kontext, Arbeitsformen und Modellauswahl in VS Code.",
+      "url": "https://code.visualstudio.com/docs/chat/chat-overview",
+      "kind": "official",
+      "verifiedAt": "2026-08-18"
+    },
+    {
+      "title": "GitHub Docs: Unterstützte KI-Modelle",
+      "description": "Aktuelle, produkt- und planabhängige Übersicht der in GitHub Copilot verfügbaren Modelle.",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/supported-models",
+      "kind": "official",
+      "verifiedAt": "2026-08-18"
+    },
+    {
+      "title": "GitHub Docs: Copilot-Abrechnung und Nutzung",
+      "description": "Aktuelle Übersicht zu planabhängigen Kontingenten, Nutzungsabrechnung und weiterführenden Kosteninformationen.",
+      "url": "https://docs.github.com/en/copilot/concepts/billing",
+      "kind": "official",
+      "verifiedAt": "2026-08-18"
+    }
+  ],
   "exploreTargets": [
     "copilot.chat.toggle",
     "copilot.chat",
@@ -89,15 +112,15 @@
     {
       "id": "explore-copilot-surface",
       "title": "Copilot-Arbeitsformen frei erkunden",
-      "description": "Du darfst die Bereiche in beliebiger Reihenfolge untersuchen. Die Dateien und der Geheimnis-Marker sind ausschließlich synthetische Trainingsdaten.",
-      "instruction": "Öffne Copilot Chat und untersuche neue Unterhaltung, Kontext hinzufügen, angehängten Dateikontext, Prompt-Feld, Ask/Plan/Agent, Modellauswahl und Aufgabe stoppen. Prüfe außerdem den Inline-Vorschlag als Ghost Text direkt in calculator.py sowie die Tastaturaktionen Tab zum Annehmen und Esc zum Verwerfen.",
-      "why": "Bevor du Copilot für reale Aufgaben nutzt, solltest du erkennen, welche Funktion nur erklärt, welche direkt Änderungen im Editor anbietet, welcher Kontext tatsächlich angehängt ist und wo du die Kontrolle behältst.",
+      "description": "Du darfst die Bereiche in beliebiger Reihenfolge untersuchen. Die Dateien und der Geheimnis-Marker sind ausschließlich synthetische Trainingsdaten. Gut zu wissen: Im Chat-Eingabefeld fügt Shift + Enter eine neue Zeile in deinen Prompt ein; Enter sendet die Anfrage.",
+      "instruction": "Öffne Copilot Chat und untersuche neue Unterhaltung, Kontext hinzufügen, angehängten Dateikontext, Prompt-Feld, Ask/Plan/Agent, Modellauswahl und Aufgabe stoppen. Ordne die Modi an Beispielen ein: Ask zum Verstehen oder Erklären, Plan zum Strukturieren und Prüfen eines Lösungswegs, Agent für mehrstufige Aufgaben mit Änderungen oder Werkzeugnutzung. Prüfe außerdem den Inline-Vorschlag als Ghost Text direkt in calculator.py sowie die Tastaturaktionen Tab zum Annehmen und Esc zum Verwerfen.",
+      "why": "Wähle Modus und Modell nach der Aufgabe statt nach einem pauschalen Ranking. Für die Modellwahl zählen gewünschte Qualität und Reasoning-Fähigkeit, Geschwindigkeit, benötigter Kontext, Agent-/Werkzeugfähigkeit, planabhängiges Kontingent beziehungsweise Kosten sowie die Unternehmensfreigabe. Auto ist ein sinnvoller Ausgangspunkt, wenn keine bestimmte Eigenschaft priorisiert werden muss; eine bewusste Auswahl lohnt sich, wenn eines dieser Kriterien entscheidend ist. Verfügbarkeit und Abrechnung können sich mit Produktversion und Plan ändern.",
       "helpLevels": [
         "Beginne mit dem Copilot-Button und öffne den Chat.",
-        "Untersuche im Chat zuerst Kontext hinzufügen, den Kontext-Chip, Modus und Modell. Wechsle danach zum Editor und prüfe den Ghost Text.",
-        "Öffne den Chat, untersuche Neue Unterhaltung, Kontext hinzufügen, Kontext-Chip, Prompt, Modus, Modell und Stoppen; untersuche anschließend im Editor Inline-Vorschlag, Tab-Annahme und Esc-Verwerfen."
+        "Untersuche im Chat zuerst Kontext hinzufügen, den Kontext-Chip, Prompt-Feld, Modus und Modell. Nutze Shift + Enter, wenn du im Prompt eine neue Zeile brauchst. Wechsle danach zum Editor und prüfe den Ghost Text.",
+        "Öffne den Chat, untersuche Neue Unterhaltung, Kontext hinzufügen, Kontext-Chip, Prompt, Modus, Modell und Stoppen; untersuche anschließend im Editor Inline-Vorschlag, Tab-Annahme und Esc-Verwerfen. Vergleiche Auto und bewusste Modellauswahl anhand von Aufgabe, Qualität, Geschwindigkeit, Kontext, Kontingent/Kosten und Unternehmensfreigabe."
       ],
-      "successMessage": "Du hast die zentralen Copilot-Arbeitsformen und Kontrollpunkte untersucht."
+      "successMessage": "Du hast die zentralen Copilot-Arbeitsformen, Modus- und Modellwahl sowie ihre Kontrollpunkte untersucht."
     }
   ]
 }
