@@ -59,37 +59,34 @@ test("Copilot guidance teaches situational mode choice without safety guarantees
   assert.match(agentDescription, /Ergebnisprüfung/i);
 });
 
-test(
-  "model-selection heuristic covers stable criteria and keeps volatile details in maintained data",
-  () => {
-    const guidance = requireExploreStep().why ?? "";
-    for (const criterion of [
-      "Qualität",
-      "Reasoning",
-      "Geschwindigkeit",
-      "Kontext",
-      "Agent-/Werkzeugfähigkeit",
-      "Kontingent",
-      "Kosten",
-      "Unternehmensfreigabe",
-      "Auto",
-    ]) {
-      assert.match(guidance, new RegExp(criterion));
-    }
-    assert.match(guidance, /Verfügbarkeit.*Abrechnung.*Produktversion.*Plan/i);
-    assert.doesNotMatch(guidance, /OpenAI.*billig|Anthropic.*teuer|universell bestes Modell/i);
+test("model-selection heuristic covers stable criteria and keeps volatile details in maintained data", () => {
+  const guidance = requireExploreStep().why ?? "";
+  for (const criterion of [
+    "Qualität",
+    "Reasoning",
+    "Geschwindigkeit",
+    "Kontext",
+    "Agent-/Werkzeugfähigkeit",
+    "Kontingent",
+    "Kosten",
+    "Unternehmensfreigabe",
+    "Auto",
+  ]) {
+    assert.match(guidance, new RegExp(criterion));
+  }
+  assert.match(guidance, /Verfügbarkeit.*Abrechnung.*Produktversion.*Plan/i);
+  assert.doesNotMatch(guidance, /OpenAI.*billig|Anthropic.*teuer|universell bestes Modell/i);
 
-    const profile = resolveCopilotProductProfile({
-      productId: "github-copilot",
-      hostProductId: "vscode",
-      version: "2026.08",
-    });
-    assert.ok(profile.models.some(({ selection }) => selection === "automatic"));
-    assert.ok(profile.models.some(({ selection }) => selection === "explicit"));
-    assert.ok(profile.sources.some(({ url }) => url.includes("/copilot/reference/ai-models/")));
-    assert.ok(profile.sources.some(({ url }) => url.includes("/copilot/concepts/billing")));
-    assert.ok(
-      exploreScenario.resources?.some(({ url }) => url.includes("/copilot/concepts/billing")),
-    );
-  },
-);
+  const profile = resolveCopilotProductProfile({
+    productId: "github-copilot",
+    hostProductId: "vscode",
+    version: "2026.08",
+  });
+  assert.ok(profile.models.some(({ selection }) => selection === "automatic"));
+  assert.ok(profile.models.some(({ selection }) => selection === "explicit"));
+  assert.ok(profile.sources.some(({ url }) => url.includes("/copilot/reference/ai-models/")));
+  assert.ok(profile.sources.some(({ url }) => url.includes("/copilot/concepts/billing")));
+  assert.ok(
+    exploreScenario.resources?.some(({ url }) => url.includes("/copilot/concepts/billing")),
+  );
+});
