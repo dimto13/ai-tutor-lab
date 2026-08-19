@@ -38,7 +38,7 @@
     "validate:amplify-schema": "node --experimental-strip-types scripts/validate-amplify-schema.mjs",
     "validate:amplify-function-bundles": "node scripts/validate-amplify-function-bundles.mjs",
     "validate:amplify-cloudformation-graph": "tsx scripts/validate-amplify-cloudformation-graph.mjs",
-    "validate:attestation-appsync": "eslint amplify/data/issue-attestation-write.js amplify/data/export-attestation.js",
+    "validate:attestation-appsync": "node scripts/validate-attestation-appsync-runtime.mjs",
     "validate:amplify-output": "node scripts/validate-amplify-output.mjs",
     "validate:amplify-runtime": "node scripts/smoke-amplify-runtime.mjs",
     "amplify:status": "sh scripts/amplify-deployment-status.sh",
