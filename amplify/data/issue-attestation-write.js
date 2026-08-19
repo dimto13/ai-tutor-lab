@@ -32,7 +32,7 @@ function isLeapYear(year) {
 }
 
 function validUntilIso(issuedIso) {
-  const year = Number(issuedIso.slice(0, 4));
+  const year = issuedIso.slice(0, 4) * 1;
   const month = issuedIso.slice(5, 7);
   let day = issuedIso.slice(8, 10);
   const targetYear = year + 1;
