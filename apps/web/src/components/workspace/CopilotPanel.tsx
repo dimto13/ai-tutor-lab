@@ -517,11 +517,7 @@ export function CopilotPanel({
                 onFocus={() => inspectTarget("copilot.chat.prompt")}
                 onChange={(event) => setPrompt(event.target.value)}
                 onKeyDown={(event) => {
-                  if (
-                    event.key === "Enter" &&
-                    !event.shiftKey &&
-                    !event.nativeEvent.isComposing
-                  ) {
+                  if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                     event.preventDefault();
                     void submitPrompt();
                   }
