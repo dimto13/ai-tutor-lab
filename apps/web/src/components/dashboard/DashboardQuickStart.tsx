@@ -115,7 +115,10 @@ export function DashboardQuickStart({
       candidate.scenarioId !== recommendation.primaryAction.scenarioId,
   );
   const loading =
-    recommendationLoading || resumeStatus === "loading" || preferences.status === "loading";
+    recommendationLoading ||
+    resumeStatus === "loading" ||
+    preferences.status === "idle" ||
+    preferences.status === "loading";
 
   return (
     <section aria-labelledby="dashboard-next-action-heading">
@@ -268,7 +271,9 @@ export function DashboardQuickStart({
                 className="mt-5 inline-flex max-w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <span className="truncate">
-                  {recommendation.primaryAction.kind === "resume" ? "Fortsetzen" : "Als Nächstes starten"}
+                  {recommendation.primaryAction.kind === "resume"
+                    ? "Fortsetzen"
+                    : "Als Nächstes starten"}
                   : {recommendation.primaryAction.title}
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
