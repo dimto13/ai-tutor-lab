@@ -511,16 +511,21 @@ export function CopilotPanel({
             ) : null}
 
             <div className="flex gap-2">
-              <input
+              <textarea
                 data-highlight="copilot.chat.prompt"
                 value={prompt}
                 onFocus={() => inspectTarget("copilot.chat.prompt")}
                 onChange={(event) => setPrompt(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") void submitPrompt();
+                  if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    void submitPrompt();
+                  }
                 }}
+                rows={2}
+                aria-label="Copilot-Prompt"
                 placeholder="Ask Copilot..."
-                className="min-w-0 flex-1 rounded border border-border bg-editor px-2 py-1.5 text-xs text-foreground outline-none focus:border-ring"
+                className="min-h-10 max-h-24 min-w-0 flex-1 resize-none rounded border border-border bg-editor px-2 py-1.5 text-xs leading-5 text-foreground outline-none focus:border-ring"
               />
               <button
                 type="button"
