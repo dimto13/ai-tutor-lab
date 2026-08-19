@@ -1,5 +1,5 @@
 import type { SelfAssessedAiLevel, TrainingMode } from "@ai-train-lab/training-engine";
-import { aiLevelLabel } from "@/profile/aiLevelOptions";
+import { aiLevelLabel } from "../profile/aiLevelOptions";
 import {
   starterTechnologyPriority,
   type DashboardPrimaryAction,
