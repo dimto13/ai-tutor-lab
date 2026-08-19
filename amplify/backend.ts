@@ -1,5 +1,4 @@
 import { defineBackend } from "@aws-amplify/backend";
-import { Stack } from "aws-cdk-lib";
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
 import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
@@ -12,7 +11,7 @@ function requiredResource<T>(resource: T | undefined, name: string): T {
   return resource;
 }
 
-const backend = defineBackend({
+export const backend = defineBackend({
   auth,
   data,
   telemetryAggregateProjector,
@@ -91,7 +90,7 @@ backend.telemetryDeletionWorker.addEnvironment(
   deletionPointerTable.tableName,
 );
 
-new EventSourceMapping(Stack.of(rawTelemetryTable), "TelemetryAggregateProjectionStream", {
+new EventSourceMapping(backend.data.stack, "TelemetryAggregateProjectionStream", {
   target: projectorLambda,
   eventSourceArn: rawTelemetryStreamArn,
   startingPosition: StartingPosition.TRIM_HORIZON,
