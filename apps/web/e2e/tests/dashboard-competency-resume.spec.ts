@@ -35,7 +35,7 @@ async function waitForPersistedScenario(page: Page, scenarioId: string): Promise
     .toBe(true);
 }
 
-test("first-user dashboard shows competency state and exactly one deterministic next action", async ({
+test("first-user dashboard calibrates one deterministic next action from goal, level and work style", async ({
   page,
   accessibility,
 }) => {
@@ -44,15 +44,35 @@ test("first-user dashboard shows competency state and exactly one deterministic 
 
   await expect(page.getByRole("heading", { name: "Dein Kompetenzprofil" })).toBeVisible();
   await expect(page.getByText("Im lokalen Modus nicht autoritativ verfügbar")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Dein nächster Schritt" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Direkteinstieg" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Alle Trainings" })).toBeVisible();
+  await expect(page.locator('[data-quick-start-ai-level="true"]')).toContainText(
+    "Anfänger (Einstiegs-Default)",
+  );
 
   const primary = page.locator('[data-primary-dashboard-action="true"]');
   await expect(primary).toHaveCount(1);
   await expect(primary).toHaveAttribute("href", "/training/vscode-basics.guided");
-  await expect(primary).toContainText("Starten: Visual Studio Code – Geführte Grundlagen");
+  await expect(primary).toContainText(
+    "Als Nächstes starten: Visual Studio Code – Geführte Grundlagen",
+  );
 
-  await accessibility.check("competency-first first-user dashboard /");
+  const levelNavigation = page.getByTestId("ai-level-navigation");
+  await levelNavigation.click();
+  const settings = page.getByRole("dialog", { name: "Einstellungen" });
+  await settings.getByRole("radio", { name: /Fortgeschritten/ }).check();
+  await settings.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.locator('[data-quick-start-ai-level="true"]')).toHaveText("Fortgeschritten");
+
+  await page.getByRole("radio", { name: /Konkrete Aufgabe lösen/ }).check();
+  await page.getByRole("radio", { name: /^Challenge/ }).check();
+  await expect(primary).toHaveCount(1);
+  await expect(primary).toHaveAttribute("href", /\/training\/.+\.challenge$/);
+  await expect(
+    page.getByText(/eine konkrete Aufgabe lösen.*Fortgeschritten.*Challenge/),
+  ).toBeVisible();
+
+  await accessibility.check("calibrated dashboard quick start /");
 });
 
 test("an unfinished training becomes the one primary action and resumes exact session plus runtime state", async ({
@@ -78,6 +98,11 @@ test("an unfinished training becomes the one primary action and resumes exact se
   await expect(primary).toHaveAttribute("href", "/training/git-basics");
   await expect(primary).toContainText("Fortsetzen:");
   await expect(page.getByText(/Weiter geht es bei „Copilot Chat öffnen“/)).toBeVisible();
+
+  await page.getByRole("radio", { name: /Konkrete Aufgabe lösen/ }).check();
+  await page.getByRole("radio", { name: /^Challenge/ }).check();
+  await expect(primary).toHaveAttribute("href", "/training/git-basics");
+  await expect(primary).toContainText("Fortsetzen:");
 
   await primary.click();
   await waitForTrainingReady(page);
@@ -113,7 +138,7 @@ test("multiple unfinished trainings use persisted recency and keep every other r
   ).toHaveAttribute("href", "/training/vscode-basics.guided");
 });
 
-test("primary recommendation stays keyboard reachable with visible focus on a small viewport", async ({
+test("quick-start calibration stays keyboard reachable with visible focus on a small viewport", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 720 });
@@ -121,13 +146,21 @@ test("primary recommendation stays keyboard reachable with visible focus on a sm
   await waitForDashboardOverview(page);
 
   const primary = page.locator('[data-primary-dashboard-action="true"]');
+  const firstGoal = page.getByRole("radio", { name: /Werkzeug kennenlernen/ });
+  const secondGoal = page.getByRole("radio", { name: /Sicherer im Alltag werden/ });
+
   await expect(primary).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
     .toBe(true);
 
+  await firstGoal.focus();
+  await expect(firstGoal).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(secondGoal).toBeChecked();
+
   await page.locator("body").click({ position: { x: 1, y: 1 } });
-  for (let index = 0; index < 8; index += 1) {
+  for (let index = 0; index < 24; index += 1) {
     if (await primary.evaluate((element) => element === document.activeElement)) break;
     await page.keyboard.press("Tab");
   }

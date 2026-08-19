@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, RotateCcw, Sparkles } from "lucide-react";
 import type { SkillLevel } from "@ai-train-lab/training-engine";
 import { technologyCatalog } from "@/catalog";
-import type { SkillProfilesState } from "@/skill-profile/useSkillProfiles";
+import { DashboardQuickStart } from "@/components/dashboard/DashboardQuickStart";
 import { useTrainingRecommendation } from "@/dashboard/useTrainingRecommendation";
+import type { SkillProfilesState } from "@/skill-profile/useSkillProfiles";
 
 const levelLabels: Record<SkillLevel, string> = {
   novice: "Novice",
@@ -15,10 +15,6 @@ const levelLabels: Record<SkillLevel, string> = {
 export function DashboardLearningOverview() {
   const { primaryAction, recommendationLoading, resumable, resumeStatus, skillProfiles } =
     useTrainingRecommendation();
-  const otherResumable = resumable.filter(
-    (candidate) =>
-      primaryAction?.kind !== "resume" || candidate.scenarioId !== primaryAction.scenarioId,
-  );
 
   return (
     <div className="mt-8 space-y-6" data-dashboard-overview-ready={!recommendationLoading}>
@@ -44,81 +40,12 @@ export function DashboardLearningOverview() {
         <CompetencySummary state={skillProfiles} />
       </section>
 
-      <section aria-labelledby="dashboard-next-action-heading">
-        <div>
-          <h2 id="dashboard-next-action-heading" className="text-lg font-semibold text-foreground">
-            Dein nächster Schritt
-          </h2>
-          <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
-            Angefangene Trainings haben Vorrang. Ohne offenen Arbeitsstand wird deterministisch nach
-            bestätigtem Kompetenzprofil und festem Grundlagen-Lernpfad priorisiert.
-          </p>
-        </div>
-
-        {recommendationLoading ? (
-          <div className="mt-4 rounded-xl border border-border bg-card p-5" role="status">
-            <p className="text-sm text-muted-foreground">Nächster Schritt wird ermittelt …</p>
-          </div>
-        ) : primaryAction ? (
-          <article className="mt-4 rounded-xl border border-ring/60 bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-accent">
-              {primaryAction.kind === "resume" ? (
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-              )}
-              Primäre Empfehlung
-            </div>
-            <h3 className="mt-3 text-base font-semibold text-foreground">{primaryAction.title}</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              {primaryAction.reason}
-            </p>
-            <Link
-              to="/training/$scenarioId"
-              params={{ scenarioId: primaryAction.scenarioId }}
-              data-primary-dashboard-action="true"
-              className="mt-4 inline-flex max-w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <span className="truncate">
-                {primaryAction.kind === "resume" ? "Fortsetzen" : "Starten"}: {primaryAction.title}
-              </span>
-              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-            </Link>
-          </article>
-        ) : (
-          <div className="mt-4 rounded-xl border border-border bg-card p-5" role="status">
-            <p className="text-sm text-muted-foreground">
-              Aktuell ist keine passende Trainingsaktion verfügbar.
-            </p>
-          </div>
-        )}
-
-        {resumeStatus === "error" ? (
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground" role="status">
-            Einzelne gespeicherte Trainings konnten nicht gelesen werden. Verfügbare Arbeitsstände
-            und die Kompetenzempfehlung bleiben nutzbar.
-          </p>
-        ) : null}
-
-        {otherResumable.length > 0 ? (
-          <div className="mt-4 rounded-xl border border-border bg-card/60 p-4">
-            <h3 className="text-sm font-semibold text-foreground">Weitere angefangene Trainings</h3>
-            <ul className="mt-2 space-y-1">
-              {otherResumable.map((candidate) => (
-                <li key={candidate.scenarioId}>
-                  <Link
-                    to="/training/$scenarioId"
-                    params={{ scenarioId: candidate.scenarioId }}
-                    className="inline-flex rounded-md px-1 py-1 text-sm text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    Fortsetzen: {candidate.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </section>
+      <DashboardQuickStart
+        basePrimaryAction={primaryAction}
+        recommendationLoading={recommendationLoading}
+        resumable={resumable}
+        resumeStatus={resumeStatus}
+      />
     </div>
   );
 }
