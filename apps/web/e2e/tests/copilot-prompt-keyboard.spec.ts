@@ -17,26 +17,25 @@ async function openCopilotPrompt(page: Page) {
   return page.getByRole("textbox", { name: "Copilot-Prompt" });
 }
 
-test(
-  "Copilot-Prompt nutzt Shift+Enter für Zeilenumbruch und Enter zum Senden",
-  async ({ page }) => {
-    const prompt = await openCopilotPrompt(page);
-    const response = page.getByText(
-      /Für die geforderte Addition muss die Funktion a \+ b zurückgeben/,
-    );
+test("Copilot-Prompt nutzt Shift+Enter für Zeilenumbruch und Enter zum Senden", async ({
+  page,
+}) => {
+  const prompt = await openCopilotPrompt(page);
+  const response = page.getByText(
+    /Für die geforderte Addition muss die Funktion a \+ b zurückgeben/,
+  );
 
-    await expect(prompt).toBeVisible();
-    await prompt.fill("Erkläre die Addition.");
-    await prompt.press("Shift+Enter");
-    await prompt.type("Bitte kurz antworten.");
+  await expect(prompt).toBeVisible();
+  await prompt.fill("Erkläre die Addition.");
+  await prompt.press("Shift+Enter");
+  await prompt.type("Bitte kurz antworten.");
 
-    await expect(prompt).toBeFocused();
-    await expect(prompt).toHaveValue("Erkläre die Addition.\nBitte kurz antworten.");
-    await expect(response).toHaveCount(0);
+  await expect(prompt).toBeFocused();
+  await expect(prompt).toHaveValue("Erkläre die Addition.\nBitte kurz antworten.");
+  await expect(response).toHaveCount(0);
 
-    await prompt.press("Enter");
+  await prompt.press("Enter");
 
-    await expect(prompt).toHaveValue("");
-    await expect(response).toBeVisible();
-  },
-);
+  await expect(prompt).toHaveValue("");
+  await expect(response).toBeVisible();
+});
