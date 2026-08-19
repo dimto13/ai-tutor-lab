@@ -4,8 +4,7 @@ const PRINTABLE_ASCII =
   " !\"#$%&'()*+,-./0123456789:;<=>?@" +
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`" +
   "abcdefghijklmnopqrstuvwxyz{|}~";
-const SAFE_FILENAME_CHARS =
-  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+const SAFE_FILENAME_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
 
 function caller(ctx) {
   const identity = ctx.identity;
