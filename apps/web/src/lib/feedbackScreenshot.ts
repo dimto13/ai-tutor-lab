@@ -79,6 +79,10 @@ function sanitizeCaptureClone(root: HTMLElement): void {
     element.remove();
   });
 
+  root.querySelectorAll<HTMLElement>('[data-feedback-redact="true"]').forEach((element) => {
+    element.textContent = "Eingabe ausgeblendet";
+  });
+
   root
     .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea")
     .forEach((field) => {
