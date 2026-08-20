@@ -8,6 +8,7 @@ export * from "./helpPolicy.ts";
 export * from "./learningPreferences.ts";
 export * from "./persistence.ts";
 export * from "./scoring.ts";
+export * from "./scoreVisibility.ts";
 export * from "./skillProfile.ts";
 export * from "./stateMachine.ts";
 export * from "./trainingProgress.ts";
