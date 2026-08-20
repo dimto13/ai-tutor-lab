@@ -160,6 +160,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
               )}
             </div>
             <p
+              data-feedback-redact={message.role === "user" ? "true" : undefined}
               className={`rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
                 message.role === "tutor"
                   ? "bg-card text-foreground"
