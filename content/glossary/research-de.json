@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "language": "de",
+  "technologyConcepts": {
+    "ai_coding_assistant": ["ai.agent", "research.source_evidence"]
+  },
+  "concepts": [
+    {
+      "key": "ai.agent",
+      "term": "Agent",
+      "aliases": ["KI-Agent", "AI Agent"],
+      "simple": "Ein Agent ist ein KI-System, das ein Ziel in mehrere Schritte zerlegen und dafür erlaubte Werkzeuge oder Datenquellen verwenden kann.",
+      "advanced": "Agentische Systeme planen Zwischenschritte und können über freigegebene Werkzeugschnittstellen wie MCP Aktionen oder Abfragen ausführen. Ergebnisse bleiben prüfpflichtig; Berechtigungen, Datenfluss und Werkzeuggrenzen bestimmen, was der Agent tatsächlich tun darf.",
+      "uiTargets": []
+    },
+    {
+      "key": "research.source_evidence",
+      "term": "Quelle / Beleg",
+      "aliases": ["Quelle", "Beleg", "Quellenangabe", "Evidence"],
+      "simple": "Eine Quelle zeigt, woher eine Aussage stammt. Zum Beleg wird sie erst, wenn sie die konkrete Aussage tatsächlich trägt und für den benötigten Zeitraum aktuell genug ist.",
+      "advanced": "Quellenqualität hängt unter anderem von Quellentyp, Aktualität, Primärnähe und der Deckung der konkreten Aussage ab. Eine verlinkte Quelle kann echt und dennoch veraltet sein oder einen genannten Zahlenwert nicht stützen.",
+      "uiTargets": []
+    }
+  ]
+}
