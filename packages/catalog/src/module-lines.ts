@@ -123,10 +123,7 @@ export function findModuleLineById(
   return catalog.lines.find(({ id }) => id === moduleLineId) ?? null;
 }
 
-export function getModuleLineById(
-  catalog: ModuleLineCatalog,
-  moduleLineId: string,
-): ModuleLine {
+export function getModuleLineById(catalog: ModuleLineCatalog, moduleLineId: string): ModuleLine {
   const moduleLine = findModuleLineById(catalog, moduleLineId);
   if (!moduleLine) throw new Error(`Unknown module line: ${moduleLineId}`);
   return moduleLine;
