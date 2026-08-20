@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Camera, Download, MessageSquareWarning, Trash2, X } from "lucide-react";
-import { getRuntimeAdapter } from "@/runtime";
-import { useTraining } from "@/state/trainingStore";
 import { captureTrainingSurfaceScreenshot } from "@/lib/feedbackScreenshot";
 import {
   acknowledgeFeedbackNotice,
@@ -15,6 +13,8 @@ import {
   type FeedbackSource,
   type FeedbackViewportClass,
 } from "@/lib/feedbackStore";
+import { getRuntimeAdapter } from "@/runtime";
+import { useTraining } from "@/state/trainingStore";
 
 interface FeedbackCaptureProps {
   source: FeedbackSource;
@@ -44,7 +44,7 @@ export function FeedbackCapture({
   flow = "general",
 }: FeedbackCaptureProps) {
   const { scenario, mode, progress } = useTraining();
-  const runtimeAdapterId = scenario.environment?.runtimeAdapterId ?? null;
+  const runtimeAdapterId = scenario.environment?.runtimeAdapterId;
   const runtimeAdapter = useMemo(() => getRuntimeAdapter(runtimeAdapterId), [runtimeAdapterId]);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -66,7 +66,7 @@ export function FeedbackCapture({
       scenarioId: scenario.id,
       stepId,
       mode,
-      runtimeAdapterId,
+      runtimeAdapterId: runtimeAdapterId ?? null,
       runtime: {
         productId: runtimeAdapter?.productId ?? null,
         capabilities: [...(runtimeAdapter?.capabilities ?? [])],
@@ -122,9 +122,7 @@ export function FeedbackCapture({
         text,
         {
           ...context,
-          runtime: context.runtime
-            ? { ...context.runtime, viewportClass: viewportClass() }
-            : context.runtime,
+          runtime: { ...context.runtime, viewportClass: viewportClass() },
         },
         { kind, screenshot },
       );
@@ -177,17 +175,13 @@ export function FeedbackCapture({
         <Dialog.Content
           data-feedback-capture-ui="true"
           className="platform-ui fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-border bg-panel p-4 text-left shadow-2xl focus:outline-none sm:p-5"
-          aria-describedby="feedback-dialog-description"
         >
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold text-foreground">
                 {problemFlow ? "Problem melden" : "Feedback geben"}
               </Dialog.Title>
-              <Dialog.Description
-                id="feedback-dialog-description"
-                className="mt-1 text-[12px] leading-relaxed text-muted-foreground"
-              >
+              <Dialog.Description className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
                 Scenario, Schritt, Modus und datensparsame technische Laufzeitinformationen werden
                 automatisch als Kontext angehängt.
               </Dialog.Description>
@@ -268,7 +262,7 @@ export function FeedbackCapture({
             {context.mode}
             {" · "}
             {context.runtimeAdapterId ?? "kein Runtime-Adapter"}
-            {context.runtime?.productId ? ` · ${context.runtime.productId}` : ""}
+            {context.runtime.productId ? ` · ${context.runtime.productId}` : ""}
           </div>
 
           <div className="mt-4 rounded-lg border border-border bg-card/70 p-3">
