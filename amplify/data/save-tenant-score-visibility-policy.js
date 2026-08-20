@@ -37,7 +37,10 @@ function caller(ctx) {
 
   if (!tenantAdmin) util.unauthorized();
   if (tenantId === null) {
-    util.error("Tenant membership is required for score policy administration", "TenantMembershipError");
+    util.error(
+      "Tenant membership is required for score policy administration",
+      "TenantMembershipError",
+    );
   }
   return { userId: identity.sub, tenantId };
 }
