@@ -1,12 +1,33 @@
 import { browserLocalStorage } from "@/persistence/adapters/browserLocalStorage";
 
 export type FeedbackSource = "tutor" | "completion";
+export type FeedbackKind = "problem" | "ux" | "improvement" | "general";
+export type FeedbackViewportClass = "compact" | "small" | "medium" | "large" | "unknown";
+
+export interface FeedbackRuntimeContextSnapshot {
+  productId: string | null;
+  capabilities: string[];
+  viewportClass: FeedbackViewportClass;
+  stepStatus: string | null;
+  hintsUsed: number;
+  mistakes: number;
+}
+
+export interface FeedbackScreenshotAttachment {
+  kind: "screenshot";
+  mediaType: "image/png";
+  dataUrl: string;
+  width: number;
+  height: number;
+  capturedArea: "training-surface";
+}
 
 export interface FeedbackContextSnapshot {
   scenarioId: string;
   stepId: string | null;
   mode: string;
   runtimeAdapterId: string | null;
+  runtime: FeedbackRuntimeContextSnapshot | null;
   appVersion: string;
   commit: string;
   timestamp: string;
@@ -15,8 +36,15 @@ export interface FeedbackContextSnapshot {
 export interface FeedbackRecord {
   id: string;
   source: FeedbackSource;
+  kind: FeedbackKind;
   text: string;
   context: FeedbackContextSnapshot;
+  screenshot?: FeedbackScreenshotAttachment;
+}
+
+export interface SaveFeedbackOptions {
+  kind?: FeedbackKind;
+  screenshot?: FeedbackScreenshotAttachment | null;
 }
 
 const STORAGE_KEY = "ai-training-lab:feedback:v1";
@@ -27,24 +55,84 @@ function createId(): string {
   return `feedback-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function isViewportClass(value: unknown): value is FeedbackViewportClass {
+  return (
+    value === "compact" ||
+    value === "small" ||
+    value === "medium" ||
+    value === "large" ||
+    value === "unknown"
+  );
+}
+
+function isRuntimeContext(value: unknown): value is FeedbackRuntimeContextSnapshot {
+  if (value === null) return true;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const runtime = value as Record<string, unknown>;
+  return (
+    (runtime["productId"] === null || typeof runtime["productId"] === "string") &&
+    Array.isArray(runtime["capabilities"]) &&
+    runtime["capabilities"].every((capability) => typeof capability === "string") &&
+    isViewportClass(runtime["viewportClass"]) &&
+    (runtime["stepStatus"] === null || typeof runtime["stepStatus"] === "string") &&
+    typeof runtime["hintsUsed"] === "number" &&
+    typeof runtime["mistakes"] === "number"
+  );
+}
+
+function isScreenshotAttachment(value: unknown): value is FeedbackScreenshotAttachment {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const screenshot = value as Record<string, unknown>;
+  return (
+    screenshot["kind"] === "screenshot" &&
+    screenshot["mediaType"] === "image/png" &&
+    typeof screenshot["dataUrl"] === "string" &&
+    screenshot["dataUrl"].startsWith("data:image/png;base64,") &&
+    typeof screenshot["width"] === "number" &&
+    typeof screenshot["height"] === "number" &&
+    screenshot["capturedArea"] === "training-surface"
+  );
+}
+
+function isFeedbackKind(value: unknown): value is FeedbackKind {
+  return value === "problem" || value === "ux" || value === "improvement" || value === "general";
+}
+
 function isFeedbackRecord(value: unknown): value is FeedbackRecord {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   const context = record["context"];
   if (!context || typeof context !== "object" || Array.isArray(context)) return false;
   const snapshot = context as Record<string, unknown>;
+  const kind = record["kind"] ?? "general";
+  const runtime = snapshot["runtime"] ?? null;
+  const screenshot = record["screenshot"];
   return (
     typeof record["id"] === "string" &&
     (record["source"] === "tutor" || record["source"] === "completion") &&
+    isFeedbackKind(kind) &&
     typeof record["text"] === "string" &&
     typeof snapshot["scenarioId"] === "string" &&
     (snapshot["stepId"] === null || typeof snapshot["stepId"] === "string") &&
     typeof snapshot["mode"] === "string" &&
     (snapshot["runtimeAdapterId"] === null || typeof snapshot["runtimeAdapterId"] === "string") &&
+    isRuntimeContext(runtime) &&
     typeof snapshot["appVersion"] === "string" &&
     typeof snapshot["commit"] === "string" &&
-    typeof snapshot["timestamp"] === "string"
+    typeof snapshot["timestamp"] === "string" &&
+    (screenshot === undefined || isScreenshotAttachment(screenshot))
   );
+}
+
+function normalizeFeedbackRecord(record: FeedbackRecord): FeedbackRecord {
+  return {
+    ...record,
+    kind: record.kind ?? "general",
+    context: {
+      ...record.context,
+      runtime: record.context.runtime ?? null,
+    },
+  };
 }
 
 export function loadFeedbackRecords(): FeedbackRecord[] {
@@ -54,7 +142,9 @@ export function loadFeedbackRecords(): FeedbackRecord[] {
     const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isFeedbackRecord) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter(isFeedbackRecord).map((record) => normalizeFeedbackRecord(record))
+      : [];
   } catch {
     return [];
   }
@@ -64,6 +154,7 @@ export function saveFeedbackRecord(
   source: FeedbackSource,
   text: string,
   context: Omit<FeedbackContextSnapshot, "timestamp">,
+  options: SaveFeedbackOptions = {},
 ): FeedbackRecord {
   const storage = browserLocalStorage();
   if (!storage) throw new Error("Feedback storage is not available");
@@ -74,11 +165,13 @@ export function saveFeedbackRecord(
   const record: FeedbackRecord = {
     id: createId(),
     source,
+    kind: options.kind ?? "general",
     text: normalizedText,
     context: {
       ...context,
       timestamp: new Date().toISOString(),
     },
+    ...(options.screenshot ? { screenshot: options.screenshot } : {}),
   };
   const records = [...loadFeedbackRecords(), record];
   storage.setItem(STORAGE_KEY, JSON.stringify(records));
@@ -96,7 +189,7 @@ export function acknowledgeFeedbackNotice(): void {
 export function feedbackExportJson(): string {
   return JSON.stringify(
     {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: new Date().toISOString(),
       feedback: loadFeedbackRecords(),
     },
