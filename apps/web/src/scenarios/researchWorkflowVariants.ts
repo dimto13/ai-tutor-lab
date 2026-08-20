@@ -30,15 +30,14 @@ const exploreStep: TrainingStep = {
   description:
     "Erkunde, wie simulierte Web-/MCP-Suchläufe, Ergebnisartefakt, Iteration, Quellenprüfung und Transfer zusammenhängen.",
   instruction:
-    "Untersuche Rechercheprotokoll, Vergleichstabelle und alle drei Quellentypen in eigener Reihenfolge. Für den Abschluss musst du beide tatsächlichen Mängel markieren, die Kontrollquelle unverändert lassen und anschließend in Copilot eine Quellenklassifikation mit Empfehlung formulieren.",
-  why: "Explore baut ein mentales Modell des gesamten Workflows auf, ohne die fachliche Prüfpflicht zu umgehen.",
+    "Untersuche Rechercheprotokoll, Vergleichstabelle und alle drei Quellentypen in eigener Reihenfolge. Probiere die Prüfmarkierung aus und vergleiche Zahlenwert, Aktualität und Belegwirkung; die verbindliche Zwei-Mängel-Prüfung folgt im Guided- und Challenge-Modus.",
+  why: "Explore baut ein mentales Modell des gesamten Workflows auf, während die bewertete Prüfpflicht in den dafür vorgesehenen Modi bleibt.",
   helpLevels: [
     "Beginne beim Rechercheprotokoll und der Vergleichstabelle.",
     "Prüfe Herstellerdokumentation, Community-Beitrag und offiziellen Blog auf Zahl, Frische und Belegwirkung.",
-    "Markiere den Zahlenwiderspruch in Quelle A und die veraltete Community-Quelle B, nicht Quelle C. Formuliere danach in Copilot eine Einordnung aller drei Quellentypen mit Empfehlung.",
+    "Vergleiche bei Quelle A 90 % mit 8 von 10, prüfe bei Quelle B das Datum und nutze Quelle C als belastbare Kontrollquelle.",
   ],
-  successMessage:
-    "Der Recherche-Workflow wurde einschließlich Quellenprüfung und Transfer untersucht.",
+  successMessage: "Die zentralen Flächen des Recherche-Workflows wurden untersucht.",
 };
 
 const challengeStep: TrainingStep = {
@@ -102,7 +101,7 @@ export function createResearchWorkflowVariants(base: Scenario): [Scenario, Scena
       mode: "explore",
       title: "Recherche-Workflow frei erkunden",
       description:
-        "Untersuche die deterministisch simulierte Web-/MCP-Recherche frei; der Abschluss verlangt trotzdem beide Quellenmängel und eine begründete Transferempfehlung.",
+        "Untersuche die deterministisch simulierte Web-/MCP-Recherche, ihre Iterationen und die drei Quellentypen frei über den generischen Explore-Vertrag.",
       estimatedMinutes: 12,
       points: 90,
       exploreTargets: [
@@ -114,7 +113,6 @@ export function createResearchWorkflowVariants(base: Scenario): [Scenario, Scena
         "artifact.preview.verify",
         "copilot.chat.prompt",
       ],
-      completionValidation: researchCompletion,
       steps: [exploreStep],
     }),
     createModeVariant(base, {
