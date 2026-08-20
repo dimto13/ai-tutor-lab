@@ -116,11 +116,20 @@ export function parseModuleLineCatalog(raw: unknown): ModuleLineCatalog {
   return moduleLineCatalogSchema.parse(raw);
 }
 
-export function getModuleLineById(
+export function findModuleLineById(
   catalog: ModuleLineCatalog,
   moduleLineId: string,
 ): ModuleLine | null {
   return catalog.lines.find(({ id }) => id === moduleLineId) ?? null;
+}
+
+export function getModuleLineById(
+  catalog: ModuleLineCatalog,
+  moduleLineId: string,
+): ModuleLine {
+  const moduleLine = findModuleLineById(catalog, moduleLineId);
+  if (!moduleLine) throw new Error(`Unknown module line: ${moduleLineId}`);
+  return moduleLine;
 }
 
 export function getDidacticPatternById(
