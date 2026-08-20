@@ -11,6 +11,10 @@ const clientUrl = new URL(
   "../../apps/web/src/data-transparency/userDataTransparency.ts",
   import.meta.url,
 );
+const amplifyAdapterUrl = new URL(
+  "../../apps/web/src/persistence/adapters/amplifyDataTransparency.ts",
+  import.meta.url,
+);
 
 function definitionBlock(source: string, name: string): string {
   const start = source.indexOf(`  ${name}:`);
@@ -73,12 +77,25 @@ test("local-only and server storage are labeled explicitly instead of being conf
   assert.match(source, /AWS Cognito für die Anmeldung und Auth-Claims/);
   assert.match(source, /UserProfile-Pfad/);
   assert.match(source, /Lokaler Auth-Adapter plus Browser-Speicher/);
-  assert.match(source, /Browser-localStorage im bestehenden Feedback-Speicher/);
+  assert.match(source, /Browser-Speicher im bestehenden Feedback-Pfad/);
   assert.match(source, /nicht zuverlässig einer angemeldeten Person zugeordnet/);
   assert.match(
     source,
     /Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen/,
   );
+});
+
+test("cloud data access stays lazy and behind the existing persistence adapter boundary", async () => {
+  const [client, adapter] = await Promise.all([
+    readFile(clientUrl, "utf8"),
+    readFile(amplifyAdapterUrl, "utf8"),
+  ]);
+
+  assert.doesNotMatch(client, /aws-amplify\/data/);
+  assert.match(client, /import\(\s*["']@\/persistence\/adapters\/amplifyDataTransparency["']\s*\)/);
+  assert.match(adapter, /from ["']aws-amplify\/data["']/);
+  assert.match(adapter, /JSON\.parse\(result\.data\)/);
+  assert.match(adapter, /Amplify Data returned invalid JSON for the own-data export/);
 });
 
 test("own-data operations are authenticated, argumentless and server-authoritative", async () => {
@@ -121,6 +138,9 @@ test("export worker has read-only access, uses only active persistence and reuse
   assert.match(handler, /telemetry-deletion-owner:v1/);
   assert.match(handler, /Telemetry export query escaped authenticated subject scope/);
   assert.match(handler, /User data export scan escaped authenticated subject scope/);
-  assert.match(handler, /Tenant aggregates are not person-specific own data/);
+  assert.match(
+    handler,
+    /tenantAggregates:\s*["']Not person-specific and therefore not part of this own-data export\.["']/,
+  );
   assert.match(handler, /Transient authentication credentials are never exported/);
 });
