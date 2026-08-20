@@ -59,6 +59,8 @@ test("transparency catalog covers actual personal data classes and keeps policie
   assert.match(source, /fachliche Nachweisgültigkeit beträgt 12 Monate\. Das ist keine Löschfrist/);
   assert.match(source, /keine separate automatische Löschfrist/);
   assert.match(source, /Rohtelemetrie hat eine serverseitige TTL/);
+  assert.match(source, /Kompetenzprofil wird daraus serverseitig berechnet/);
+  assert.match(source, /keine parallele authoritative Punkte-Persistenz/);
   assert.doesNotMatch(source, /ScoreEvents.*90 Tage/);
   assert.doesNotMatch(source, /Kompetenznachweis.*90 Tage/);
 });
@@ -72,7 +74,7 @@ test("local-only and server storage are labeled explicitly instead of being conf
   assert.match(source, /Nur im Browser des lokalen Entwicklungsmodus/);
   assert.match(source, /Browser-localStorage im bestehenden Feedback-Speicher/);
   assert.match(source, /nicht zuverlässig einer angemeldeten Person zugeordnet/);
-  assert.match(source, /Tokens und/);
+  assert.match(source, /Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen/);
 });
 
 test("own-data operations are authenticated, argumentless and server-authoritative", async () => {
@@ -98,7 +100,7 @@ test("own-data operations are authenticated, argumentless and server-authoritati
   assert.doesNotMatch(handler, /event\?\.arguments\?\.tenantId/);
 });
 
-test("export worker has read-only access and reuses telemetry ownership pointers", async () => {
+test("export worker has read-only access, uses only active persistence and reuses telemetry pointers", async () => {
   const [backend, handler] = await Promise.all([
     readFile(backendUrl, "utf8"),
     readFile(handlerUrl, "utf8"),
@@ -108,6 +110,10 @@ test("export worker has read-only access and reuses telemetry ownership pointers
   assert.match(backend, /rawTelemetryTable\.grantReadData\(userDataExportLambda\)/);
   assert.match(backend, /deletionPointerTable\.grantReadData\(userDataExportLambda\)/);
   assert.doesNotMatch(backend, /grantReadWriteData\(userDataExportLambda\)/);
+  assert.doesNotMatch(handler, /STEP_STATE_TABLE_NAME/);
+  assert.doesNotMatch(handler, /HINT_USAGE_TABLE_NAME/);
+  assert.doesNotMatch(handler, /ATTEMPT_TABLE_NAME/);
+  assert.doesNotMatch(handler, /SKILL_PROFILE_TABLE_NAME/);
   assert.match(handler, /telemetry-deletion-owner:v1/);
   assert.match(handler, /Telemetry export query escaped authenticated subject scope/);
   assert.match(handler, /User data export scan escaped authenticated subject scope/);
