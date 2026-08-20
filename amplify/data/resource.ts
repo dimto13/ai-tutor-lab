@@ -12,6 +12,7 @@ export const schema = a.schema({
   AttestationSigningStatus: a.enum(["signed", "external_signature_required"]),
   AttestationExportFormat: a.enum(["PDF", "CSV"]),
   TelemetryPseudonymizationMode: a.enum(["SESSION", "ANONYMOUS"]),
+  ScoreVisibilityLevel: a.enum(["private", "aggregate", "named"]),
 
   UserProfile: a
     .model({
@@ -152,6 +153,7 @@ export const schema = a.schema({
     })
     .secondaryIndexes((index) => [
       index("ownerKey").sortKeys(["occurredAt"]).name("scoreEventsByOwnerTime"),
+      index("tenantId").sortKeys(["occurredAt"]).name("scoreEventsByTenantTime"),
     ])
     .authorization((allow) => [allow.authenticated()])
     .disableOperations(["queries", "mutations", "subscriptions"]),
@@ -205,6 +207,19 @@ export const schema = a.schema({
       tenantId: a.string().required(),
       pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
       rawEventRetentionDays: a.integer(),
+      updatedAt: a.float().required(),
+    })
+    .authorization((allow) => [allow.authenticated()])
+    .disableOperations(["queries", "mutations", "subscriptions"]),
+
+  TenantScoreVisibilityPolicy: a
+    .model({
+      tenantId: a.string().required(),
+      visibility: a.ref("ScoreVisibilityLevel").required(),
+      leaderboardsEnabled: a.boolean().required(),
+      namedApprovalReference: a.string(),
+      namedApprovalConfirmedBy: a.string(),
+      namedApprovalConfirmedAt: a.float(),
       updatedAt: a.float().required(),
     })
     .authorization((allow) => [allow.authenticated()])
@@ -333,6 +348,26 @@ export const schema = a.schema({
   TenantTelemetryPolicyEnvelope: a.customType({
     pseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
     rawEventRetentionDays: a.integer().required(),
+  }),
+
+  TenantScoreVisibilityPolicyEnvelope: a.customType({
+    visibility: a.ref("ScoreVisibilityLevel").required(),
+    leaderboardsEnabled: a.boolean().required(),
+    namedApprovalConfirmed: a.boolean().required(),
+    namedApprovalReference: a.string(),
+    namedApprovalConfirmedBy: a.string(),
+    namedApprovalConfirmedAt: a.float(),
+    updatedAt: a.float(),
+  }),
+
+  TenantScoreboard: a.customType({
+    visibility: a.ref("ScoreVisibilityLevel").required(),
+    leaderboardsEnabled: a.boolean().required(),
+    cohortSuppressed: a.boolean().required(),
+    cohortSize: a.integer(),
+    totalPoints: a.float(),
+    averagePoints: a.float(),
+    entries: a.json().required(),
   }),
 
   TelemetryDeletionPage: a.customType({
@@ -593,6 +628,49 @@ export const schema = a.schema({
         entry: "./load-tenant-reporting-context.js",
       }),
     ),
+
+  loadTenantScoreVisibilityPolicy: a
+    .query()
+    .returns(a.ref("TenantScoreVisibilityPolicyEnvelope"))
+    .authorization((allow) => [allow.groups(["role:tenant_admin"])])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("TenantScoreVisibilityPolicy"),
+        entry: "./score-visibility-load-policy.js",
+      }),
+    ),
+
+  saveTenantScoreVisibilityPolicy: a
+    .mutation()
+    .arguments({
+      visibility: a.ref("ScoreVisibilityLevel").required(),
+      leaderboardsEnabled: a.boolean().required(),
+      namedApprovalConfirmed: a.boolean(),
+      namedApprovalReference: a.string(),
+    })
+    .returns(a.ref("TenantScoreVisibilityPolicyEnvelope"))
+    .authorization((allow) => [allow.groups(["role:tenant_admin"])])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref("TenantScoreVisibilityPolicy"),
+        entry: "./save-tenant-score-visibility-policy.js",
+      }),
+    ),
+
+  loadTenantScoreboard: a
+    .query()
+    .returns(a.ref("TenantScoreboard"))
+    .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TenantScoreVisibilityPolicy"),
+        entry: "./score-visibility-load-policy.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("ScoreEvent"),
+        entry: "./load-tenant-scoreboard.js",
+      }),
+    ]),
 
   appendTrainingTelemetryEvent: a
     .mutation()
