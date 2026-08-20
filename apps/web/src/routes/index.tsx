@@ -289,13 +289,13 @@ const workflowTrainings: TrainingCardModel[] = [
 ];
 
 const aiWorkflowModuleLine = getModuleLineById(moduleLineCatalog, "ai-workflows-in-practice");
-if (!aiWorkflowModuleLine) {
-  throw new Error("Missing module line: ai-workflows-in-practice");
-}
-
-const aiWorkflowTrainings = aiWorkflowModuleLine.moduleIds
-  .map((moduleId) => workflowTrainings.find(({ id }) => id === moduleId))
-  .filter((training): training is TrainingCardModel => Boolean(training));
+const aiWorkflowTrainings = aiWorkflowModuleLine.moduleIds.map((moduleId) => {
+  const training = workflowTrainings.find(({ id }) => id === moduleId);
+  if (!training) {
+    throw new Error(`Missing dashboard training card for module line module: ${moduleId}`);
+  }
+  return training;
+});
 
 const otherTrainings: TrainingCardModel[] = [
   {
