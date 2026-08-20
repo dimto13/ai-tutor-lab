@@ -312,6 +312,23 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 )}
               </fieldset>
 
+              <section className="rounded-lg border border-border bg-background/35 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Datentransparenz
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  Sieh, welche Daten das Produkt über dich speichert, wer sie sehen kann und welche
+                  Aufbewahrungs- oder Löschregeln tatsächlich implementiert sind.
+                </p>
+                <a
+                  href="/datentransparenz"
+                  onClick={closeSettings}
+                  className="mt-3 inline-flex min-h-9 items-center rounded-md border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Diese Daten werden über mich gespeichert
+                </a>
+              </section>
+
               {saveError || profile.error || preferences.error ? (
                 <p role="alert" className="text-xs text-destructive">
                   {saveError ?? profile.error ?? preferences.error}

@@ -1,5 +1,6 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 import { telemetryDeletionWorker } from "../functions/telemetry-deletion-worker/resource.ts";
+import { userDataExport } from "../functions/user-data-export/resource.ts";
 
 export const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
@@ -375,6 +376,14 @@ export const schema = a.schema({
     complete: a.boolean().required(),
   }),
 
+  MyDataTransparencyContext: a.customType({
+    scoreVisibility: a.ref("ScoreVisibilityLevel").required(),
+    leaderboardsEnabled: a.boolean().required(),
+    namedApprovalConfirmed: a.boolean().required(),
+    rawTelemetryRetentionDays: a.integer().required(),
+    telemetryPseudonymizationMode: a.ref("TelemetryPseudonymizationMode").required(),
+  }),
+
   ScenarioLearningAnalytics: a.customType({
     scenarioId: a.string().required(),
     sessionsStarted: a.integer().required(),
@@ -727,6 +736,18 @@ export const schema = a.schema({
     .returns(a.ref("TelemetryDeletionPage"))
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(telemetryDeletionWorker)),
+
+  loadMyDataTransparencyContext: a
+    .query()
+    .returns(a.ref("MyDataTransparencyContext"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(userDataExport)),
+
+  exportMyData: a
+    .query()
+    .returns(a.string())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(userDataExport)),
 
   loadTrainingAnalytics: a
     .query()
