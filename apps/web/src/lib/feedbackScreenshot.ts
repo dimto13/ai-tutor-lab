@@ -123,7 +123,8 @@ function blobToDataUrl(blob: Blob): Promise<string> {
         reject(new Error("Screenshot data could not be encoded"));
       }
     };
-    reader.onerror = () => reject(reader.error ?? new Error("Screenshot data could not be encoded"));
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("Screenshot data could not be encoded"));
     reader.readAsDataURL(blob);
   });
 }
