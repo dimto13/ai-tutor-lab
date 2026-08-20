@@ -26,7 +26,7 @@ export const Route = createFileRoute("/datentransparenz")({
 });
 
 function scoreVisibilityLabel(context: DataTransparencyContext): string {
-  if (context.storageMode === "browser-local") return "Lokaler Modus";
+  if (context.storageMode === "browser-local") return "Punkte: nur lokal, keine Tenant-Auswertung";
   if (context.scoreVisibility === "private") return "Punkte: privat";
   if (context.scoreVisibility === "aggregate") return "Punkte: aggregiert ab n=5";
   return context.namedApprovalConfirmed ? "Punkte: namentlich freigegeben" : "Punkte: gesperrt";
