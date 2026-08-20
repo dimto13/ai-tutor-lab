@@ -66,7 +66,9 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   await page.getByRole("button", { name: "Tutor fragen" }).click();
   await page.getByPlaceholder("Frage an den Tutor…").fill("Was ist ein Workspace?");
   await page.getByRole("button", { name: "Senden" }).click();
-  await expect(page.getByText("Was ist ein Workspace?", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("paragraph").filter({ hasText: /^Was ist ein Workspace\?$/ }),
+  ).toBeVisible();
   await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
 
   await page.getByRole("button", { name: "Ich habe ein Problem" }).click();
@@ -141,7 +143,7 @@ test("Problemmeldung lässt sich abbrechen, ohne Feedback oder Training-State zu
   await dialog
     .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
     .fill("Diese Meldung soll verworfen werden.");
-  await dialog.getByRole("button", { name: "Abbrechen" }).click();
+  await dialog.getByRole("button", { name: "Abbrechen", exact: true }).click();
 
   await expect(dialog).toBeHidden();
   await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
@@ -190,8 +192,10 @@ test("Problem-Shortcut bleibt bei 320px per Tastatur und Reduced Motion zugängl
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/training/vscode-basics.guided");
   await waitForTrainingReady(page);
+  await page.getByRole("button", { name: "Guide anzeigen" }).click();
 
   const shortcut = page.getByRole("button", { name: "Ich habe ein Problem" });
+  await expect(shortcut).toBeVisible();
   await shortcut.focus();
   await expect(shortcut).toBeFocused();
   await page.keyboard.press("Enter");
