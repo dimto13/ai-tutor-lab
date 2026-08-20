@@ -100,33 +100,42 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       storage: cloud
         ? "AWS Cognito für die Anmeldung und Auth-Claims; ergänzende Profildaten im bestehenden UserProfile-Pfad."
         : "Lokaler Auth-Adapter plus Browser-Speicher für das lokale Nutzerprofil; kein Cognito-Cloudkonto wird verwendet.",
-      recipients: "Du selbst sowie Authentifizierungs- und Backend-Dienste, die Identität, Tenant und Rollen zur Autorisierung benötigen. Es gibt keinen Trainer-Read auf dein UserProfile.",
-      retention: "Für Auth-Konto und UserProfile ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
+      recipients:
+        "Du selbst sowie Authentifizierungs- und Backend-Dienste, die Identität, Tenant und Rollen zur Autorisierung benötigen. Es gibt keinen Trainer-Read auf dein UserProfile.",
+      retention:
+        "Für Auth-Konto und UserProfile ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
     },
     {
       id: "preferences",
       title: "Lernpräferenzen und Barrierefreiheit",
-      stored: "Sprache, bevorzugter Trainingsmodus, Wochenziel, Accessibility-Einstellungen und deine KI-Selbsteinschätzung.",
+      stored:
+        "Sprache, bevorzugter Trainingsmodus, Wochenziel, Accessibility-Einstellungen und deine KI-Selbsteinschätzung.",
       storage: cloud
         ? "AWS-Cloud im bestehenden UserPreferences-Pfad."
         : "Nur im Browser des lokalen Entwicklungsmodus.",
-      recipients: "Du selbst und die Backend-Dienste für deine persönlichen Einstellungen. Diese Selbsteinschätzung ist kein Kompetenznachweis.",
-      retention: "Für Präferenzen ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
+      recipients:
+        "Du selbst und die Backend-Dienste für deine persönlichen Einstellungen. Diese Selbsteinschätzung ist kein Kompetenznachweis.",
+      retention:
+        "Für Präferenzen ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
     },
     {
       id: "training",
       title: "Trainingsfortschritt und Runtime-Zustand",
-      stored: "Trainingssessions mit dem aktuellen Lernfortschritt im Session-Payload sowie separate Runtime-Snapshots für den simulierten Produktzustand.",
+      stored:
+        "Trainingssessions mit dem aktuellen Lernfortschritt im Session-Payload sowie separate Runtime-Snapshots für den simulierten Produktzustand.",
       storage: cloud
         ? "AWS-Cloud über die bestehenden TrainingSession-/RuntimeSnapshot-Persistenzadapter; Offline-Fallback kann zusätzlich subject-gescopte Browserdaten halten."
         : "Subject-gescopte Browser-Persistenz im lokalen Entwicklungsmodus.",
-      recipients: "Du selbst und die Trainings-Backendlogik. Trainer-/Admin-Analytics verwendet einen getrennten Telemetriepfad und gibt gespeicherte Session-/Runtime-Rohzustände nicht direkt aus.",
-      retention: "Für TrainingSessions ist keine separate automatische Löschfrist implementiert. Runtime-Snapshots können im bestehenden Runtime-Pfad ersetzt oder gelöscht werden; Browser-Fallback bleibt bis Überschreiben oder Löschen des Browser-Speichers bestehen.",
+      recipients:
+        "Du selbst und die Trainings-Backendlogik. Trainer-/Admin-Analytics verwendet einen getrennten Telemetriepfad und gibt gespeicherte Session-/Runtime-Rohzustände nicht direkt aus.",
+      retention:
+        "Für TrainingSessions ist keine separate automatische Löschfrist implementiert. Runtime-Snapshots können im bestehenden Runtime-Pfad ersetzt oder gelöscht werden; Browser-Fallback bleibt bis Überschreiben oder Löschen des Browser-Speichers bestehen.",
     },
     {
       id: "scores",
       title: "Punkte und Kompetenzprofil",
-      stored: "Serverbestätigte ScenarioRuns und ScoreEvents werden gespeichert. Das Kompetenzprofil je Technologie wird daraus serverseitig berechnet.",
+      stored:
+        "Serverbestätigte ScenarioRuns und ScoreEvents werden gespeichert. Das Kompetenzprofil je Technologie wird daraus serverseitig berechnet.",
       storage: cloud
         ? "ScoreEvents und ScenarioRuns liegen in der serverautoritativen AWS-Persistenz; der Client ist nicht die Punktequelle und das Kompetenzprofil ist keine parallele authoritative Punkte-Persistenz."
         : "Im lokalen Entwicklungsmodus entsteht keine tenantweite serverautoritative Rangliste.",
@@ -136,19 +145,22 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
     {
       id: "attestations",
       title: "Kompetenznachweise",
-      stored: "Ausgestellte Nachweise mit Szenario-/Produktversion, Lernzielen, Evidenz, Gültigkeitszeitraum und Signaturmetadaten.",
+      stored:
+        "Ausgestellte Nachweise mit Szenario-/Produktversion, Lernzielen, Evidenz, Gültigkeitszeitraum und Signaturmetadaten.",
       storage: cloud
         ? "Serverautoritative AWS-Persistenz; vorhandene Nachweis-Exporte werden erst auf deine Anfrage erzeugt."
         : "Im lokalen Entwicklungsmodus wird kein serverautoritatives Cloud-Attestation-Repository als persönliche Datenquelle verwendet.",
       recipients: cloud
         ? "Du selbst. Ein PDF-/CSV-Nachweis verlässt den Self-Service-Pfad erst, wenn du ihn ausdrücklich exportierst und selbst weitergibst."
         : "Keine Cloud-Empfänger im lokalen Entwicklungsmodus.",
-      retention: "Die fachliche Nachweisgültigkeit beträgt 12 Monate. Das ist keine Löschfrist; für den gespeicherten Nachweis ist aktuell keine separate automatische Löschfrist definiert.",
+      retention:
+        "Die fachliche Nachweisgültigkeit beträgt 12 Monate. Das ist keine Löschfrist; für den gespeicherten Nachweis ist aktuell keine separate automatische Löschfrist definiert.",
     },
     {
       id: "telemetry",
       title: "Nutzungs- und Lerntelemetrie",
-      stored: "Pseudonymisierte Rohereignisse zu Sessions, Schritten, Hinweisen und Versuchen sowie daraus erzeugte tenantweite Aggregate.",
+      stored:
+        "Pseudonymisierte Rohereignisse zu Sessions, Schritten, Hinweisen und Versuchen sowie daraus erzeugte tenantweite Aggregate.",
       storage: cloud
         ? `AWS-Cloud. Rohereignisse werden im Modus ${context.telemetryPseudonymizationMode ?? "SESSION"} pseudonymisiert.`
         : "Im lokalen Entwicklungsmodus ist der Cloud-Telemetriepfad nicht aktiv.",
@@ -163,18 +175,25 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
     {
       id: "feedback",
       title: "Produktfeedback",
-      stored: "Explizit eingegebenes Feedback mit Szenario-, Schritt-, Modus- und technischem Kontext.",
-      storage: "Browser-localStorage im bestehenden Feedback-Speicher; aktuell kein automatischer Server-Upload.",
-      recipients: "Nur Personen mit Zugriff auf dieses Browserprofil, solange du das Feedback nicht selbst exportierst. Der aktuelle Feedback-Speicher ist nicht serverseitig an dein Konto gebunden.",
-      retention: "Bis du die Browserdaten löschst. Weil dieser Speicher nicht zuverlässig einer angemeldeten Person zugeordnet ist, wird er nicht automatisch in den kontogebundenen Eigendatenexport gemischt; der bestehende Feedback-Export bleibt separat verfügbar.",
+      stored:
+        "Explizit eingegebenes Feedback mit Szenario-, Schritt-, Modus- und technischem Kontext.",
+      storage:
+        "Browser-localStorage im bestehenden Feedback-Speicher; aktuell kein automatischer Server-Upload.",
+      recipients:
+        "Nur Personen mit Zugriff auf dieses Browserprofil, solange du das Feedback nicht selbst exportierst. Der aktuelle Feedback-Speicher ist nicht serverseitig an dein Konto gebunden.",
+      retention:
+        "Bis du die Browserdaten löschst. Weil dieser Speicher nicht zuverlässig einer angemeldeten Person zugeordnet ist, wird er nicht automatisch in den kontogebundenen Eigendatenexport gemischt; der bestehende Feedback-Export bleibt separat verfügbar.",
     },
     {
       id: "transient",
       title: "Nur vorübergehend verarbeitete Daten",
-      stored: "Authentifizierungs- und Request-Kontext einschließlich kurzlebiger Zugangstokens, der benötigt wird, um deinen Nutzer und Tenant serverseitig zu autorisieren.",
-      storage: "Nur transient im Auth-/Request-Pfad; keine zusätzliche Export-Persistenz wird angelegt.",
+      stored:
+        "Authentifizierungs- und Request-Kontext einschließlich kurzlebiger Zugangstokens, der benötigt wird, um deinen Nutzer und Tenant serverseitig zu autorisieren.",
+      storage:
+        "Nur transient im Auth-/Request-Pfad; keine zusätzliche Export-Persistenz wird angelegt.",
       recipients: "Authentifizierungs- und Backend-Dienste während der Verarbeitung.",
-      retention: "Nicht als eigener Produktdatensatz gespeichert. Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen.",
+      retention:
+        "Nicht als eigener Produktdatensatz gespeichert. Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen.",
     },
   ];
 }
