@@ -60,12 +60,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   };
 
   const problemShortcut = (
-    <FeedbackCapture
-      source="tutor"
-      triggerLabel="Ich habe ein Problem"
-      compact
-      flow="problem"
-    />
+    <FeedbackCapture source="tutor" triggerLabel="Ich habe ein Problem" compact flow="problem" />
   );
 
   if (!open) {
