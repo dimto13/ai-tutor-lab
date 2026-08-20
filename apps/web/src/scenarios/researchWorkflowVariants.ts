@@ -37,7 +37,8 @@ const exploreStep: TrainingStep = {
     "Prüfe Herstellerdokumentation, Community-Beitrag und offiziellen Blog auf Zahl, Frische und Belegwirkung.",
     "Markiere den Zahlenwiderspruch in Quelle A und die veraltete Community-Quelle B, nicht Quelle C. Formuliere danach in Copilot eine Einordnung aller drei Quellentypen mit Empfehlung.",
   ],
-  successMessage: "Der Recherche-Workflow wurde einschließlich Quellenprüfung und Transfer untersucht.",
+  successMessage:
+    "Der Recherche-Workflow wurde einschließlich Quellenprüfung und Transfer untersucht.",
 };
 
 const challengeStep: TrainingStep = {
@@ -52,7 +53,8 @@ const challengeStep: TrainingStep = {
     "Alle vier Revisionen müssen angewendet sein; genau Quelle A und B tragen die eingebauten Mängel.",
     "Quelle A widerspricht der Tabelle numerisch, Quelle B ist veraltet, Quelle C ist die belastbare Kontrollquelle. Nenne anschließend Herstellerdokumentation, offiziellen Blog und Community-Beitrag in einer begründeten Empfehlung im Copilot Chat.",
   ],
-  successMessage: "Die Recherche ist nachvollziehbar iteriert, korrekt geprüft und begründet eingeordnet.",
+  successMessage:
+    "Die Recherche ist nachvollziehbar iteriert, korrekt geprüft und begründet eingeordnet.",
 };
 
 const transferValidation: Validation[] = [
