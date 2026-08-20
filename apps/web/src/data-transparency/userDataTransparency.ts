@@ -93,13 +93,15 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
   return [
     {
       id: "account",
-      title: "Kontoprofil",
-      stored: "Nutzer-ID, Tenant-Zuordnung, Anzeigename und – sofern vorhanden – E-Mail-Adresse.",
+      title: "Kontoprofil und Anmeldung",
+      stored: cloud
+        ? "Cognito-Identität und aktuelle Auth-Claims wie Nutzer-ID, Tenant-Zuordnung, E-Mail, Anzeigename und Rollen sowie – sofern angelegt – das ergänzende UserProfile."
+        : "Die lokale Testidentität aus der Entwicklungs-Konfiguration und – sofern gespeichert – das lokale Nutzerprofil.",
       storage: cloud
-        ? "AWS-Cloud im bestehenden UserProfile-Pfad."
-        : "Nur im Browser des lokalen Entwicklungsmodus; kein Cloud-Profil wird verwendet.",
-      recipients: "Du selbst und die technischen Backend-Dienste, die dein Profil laden oder speichern. Es gibt keinen Trainer-Read auf dein Profil.",
-      retention: "Für das Profil ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
+        ? "AWS Cognito für die Anmeldung und Auth-Claims; ergänzende Profildaten im bestehenden UserProfile-Pfad."
+        : "Lokaler Auth-Adapter plus Browser-Speicher für das lokale Nutzerprofil; kein Cognito-Cloudkonto wird verwendet.",
+      recipients: "Du selbst sowie Authentifizierungs- und Backend-Dienste, die Identität, Tenant und Rollen zur Autorisierung benötigen. Es gibt keinen Trainer-Read auf dein UserProfile.",
+      retention: "Für Auth-Konto und UserProfile ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
     },
     {
       id: "preferences",
@@ -169,7 +171,7 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
     {
       id: "transient",
       title: "Nur vorübergehend verarbeitete Daten",
-      stored: "Authentifizierungs- und Request-Kontext, der benötigt wird, um deinen Nutzer und Tenant serverseitig zu autorisieren.",
+      stored: "Authentifizierungs- und Request-Kontext einschließlich kurzlebiger Zugangstokens, der benötigt wird, um deinen Nutzer und Tenant serverseitig zu autorisieren.",
       storage: "Nur transient im Auth-/Request-Pfad; keine zusätzliche Export-Persistenz wird angelegt.",
       recipients: "Authentifizierungs- und Backend-Dienste während der Verarbeitung.",
       retention: "Nicht als eigener Produktdatensatz gespeichert. Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen.",
@@ -234,6 +236,13 @@ export async function ownDataExportJson(input: OwnDataExportInput): Promise<stri
         tenantId: input.identity.tenantId,
       },
       storageMode,
+      authenticatedIdentity: {
+        userId: input.identity.userId,
+        tenantId: input.identity.tenantId,
+        email: input.identity.email,
+        displayName: input.identity.displayName,
+        roles: input.identity.roles,
+      },
       serverData,
       browserData: {
         profile: storageMode === "browser-local" ? input.profile : null,
