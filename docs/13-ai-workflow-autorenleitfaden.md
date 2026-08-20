@@ -178,8 +178,8 @@ Für jedes neue Workflow-Modul wird vor der Implementierung festgelegt:
 | Iteration                | welche sichtbare Änderung angefordert wird         |
 | eingebauter Schwachpunkt | exakter Fehler und seine Quelle im Seed            |
 | Prüfnachweis             | Event/State, das die Erkennung des Fehlers belegt  |
-| Feedback                 | Rückmeldung nach der aktiven Prüfung                |
-| Transfer                 | Risiken, Grenzen und geeigneter Einsatz             |
+| Feedback                 | Rückmeldung nach der aktiven Prüfung               |
+| Transfer                 | Risiken, Grenzen und geeigneter Einsatz            |
 
 Explore, Guided und Challenge dürfen dieselbe fachliche Geschichte unterschiedlich führen. Der Challenge-Modus bewertet bevorzugt den Zielzustand und nicht eine vorgeschriebene Klickfolge.
 
