@@ -50,6 +50,7 @@ export type {
   DidacticPhase,
   ModuleLine,
   ModuleLineCatalog,
+  ModuleLineItem,
   VerificationContract,
 } from "./module-lines.ts";
 export {
@@ -61,6 +62,7 @@ export {
   moduleLineCatalogSchema,
   moduleLineSchema,
   parseModuleLineCatalog,
+  selectModuleLineItems,
   verificationContractSchema,
 } from "./module-lines.ts";
 export type {
