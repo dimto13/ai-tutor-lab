@@ -198,56 +198,69 @@ export function HighlightOverlay({
   const effectiveTooltip = conceptFocus
     ? `${conceptFocus.term}: zugehöriger Bereich in der Oberfläche.`
     : tooltip;
+  const announcement = effectiveTooltip ?? activeStep?.instruction;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
-      <div
-        className={`absolute left-0 right-0 top-0 ${dim} transition-opacity motion-reduce:transition-none`}
-        style={{ height: rect.top }}
-      />
-      <div
-        className={`absolute bottom-0 left-0 right-0 ${dim}`}
-        style={{ top: rect.top + rect.height }}
-      />
-      <div
-        className={`absolute left-0 ${dim}`}
-        style={{ top: rect.top, height: rect.height, width: rect.left }}
-      />
-      <div
-        className={`absolute right-0 ${dim}`}
-        style={{ top: rect.top, height: rect.height, left: rect.left + rect.width }}
-      />
-      <div
-        data-testid="highlight-frame"
-        data-highlight-kind="guided"
-        data-highlight-concept={conceptFocus?.conceptKey ?? explanationConcept?.key}
-        className={`absolute rounded-md ring-2 ring-ring ${
-          strong ? "animate-pulse motion-reduce:animate-none" : ""
-        }`}
-        style={{
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-          boxShadow:
-            "0 0 0 1px var(--ring), 0 0 24px 4px color-mix(in oklab, var(--ring) 45%, transparent)",
-        }}
-      />
-      {effectiveTooltip && visible && placement ? (
-        <div
-          ref={tooltipRef}
-          data-testid="highlight-tooltip"
-          data-placement-side={placement.side}
-          className="absolute max-w-64 rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
-          style={{
-            top: placement.top,
-            left: placement.left,
-            maxWidth: "calc(100vw - 24px)",
-          }}
+    <>
+      {announcement ? (
+        <p
+          data-testid="highlight-announcement"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
         >
-          {effectiveTooltip}
-        </div>
+          Hervorgehobenes Ziel: {announcement}
+        </p>
       ) : null}
-    </div>
+      <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
+        <div
+          className={`absolute left-0 right-0 top-0 ${dim} transition-opacity motion-reduce:transition-none`}
+          style={{ height: rect.top }}
+        />
+        <div
+          className={`absolute bottom-0 left-0 right-0 ${dim}`}
+          style={{ top: rect.top + rect.height }}
+        />
+        <div
+          className={`absolute left-0 ${dim}`}
+          style={{ top: rect.top, height: rect.height, width: rect.left }}
+        />
+        <div
+          className={`absolute right-0 ${dim}`}
+          style={{ top: rect.top, height: rect.height, left: rect.left + rect.width }}
+        />
+        <div
+          data-testid="highlight-frame"
+          data-highlight-kind="guided"
+          data-highlight-concept={conceptFocus?.conceptKey ?? explanationConcept?.key}
+          className={`absolute rounded-md ring-2 ring-ring ${
+            strong ? "animate-pulse motion-reduce:animate-none" : ""
+          }`}
+          style={{
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+            boxShadow:
+              "0 0 0 1px var(--ring), 0 0 24px 4px color-mix(in oklab, var(--ring) 45%, transparent)",
+          }}
+        />
+        {effectiveTooltip && visible && placement ? (
+          <div
+            ref={tooltipRef}
+            data-testid="highlight-tooltip"
+            data-placement-side={placement.side}
+            className="absolute max-w-64 rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
+            style={{
+              top: placement.top,
+              left: placement.left,
+              maxWidth: "calc(100vw - 24px)",
+            }}
+          >
+            {effectiveTooltip}
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }
