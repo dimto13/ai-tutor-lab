@@ -113,7 +113,7 @@ test("explore stays on the generic surface-inspection contract", () => {
   assert.ok(explore.exploreTargets?.includes("copilot.chat.prompt"));
 });
 
-test("challenge requires both defects, the control source and active transfer", () => {
+test("challenge requires both defects, keeps the control source unmarked and requires active transfer", () => {
   const verifiedChecks = stateChecks(challenge.completionValidation, "artifact.verifiedIds");
   assert.ok(
     verifiedChecks.some((entry) => entry.kind === "state" && entry.includes === "source-a"),
@@ -124,6 +124,6 @@ test("challenge requires both defects, the control source and active transfer", 
   assert.ok(
     verifiedChecks.some((entry) => entry.kind === "state" && entry.excludes === "source-c"),
   );
-  assert.equal(stateChecks(challenge.completionValidation, "artifact.active.id").length, 1);
+  assert.equal(stateChecks(challenge.completionValidation, "artifact.active.id").length, 0);
   assert.equal(stateChecks(challenge.completionValidation, "copilot.prompt.last").length, 4);
 });
