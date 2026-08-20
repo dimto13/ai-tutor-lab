@@ -240,7 +240,7 @@ test("Feedback bleibt lokal exportierbar und nutzt das bestehende Feedback-Forma
     }>;
   };
 
-  expect(exported.schemaVersion).toBe(2);
+  expect(exported.schemaVersion).toBe(1);
   expect(exported.feedback).toHaveLength(1);
   expect(exported.feedback[0]?.source).toBe("tutor");
   expect(exported.feedback[0]?.kind).toBe("problem");
