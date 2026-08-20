@@ -42,9 +42,8 @@ export async function loadMyDataTransparencyContext(): Promise<DataTransparencyC
     };
   }
 
-  const { loadAmplifyDataTransparencyContext } = await import(
-    "@/persistence/adapters/amplifyDataTransparency"
-  );
+  const { loadAmplifyDataTransparencyContext } =
+    await import("@/persistence/adapters/amplifyDataTransparency");
   const context = await loadAmplifyDataTransparencyContext();
   return { storageMode, ...context };
 }
@@ -204,9 +203,7 @@ export function scopedBrowserTrainingRecords(identity: UserIdentity): Array<{
 }
 
 async function remoteOwnDataJson(): Promise<unknown> {
-  const { exportAmplifyOwnData } = await import(
-    "@/persistence/adapters/amplifyDataTransparency"
-  );
+  const { exportAmplifyOwnData } = await import("@/persistence/adapters/amplifyDataTransparency");
   return exportAmplifyOwnData();
 }
 
