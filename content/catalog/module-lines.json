@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "patterns": [
+    {
+      "id": "ai-workflow-seven-step",
+      "title": "KI-Workflow in sieben Schritten",
+      "phases": [
+        {
+          "id": "context",
+          "title": "Ausgangslage / Arbeitskontext",
+          "purpose": "Eine realistische fachliche Ausgangslage und den Nutzen der KI-Unterstützung verständlich machen."
+        },
+        {
+          "id": "task",
+          "title": "Aufgabe oder Problem",
+          "purpose": "Ziel, relevanten Kontext, Qualitätsbedingungen und gewünschtes Ausgabeformat als eigenen Auftrag formulieren."
+        },
+        {
+          "id": "ai-use",
+          "title": "KI-Einsatz",
+          "purpose": "Die deterministisch simulierte KI-Arbeit mit nachvollziehbaren Zwischenstufen sichtbar machen."
+        },
+        {
+          "id": "artifact",
+          "title": "Artefakt / Arbeitsprodukt",
+          "purpose": "Ein konkretes und fachlich prüfbares Ergebnis außerhalb eines reinen Chattexts bereitstellen."
+        },
+        {
+          "id": "iteration",
+          "title": "Iteration / Verbesserung",
+          "purpose": "Eine gezielte Änderung am bestehenden Ergebnis anfordern und im Artefakt sichtbar machen."
+        },
+        {
+          "id": "verification",
+          "title": "Prüfung / Verifikation",
+          "purpose": "Das KI-Ergebnis aktiv gegen Quelle, Regel oder Ausgangsdaten prüfen und den eingebauten Schwachpunkt erkennen oder korrigieren.",
+          "verificationContract": {
+            "requiresEmbeddedWeakness": true,
+            "requiresActiveLearnerAction": true,
+            "requiresDeterministicValidation": true,
+            "requiresFeedback": true
+          }
+        },
+        {
+          "id": "transfer",
+          "title": "Transfer / Wiederholung",
+          "purpose": "Einsatzgrenzen, menschliche Verantwortung, Risiken und Übertragbarkeit auf den eigenen Arbeitskontext einordnen."
+        }
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "id": "ai-workflows-in-practice",
+      "title": "KI-Workflows in der Praxis",
+      "description": "Realistische Arbeitsabläufe mit KI durchführen, sichtbare Arbeitsprodukte iterieren und Ergebnisse aktiv fachlich prüfen.",
+      "learningLayer": "ai_workflow",
+      "patternId": "ai-workflow-seven-step",
+      "moduleIds": [
+        "developer-workflow-basics",
+        "research-workflow",
+        "html-page-workflow"
+      ]
+    }
+  ]
+}
