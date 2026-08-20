@@ -42,6 +42,24 @@ export interface FeedbackRecord {
   screenshot?: FeedbackScreenshotAttachment;
 }
 
+interface PersistedFeedbackRecord {
+  id: string;
+  source: FeedbackSource;
+  kind?: FeedbackKind;
+  text: string;
+  context: {
+    scenarioId: string;
+    stepId: string | null;
+    mode: string;
+    runtimeAdapterId: string | null;
+    runtime?: FeedbackRuntimeContextSnapshot | null;
+    appVersion: string;
+    commit: string;
+    timestamp: string;
+  };
+  screenshot?: FeedbackScreenshotAttachment;
+}
+
 export interface SaveFeedbackOptions {
   kind?: FeedbackKind;
   screenshot?: FeedbackScreenshotAttachment | null;
@@ -65,8 +83,10 @@ function isViewportClass(value: unknown): value is FeedbackViewportClass {
   );
 }
 
-function isRuntimeContext(value: unknown): value is FeedbackRuntimeContextSnapshot {
-  if (value === null) return true;
+function isRuntimeContext(
+  value: unknown,
+): value is FeedbackRuntimeContextSnapshot | null | undefined {
+  if (value === null || value === undefined) return true;
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const runtime = value as Record<string, unknown>;
   return (
@@ -98,25 +118,24 @@ function isFeedbackKind(value: unknown): value is FeedbackKind {
   return value === "problem" || value === "ux" || value === "improvement" || value === "general";
 }
 
-function isFeedbackRecord(value: unknown): value is FeedbackRecord {
+function isPersistedFeedbackRecord(value: unknown): value is PersistedFeedbackRecord {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   const context = record["context"];
   if (!context || typeof context !== "object" || Array.isArray(context)) return false;
   const snapshot = context as Record<string, unknown>;
-  const kind = record["kind"] ?? "general";
-  const runtime = snapshot["runtime"] ?? null;
+  const kind = record["kind"];
   const screenshot = record["screenshot"];
   return (
     typeof record["id"] === "string" &&
     (record["source"] === "tutor" || record["source"] === "completion") &&
-    isFeedbackKind(kind) &&
+    (kind === undefined || isFeedbackKind(kind)) &&
     typeof record["text"] === "string" &&
     typeof snapshot["scenarioId"] === "string" &&
     (snapshot["stepId"] === null || typeof snapshot["stepId"] === "string") &&
     typeof snapshot["mode"] === "string" &&
     (snapshot["runtimeAdapterId"] === null || typeof snapshot["runtimeAdapterId"] === "string") &&
-    isRuntimeContext(runtime) &&
+    isRuntimeContext(snapshot["runtime"]) &&
     typeof snapshot["appVersion"] === "string" &&
     typeof snapshot["commit"] === "string" &&
     typeof snapshot["timestamp"] === "string" &&
@@ -124,14 +143,17 @@ function isFeedbackRecord(value: unknown): value is FeedbackRecord {
   );
 }
 
-function normalizeFeedbackRecord(record: FeedbackRecord): FeedbackRecord {
+function normalizeFeedbackRecord(record: PersistedFeedbackRecord): FeedbackRecord {
   return {
-    ...record,
+    id: record.id,
+    source: record.source,
     kind: record.kind ?? "general",
+    text: record.text,
     context: {
       ...record.context,
       runtime: record.context.runtime ?? null,
     },
+    ...(record.screenshot ? { screenshot: record.screenshot } : {}),
   };
 }
 
@@ -143,7 +165,7 @@ export function loadFeedbackRecords(): FeedbackRecord[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed)
-      ? parsed.filter(isFeedbackRecord).map((record) => normalizeFeedbackRecord(record))
+      ? parsed.filter(isPersistedFeedbackRecord).map(normalizeFeedbackRecord)
       : [];
   } catch {
     return [];
@@ -189,7 +211,7 @@ export function acknowledgeFeedbackNotice(): void {
 export function feedbackExportJson(): string {
   return JSON.stringify(
     {
-      schemaVersion: 2,
+      schemaVersion: 1,
       exportedAt: new Date().toISOString(),
       feedback: loadFeedbackRecords(),
     },
