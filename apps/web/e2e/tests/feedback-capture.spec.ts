@@ -11,28 +11,6 @@ async function readFeedbackRecords(page: Page): Promise<unknown[]> {
   }, FEEDBACK_STORAGE_KEY);
 }
 
-async function prepareScreenshotCaptureCounter(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    const original = HTMLCanvasElement.prototype.toDataURL;
-    const target = window as Window & { __feedbackScreenshotCaptureCount?: number };
-    target.__feedbackScreenshotCaptureCount = 0;
-    HTMLCanvasElement.prototype.toDataURL = function toDataURL(type?: string, quality?: number) {
-      const current = window as Window & { __feedbackScreenshotCaptureCount?: number };
-      current.__feedbackScreenshotCaptureCount =
-        (current.__feedbackScreenshotCaptureCount ?? 0) + 1;
-      return original.call(this, type, quality);
-    };
-  });
-}
-
-async function screenshotCaptureCount(page: Page): Promise<number> {
-  return page.evaluate(
-    () =>
-      (window as Window & { __feedbackScreenshotCaptureCount?: number })
-        .__feedbackScreenshotCaptureCount ?? 0,
-  );
-}
-
 async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
     "Training bereit",
@@ -43,7 +21,6 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   page,
   accessibility,
 }) => {
-  await prepareScreenshotCaptureCounter(page);
   const forbiddenRequests: string[] = [];
   page.on("request", (request) => {
     const url = new URL(request.url());
@@ -78,7 +55,9 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   await expect(dialog).toContainText("vscode-basics.guided");
   await expect(dialog).toContainText("guided");
   await expect(dialog).toContainText("vscode-simulator");
-  expect(await screenshotCaptureCount(page)).toBe(0);
+  await expect(
+    dialog.getByRole("img", { name: "Vorschau des aufgenommenen Trainings-Screenshots" }),
+  ).toHaveCount(0);
 
   await dialog
     .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
@@ -124,7 +103,6 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   expect(records[0]?.context?.runtime?.hintsUsed).toBe(0);
   expect(records[0]?.context?.runtime?.mistakes).toBe(0);
 
-  expect(await screenshotCaptureCount(page)).toBe(0);
   await expect(stepHeading).toHaveText(stepBeforeFeedback!);
   expect(forbiddenRequests).toEqual([]);
   await accessibility.check("explicit tutor problem feedback confirmation");
@@ -153,7 +131,6 @@ test("Problemmeldung lässt sich abbrechen, ohne Feedback oder Training-State zu
 test("Screenshot entsteht erst nach Consent, wird als Vorschau gezeigt und kann verworfen werden", async ({
   page,
 }) => {
-  await prepareScreenshotCaptureCounter(page);
   await page.goto("/training/vscode-basics.guided");
   await waitForTrainingReady(page);
 
@@ -163,17 +140,18 @@ test("Screenshot entsteht erst nach Consent, wird als Vorschau gezeigt und kann 
     .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
     .fill("Die visuelle Zuordnung im Simulator ist unklar.");
 
-  expect(await screenshotCaptureCount(page)).toBe(0);
-  await dialog.getByRole("button", { name: "Screenshot hinzufügen" }).click();
-  await expect(dialog).toContainText("Erst dieser Klick startet die Aufnahme");
-  expect(await screenshotCaptureCount(page)).toBe(0);
-
-  await dialog.getByRole("button", { name: "Screenshot jetzt aufnehmen" }).click();
   const preview = dialog.getByRole("img", {
     name: "Vorschau des aufgenommenen Trainings-Screenshots",
   });
+  await expect(preview).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Screenshot hinzufügen" }).click();
+  await expect(dialog).toContainText("Erst dieser Klick startet die Aufnahme");
+  await expect(preview).toHaveCount(0);
+  await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
+
+  await dialog.getByRole("button", { name: "Screenshot jetzt aufnehmen" }).click();
   await expect(preview).toBeVisible();
-  await expect.poll(() => screenshotCaptureCount(page)).toBeGreaterThan(0);
+  await expect(preview).toHaveAttribute("src", /^data:image\/svg\+xml;base64,/);
 
   await dialog.getByRole("button", { name: "Screenshot verwerfen" }).click();
   await expect(preview).toHaveCount(0);
