@@ -1,4 +1,4 @@
-import { findModuleLineById, moduleLineCatalog } from "@/catalog";
+import { moduleLineCatalog, selectModuleLineItems } from "@/catalog";
 import type { LearningLayer, Scenario } from "@/types/training";
 import { parseScenario } from "./contentLoader";
 import { createHtmlPageWorkflowVariants } from "./htmlPageWorkflowVariants";
@@ -93,14 +93,5 @@ export function getScenariosForLearningLayer(learningLayer: LearningLayer): Scen
 }
 
 export function getScenariosForModuleLine(moduleLineId: string): Scenario[] {
-  const moduleLine = findModuleLineById(moduleLineCatalog, moduleLineId);
-  if (!moduleLine) return [];
-
-  const moduleIds = new Set(moduleLine.moduleIds);
-  return Object.values(scenarios).filter(
-    (scenario) =>
-      scenario.learningLayer === moduleLine.learningLayer &&
-      scenario.moduleId !== undefined &&
-      moduleIds.has(scenario.moduleId),
-  );
+  return selectModuleLineItems(moduleLineCatalog, moduleLineId, Object.values(scenarios));
 }
