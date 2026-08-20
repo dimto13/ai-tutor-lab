@@ -2,19 +2,67 @@ import type { FeedbackScreenshotAttachment } from "@/lib/feedbackStore";
 
 const MAX_CAPTURE_WIDTH = 1280;
 const MAX_CAPTURE_HEIGHT = 900;
+const CAPTURE_STYLE_PROPERTIES = [
+  "display",
+  "position",
+  "box-sizing",
+  "width",
+  "height",
+  "min-width",
+  "min-height",
+  "max-width",
+  "max-height",
+  "margin",
+  "padding",
+  "gap",
+  "flex",
+  "flex-direction",
+  "flex-wrap",
+  "align-items",
+  "align-content",
+  "justify-content",
+  "grid-template-columns",
+  "grid-template-rows",
+  "grid-auto-flow",
+  "overflow",
+  "overflow-x",
+  "overflow-y",
+  "background",
+  "background-color",
+  "color",
+  "border",
+  "border-radius",
+  "box-shadow",
+  "opacity",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "line-height",
+  "letter-spacing",
+  "text-align",
+  "text-decoration",
+  "text-transform",
+  "white-space",
+  "word-break",
+  "overflow-wrap",
+] as const;
 
-function inlineComputedStyles(source: HTMLElement, clone: HTMLElement): void {
+function inlineComputedStyles(source: Element, clone: Element): void {
+  if (!(source instanceof HTMLElement || source instanceof SVGElement)) return;
+  if (!(clone instanceof HTMLElement || clone instanceof SVGElement)) return;
+
   const computed = window.getComputedStyle(source);
-  const css = Array.from(computed)
-    .map((property) => `${property}:${computed.getPropertyValue(property)};`)
-    .join("");
-  clone.setAttribute("style", css);
+  for (const property of CAPTURE_STYLE_PROPERTIES) {
+    const value = computed.getPropertyValue(property);
+    if (value) clone.style.setProperty(property, value);
+  }
 }
 
 function createStyledClone(source: HTMLElement): HTMLElement {
   const clone = source.cloneNode(true) as HTMLElement;
-  const sourceElements = [source, ...source.querySelectorAll<HTMLElement>("*")];
-  const cloneElements = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
+  const sourceElements = [source, ...source.querySelectorAll("*")];
+  const cloneElements = [clone, ...clone.querySelectorAll("*")];
 
   for (let index = 0; index < sourceElements.length; index += 1) {
     const sourceElement = sourceElements[index];
@@ -61,12 +109,18 @@ function captureTarget(): HTMLElement {
   return document.body;
 }
 
-function imageFromUrl(url: string): Promise<HTMLImageElement> {
+function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Screenshot preview could not be rendered"));
-    image.src = url;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Screenshot data could not be encoded"));
+      }
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Screenshot data could not be encoded"));
+    reader.readAsDataURL(blob);
   });
 }
 
@@ -88,27 +142,15 @@ export async function captureTrainingSurfaceScreenshot(): Promise<FeedbackScreen
   clone.style.overflow = "hidden";
 
   const serialized = new XMLSerializer().serializeToString(clone);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${sourceWidth}" height="${sourceHeight}" viewBox="0 0 ${sourceWidth} ${sourceHeight}"><foreignObject x="0" y="0" width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${sourceWidth}px;height:${sourceHeight}px;overflow:hidden">${serialized}</div></foreignObject></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${sourceWidth} ${sourceHeight}"><foreignObject x="0" y="0" width="${sourceWidth}" height="${sourceHeight}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${sourceWidth}px;height:${sourceHeight}px;overflow:hidden">${serialized}</div></foreignObject></svg>`;
+  const dataUrl = await blobToDataUrl(new Blob([svg], { type: "image/svg+xml" }));
 
-  const objectUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
-  try {
-    const image = await imageFromUrl(objectUrl);
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Screenshot canvas is not available");
-    context.drawImage(image, 0, 0, width, height);
-
-    return {
-      kind: "screenshot",
-      mediaType: "image/png",
-      dataUrl: canvas.toDataURL("image/png"),
-      width,
-      height,
-      capturedArea: "training-surface",
-    };
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
+  return {
+    kind: "screenshot",
+    mediaType: "image/svg+xml",
+    dataUrl,
+    width,
+    height,
+    capturedArea: "training-surface",
+  };
 }
