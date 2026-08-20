@@ -1,9 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import {
-  getDidacticPatternById,
-  moduleLineCatalog,
-} from "../packages/catalog/src/index.ts";
+import { getDidacticPatternById, moduleLineCatalog } from "../packages/catalog/src/index.ts";
 import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
 import type { Scenario } from "../apps/web/src/types/training.ts";
 
