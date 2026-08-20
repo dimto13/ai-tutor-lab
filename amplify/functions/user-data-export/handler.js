@@ -74,11 +74,9 @@ function telemetryPolicyId(tenantId) {
 }
 
 function telemetryOwnerKey(subject) {
-  return [
-    "telemetry-deletion-owner:v1",
-    encoded(subject.tenantId),
-    encoded(subject.userId),
-  ].join(".");
+  return ["telemetry-deletion-owner:v1", encoded(subject.tenantId), encoded(subject.userId)].join(
+    ".",
+  );
 }
 
 function decodeAttribute(attribute) {
@@ -152,7 +150,11 @@ function scoreVisibilityContext(row, tenantId) {
   if (row.tenantId !== tenantId) {
     throw new Error("Score visibility policy escaped authenticated tenant scope");
   }
-  if (row.visibility !== "private" && row.visibility !== "aggregate" && row.visibility !== "named") {
+  if (
+    row.visibility !== "private" &&
+    row.visibility !== "aggregate" &&
+    row.visibility !== "named"
+  ) {
     throw new Error("Persisted score visibility level is invalid");
   }
   if (typeof row.leaderboardsEnabled !== "boolean") {
@@ -189,7 +191,8 @@ function telemetryContext(row, tenantId) {
       ? rawDays
       : DEFAULT_RAW_EVENT_RETENTION_DAYS;
   return {
-    telemetryPseudonymizationMode: row?.pseudonymizationMode === "ANONYMOUS" ? "ANONYMOUS" : "SESSION",
+    telemetryPseudonymizationMode:
+      row?.pseudonymizationMode === "ANONYMOUS" ? "ANONYMOUS" : "SESSION",
     rawTelemetryRetentionDays,
   };
 }
