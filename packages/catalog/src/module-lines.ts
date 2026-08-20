@@ -111,6 +111,10 @@ export type DidacticPhase = z.infer<typeof didacticPhaseSchema>;
 export type DidacticPattern = z.infer<typeof didacticPatternSchema>;
 export type ModuleLine = z.infer<typeof moduleLineSchema>;
 export type ModuleLineCatalog = z.infer<typeof moduleLineCatalogSchema>;
+export type ModuleLineItem = {
+  learningLayer?: string;
+  moduleId?: string;
+};
 
 export function parseModuleLineCatalog(raw: unknown): ModuleLineCatalog {
   return moduleLineCatalogSchema.parse(raw);
@@ -134,4 +138,21 @@ export function getDidacticPatternById(
   patternId: string,
 ): DidacticPattern | null {
   return catalog.patterns.find(({ id }) => id === patternId) ?? null;
+}
+
+export function selectModuleLineItems<T extends ModuleLineItem>(
+  catalog: ModuleLineCatalog,
+  moduleLineId: string,
+  items: Iterable<T>,
+): T[] {
+  const moduleLine = findModuleLineById(catalog, moduleLineId);
+  if (!moduleLine) return [];
+
+  const moduleIds = new Set(moduleLine.moduleIds);
+  return [...items].filter(
+    (item) =>
+      item.learningLayer === moduleLine.learningLayer &&
+      item.moduleId !== undefined &&
+      moduleIds.has(item.moduleId),
+  );
 }
