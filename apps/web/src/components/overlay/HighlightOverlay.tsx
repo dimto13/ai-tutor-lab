@@ -205,7 +205,6 @@ export function HighlightOverlay({
       {announcement ? (
         <p
           data-testid="highlight-announcement"
-          role="status"
           aria-live="polite"
           aria-atomic="true"
           className="sr-only"
