@@ -206,8 +206,8 @@ test.describe("Accessibility regressions", () => {
     const announcement = page.getByTestId("highlight-announcement");
     await expect(primaryAction).toContainText(/Explorer/i);
     await expect(page.getByTestId("highlight-frame")).toBeVisible();
-    await expect(announcement).toHaveAttribute("role", "status");
     await expect(announcement).toHaveAttribute("aria-live", "polite");
+    await expect(announcement).toHaveAttribute("aria-atomic", "true");
     await expect(announcement).toContainText(/Explorer/i);
 
     const highlightToggle = page.getByRole("button", { name: "Highlights", exact: true });
