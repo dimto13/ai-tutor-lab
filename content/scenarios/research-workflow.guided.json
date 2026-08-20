@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "ai_workflow",
   "title": "Recherche mit Websuche/MCP – Ergebnisse prüfen",
-  "description": "Formuliere eine Recherche, verfolge mehrere simulierte Suchläufe, iteriere eine Vergleichstabelle und finde zwei eingebaute Quellenmängel.",
+  "description": "Formuliere eine Recherche, verfolge mehrere deterministisch simulierte Web-/MCP-Suchläufe, iteriere eine Vergleichstabelle und finde einen Zahlenwiderspruch sowie eine veraltete Quelle.",
   "audience": {
     "personaId": "non-programmer",
     "glossaryConcepts": [
@@ -37,13 +37,16 @@
       "folders": ["team-research"],
       "files": ["research-brief.md"],
       "contents": {
-        "research-brief.md": "# Team-Entscheidung\nVergleiche drei Recherchewerkzeuge mit aktuellen Quellen."
+        "research-brief.md": "# Team-Entscheidung\nVergleiche drei Recherchewerkzeuge mit aktuellen Quellen. Alle Suchergebnisse in diesem Training sind deterministisch simuliert; es werden keine echten Web- oder MCP-Aufrufe ausgeführt."
       },
       "openTabs": ["research-brief.md"],
       "activeFile": "research-brief.md",
       "chatResponses": [
         {
-          "response": "Auftrag verstanden. Die Recherche wird in Marktüberblick, Aktualitätsfilter und Quellenabgleich zerlegt. Führe die drei sichtbaren Suchschritte im Rechercheprotokoll aus."
+          "response": "Auftrag verstanden. Die simulierte Recherche wird in Marktüberblick, Aktualitätsfilter und Quellenabgleich zerlegt. Führe die drei sichtbaren Suchschritte im Rechercheprotokoll aus."
+        },
+        {
+          "response": "Einordnung übernommen. Für die Entscheidung zählen Quellentyp, Aktualität und die konkrete Deckung der Aussage; Herstellerdokumentation und offizieller Blog sind nicht automatisch korrekt, Community-Beiträge nicht automatisch wertlos."
         }
       ],
       "artifactPreview": {
@@ -53,8 +56,8 @@
           {
             "id": "research-log",
             "type": "data",
-            "title": "Rechercheprotokoll",
-            "value": "Auftrag verstanden. Noch keine Suche ausgeführt."
+            "title": "Rechercheprotokoll · simulierte Web-/MCP-Suche",
+            "value": "Auftrag verstanden. Noch keine Suche ausgeführt. Laufzeit: deterministischer Simulator, keine Live-Websuche."
           },
           {
             "id": "comparison",
@@ -67,48 +70,69 @@
               },
               {
                 "key": "fit",
-                "label": "Eignung"
+                "label": "Eignung / Aussage"
               },
               {
                 "key": "source",
                 "label": "Quelle"
+              },
+              {
+                "key": "sourceType",
+                "label": "Quellentyp"
+              },
+              {
+                "key": "freshness",
+                "label": "Frische"
+              },
+              {
+                "key": "quality",
+                "label": "Bewertung"
               }
             ],
             "rows": [
               {
                 "option": "TeamSearch",
-                "fit": "Sehr gut für verteilte Teams",
-                "source": "Quelle A"
+                "fit": "90 % der geprüften Aussagen sind laut Benchmark belegt",
+                "source": "Quelle A",
+                "sourceType": "Herstellerdokumentation",
+                "freshness": "aktuell",
+                "quality": "Primärquelle · Zahl prüfen"
               },
               {
                 "option": "DocScout",
-                "fit": "Günstig und aktuell",
-                "source": "Quelle B"
+                "fit": "Günstige Option für den Einstieg",
+                "source": "Quelle B",
+                "sourceType": "Community-Beitrag",
+                "freshness": "veraltet",
+                "quality": "Kontextquelle · nicht entscheidungsreif"
               },
               {
                 "option": "ResearchHub",
-                "fit": "Gute Quellenübersicht",
-                "source": "Quelle C"
+                "fit": "Dokumentiert Quellen, Datum und Exportformat",
+                "source": "Quelle C",
+                "sourceType": "Offizieller Blog",
+                "freshness": "aktuell",
+                "quality": "Offizielle Sekundärquelle · Aussage gedeckt"
               }
             ]
           },
           {
             "id": "source-a",
             "type": "data",
-            "title": "Quelle A · Produktseite",
-            "value": "18.04.2026: TeamSearch bündelt Suchergebnisse und Exporte. Keine Aussage zur besonderen Eignung für verteilte Teams."
+            "title": "Quelle A · Herstellerdokumentation",
+            "value": "Typ: Herstellerdokumentation\nStand: 18.04.2026\nFrische: aktuell\nQualitätsstatus: Primärquelle, konkrete Aussage trotzdem prüfen\n\nSimulierter Prüfbenchmark: 8 von 10 geprüften Aussagen waren belegt – das entspricht 80 %."
           },
           {
             "id": "source-b",
             "type": "data",
-            "title": "Quelle B · Marktübersicht",
-            "value": "10.05.2023: DocScout wurde mit einem Einstiegspreis von 12 € beschrieben. Die Quelle ist mehr als drei Jahre alt."
+            "title": "Quelle B · Community-Beitrag",
+            "value": "Typ: Community-Beitrag\nStand: 10.05.2023\nFrische: veraltet – mehr als drei Jahre alt\nQualitätsstatus: Kontextquelle, für aktuelle Kosten nicht belastbar\n\nDer Beitrag nennt für DocScout einen damaligen Einstiegspreis von 12 € pro Monat."
           },
           {
             "id": "source-c",
             "type": "data",
-            "title": "Quelle C · Anbieterinfo",
-            "value": "02.06.2026: ResearchHub dokumentiert Quellen, Datum und Exportformat pro Recherche. Aussage und Aktualität sind nachvollziehbar."
+            "title": "Quelle C · Offizieller Blog",
+            "value": "Typ: Offizieller Blog\nStand: 02.06.2026\nFrische: aktuell\nQualitätsstatus: offizielle Sekundärquelle, Aussage gedeckt\n\nResearchHub dokumentiert Quellen, Datum und Exportformat pro Recherche."
           }
         ],
         "revisions": [
@@ -119,8 +143,8 @@
             "next": {
               "id": "research-log",
               "type": "data",
-              "title": "Rechercheprotokoll",
-              "value": "Suche 1/3: Marktüberblick – 8 Kandidaten gefunden."
+              "title": "Rechercheprotokoll · simulierte Web-/MCP-Suche",
+              "value": "Suche 1/3: Marktüberblick – 8 simulierte Kandidaten gefunden."
             }
           },
           {
@@ -130,7 +154,7 @@
             "next": {
               "id": "research-log",
               "type": "data",
-              "title": "Rechercheprotokoll",
+              "title": "Rechercheprotokoll · simulierte Web-/MCP-Suche",
               "value": "Suche 2/3: 5 Kandidaten mit aktuellen Treffern priorisiert."
             }
           },
@@ -141,8 +165,8 @@
             "next": {
               "id": "research-log",
               "type": "data",
-              "title": "Rechercheprotokoll",
-              "value": "Suche 3/3: 3 Optionen mit Quellenbezug ausgewählt."
+              "title": "Rechercheprotokoll · simulierte Web-/MCP-Suche",
+              "value": "Suche 3/3: Herstellerdokumentation, offizieller Blog und Community-Beitrag sichtbar gegenübergestellt."
             }
           },
           {
@@ -160,11 +184,23 @@
                 },
                 {
                   "key": "fit",
-                  "label": "Eignung"
+                  "label": "Eignung / Aussage"
                 },
                 {
                   "key": "source",
                   "label": "Quelle"
+                },
+                {
+                  "key": "sourceType",
+                  "label": "Quellentyp"
+                },
+                {
+                  "key": "freshness",
+                  "label": "Frische"
+                },
+                {
+                  "key": "quality",
+                  "label": "Bewertung"
                 },
                 {
                   "key": "cost",
@@ -174,20 +210,29 @@
               "rows": [
                 {
                   "option": "TeamSearch",
-                  "fit": "Sehr gut für verteilte Teams",
+                  "fit": "90 % der geprüften Aussagen sind laut Benchmark belegt",
                   "source": "Quelle A",
+                  "sourceType": "Herstellerdokumentation",
+                  "freshness": "aktuell",
+                  "quality": "Primärquelle · Zahl prüfen",
                   "cost": "29 €/Monat"
                 },
                 {
                   "option": "DocScout",
-                  "fit": "Günstig und aktuell",
+                  "fit": "Günstige Option für den Einstieg",
                   "source": "Quelle B",
-                  "cost": "12 €/Monat"
+                  "sourceType": "Community-Beitrag",
+                  "freshness": "veraltet",
+                  "quality": "Kontextquelle · nicht entscheidungsreif",
+                  "cost": "12 €/Monat (Stand 2023)"
                 },
                 {
                   "option": "ResearchHub",
-                  "fit": "Gute Quellenübersicht",
+                  "fit": "Dokumentiert Quellen, Datum und Exportformat",
                   "source": "Quelle C",
+                  "sourceType": "Offizieller Blog",
+                  "freshness": "aktuell",
+                  "quality": "Offizielle Sekundärquelle · Aussage gedeckt",
                   "cost": "24 €/Monat"
                 }
               ]
@@ -220,8 +265,8 @@
     },
     {
       "id": "searches",
-      "title": "Drei Suchläufe sichtbar ausführen",
-      "description": "Die Recherche ist als Abfolge aus Marktüberblick, Aktualitätsfilter und Quellenabgleich modelliert.",
+      "title": "Drei simulierte Suchläufe sichtbar ausführen",
+      "description": "Die Recherche ist als Abfolge aus Marktüberblick, Aktualitätsfilter und Quellenabgleich modelliert. Die Suchläufe sind deterministisch; es gibt keine Live-Web- oder MCP-Abhängigkeit.",
       "instruction": "Öffne das Rechercheprotokoll und führe nacheinander Suche 1, Suche 2 und Suche 3 aus.",
       "why": "Mehrere sichtbare Suchschritte machen die Entstehung des Ergebnisses nachvollziehbar.",
       "helpLevels": [
@@ -229,7 +274,7 @@
         "Wende die angebotenen Revisionen nacheinander an.",
         "Wähle das Rechercheprotokoll und klicke nacheinander auf „Suche 1 · Marktüberblick“, „Suche 2 · Zeitraum eingrenzen“ und „Suche 3 · Quellen abgleichen“."
       ],
-      "successMessage": "Alle drei Suchläufe sind sichtbar erfolgt.",
+      "successMessage": "Alle drei simulierten Suchläufe sind sichtbar erfolgt.",
       "validation": {
         "kind": "event",
         "type": "artifact.updated",
@@ -243,7 +288,7 @@
     {
       "id": "iterate",
       "title": "Vergleichstabelle iterieren",
-      "description": "Das Ergebnis enthält Optionen und Quellen; für die Entscheidung fehlen noch Kosten.",
+      "description": "Das Ergebnis enthält Optionen, Quellentyp, Frische und Qualitätsstatus; für die Entscheidung fehlen noch Kosten.",
       "instruction": "Wähle Vergleichstabelle und wende „Kosten ergänzen“ an.",
       "why": "Eine gezielte Iteration verbessert das bestehende Artefakt, ohne die Recherche neu zu starten.",
       "helpLevels": [
@@ -264,16 +309,16 @@
     },
     {
       "id": "source-a",
-      "title": "Unbelegte Aussage erkennen",
-      "description": "Quelle A nennt TeamSearch, trägt aber die behauptete besondere Eignung nicht.",
-      "instruction": "Öffne Quelle A, vergleiche sie mit der Tabelle und markiere das Ergebnis als geprüft.",
-      "why": "Eine Quellenangabe ist nur dann ein Beleg, wenn sie die konkrete Aussage tatsächlich trägt.",
+      "title": "Zahlenwiderspruch zur Quelle erkennen",
+      "description": "Die Tabelle behauptet 90 %, die Herstellerdokumentation nennt im simulierten Prüfbenchmark 8 von 10 beziehungsweise 80 %.",
+      "instruction": "Öffne Quelle A, vergleiche die Zahl mit der Tabelle und markiere diesen Mangel als geprüft.",
+      "why": "Eine verlinkte Primärquelle ist nur dann ein Beleg, wenn auch der konkrete Zahlenwert mit ihr übereinstimmt.",
       "helpLevels": [
-        "Öffne Quelle A.",
-        "Vergleiche Wortlaut und Tabellenbehauptung.",
-        "Öffne Quelle A, vergleiche den Wortlaut mit der Tabellenbehauptung und klicke anschließend auf Ergebnis geprüft."
+        "Öffne Quelle A und suche den Prozentwert.",
+        "Vergleiche 90 % in der Tabelle mit 8 von 10 in der Quelle.",
+        "Öffne Quelle A, erkenne 8 von 10 = 80 % statt der behaupteten 90 % und klicke anschließend auf Ergebnis geprüft."
       ],
-      "successMessage": "Die unbelegte Aussage ist markiert.",
+      "successMessage": "Der numerische Quellenwiderspruch ist markiert.",
       "validation": {
         "kind": "event",
         "type": "artifact.verified",
@@ -285,16 +330,16 @@
     },
     {
       "id": "source-b",
-      "title": "Veraltete Quelle erkennen",
-      "description": "Quelle B ist echt, aber älter als der geforderte Zeitraum.",
-      "instruction": "Öffne Quelle B, prüfe das Datum und markiere den Mangel als geprüft.",
-      "why": "Veraltete Informationen können eine aktuelle Entscheidung verzerren.",
+      "title": "Veraltete Community-Quelle erkennen",
+      "description": "Der Community-Beitrag ist echt, aber mehr als drei Jahre alt und damit außerhalb des geforderten 12-Monats-Zeitraums.",
+      "instruction": "Öffne Quelle B, prüfe Quellentyp und Datum und markiere den Mangel als geprüft.",
+      "why": "Ein Community-Beitrag kann nützlich sein, aber veraltete Informationen dürfen eine aktuelle Entscheidung nicht unbemerkt tragen.",
       "helpLevels": [
         "Öffne Quelle B.",
         "Vergleiche Datum und 12-Monats-Vorgabe.",
-        "Öffne Quelle B, vergleiche das Datum mit der 12-Monats-Vorgabe und klicke anschließend auf Ergebnis geprüft."
+        "Öffne Quelle B, erkenne den Stand 10.05.2023 als veraltet und klicke anschließend auf Ergebnis geprüft."
       ],
-      "successMessage": "Die veraltete Quelle ist markiert.",
+      "successMessage": "Die veraltete Community-Quelle ist markiert.",
       "validation": {
         "kind": "event",
         "type": "artifact.verified",
@@ -306,16 +351,16 @@
     },
     {
       "id": "source-c",
-      "title": "Kontrollquelle prüfen",
-      "description": "Quelle C ist aktuell und deckt die Aussage. Nicht jede Quelle ist mangelhaft.",
-      "instruction": "Öffne Quelle C und prüfe sie, ohne sie als Mangel zu markieren.",
-      "why": "Gute Prüfung unterscheidet belastbare von problematischen Quellen.",
+      "title": "Aktuellen offiziellen Blog als Kontrollquelle prüfen",
+      "description": "Quelle C ist ein aktueller offizieller Blogbeitrag und deckt die konkrete Aussage. Nicht jede Quelle ist mangelhaft.",
+      "instruction": "Öffne Quelle C und prüfe Typ, Datum und Aussage, ohne sie als Mangel zu markieren.",
+      "why": "Gute Prüfung unterscheidet belastbare von problematischen Quellen und bewertet nicht nur nach dem Absender.",
       "helpLevels": [
         "Öffne Quelle C.",
-        "Prüfe Datum und Aussage.",
-        "Öffne Quelle C, prüfe Datum und Aussage und lass die Prüfmarkierung aus, weil kein Mangel vorliegt."
+        "Prüfe Typ, Datum und Aussage.",
+        "Öffne Quelle C, prüfe den Stand 02.06.2026 und die gedeckte Aussage und lass die Prüfmarkierung aus, weil kein Mangel vorliegt."
       ],
-      "successMessage": "Auch die dritte Quelle wurde kontrolliert.",
+      "successMessage": "Die belastbare Kontrollquelle wurde geprüft.",
       "validation": {
         "kind": "event",
         "type": "artifact.selected",
@@ -327,13 +372,42 @@
     },
     {
       "id": "classify",
-      "title": "MCP, Agent und Quelle einordnen",
-      "description": "Ein Agent kann über MCP externe Suchwerkzeuge nutzen; eine eingebaute Suche kann denselben fachlichen Zweck im Produkt erfüllen.",
-      "instruction": "Merke dir: Suchanfrage und Kontext können Systemgrenzen verlassen. Eine Quelle/Beleg-Angabe ist keine Garantie und muss vor einer geschäftlichen Entscheidung geprüft werden.",
-      "why": "Der reale Schaden entsteht durch ungeprüfte Übernahme plausibler Ergebnisse.",
-      "helpLevels": ["", "", ""],
-      "successMessage": "Du kannst Nutzen, Datenfluss und Prüfpflicht einordnen.",
-      "stepType": "explanation"
+      "title": "Quellen klassifizieren und Empfehlung formulieren",
+      "description": "Ordne Herstellerdokumentation, offiziellen Blog und Community-Beitrag nach ihrer Rolle ein und leite daraus eine begründete Recherche- oder Arbeitsentscheidung ab. Beziehe MCP/Agent-Datenfluss und die beiden gefundenen Mängel ein.",
+      "instruction": "Öffne Copilot Chat und schreibe in eigenen Worten eine kurze Einordnung, die Herstellerdokumentation, offiziellen Blog und Community-Beitrag nennt und mit einer begründeten Empfehlung endet.",
+      "why": "Der Transfer besteht darin, Quellen nicht pauschal zu vertrauen, sondern Typ, Aktualität und konkrete Belegwirkung in eine verantwortbare Entscheidung zu übersetzen.",
+      "helpLevels": [
+        "Nenne alle drei Quellentypen und eine Empfehlung.",
+        "Ordne Herstellerdokumentation, offiziellen Blog und Community-Beitrag nach Aussagekraft und Aktualität ein.",
+        "Öffne Copilot Chat und formuliere eine kurze Einordnung mit den Begriffen Herstellerdokumentation, offizieller Blog und Community-Beitrag sowie einer begründeten Empfehlung für das weitere Vorgehen."
+      ],
+      "successMessage": "Du hast Quellenklassifikation und begründete Empfehlung aktiv formuliert.",
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "copilot.prompt.last",
+            "includesAny": ["Herstellerdokumentation", "Hersteller"]
+          },
+          {
+            "kind": "state",
+            "selector": "copilot.prompt.last",
+            "includesAny": ["offizieller Blog", "offiziellen Blog", "Blog"]
+          },
+          {
+            "kind": "state",
+            "selector": "copilot.prompt.last",
+            "includesAny": ["Community-Beitrag", "Community"]
+          },
+          {
+            "kind": "state",
+            "selector": "copilot.prompt.last",
+            "includesAny": ["Empfehlung", "empfehle", "Vorgehen"]
+          }
+        ]
+      },
+      "highlightTarget": "copilot.chat.prompt"
     }
   ]
 }

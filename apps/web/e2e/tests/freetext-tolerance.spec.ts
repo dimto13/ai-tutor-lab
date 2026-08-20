@@ -16,7 +16,9 @@ test("Recherche akzeptiert sinngleiche Formulierung ohne Magic Word", async ({ p
   await prompt.press("Enter");
 
   await expect(
-    page.getByRole("heading", { name: "Schritt 2 – Drei Suchläufe sichtbar ausführen" }),
+    page.getByRole("heading", {
+      name: "Schritt 2 – Drei simulierte Suchläufe sichtbar ausführen",
+    }),
   ).toBeVisible();
 });
 
