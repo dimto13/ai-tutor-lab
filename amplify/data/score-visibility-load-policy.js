@@ -13,25 +13,26 @@ function caller(ctx) {
   let role = null;
 
   for (const group of groups) {
-    if (typeof group !== "string") continue;
-    if (group.startsWith("tenant:")) {
-      const candidate = group.slice("tenant:".length);
-      if (candidate.length === 0) {
-        util.error("Invalid tenant membership", "TenantMembershipError");
+    if (typeof group === "string") {
+      if (group.startsWith("tenant:")) {
+        const candidate = group.slice("tenant:".length);
+        if (candidate.length === 0) {
+          util.error("Invalid tenant membership", "TenantMembershipError");
+        }
+        if (tenantId !== null && tenantId !== candidate) {
+          util.error(
+            "Multiple tenant memberships require explicit tenant selection",
+            "TenantMembershipError",
+          );
+        }
+        tenantId = candidate;
+      } else if (group.startsWith("role:")) {
+        if (KNOWN_ROLE_GROUPS.indexOf(group) === -1) {
+          util.error("Unknown application role membership", "RoleMembershipError");
+        }
+        if (group === "role:tenant_admin") role = "tenant_admin";
+        else if (group === "role:trainer" && role === null) role = "trainer";
       }
-      if (tenantId !== null && tenantId !== candidate) {
-        util.error(
-          "Multiple tenant memberships require explicit tenant selection",
-          "TenantMembershipError",
-        );
-      }
-      tenantId = candidate;
-    } else if (group.startsWith("role:")) {
-      if (KNOWN_ROLE_GROUPS.indexOf(group) === -1) {
-        util.error("Unknown application role membership", "RoleMembershipError");
-      }
-      if (group === "role:tenant_admin") role = "tenant_admin";
-      else if (group === "role:trainer" && role === null) role = "trainer";
     }
   }
 
