@@ -1,45 +1,234 @@
 import { readFile } from "node:fs/promises";
-import { expect, test } from "../fixtures/browser-error-guard";
+import { expect, test } from "../fixtures/accessibility-regression";
 
-test("Feedback speichert Kontext lokal, übersteht Reload und lässt sich als JSON exportieren", async ({
+const FEEDBACK_STORAGE_KEY = "ai-training-lab:feedback:v1";
+
+async function installScreenshotCaptureCounter(page: Parameters<typeof test>[0] extends never ? never : never) {
+  void page;
+}
+
+async function readFeedbackRecords(page: import("@playwright/test").Page) {
+  return page.evaluate((storageKey) => {
+    const raw = window.localStorage.getItem(storageKey);
+    return raw ? (JSON.parse(raw) as unknown[]) : [];
+  }, FEEDBACK_STORAGE_KEY);
+}
+
+async function screenshotCaptureCount(page: import("@playwright/test").Page): Promise<number> {
+  return page.evaluate(
+    () => (window as Window & { __feedbackScreenshotCaptureCount?: number }).__feedbackScreenshotCaptureCount ?? 0,
+  );
+}
+
+async function prepareScreenshotCaptureCounter(page: import("@playwright/test").Page): Promise<void> {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.toDataURL;
+    (window as Window & { __feedbackScreenshotCaptureCount?: number }).__feedbackScreenshotCaptureCount =
+      0;
+    HTMLCanvasElement.prototype.toDataURL = function toDataURL(type?: string, quality?: unknown) {
+      const target = window as Window & { __feedbackScreenshotCaptureCount?: number };
+      target.__feedbackScreenshotCaptureCount = (target.__feedbackScreenshotCaptureCount ?? 0) + 1;
+      return original.call(this, type, quality);
+    };
+  });
+}
+
+test("Tutor trennt Lernfrage und explizite Problemmeldung und speichert strukturierten Kontext", async ({
   page,
+  accessibility,
 }) => {
+  await prepareScreenshotCaptureCounter(page);
+  const forbiddenRequests: string[] = [];
+  page.on("request", (request) => {
+    const url = request.url();
+    const parsed = new URL(url);
+    if (
+      /(^|\.)github\.com$/i.test(parsed.hostname) ||
+      /(^|\.)api\.github\.com$/i.test(parsed.hostname) ||
+      /(^|\.)githubusercontent\.com$/i.test(parsed.hostname) ||
+      /(^|\/)deploy(?:\/|$)/i.test(parsed.pathname)
+    ) {
+      forbiddenRequests.push(url);
+    }
+  });
+
   await page.goto("/training/vscode-basics.guided");
-  await expect(page.getByRole("status")).toContainText("Training bereit");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
 
   const stepHeading = page.locator("aside h2").first();
   const stepBeforeFeedback = await stepHeading.textContent();
   expect(stepBeforeFeedback).toBeTruthy();
 
-  await page.getByRole("button", { name: "Feedback geben" }).click();
-  const dialog = page.getByRole("dialog", { name: "Feedback geben" });
+  await page.getByRole("button", { name: "Tutor fragen" }).click();
+  const tutorQuestion = page.getByPlaceholder("Frage an den Tutor…");
+  await tutorQuestion.fill("Was ist ein Workspace?");
+  await page.getByRole("button", { name: "Senden" }).click();
+  await expect(page.getByText("Was ist ein Workspace?", { exact: true })).toBeVisible();
+  await expect.poll(() => readFeedbackRecords(page)).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Ich habe ein Problem" }).click();
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
   await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText(
-    "keine personenbezogenen, vertraulichen oder geheimen Inhalte",
-  );
+  await expect(dialog).toContainText("Lernfragen bleiben normale Tutorfragen");
   await expect(dialog).toContainText("vscode-basics.guided");
+  await expect(dialog).toContainText("guided");
   await expect(dialog).toContainText("vscode-simulator");
+  await expect(screenshotCaptureCount(page)).resolves.toBe(0);
 
   await dialog
-    .getByPlaceholder("Was war unklar, hilfreich oder sollte verbessert werden?")
-    .fill("Die Erklärung zum aktuellen Schritt könnte ein kurzes Beispiel enthalten.");
-  await dialog.getByRole("button", { name: "Feedback speichern" }).click();
-  await expect(dialog.getByRole("status")).toContainText("Feedback lokal gespeichert");
-  await dialog.getByRole("button", { name: "Feedback schließen" }).click();
-
-  await expect(stepHeading).toHaveText(stepBeforeFeedback!);
-
-  await page.reload();
-  await expect(page.getByRole("status")).toContainText("Training bereit");
-  await page.getByRole("button", { name: "Feedback geben" }).click();
-  const reloadedDialog = page.getByRole("dialog", { name: "Feedback geben" });
-  await expect(reloadedDialog).not.toContainText(
-    "keine personenbezogenen, vertraulichen oder geheimen Inhalte",
+    .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
+    .fill("Beim aktuellen Schritt ist nicht klar, warum der Workspace geöffnet werden soll.");
+  await dialog.getByRole("button", { name: "Problemmeldung speichern" }).click();
+  await expect(dialog.getByRole("status")).toContainText(
+    "Feedback lokal gespeichert. Dein Trainingsfortschritt bleibt unverändert.",
   );
-  await expect(reloadedDialog.getByRole("button", { name: "JSON exportieren (1)" })).toBeEnabled();
+
+  const records = (await readFeedbackRecords(page)) as Array<{
+    source?: string;
+    kind?: string;
+    text?: string;
+    screenshot?: unknown;
+    context?: {
+      scenarioId?: string;
+      stepId?: string | null;
+      mode?: string;
+      runtimeAdapterId?: string | null;
+      runtime?: {
+        productId?: string | null;
+        capabilities?: string[];
+        viewportClass?: string;
+        stepStatus?: string | null;
+        hintsUsed?: number;
+        mistakes?: number;
+      } | null;
+    };
+  }>;
+  expect(records).toHaveLength(1);
+  expect(records[0]?.source).toBe("tutor");
+  expect(records[0]?.kind).toBe("problem");
+  expect(records[0]?.text).toContain("Workspace");
+  expect(records[0]?.screenshot).toBeUndefined();
+  expect(records[0]?.context?.scenarioId).toBe("vscode-basics.guided");
+  expect(records[0]?.context?.stepId).toBeTruthy();
+  expect(records[0]?.context?.mode).toBe("guided");
+  expect(records[0]?.context?.runtimeAdapterId).toBe("vscode-simulator");
+  expect(records[0]?.context?.runtime?.productId).toBeTruthy();
+  expect(records[0]?.context?.runtime?.capabilities?.length).toBeGreaterThan(0);
+  expect(records[0]?.context?.runtime?.stepStatus).toBeTruthy();
+  expect(records[0]?.context?.runtime?.hintsUsed).toBe(0);
+  expect(records[0]?.context?.runtime?.mistakes).toBe(0);
+
+  await expect(screenshotCaptureCount(page)).resolves.toBe(0);
+  await expect(stepHeading).toHaveText(stepBeforeFeedback!);
+  expect(forbiddenRequests).toEqual([]);
+  await accessibility.check("explicit tutor problem feedback confirmation");
+});
+
+test("Problemmeldung lässt sich abbrechen, ohne Feedback oder Training-State zu verändern", async ({
+  page,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
+
+  const stepHeading = page.locator("aside h2").first();
+  const stepBeforeFeedback = await stepHeading.textContent();
+  await page.getByRole("button", { name: "Ich habe ein Problem" }).click();
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
+  await dialog
+    .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
+    .fill("Diese Meldung soll verworfen werden.");
+  await dialog.getByRole("button", { name: "Abbrechen" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => readFeedbackRecords(page)).toHaveLength(0);
+  await expect(stepHeading).toHaveText(stepBeforeFeedback!);
+});
+
+test("Screenshot entsteht erst nach Consent, wird als Vorschau gezeigt und kann verworfen werden", async ({
+  page,
+}) => {
+  await prepareScreenshotCaptureCounter(page);
+  await page.goto("/training/vscode-basics.guided");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
+
+  await page.getByRole("button", { name: "Ich habe ein Problem" }).click();
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
+  await dialog
+    .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
+    .fill("Die visuelle Zuordnung im Simulator ist unklar.");
+
+  await expect(screenshotCaptureCount(page)).resolves.toBe(0);
+  await dialog.getByRole("button", { name: "Screenshot hinzufügen" }).click();
+  await expect(dialog).toContainText("Erst dieser Klick startet die Aufnahme");
+  await expect(screenshotCaptureCount(page)).resolves.toBe(0);
+
+  await dialog.getByRole("button", { name: "Screenshot jetzt aufnehmen" }).click();
+  await expect(
+    dialog.getByRole("img", { name: "Vorschau des aufgenommenen Trainings-Screenshots" }),
+  ).toBeVisible();
+  await expect.poll(() => screenshotCaptureCount(page)).toBeGreaterThan(0);
+
+  await dialog.getByRole("button", { name: "Screenshot verwerfen" }).click();
+  await expect(
+    dialog.getByRole("img", { name: "Vorschau des aufgenommenen Trainings-Screenshots" }),
+  ).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Problemmeldung speichern" }).click();
+
+  const records = (await readFeedbackRecords(page)) as Array<{ screenshot?: unknown }>;
+  expect(records).toHaveLength(1);
+  expect(records[0]?.screenshot).toBeUndefined();
+});
+
+test("Problem-Shortcut bleibt bei 320px per Tastatur und Reduced Motion zugänglich", async ({
+  page,
+  accessibility,
+}) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/training/vscode-basics.guided");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
+
+  const shortcut = page.getByRole("button", { name: "Ich habe ein Problem" });
+  await shortcut.focus();
+  await expect(shortcut).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
+  await expect(dialog).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true);
+  await accessibility.check("beta feedback dialog at 320px reduced-motion");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => readFeedbackRecords(page)).toHaveLength(0);
+});
+
+test("Feedback speichert bestehenden Kontext weiter lokal und lässt sich als JSON exportieren", async ({
+  page,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
+
+  await page.getByRole("button", { name: "Ich habe ein Problem" }).click();
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
+  await dialog
+    .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
+    .fill("Die Erklärung zum aktuellen Schritt könnte ein kurzes Beispiel enthalten.");
+  await dialog.getByRole("button", { name: "Problemmeldung speichern" }).click();
 
   const downloadPromise = page.waitForEvent("download");
-  await reloadedDialog.getByRole("button", { name: "JSON exportieren (1)" }).click();
+  await dialog.getByRole("button", { name: "JSON exportieren (1)" }).click();
   const download = await downloadPromise;
   const downloadPath = await download.path();
   expect(downloadPath).not.toBeNull();
@@ -47,6 +236,7 @@ test("Feedback speichert Kontext lokal, übersteht Reload und lässt sich als JS
     schemaVersion: number;
     feedback: Array<{
       source: string;
+      kind: string;
       text: string;
       context: {
         scenarioId: string;
@@ -60,9 +250,10 @@ test("Feedback speichert Kontext lokal, übersteht Reload und lässt sich als JS
     }>;
   };
 
-  expect(exported.schemaVersion).toBe(1);
+  expect(exported.schemaVersion).toBe(2);
   expect(exported.feedback).toHaveLength(1);
   expect(exported.feedback[0]?.source).toBe("tutor");
+  expect(exported.feedback[0]?.kind).toBe("problem");
   expect(exported.feedback[0]?.text).toContain("kurzes Beispiel");
   expect(exported.feedback[0]?.context.scenarioId).toBe("vscode-basics.guided");
   expect(exported.feedback[0]?.context.stepId).toBeTruthy();
@@ -77,7 +268,9 @@ test("Abschlussansicht bietet optionales Feedback ohne den Abschlusszustand zu v
   page,
 }) => {
   await page.goto("/training/copilot-basics.challenge");
-  await expect(page.getByRole("status")).toContainText("Training bereit");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   await expect(page.locator('[data-highlight="copilot.inline.suggestion"]')).toContainText(
     "return a + b",
