@@ -85,7 +85,7 @@ function scoreRecipients(context: DataTransparencyContext): string {
 }
 
 function scoreRetention(): string {
-  return "Für ScoreEvents und Kompetenzprojektionen ist im aktuellen Produktvertrag keine separate automatische Löschfrist definiert.";
+  return "Für gespeicherte ScoreEvents und ScenarioRuns ist im aktuellen Produktvertrag keine separate automatische Löschfrist definiert. Das Kompetenzprofil wird daraus serverseitig berechnet und ist keine zweite authoritative Punkte-Persistenz.";
 }
 
 export function dataCategories(context: DataTransparencyContext): DataCategoryDescription[] {
@@ -114,19 +114,19 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
     {
       id: "training",
       title: "Trainingsfortschritt und Runtime-Zustand",
-      stored: "Trainingssessions, Schrittstatus, Runtime-Snapshots, Hinweise und Versuche einschließlich Zeitpunkten und technischem Trainingszustand.",
+      stored: "Trainingssessions mit dem aktuellen Lernfortschritt im Session-Payload sowie separate Runtime-Snapshots für den simulierten Produktzustand.",
       storage: cloud
-        ? "AWS-Cloud über TrainingSession/RuntimeSnapshot und die bestehenden Persistenzadapter; Offline-Fallback kann zusätzlich subject-gescopte Browserdaten halten."
+        ? "AWS-Cloud über die bestehenden TrainingSession-/RuntimeSnapshot-Persistenzadapter; Offline-Fallback kann zusätzlich subject-gescopte Browserdaten halten."
         : "Subject-gescopte Browser-Persistenz im lokalen Entwicklungsmodus.",
-      recipients: "Du selbst und die Trainings-Backendlogik. Trainer-/Admin-Analytics verwendet einen getrennten Telemetriepfad und gibt diese gespeicherten Session-/Runtime-Rohzustände nicht direkt aus.",
-      retention: "Für Trainingssessions und Schrittzustände ist keine separate automatische Löschfrist implementiert. Runtime-Snapshots können im bestehenden Runtime-Pfad ersetzt oder gelöscht werden; Browser-Fallback bleibt bis Überschreiben oder Löschen des Browser-Speichers bestehen.",
+      recipients: "Du selbst und die Trainings-Backendlogik. Trainer-/Admin-Analytics verwendet einen getrennten Telemetriepfad und gibt gespeicherte Session-/Runtime-Rohzustände nicht direkt aus.",
+      retention: "Für TrainingSessions ist keine separate automatische Löschfrist implementiert. Runtime-Snapshots können im bestehenden Runtime-Pfad ersetzt oder gelöscht werden; Browser-Fallback bleibt bis Überschreiben oder Löschen des Browser-Speichers bestehen.",
     },
     {
       id: "scores",
       title: "Punkte und Kompetenzprofil",
-      stored: "Serverbestätigte ScenarioRuns, ScoreEvents sowie daraus berechnete Kompetenzstände je Technologie.",
+      stored: "Serverbestätigte ScenarioRuns und ScoreEvents werden gespeichert. Das Kompetenzprofil je Technologie wird daraus serverseitig berechnet.",
       storage: cloud
-        ? "Serverautoritative AWS-Persistenz; der Client ist nicht die Punktequelle."
+        ? "ScoreEvents und ScenarioRuns liegen in der serverautoritativen AWS-Persistenz; der Client ist nicht die Punktequelle und das Kompetenzprofil ist keine parallele authoritative Punkte-Persistenz."
         : "Im lokalen Entwicklungsmodus entsteht keine tenantweite serverautoritative Rangliste.",
       recipients: scoreRecipients(context),
       retention: scoreRetention(),
@@ -135,8 +135,12 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       id: "attestations",
       title: "Kompetenznachweise",
       stored: "Ausgestellte Nachweise mit Szenario-/Produktversion, Lernzielen, Evidenz, Gültigkeitszeitraum und Signaturmetadaten.",
-      storage: "Serverautoritative AWS-Persistenz; vorhandene Nachweis-Exporte werden erst auf deine Anfrage erzeugt.",
-      recipients: "Du selbst. Ein PDF-/CSV-Nachweis verlässt den Self-Service-Pfad erst, wenn du ihn ausdrücklich exportierst und selbst weitergibst.",
+      storage: cloud
+        ? "Serverautoritative AWS-Persistenz; vorhandene Nachweis-Exporte werden erst auf deine Anfrage erzeugt."
+        : "Im lokalen Entwicklungsmodus wird kein serverautoritatives Cloud-Attestation-Repository als persönliche Datenquelle verwendet.",
+      recipients: cloud
+        ? "Du selbst. Ein PDF-/CSV-Nachweis verlässt den Self-Service-Pfad erst, wenn du ihn ausdrücklich exportierst und selbst weitergibst."
+        : "Keine Cloud-Empfänger im lokalen Entwicklungsmodus.",
       retention: "Die fachliche Nachweisgültigkeit beträgt 12 Monate. Das ist keine Löschfrist; für den gespeicherten Nachweis ist aktuell keine separate automatische Löschfrist definiert.",
     },
     {
