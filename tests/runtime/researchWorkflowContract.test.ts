@@ -107,21 +107,23 @@ test("guided verification requires both defects before active transfer", () => {
   assert.equal(stateChecks(transferStep?.validation, "copilot.prompt.last").length, 4);
 });
 
-test("explore and challenge share the same two-defect and transfer completion gate", () => {
-  for (const scenario of [explore, challenge]) {
-    const verifiedChecks = stateChecks(scenario.completionValidation, "artifact.verifiedIds");
-    assert.ok(
-      verifiedChecks.some((entry) => entry.kind === "state" && entry.includes === "source-a"),
-      `${scenario.id} must require source-a`,
-    );
-    assert.ok(
-      verifiedChecks.some((entry) => entry.kind === "state" && entry.includes === "source-b"),
-      `${scenario.id} must require source-b`,
-    );
-    assert.ok(
-      verifiedChecks.some((entry) => entry.kind === "state" && entry.excludes === "source-c"),
-      `${scenario.id} must reject false marking of source-c`,
-    );
-    assert.equal(stateChecks(scenario.completionValidation, "copilot.prompt.last").length, 4);
-  }
+test("explore stays on the generic surface-inspection contract", () => {
+  assert.equal(explore.completionValidation, undefined);
+  assert.ok(explore.exploreTargets?.includes("artifact.preview.verify"));
+  assert.ok(explore.exploreTargets?.includes("copilot.chat.prompt"));
+});
+
+test("challenge requires both defects, the control source and active transfer", () => {
+  const verifiedChecks = stateChecks(challenge.completionValidation, "artifact.verifiedIds");
+  assert.ok(
+    verifiedChecks.some((entry) => entry.kind === "state" && entry.includes === "source-a"),
+  );
+  assert.ok(
+    verifiedChecks.some((entry) => entry.kind === "state" && entry.includes === "source-b"),
+  );
+  assert.ok(
+    verifiedChecks.some((entry) => entry.kind === "state" && entry.excludes === "source-c"),
+  );
+  assert.equal(stateChecks(challenge.completionValidation, "artifact.active.id").length, 1);
+  assert.equal(stateChecks(challenge.completionValidation, "copilot.prompt.last").length, 4);
 });
