@@ -75,7 +75,10 @@ test("local-only and server storage are labeled explicitly instead of being conf
   assert.match(source, /Lokaler Auth-Adapter plus Browser-Speicher/);
   assert.match(source, /Browser-localStorage im bestehenden Feedback-Speicher/);
   assert.match(source, /nicht zuverlässig einer angemeldeten Person zugeordnet/);
-  assert.match(source, /Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen/);
+  assert.match(
+    source,
+    /Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen/,
+  );
 });
 
 test("own-data operations are authenticated, argumentless and server-authoritative", async () => {
