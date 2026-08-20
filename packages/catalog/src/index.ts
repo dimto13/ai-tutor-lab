@@ -55,6 +55,7 @@ export type {
 export {
   didacticPatternSchema,
   didacticPhaseSchema,
+  findModuleLineById,
   getDidacticPatternById,
   getModuleLineById,
   moduleLineCatalogSchema,
