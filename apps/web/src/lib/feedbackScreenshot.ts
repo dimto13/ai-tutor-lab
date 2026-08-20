@@ -3,18 +3,27 @@ import type { FeedbackScreenshotAttachment } from "@/lib/feedbackStore";
 const MAX_CAPTURE_WIDTH = 1280;
 const MAX_CAPTURE_HEIGHT = 900;
 
-function collectDocumentStyles(): string {
-  return Array.from(document.styleSheets)
-    .map((sheet) => {
-      try {
-        return Array.from(sheet.cssRules)
-          .map((rule) => rule.cssText)
-          .join("\n");
-      } catch {
-        return "";
-      }
-    })
-    .join("\n");
+function inlineComputedStyles(source: HTMLElement, clone: HTMLElement): void {
+  const computed = window.getComputedStyle(source);
+  const css = Array.from(computed)
+    .map((property) => `${property}:${computed.getPropertyValue(property)};`)
+    .join("");
+  clone.setAttribute("style", css);
+}
+
+function createStyledClone(source: HTMLElement): HTMLElement {
+  const clone = source.cloneNode(true) as HTMLElement;
+  const sourceElements = [source, ...source.querySelectorAll<HTMLElement>("*")];
+  const cloneElements = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
+
+  for (let index = 0; index < sourceElements.length; index += 1) {
+    const sourceElement = sourceElements[index];
+    const cloneElement = cloneElements[index];
+    if (!sourceElement || !cloneElement) continue;
+    inlineComputedStyles(sourceElement, cloneElement);
+  }
+
+  return clone;
 }
 
 function sanitizeCaptureClone(root: HTMLElement): void {
@@ -26,12 +35,19 @@ function sanitizeCaptureClone(root: HTMLElement): void {
     .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea")
     .forEach((field) => {
       field.value = "";
-      field.setAttribute("value", "");
+      field.textContent = "";
+      field.removeAttribute("value");
       field.setAttribute("placeholder", "Eingabe ausgeblendet");
     });
 
   root.querySelectorAll<HTMLElement>('[contenteditable="true"]').forEach((element) => {
     element.textContent = "Eingabe ausgeblendet";
+  });
+
+  root.querySelectorAll<HTMLImageElement>("img").forEach((image) => {
+    image.removeAttribute("src");
+    image.removeAttribute("srcset");
+    image.setAttribute("alt", image.alt || "Bild ausgeblendet");
   });
 }
 
@@ -63,21 +79,16 @@ export async function captureTrainingSurfaceScreenshot(): Promise<FeedbackScreen
   const width = Math.max(1, Math.round(sourceWidth * scale));
   const height = Math.max(1, Math.round(sourceHeight * scale));
 
-  const clone = target.cloneNode(true) as HTMLElement;
+  const clone = createStyledClone(target);
   sanitizeCaptureClone(clone);
+  clone.style.width = `${sourceWidth}px`;
+  clone.style.height = `${sourceHeight}px`;
+  clone.style.margin = "0";
+  clone.style.transform = "none";
+  clone.style.overflow = "hidden";
 
   const serialized = new XMLSerializer().serializeToString(clone);
-  const styles = collectDocumentStyles().replaceAll("</style>", "<\\/style>");
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${sourceWidth}" height="${sourceHeight}" viewBox="0 0 ${sourceWidth} ${sourceHeight}">
-      <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml">
-          <style>${styles}</style>
-          ${serialized}
-        </div>
-      </foreignObject>
-    </svg>
-  `;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${sourceWidth}" height="${sourceHeight}" viewBox="0 0 ${sourceWidth} ${sourceHeight}"><foreignObject x="0" y="0" width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${sourceWidth}px;height:${sourceHeight}px;overflow:hidden">${serialized}</div></foreignObject></svg>`;
 
   const objectUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
   try {
