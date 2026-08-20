@@ -1,4 +1,3 @@
-import type { Schema } from "../../../../amplify/data/resource";
 import type { UserIdentity } from "@/auth/authService";
 import { browserLocalStorage } from "@/persistence/adapters/browserLocalStorage";
 
@@ -30,19 +29,6 @@ function configuredMode(): DataStorageMode {
   return import.meta.env.PROD ? "cloud" : "browser-local";
 }
 
-function errorText(errors: unknown): string {
-  if (!Array.isArray(errors)) return "Unknown Amplify Data error";
-  return errors
-    .map((error) => {
-      if (typeof error !== "object" || error === null) return String(error);
-      const message = Reflect.get(error, "message");
-      const errorType = Reflect.get(error, "errorType");
-      return [errorType, message].filter((value) => typeof value === "string").join(": ");
-    })
-    .filter(Boolean)
-    .join("; ");
-}
-
 export async function loadMyDataTransparencyContext(): Promise<DataTransparencyContext> {
   const storageMode = configuredMode();
   if (storageMode === "browser-local") {
@@ -56,19 +42,11 @@ export async function loadMyDataTransparencyContext(): Promise<DataTransparencyC
     };
   }
 
-  const { generateClient } = await import("aws-amplify/data");
-  const client = generateClient<Schema>();
-  const result = await client.queries.loadMyDataTransparencyContext();
-  if (result.errors?.length) throw new Error(errorText(result.errors));
-  if (!result.data) throw new Error("Amplify Data returned no transparency context");
-  return {
-    storageMode,
-    scoreVisibility: result.data.scoreVisibility,
-    leaderboardsEnabled: result.data.leaderboardsEnabled,
-    namedApprovalConfirmed: result.data.namedApprovalConfirmed,
-    rawTelemetryRetentionDays: result.data.rawTelemetryRetentionDays,
-    telemetryPseudonymizationMode: result.data.telemetryPseudonymizationMode,
-  };
+  const { loadAmplifyDataTransparencyContext } = await import(
+    "@/persistence/adapters/amplifyDataTransparency"
+  );
+  const context = await loadAmplifyDataTransparencyContext();
+  return { storageMode, ...context };
 }
 
 function scoreRecipients(context: DataTransparencyContext): string {
@@ -178,7 +156,7 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       stored:
         "Explizit eingegebenes Feedback mit Szenario-, Schritt-, Modus- und technischem Kontext.",
       storage:
-        "Browser-localStorage im bestehenden Feedback-Speicher; aktuell kein automatischer Server-Upload.",
+        "Browser-Speicher im bestehenden Feedback-Pfad; aktuell kein automatischer Server-Upload.",
       recipients:
         "Nur Personen mit Zugriff auf dieses Browserprofil, solange du das Feedback nicht selbst exportierst. Der aktuelle Feedback-Speicher ist nicht serverseitig an dein Konto gebunden.",
       retention:
@@ -226,12 +204,10 @@ export function scopedBrowserTrainingRecords(identity: UserIdentity): Array<{
 }
 
 async function remoteOwnDataJson(): Promise<unknown> {
-  const { generateClient } = await import("aws-amplify/data");
-  const client = generateClient<Schema>();
-  const result = await client.queries.exportMyData();
-  if (result.errors?.length) throw new Error(errorText(result.errors));
-  if (typeof result.data !== "string") throw new Error("Amplify Data returned no own-data export");
-  return JSON.parse(result.data) as unknown;
+  const { exportAmplifyOwnData } = await import(
+    "@/persistence/adapters/amplifyDataTransparency"
+  );
+  return exportAmplifyOwnData();
 }
 
 export interface OwnDataExportInput {
