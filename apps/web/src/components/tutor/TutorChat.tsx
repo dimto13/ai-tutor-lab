@@ -59,6 +59,15 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     ]);
   };
 
+  const problemShortcut = (
+    <FeedbackCapture
+      source="tutor"
+      triggerLabel="Ich habe ein Problem"
+      compact
+      flow="problem"
+    />
+  );
+
   if (!open) {
     return (
       <div
@@ -101,7 +110,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           </button>
-          <FeedbackCapture source="tutor" compact />
+          {problemShortcut}
         </div>
       </div>
     );
@@ -120,7 +129,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           {mode === "challenge" ? (
             <span className="normal-case font-normal tracking-normal">nur auf Anfrage</span>
           ) : null}
-          <FeedbackCapture source="tutor" compact />
+          {problemShortcut}
           {mode === "guided" ? (
             <button
               type="button"
