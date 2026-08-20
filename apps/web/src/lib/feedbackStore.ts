@@ -15,7 +15,7 @@ export interface FeedbackRuntimeContextSnapshot {
 
 export interface FeedbackScreenshotAttachment {
   kind: "screenshot";
-  mediaType: "image/png";
+  mediaType: "image/png" | "image/svg+xml";
   dataUrl: string;
   width: number;
   height: number;
@@ -103,11 +103,16 @@ function isRuntimeContext(
 function isScreenshotAttachment(value: unknown): value is FeedbackScreenshotAttachment {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const screenshot = value as Record<string, unknown>;
+  const mediaType = screenshot["mediaType"];
+  const dataUrl = screenshot["dataUrl"];
+  const supportedDataUrl =
+    typeof dataUrl === "string" &&
+    ((mediaType === "image/png" && dataUrl.startsWith("data:image/png;base64,")) ||
+      (mediaType === "image/svg+xml" && dataUrl.startsWith("data:image/svg+xml;base64,")));
   return (
     screenshot["kind"] === "screenshot" &&
-    screenshot["mediaType"] === "image/png" &&
-    typeof screenshot["dataUrl"] === "string" &&
-    screenshot["dataUrl"].startsWith("data:image/png;base64,") &&
+    (mediaType === "image/png" || mediaType === "image/svg+xml") &&
+    supportedDataUrl &&
     typeof screenshot["width"] === "number" &&
     typeof screenshot["height"] === "number" &&
     screenshot["capturedArea"] === "training-surface"
