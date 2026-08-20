@@ -1,4 +1,6 @@
+import rawModuleLineCatalog from "../../../content/catalog/module-lines.json" with { type: "json" };
 import rawCatalog from "../../../content/catalog/technology-catalog.json" with { type: "json" };
+import { parseModuleLineCatalog } from "./module-lines.ts";
 import { parseTechnologyCatalog } from "./schema.ts";
 
 export type {
@@ -44,6 +46,23 @@ export type {
 } from "./environment.ts";
 export { validateCatalogEnvironmentReference } from "./environment.ts";
 export type {
+  DidacticPattern,
+  DidacticPhase,
+  ModuleLine,
+  ModuleLineCatalog,
+  VerificationContract,
+} from "./module-lines.ts";
+export {
+  didacticPatternSchema,
+  didacticPhaseSchema,
+  getDidacticPatternById,
+  getModuleLineById,
+  moduleLineCatalogSchema,
+  moduleLineSchema,
+  parseModuleLineCatalog,
+  verificationContractSchema,
+} from "./module-lines.ts";
+export type {
   Capability,
   Integration,
   Product,
@@ -57,4 +76,5 @@ export type {
 
 export { capabilitySchema, parseTechnologyCatalog, technologyCatalogSchema } from "./schema.ts";
 
+export const moduleLineCatalog = parseModuleLineCatalog(rawModuleLineCatalog);
 export const technologyCatalog = parseTechnologyCatalog(rawCatalog);
