@@ -1,12 +1,12 @@
 # 13 — Autorenleitfaden: KI-Workflows in der Praxis
 
-Dieser Leitfaden definiert das verbindliche Autorenmuster für Szenarien der Modullinie **„KI-Workflows in der Praxis“**. Er ergänzt das Domänenmodell und gilt für alle Szenarien mit `learningLayer: "ai_workflow"`.
+Dieser Leitfaden definiert das verbindliche Autorenmuster für produktive Szenarien der Modullinie **„KI-Workflows in der Praxis“**. Er ergänzt das Domänenmodell und den maschinenlesbaren Vertrag in `content/catalog/module-lines.json`.
 
 Die Modullinie erklärt nicht primär die Bedienung eines Werkzeugs. Sie zeigt, **was KI in einem realistischen Arbeitsablauf tut, welches überprüfbare Ergebnis entsteht und wie der Lernende dieses Ergebnis fachlich beurteilt**.
 
-## 1. Abgrenzung der Modullinie
+## 1. Abgrenzung und Katalogvertrag
 
-Ein `ai_workflow`-Szenario ist richtig eingeordnet, wenn das Lernziel auf einem vollständigen Arbeitsablauf liegt und nicht auf einem einzelnen Produktmerkmal.
+Ein Workflow-Modul ist richtig eingeordnet, wenn das Lernziel auf einem vollständigen Arbeitsablauf liegt und nicht auf einem einzelnen Produktmerkmal.
 
 - `tool`: Bedienung eines Werkzeugs, z. B. Explorer oder Pull Request öffnen.
 - `concept`: einen Begriff oder Zusammenhang verstehen.
@@ -14,13 +14,22 @@ Ein `ai_workflow`-Szenario ist richtig eingeordnet, wenn das Lernziel auf einem 
 
 Werkzeugwissen darf in einem Workflow vorausgesetzt oder beiläufig wiederholt werden. Ein Workflow-Szenario ersetzt jedoch keine Werkzeuggrundlage.
 
-Technisch wird die Kategorie über `learningLayer: "ai_workflow"` geführt. Der Szenariokatalog kann diese Modullinie über `getScenariosForLearningLayer("ai_workflow")` separat ausgeben.
+Die maschinenlesbare Single Source of Truth für die Modullinie liegt in `content/catalog/module-lines.json`:
+
+- `lines[].id = "ai-workflows-in-practice"` kennzeichnet die gemeinsame Modullinie.
+- `learningLayer = "ai_workflow"` bindet sie an die bestehende fachliche Szenarioschicht.
+- `moduleIds` bestimmt explizit, welche produktiven Module im Trainingskatalog zu dieser Linie gehören.
+- `patternId = "ai-workflow-seven-step"` referenziert das wiederverwendbare didaktische Muster.
+
+`learningLayer: "ai_workflow"` allein bedeutet deshalb **nicht**, dass ein Enabler- oder Foundation-Szenario automatisch als produktives Modul dieser Linie erscheint. Neue Fachmodule werden erst durch ihre eigene Story umgesetzt und anschließend bewusst in `moduleIds` registriert.
+
+Die Runtime löst die Linie über den bestehenden Szenariokatalog auf. Weder Content noch Modullinienvertrag enthalten DOM-/CSS-Selektoren oder komponentenspezifische Navigationslogik.
 
 ## 2. Verbindliche Dramaturgie
 
-Jedes Szenario folgt inhaltlich denselben sieben Phasen. Mehrere konkrete `steps` dürfen zu einer Phase gehören, aber keine Phase darf entfallen.
+Jedes produktive Modul der Modullinie folgt inhaltlich denselben sieben Phasen. Mehrere konkrete `steps` dürfen zu einer Phase gehören, aber keine Phase darf entfallen.
 
-### Phase 1 — Ausgangslage
+### Phase 1 — Ausgangslage / Arbeitskontext
 
 Die Aufgabe muss realistisch und ohne KI spürbar aufwendig sein.
 
@@ -32,7 +41,7 @@ Der Lernende soll verstehen:
 
 Nicht ausreichend ist eine abstrakte Aufgabe wie „Teste die KI“.
 
-### Phase 2 — Auftrag formulieren
+### Phase 2 — Aufgabe oder Problem
 
 Der Lernende formuliert den Auftrag selbst. Ein vollständiger Prompt wird nicht einfach zum Abschreiben vorgegeben.
 
@@ -45,7 +54,7 @@ Der Auftrag soll mindestens abdecken:
 
 Hilfestufen dürfen diese Bestandteile einzeln sichtbar machen, aber nicht sofort die vollständige Lösung liefern.
 
-### Phase 3 — KI arbeitet sichtbar
+### Phase 3 — KI-Einsatz
 
 Die Bearbeitung darf nicht als Sprung von Prompt zu Endergebnis erscheinen.
 
@@ -59,7 +68,7 @@ Der Simulator zeigt nachvollziehbare Zwischenstufen, zum Beispiel:
 
 Die Ausgaben bleiben deterministisch hinterlegt. Das Szenario benötigt keine echte Websuche, keine echte Unternehmensdatei und keinen nicht reproduzierbaren Modellaufruf.
 
-### Phase 4 — Ergebnis als Artefakt
+### Phase 4 — Artefakt / Arbeitsprodukt
 
 Das fachliche Ergebnis erscheint auf einer sichtbaren Ergebnisfläche und nicht ausschließlich als Chattext.
 
@@ -72,7 +81,7 @@ Geeignete Artefakte sind zum Beispiel:
 
 Das Artefakt muss so konkret sein, dass der Lernende einzelne Aussagen oder Werte prüfen kann.
 
-### Phase 5 — Iteration
+### Phase 5 — Iteration / Verbesserung
 
 Der Lernende verlangt mindestens eine gezielte Änderung am bestehenden Ergebnis.
 
@@ -86,11 +95,11 @@ Beispiele:
 
 Die Änderung muss im Artefakt sichtbar werden. Eine reine Bestätigung im Chat reicht nicht.
 
-### Phase 6 — Prüfschritt
+### Phase 6 — Prüfung / Verifikation
 
 **Diese Phase ist verpflichtend und darf nicht übersprungen werden.**
 
-Jedes Szenario enthält mindestens einen realistischen, fachlich auffindbaren Schwachpunkt. Der Lernende muss das KI-Ergebnis aktiv gegen eine Quelle, eine Regel oder nachvollziehbare Ausgangsdaten prüfen.
+Jedes produktive Modul enthält mindestens einen realistischen, fachlich auffindbaren Schwachpunkt. Der Lernende muss das KI-Ergebnis aktiv gegen eine Quelle, eine Regel oder nachvollziehbare Ausgangsdaten prüfen.
 
 Geeignete Schwachpunkte sind zum Beispiel:
 
@@ -108,11 +117,14 @@ Der Fehler muss:
 1. realistisch sein,
 2. mit den im Szenario verfügbaren Informationen auffindbar sein,
 3. reproduzierbar im Seed oder Artefaktzustand hinterlegt sein,
-4. durch eine deklarative Event- oder State-Validierung prüfbar sein.
+4. durch eine deklarative Event- oder State-Validierung prüfbar sein,
+5. nach der Lernhandlung ein nachvollziehbares Feedback auslösen.
 
-### Phase 7 — Einordnung
+Der maschinenlesbare Pattern-Vertrag sichert für diese Phase `requiresEmbeddedWeakness`, `requiresActiveLearnerAction`, `requiresDeterministicValidation` und `requiresFeedback` ab.
 
-Zum Abschluss ordnet das Szenario den Workflow ein.
+### Phase 7 — Transfer / Wiederholung
+
+Zum Abschluss ordnet das Szenario den Workflow ein und macht ihn auf ähnliche Aufgaben übertragbar.
 
 Mindestens zu behandeln sind:
 
@@ -148,14 +160,16 @@ Die sichtbare KI-Arbeit kann reale Arbeitsschritte nachbilden, aber ihre Ergebni
 
 Eine reale Web-, Datei- oder Modellintegration darf später denselben Vertrag erfüllen, ist aber keine Voraussetzung für ein Content-Szenario.
 
-## 5. Autorenvertrag für neue Szenarien
+## 5. Autorenvertrag für neue Module
 
 Für jedes neue Workflow-Modul wird vor der Implementierung festgelegt:
 
 | Feld                     | Verpflichtende Aussage                             |
 | ------------------------ | -------------------------------------------------- |
 | `moduleId`               | stabile Modul-ID für die zusammengehörigen Modi    |
-| `learningLayer`          | immer `ai_workflow`                                |
+| `learningLayer`          | `ai_workflow`                                      |
+| Modullinie               | Registrierung in `ai-workflows-in-practice`        |
+| didaktisches Muster      | `ai-workflow-seven-step`                           |
 | Zielgruppe               | mit oder ohne Programmierkenntnisse                |
 | Ausgangslage             | reale, ohne KI mühsame Aufgabe                     |
 | Auftrag                  | welche Bestandteile der Lernende selbst formuliert |
@@ -164,7 +178,8 @@ Für jedes neue Workflow-Modul wird vor der Implementierung festgelegt:
 | Iteration                | welche sichtbare Änderung angefordert wird         |
 | eingebauter Schwachpunkt | exakter Fehler und seine Quelle im Seed            |
 | Prüfnachweis             | Event/State, das die Erkennung des Fehlers belegt  |
-| Einordnung               | Risiken, Grenzen und geeigneter Einsatz            |
+| Feedback                 | Rückmeldung nach der aktiven Prüfung                |
+| Transfer                 | Risiken, Grenzen und geeigneter Einsatz             |
 
 Explore, Guided und Challenge dürfen dieselbe fachliche Geschichte unterschiedlich führen. Der Challenge-Modus bewertet bevorzugt den Zielzustand und nicht eine vorgeschriebene Klickfolge.
 
@@ -180,6 +195,14 @@ Für einen Prüfschritt mit zwei eingebauten Mängeln müssen beide Bedingungen 
 
 Das Szenario kennt nur semantische Runtime-Referenzen. CSS-Selektoren und komponentenspezifische DOM-Abhängigkeiten gehören nicht in Content-Dateien.
 
+Der Content-Check validiert zusätzlich den Modullinienvertrag:
+
+- referenzierte Patterns existieren,
+- produktive `moduleIds` existieren im Szenariokatalog,
+- Szenarien eines registrierten Moduls verwenden den erwarteten `learningLayer`,
+- die KI-Workflow-Linie besitzt exakt die sieben vereinbarten Phasen,
+- Phase 6 trägt den aktiven Prüfvertrag mit eingebautem Schwachpunkt.
+
 ## 7. Anti-Patterns
 
 Folgende Umsetzungen gehören nicht in diese Modullinie:
@@ -191,12 +214,14 @@ Folgende Umsetzungen gehören nicht in diese Modullinie:
 - echte Websuche voraussetzen, obwohl das Szenario deterministisch testbar sein soll.
 - Produktbedienung als Workflow verkaufen, ohne fachliches Artefakt und Ergebnisprüfung.
 - technische Fachbegriffe bei Nicht-Programmierern ungeklärt voraussetzen.
+- ein Child-Issue durch bloße Registrierung eines noch nicht implementierten Moduls vorwegnehmen.
 
 ## 8. Abnahmecheckliste
 
-Vor einem Pull Request für ein neues `ai_workflow`-Szenario müssen Autoren prüfen:
+Vor einem Pull Request für ein neues produktives Modul müssen Autoren prüfen:
 
 - [ ] `learningLayer` ist `ai_workflow`.
+- [ ] `moduleId` ist nach Implementierung bewusst in der Modullinie registriert.
 - [ ] Ausgangslage beschreibt einen realistischen Nutzen.
 - [ ] Lernender formuliert Ziel, Kontext und Ausgabeformat selbst.
 - [ ] KI-Arbeit enthält sichtbare Zwischenstufen.
@@ -204,12 +229,13 @@ Vor einem Pull Request für ein neues `ai_workflow`-Szenario müssen Autoren pr�
 - [ ] Mindestens eine Iteration verändert das Artefakt sichtbar.
 - [ ] Mindestens ein realistischer Schwachpunkt ist deterministisch eingebaut.
 - [ ] Prüfschritt kann nur nach tatsächlicher Erkennung des Schwachpunkts erfolgreich sein.
-- [ ] Einordnung behandelt Grenzen und Risiken.
+- [ ] Nach der Prüfung erhält der Lernende fachlich passendes Feedback.
+- [ ] Transfer behandelt Grenzen, Risiken und Wiederverwendung.
 - [ ] Zielgruppe und vorausgesetztes Wissen sind explizit.
 - [ ] Guided-Pfad ist vollständig durchlaufbar.
 - [ ] Challenge bewertet soweit möglich den Endzustand statt die Klickreihenfolge.
-- [ ] CI-validierbare Seeds, Targets und Selektoren werden verwendet.
+- [ ] CI-validierbare Seeds und semantische Runtime-Targets werden verwendet; keine DOM-/CSS-Selektoren.
 
 ## 9. Verhältnis zu den Folge-Szenarien
 
-AITP-151 definiert den gemeinsamen Rahmen. Die konkreten Workflow-Szenarien werden in den dafür vorgesehenen Folge-Issues implementiert. Jedes dieser Issues muss diesen Leitfaden erfüllen und seinen eingebauten Schwachpunkt im PR-Abnahmebericht ausdrücklich benennen.
+AITP-151 definiert den gemeinsamen Rahmen. Die konkreten Workflow-Szenarien werden in den dafür vorgesehenen Folge-Issues implementiert. Jedes dieser Issues muss diesen Leitfaden erfüllen, sein Modul nach der Implementierung bewusst in die Modullinie aufnehmen und den eingebauten Schwachpunkt im PR-Abnahmebericht ausdrücklich benennen.
