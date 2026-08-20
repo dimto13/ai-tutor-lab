@@ -18,7 +18,8 @@ async function prepareScreenshotCaptureCounter(page: Page): Promise<void> {
     target.__feedbackScreenshotCaptureCount = 0;
     HTMLCanvasElement.prototype.toDataURL = function toDataURL(type?: string, quality?: number) {
       const current = window as Window & { __feedbackScreenshotCaptureCount?: number };
-      current.__feedbackScreenshotCaptureCount = (current.__feedbackScreenshotCaptureCount ?? 0) + 1;
+      current.__feedbackScreenshotCaptureCount =
+        (current.__feedbackScreenshotCaptureCount ?? 0) + 1;
       return original.call(this, type, quality);
     };
   });
@@ -26,7 +27,9 @@ async function prepareScreenshotCaptureCounter(page: Page): Promise<void> {
 
 async function screenshotCaptureCount(page: Page): Promise<number> {
   return page.evaluate(
-    () => (window as Window & { __feedbackScreenshotCaptureCount?: number }).__feedbackScreenshotCaptureCount ?? 0,
+    () =>
+      (window as Window & { __feedbackScreenshotCaptureCount?: number })
+        .__feedbackScreenshotCaptureCount ?? 0,
   );
 }
 
