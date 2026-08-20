@@ -71,7 +71,7 @@ test("local-only and server storage are labeled explicitly instead of being conf
   assert.match(source, /export type DataStorageMode = ["']browser-local["'] \| ["']cloud["']/);
   assert.match(source, /VITE_AUTH_MODE/);
   assert.match(source, /AWS Cognito für die Anmeldung und Auth-Claims/);
-  assert.match(source, /ergänzende Profildaten im bestehenden UserProfile-Pfad/);
+  assert.match(source, /UserProfile-Pfad/);
   assert.match(source, /Lokaler Auth-Adapter plus Browser-Speicher/);
   assert.match(source, /Browser-localStorage im bestehenden Feedback-Speicher/);
   assert.match(source, /nicht zuverlässig einer angemeldeten Person zugeordnet/);
