@@ -13,24 +13,25 @@ function caller(ctx) {
   let tenantAdmin = false;
 
   for (const group of groups) {
-    if (typeof group !== "string") continue;
-    if (group.startsWith("tenant:")) {
-      const candidate = group.slice("tenant:".length);
-      if (candidate.length === 0) {
-        util.error("Invalid tenant membership", "TenantMembershipError");
+    if (typeof group === "string") {
+      if (group.startsWith("tenant:")) {
+        const candidate = group.slice("tenant:".length);
+        if (candidate.length === 0) {
+          util.error("Invalid tenant membership", "TenantMembershipError");
+        }
+        if (tenantId !== null && tenantId !== candidate) {
+          util.error(
+            "Multiple tenant memberships require explicit tenant selection",
+            "TenantMembershipError",
+          );
+        }
+        tenantId = candidate;
+      } else if (group.startsWith("role:")) {
+        if (KNOWN_ROLE_GROUPS.indexOf(group) === -1) {
+          util.error("Unknown application role membership", "RoleMembershipError");
+        }
+        if (group === "role:tenant_admin") tenantAdmin = true;
       }
-      if (tenantId !== null && tenantId !== candidate) {
-        util.error(
-          "Multiple tenant memberships require explicit tenant selection",
-          "TenantMembershipError",
-        );
-      }
-      tenantId = candidate;
-    } else if (group.startsWith("role:")) {
-      if (KNOWN_ROLE_GROUPS.indexOf(group) === -1) {
-        util.error("Unknown application role membership", "RoleMembershipError");
-      }
-      if (group === "role:tenant_admin") tenantAdmin = true;
     }
   }
 
