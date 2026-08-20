@@ -27,7 +27,7 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
 
   const categories = page.getByTestId("data-transparency-categories");
   for (const name of [
-    "Kontoprofil",
+    "Kontoprofil und Anmeldung",
     "Lernpräferenzen und Barrierefreiheit",
     "Trainingsfortschritt und Runtime-Zustand",
     "Punkte und Kompetenzprofil",
@@ -87,7 +87,9 @@ test("lokaler Eigendatenexport enthält nur subject-gescopte Browserdaten", asyn
   expect(JSON.stringify(exported)).not.toContain("other-training-state");
   expect(exported.excluded.authTokens).toContain("never exported");
   expect(exported.excluded.tenantAggregates).toContain("not person-specific");
-  await expect(page.getByRole("status")).toContainText("Eigendatenexport wurde als JSON-Datei erstellt");
+  await expect(page.getByRole("status")).toContainText(
+    "Eigendatenexport wurde als JSON-Datei erstellt",
+  );
 });
 
 test("Datentransparenz bleibt bei 320px tastatur- und screenreader-tauglich", async ({
