@@ -6,13 +6,9 @@ const PERSONAL_TABLES = [
   ["profile", "USER_PROFILE_TABLE_NAME"],
   ["preferences", "USER_PREFERENCES_TABLE_NAME"],
   ["trainingSessions", "TRAINING_SESSION_TABLE_NAME"],
-  ["stepStates", "STEP_STATE_TABLE_NAME"],
   ["runtimeSnapshots", "RUNTIME_SNAPSHOT_TABLE_NAME"],
-  ["hintUsage", "HINT_USAGE_TABLE_NAME"],
-  ["attempts", "ATTEMPT_TABLE_NAME"],
   ["scenarioRuns", "SCENARIO_RUN_TABLE_NAME"],
   ["scoreEvents", "SCORE_EVENT_TABLE_NAME"],
-  ["skillProfiles", "SKILL_PROFILE_TABLE_NAME"],
   ["attestations", "ATTESTATION_TABLE_NAME"],
 ];
 
