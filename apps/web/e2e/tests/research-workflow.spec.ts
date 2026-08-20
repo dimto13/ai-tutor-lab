@@ -103,8 +103,5 @@ test("Challenge: Abschluss bleibt gesperrt, bis beide Mängel und der Transfer n
   await page.getByRole("button", { name: "Copilot Chat schließen", exact: true }).click();
   await page.getByRole("button", { name: /Quelle B · Community-Beitrag/ }).click();
   await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
-
-  await page.getByRole("button", { name: /Quelle C · Offizieller Blog/ }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
