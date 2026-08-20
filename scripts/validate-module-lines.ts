@@ -39,8 +39,8 @@ for (const line of moduleLineCatalog.lines) {
       );
     }
 
-    const verificationPhase = pattern.phases[5];
-    if (verificationPhase?.id !== "verification" || !verificationPhase.verificationContract) {
+    const verificationPhase = pattern.phases.find(({ id }) => id === "verification");
+    if (!verificationPhase?.verificationContract) {
       issues.push(
         `${line.id}: phase 6 must be verification with embedded weakness, active learner action, deterministic validation and feedback`,
       );
