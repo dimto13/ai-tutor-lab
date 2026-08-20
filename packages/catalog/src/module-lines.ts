@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const nonEmptyIdSchema = z.string().trim().min(1);
 
+export const moduleLineLearningLayerSchema = z.enum(["tool", "concept", "ai_workflow"]);
+
 export const verificationContractSchema = z
   .object({
     requiresEmbeddedWeakness: z.literal(true),
@@ -46,7 +48,7 @@ export const moduleLineSchema = z
     id: nonEmptyIdSchema,
     title: z.string().trim().min(1),
     description: z.string().trim().min(1),
-    learningLayer: nonEmptyIdSchema,
+    learningLayer: moduleLineLearningLayerSchema,
     patternId: nonEmptyIdSchema,
     moduleIds: z.array(nonEmptyIdSchema).min(1),
   })
@@ -106,13 +108,14 @@ export const moduleLineCatalogSchema = z
     });
   });
 
+export type ModuleLineLearningLayer = z.infer<typeof moduleLineLearningLayerSchema>;
 export type VerificationContract = z.infer<typeof verificationContractSchema>;
 export type DidacticPhase = z.infer<typeof didacticPhaseSchema>;
 export type DidacticPattern = z.infer<typeof didacticPatternSchema>;
 export type ModuleLine = z.infer<typeof moduleLineSchema>;
 export type ModuleLineCatalog = z.infer<typeof moduleLineCatalogSchema>;
 export type ModuleLineItem = {
-  learningLayer?: string;
+  learningLayer?: ModuleLineLearningLayer;
   moduleId?: string;
 };
 
