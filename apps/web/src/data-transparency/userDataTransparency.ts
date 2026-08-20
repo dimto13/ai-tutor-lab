@@ -1,4 +1,4 @@
-import type { Schema } from "../../../../../amplify/data/resource";
+import type { Schema } from "../../../../amplify/data/resource";
 import type { UserIdentity } from "@/auth/authService";
 import { browserLocalStorage } from "@/persistence/adapters/browserLocalStorage";
 
