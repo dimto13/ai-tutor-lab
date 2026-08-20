@@ -33,7 +33,7 @@
     "preview": "npm run preview -w @ai-train-lab/web",
     "typecheck:amplify": "tsc --noEmit -p amplify/tsconfig.json",
     "typecheck": "npm run typecheck:amplify && npm run typecheck --workspaces --if-present",
-    "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
+    "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-module-lines.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
     "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
     "validate:amplify-schema": "node --experimental-strip-types scripts/validate-amplify-schema.mjs",
     "validate:amplify-function-bundles": "node scripts/validate-amplify-function-bundles.mjs",
