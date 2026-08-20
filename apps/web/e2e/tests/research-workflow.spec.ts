@@ -25,7 +25,7 @@ async function submitTransferRecommendation(page: Page): Promise<void> {
   await prompt.press("Enter");
 }
 
-test("Explore: simulierte Recherche zeigt Quellentypen und verlangt beide Mängel plus Transfer", async ({
+test("Explore: simulierte Recherche macht Suchfolge, Quellentypen und Prüfstellen frei erkundbar", async ({
   page,
 }) => {
   await page.goto("/training/research-workflow.explore");
@@ -38,19 +38,10 @@ test("Explore: simulierte Recherche zeigt Quellentypen und verlangt beide Mänge
   await runResearchRevisions(page);
   await page.getByRole("button", { name: /Quelle A · Herstellerdokumentation/ }).click();
   await expect(page.getByText(/80 %/)).toBeVisible();
-  await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
-  await page.getByRole("button", { name: /Quelle C · Offizieller Blog/ }).click();
-  await submitTransferRecommendation(page);
-
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Copilot Chat schließen", exact: true }).click();
   await page.getByRole("button", { name: /Quelle B · Community-Beitrag/ }).click();
   await expect(page.getByText(/mehr als drei Jahre alt/)).toBeVisible();
-  await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
   await page.getByRole("button", { name: /Quelle C · Offizieller Blog/ }).click();
-
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(page.getByText(/Qualitätsstatus: offizielle Sekundärquelle/)).toBeVisible();
 });
 
 test("Guided: Recherche wird iteriert, beide Mängel werden geprüft und Transfer wird formuliert", async ({
@@ -79,7 +70,7 @@ test("Guided: Recherche wird iteriert, beide Mängel werden geprüft und Transfe
   await expectGuidedStep(page, 4, "Zahlenwiderspruch zur Quelle erkennen");
 
   await page.getByRole("button", { name: /Quelle A · Herstellerdokumentation/ }).click();
-  await expect(page.getByText(/8 von 10/)).toBeVisible();
+  await expect(page.getByText(/Simulierter Prüfbenchmark: 8 von 10/)).toBeVisible();
   await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
   await expectGuidedStep(page, 5, "Veraltete Community-Quelle erkennen");
 
