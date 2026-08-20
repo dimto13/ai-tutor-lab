@@ -33,5 +33,8 @@ test("AI workflow module line resolves only its declared authored modules", () =
 });
 
 test("unknown module line resolves to no scenarios", () => {
-  assert.deepEqual(selectModuleLineItems(moduleLineCatalog, "unknown-module-line", scenarioReferences), []);
+  assert.deepEqual(
+    selectModuleLineItems(moduleLineCatalog, "unknown-module-line", scenarioReferences),
+    [],
+  );
 });
