@@ -5,6 +5,7 @@ import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
 import { telemetryDeletionWorker } from "./functions/telemetry-deletion-worker/resource";
+import { userDataExport } from "./functions/user-data-export/resource";
 
 function requiredResource<T>(resource: T | undefined, name: string): T {
   if (resource === undefined) throw new Error(`Missing generated backend resource: ${name}`);
@@ -16,6 +17,7 @@ export const backend = defineBackend({
   data,
   telemetryAggregateProjector,
   telemetryDeletionWorker,
+  userDataExport,
 });
 
 const { cfnIdentityPool } = backend.auth.resources.cfnResources;
@@ -66,6 +68,7 @@ const rawTelemetryStreamArn = requiredResource(
 );
 const projectorLambda = backend.telemetryAggregateProjector.resources.lambda;
 const deletionLambda = backend.telemetryDeletionWorker.resources.lambda;
+const userDataExportLambda = backend.userDataExport.resources.lambda;
 
 aggregateTable.grantReadWriteData(projectorLambda);
 projectionReceiptTable.grantReadWriteData(projectorLambda);
@@ -86,6 +89,35 @@ backend.telemetryDeletionWorker.addEnvironment(
   rawTelemetryTable.tableName,
 );
 backend.telemetryDeletionWorker.addEnvironment(
+  "TELEMETRY_DELETION_POINTER_TABLE_NAME",
+  deletionPointerTable.tableName,
+);
+
+const exportTables = [
+  ["USER_PROFILE_TABLE_NAME", "UserProfile"],
+  ["USER_PREFERENCES_TABLE_NAME", "UserPreferences"],
+  ["TRAINING_SESSION_TABLE_NAME", "TrainingSession"],
+  ["STEP_STATE_TABLE_NAME", "StepState"],
+  ["RUNTIME_SNAPSHOT_TABLE_NAME", "RuntimeSnapshot"],
+  ["HINT_USAGE_TABLE_NAME", "HintUsage"],
+  ["ATTEMPT_TABLE_NAME", "Attempt"],
+  ["SCENARIO_RUN_TABLE_NAME", "ScenarioRun"],
+  ["SCORE_EVENT_TABLE_NAME", "ScoreEvent"],
+  ["SKILL_PROFILE_TABLE_NAME", "SkillProfile"],
+  ["ATTESTATION_TABLE_NAME", "Attestation"],
+  ["TENANT_SCORE_VISIBILITY_POLICY_TABLE_NAME", "TenantScoreVisibilityPolicy"],
+  ["TENANT_TELEMETRY_POLICY_TABLE_NAME", "TenantTelemetryPolicy"],
+] as const;
+
+for (const [environmentName, modelName] of exportTables) {
+  const table = requiredResource(backend.data.resources.tables[modelName], `${modelName} table`);
+  table.grantReadData(userDataExportLambda);
+  backend.userDataExport.addEnvironment(environmentName, table.tableName);
+}
+rawTelemetryTable.grantReadData(userDataExportLambda);
+deletionPointerTable.grantReadData(userDataExportLambda);
+backend.userDataExport.addEnvironment("TELEMETRY_RAW_EVENT_TABLE_NAME", rawTelemetryTable.tableName);
+backend.userDataExport.addEnvironment(
   "TELEMETRY_DELETION_POINTER_TABLE_NAME",
   deletionPointerTable.tableName,
 );
