@@ -22,11 +22,13 @@ function sanitizeCaptureClone(root: HTMLElement): void {
     element.remove();
   });
 
-  root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea").forEach((field) => {
-    field.value = "";
-    field.setAttribute("value", "");
-    field.setAttribute("placeholder", "Eingabe ausgeblendet");
-  });
+  root
+    .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea")
+    .forEach((field) => {
+      field.value = "";
+      field.setAttribute("value", "");
+      field.setAttribute("placeholder", "Eingabe ausgeblendet");
+    });
 
   root.querySelectorAll<HTMLElement>('[contenteditable="true"]').forEach((element) => {
     element.textContent = "Eingabe ausgeblendet";
