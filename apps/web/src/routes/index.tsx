@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AccountMenu } from "@/auth/AccountMenu";
+import { getModuleLineById, moduleLineCatalog } from "@/catalog";
 import { DashboardLearningOverview } from "@/components/dashboard/DashboardLearningOverview";
 import { useStoredProgressPercent } from "@/state/trainingStore";
 
@@ -287,6 +288,15 @@ const workflowTrainings: TrainingCardModel[] = [
   },
 ];
 
+const aiWorkflowModuleLine = getModuleLineById(moduleLineCatalog, "ai-workflows-in-practice");
+const aiWorkflowTrainings = aiWorkflowModuleLine.moduleIds.map((moduleId) => {
+  const training = workflowTrainings.find(({ id }) => id === moduleId);
+  if (!training) {
+    throw new Error(`Missing dashboard training card for module line module: ${moduleId}`);
+  }
+  return training;
+});
+
 const otherTrainings: TrainingCardModel[] = [
   {
     id: "m365-copilot",
@@ -338,9 +348,9 @@ function Dashboard() {
         />
 
         <TrainingSection
-          title="Werkzeuge im Zusammenspiel"
-          description="Jeder reale Arbeitsablauf wird als eigenes Training aufgedröselt. So kann jeder Workflow einzeln verstanden, geübt und später gezielt wiederholt werden."
-          trainings={workflowTrainings}
+          title={aiWorkflowModuleLine.title}
+          description={aiWorkflowModuleLine.description}
+          trainings={aiWorkflowTrainings}
         />
 
         <TrainingSection
