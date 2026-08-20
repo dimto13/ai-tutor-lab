@@ -66,7 +66,10 @@ function normalizePolicy(row, tenantId) {
   }
 
   if (row.tenantId !== tenantId) {
-    util.error("Score visibility policy escaped authenticated tenant scope", "ScoreVisibilityScopeError");
+    util.error(
+      "Score visibility policy escaped authenticated tenant scope",
+      "ScoreVisibilityScopeError",
+    );
   }
   if (
     row.visibility !== "private" &&
@@ -88,7 +91,10 @@ function normalizePolicy(row, tenantId) {
 
   if (row.visibility !== "named") {
     if (row.leaderboardsEnabled || hasApproval) {
-      util.error("Persisted score visibility policy is contradictory", "ScoreVisibilityPolicyError");
+      util.error(
+        "Persisted score visibility policy is contradictory",
+        "ScoreVisibilityPolicyError",
+      );
     }
   } else if (!hasApproval) {
     util.error(
