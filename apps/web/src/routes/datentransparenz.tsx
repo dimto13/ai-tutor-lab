@@ -82,7 +82,9 @@ function DataTransparencyPage() {
       setExportStatus("Dein Eigendatenexport wurde als JSON-Datei erstellt.");
     } catch (cause) {
       setExportStatus(
-        cause instanceof Error ? cause.message : "Der Eigendatenexport konnte nicht erstellt werden.",
+        cause instanceof Error
+          ? cause.message
+          : "Der Eigendatenexport konnte nicht erstellt werden.",
       );
     } finally {
       setExporting(false);
@@ -165,7 +167,10 @@ function DataTransparencyPage() {
         </div>
 
         {contextError ? (
-          <div role="alert" className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive">
+          <div
+            role="alert"
+            className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive"
+          >
             Die aktuelle Tenant-Policy konnte nicht sicher geladen werden. Deshalb werden keine
             möglicherweise falschen Sichtbarkeits- oder Retention-Angaben angezeigt. {contextError}
           </div>
@@ -181,7 +186,9 @@ function DataTransparencyPage() {
           <>
             <div className="mt-7 flex flex-wrap gap-2" aria-label="Aktueller Datenkontext">
               <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
-                {context.storageMode === "cloud" ? "Speichermodus: Cloud" : "Speichermodus: Browser lokal"}
+                {context.storageMode === "cloud"
+                  ? "Speichermodus: Cloud"
+                  : "Speichermodus: Browser lokal"}
               </span>
               <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
                 {scoreVisibilityLabel(context)}
@@ -193,7 +200,10 @@ function DataTransparencyPage() {
               ) : null}
             </div>
 
-            <div data-testid="data-transparency-categories" className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div
+              data-testid="data-transparency-categories"
+              className="mt-6 grid gap-4 lg:grid-cols-2"
+            >
               {categories.map((category) => (
                 <section
                   key={category.id}
@@ -201,7 +211,10 @@ function DataTransparencyPage() {
                   aria-labelledby={`data-category-${category.id}`}
                   className="rounded-xl border border-border bg-panel p-5"
                 >
-                  <h2 id={`data-category-${category.id}`} className="text-base font-semibold text-foreground">
+                  <h2
+                    id={`data-category-${category.id}`}
+                    className="text-base font-semibold text-foreground"
+                  >
                     {category.title}
                   </h2>
                   <dl className="mt-4 space-y-4 text-sm">
@@ -221,7 +234,9 @@ function DataTransparencyPage() {
                       <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Wer kann es sehen?
                       </dt>
-                      <dd className="mt-1 leading-relaxed text-foreground">{category.recipients}</dd>
+                      <dd className="mt-1 leading-relaxed text-foreground">
+                        {category.recipients}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
