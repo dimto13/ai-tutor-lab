@@ -40,7 +40,7 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
   }
 
   await expect(categories).toContainText("keine separate automatische Löschfrist");
-  await expect(categories).toContainText("Browser-localStorage");
+  await expect(categories).toContainText("Browser-Speicher im bestehenden Feedback-Pfad");
   await expect(categories).toContainText("nicht serverseitig an dein Konto gebunden");
   await accessibility.check("data transparency account route");
 });
