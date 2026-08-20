@@ -112,7 +112,10 @@ for (const [environmentName, modelName] of exportTables) {
 }
 rawTelemetryTable.grantReadData(userDataExportLambda);
 deletionPointerTable.grantReadData(userDataExportLambda);
-backend.userDataExport.addEnvironment("TELEMETRY_RAW_EVENT_TABLE_NAME", rawTelemetryTable.tableName);
+backend.userDataExport.addEnvironment(
+  "TELEMETRY_RAW_EVENT_TABLE_NAME",
+  rawTelemetryTable.tableName,
+);
 backend.userDataExport.addEnvironment(
   "TELEMETRY_DELETION_POINTER_TABLE_NAME",
   deletionPointerTable.tableName,
