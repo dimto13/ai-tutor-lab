@@ -5,10 +5,11 @@ import {
   moduleLineCatalog,
 } from "../packages/catalog/src/index.ts";
 import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
+import type { Scenario } from "../apps/web/src/types/training.ts";
 
 const scenariosDir = resolve(process.cwd(), "content/scenarios");
 const scenarioFiles = (await readdir(scenariosDir)).filter((file) => file.endsWith(".json"));
-const scenarios = [];
+const scenarios: Scenario[] = [];
 
 for (const file of scenarioFiles) {
   const raw = JSON.parse(await readFile(resolve(scenariosDir, file), "utf8"));
