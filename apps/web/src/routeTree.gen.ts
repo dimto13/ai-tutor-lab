@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
+import { Route as DatentransparenzRouteImport } from './routes/datentransparenz'
 import { Route as KompetenzRouteImport } from './routes/kompetenz'
 import { Route as WillkommenRouteImport } from './routes/willkommen'
 import { Route as TrainingScenarioIdRouteImport } from './routes/training.$scenarioId'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AnmeldenRoute = AnmeldenRouteImport.update({
   id: '/anmelden',
   path: '/anmelden',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatentransparenzRoute = DatentransparenzRouteImport.update({
+  id: '/datentransparenz',
+  path: '/datentransparenz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KompetenzRoute = KompetenzRouteImport.update({
@@ -44,6 +50,7 @@ const TrainingScenarioIdRoute = TrainingScenarioIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/datentransparenz': typeof DatentransparenzRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/datentransparenz': typeof DatentransparenzRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/datentransparenz': typeof DatentransparenzRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
@@ -66,13 +75,25 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
+    | '/'
+    | '/anmelden'
+    | '/datentransparenz'
+    | '/kompetenz'
+    | '/willkommen'
+    | '/training/$scenarioId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/anmelden' | '/kompetenz' | '/willkommen' | '/training/$scenarioId'
+  to:
+    | '/'
+    | '/anmelden'
+    | '/datentransparenz'
+    | '/kompetenz'
+    | '/willkommen'
+    | '/training/$scenarioId'
   id:
     | '__root__'
     | '/'
     | '/anmelden'
+    | '/datentransparenz'
     | '/kompetenz'
     | '/willkommen'
     | '/training/$scenarioId'
@@ -81,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnmeldenRoute: typeof AnmeldenRoute
+  DatentransparenzRoute: typeof DatentransparenzRoute
   KompetenzRoute: typeof KompetenzRoute
   WillkommenRoute: typeof WillkommenRoute
   TrainingScenarioIdRoute: typeof TrainingScenarioIdRoute
@@ -100,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/anmelden'
       fullPath: '/anmelden'
       preLoaderRoute: typeof AnmeldenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/datentransparenz': {
+      id: '/datentransparenz'
+      path: '/datentransparenz'
+      fullPath: '/datentransparenz'
+      preLoaderRoute: typeof DatentransparenzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kompetenz': {
@@ -129,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnmeldenRoute: AnmeldenRoute,
+  DatentransparenzRoute: DatentransparenzRoute,
   KompetenzRoute: KompetenzRoute,
   WillkommenRoute: WillkommenRoute,
   TrainingScenarioIdRoute: TrainingScenarioIdRoute,
