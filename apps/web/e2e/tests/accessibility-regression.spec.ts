@@ -1,9 +1,4 @@
-import {
-  expect,
-  test,
-  type Locator,
-  type Page,
-} from "../fixtures/accessibility-regression";
+import { expect, test, type Locator, type Page } from "../fixtures/accessibility-regression";
 
 async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
@@ -135,10 +130,7 @@ test.describe("Accessibility regressions", () => {
     await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
 
     await activateWithKeyboard(page, page.getByRole("button", { name: "Terminal", exact: true }));
-    await activateWithKeyboard(
-      page,
-      page.getByRole("menuitem", { name: /New Terminal/ }).first(),
-    );
+    await activateWithKeyboard(page, page.getByRole("menuitem", { name: /New Terminal/ }).first());
     await expectGuidedStep(page, 12, "Problems-View verwenden");
 
     await activateWithKeyboard(page, page.getByRole("button", { name: "Problems", exact: true }));
@@ -230,7 +222,9 @@ test.describe("Accessibility regressions", () => {
 
     const guideToggle = page.getByRole("button", { name: "Guide anzeigen" });
     await activateWithKeyboard(page, guideToggle);
-    await expect(page.getByRole("heading", { name: "Schritt 1 – Activity Bar einordnen" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Schritt 1 – Activity Bar einordnen" }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Arbeitsbereich anzeigen" })).toBeFocused();
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
