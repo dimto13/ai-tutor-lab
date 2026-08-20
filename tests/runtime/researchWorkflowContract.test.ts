@@ -6,7 +6,10 @@ import { createResearchWorkflowVariants } from "../../apps/web/src/scenarios/res
 import type { Validation } from "../../apps/web/src/types/training.ts";
 
 const raw = JSON.parse(
-  await readFile(new URL("../../content/scenarios/research-workflow.guided.json", import.meta.url), "utf8"),
+  await readFile(
+    new URL("../../content/scenarios/research-workflow.guided.json", import.meta.url),
+    "utf8",
+  ),
 );
 const guided = parseScenario(raw);
 const [explore, challenge] = createResearchWorkflowVariants(guided);
