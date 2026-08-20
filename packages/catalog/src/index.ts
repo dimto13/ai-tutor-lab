@@ -51,6 +51,7 @@ export type {
   ModuleLine,
   ModuleLineCatalog,
   ModuleLineItem,
+  ModuleLineLearningLayer,
   VerificationContract,
 } from "./module-lines.ts";
 export {
@@ -60,6 +61,7 @@ export {
   getDidacticPatternById,
   getModuleLineById,
   moduleLineCatalogSchema,
+  moduleLineLearningLayerSchema,
   moduleLineSchema,
   parseModuleLineCatalog,
   selectModuleLineItems,
