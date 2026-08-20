@@ -21,7 +21,9 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
     page.getByRole("heading", { name: "Diese Daten werden über mich gespeichert" }),
   ).toBeVisible();
   await expect(page.getByText("Speichermodus: Browser lokal", { exact: true })).toBeVisible();
-  await expect(page.getByText("Punkte: Lokaler Modus", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Punkte: nur lokal, keine Tenant-Auswertung", { exact: true }),
+  ).toBeVisible();
 
   const categories = page.getByTestId("data-transparency-categories");
   for (const name of [
