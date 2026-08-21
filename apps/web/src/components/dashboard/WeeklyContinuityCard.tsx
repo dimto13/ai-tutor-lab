@@ -53,7 +53,9 @@ export function WeeklyContinuityCard() {
     try {
       await preferences.saveWeeklyGoalMinutes(draftGoal);
     } catch (cause) {
-      setSaveError(cause instanceof Error ? cause.message : "Das Wochenziel konnte nicht gespeichert werden.");
+      setSaveError(
+        cause instanceof Error ? cause.message : "Das Wochenziel konnte nicht gespeichert werden.",
+      );
     } finally {
       setSaving(false);
     }
@@ -87,7 +89,9 @@ export function WeeklyContinuityCard() {
             {persistedGoal ? ` / ${persistedGoal} Min.` : ""}
           </p>
           {summary.goalProgressPercent !== null ? (
-            <p className="text-xs text-muted-foreground">{summary.goalProgressPercent} % des Wochenziels</p>
+            <p className="text-xs text-muted-foreground">
+              {summary.goalProgressPercent} % des Wochenziels
+            </p>
           ) : null}
         </div>
       </div>
@@ -122,7 +126,10 @@ export function WeeklyContinuityCard() {
         </p>
       </div>
 
-      <form className="mt-5 flex flex-wrap items-end gap-3 border-t border-border pt-4" onSubmit={saveGoal}>
+      <form
+        className="mt-5 flex flex-wrap items-end gap-3 border-t border-border pt-4"
+        onSubmit={saveGoal}
+      >
         <label className="text-xs font-medium text-foreground">
           Wochenziel in Minuten
           <input
@@ -145,7 +152,8 @@ export function WeeklyContinuityCard() {
         </button>
         <p className="max-w-md text-[11px] leading-relaxed text-muted-foreground">
           Erinnerungen sind standardmäßig aus. Ohne eine separate ausdrückliche Zustimmung wird
-          keine Benachrichtigung versendet; ein Erinnerungsversand ist in dieser Ausbaustufe nicht aktiviert.
+          keine Benachrichtigung versendet; ein Erinnerungsversand ist in dieser Ausbaustufe nicht
+          aktiviert.
         </p>
       </form>
       {saveError ? (
