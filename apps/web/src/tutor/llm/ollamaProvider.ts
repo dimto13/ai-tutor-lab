@@ -10,6 +10,14 @@ interface OpenAiChatCompletionResponse {
       content?: string | null;
     };
   }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  };
+}
+
+function tokenCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
 export class OllamaProvider implements LlmProvider {
@@ -20,6 +28,11 @@ export class OllamaProvider implements LlmProvider {
   constructor(config: LlmProviderConfig, fetchImpl: FetchLike = fetch) {
     this.config = config;
     this.fetchImpl = fetchImpl;
+  }
+
+  estimateMaximumCostMicros(_request: LlmRequest): number {
+    // The supported Ollama path is locally operated and has no per-request provider charge.
+    return 0;
   }
 
   async complete(request: LlmRequest): Promise<LlmResponse> {
@@ -33,6 +46,7 @@ export class OllamaProvider implements LlmProvider {
         model: this.config.model,
         messages: request.messages,
         temperature: request.temperature ?? 0,
+        ...(request.maxOutputTokens === undefined ? {} : { max_tokens: request.maxOutputTokens }),
         ...(request.structuredOutput ? { response_format: { type: "json_object" } } : {}),
       }),
     });
@@ -51,6 +65,11 @@ export class OllamaProvider implements LlmProvider {
     return {
       text,
       model: payload.model || this.config.model,
+      usage: {
+        inputTokens: tokenCount(payload.usage?.prompt_tokens),
+        outputTokens: tokenCount(payload.usage?.completion_tokens),
+        costMicros: 0,
+      },
     };
   }
 }
