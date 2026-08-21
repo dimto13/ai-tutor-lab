@@ -6,9 +6,34 @@ interface LearningObjectiveCatalog {
   objectives: Array<{ id: string }>;
 }
 
+interface GlossaryConcept {
+  key: string;
+  term: string;
+  aliases: string[];
+}
+
+interface GlossaryCatalog {
+  concepts: GlossaryConcept[];
+}
+
+interface IntroductionCatalog {
+  steps: Array<{
+    id: string;
+    title: string;
+    description: string;
+    instruction: string;
+  }>;
+}
+
 interface Scenario {
   learningObjectives: string[];
   exploreTargets?: string[];
+  steps?: Array<{
+    description?: string;
+    instruction?: string;
+    rationale?: string;
+    helpLevels?: string[];
+  }>;
 }
 
 function readJson<T>(relativePath: string): T {
@@ -21,6 +46,17 @@ const objectiveCatalog = readJson<LearningObjectiveCatalog>(
 const explore = readJson<Scenario>("../../content/scenarios/vscode-basics.explore.json");
 const guided = readJson<Scenario>("../../content/scenarios/vscode-basics.guided.json");
 const challenge = readJson<Scenario>("../../content/scenarios/vscode-basics.challenge.json");
+const introductions = readJson<IntroductionCatalog>("../../content/introductions/de.json");
+const glossaryCatalogs = [
+  readJson<GlossaryCatalog>("../../content/glossary/de.json"),
+  readJson<GlossaryCatalog>("../../content/glossary/vscode-menus.de.json"),
+  readJson<GlossaryCatalog>("../../content/glossary/vscode-surfaces.de.json"),
+];
+const glossaryByKey = new Map<string, GlossaryConcept>(
+  glossaryCatalogs
+    .flatMap((catalog) => catalog.concepts)
+    .map((concept) => [concept.key, concept] as const),
+);
 
 test("VS Code basics keeps the #122 competency contract explicit", () => {
   const objectiveIds = new Set(objectiveCatalog.objectives.map((objective) => objective.id));
@@ -83,5 +119,76 @@ test("VS Code Explore keeps the core navigation and orientation surfaces discove
     "vscode.workspace.context",
   ]) {
     assert.ok(targets.has(target), `Explore lost semantic surface: ${target}`);
+  }
+});
+
+test("VS Code learner-facing glossary keeps German terms with original UI aliases", () => {
+  const expectedTerms = [
+    ["vscode.view", "Ansicht", "View"],
+    ["vscode.panel", "Bereich", "Panel"],
+    ["vscode.problems", "Probleme", "Problems"],
+    ["vscode.output", "Ausgabe", "Output"],
+    ["vscode.settings", "Einstellungen", "Settings"],
+    ["vscode.view_menu", "Ansicht-Menü", "View"],
+  ] as const;
+
+  for (const [key, germanTerm, englishAlias] of expectedTerms) {
+    const concept = glossaryByKey.get(key);
+    assert.ok(concept, `missing glossary concept: ${key}`);
+    assert.equal(concept.term, germanTerm, `${key} must use the German learner-facing term`);
+    assert.ok(
+      concept.aliases.includes(englishAlias),
+      `${key} must preserve the original UI label as alias: ${englishAlias}`,
+    );
+  }
+});
+
+test("VS Code content introduces German terms once while action labels stay product-accurate", () => {
+  const panelIntroduction = introductions.steps.find((step) => step.id === "vscode.ui.panel");
+  assert.ok(panelIntroduction, "missing shared Panel introduction");
+  assert.match(`${panelIntroduction.title} ${panelIntroduction.description}`, /Bereich \(Panel\)/);
+
+  const viewIntroduction = introductions.steps.find((step) => step.id === "vscode.ui.view");
+  assert.ok(viewIntroduction, "missing shared View introduction");
+  assert.match(`${viewIntroduction.title} ${viewIntroduction.description}`, /Ansicht \(View\)/);
+
+  const guidedText = JSON.stringify(guided);
+  for (const phrase of ["Ansichten (Views)", "Probleme (Problems)", "Ausgabe (Output)"]) {
+    assert.ok(guidedText.includes(phrase), `Guided lost German-first introduction: ${phrase}`);
+  }
+  for (const productLabel of [
+    "File → Open Folder...",
+    "Terminal → New Terminal",
+    "auf Problems",
+    "auf Output",
+  ]) {
+    assert.ok(
+      guidedText.includes(productLabel),
+      `Guided changed a product action label: ${productLabel}`,
+    );
+  }
+
+  const exploreText = JSON.stringify(explore);
+  for (const phrase of [
+    "Suche (Search)",
+    "Ansicht-Menü (View)",
+    "Einstellungen (Settings)",
+    "Erweiterungen (Extensions)",
+    "Bereich (Panel)",
+  ]) {
+    assert.ok(exploreText.includes(phrase), `Explore lost first-use terminology: ${phrase}`);
+  }
+  for (const productLabel of [
+    "File → Preferences",
+    "File → Open Folder",
+    "File → Open Workspace from File",
+    "Command Palette",
+    "Problems",
+    "Output",
+  ]) {
+    assert.ok(
+      exploreText.includes(productLabel),
+      `Explore changed a product action label: ${productLabel}`,
+    );
   }
 });
