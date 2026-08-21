@@ -20,7 +20,10 @@ class MemoryTelemetrySink implements TelemetrySink {
   }
 }
 
-function subscribeWithoutKnowingTransport(bus: TrainingEventBus, seen: TrainingEvent[]): () => void {
+function subscribeWithoutKnowingTransport(
+  bus: TrainingEventBus,
+  seen: TrainingEvent[],
+): () => void {
   return bus.subscribe((event) => {
     seen.push(event);
   });
