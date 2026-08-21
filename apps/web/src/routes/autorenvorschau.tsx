@@ -8,10 +8,7 @@ import {
   suggestAuthorEventType,
   type AuthorRuntimeLookup,
 } from "@/authoring/authorPreview";
-import {
-  getRuntimeAdapterForSelector,
-  getRuntimeAdapterForTarget,
-} from "@/runtime";
+import { getRuntimeAdapterForSelector, getRuntimeAdapterForTarget } from "@/runtime";
 import { getScenario, getScenarioIds } from "@/scenarios";
 
 export const Route = createFileRoute("/autorenvorschau")({
