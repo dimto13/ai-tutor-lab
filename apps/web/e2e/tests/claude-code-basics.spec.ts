@@ -53,9 +53,7 @@ test("Explore: Kontrollflächen erklären Wirkungsbereich, Sicherheit und Verifi
   await page.goto(exploreUrl);
   await waitForTrainingReady(page);
 
-  await expect(
-    page.getByRole("heading", { name: "Agentenarbeitsplatz frei untersuchen" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Oberfläche frei untersuchen" })).toBeVisible();
   await expect(page.getByText("Aktivitätsprotokoll", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Plan prüfen" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Aufgabe stoppen" })).toBeVisible();
@@ -113,7 +111,10 @@ test("Guided: riskanter Entwurf wird abgelehnt, korrigiert, getestet und verifiz
 
   await sendInput(page, "npm test");
   await expectGuidedStep(page, 12, "Abschlusszustand eigenständig verifizieren");
-  await expect(page.getByText(/1 Test bestanden/)).toBeVisible();
+  const verificationPanel = page.getByRole("complementary", {
+    name: "Arbeits- und Prüfinformationen",
+  });
+  await expect(verificationPanel.getByText(/1 Test bestanden/)).toBeVisible();
 
   await page.getByRole("button", { name: "Ergebnis verifizieren" }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
@@ -175,7 +176,7 @@ test("Guided: Sitzungs- und Korrekturzustand übersteht einen Reload", async ({ 
 test("Challenge: sicherer Pfad erreicht korrekten getesteten Endzustand", async ({ page }) => {
   await page.goto(challengeUrl);
   await waitForTrainingReady(page);
-  await expect(page.getByText(/Sicherheitsgrenze:/)).toBeVisible();
+  await expect(page.getByText(/Sicherheitsgrenze/)).toBeVisible();
 
   await completeSafeChallenge(page);
 
