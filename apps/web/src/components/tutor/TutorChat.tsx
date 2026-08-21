@@ -58,27 +58,30 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setMessages((messages) => [...messages, { role: "user", text: question }]);
     setPending(true);
 
-    let answer = answerDeterministically(question, tutorContext, findGlossaryConcept);
-    const accessToken = auth.session?.accessToken ?? null;
-    if (accessToken) {
-      try {
-        const response = await askTutorLlm({
-          data: {
-            scenarioId: tutorContext.scenario.id,
-            mode: tutorContext.mode,
-            currentStepId: tutorContext.currentStep?.id ?? null,
-            question,
-            accessToken,
-          },
-        });
-        if (response.status !== "unavailable") answer = response.answer;
-      } catch {
-        // The deterministic tutor remains the safe fallback if the optional server LLM is unavailable.
+    try {
+      let answer = answerDeterministically(question, tutorContext, findGlossaryConcept);
+      const accessToken = auth.session?.accessToken ?? null;
+      if (accessToken) {
+        try {
+          const response = await askTutorLlm({
+            data: {
+              scenarioId: tutorContext.scenario.id,
+              mode: tutorContext.mode,
+              currentStepId: tutorContext.currentStep?.id ?? null,
+              question,
+              accessToken,
+            },
+          });
+          if (response.status !== "unavailable") answer = response.answer;
+        } catch {
+          // The deterministic tutor remains the safe fallback if the optional server LLM is unavailable.
+        }
       }
-    }
 
-    setMessages((messages) => [...messages, { role: "tutor", text: answer }]);
-    setPending(false);
+      setMessages((messages) => [...messages, { role: "tutor", text: answer }]);
+    } finally {
+      setPending(false);
+    }
   };
 
   const problemShortcut = (
