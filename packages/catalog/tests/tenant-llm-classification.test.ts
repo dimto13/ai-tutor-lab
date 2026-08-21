@@ -33,7 +33,10 @@ const source = { format: "txt" as const, bytes: new TextEncoder().encode("INTERN
 
 describe("applyBoundaryLlmClassification", () => {
   it("keeps deterministic classification fully functional without a configured model", async () => {
-    assert.equal(await applyBoundaryLlmClassification(scheme, context, source, deterministic), deterministic);
+    assert.equal(
+      await applyBoundaryLlmClassification(scheme, context, source, deterministic),
+      deterministic,
+    );
   });
 
   it("does not call the model unless both feature flag and tenant opt-in are enabled", async () => {
