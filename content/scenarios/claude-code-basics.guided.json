@@ -177,11 +177,9 @@
         "Lies den Plan und wähle Plan prüfen."
       ],
       "validation": {
-        "kind": "event",
-        "type": "ai.plan.reviewed",
-        "match": {
-          "proposalId": "readme-draft-sensitive"
-        }
+        "kind": "state",
+        "selector": "claude.plan.reviewed",
+        "equals": true
       },
       "highlightTarget": "claude.plan.review",
       "highlightTooltip": "Plan prüfen bedeutet nicht ausführen – es ist ein bewusster Kontrollpunkt.",
@@ -276,11 +274,9 @@
         "Wähle anschließend Plan prüfen."
       ],
       "validation": {
-        "kind": "event",
-        "type": "ai.plan.reviewed",
-        "match": {
-          "proposalId": "readme-corrected"
-        }
+        "kind": "state",
+        "selector": "claude.plan.reviewed",
+        "equals": true
       },
       "highlightTarget": "claude.plan.review",
       "highlightTooltip": "Jeder neue Plan wird erneut geprüft.",
@@ -351,12 +347,9 @@
         "Der Simulator führt keinen echten Prozess aus; er bewertet ausschließlich die synthetische README-Fixture."
       ],
       "validation": {
-        "kind": "event",
-        "type": "test.completed",
-        "match": {
-          "checkId": "readme-safety-test",
-          "passed": true
-        }
+        "kind": "state",
+        "selector": "claude.tests.lastPassed",
+        "equals": true
       },
       "highlightTarget": "claude.verification",
       "highlightTooltip": "Der Teststatus ist ein eigener Nachweis neben Plan und Diff.",
@@ -374,11 +367,9 @@
         "Wähle rechts Ergebnis verifizieren."
       ],
       "validation": {
-        "kind": "event",
-        "type": "verification.completed",
-        "match": {
-          "passed": true
-        }
+        "kind": "state",
+        "selector": "claude.verification.passed",
+        "equals": true
       },
       "highlightTarget": "claude.verification",
       "highlightTooltip": "Abschluss bedeutet selbst prüfen, nicht der Agentenantwort glauben.",
