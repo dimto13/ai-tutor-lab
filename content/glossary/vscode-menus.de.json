@@ -39,10 +39,10 @@
     },
     {
       "key": "vscode.go_menu",
-      "term": "Go-Menü",
-      "aliases": ["Go", "Navigations-Menü"],
-      "simple": "Das Go-Menü ist der Navigationsbereich der Menüleiste. Es hilft dir, schnell zu einer anderen Stelle zu springen, etwa zu einer Datei, Zeile, Definition oder zum vorherigen Ort.",
-      "advanced": "Go bündelt Navigationsbefehle für Editor-Historie, Dateien, Symbole, Definitionen, Referenzen, Zeilen und diagnostische Sprungziele.",
+      "term": "Gehe-zu-Menü",
+      "aliases": ["Go", "Go-Menü", "Navigations-Menü"],
+      "simple": "Das Gehe-zu-Menü (Go) ist der Navigationsbereich der Menüleiste. Es hilft dir, schnell zu einer anderen Stelle zu springen, etwa zu einer Datei, Zeile, Definition oder zum vorherigen Ort.",
+      "advanced": "Das Gehe-zu-Menü bündelt Navigationsbefehle für Editor-Historie, Dateien, Symbole, Definitionen, Referenzen, Zeilen und diagnostische Sprungziele.",
       "uiTargets": ["vscode.menu.go"]
     },
     {
