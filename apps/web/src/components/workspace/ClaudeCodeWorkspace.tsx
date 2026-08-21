@@ -204,7 +204,9 @@ export function ClaudeCodeWorkspace() {
                   Arbeitsplan
                 </p>
                 {state.planReviewed ? (
-                  <span className="ml-auto text-[10px] font-medium text-emerald-300">Plan geprüft</span>
+                  <span className="ml-auto text-[10px] font-medium text-emerald-300">
+                    Plan geprüft
+                  </span>
                 ) : (
                   <button
                     type="button"
