@@ -71,7 +71,7 @@ const builtinRules: readonly DetectionRule[] = [
     indicatorId: "salary_data",
     reason: "Gehalts- oder HR-Merkmal erkannt",
     patterns: [
-      /\b(?:gehalt|gehaltsliste|monatsbrutto|brutto|payroll|bonus|vergütung|lohnabrechnung)\b/iu,
+      /\b(?:gehalt|gehaltsliste|monatsbrutto|brutto|payroll|bonus|vergütung|jahresvergütung|lohnabrechnung)\b/iu,
       /\bHR\b/u,
     ],
   },
