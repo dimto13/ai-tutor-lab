@@ -40,7 +40,10 @@ test.describe("Accessibility regressions", () => {
   }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
-    await page.getByRole("button", { name: "Abmelden" }).click();
+    await page.getByTestId("account-menu-trigger").click();
+    const accountMenu = page.getByTestId("account-menu-popover");
+    await expect(accountMenu).toBeVisible();
+    await accountMenu.getByRole("button", { name: "Abmelden" }).click();
     await expect(page).toHaveURL(/\/willkommen$/);
 
     await page.getByRole("link", { name: "Anmelden" }).click();
