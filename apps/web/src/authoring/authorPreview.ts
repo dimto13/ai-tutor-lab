@@ -7,7 +7,6 @@ import {
   type TrainingStep,
   type Validation,
 } from "@ai-train-lab/training-engine";
-import { getRuntimeAdapterForSelector, getRuntimeAdapterForTarget } from "@/runtime";
 
 export type AuthorTargetResolution =
   | { status: "none" }
@@ -25,18 +24,27 @@ export interface SimulatedAuthorEvent {
   payload: Record<string, unknown>;
 }
 
+export interface AuthorRuntimeHandle {
+  id: string;
+  productId: string;
+  describeSurface(): readonly { ref: string; label: string }[];
+  query(key: string): Promise<unknown>;
+}
+
+export interface AuthorRuntimeLookup {
+  forTarget(target: string, scenario: Scenario): AuthorRuntimeHandle | null;
+  forStateKey(key: string, scenario: Scenario): AuthorRuntimeHandle | null;
+}
+
 export function resolveAuthorHighlightTarget(
   scenario: Scenario,
   step: TrainingStep,
+  runtimes: AuthorRuntimeLookup,
 ): AuthorTargetResolution {
   const target = step.highlightTarget;
   if (!target) return { status: "none" };
 
-  const runtime = getRuntimeAdapterForTarget(
-    target,
-    scenario.environment?.runtimeAdapterId,
-    scenario.environment?.integrationRuntimeAdapterIds,
-  );
+  const runtime = runtimes.forTarget(target, scenario);
   if (!runtime) return { status: "missing", target };
 
   const surface = runtime.describeSurface().find((entry) => entry.ref === target);
@@ -60,6 +68,7 @@ export async function simulateAuthorStepValidation(
   scenario: Scenario,
   step: TrainingStep,
   simulated: SimulatedAuthorEvent,
+  runtimes: AuthorRuntimeLookup,
 ): Promise<EngineValidationResult> {
   const event: TrainingEvent = {
     id: "author-preview-event",
@@ -75,16 +84,12 @@ export async function simulateAuthorStepValidation(
     return registry.validate(step.validation, {
       event,
       events: [event],
-      query: async (selector) => {
-        const runtime = getRuntimeAdapterForSelector(
-          selector,
-          scenario.environment?.runtimeAdapterId,
-          scenario.environment?.integrationRuntimeAdapterIds,
-        );
+      query: async (key) => {
+        const runtime = runtimes.forStateKey(key, scenario);
         if (!runtime) {
-          throw new Error(`Kein RuntimeAdapter für State-Selektor: ${selector}`);
+          throw new Error(`Kein RuntimeAdapter für State-Abfrage: ${key}`);
         }
-        return runtime.query(selector);
+        return runtime.query(key);
       },
     });
   }
