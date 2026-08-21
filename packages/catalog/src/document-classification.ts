@@ -77,6 +77,11 @@ const builtinRules: readonly DetectionRule[] = [
   },
 ];
 
+const explicitUncertaintyPatterns: readonly RegExp[] = [
+  /\bnicht sicher (?:auflösbar|zuordenbar|bestimmbar)\b/iu,
+  /\b(?:unklar|unsicher|mehrdeutig|nicht eindeutig)\b/iu,
+];
+
 function normalizeText(text: string): string {
   return text.normalize("NFKC").replace(/\s+/gu, " ").trim();
 }
@@ -145,9 +150,10 @@ export function classifyExtractedDocument(
   const tenant = detectTenantKeywords(scheme, text, options.keywordRules ?? []);
   const indicatorIds = [...new Set([...builtin.ids, ...tenant.ids])];
 
-  // Empty/unreadable content is never silently classified as harmless. Likewise,
-  // non-empty content with no recognizable signal requires a human decision.
-  const uncertain = text.length === 0 || indicatorIds.length === 0;
+  // Empty/unreadable content and explicit ambiguity are never silently classified
+  // as harmless. The same conservative escalation applies when no signal exists.
+  const explicitUncertainty = explicitUncertaintyPatterns.some((pattern) => pattern.test(text));
+  const uncertain = text.length === 0 || indicatorIds.length === 0 || explicitUncertainty;
   const decision = classifyByIndicators(scheme, indicatorIds, { uncertain });
 
   return {
