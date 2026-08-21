@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildWeeklyContinuity, startOfUtcWeek } from "../../apps/web/src/continuity/weeklyContinuity.ts";
+import {
+  buildWeeklyContinuity,
+  startOfUtcWeek,
+} from "../../apps/web/src/continuity/weeklyContinuity.ts";
 
 const MONDAY = Date.UTC(2026, 7, 17, 12);
 
