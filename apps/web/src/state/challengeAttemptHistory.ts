@@ -20,7 +20,8 @@ function normalizeFailedStartedAt(values: unknown[]): number[] {
   return [
     ...new Set(
       values.filter(
-        (startedAt): startedAt is number => Number.isFinite(startedAt) && startedAt >= 0,
+        (startedAt): startedAt is number =>
+          typeof startedAt === "number" && Number.isFinite(startedAt) && startedAt >= 0,
       ),
     ),
   ]
