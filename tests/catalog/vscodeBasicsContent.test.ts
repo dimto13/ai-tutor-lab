@@ -146,10 +146,7 @@ test("VS Code learner-facing glossary keeps German terms with original UI aliase
 test("VS Code content introduces German terms once while action labels stay product-accurate", () => {
   const panelIntroduction = introductions.steps.find((step) => step.id === "vscode.ui.panel");
   assert.ok(panelIntroduction, "missing shared Panel introduction");
-  assert.match(
-    `${panelIntroduction.title} ${panelIntroduction.description}`,
-    /Bereich \(Panel\)/,
-  );
+  assert.match(`${panelIntroduction.title} ${panelIntroduction.description}`, /Bereich \(Panel\)/);
 
   const viewIntroduction = introductions.steps.find((step) => step.id === "vscode.ui.view");
   assert.ok(viewIntroduction, "missing shared View introduction");
@@ -165,7 +162,10 @@ test("VS Code content introduces German terms once while action labels stay prod
     "auf Problems",
     "auf Output",
   ]) {
-    assert.ok(guidedText.includes(productLabel), `Guided changed a product action label: ${productLabel}`);
+    assert.ok(
+      guidedText.includes(productLabel),
+      `Guided changed a product action label: ${productLabel}`,
+    );
   }
 
   const exploreText = JSON.stringify(explore);
@@ -186,6 +186,9 @@ test("VS Code content introduces German terms once while action labels stay prod
     "Problems",
     "Output",
   ]) {
-    assert.ok(exploreText.includes(productLabel), `Explore changed a product action label: ${productLabel}`);
+    assert.ok(
+      exploreText.includes(productLabel),
+      `Explore changed a product action label: ${productLabel}`,
+    );
   }
 });
