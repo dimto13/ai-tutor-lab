@@ -84,14 +84,29 @@ Die Verantwortungsgrenze ist verbindlich:
 
 ## Sprachregel für Produktoberflächen
 
-Bei sichtbaren UI-Bezeichnungen bleibt der originale Produktbegriff die Referenz. Die deutsche
-Erklärung dient der Einordnung, darf aber keine zweite konkurrierende Bezeichnung etablieren.
+Lerntexte und die sichtbare Produktoberfläche haben unterschiedliche Aufgaben: Der Guide erklärt auf
+Deutsch, die Simulation bildet die tatsächlichen Produktlabels ab. Deshalb gilt pro Modul ein
+verbindlicher Einführungs- und Wiederholungsvertrag.
 
-1. Beim ersten notwendigen Auftreten wird der originale UI-Begriff mit einer kurzen deutschen
-   Erklärung verbunden, zum Beispiel `File (Datei)` oder `Activity Bar (linke Navigationsleiste)`.
-2. Danach wird im selben Lernkontext konsequent der originale UI-Begriff verwendet, insbesondere in
-   Handlungsanweisungen, damit Text und sichtbare Oberfläche übereinstimmen.
-3. Sichtbare Menüpunkte und Schaltflächen werden nicht durch frei erfundene deutsche Produktnamen
-   ersetzt. Die Erklärung beschreibt die Funktion, nicht eine vermeintliche offizielle Übersetzung.
-4. Gibt es keinen sinnvollen Office-Gegenpart, wird das ausdrücklich gesagt. Die Analogie soll das
+1. Hat ein Oberflächenbegriff eine tragfähige deutsche Entsprechung, wird er beim ersten fachlich
+   notwendigen Auftreten als `Deutsch (English UI label)` eingeführt, zum Beispiel
+   `Bereich (Panel)`, `Ansicht (View)`, `Probleme (Problems)`, `Ausgabe (Output)` oder
+   `Einstellungen (Settings)`.
+2. Nach dieser ersten Einführung darf im selben Modul die kurze deutsche Form verwendet werden,
+   solange sie eindeutig bleibt. Die englische Klammer wird nicht in jedem Schritt wiederholt.
+3. Sichtbare Menüpunkte, Schaltflächen, Befehle, Dateinamen und Tastenkürzel bleiben in konkreten
+   Handlungsanweisungen exakt so geschrieben, wie sie im Produkt erscheinen, zum Beispiel
+   `Terminal → New Terminal`, `File → Open Folder...`, `Problems`, `Output` oder `Strg+S`.
+4. Eigennamen und etablierte Produktbegriffe ohne tragfähige deutsche Hauptbezeichnung bleiben
+   `English (deutsche Erklärung)`, zum Beispiel `Command Palette (Befehlspalette)` oder
+   `Activity Bar (Aktivitätsleiste)`. Produktnamen wie `Visual Studio Code` und `GitHub Copilot`
+   werden nicht übersetzt.
+5. Im Content-Glossar steht bei übersetzbaren UI-Begriffen die deutsche Form in `term`; das originale
+   englische UI-Label bleibt in `aliases`. Bei Produkt-/Eigennamen gilt die umgekehrte Reihenfolge.
+   Dadurch kann der Matcher beide Schreibweisen erkennen; die Klammerform erzeugt kein zweites Konzept.
+6. Die Klammererklärung wird pro Modul beim ersten fachlichen Auftreten gesetzt. Wiederverwendbare
+   Introduction-Steps zählen als diese Einführung; nachfolgende Guided-Schritte dürfen die kurze
+   deutsche Form verwenden. Explore-Szenarien ohne Introduction-Block führen die Begriffe im eigenen
+   Einstieg ein.
+7. Gibt es keinen sinnvollen Office-Gegenpart, wird das ausdrücklich gesagt. Analogien sollen das
    Verständnis erleichtern und keine fachlich falsche Gleichsetzung erzeugen.
