@@ -22,11 +22,15 @@ schwache Session die gespeicherte Selbsteinschätzung nicht heimlich auf `beginn
 
 Für Adaption werden drei voneinander getrennte Signalgruppen verwendet:
 
-| Signalgruppe | Beispiele | Autorität | Darf Punkte/Kompetenz erzeugen? |
-| --- | --- | --- | --- |
-| Selbsteinschätzung | `beginner`, `intermediate`, `advanced` | Nutzerpräferenz | **Nein** |
-| Beobachtbare Leistung | Challenge bestanden, Hilfegrad, Fehlversuche, validierte Lernziele, serverseitig akzeptierte Score-/Attestation-Evidence | serverautoritative Trainings-/Scoring-Pfade | **Ja, ausschließlich nach bestehenden Scoring-/Skill-Regeln** |
-| Fortschritts-/Adaptionssignale | abgeschlossene Module, Wiederholungen, frühere Hilfeintensität, empfohlene nächste Aktion | abgeleitet | **Nein, nur Darstellung/Recommendation** |
+- **Selbsteinschätzung:** `beginner`, `intermediate`, `advanced`. Autorität: Nutzerpräferenz.
+  Darf Punkte oder Kompetenz erzeugen: **nein**.
+- **Beobachtbare Leistung:** Challenge-Erfolg, Hilfegrad, Fehlversuche, validierte Lernziele und
+  serverseitig akzeptierte Score-/Attestation-Evidence. Autorität: serverautoritative
+  Trainings-/Scoring-Pfade. Darf Punkte oder Kompetenz erzeugen: **ja, ausschließlich nach den
+  bestehenden Scoring-/Skill-Regeln**.
+- **Fortschritts-/Adaptionssignale:** abgeschlossene Module, Wiederholungen, frühere
+  Hilfeintensität und empfohlene nächste Aktion. Autorität: abgeleitet. Darf Punkte oder Kompetenz
+  erzeugen: **nein; nur Darstellung und Recommendation**.
 
 Priorität bei einem Widerspruch: Für **Nachweise** gewinnt immer die beobachtbare Leistung. Für
 **Darstellung der Selbsteinschätzung** gewinnt immer der vom Nutzer gespeicherte Wert. Für
@@ -66,11 +70,31 @@ Die gemessene Performance wird für Recommendation bewusst grob in `insufficient
 und `strong` zusammengefasst. Diese Begriffe sind **keine neuen SkillProfile-Stufen** und werden
 nicht persistiert; sie sind nur ein fachlicher Entscheidungseingang.
 
-| Selbsteinschätzung | Insufficient / noch keine belastbare Evidence | Developing / gemischte Evidence | Strong / wiederholt selbstständig |
-| --- | --- | --- | --- |
-| `beginner` | Explore/Guided priorisieren, hohe Erklärungstiefe und aktive Hilfen anbieten | Guided fortsetzen, Challenge optional anbieten, Hilfen leicht reduzieren | Challenge bzw. anspruchsvolleren nächsten Schritt anbieten; Selbsteinschätzung unverändert lassen |
-| `intermediate` | Guided empfehlen, Kontext erhöhen; bei wiederholten Fehlschlägen Grundlagen anbieten | kompakter Guided-Pfad mit frühem Challenge-Angebot | Challenge/Stretch Goal priorisieren und Erklärungen komprimieren |
-| `advanced` | Direkteinstieg bleibt erlaubt; nach wiederholt schwacher Evidence Guided/Grundlagen **empfehlen**, niemals erzwingen oder Level umschreiben | Challenge weiter anbieten, aber gezielte Unterstützung dort einblenden, wo Evidence Lücken zeigt | Challenge/Stretch Goal priorisieren, Grundlagen ausblenden aber jederzeit erreichbar halten |
+### `beginner`
+
+- **Insufficient / noch keine belastbare Evidence:** Explore/Guided priorisieren, hohe
+  Erklärungstiefe und aktive Hilfen anbieten.
+- **Developing / gemischte Evidence:** Guided fortsetzen, Challenge optional anbieten, Hilfen
+  leicht reduzieren.
+- **Strong / wiederholt selbstständig:** Challenge beziehungsweise anspruchsvolleren nächsten
+  Schritt anbieten; Selbsteinschätzung unverändert lassen.
+
+### `intermediate`
+
+- **Insufficient / noch keine belastbare Evidence:** Guided empfehlen, Kontext erhöhen; bei
+  wiederholten Fehlschlägen Grundlagen anbieten.
+- **Developing / gemischte Evidence:** kompakter Guided-Pfad mit frühem Challenge-Angebot.
+- **Strong / wiederholt selbstständig:** Challenge/Stretch Goal priorisieren und Erklärungen
+  komprimieren.
+
+### `advanced`
+
+- **Insufficient / noch keine belastbare Evidence:** Direkteinstieg bleibt erlaubt; nach wiederholt
+  schwacher Evidence Guided/Grundlagen **empfehlen**, niemals erzwingen oder Level umschreiben.
+- **Developing / gemischte Evidence:** Challenge weiter anbieten, aber gezielte Unterstützung dort
+  einblenden, wo Evidence Lücken zeigt.
+- **Strong / wiederholt selbstständig:** Challenge/Stretch Goal priorisieren, Grundlagen ausblenden,
+  aber jederzeit erreichbar halten.
 
 ### Verbindliche Abweichungsfälle
 
@@ -105,14 +129,14 @@ persönliches Wochenziel, neuer nachgewiesener Kompetenzstand. Sie belohnt keine
 ### Scoring
 
 Scoring bleibt vollständig serverautoritativ. Grundlage sind ausschließlich verifizierte
-Trainingsevidence und die Regeln aus #31/#32 bzw. `22-server-scoring.md`. Die Recommendation-
-Schicht darf keinen ScoreAward erzeugen, modifizieren oder simulieren.
+Trainingsevidence und die Regeln aus #31/#32 beziehungsweise `22-server-scoring.md`. Die
+Recommendation-Schicht darf keinen ScoreAward erzeugen, modifizieren oder simulieren.
 
 ### SkillProfile / Attestation
 
-SkillProfile-Stufen und Attestations bleiben leistungsbasiert. Die Schwellen und Challenge-
-Voraussetzungen aus #33/#34 gelten unverändert. `selfAssessedAiLevel` wird weder in Score-Summen
-noch in Attestation-Evidence übernommen.
+SkillProfile-Stufen und Attestations bleiben leistungsbasiert. Die Schwellen und
+Challenge-Voraussetzungen aus #33/#34 gelten unverändert. `selfAssessedAiLevel` wird weder in
+Score-Summen noch in Attestation-Evidence übernommen.
 
 ## 25.6 Neutraler Adaptionsvertrag
 
@@ -183,17 +207,22 @@ Adaption soll nicht nach jeder Einzelaktion springen. Deshalb gelten folgende Re
 Es ist für diesen Spike kein neues Sammel-Issue nötig; die vorhandenen Tickets decken die
 Implementierungsschichten bereits ab:
 
-| Folgearbeit | Issue | Vertrag aus diesem Dokument |
-| --- | --- | --- |
-| Guided überspringen / Rückführung nach Fehlschlägen | #22 | Recommendation, niemals Zwang; zwei Fehlschläge als Schwelle |
-| Serverautoritatives Scoring | #31/#32 | Selbsteinschätzung bleibt vollständig außerhalb der Award-Logik |
-| SkillProfile | #33 | ausschließlich leistungsbasierte Stufen, keine Selbstdeklaration |
-| Attestations | #34 | ausschließlich validierte Challenge-/Lernziel-Evidence |
-| Dashboard: genau eine nächste Aktion | #37 | Recommendation kombiniert Präferenz + Evidence, ohne Score-Mutation |
-| Kompakter Direkteinstieg | #304 | deterministische Erstkalibrierung; Leveländerung nur nach Nutzerbestätigung |
-| Lernkontinuität | #35 | Fortschritt ohne Streak-/Verlustmechanik; keine Belohnung für Selbstdeklaration |
-| Adaptive Tutor-Kommunikation | #101 | darf Erklärungstiefe nutzen, aber kein psychologisches Profil aus #247 ableiten |
-| Sichtbare Level-Präferenz | #307 | klar als Selbsteinschätzung kennzeichnen, nicht als SkillProfile |
+- **#22 — Guided überspringen / Rückführung nach Fehlschlägen:** Recommendation, niemals Zwang;
+  zwei Fehlschläge als Schwelle.
+- **#31/#32 — serverautoritatives Scoring:** Selbsteinschätzung bleibt vollständig außerhalb der
+  Award-Logik.
+- **#33 — SkillProfile:** ausschließlich leistungsbasierte Stufen, keine Selbstdeklaration.
+- **#34 — Attestations:** ausschließlich validierte Challenge-/Lernziel-Evidence.
+- **#37 — Dashboard, genau eine nächste Aktion:** Recommendation kombiniert Präferenz und Evidence,
+  ohne Score-Mutation.
+- **#304 — kompakter Direkteinstieg:** deterministische Erstkalibrierung; Leveländerung nur nach
+  Nutzerbestätigung.
+- **#35 — Lernkontinuität:** Fortschritt ohne Streak-/Verlustmechanik; keine Belohnung für
+  Selbstdeklaration.
+- **#101 — adaptive Tutor-Kommunikation:** darf Erklärungstiefe nutzen, aber kein psychologisches
+  Profil aus #247 ableiten.
+- **#307 — sichtbare Level-Präferenz:** klar als Selbsteinschätzung kennzeichnen, nicht als
+  SkillProfile.
 
 #36 kann Abschluss-/Fortschrittsdarstellung mit den gleichen Trennungsregeln verwenden; #37 bleibt
 SSOT für die eine priorisierte nächste Dashboard-Aktion. Konkrete Scenario-Auswahl gehört in diese
