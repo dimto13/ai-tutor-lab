@@ -758,12 +758,47 @@ export const schema = a.schema({
     })
     .returns(a.ref("ScenarioLearningAnalytics"))
     .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
-    .handler(
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TenantScoreVisibilityPolicy"),
+        entry: "./score-visibility-load-policy.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("ScoreEvent"),
+        entry: "./load-training-analytics-cohort.js",
+      }),
       a.handler.custom({
         dataSource: a.ref("TrainingTelemetryEvent"),
         entry: "./load-training-analytics.js",
       }),
-    ),
+    ]),
+
+  exportTrainingAnalyticsCsv: a
+    .query()
+    .arguments({
+      scenarioId: a.string().required(),
+      from: a.float(),
+      to: a.float(),
+    })
+    .returns(a.string())
+    .authorization((allow) => [allow.groups(["role:trainer", "role:tenant_admin"])])
+    .handler([
+      a.handler.custom({
+        dataSource: a.ref("TenantScoreVisibilityPolicy"),
+        entry: "./score-visibility-load-policy.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("ScoreEvent"),
+        entry: "./load-training-analytics-cohort.js",
+      }),
+      a.handler.custom({
+        dataSource: a.ref("TrainingTelemetryEvent"),
+        entry: "./load-training-analytics.js",
+      }),
+      a.handler.custom({
+        entry: "./export-training-analytics-csv.js",
+      }),
+    ]),
 
   awardScenarioScore: a
     .mutation()
