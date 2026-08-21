@@ -147,10 +147,7 @@ function cognitoIssuer(config: CognitoPublicConfig): string {
   return `https://cognito-idp.${config.region}.amazonaws.com/${config.userPoolId}`;
 }
 
-async function loadJwks(
-  config: CognitoPublicConfig,
-  forceRefresh = false,
-): Promise<JsonWebKey[]> {
+async function loadJwks(config: CognitoPublicConfig, forceRefresh = false): Promise<JsonWebKey[]> {
   const issuer = cognitoIssuer(config);
   if (forceRefresh) jwksCache.delete(issuer);
   let cached = jwksCache.get(issuer);
