@@ -7,10 +7,7 @@ import {
   type TrainingStep,
   type Validation,
 } from "@ai-train-lab/training-engine";
-import {
-  getRuntimeAdapterForSelector,
-  getRuntimeAdapterForTarget,
-} from "@/runtime";
+import { getRuntimeAdapterForSelector, getRuntimeAdapterForTarget } from "@/runtime";
 
 export type AuthorTargetResolution =
   | { status: "none" }
