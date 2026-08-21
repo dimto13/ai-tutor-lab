@@ -66,14 +66,15 @@ test("authenticated shell exposes a keyboard-safe account menu and persists sett
 
   await expect(dialog).toBeHidden();
   await expect(menuTrigger).toBeFocused();
-  await expect(page.getByText("Tobias Test", { exact: true })).toBeVisible();
+  await expect(menuTrigger).toHaveAccessibleName("Nutzermenü für Lokaler Lernender öffnen");
 
   await page.reload();
-  await expect(page.getByText("Tobias Test", { exact: true })).toBeVisible();
+  await expect(menuTrigger).toHaveAccessibleName("Nutzermenü für Lokaler Lernender öffnen");
 
   await menuTrigger.click();
   await menu.getByRole("button", { name: "Einstellungen" }).click();
   await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("textbox", { name: "Name" })).toHaveValue("Tobias Test");
   await expect(dialog.getByRole("radio", { name: /Erfahren/ })).toBeChecked();
   await expect(emailDisplay).toContainText("*");
   await expect(emailDisplay).not.toHaveText("learner@local.test");
