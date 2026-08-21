@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { SkillLevel } from "@ai-train-lab/training-engine";
 import { technologyCatalog } from "@/catalog";
 import { DashboardQuickStart } from "@/components/dashboard/DashboardQuickStart";
+import { WeeklyContinuityCard } from "@/components/dashboard/WeeklyContinuityCard";
 import { useTrainingRecommendation } from "@/dashboard/useTrainingRecommendation";
 import type { SkillProfilesState } from "@/skill-profile/useSkillProfiles";
 
@@ -39,6 +40,8 @@ export function DashboardLearningOverview() {
 
         <CompetencySummary state={skillProfiles} />
       </section>
+
+      <WeeklyContinuityCard />
 
       <DashboardQuickStart
         basePrimaryAction={primaryAction}
