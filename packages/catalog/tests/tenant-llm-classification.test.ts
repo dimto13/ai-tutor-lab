@@ -96,6 +96,18 @@ describe("applyBoundaryLlmClassification", () => {
     assert.match(raised.reasons.join(" "), /vertraulicher Vertragskontext/);
   });
 
+  it("falls back to the deterministic result for an unknown model-proposed level", async () => {
+    const result = await applyBoundaryLlmClassification(scheme, context, source, deterministic, {
+      enabled: true,
+      tenantOptIn: true,
+      classifier: {
+        classify: () => ({ levelId: "hallucinated-secret", rationale: "unknown model output" }),
+      },
+    });
+
+    assert.equal(result, deterministic);
+  });
+
   it("falls back to the deterministic result when the optional model is unavailable", async () => {
     const result = await applyBoundaryLlmClassification(scheme, context, source, deterministic, {
       enabled: true,
