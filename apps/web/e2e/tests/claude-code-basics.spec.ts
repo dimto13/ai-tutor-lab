@@ -53,7 +53,9 @@ test("Explore: Kontrollflächen erklären Wirkungsbereich, Sicherheit und Verifi
   await page.goto(exploreUrl);
   await waitForTrainingReady(page);
 
-  await expect(page.getByRole("heading", { name: "Agentenarbeitsplatz frei untersuchen" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Agentenarbeitsplatz frei untersuchen" }),
+  ).toBeVisible();
   await expect(page.getByText("Aktivitätsprotokoll", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Plan prüfen" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Aufgabe stoppen" })).toBeVisible();
@@ -135,7 +137,9 @@ test("Guided: riskante Freigabe bringt die geforderte Sicherheitsentscheidung ni
   await expect(page.getByText(/DEMO_TOKEN=TRAINING-ONLY-SECRET/)).toHaveCount(0);
 });
 
-test("Guided: ein themenfremder Auftrag bringt den Auftragsschritt nicht voran", async ({ page }) => {
+test("Guided: ein themenfremder Auftrag bringt den Auftragsschritt nicht voran", async ({
+  page,
+}) => {
   await page.goto(guidedUrl);
   await waitForTrainingReady(page);
 
