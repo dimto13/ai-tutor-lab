@@ -52,8 +52,10 @@ const glossaryCatalogs = [
   readJson<GlossaryCatalog>("../../content/glossary/vscode-menus.de.json"),
   readJson<GlossaryCatalog>("../../content/glossary/vscode-surfaces.de.json"),
 ];
-const glossaryByKey = new Map(
-  glossaryCatalogs.flatMap((catalog) => catalog.concepts).map((concept) => [concept.key, concept]),
+const glossaryByKey = new Map<string, GlossaryConcept>(
+  glossaryCatalogs
+    .flatMap((catalog) => catalog.concepts)
+    .map((concept) => [concept.key, concept] as const),
 );
 
 test("VS Code basics keeps the #122 competency contract explicit", () => {
