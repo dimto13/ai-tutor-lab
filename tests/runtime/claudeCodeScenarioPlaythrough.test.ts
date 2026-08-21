@@ -55,7 +55,9 @@ const guidedStepActions: Record<string, StepAction> = {
   "inspect-sensitive-diff": (runtime) => runtime.openProposedChange(),
   "reject-sensitive-change": (runtime) => runtime.rejectPendingChange(),
   "refocus-agent": (runtime) =>
-    runtime.submitPrompt("Korrigiere den Vorschlag sicher ohne Geheimnisse und schließe config aus"),
+    runtime.submitPrompt(
+      "Korrigiere den Vorschlag sicher ohne Geheimnisse und schließe config aus",
+    ),
   "review-corrected-plan": (runtime) => runtime.reviewPlan(),
   "inspect-corrected-diff": (runtime) => runtime.openProposedChange(),
   "approve-corrected-change": (runtime) => runtime.approvePendingChange(),
