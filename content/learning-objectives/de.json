@@ -163,6 +163,46 @@
       "description": "Eine vorgeschlagene Änderung bewusst freigeben oder ablehnen und dabei die Verantwortung für den Arbeitsstand behalten."
     },
     {
+      "id": "understand_cli_agent_environment",
+      "title": "Terminal, Shell und Projektkontext eines CLI-Agenten einordnen",
+      "description": "Terminal, Shell, Kommando, aktuelles Verzeichnis und Arbeitsverzeichnis unterscheiden und daraus den technischen Wirkungsbereich einer Agentensitzung ableiten."
+    },
+    {
+      "id": "distinguish_cli_agent_from_shell_and_chat",
+      "title": "CLI-Agent, Shellkommando und klassischen Chat unterscheiden",
+      "description": "Direkte Shellkommandos, erklärenden Chat und einen agentischen Auftrag mit Projektkontext, Planung und möglichen Werkzeugaktionen nach Eingriffstiefe und Verantwortung abgrenzen."
+    },
+    {
+      "id": "formulate_cli_agent_task",
+      "title": "Agentenaufträge mit Ziel, Kontext und Grenzen formulieren",
+      "description": "Ziel, freigegebenen Kontext, Einschränkungen und Erfolgskriterien so beschreiben, dass ein Agentenplan und der spätere Endzustand überprüfbar bleiben."
+    },
+    {
+      "id": "review_cli_agent_plan",
+      "title": "Agentenplan vor der Ausführung kritisch prüfen",
+      "description": "Geplante Dateien, Kontextquellen, Aktionen und Annahmen auf Notwendigkeit, Sicherheitsgrenzen und fehlende Schritte prüfen, bevor eine Wirkung freigegeben wird."
+    },
+    {
+      "id": "control_cli_agent_task",
+      "title": "Agentische Arbeit stoppen, korrigieren und refokussieren",
+      "description": "Eine ungeeignete laufende Aufgabe stoppen oder einen Vorschlag ablehnen, den Mangel konkret benennen und Ziel oder Kontext für einen neuen Versuch sinnvoll verengen."
+    },
+    {
+      "id": "recognize_cli_agent_failure",
+      "title": "Fehler, Halluzinationen und unvollständige Agentenergebnisse erkennen",
+      "description": "Plausibel klingende Aussagen, Plan und tatsächlichen Diff beziehungsweise Dateizustand gegeneinander prüfen und fachliche Fehler, unbelegte Annahmen oder unvollständige Ergebnisse erkennen."
+    },
+    {
+      "id": "protect_cli_agent_context",
+      "title": "Geheimnisse und nicht freigegebene Daten schützen",
+      "description": "Zugangsdaten, Geheimnisse und nicht freigegebene Unternehmensinformationen aus unnötigem Agentenkontext und aus vorgeschlagenen Änderungen heraushalten und riskante Berechtigungen ablehnen."
+    },
+    {
+      "id": "verify_cli_agent_result",
+      "title": "Agentenergebnis unabhängig verifizieren",
+      "description": "Datei-Endzustand, Befehls- beziehungsweise Testergebnisse und Sicherheitsentscheidungen selbst prüfen und erst danach einen Agentenauftrag als erfolgreich abgeschlossen bewerten."
+    },
+    {
       "id": "identify_classification_indicators",
       "title": "Klassifizierungsmerkmale sicher erkennen",
       "description": "In einem Dokument die tatsächlich relevanten Schutzmerkmale erkennen und von neutralen oder nur ähnlich aussehenden Angaben unterscheiden."
