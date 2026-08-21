@@ -56,7 +56,7 @@
     {
       "key": "vscode.terminal_menu",
       "term": "Terminal-Menü",
-      "aliases": ["Terminal"],
+      "aliases": ["Terminal", "Terminal-Menü"],
       "simple": "Das Terminal-Menü verwaltet das integrierte Terminal und Aufgaben, die als Befehle ausgeführt werden. Dort kannst du zum Beispiel ein neues Terminal öffnen, es teilen oder vorbereitete Tasks starten.",
       "advanced": "Das Terminal-Menü enthält Lifecycle-Befehle für integrierte Terminals sowie Task-Runner-Funktionen und Profilkonfiguration.",
       "uiTargets": ["vscode.menu.terminal"]
