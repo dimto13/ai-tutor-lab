@@ -37,7 +37,8 @@ describe("evaluateUseCaseGuidance", () => {
       constraints: "",
     });
     assert.equal(missingConstraints.kind, "clarify");
-    if (missingConstraints.kind === "clarify") assert.match(missingConstraints.question, /Vorgaben/);
+    if (missingConstraints.kind === "clarify")
+      assert.match(missingConstraints.question, /Vorgaben/);
   });
 
   it("maps development work to a controlled workflow", () => {
