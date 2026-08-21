@@ -32,7 +32,10 @@ async function completeSafeChallenge(page: Page): Promise<void> {
   await expect(page.getByText(/DEMO_TOKEN=TRAINING-ONLY-SECRET/)).toHaveCount(0);
   await page.getByRole("button", { name: "Freigeben" }).click();
   await sendInput(page, "npm test");
-  await expect(page.getByText(/2 Tests bestanden/)).toBeVisible();
+  const verificationPanel = page.getByRole("complementary", {
+    name: "Arbeits- und Prüfinformationen",
+  });
+  await expect(verificationPanel.getByText(/2 Tests bestanden/)).toBeVisible();
   await page.getByRole("button", { name: "Ergebnis verifizieren" }).click();
 }
 
@@ -54,7 +57,9 @@ test("Explore: Kontrollflächen erklären Wirkungsbereich, Sicherheit und Verifi
   await waitForTrainingReady(page);
 
   await expect(page.getByRole("heading", { name: "Oberfläche frei untersuchen" })).toBeVisible();
-  await expect(page.getByText("Aktivitätsprotokoll", { exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel("Verlauf der Sitzung").getByText("Aktivitätsprotokoll", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Plan prüfen" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Aufgabe stoppen" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Ergebnis verifizieren" })).toBeVisible();
