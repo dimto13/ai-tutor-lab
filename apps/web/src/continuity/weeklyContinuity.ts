@@ -36,7 +36,11 @@ export function buildWeeklyContinuity(
   const totals = new Map<number, number>();
 
   for (const run of runs) {
-    if (!Number.isFinite(run.finishedAt) || !Number.isFinite(run.durationMs) || run.durationMs < 0) {
+    if (
+      !Number.isFinite(run.finishedAt) ||
+      !Number.isFinite(run.durationMs) ||
+      run.durationMs < 0
+    ) {
       continue;
     }
     const weekStart = startOfUtcWeek(run.finishedAt);
@@ -65,7 +69,9 @@ export function buildWeeklyContinuity(
 }
 
 export function formatWeekLabel(weekStart: number): string {
-  return new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(
-    new Date(weekStart),
-  );
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+  }).format(new Date(weekStart));
 }
