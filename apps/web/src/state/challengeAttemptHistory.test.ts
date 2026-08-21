@@ -26,9 +26,9 @@ function persistenceDouble(initial: unknown = null) {
 describe("challengeAttemptHistory", () => {
   it("treats missing or malformed metadata as no failed attempts", () => {
     expect(parseChallengeAttemptHistory(null).failedStartedAt).toEqual([]);
-    expect(parseChallengeAttemptHistory({ version: 99, failedStartedAt: [1, 2] }).failedStartedAt).toEqual(
-      [],
-    );
+    expect(
+      parseChallengeAttemptHistory({ version: 99, failedStartedAt: [1, 2] }).failedStartedAt,
+    ).toEqual([]);
   });
 
   it("deduplicates persisted attempt identities and recommends Guided only after two failures", () => {
