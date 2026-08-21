@@ -24,7 +24,8 @@
       "cli_agent.permission",
       "cli_agent.control",
       "cli_agent.safety",
-      "cli_agent.verification"
+      "cli_agent.verification",
+      "platform.diff"
     ]
   },
   "environment": {
