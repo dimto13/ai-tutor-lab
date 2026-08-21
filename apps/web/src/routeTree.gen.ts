@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
+import { Route as AutorenvorschauRouteImport } from './routes/autorenvorschau'
 import { Route as DatentransparenzRouteImport } from './routes/datentransparenz'
 import { Route as KompetenzRouteImport } from './routes/kompetenz'
 import { Route as WillkommenRouteImport } from './routes/willkommen'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const AnmeldenRoute = AnmeldenRouteImport.update({
   id: '/anmelden',
   path: '/anmelden',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutorenvorschauRoute = AutorenvorschauRouteImport.update({
+  id: '/autorenvorschau',
+  path: '/autorenvorschau',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DatentransparenzRoute = DatentransparenzRouteImport.update({
@@ -50,6 +56,7 @@ const TrainingScenarioIdRoute = TrainingScenarioIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/autorenvorschau': typeof AutorenvorschauRoute
   '/datentransparenz': typeof DatentransparenzRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/autorenvorschau': typeof AutorenvorschauRoute
   '/datentransparenz': typeof DatentransparenzRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/anmelden': typeof AnmeldenRoute
+  '/autorenvorschau': typeof AutorenvorschauRoute
   '/datentransparenz': typeof DatentransparenzRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/anmelden'
+    | '/autorenvorschau'
     | '/datentransparenz'
     | '/kompetenz'
     | '/willkommen'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/anmelden'
+    | '/autorenvorschau'
     | '/datentransparenz'
     | '/kompetenz'
     | '/willkommen'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/anmelden'
+    | '/autorenvorschau'
     | '/datentransparenz'
     | '/kompetenz'
     | '/willkommen'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnmeldenRoute: typeof AnmeldenRoute
+  AutorenvorschauRoute: typeof AutorenvorschauRoute
   DatentransparenzRoute: typeof DatentransparenzRoute
   KompetenzRoute: typeof KompetenzRoute
   WillkommenRoute: typeof WillkommenRoute
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/anmelden'
       fullPath: '/anmelden'
       preLoaderRoute: typeof AnmeldenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/autorenvorschau': {
+      id: '/autorenvorschau'
+      path: '/autorenvorschau'
+      fullPath: '/autorenvorschau'
+      preLoaderRoute: typeof AutorenvorschauRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/datentransparenz': {
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnmeldenRoute: AnmeldenRoute,
+  AutorenvorschauRoute: AutorenvorschauRoute,
   DatentransparenzRoute: DatentransparenzRoute,
   KompetenzRoute: KompetenzRoute,
   WillkommenRoute: WillkommenRoute,
