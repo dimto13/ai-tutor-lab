@@ -115,7 +115,9 @@ function detectTenantKeywords(
 
   for (const rule of keywordRules) {
     if (!available.has(rule.indicatorId)) {
-      throw new Error(`Unknown classification indicator in tenant keyword rule: ${rule.indicatorId}`);
+      throw new Error(
+        `Unknown classification indicator in tenant keyword rule: ${rule.indicatorId}`,
+      );
     }
     const matched = rule.keywords.some((keyword) => {
       const normalized = normalizeText(keyword).toLocaleLowerCase("de-DE");
@@ -154,7 +156,9 @@ export function classifyExtractedDocument(
     reasons: [
       ...builtin.reasons,
       ...tenant.reasons,
-      ...(uncertain ? ["keine belastbare automatische Einstufung; menschliche Prüfung erforderlich"] : []),
+      ...(uncertain
+        ? ["keine belastbare automatische Einstufung; menschliche Prüfung erforderlich"]
+        : []),
     ],
   };
 }
@@ -182,7 +186,10 @@ export function createUtf8TextExtractor(): DocumentTextExtractor {
   return {
     format: "txt",
     extract(source) {
-      return { format: "txt", text: new TextDecoder("utf-8", { fatal: true }).decode(source.bytes) };
+      return {
+        format: "txt",
+        text: new TextDecoder("utf-8", { fatal: true }).decode(source.bytes),
+      };
     },
   };
 }
