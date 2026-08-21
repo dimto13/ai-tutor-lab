@@ -3,16 +3,56 @@
   "language": "de",
   "technologyConcepts": {
     "cli_agent": [
+      "cli_agent.terminal",
+      "cli_agent.shell",
+      "cli_agent.command",
+      "cli_agent.agent",
       "cli_agent.session",
       "cli_agent.transcript",
+      "cli_agent.activity_log",
       "cli_agent.prompt",
       "cli_agent.plan",
       "cli_agent.proposed_change",
       "cli_agent.permission",
-      "cli_agent.workspace"
+      "cli_agent.workspace",
+      "cli_agent.control",
+      "cli_agent.safety",
+      "cli_agent.verification"
     ]
   },
   "concepts": [
+    {
+      "key": "cli_agent.terminal",
+      "term": "Terminal",
+      "aliases": ["Kommandozeile", "CLI"],
+      "simple": "Das Terminal ist ein textbasiertes Arbeitsfenster. Dort kannst du gewöhnliche Kommandos ausführen oder mit einem CLI-Agenten arbeiten.",
+      "advanced": "Ein Terminal stellt die textbasierte Ein- und Ausgabe für eine Shell oder ein CLI-Werkzeug bereit. Im Training ist diese Oberfläche vollständig simuliert; es werden keine Prozesse auf dem Entwicklungsrechner gestartet.",
+      "uiTargets": ["claude.prompt.input"]
+    },
+    {
+      "key": "cli_agent.shell",
+      "term": "Shell",
+      "aliases": ["Befehlsinterpreter"],
+      "simple": "Die Shell nimmt Kommandos wie ls entgegen und führt die jeweils klar benannte Operation aus.",
+      "advanced": "Eine Shell interpretiert Kommandos und deren Argumente. Sie ist vom Agenten zu unterscheiden: Die Shell plant kein Ziel selbstständig, sondern führt den angegebenen Befehl aus.",
+      "uiTargets": ["claude.prompt.input"]
+    },
+    {
+      "key": "cli_agent.command",
+      "term": "Kommando",
+      "aliases": ["Befehl", "Shellkommando"],
+      "simple": "Ein Kommando ist eine konkrete Anweisung an die Shell, zum Beispiel ls zum Anzeigen von Dateien.",
+      "advanced": "Ein Kommando benennt eine direkte Operation. Im Unterschied zu einem Agentenauftrag entsteht daraus keine mehrstufige autonome Planung; im Simulator werden alle Kommandowirkungen deterministisch aus Fixtures erzeugt.",
+      "uiTargets": ["claude.prompt.input"]
+    },
+    {
+      "key": "cli_agent.agent",
+      "term": "CLI-Agent",
+      "aliases": ["Agent auf der Kommandozeile", "Coding Agent"],
+      "simple": "Ein CLI-Agent bekommt ein Ziel in eigenen Worten und kann daraus mehrere Arbeitsschritte, Werkzeugaufrufe und Änderungsvorschläge ableiten.",
+      "advanced": "Ein CLI-Agent verbindet Sprachmodell, Projektkontext und Werkzeuge in einer laufenden Sitzung. Anders als ein klassischer Chat kann er geplante Aktionen auf einen Arbeitskontext beziehen; anders als ein Shellkommando übersetzt er ein Ziel in mehrere Schritte. Jede Wirkung bleibt trotzdem prüf- und freigabepflichtig.",
+      "uiTargets": ["claude.session.header", "claude.prompt.input"]
+    },
     {
       "key": "cli_agent.session",
       "term": "Agentensitzung",
@@ -26,15 +66,23 @@
       "term": "Verlauf",
       "aliases": ["Transcript", "Sitzungsverlauf"],
       "simple": "Der Verlauf zeigt untereinander, was du gefragt hast und was der Agent geantwortet oder getan hat.",
-      "advanced": "Der Verlauf ist die chronologische Protokollspur einer Sitzung aus Nutzereingaben, Agentenantworten und Systemmeldungen. Er ist die Grundlage dafür, eine Agentenentscheidung im Nachhinein zu prüfen.",
+      "advanced": "Der Verlauf ist die chronologische Protokollspur einer Sitzung aus Nutzereingaben, Agentenantworten und Systemmeldungen. Er hilft dabei, Entscheidungen und Annahmen im Nachhinein zu prüfen.",
       "uiTargets": ["claude.transcript"]
     },
     {
+      "key": "cli_agent.activity_log",
+      "term": "Aktivitätsprotokoll",
+      "aliases": ["Aktivitäten", "Activity Log"],
+      "simple": "Das Aktivitätsprotokoll macht sichtbar, welche Eingaben, Agentenantworten, Kommandos und Prüfergebnisse in der Sitzung entstanden sind.",
+      "advanced": "Das Aktivitätsprotokoll ist die beobachtbare Ereignisspur der simulierten Agentenarbeit. Es ergänzt den Diff, weil auch Kommandos, Stopps und Testergebnisse nachvollziehbar bleiben.",
+      "uiTargets": ["claude.activity"]
+    },
+    {
       "key": "cli_agent.prompt",
-      "term": "Eingabeaufforderung",
-      "aliases": ["Prompt", "Anweisung"],
-      "simple": "Die Eingabeaufforderung ist die Zeile, in die du dem Agenten in eigenen Worten sagst, was er tun soll.",
-      "advanced": "Ein Prompt beschreibt das Ziel in natürlicher Sprache statt in Befehlssyntax. Der Agent leitet daraus Arbeitsschritte und Werkzeugaufrufe ab; präzise Zielangaben verringern Fehlinterpretationen.",
+      "term": "Agentenauftrag",
+      "aliases": ["Prompt", "Eingabeaufforderung", "Anweisung"],
+      "simple": "Ein Agentenauftrag beschreibt Ziel, nötigen Kontext, Grenzen und Erfolgskriterien in eigenen Worten.",
+      "advanced": "Ein guter Agentenauftrag benennt das gewünschte Ergebnis, relevanten Kontext, ausdrücklich ausgeschlossene Inhalte oder Aktionen und einen prüfbaren Abschlusszustand. Die Formulierung darf variieren; entscheidend ist die fachliche Klarheit.",
       "uiTargets": ["claude.prompt.input"]
     },
     {
@@ -42,32 +90,56 @@
       "term": "Arbeitsplan",
       "aliases": ["Plan", "Vorgehensvorschlag"],
       "simple": "Der Arbeitsplan ist die Liste der Schritte, die der Agent vor der Umsetzung ankündigt.",
-      "advanced": "Ein Arbeitsplan macht die beabsichtigte Schrittfolge vor der Ausführung sichtbar. Er erlaubt eine Kurskorrektur, bevor Änderungen am Arbeitsverzeichnis entstehen.",
-      "uiTargets": ["claude.plan"]
+      "advanced": "Ein Arbeitsplan macht beabsichtigte Dateien, Kontextquellen und Aktionen vor der Ausführung sichtbar. Er wird auf unnötigen Kontext, riskante Schritte, falsche Annahmen und fehlende Erfolgskriterien geprüft, bevor eine Wirkung freigegeben wird.",
+      "uiTargets": ["claude.plan", "claude.plan.review"]
     },
     {
       "key": "cli_agent.proposed_change",
       "term": "Änderungsvorschlag",
       "aliases": ["Vorgeschlagene Änderung", "Diff"],
       "simple": "Ein Änderungsvorschlag zeigt, was der Agent an einer Datei ändern möchte, bevor die Änderung wirklich passiert.",
-      "advanced": "Ein Änderungsvorschlag ist ein noch nicht angewendeter Bearbeitungsschritt mit Zieldatei und neuem Inhalt. Erst die Freigabe überführt ihn in den tatsächlichen Dateizustand.",
+      "advanced": "Ein Änderungsvorschlag ist ein noch nicht angewendeter Bearbeitungsschritt mit Zieldatei und neuem Inhalt. Der konkrete Diff muss unabhängig vom Plan auf fachliche Richtigkeit, Vollständigkeit und unbeabsichtigte Datenübernahme geprüft werden.",
       "uiTargets": ["claude.diff"]
     },
     {
       "key": "cli_agent.permission",
-      "term": "Freigabe",
-      "aliases": ["Berechtigung", "Bestätigung"],
-      "simple": "Vor einer Änderung fragt der Agent nach. Du entscheidest, ob er sie ausführen darf oder nicht.",
-      "advanced": "Die Freigabe ist der bewusste Kontrollpunkt zwischen Vorschlag und Wirkung. Sie hält die Verantwortung für Änderungen bei der Person und verhindert, dass ein Agent unbemerkt in den Arbeitsstand eingreift.",
-      "uiTargets": ["claude.approval.approve", "claude.approval.reject"]
+      "term": "Berechtigungsentscheidung",
+      "aliases": ["Freigabe", "Berechtigung", "Bestätigung"],
+      "simple": "Vor einer vorgeschlagenen Änderung entscheidest du bewusst, ob sie wirklich ausgeführt werden darf oder abgelehnt werden muss.",
+      "advanced": "Die Berechtigungsentscheidung ist der Kontrollpunkt zwischen Vorschlag und Wirkung. Sie richtet sich nach Notwendigkeit, geprüftem Diff und Sicherheitsgrenzen; ein Dialog darf niemals nur routinemäßig bestätigt werden.",
+      "uiTargets": ["claude.permission", "claude.approval.approve", "claude.approval.reject"]
     },
     {
       "key": "cli_agent.workspace",
       "term": "Arbeitsverzeichnis",
-      "aliases": ["Working Directory", "Projektverzeichnis"],
-      "simple": "Das Arbeitsverzeichnis ist der Ordner, in dem der Agent arbeitet. Nur dessen Dateien sieht und ändert er.",
-      "advanced": "Das Arbeitsverzeichnis begrenzt den Wirkungsbereich einer Agentensitzung. Es bestimmt, welche Dateien als Kontext gelesen und welche durch freigegebene Änderungen geschrieben werden können.",
-      "uiTargets": ["claude.workspace.files"]
+      "aliases": ["aktuelles Verzeichnis", "Working Directory", "Projektverzeichnis"],
+      "simple": "Das Arbeitsverzeichnis ist der aktuelle Projektordner, in dem der Agent arbeitet. Es bestimmt, welche Dateien zu seinem unmittelbaren Arbeitskontext gehören.",
+      "advanced": "Das Arbeitsverzeichnis begrenzt den technischen Wirkungsbereich einer Agentensitzung. Es ist vom fachlich freigegebenen Kontext zu unterscheiden: Nur weil eine Datei im Projekt liegt, darf ihr Inhalt nicht automatisch in einen Agentenauftrag oder eine Ausgabe einfließen.",
+      "uiTargets": ["claude.workspace.files", "claude.session.header"]
+    },
+    {
+      "key": "cli_agent.control",
+      "term": "Aufgabensteuerung",
+      "aliases": ["Stoppen", "Korrigieren", "Refokussieren"],
+      "simple": "Du kannst eine laufende Agentenaufgabe stoppen, einen ungeeigneten Vorschlag ablehnen und den Auftrag mit klareren Grenzen neu formulieren.",
+      "advanced": "Agentische Arbeit ist iterativ kontrollierbar. Stoppen beendet einen ungeeigneten Lauf; Korrigieren benennt den Mangel; Refokussieren verengt Ziel oder Kontext, ohne einen fehlerhaften Zwischenstand als Erfolg zu behandeln.",
+      "uiTargets": ["claude.task.stop", "claude.prompt.input", "claude.approval.reject"]
+    },
+    {
+      "key": "cli_agent.safety",
+      "term": "Sicherheitsgrenze",
+      "aliases": ["Kontextschutz", "Geheimnisschutz"],
+      "simple": "Geheimnisse, Zugangsdaten und nicht freigegebene Unternehmensinformationen gehören nicht in unnötigen Agentenkontext oder veröffentlichbare Dateien.",
+      "advanced": "Sicherheitsgrenzen werden als explizite Ausschlüsse im Auftrag, bei der Planprüfung und vor jeder Berechtigungsentscheidung kontrolliert. Das Training verwendet ausschließlich deutlich gekennzeichnete synthetische Marker und niemals echte Zugangsdaten oder Unternehmensinhalte.",
+      "uiTargets": ["claude.permission", "claude.diff"]
+    },
+    {
+      "key": "cli_agent.verification",
+      "term": "Ergebnisverifikation",
+      "aliases": ["Prüflauf", "Testergebnis", "Abschlussprüfung"],
+      "simple": "Am Ende prüfst du den tatsächlichen Arbeitsstand mit einem Test und einem eigenen Urteil, statt der Agentenantwort blind zu vertrauen.",
+      "advanced": "Eine belastbare Ergebnisverifikation kombiniert den realen Datei-Endzustand, unabhängige Prüfergebnisse und die Historie der Sicherheitsentscheidungen. Erst wenn Inhalt und Tests stimmen und keine unzulässige Aktion freigegeben wurde, gilt die Aufgabe als verifiziert.",
+      "uiTargets": ["claude.verification", "claude.activity"]
     }
   ]
 }
