@@ -117,7 +117,7 @@ export function WeeklyContinuityCard() {
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground" role="status">
+        <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
           {historyStatus === "loading"
             ? "Acht-Wochen-Verlauf wird geladen …"
             : historyStatus === "error"
