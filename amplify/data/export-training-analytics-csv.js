@@ -62,7 +62,8 @@ export function response(ctx) {
     ]),
   ];
 
-  const steps = analytics.steps && typeof analytics.steps.length === "number" ? analytics.steps : [];
+  const steps =
+    analytics.steps && typeof analytics.steps.length === "number" ? analytics.steps : [];
   for (const step of steps) {
     lines.push(
       row([
