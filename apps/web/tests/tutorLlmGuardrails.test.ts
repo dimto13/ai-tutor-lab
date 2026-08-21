@@ -100,7 +100,7 @@ test("fails closed when a provider invents an unknown UI target", async () => {
   assert.match(result.answer, /nicht sicher/);
 });
 
-test("fails closed when action language has no semantic UI reference", async () => {
+test("fails closed when Unicode action language has no semantic UI reference", async () => {
   const provider = new FakeProvider(
     "provider-a",
     response({ answer: "Öffne den Cloud-Assistenten.", kind: "explanation", uiTargetRefs: [] }),
@@ -163,6 +163,31 @@ test("server-side cost reservation rejects a request before calling any provider
   assert.equal(result.status, "budget_exhausted");
   assert.equal(provider.requests.length, 0);
   assert.equal(audit[0]?.status, "budget_exhausted");
+});
+
+test("budget settlement charges actual cost and expires old server sessions", () => {
+  let now = 1_000;
+  const store = new InMemoryTutorSessionBudgetStore({ ttlMs: 1_000, now: () => now });
+  const policy = { maxRequests: 3, maxCostMicros: 1_000, maxOutputTokens: 200 };
+  const reservation = store.reserve("identity:tenant:user", 500, policy);
+
+  assert.ok(reservation);
+  assert.deepEqual(store.snapshot("identity:tenant:user"), {
+    requestCount: 1,
+    costMicros: 500,
+  });
+
+  store.settle(reservation, 125);
+  assert.deepEqual(store.snapshot("identity:tenant:user"), {
+    requestCount: 1,
+    costMicros: 125,
+  });
+
+  now += 1_001;
+  assert.deepEqual(store.snapshot("identity:tenant:user"), {
+    requestCount: 0,
+    costMicros: 0,
+  });
 });
 
 test("the same guardrail contract applies to different provider implementations", async () => {
