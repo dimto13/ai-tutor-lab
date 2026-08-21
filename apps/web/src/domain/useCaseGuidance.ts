@@ -14,14 +14,21 @@ export type UseCaseGuidanceResult =
   | { kind: "clarify"; question: string }
   | { kind: "recommendation"; recommendation: UseCaseRecommendation };
 
-const normalize = (value: string) => value.trim().replace(/\s+/g, " ");
+const normalize = (value: unknown) =>
+  typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+
+const vagueGoalPattern = /^(?:e-?mails?|texte?|daten|code|recherche|dokumente?|automatisierung)$/iu;
+const researchPattern = /\b(?:recherch\w*|quelle\w*|wissen|vergleich\w*|information\w*)\b/iu;
+const documentPattern = /\b(?:dokument\w*|bericht\w*|text|word|präsent\w*|zusammenfass\w*)\b/iu;
+const developmentPattern =
+  /\b(?:code|software|entwick\w*|repository|github|vs\s?code|vscode|terminal)\b/iu;
 
 export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGuidanceResult {
   const goal = normalize(input.goal);
   const tools = normalize(input.tools);
   const constraints = normalize(input.constraints);
 
-  if (goal.length < 12) {
+  if (!goal || vagueGoalPattern.test(goal)) {
     return {
       kind: "clarify",
       question: "Welches konkrete Arbeitsergebnis möchtest du mit KI erreichen?",
@@ -44,11 +51,21 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
   }
 
   const combined = `${goal} ${tools} ${constraints}`.toLocaleLowerCase("de-DE");
-  const needsResearch = /recherch|quelle|wissen|vergleich|information/.test(combined);
-  const needsDocumentWork = /dokument|bericht|text|word|präsent|zusammenfass/.test(combined);
-  const needsDevelopment = /code|software|entwick|repository|github|vscode|terminal/.test(combined);
+  const matches = [
+    { kind: "research", matched: researchPattern.test(combined) },
+    { kind: "document", matched: documentPattern.test(combined) },
+    { kind: "development", matched: developmentPattern.test(combined) },
+  ].filter((candidate) => candidate.matched);
 
-  if (needsDevelopment) {
+  if (matches.length > 1) {
+    return {
+      kind: "clarify",
+      question:
+        "Was steht bei deinem Vorhaben im Vordergrund: Recherche, Dokumentarbeit oder Softwareentwicklung?",
+    };
+  }
+
+  if (matches[0]?.kind === "development") {
     return {
       kind: "recommendation",
       recommendation: {
@@ -64,7 +81,7 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
     };
   }
 
-  if (needsResearch) {
+  if (matches[0]?.kind === "research") {
     return {
       kind: "recommendation",
       recommendation: {
@@ -80,7 +97,7 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
     };
   }
 
-  if (needsDocumentWork) {
+  if (matches[0]?.kind === "document") {
     return {
       kind: "recommendation",
       recommendation: {
