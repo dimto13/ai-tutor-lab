@@ -10,11 +10,27 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "claude-code-basics.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 180,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "claude-code-basics.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 70,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "claude-code-basics.guided",
       "mode": "guided",
       "version": "1",
-      "points": 60,
-      "estimatedMinutes": 8,
+      "points": 100,
+      "estimatedMinutes": 14,
       "fastRunThresholdRatio": 0.25
     },
     {

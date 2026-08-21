@@ -6,17 +6,21 @@ import {
   type TrainingEvent,
   type Validation,
 } from "@ai-train-lab/training-engine";
-import rawScenario from "../../content/scenarios/claude-code-basics.guided.json" with { type: "json" };
+import exploreRaw from "../../content/scenarios/claude-code-basics.explore.json" with { type: "json" };
+import guidedRaw from "../../content/scenarios/claude-code-basics.guided.json" with { type: "json" };
+import challengeRaw from "../../content/scenarios/claude-code-basics.challenge.json" with { type: "json" };
 import { parseScenario } from "../../apps/web/src/scenarios/contentLoader.ts";
 import {
   createClaudeCodeRuntime,
   type ClaudeCodeRuntimeAdapter,
 } from "../../apps/web/src/runtime/claudeCodeRuntime.ts";
+import { CLAUDE_CODE_DEFINITION } from "../../apps/web/src/runtime/claudeCodeDefinition.ts";
 
 /**
- * End-to-end generizität proof for AITP-25: the authored scenario is loaded by
- * the production content loader and validated by the unchanged training engine
- * against the Claude Code adapter. No engine-side registration is involved.
+ * End-to-end generizität proof for #126: authored scenarios are loaded by the
+ * production content loader and validated by the unchanged training engine
+ * against the existing Claude Code RuntimeAdapter. No engine registration or
+ * host-shell integration is involved.
  */
 
 function createContainer(): HTMLElement {
@@ -42,21 +46,31 @@ async function evaluateStep(
 
 type StepAction = (runtime: ClaudeCodeRuntimeAdapter) => void;
 
-const stepActions: Record<string, StepAction> = {
+const guidedStepActions: Record<string, StepAction> = {
   "start-agent-session": (runtime) => runtime.startSession(),
   "list-workspace-files": (runtime) => runtime.runCommand("ls"),
   "ask-agent-for-change": (runtime) =>
-    runtime.submitPrompt("Ergänze in der README einen Abschnitt mit den ersten Schritten"),
-  "inspect-proposed-change": (runtime) => runtime.openProposedChange(),
-  "approve-proposed-change": (runtime) => runtime.approvePendingChange(),
+    runtime.submitPrompt("Ergänze in README.md einen Abschnitt mit den ersten Schritten"),
+  "review-sensitive-plan": (runtime) => runtime.reviewPlan(),
+  "inspect-sensitive-diff": (runtime) => runtime.openProposedChange(),
+  "reject-sensitive-change": (runtime) => runtime.rejectPendingChange(),
+  "refocus-agent": (runtime) =>
+    runtime.submitPrompt(
+      "Korrigiere den Vorschlag sicher ohne Geheimnisse und schließe config aus",
+    ),
+  "review-corrected-plan": (runtime) => runtime.reviewPlan(),
+  "inspect-corrected-diff": (runtime) => runtime.openProposedChange(),
+  "approve-corrected-change": (runtime) => runtime.approvePendingChange(),
+  "run-verification-test": (runtime) => runtime.runCommand("npm test"),
+  "verify-final-result": (runtime) => runtime.verifyResult(),
 };
 
-async function mountScenarioRuntime(): Promise<{
+async function mountGuidedRuntime(): Promise<{
   runtime: ClaudeCodeRuntimeAdapter;
   drain: () => TrainingEvent[];
   dispose: () => Promise<void>;
 }> {
-  const scenario = parseScenario(rawScenario);
+  const scenario = parseScenario(guidedRaw);
   const runtime = createClaudeCodeRuntime();
   let buffer: TrainingEvent[] = [];
   const unsubscribe = runtime.subscribe((event) => buffer.push(event));
@@ -75,26 +89,30 @@ async function mountScenarioRuntime(): Promise<{
   };
 }
 
-test("claude-code-basics.guided: loads through the production content loader", () => {
-  const scenario = parseScenario(rawScenario);
+test("claude-code basics: Explore, Guided and Challenge load through production content", () => {
+  const explore = parseScenario(exploreRaw);
+  const guided = parseScenario(guidedRaw);
+  const challenge = parseScenario(challengeRaw);
 
-  assert.equal(scenario.environment?.productId, "claude-code");
-  assert.equal(scenario.environment?.runtimeAdapterId, "claude-code-cli-simulator");
-  assert.equal(scenario.environment?.integrations, undefined);
-  assert.ok(
-    scenario.steps.length >= 4,
-    `mini scenario needs at least four steps, got ${scenario.steps.length}`,
-  );
-  for (const step of scenario.steps) {
-    assert.ok(step.validation, `step ${step.id} needs a validation to be playable`);
+  assert.equal(explore.mode, "explore");
+  assert.equal(guided.mode, "guided");
+  assert.equal(challenge.mode, "challenge");
+  for (const scenario of [explore, guided, challenge]) {
+    assert.equal(scenario.environment?.productId, "claude-code");
+    assert.equal(scenario.environment?.runtimeAdapterId, "claude-code-cli-simulator");
+    assert.equal(scenario.environment?.integrations, undefined);
   }
+
+  assert.ok(explore.exploreTargets?.length);
+  const runtimeTargets = new Set(CLAUDE_CODE_DEFINITION.surface.map(({ ref }) => ref));
+  for (const target of explore.exploreTargets ?? []) {
+    assert.ok(runtimeTargets.has(target), `unknown Explore target ${target}`);
+  }
+  assert.ok(challenge.completionValidation, "Challenge needs end-state validation");
 });
 
-test("claude-code-basics.guided: no step depends on explore-only inspection events", () => {
-  const scenario = parseScenario(rawScenario);
-
-  // Workspace components only forward `inspect()` in explore mode, so a guided
-  // step validating on `ui.element.inspected` could never be completed.
+test("claude-code Guided: no step depends on explore-only inspection events", () => {
+  const scenario = parseScenario(guidedRaw);
   const eventTypes: string[] = [];
   const collect = (validation: Validation | undefined): void => {
     if (!validation) return;
@@ -107,20 +125,16 @@ test("claude-code-basics.guided: no step depends on explore-only inspection even
   scenario.steps.forEach((step) => collect(step.validation));
 
   assert.ok(eventTypes.length > 0);
-  assert.equal(
-    eventTypes.includes("ui.element.inspected"),
-    false,
-    "guided steps must validate on real learner actions, not explore-only inspection",
-  );
+  assert.equal(eventTypes.includes("ui.element.inspected"), false);
 });
 
-test("claude-code-basics.guided: every step validates against the unchanged engine", async () => {
-  const scenario = parseScenario(rawScenario);
-  const { runtime, drain, dispose } = await mountScenarioRuntime();
+test("claude-code Guided: every step validates against the unchanged engine", async () => {
+  const scenario = parseScenario(guidedRaw);
+  const { runtime, drain, dispose } = await mountGuidedRuntime();
 
   try {
     for (const step of scenario.steps) {
-      const action = stepActions[step.id];
+      const action = guidedStepActions[step.id];
       assert.ok(action, `no learner action mapped for step ${step.id}`);
 
       drain();
@@ -140,56 +154,90 @@ test("claude-code-basics.guided: every step validates against the unchanged engi
 
     const contents = await runtime.query<Record<string, string>>("claude.files.contents");
     assert.match(contents["README.md"] ?? "", /## Erste Schritte/);
-    assert.deepEqual(await runtime.query("claude.changes.applied"), ["readme-installation"]);
+    assert.doesNotMatch(contents["README.md"] ?? "", /DEMO_TOKEN/);
+    assert.deepEqual(await runtime.query("claude.changes.rejected"), ["readme-draft-sensitive"]);
+    assert.deepEqual(await runtime.query("claude.changes.applied"), ["readme-corrected"]);
+    assert.deepEqual(await runtime.query("claude.security.unsafeApprovals"), []);
+    assert.equal(await runtime.query("claude.tests.lastPassed"), true);
+    assert.equal(await runtime.query("claude.verification.passed"), true);
   } finally {
     await dispose();
   }
 });
 
-test("claude-code-basics.guided: the approval step is not satisfied by rejecting the change", async () => {
-  const scenario = parseScenario(rawScenario);
-  const approvalStep = scenario.steps.find((step) => step.id === "approve-proposed-change");
-  assert.ok(approvalStep?.validation);
+test("claude-code Guided: approving the sensitive proposal fails the intended safety decision", async () => {
+  const scenario = parseScenario(guidedRaw);
+  const rejectionStep = scenario.steps.find((step) => step.id === "reject-sensitive-change");
+  assert.ok(rejectionStep?.validation);
 
-  const { runtime, drain, dispose } = await mountScenarioRuntime();
-
+  const { runtime, drain, dispose } = await mountGuidedRuntime();
   try {
-    runtime.startSession();
-    runtime.submitPrompt("Ergänze in der README einen Abschnitt mit den ersten Schritten");
+    runtime.submitPrompt("Ergänze in README.md einen Abschnitt mit den ersten Schritten");
+    runtime.openProposedChange();
     drain();
 
+    runtime.approvePendingChange();
+    const result = await evaluateStep(rejectionStep.validation as Validation, drain(), (selector) =>
+      runtime.query(selector),
+    );
+
+    assert.notEqual(result.outcome, "pass");
+    assert.deepEqual(await runtime.query("claude.security.unsafeApprovals"), [
+      "readme-draft-sensitive",
+    ]);
+  } finally {
+    await dispose();
+  }
+});
+
+test("claude-code Challenge: safe result passes without a prescribed prompt or review sequence", async () => {
+  const scenario = parseScenario(challengeRaw);
+  assert.ok(scenario.completionValidation);
+  const runtime = createClaudeCodeRuntime();
+  await runtime.mount(createContainer(), scenario.environment?.seed);
+
+  try {
+    // Deliberately use a minimal valid path: the Challenge must score outcome,
+    // test evidence and safety decisions rather than Guided's click sequence.
     runtime.rejectPendingChange();
-    const result = await evaluateStep(approvalStep.validation as Validation, drain(), (selector) =>
-      runtime.query(selector),
-    );
+    runtime.submitPrompt("Bitte Status sicher aus docs/status übernehmen, ohne Geheimnisse");
+    runtime.approvePendingChange();
+    runtime.runCommand("npm test");
+    runtime.verifyResult();
 
-    assert.notEqual(result.outcome, "pass");
-    const contents = await runtime.query<Record<string, string>>("claude.files.contents");
-    assert.doesNotMatch(contents["README.md"] ?? "", /## Erste Schritte/);
+    const result = await registry.validate(scenario.completionValidation, {
+      query: (selector) => runtime.query(selector),
+    });
+    assert.equal(result.outcome, "pass");
+    assert.deepEqual(await runtime.query("claude.changes.rejected"), ["unsafe-status-export"]);
+    assert.deepEqual(await runtime.query("claude.security.unsafeApprovals"), []);
   } finally {
-    await dispose();
+    await runtime.unmount();
   }
 });
 
-test("claude-code-basics.guided: an unrelated prompt does not satisfy the instruction step", async () => {
-  const scenario = parseScenario(rawScenario);
-  const promptStep = scenario.steps.find((step) => step.id === "ask-agent-for-change");
-  assert.ok(promptStep?.validation);
-
-  const { runtime, drain, dispose } = await mountScenarioRuntime();
+test("claude-code Challenge: unsafe approval cannot be repaired into a passing completion", async () => {
+  const scenario = parseScenario(challengeRaw);
+  assert.ok(scenario.completionValidation);
+  const runtime = createClaudeCodeRuntime();
+  await runtime.mount(createContainer(), scenario.environment?.seed);
 
   try {
-    runtime.startSession();
-    drain();
+    runtime.approvePendingChange();
+    runtime.submitPrompt("Bitte Status sicher aus docs/status übernehmen, ohne Geheimnisse");
+    runtime.approvePendingChange();
+    runtime.runCommand("npm test");
+    runtime.verifyResult();
 
-    runtime.submitPrompt("Wie spät ist es?");
-    const result = await evaluateStep(promptStep.validation as Validation, drain(), (selector) =>
-      runtime.query(selector),
-    );
-
+    const result = await registry.validate(scenario.completionValidation, {
+      query: (selector) => runtime.query(selector),
+    });
     assert.notEqual(result.outcome, "pass");
-    assert.equal(await runtime.query("claude.pendingChange.id"), null);
+    assert.deepEqual(await runtime.query("claude.security.unsafeApprovals"), [
+      "unsafe-status-export",
+    ]);
+    assert.equal(await runtime.query("claude.verification.passed"), false);
   } finally {
-    await dispose();
+    await runtime.unmount();
   }
 });

@@ -1,0 +1,109 @@
+{
+  "id": "claude-code-basics.explore",
+  "moduleId": "claude-code-basics",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "CLI-Agenten – sicher erkunden",
+  "description": "Erkunde einen vollständig simulierten Claude-Code-Arbeitsplatz. Unterscheide gewöhnliche Terminalkommandos von Agentenaufträgen und untersuche Plan, Aktivitätsprotokoll, Diff, Berechtigungsentscheidung, Stoppen sowie Tests und Ergebnisprüfung.",
+  "learningObjectives": [
+    "understand_cli_agent_environment",
+    "distinguish_cli_agent_from_shell_and_chat",
+    "formulate_cli_agent_task",
+    "review_cli_agent_plan",
+    "inspect_agent_change_proposal",
+    "decide_on_agent_change",
+    "control_cli_agent_task",
+    "protect_cli_agent_context",
+    "verify_cli_agent_result"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "cli_agent.terminal",
+      "cli_agent.session",
+      "cli_agent.workspace",
+      "cli_agent.prompt",
+      "cli_agent.plan",
+      "cli_agent.activity_log",
+      "cli_agent.proposed_change",
+      "cli_agent.permission",
+      "cli_agent.control",
+      "cli_agent.safety",
+      "cli_agent.verification",
+      "platform.diff"
+    ]
+  },
+  "environment": {
+    "productId": "claude-code",
+    "version": "1.x",
+    "runtimeAdapterId": "claude-code-cli-simulator",
+    "seed": {
+      "claudeCode": {
+        "model": "claude-opus-5",
+        "cwd": "~/training-projekt",
+        "files": {
+          "README.md": "# Training-Projekt\n\nAlle Inhalte in diesem Projekt sind synthetische Trainingsdaten.\n",
+          "docs/setup.md": "# Einrichtung\n\nNutze ausschließlich die Beispieldaten dieses Trainings.\n",
+          "config.example": "DEMO_TOKEN=TRAINING-ONLY-SECRET\n"
+        },
+        "proposals": [
+          {
+            "id": "explore-proposal",
+            "path": "README.md",
+            "label": "Statusabschnitt ergänzen",
+            "summary": "Ein rein synthetischer Vorschlag zum Erkunden von Plan, Diff und Freigabe.",
+            "promptMatch": ["status", "readme"],
+            "planSteps": [
+              "README.md und docs/setup.md lesen",
+              "Statusabschnitt formulieren",
+              "Änderung vor der Ausführung zur Prüfung vorlegen"
+            ],
+            "nextContent": "# Training-Projekt\n\nAlle Inhalte in diesem Projekt sind synthetische Trainingsdaten.\n\n## Status\n\nEinrichtung geprüft.\n",
+            "safety": "safe"
+          }
+        ],
+        "initialProposalId": "explore-proposal",
+        "checks": [
+          {
+            "id": "readme-check",
+            "command": "npm test",
+            "path": "README.md",
+            "includes": ["# Training-Projekt"],
+            "excludes": ["DEMO_TOKEN"],
+            "passingOutput": "1 Test bestanden – README enthält keine freizugebenden Beispieldaten.",
+            "failingOutput": "1 Test fehlgeschlagen – README-Inhalt oder Sicherheitsgrenze prüfen."
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 70,
+  "exploreTargets": [
+    "claude.session.header",
+    "claude.workspace.files",
+    "claude.prompt.input",
+    "claude.plan",
+    "claude.plan.review",
+    "claude.activity",
+    "claude.diff",
+    "claude.permission",
+    "claude.task.stop",
+    "claude.verification"
+  ],
+  "steps": [
+    {
+      "id": "explore-cli-agent",
+      "title": "Agentenarbeitsplatz frei untersuchen",
+      "description": "Alle Dateien, Antworten und Sicherheitsmarker sind synthetisch. Nichts wird auf deinem Rechner oder in einem echten Projektbestand ausgeführt.",
+      "instruction": "Untersuche Sitzungskopf und Arbeitsverzeichnis, Aufgabenzeile, Plan und Planprüfung, Aktivitätsprotokoll, Änderungsvorschlag, Berechtigungsentscheidung, Stoppen sowie die Test- und Ergebnisansicht. Ordne dabei ein: Ein Shellkommando führt eine klar benannte Operation aus; ein CLI-Agent erhält dagegen ein Ziel und kann daraus mehrere Schritte und vorgeschlagene Änderungen ableiten. Ein klassischer Chat erklärt oder formuliert, besitzt aber nicht automatisch denselben Projekt- und Werkzeugkontext.",
+      "why": "Wer Wirkungsbereich, Plan, Berechtigungen und Prüfergebnis getrennt erkennt, kann agentische Arbeit kontrollieren statt nur einer überzeugend klingenden Antwort zu vertrauen.",
+      "helpLevels": [
+        "Beginne beim Sitzungskopf und beim Arbeitsverzeichnis und arbeite dich anschließend durch Plan, Verlauf und Diff.",
+        "Untersuche auch den Bereich Freigeben/Ablehnen, die Stop-Aktion und die Ergebnisansicht rechts.",
+        "Klicke nacheinander auf die markierten Bereiche Sitzungskopf, Arbeitsverzeichnis, Eingabezeile, Plan, Plan prüfen, Aktivitätsprotokoll, Diff, Freigeben/Ablehnen, Aufgabe stoppen und Tests und Ergebnis; die Reihenfolge ist frei."
+      ],
+      "successMessage": "Du hast die zentralen Kontrollflächen eines CLI-Agenten und ihre Sicherheitsfunktion untersucht."
+    }
+  ]
+}

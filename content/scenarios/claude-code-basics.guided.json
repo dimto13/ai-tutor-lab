@@ -3,14 +3,36 @@
   "moduleId": "claude-code-basics",
   "mode": "guided",
   "learningLayer": "ai_workflow",
-  "title": "Claude Code – Vorschlag prüfen und freigeben",
-  "description": "Gib einem Agenten auf der Kommandozeile ein Ziel in eigenen Worten, lies seinen Arbeitsplan und entscheide bewusst über die vorgeschlagene Änderung.",
+  "title": "CLI-Agenten – Auftrag, Kontrolle und Prüfung",
+  "description": "Delegiere eine kleine Aufgabe an Claude Code, prüfe Plan und Diff, lehne eine unnötige Geheimnisfreigabe ab, fokussiere den Agenten neu und verifiziere den korrigierten Endzustand mit einem simulierten Test.",
   "learningObjectives": [
-    "start_cli_agent_session",
-    "instruct_agent_in_natural_language",
+    "understand_cli_agent_environment",
+    "distinguish_cli_agent_from_shell_and_chat",
+    "formulate_cli_agent_task",
+    "review_cli_agent_plan",
     "inspect_agent_change_proposal",
-    "decide_on_agent_change"
+    "decide_on_agent_change",
+    "control_cli_agent_task",
+    "protect_cli_agent_context",
+    "verify_cli_agent_result"
   ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "cli_agent.terminal",
+      "cli_agent.session",
+      "cli_agent.workspace",
+      "cli_agent.prompt",
+      "cli_agent.plan",
+      "cli_agent.activity_log",
+      "cli_agent.proposed_change",
+      "cli_agent.permission",
+      "cli_agent.control",
+      "cli_agent.safety",
+      "cli_agent.verification",
+      "platform.diff"
+    ]
+  },
   "environment": {
     "productId": "claude-code",
     "version": "1.x",
@@ -20,15 +42,16 @@
         "model": "claude-opus-5",
         "cwd": "~/onboarding-guide",
         "files": {
-          "README.md": "# Onboarding Guide\n\nEine kurze Sammlung für neue Teammitglieder.\n",
-          "docs/setup.md": "# Einrichtung\n\nNoch offen.\n"
+          "README.md": "# Onboarding Guide\n\nEine vollständig synthetische Sammlung für neue Teammitglieder.\n",
+          "docs/setup.md": "# Einrichtung\n\n1. Trainingsprojekt öffnen.\n2. README lesen.\n",
+          "config.example": "DEMO_TOKEN=TRAINING-ONLY-SECRET\n"
         },
         "proposals": [
           {
-            "id": "readme-installation",
+            "id": "readme-draft-sensitive",
             "path": "README.md",
-            "label": "Abschnitt „Erste Schritte“ ergänzen",
-            "summary": "Fügt der README einen kurzen Abschnitt mit den ersten Schritten hinzu.",
+            "label": "Erste Schritte samt Beispieltoken ergänzen",
+            "summary": "Der erste Entwurf erfüllt das Inhaltsziel, möchte aber unnötig einen synthetischen Geheimnis-Marker in die README übernehmen.",
             "promptMatch": [
               "erste schritte",
               "einstieg",
@@ -38,60 +61,77 @@
               "starten"
             ],
             "planSteps": [
-              "README.md im Arbeitsverzeichnis lesen",
-              "Abschnitt „Erste Schritte“ formulieren",
+              "README.md und docs/setup.md lesen",
+              "config.example als zusätzliche Quelle lesen",
+              "Abschnitt Erste Schritte inklusive Beispieltoken formulieren",
               "Änderung zur Freigabe vorlegen"
             ],
-            "nextContent": "# Onboarding Guide\n\nEine kurze Sammlung für neue Teammitglieder.\n\n## Erste Schritte\n\n1. Lies docs/setup.md.\n2. Melde dich im Team-Kanal.\n3. Bearbeite die erste Übungsaufgabe.\n"
+            "nextContent": "# Onboarding Guide\n\nEine vollständig synthetische Sammlung für neue Teammitglieder.\n\n## Erste Schritte\n\n1. Lies docs/setup.md.\n2. Verwende DEMO_TOKEN=TRAINING-ONLY-SECRET.\n3. Bearbeite die erste Übungsaufgabe.\n",
+            "safety": "sensitive",
+            "safetyReason": "Der Vorschlag möchte DEMO_TOKEN aus config.example in die README kopieren. Auch ein synthetischer Geheimnis-Marker demonstriert hier eine unzulässige Kontextfreigabe."
+          },
+          {
+            "id": "readme-corrected",
+            "path": "README.md",
+            "label": "Erste Schritte ohne Geheimnis ergänzen",
+            "summary": "Der korrigierte Entwurf nutzt nur freigegebene Einrichtungsinformationen und lässt config.example außen vor.",
+            "promptMatch": ["korrig", "ohne geheim", "ohne token", "sicher", "config ausschließen"],
+            "planSteps": [
+              "README.md und docs/setup.md als freigegebenen Kontext verwenden",
+              "config.example ausdrücklich ausschließen",
+              "Abschnitt Erste Schritte ohne Geheimnisse formulieren",
+              "Änderung zur Freigabe vorlegen"
+            ],
+            "nextContent": "# Onboarding Guide\n\nEine vollständig synthetische Sammlung für neue Teammitglieder.\n\n## Erste Schritte\n\n1. Lies docs/setup.md.\n2. Öffne das Trainingsprojekt.\n3. Bearbeite die erste Übungsaufgabe.\n",
+            "safety": "safe"
+          }
+        ],
+        "checks": [
+          {
+            "id": "readme-safety-test",
+            "command": "npm test",
+            "path": "README.md",
+            "includes": ["## Erste Schritte", "docs/setup.md"],
+            "excludes": ["DEMO_TOKEN", "TRAINING-ONLY-SECRET"],
+            "passingOutput": "1 Test bestanden – Inhalt vollständig, kein Geheimnis-Marker in README.md.",
+            "failingOutput": "1 Test fehlgeschlagen – Inhalt unvollständig oder Geheimnis-Marker in README.md gefunden."
           }
         ]
       }
     }
   },
-  "estimatedMinutes": 8,
-  "points": 60,
-  "audience": {
-    "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "cli_agent.session",
-      "cli_agent.transcript",
-      "cli_agent.prompt",
-      "cli_agent.plan",
-      "cli_agent.proposed_change",
-      "cli_agent.permission",
-      "cli_agent.workspace"
-    ]
-  },
+  "estimatedMinutes": 14,
+  "points": 100,
   "steps": [
     {
       "id": "start-agent-session",
-      "title": "Sitzung starten",
-      "description": "Ein Agent auf der Kommandozeile arbeitet immer in einem bestimmten Ordner. Dieser Ordner legt fest, welche Dateien er überhaupt sehen und ändern kann.",
-      "instruction": "Starte die Sitzung und lies im Sitzungskopf, in welchem Arbeitsverzeichnis der Agent arbeitet.",
-      "why": "Wer den Wirkungsbereich kennt, kann einschätzen, welche Dateien eine Anweisung überhaupt betreffen kann.",
+      "title": "Sitzung und Wirkungsbereich einordnen",
+      "description": "Ein CLI-Agent arbeitet in einer Sitzung und in einem bestimmten aktuellen Verzeichnis. Dieses Arbeitsverzeichnis begrenzt den Projektkontext, den der Agent sehen und verändern kann.",
+      "instruction": "Starte die Sitzung und lies im Sitzungskopf das Arbeitsverzeichnis ~/onboarding-guide.",
+      "why": "Bevor du delegierst, musst du wissen, in welchem Projektkontext ein Agent überhaupt wirken kann.",
       "helpLevels": [
         "Der Sitzungskopf steht ganz oben und nennt Modell und Ordner.",
         "Starte die Sitzung über den Sitzungskopf.",
-        "Der Sitzungskopf am oberen Rand wird hervorgehoben. Starte dort die Sitzung und lies den angezeigten Ordner ~/onboarding-guide."
+        "Starte oben die Sitzung und prüfe den angezeigten Ordner ~/onboarding-guide."
       ],
       "validation": {
         "kind": "event",
         "type": "terminal.opened"
       },
       "highlightTarget": "claude.session.header",
-      "highlightTooltip": "Modell und Arbeitsverzeichnis der Sitzung.",
-      "successMessage": "Die Sitzung läuft im Ordner ~/onboarding-guide."
+      "highlightTooltip": "Sitzung und aktuelles Arbeitsverzeichnis bestimmen den Wirkungsbereich.",
+      "successMessage": "Die Sitzung läuft im synthetischen Projekt ~/onboarding-guide."
     },
     {
       "id": "list-workspace-files",
-      "title": "Dateien im Arbeitsverzeichnis ansehen",
-      "description": "Bevor du etwas änderst, lohnt sich ein Blick auf den Bestand. Ein gewöhnliches Kommando reicht dafür aus.",
-      "instruction": "Lass dir mit dem Kommando ls die Dateien im Arbeitsverzeichnis auflisten.",
-      "why": "Der Agent ersetzt gewöhnliche Kommandos nicht; beide Wege stehen in derselben Sitzung nebeneinander.",
+      "title": "Shellkommando und Agentenauftrag unterscheiden",
+      "description": "Ein Shellkommando wie ls fordert eine klar benannte Operation an. Ein Agentenauftrag beschreibt dagegen ein Ziel, aus dem mehrere Schritte entstehen können.",
+      "instruction": "Führe mit ls ein gewöhnliches Kommando aus und sieh dir die vorhandenen Dateien an.",
+      "why": "CLI-Agent und Shell teilen sich eine Eingabezeile, sind aber nicht dasselbe: Das Kommando ist direkt, der Agent plant aus einem Ziel heraus.",
       "helpLevels": [
-        "Kommandos tippst du in dieselbe Zeile wie deine Anweisungen an den Agenten.",
+        "Kommandos tippst du in dieselbe Eingabezeile wie Agentenaufträge.",
         "Tippe ls und bestätige die Eingabe.",
-        "Die Dateiliste des Arbeitsverzeichnisses wird hervorgehoben. Tippe in der Eingabezeile ls und bestätige mit der Eingabetaste."
+        "Tippe in der Eingabezeile ls und bestätige mit Enter."
       ],
       "validation": {
         "kind": "event",
@@ -100,42 +140,62 @@
           "command": ["ls", "dir"]
         }
       },
-      "highlightTarget": "claude.workspace.files",
-      "highlightTooltip": "Diese Dateien liegen im Wirkungsbereich der Sitzung.",
-      "successMessage": "Du siehst den Bestand: README.md und docs/setup.md."
+      "highlightTarget": "claude.prompt.input",
+      "highlightTooltip": "Hier stehen gewöhnliche Kommandos und natürlich formulierte Agentenaufträge nebeneinander.",
+      "successMessage": "README.md, docs/setup.md und config.example liegen im Wirkungsbereich."
     },
     {
       "id": "ask-agent-for-change",
-      "title": "Ziel in eigenen Worten formulieren",
-      "description": "Statt eine Befehlssyntax zu lernen, beschreibst du dem Agenten das Ziel. Er leitet daraus einen Arbeitsplan ab.",
-      "instruction": "Bitte den Agenten in eigenen Worten, in der README einen Abschnitt mit den ersten Schritten zu ergänzen.",
-      "why": "Eine klare Zielbeschreibung führt zu einem nachvollziehbaren Plan; die Formulierung selbst darfst du frei wählen.",
+      "title": "Auftrag mit Ziel und Erfolgskriterium formulieren",
+      "description": "Ein guter Agentenauftrag beschreibt das gewünschte Ergebnis. Der Agent leitet daraus einen Plan ab; dieser Plan ist noch keine Freigabe zur Ausführung.",
+      "instruction": "Bitte den Agenten in eigenen Worten, in README.md einen Abschnitt Erste Schritte für neue Teammitglieder zu ergänzen.",
+      "why": "Du delegierst das Ziel, behältst aber Plan, Kontext und Erfolgskriterien unter deiner Kontrolle.",
       "helpLevels": [
-        "Schreibe in die Eingabezeile, was inhaltlich entstehen soll.",
-        "Formuliere eine Bitte, die den Einstieg in der README ergänzt.",
-        "Die Eingabezeile wird hervorgehoben. Schreibe dort sinngemäß „Ergänze in der README einen Abschnitt mit den ersten Schritten“ und bestätige die Eingabe."
+        "Nenne Zieldatei und gewünschten Inhalt.",
+        "Formuliere sinngemäß einen Einstieg mit Ersten Schritten in README.md.",
+        "Schreibe zum Beispiel: Ergänze in README.md einen Abschnitt mit den ersten Schritten."
       ],
       "validation": {
         "kind": "event",
         "type": "ai.prompt.submitted",
         "match": {
-          "proposalId": "readme-installation"
+          "proposalId": "readme-draft-sensitive"
         }
       },
       "highlightTarget": "claude.prompt.input",
-      "highlightTooltip": "Hier beschreibst du das Ziel in natürlicher Sprache.",
-      "successMessage": "Der Agent hat dein Ziel verstanden und einen Arbeitsplan vorgelegt."
+      "highlightTooltip": "Ziel, Kontextgrenze und Erfolgskriterium gehören in einen prüfbaren Auftrag.",
+      "successMessage": "Der Agent hat einen ersten Plan abgeleitet."
     },
     {
-      "id": "inspect-proposed-change",
-      "title": "Vorschlag ansehen, bevor er wirkt",
-      "description": "Der Agent hat noch nichts geändert. Er zeigt zuerst, welche Datei er wie anpassen möchte.",
-      "instruction": "Sieh dir den Änderungsvorschlag an und prüfe, welche Datei betroffen ist.",
-      "why": "Zwischen Vorschlag und Wirkung liegt bewusst ein Prüfschritt; nur so bleibt die Entscheidung bei dir.",
+      "id": "review-sensitive-plan",
+      "title": "Plan vor der Ausführung hinterfragen",
+      "description": "Der Plan will zusätzlich config.example lesen und einen Beispieltoken übernehmen. Das ist für eine Onboarding-README unnötig.",
+      "instruction": "Lies den Arbeitsplan vollständig und bestätige anschließend Plan prüfen.",
+      "why": "Schon im Plan erkennst du unnötige Kontextausweitung, bevor daraus eine Dateiänderung wird.",
       "helpLevels": [
-        "Der Vorschlag steht unter dem Arbeitsplan und ist zunächst zugeklappt.",
-        "Öffne den Änderungsvorschlag und lies die genannte Zieldatei.",
-        "Der Änderungsvorschlag wird hervorgehoben. Klappe ihn dort auf und prüfe, dass als Zieldatei README.md genannt ist."
+        "Achte darauf, welche Dateien der Plan als Quellen verwenden will.",
+        "config.example ist für das fachliche Ziel nicht erforderlich.",
+        "Lies den gesamten Arbeitsplan, prüfe den unnötigen Bezug auf config.example und wähle anschließend Plan prüfen."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "claude.plan.reviewed",
+        "equals": true
+      },
+      "highlightTarget": "claude.plan.review",
+      "highlightTooltip": "Plan prüfen bedeutet nicht ausführen – es ist ein bewusster Kontrollpunkt.",
+      "successMessage": "Du hast erkannt, dass der Plan unnötigen Kontext einbezieht."
+    },
+    {
+      "id": "inspect-sensitive-diff",
+      "title": "Diff und Zieldatei prüfen",
+      "description": "Vor einer Berechtigungsentscheidung kontrollierst du den tatsächlichen Änderungsvorschlag statt nur der Zusammenfassung zu vertrauen.",
+      "instruction": "Öffne den Vorschlag und prüfe Zieldatei und neuen Inhalt.",
+      "why": "Ein Agent kann einen plausiblen Plan liefern und trotzdem einen ungeeigneten oder unvollständigen Diff erzeugen.",
+      "helpLevels": [
+        "Der Änderungsvorschlag ist noch zugeklappt.",
+        "Öffne Vorschlag ansehen.",
+        "Prüfe nach dem Öffnen README.md und den enthaltenen DEMO_TOKEN-Marker."
       ],
       "validation": {
         "kind": "all",
@@ -145,39 +205,176 @@
             "type": "file.opened",
             "match": {
               "path": "README.md",
-              "proposalId": "readme-installation"
+              "proposalId": "readme-draft-sensitive"
             }
           },
           {
             "kind": "state",
             "selector": "claude.changes.viewed",
-            "includes": "readme-installation"
+            "includes": "readme-draft-sensitive"
           }
         ]
       },
       "highlightTarget": "claude.diff",
-      "highlightTooltip": "Vorgeschlagener neuer Inhalt – noch nicht übernommen.",
-      "successMessage": "Der Vorschlag betrifft README.md und wartet auf deine Entscheidung."
+      "highlightTooltip": "Der Diff zeigt die tatsächliche vorgeschlagene Wirkung.",
+      "successMessage": "Der Diff würde den synthetischen Geheimnis-Marker in README.md übernehmen."
     },
     {
-      "id": "approve-proposed-change",
-      "title": "Änderung bewusst freigeben",
-      "description": "Erst mit deiner Freigabe wird aus dem Vorschlag ein tatsächlicher Dateizustand. Ohne Freigabe bliebe alles unverändert.",
-      "instruction": "Gib die vorgeschlagene Änderung an README.md frei.",
-      "why": "Die Freigabe ist der Punkt, an dem du die Verantwortung für den Arbeitsstand ausdrücklich übernimmst.",
+      "id": "reject-sensitive-change",
+      "title": "Unnötige Berechtigung ablehnen",
+      "description": "Der Inhalt aus config.example ist für die Aufgabe nicht erforderlich. Eine Freigabe wäre fachlich und sicherheitlich falsch.",
+      "instruction": "Lehne den Änderungsvorschlag ab.",
+      "why": "Berechtigungsdialoge sind keine Formalität. Erlaubt wird nur, was für das vereinbarte Ziel notwendig und geprüft ist.",
       "helpLevels": [
-        "Zur Entscheidung stehen Freigeben und Ablehnen bereit.",
-        "Wähle die Freigabe für den Vorschlag zu README.md.",
-        "Die Freigabe wird hervorgehoben. Bestätige dort die Änderung an README.md, damit der neue Abschnitt wirklich in der Datei landet."
+        "Vergleiche Freigeben und Ablehnen mit dem erkannten Risiko.",
+        "Der DEMO_TOKEN-Marker gehört nicht in README.md.",
+        "Prüfe den DEMO_TOKEN-Marker im geöffneten Diff und wähle danach ausdrücklich Ablehnen."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "ai.suggestion.rejected",
+        "match": {
+          "proposalId": "readme-draft-sensitive"
+        }
+      },
+      "highlightTarget": "claude.approval.reject",
+      "highlightTooltip": "Nicht erforderliche oder riskante Aktionen werden nicht freigegeben.",
+      "successMessage": "Der ungeeignete Entwurf wurde abgelehnt und README.md blieb unverändert."
+    },
+    {
+      "id": "refocus-agent",
+      "title": "Agenten korrigieren und neu fokussieren",
+      "description": "Nach einer Ablehnung erklärst du, was am ersten Ansatz falsch war und welche Grenze für den nächsten Versuch gilt.",
+      "instruction": "Fordere eine korrigierte Version an, die nur README.md und docs/setup.md verwendet und config.example beziehungsweise Geheimnisse ausschließt.",
+      "why": "Agentische Arbeit ist iterativ: Ein Mangel wird nicht blind akzeptiert, sondern mit klarer Korrektur und engerem Kontext behoben.",
+      "helpLevels": [
+        "Nenne ausdrücklich, was ausgeschlossen werden soll.",
+        "Verlange eine sichere Korrektur ohne Token oder Geheimnis.",
+        "Schreibe zum Beispiel: Korrigiere den Vorschlag sicher ohne Geheimnisse und schließe config.example aus."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "ai.prompt.submitted",
+        "match": {
+          "proposalId": "readme-corrected"
+        }
+      },
+      "highlightTarget": "claude.prompt.input",
+      "highlightTooltip": "Korrektur heißt: Mangel benennen, Grenze schärfen, Erfolgskriterium beibehalten.",
+      "successMessage": "Der Agent hat einen neuen, engeren Plan erstellt."
+    },
+    {
+      "id": "review-corrected-plan",
+      "title": "Korrigierten Plan erneut prüfen",
+      "description": "Auch nach einer Korrektur gilt kein Vertrauensbonus. Der neue Plan muss die geforderte Kontextgrenze tatsächlich einhalten.",
+      "instruction": "Lies den neuen Plan und bestätige Plan prüfen.",
+      "why": "Eine Korrektur ist erst belastbar, wenn Plan und Wirkung die neue Einschränkung nachvollziehbar umsetzen.",
+      "helpLevels": [
+        "Suche im Plan nach dem ausdrücklichen Ausschluss von config.example.",
+        "Prüfe, dass nur README.md und docs/setup.md als Kontext vorgesehen sind.",
+        "Prüfe im korrigierten Plan, dass config.example ausdrücklich ausgeschlossen ist, und wähle anschließend Plan prüfen."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "claude.plan.reviewed",
+        "equals": true
+      },
+      "highlightTarget": "claude.plan.review",
+      "highlightTooltip": "Jeder neue Plan wird erneut geprüft.",
+      "successMessage": "Der korrigierte Plan hält die Kontextgrenze ein."
+    },
+    {
+      "id": "inspect-corrected-diff",
+      "title": "Korrigierten Diff kontrollieren",
+      "description": "Der neue Plan ist plausibel; jetzt prüfst du trotzdem den konkreten Dateiinhalt.",
+      "instruction": "Öffne den korrigierten Änderungsvorschlag und prüfe, dass kein DEMO_TOKEN enthalten ist.",
+      "why": "Planprüfung und Diffprüfung beantworten unterschiedliche Fragen: Was beabsichtigt der Agent und was würde tatsächlich geschrieben?",
+      "helpLevels": [
+        "Öffne den Vorschlag.",
+        "Prüfe README.md auf Erste Schritte und auf das Fehlen des Tokens.",
+        "Öffne Vorschlag ansehen und prüfe im Diff, dass weder DEMO_TOKEN noch TRAINING-ONLY-SECRET enthalten ist."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "event",
+            "type": "file.opened",
+            "match": {
+              "path": "README.md",
+              "proposalId": "readme-corrected"
+            }
+          },
+          {
+            "kind": "state",
+            "selector": "claude.changes.viewed",
+            "includes": "readme-corrected"
+          }
+        ]
+      },
+      "highlightTarget": "claude.diff",
+      "highlightTooltip": "Prüfe den konkreten Endinhalt, nicht nur die Agentenantwort.",
+      "successMessage": "Der korrigierte Diff enthält den gewünschten Inhalt ohne Geheimnis-Marker."
+    },
+    {
+      "id": "approve-corrected-change",
+      "title": "Nur die erforderliche Änderung freigeben",
+      "description": "Jetzt stimmen Ziel, Kontextgrenze und Diff überein. Erst an diesem Punkt ist eine Freigabe gerechtfertigt.",
+      "instruction": "Gib den korrigierten Vorschlag frei.",
+      "why": "Freigabe folgt aus Prüfung; sie ersetzt die Prüfung nicht.",
+      "helpLevels": [
+        "Der korrigierte Vorschlag ist als sicher markiert.",
+        "README.md darf jetzt geändert werden.",
+        "Kontrolliere nochmals Zieldatei README.md und den sicheren Diff und wähle danach Freigeben."
       ],
       "validation": {
         "kind": "state",
         "selector": "claude.changes.applied",
-        "includes": "readme-installation"
+        "includes": "readme-corrected"
       },
       "highlightTarget": "claude.approval.approve",
-      "highlightTooltip": "Erst hier wird die Änderung wirksam.",
-      "successMessage": "README.md enthält jetzt den Abschnitt „Erste Schritte“ – freigegeben durch dich."
+      "highlightTooltip": "Nur der geprüfte und erforderliche Vorschlag wird wirksam.",
+      "successMessage": "README.md wurde mit der korrigierten Fassung aktualisiert."
+    },
+    {
+      "id": "run-verification-test",
+      "title": "Ergebnis mit einem Test prüfen",
+      "description": "Die Agentenantwort behauptet keinen Erfolg. Du prüfst den Arbeitsstand mit einem im Szenario hinterlegten, deterministischen Test.",
+      "instruction": "Führe npm test aus und kontrolliere das Ergebnis im Aktivitätsprotokoll und in der Ergebnisansicht.",
+      "why": "Ein positiver Agententext ist kein Nachweis. Ein unabhängiger Prüfschritt kontrolliert den tatsächlichen Dateizustand.",
+      "helpLevels": [
+        "Der Test wird wie ein gewöhnliches Kommando eingegeben.",
+        "Tippe npm test in die Eingabezeile.",
+        "Tippe npm test in die Eingabezeile, bestätige mit Enter und kontrolliere anschließend den grünen Prüflauf rechts."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "claude.tests.lastPassed",
+        "equals": true
+      },
+      "highlightTarget": "claude.verification",
+      "highlightTooltip": "Der Teststatus ist ein eigener Nachweis neben Plan und Diff.",
+      "successMessage": "Der synthetische Test ist grün: Inhalt vollständig und Geheimnis ausgeschlossen."
+    },
+    {
+      "id": "verify-final-result",
+      "title": "Abschlusszustand eigenständig verifizieren",
+      "description": "Zum Schluss verbindest du Dateiänderung, Teststatus und Sicherheitsentscheidung zu einem eigenen Urteil.",
+      "instruction": "Wähle Ergebnis verifizieren.",
+      "why": "Die Verantwortung endet nicht mit der Agentenantwort. Ein korrekter Abschluss braucht geprüften Inhalt, grünen Test und keine unzulässige Freigabe.",
+      "helpLevels": [
+        "Die Ergebnisansicht fasst den letzten Prüflauf zusammen.",
+        "Verifiziere erst nach dem grünen Test.",
+        "Kontrolliere zuerst den grünen Teststatus und wähle danach rechts Ergebnis verifizieren."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "claude.verification.passed",
+        "equals": true
+      },
+      "highlightTarget": "claude.verification",
+      "highlightTooltip": "Abschluss bedeutet selbst prüfen, nicht der Agentenantwort glauben.",
+      "successMessage": "Der Endzustand ist fachlich, technisch und sicherheitlich verifiziert."
     }
   ]
 }

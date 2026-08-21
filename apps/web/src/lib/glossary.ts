@@ -1,4 +1,5 @@
 import glossaryData from "../../../../content/glossary/de.json" with { type: "json" };
+import claudeCodeGlossaryData from "../../../../content/glossary/claude-code.de.json" with { type: "json" };
 import productGlossaryData from "../../../../content/glossary/products.de.json" with { type: "json" };
 import vscodeMenuGlossaryData from "../../../../content/glossary/vscode-menus.de.json" with { type: "json" };
 import vscodeSurfaceGlossaryData from "../../../../content/glossary/vscode-surfaces.de.json" with { type: "json" };
@@ -20,6 +21,7 @@ interface GlossaryDataSource {
 
 const glossarySources = [
   glossaryData,
+  claudeCodeGlossaryData,
   productGlossaryData,
   vscodeMenuGlossaryData,
   vscodeSurfaceGlossaryData,
