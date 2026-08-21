@@ -142,7 +142,7 @@
       "helpLevels": [
         "Beginne mit der Sicherheitsgrenze: Welche vorbereitete Aktion darf auf keinen Fall wirksam werden?",
         "Nach einer Ablehnung kannst du den Auftrag auf docs/status.md und einen sicheren Status ohne Geheimnisse fokussieren.",
-        "Für den Abschluss brauchst du den sicheren Diff, npm test mit grünem Ergebnis und anschließend Ergebnis verifizieren."
+        "Lehne zuerst den Vorschlag mit dem Geheimnis-Marker ab, formuliere danach einen sicheren Auftrag mit docs/status.md, prüfe den neuen Diff, gib nur diesen frei, tippe npm test und wähle bei grünem Ergebnis Ergebnis verifizieren."
       ],
       "successMessage": "README.md enthält nur den freigegebenen Status; der Test ist grün und der Endzustand wurde ohne unzulässige Freigabe verifiziert."
     }
