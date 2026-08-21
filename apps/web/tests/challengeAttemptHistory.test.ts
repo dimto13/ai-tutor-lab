@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { TrainingStatePersistence } from "../src/state/trainingStatePersistence";
+import type { TrainingStatePersistence } from "../src/state/trainingStatePersistence.ts";
 import {
   CHALLENGE_ATTEMPT_HISTORY_RUNTIME_ID,
   loadChallengeAttemptHistory,
   parseChallengeAttemptHistory,
   recordFailedChallengeAttempt,
   shouldRecommendGuidedAfterChallenge,
-} from "../src/state/challengeAttemptHistory";
+} from "../src/state/challengeAttemptHistory.ts";
 
 function persistenceDouble(initial: unknown = null) {
   let stored = initial;
