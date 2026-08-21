@@ -1,12 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleAlert, GraduationCap, Play, SearchCheck } from "lucide-react";
-import type { EngineValidationResult, TrainingStep } from "@ai-train-lab/training-engine";
+import type { EngineValidationResult, Scenario, TrainingStep } from "@ai-train-lab/training-engine";
 import {
   resolveAuthorHighlightTarget,
   simulateAuthorStepValidation,
   suggestAuthorEventType,
+  type AuthorRuntimeLookup,
 } from "@/authoring/authorPreview";
+import {
+  getRuntimeAdapterForSelector,
+  getRuntimeAdapterForTarget,
+} from "@/runtime";
 import { getScenario, getScenarioIds } from "@/scenarios";
 
 export const Route = createFileRoute("/autorenvorschau")({
@@ -22,6 +27,21 @@ export const Route = createFileRoute("/autorenvorschau")({
   }),
   component: AuthorPreviewRoute,
 });
+
+const authorRuntimeLookup: AuthorRuntimeLookup = {
+  forTarget: (target, scenario) =>
+    getRuntimeAdapterForTarget(
+      target,
+      scenario.environment?.runtimeAdapterId,
+      scenario.environment?.integrationRuntimeAdapterIds,
+    ),
+  forStateKey: (key, scenario) =>
+    getRuntimeAdapterForSelector(
+      key,
+      scenario.environment?.runtimeAdapterId,
+      scenario.environment?.integrationRuntimeAdapterIds,
+    ),
+};
 
 function AuthorPreviewRoute() {
   const scenarioIds = useMemo(() => getScenarioIds().sort(), []);
@@ -59,8 +79,8 @@ function AuthorPreviewRoute() {
     );
   }
 
-  const activeScenario = scenario;
-  const targetResolution = resolveAuthorHighlightTarget(activeScenario, step);
+  const activeScenario: Scenario = scenario;
+  const targetResolution = resolveAuthorHighlightTarget(activeScenario, step, authorRuntimeLookup);
 
   async function runValidation(currentStep: TrainingStep) {
     setError(null);
@@ -82,10 +102,15 @@ function AuthorPreviewRoute() {
     }
 
     try {
-      const nextResult = await simulateAuthorStepValidation(activeScenario, currentStep, {
-        type: eventType.trim(),
-        payload,
-      });
+      const nextResult = await simulateAuthorStepValidation(
+        activeScenario,
+        currentStep,
+        {
+          type: eventType.trim(),
+          payload,
+        },
+        authorRuntimeLookup,
+      );
       setResult(nextResult);
     } catch (validationError) {
       setError(
