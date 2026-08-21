@@ -62,10 +62,7 @@ export class TransportBackedTrainingEventBus implements TrainingEventBus {
   private readonly transport: TrainingEventTransport;
   private readonly telemetrySinks: readonly TelemetrySink[];
 
-  constructor(
-    transport: TrainingEventTransport,
-    telemetrySinks: readonly TelemetrySink[] = [],
-  ) {
+  constructor(transport: TrainingEventTransport, telemetrySinks: readonly TelemetrySink[] = []) {
     this.transport = transport;
     this.telemetrySinks = telemetrySinks;
   }
