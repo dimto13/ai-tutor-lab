@@ -9,7 +9,10 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 test.describe("account menu accessibility", () => {
   test.describe.configure({ retries: 0 });
 
-  test("user menu is keyboard accessible and contained at 320px", async ({ page, accessibility }) => {
+  test("user menu is keyboard accessible and contained at 320px", async ({
+    page,
+    accessibility,
+  }) => {
     await page.setViewportSize({ width: 320, height: 720 });
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
