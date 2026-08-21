@@ -7,6 +7,8 @@ import type {
   SupportedDocumentFormat,
 } from "./document-classification.ts";
 import { classifyDocument } from "./document-classification.ts";
+import type { BoundaryLlmClassificationOptions } from "./tenant-llm-classification.ts";
+import { applyBoundaryLlmClassification } from "./tenant-llm-classification.ts";
 
 export interface TenantDocumentCheckContext {
   tenantId: string;
@@ -48,6 +50,7 @@ export interface TenantDocumentCheckServiceOptions {
   auditSink: DocumentCheckAuditSink;
   learningUnitHref: string;
   classification?: DocumentClassificationOptions;
+  llmClassification?: BoundaryLlmClassificationOptions;
   now?: () => Date;
 }
 
@@ -75,7 +78,9 @@ function toResult(
 /**
  * Creates one document-check boundary for exactly one tenant deployment.
  * Document bytes and extracted text stay inside check() and are never handed to
- * persistence. The only durable output is the explicitly reduced audit record.
+ * persistence. The optional LLM port, when enabled with explicit tenant opt-in,
+ * receives the source only inside the same tenant boundary. The only durable
+ * output is the explicitly reduced audit record.
  */
 export function createTenantDocumentCheckService(options: TenantDocumentCheckServiceOptions) {
   if (options.scheme.tenantId !== options.tenantId) {
@@ -99,11 +104,18 @@ export function createTenantDocumentCheckService(options: TenantDocumentCheckSer
         throw new Error("Authenticated user id is required for document check");
       }
 
-      const classification = await classifyDocument(
+      const deterministic = await classifyDocument(
         options.scheme,
         source,
         options.extractors,
         options.classification,
+      );
+      const classification = await applyBoundaryLlmClassification(
+        options.scheme,
+        context,
+        source,
+        deterministic,
+        options.llmClassification,
       );
       const result = toResult(classification, options.learningUnitHref);
 
