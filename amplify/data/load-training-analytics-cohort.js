@@ -90,11 +90,12 @@ export function response(ctx) {
         "TrainingAnalyticsScopeError",
       );
     }
-    if (item.scenarioId !== scenarioId) continue;
-    if (typeof item.userId !== "string" || item.userId.length === 0) {
-      util.error("Reporting evidence is missing its owner", "TrainingAnalyticsEvidenceError");
+    if (item.scenarioId === scenarioId) {
+      if (typeof item.userId !== "string" || item.userId.length === 0) {
+        util.error("Reporting evidence is missing its owner", "TrainingAnalyticsEvidenceError");
+      }
+      users[item.userId] = true;
     }
-    users[item.userId] = true;
   }
 
   const cohortSize = Object.keys(users).length;
