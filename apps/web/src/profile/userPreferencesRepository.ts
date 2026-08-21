@@ -9,7 +9,6 @@ export interface UserPreferencesValue {
   language: string | null;
   preferredTrainingMode: TrainingMode | null;
   weeklyGoalMinutes: number | null;
-  weeklyReminderEnabled: boolean | null;
   accessibility: unknown | null;
   selfAssessedAiLevel: SelfAssessedAiLevel | null;
 }
