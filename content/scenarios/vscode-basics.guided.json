@@ -4,7 +4,7 @@
   "mode": "guided",
   "learningLayer": "tool",
   "title": "Visual Studio Code – Geführte Grundlagen",
-  "description": "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen, einschließlich Primary und Secondary Side Bar, und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und Panel. Erweiterte Workspace-Konfiguration bleibt optional.",
+  "description": "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen, einschließlich Primary und Secondary Side Bar, und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und zusätzlichem Bereich (Panel). Erweiterte Workspace-Konfiguration bleibt optional.",
   "learningObjectives": [
     "understand_vscode_ui",
     "understand_workspace",
@@ -51,7 +51,7 @@
       "title": "Explorer öffnen",
       "description": "Du kennst jetzt die Rollen von Activity Bar, Primary Side Bar, Secondary Side Bar und Explorer. Als Nächstes öffnest du die Datei- und Ordnerübersicht selbst.",
       "instruction": "Öffne den Explorer über sein Symbol in der Activity Bar.",
-      "rationale": "Die Activity Bar wählt den Hauptbereich aus; dessen Inhalt erscheint in der Primary Side Bar. Die Secondary Side Bar bleibt davon getrennt und kann zusätzliche Views aufnehmen.",
+      "rationale": "Die Activity Bar wählt den Hauptbereich aus; dessen Inhalt erscheint in der Primary Side Bar. Die Secondary Side Bar bleibt davon getrennt und kann zusätzliche Ansichten (Views) aufnehmen.",
       "helpLevels": [
         "Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol.",
         "Klicke auf das oberste Symbol mit den zwei Dateien.",
@@ -193,10 +193,10 @@
     },
     {
       "id": "open_terminal",
-      "title": "Panel und seine Views unterscheiden",
-      "description": "Im Panel können mehrere spezialisierte Ansichten liegen; VS Code nennt eine solche Ansicht View. Das Terminal ist die View für Textbefehle, Problems sammelt Fehler und Warnungen, und Output zeigt Protokoll- und Statusausgaben.",
+      "title": "Bereich und Ansichten unterscheiden",
+      "description": "Im zusätzlichen Bereich können mehrere spezialisierte Ansichten liegen. Das Terminal ist die Ansicht für Textbefehle, Probleme (Problems) sammelt Fehler und Warnungen, und Ausgabe (Output) zeigt Protokoll- und Statusausgaben.",
       "instruction": "Öffne über Terminal → New Terminal ein integriertes Terminal.",
-      "rationale": "Wenn du Panel und View unterscheidest, erkennst du, dass Terminal, Problems und Output unterschiedliche Werkzeuge im selben unteren Bereich sind. Das Terminal-Menü ist ein regulärer Einstieg in diese View.",
+      "rationale": "Wenn du Bereich und Ansicht unterscheidest, erkennst du, dass Terminal, Probleme und Ausgabe unterschiedliche Werkzeuge im selben unteren Bereich sind. Das Terminal-Menü ist ein regulärer Einstieg in diese Ansicht.",
       "helpLevels": [
         "Öffne oben in der Menüleiste das Menü Terminal.",
         "Wähle im geöffneten Terminal-Menü New Terminal.",
@@ -208,17 +208,17 @@
         "type": "terminal.opened"
       },
       "highlightTarget": "vscode.menu.terminal",
-      "highlightTooltip": "Terminal → New Terminal öffnet ein integriertes Terminal im Panel.",
-      "successMessage": "Terminal über den regulären Terminal-Menüpfad geöffnet. Das Terminal ist eine View innerhalb des Panels."
+      "highlightTooltip": "Terminal → New Terminal öffnet ein integriertes Terminal im unteren Bereich.",
+      "successMessage": "Terminal über den regulären Terminal-Menüpfad geöffnet. Das Terminal ist eine Ansicht innerhalb des unteren Bereichs."
     },
     {
       "id": "open_problems",
-      "title": "Problems-View verwenden",
-      "description": "Problems ist die View für erkannte Fehler, Warnungen und andere Diagnosen. Sie ist nicht dasselbe wie das Terminal.",
-      "instruction": "Wechsle im Panel auf Problems.",
-      "rationale": "Je nach Aufgabe brauchst du Textbefehle, Diagnosen oder Protokolle. Die Views haben unterschiedliche Zwecke.",
+      "title": "Probleme-Ansicht verwenden",
+      "description": "Die Probleme-Ansicht zeigt erkannte Fehler, Warnungen und andere Diagnosen. Sie ist nicht dasselbe wie das Terminal.",
+      "instruction": "Wechsle im unteren Bereich auf Problems.",
+      "rationale": "Je nach Aufgabe brauchst du Textbefehle, Diagnosen oder Protokolle. Die Ansichten haben unterschiedliche Zwecke.",
       "helpLevels": [
-        "Die Views des Panels stehen als Tabs oberhalb der unteren Ausgabe.",
+        "Die Ansichten des unteren Bereichs stehen als Tabs oberhalb der Ausgabe.",
         "Klicke auf Problems.",
         "Der Problems-Tab wird hervorgehoben. Klicke genau auf Problems."
       ],
@@ -232,16 +232,16 @@
       },
       "highlightTarget": "vscode.panel.problems",
       "highlightTooltip": "Problems sammelt Fehler und Warnungen.",
-      "successMessage": "Problems geöffnet. Diese View zeigt Diagnosen statt Textbefehle."
+      "successMessage": "Problems geöffnet. Diese Ansicht zeigt Diagnosen statt Textbefehle."
     },
     {
       "id": "open_output",
-      "title": "Output-View verwenden",
-      "description": "Output ist die View für Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
-      "instruction": "Wechsle im Panel auf Output.",
-      "rationale": "Output eignet sich für technische Protokolle und Statusmeldungen, die du nur lesen und nicht wie im Terminal eingeben musst.",
+      "title": "Ausgabe-Ansicht verwenden",
+      "description": "Die Ausgabe-Ansicht zeigt Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
+      "instruction": "Wechsle im unteren Bereich auf Output.",
+      "rationale": "Die Ausgabe eignet sich für technische Protokolle und Statusmeldungen, die du nur lesen und nicht wie im Terminal eingeben musst.",
       "helpLevels": [
-        "Bleibe im unteren Panel und sieh dir die Tabs der Views an.",
+        "Bleibe im unteren Bereich und sieh dir die Tabs der Ansichten an.",
         "Klicke auf Output.",
         "Der Output-Tab wird hervorgehoben. Klicke genau auf Output."
       ],
@@ -255,7 +255,7 @@
       },
       "highlightTarget": "vscode.panel.output",
       "highlightTooltip": "Output zeigt Protokoll- und Statusausgaben.",
-      "successMessage": "Output geöffnet. Du kannst Terminal, Problems und Output jetzt fachlich unterscheiden."
+      "successMessage": "Output geöffnet. Du kannst Terminal, Probleme und Ausgabe jetzt fachlich unterscheiden."
     }
   ]
 }
