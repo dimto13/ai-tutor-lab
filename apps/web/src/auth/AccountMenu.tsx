@@ -447,10 +447,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 <UserRound className="h-4 w-4 text-accent" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2
-                  id="account-settings-title"
-                  className="text-base font-semibold text-foreground"
-                >
+                <h2 id="account-settings-title" className="text-base font-semibold text-foreground">
                   Einstellungen
                 </h2>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
