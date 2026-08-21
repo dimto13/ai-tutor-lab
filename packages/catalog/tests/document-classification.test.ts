@@ -22,7 +22,9 @@ const schemeUrl = new URL(
 
 async function fixtures() {
   const corpus = parseSyntheticDocumentCorpus(JSON.parse(await readFile(corpusUrl, "utf8"))).corpus;
-  const scheme = parseClassificationSchemeYaml(await readFile(schemeUrl, "utf8")).classificationScheme;
+  const scheme = parseClassificationSchemeYaml(
+    await readFile(schemeUrl, "utf8"),
+  ).classificationScheme;
   return { corpus, scheme };
 }
 
@@ -96,11 +98,9 @@ test("PDF, DOCX, XLSX and TXT are supported through explicit extractor boundarie
 test("TXT extractor decodes locally and extractor mismatches fail closed", async () => {
   const { scheme } = await fixtures();
   const text = new TextEncoder().encode("INTERN. Projektstatus");
-  const result = await classifyDocument(
-    scheme,
-    { format: "txt", bytes: text },
-    [createUtf8TextExtractor()],
-  );
+  const result = await classifyDocument(scheme, { format: "txt", bytes: text }, [
+    createUtf8TextExtractor(),
+  ]);
   assert.equal(result.levelId, "internal");
 
   const wrong: DocumentTextExtractor = {
