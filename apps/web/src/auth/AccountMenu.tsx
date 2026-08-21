@@ -349,7 +349,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                   </div>
                   <a
                     href="/kompetenz"
-                    className="mt-2 inline-flex text-xs font-medium text-accent underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="mt-2 inline-flex text-xs font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Kompetenzprofil öffnen
                   </a>
@@ -418,17 +418,6 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             </div>
           </PopoverContent>
         </Popover>
-
-        <button
-          type="button"
-          onClick={() => void auth.signOut().catch(() => undefined)}
-          aria-label="Abmelden"
-          title="Abmelden"
-          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-          <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Abmelden</span>
-        </button>
       </div>
 
       {settingsOpen ? (
