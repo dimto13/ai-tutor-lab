@@ -85,7 +85,10 @@ export function response(ctx) {
 
   for (const item of items) {
     if (item.tenantId !== subject.tenantId) {
-      util.error("Reporting evidence escaped authenticated tenant scope", "TrainingAnalyticsScopeError");
+      util.error(
+        "Reporting evidence escaped authenticated tenant scope",
+        "TrainingAnalyticsScopeError",
+      );
     }
     if (item.scenarioId !== scenarioId) continue;
     if (typeof item.userId !== "string" || item.userId.length === 0) {
