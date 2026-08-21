@@ -55,6 +55,15 @@ export {
   supportedDocumentFormats,
 } from "./document-classification.ts";
 export type {
+  DocumentCheckAuditRecord,
+  DocumentCheckAuditSink,
+  DocumentCheckToolDecision,
+  TenantDocumentCheckContext,
+  TenantDocumentCheckResult,
+  TenantDocumentCheckServiceOptions,
+} from "./tenant-document-check.ts";
+export { createTenantDocumentCheckService } from "./tenant-document-check.ts";
+export type {
   CatalogEnvironmentReference,
   CatalogEnvironmentValidationIssue,
   CatalogIntegrationReference,
