@@ -291,7 +291,8 @@ test("claudeCodeRuntime: deterministic test output reflects synthetic file state
     runtime.runCommand("npm test");
 
     assert.equal(await runtime.query("claude.tests.lastPassed"), true);
-    const runs = await runtime.query<Array<{ passed: boolean; output: string }>>("claude.tests.runs");
+    const runs =
+      await runtime.query<Array<{ passed: boolean; output: string }>>("claude.tests.runs");
     assert.deepEqual(
       runs.map(({ passed, output }) => ({ passed, output })),
       [
