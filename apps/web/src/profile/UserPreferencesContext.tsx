@@ -153,7 +153,14 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       saveSelfAssessedAiLevel,
       saveWeeklyGoalMinutes,
     }),
-    [preferences, status, error, selfAssessedAiLevel, saveSelfAssessedAiLevel, saveWeeklyGoalMinutes],
+    [
+      preferences,
+      status,
+      error,
+      selfAssessedAiLevel,
+      saveSelfAssessedAiLevel,
+      saveWeeklyGoalMinutes,
+    ],
   );
 
   return (
