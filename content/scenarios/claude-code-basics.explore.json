@@ -29,7 +29,8 @@
       "cli_agent.permission",
       "cli_agent.control",
       "cli_agent.safety",
-      "cli_agent.verification"
+      "cli_agent.verification",
+      "platform.diff"
     ]
   },
   "environment": {
@@ -94,7 +95,7 @@
     {
       "id": "explore-cli-agent",
       "title": "Agentenarbeitsplatz frei untersuchen",
-      "description": "Alle Dateien, Antworten und Sicherheitsmarker sind synthetisch. Nichts wird auf deinem Rechner oder in einem echten Repository ausgeführt.",
+      "description": "Alle Dateien, Antworten und Sicherheitsmarker sind synthetisch. Nichts wird auf deinem Rechner oder in einem echten Projektbestand ausgeführt.",
       "instruction": "Untersuche Sitzungskopf und Arbeitsverzeichnis, Aufgabenzeile, Plan und Planprüfung, Aktivitätsprotokoll, Änderungsvorschlag, Berechtigungsentscheidung, Stoppen sowie die Test- und Ergebnisansicht. Ordne dabei ein: Ein Shellkommando führt eine klar benannte Operation aus; ein CLI-Agent erhält dagegen ein Ziel und kann daraus mehrere Schritte und vorgeschlagene Änderungen ableiten. Ein klassischer Chat erklärt oder formuliert, besitzt aber nicht automatisch denselben Projekt- und Werkzeugkontext.",
       "why": "Wer Wirkungsbereich, Plan, Berechtigungen und Prüfergebnis getrennt erkennt, kann agentische Arbeit kontrollieren statt nur einer überzeugend klingenden Antwort zu vertrauen.",
       "helpLevels": [
