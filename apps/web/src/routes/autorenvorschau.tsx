@@ -59,7 +59,8 @@ function AuthorPreviewRoute() {
     );
   }
 
-  const targetResolution = resolveAuthorHighlightTarget(scenario, step);
+  const activeScenario = scenario;
+  const targetResolution = resolveAuthorHighlightTarget(activeScenario, step);
 
   async function runValidation(currentStep: TrainingStep) {
     setError(null);
@@ -81,7 +82,7 @@ function AuthorPreviewRoute() {
     }
 
     try {
-      const nextResult = await simulateAuthorStepValidation(scenario, currentStep, {
+      const nextResult = await simulateAuthorStepValidation(activeScenario, currentStep, {
         type: eventType.trim(),
         payload,
       });
