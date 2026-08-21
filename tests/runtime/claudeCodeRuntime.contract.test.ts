@@ -69,6 +69,16 @@ const statusCheck = {
   failingOutput: "1 Test fehlgeschlagen",
 };
 
+const documentationCheck = {
+  id: "documentation-test",
+  command: "npm test:docs",
+  path: "README.md",
+  includes: ["# Projekt", "## Status"],
+  excludes: ["DEMO_TOKEN"],
+  passingOutput: "Dokumentation geprüft",
+  failingOutput: "Dokumentationsprüfung fehlgeschlagen",
+};
+
 defineRuntimeAdapterContractTests("claudeCodeRuntime", () => {
   let restoredState: ClaudeCodeState | null = null;
   let unsubscribeState: (() => void) | null = null;
@@ -305,6 +315,24 @@ test("claudeCodeRuntime: deterministic test output reflects synthetic file state
   }
 });
 
+test("claudeCodeRuntime: command whitespace and CRLF content are normalized deterministically", async () => {
+  const runtime = createClaudeCodeRuntime();
+  await runtime.mount(createContainer(), {
+    claudeCode: {
+      files: { "README.md": "# Projekt\r\n\r\n## Status\r\n\r\nbereit\r\n" },
+      checks: [statusCheck],
+    },
+  });
+
+  try {
+    runtime.runCommand("  npm   test  ");
+    assert.equal(await runtime.query("claude.tests.lastPassed"), true);
+    assert.deepEqual(await runtime.query("claude.commands.executed"), ["npm   test"]);
+  } finally {
+    await runtime.unmount();
+  }
+});
+
 test("claudeCodeRuntime: rejecting unsafe work then verifying safe work succeeds", async () => {
   const runtime = createClaudeCodeRuntime();
   await runtime.mount(createContainer(), {
@@ -359,6 +387,57 @@ test("claudeCodeRuntime: an unsafe approval remains a permanent verification fai
 
     assert.equal(runtime.verifyResult(), false);
     assert.equal(await runtime.query("claude.verification.passed"), false);
+  } finally {
+    await runtime.unmount();
+  }
+});
+
+test("claudeCodeRuntime: re-proposing an id cannot erase a prior unsafe approval", async () => {
+  const runtime = createClaudeCodeRuntime();
+  await runtime.mount(createContainer(), {
+    claudeCode: {
+      files: { "README.md": "# Projekt\n" },
+      proposals: [unsafeProposal],
+      initialProposalId: "unsafe-update",
+    },
+  });
+
+  try {
+    runtime.approvePendingChange();
+    assert.deepEqual(await runtime.query("claude.security.unsafeApprovals"), ["unsafe-update"]);
+
+    runtime.proposeChange({
+      ...unsafeProposal,
+      safety: "safe",
+      safetyReason: undefined,
+      nextContent: "# Projekt\n\nSicherer Folgeentwurf\n",
+    });
+
+    assert.deepEqual(await runtime.query("claude.security.unsafeApprovals"), ["unsafe-update"]);
+  } finally {
+    await runtime.unmount();
+  }
+});
+
+test("claudeCodeRuntime: verification requires the latest passing run for every configured check", async () => {
+  const runtime = createClaudeCodeRuntime();
+  await runtime.mount(createContainer(), {
+    claudeCode: {
+      files: { "README.md": "# Projekt\n" },
+      proposals: [safeProposal],
+      checks: [statusCheck, documentationCheck],
+    },
+  });
+
+  try {
+    runtime.submitPrompt("Bitte sicher aktualisieren");
+    runtime.approvePendingChange();
+
+    runtime.runCommand("npm test");
+    assert.equal(runtime.verifyResult(), false);
+
+    runtime.runCommand("npm test:docs");
+    assert.equal(runtime.verifyResult(), true);
   } finally {
     await runtime.unmount();
   }
