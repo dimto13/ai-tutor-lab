@@ -5,6 +5,7 @@ import {
   resolveAuthorHighlightTarget,
   simulateAuthorStepValidation,
   suggestAuthorEventType,
+  type AuthorRuntimeLookup,
 } from "../../apps/web/src/authoring/authorPreview.ts";
 
 const step: TrainingStep = {
@@ -30,8 +31,25 @@ const scenario: Scenario = {
   steps: [step],
 };
 
+const runtime = {
+  id: "vscode-simulator",
+  productId: "vscode",
+  describeSurface: () => [
+    {
+      ref: "vscode.activityBar.explorer",
+      label: "Explorer",
+    },
+  ],
+  query: async () => null,
+};
+
+const runtimes: AuthorRuntimeLookup = {
+  forTarget: (target) => (target === "vscode.activityBar.explorer" ? runtime : null),
+  forStateKey: () => runtime,
+};
+
 test("author preview resolves semantic highlight targets through the runtime contract", () => {
-  assert.deepEqual(resolveAuthorHighlightTarget(scenario, step), {
+  assert.deepEqual(resolveAuthorHighlightTarget(scenario, step, runtimes), {
     status: "resolved",
     target: "vscode.activityBar.explorer",
     runtimeId: "vscode-simulator",
@@ -42,7 +60,7 @@ test("author preview resolves semantic highlight targets through the runtime con
 
 test("author preview reports unknown targets instead of guessing DOM selectors", () => {
   const unresolved = { ...step, highlightTarget: "vscode.does-not-exist" };
-  assert.deepEqual(resolveAuthorHighlightTarget(scenario, unresolved), {
+  assert.deepEqual(resolveAuthorHighlightTarget(scenario, unresolved, runtimes), {
     status: "missing",
     target: "vscode.does-not-exist",
   });
@@ -51,17 +69,27 @@ test("author preview reports unknown targets instead of guessing DOM selectors",
 test("author preview suggests and executes the authored event validator", async () => {
   assert.equal(suggestAuthorEventType(step), "explorer.opened");
   assert.deepEqual(
-    await simulateAuthorStepValidation(scenario, step, {
-      type: "explorer.opened",
-      payload: {},
-    }),
+    await simulateAuthorStepValidation(
+      scenario,
+      step,
+      {
+        type: "explorer.opened",
+        payload: {},
+      },
+      runtimes,
+    ),
     { outcome: "pass" },
   );
   assert.deepEqual(
-    await simulateAuthorStepValidation(scenario, step, {
-      type: "file.opened",
-      payload: {},
-    }),
+    await simulateAuthorStepValidation(
+      scenario,
+      step,
+      {
+        type: "file.opened",
+        payload: {},
+      },
+      runtimes,
+    ),
     { outcome: "ignore" },
   );
 });
