@@ -113,10 +113,7 @@ export class InMemoryTutorSessionBudgetStore implements TutorSessionBudgetStore 
     const charged = Math.min(reservation.maximumCostMicros, normalizedActual);
     this.sessions.set(reservation.sessionKey, {
       requestCount: current.requestCount,
-      costMicros: Math.max(
-        0,
-        current.costMicros - reservation.maximumCostMicros + charged,
-      ),
+      costMicros: Math.max(0, current.costMicros - reservation.maximumCostMicros + charged),
       expiresAt: current.expiresAt,
     });
   }
