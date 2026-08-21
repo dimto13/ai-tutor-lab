@@ -7,10 +7,14 @@
       "stepType": "explanation",
       "optional": true,
       "title": "Activity Bar einordnen",
-      "description": "Die Activity Bar ist die schmale Symbolleiste ganz links in VS Code. Ähnlich wie die Navigationsleiste in Outlook wählst du dort aus, mit welchem Hauptbereich du gerade arbeiten möchtest.",
-      "instruction": "Merke dir: Die Activity Bar wählt einen Hauptbereich aus. Ein Klick auf eines ihrer Symbole zeigt rechts daneben den zugehörigen Inhalt in der Primary Side Bar an.",
+      "description": "Die Activity Bar (Aktivitätsleiste) ist die schmale Symbolleiste ganz links in VS Code. Ähnlich wie die Navigationsleiste in Outlook wählst du dort aus, mit welchem Hauptbereich du gerade arbeiten möchtest.",
+      "instruction": "Merke dir: Die Activity Bar wählt einen Hauptbereich aus. Ein Klick auf eines ihrer Symbole zeigt rechts daneben den zugehörigen Inhalt in der Primary Side Bar (primären Seitenleiste) an.",
       "why": "Wenn du die Activity Bar als Navigation verstehst, kannst du die linke Seite von VS Code schneller einordnen, statt einzelne Symbole auswendig zu lernen.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.activityBar.explorer",
       "highlightTooltip": "Die blaue Umrandung zeigt dir die Activity Bar ganz links. Ihre Symbole wechseln den Hauptbereich.",
       "successMessage": "Die Activity Bar ist als Navigation zwischen den Hauptbereichen eingeordnet."
@@ -20,10 +24,14 @@
       "stepType": "explanation",
       "optional": true,
       "title": "Side Bar einordnen",
-      "description": "VS Code unterscheidet zwei Seitenbereiche: Die Primary Side Bar liegt standardmäßig links neben der Activity Bar und zeigt zum Beispiel Explorer oder Search. Die Secondary Side Bar liegt auf der anderen Seite des Editors und kann zusätzliche Views wie Chat aufnehmen.",
-      "instruction": "Merke dir: Die Activity Bar steuert vor allem die Primary Side Bar. Die Secondary Side Bar schafft Platz für zusätzliche Views, ohne den Inhalt der Primary Side Bar zu ersetzen.",
+      "description": "VS Code unterscheidet zwei Seitenleisten: Die Primary Side Bar (primäre Seitenleiste) liegt standardmäßig links neben der Activity Bar und zeigt zum Beispiel Explorer oder Search. Die Secondary Side Bar (sekundäre Seitenleiste) liegt auf der anderen Seite des Editors und kann zusätzliche Ansichten (Views) wie Chat aufnehmen.",
+      "instruction": "Merke dir: Die Activity Bar steuert vor allem die Primary Side Bar. Die Secondary Side Bar schafft Platz für zusätzliche Ansichten, ohne den Inhalt der Primary Side Bar zu ersetzen.",
       "why": "Wenn du Primary und Secondary Side Bar unterscheidest, kannst du später gleichzeitig Projektstruktur und zusätzliche Werkzeuge wie Chat räumlich korrekt einordnen.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.sideBar",
       "highlightTooltip": "Die blaue Umrandung zeigt dir die Primary Side Bar neben der Activity Bar.",
       "successMessage": "Primary und Secondary Side Bar sind als getrennte Bereiche eingeordnet."
@@ -36,7 +44,11 @@
       "description": "Der Editor ist die große Arbeitsfläche in der Mitte. Er entspricht am ehesten dem Dokumentbereich in Word oder dem Arbeitsblatt in Excel: Hier öffnest, liest und bearbeitest du den eigentlichen Dateiinhalt.",
       "instruction": "Merke dir: In der Navigation suchst du eine Datei aus; im Editor arbeitest du anschließend an ihrem Inhalt.",
       "why": "Die Trennung hilft dir zu erkennen, ob du gerade eine Datei auswählst oder ihren Inhalt bearbeitest.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Die blaue Umrandung zeigt dir den Editor als zentrale Arbeitsfläche.",
       "successMessage": "Der Editor ist als zentrale Arbeitsfläche für Dateiinhalt eingeordnet."
@@ -45,24 +57,32 @@
       "id": "vscode.ui.panel",
       "stepType": "explanation",
       "optional": true,
-      "title": "Panel einordnen",
-      "description": "Das Panel ist ein zusätzlicher Bereich, meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt es Werkzeuge und Informationen, die du neben dem eigentlichen Dateiinhalt brauchst.",
-      "instruction": "Merke dir: Der Editor enthält den Dateiinhalt; das Panel ergänzt ihn um zusätzliche Werkzeuge und Ausgaben.",
-      "why": "Wenn du das Panel als Container verstehst, kannst du die unterschiedlichen Ansichten darin später leichter einordnen.",
-      "helpLevels": ["", "", ""],
+      "title": "Bereich (Panel) einordnen",
+      "description": "Der zusätzliche Bereich (Panel) liegt meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt er Werkzeuge und Informationen, die du neben dem eigentlichen Dateiinhalt brauchst.",
+      "instruction": "Merke dir: Der Editor enthält den Dateiinhalt; der Bereich ergänzt ihn um zusätzliche Werkzeuge und Ausgaben.",
+      "why": "Wenn du den Bereich als Container verstehst, kannst du die unterschiedlichen Ansichten darin später leichter einordnen.",
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.panel.terminal",
-      "highlightTooltip": "Das Panel liegt unter dem Editor. Sobald es geöffnet ist, werden seine Views dort visuell hervorgehoben.",
-      "successMessage": "Das Panel ist als zusätzlicher Werkzeug- und Informationsbereich eingeordnet."
+      "highlightTooltip": "Der Bereich liegt meist unter dem Editor. Sobald er geöffnet ist, werden seine Ansichten dort visuell hervorgehoben.",
+      "successMessage": "Der Bereich ist als zusätzlicher Werkzeug- und Informationsbereich eingeordnet."
     },
     {
       "id": "vscode.ui.status-bar",
       "stepType": "explanation",
       "optional": true,
       "title": "Status Bar einordnen",
-      "description": "Die Status Bar ist die schmale Leiste ganz unten. Wie die Statusleiste in Word oder Excel zeigt sie Informationen zum aktuellen Arbeitskontext, ohne den eigentlichen Inhalt zu überdecken.",
+      "description": "Die Status Bar (Statusleiste) ist die schmale Leiste ganz unten. Wie die Statusleiste in Word oder Excel zeigt sie Informationen zum aktuellen Arbeitskontext, ohne den eigentlichen Inhalt zu überdecken.",
       "instruction": "Merke dir: Die Status Bar informiert dich über den aktuellen Zustand, zum Beispiel über Zeile und Spalte oder den Typ einer geöffneten Datei, und enthält teilweise direkt anklickbare Aktionen.",
       "why": "Statusinformationen sind dort dauerhaft sichtbar, ohne dass du dafür ein eigenes Fenster öffnen musst.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.statusBar",
       "highlightTooltip": "Die blaue Umrandung zeigt dir die Status Bar am unteren Rand von VS Code.",
       "successMessage": "Die Status Bar ist als kompakte Zustandsanzeige eingeordnet."
@@ -71,24 +91,32 @@
       "id": "vscode.ui.view",
       "stepType": "explanation",
       "optional": true,
-      "title": "View einordnen",
-      "description": "Eine View ist eine spezialisierte Ansicht innerhalb eines größeren Bereichs. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
-      "instruction": "Merke dir: Größere Bereiche wie Primary oder Secondary Side Bar sowie das Panel können mehrere Views enthalten.",
-      "why": "Der Begriff View taucht in VS Code häufig auf. Wenn du Container und konkrete Ansicht unterscheidest, werden Beschreibungen der Oberfläche deutlich verständlicher.",
-      "helpLevels": ["", "", ""],
+      "title": "Ansicht (View) einordnen",
+      "description": "Eine Ansicht (View) ist ein spezialisierter Inhalt innerhalb eines größeren Bereichs. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
+      "instruction": "Merke dir: Größere Bereiche wie Primary oder Secondary Side Bar sowie der zusätzliche Bereich können mehrere Ansichten enthalten.",
+      "why": "Der Produktbegriff View taucht in VS Code häufig auf. Wenn du Container und konkrete Ansicht unterscheidest, werden Beschreibungen der Oberfläche deutlich verständlicher.",
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.sideBar",
-      "highlightTooltip": "Die Side Bar ist ein Beispiel für einen Container, in dem konkrete Views angezeigt werden.",
-      "successMessage": "Eine View ist als konkrete Ansicht innerhalb eines größeren Bereichs eingeordnet."
+      "highlightTooltip": "Die Side Bar ist ein Beispiel für einen Container, in dem konkrete Ansichten angezeigt werden.",
+      "successMessage": "Eine Ansicht ist als konkreter Inhalt innerhalb eines größeren Bereichs eingeordnet."
     },
     {
       "id": "vscode.ui.explorer",
       "stepType": "explanation",
       "optional": true,
       "title": "Explorer einordnen",
-      "description": "Der Explorer zeigt die Dateien und Ordner deines aktuellen Arbeitskontexts. Er funktioniert ähnlich wie der Windows-Datei-Explorer oder der Dialog Öffnen in Office, bleibt aber direkt in VS Code sichtbar.",
+      "description": "Der Explorer (Datei- und Ordnerübersicht) zeigt die Dateien und Ordner deines aktuellen Arbeitskontexts. Er funktioniert ähnlich wie der Windows-Datei-Explorer oder der Dialog Öffnen in Office, bleibt aber direkt in VS Code sichtbar.",
       "instruction": "Merke dir: Im Explorer findest und organisierst du Dateien und Ordner; den Inhalt einer geöffneten Datei bearbeitest du anschließend im Editor (der zentralen Arbeitsfläche).",
       "why": "Diese Trennung zwischen Dateistruktur und Dateiinhalt ist die Grundlage für fast alle weiteren Schritte in VS Code.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.explorer.tree",
       "highlightTooltip": "Die Markierung verbindet den Explorer-Einstieg links mit seinem Datei- und Ordnerbereich, sobald dieser sichtbar ist.",
       "successMessage": "Der Explorer ist als Datei- und Ordnerübersicht eingeordnet."
@@ -99,12 +127,16 @@
       "optional": true,
       "title": "Terminal einordnen",
       "description": "Das Terminal hat keinen direkten Office-Gegenpart. Statt eine Funktion über Schaltflächen aufzurufen, gibst du dort Textbefehle ein. Der Grundgedanke ist ähnlich wie bei einer Excel-Formel: Du formulierst eine eindeutige Anweisung, die der Computer ausführt.",
-      "instruction": "Merke dir: Das Terminal ist eine eigene View (Ansicht) im Panel (Zusatzbereich unter der Arbeitsfläche). Du musst Befehle nicht auswendig lernen; wichtig ist zunächst, dass du erkennst, wo Befehle eingegeben und ihre Ausgaben angezeigt werden.",
+      "instruction": "Merke dir: Das Terminal ist eine eigene Ansicht (View) im zusätzlichen Bereich (Panel) unter der Arbeitsfläche. Du musst Befehle nicht auswendig lernen; wichtig ist zunächst, dass du erkennst, wo Befehle eingegeben und ihre Ausgaben angezeigt werden.",
       "why": "Spätere KI-Workflows können Befehle vorschlagen oder ausführen. Du solltest deshalb erkennen können, was im Terminal passiert, auch wenn du selbst nicht programmierst.",
-      "helpLevels": ["", "", ""],
+      "helpLevels": [
+        "",
+        "",
+        ""
+      ],
       "highlightTarget": "vscode.panel.terminal",
-      "highlightTooltip": "Das Terminal ist eine View im unteren Panel und wird dort markiert, sobald das Panel geöffnet ist.",
-      "successMessage": "Das Terminal ist als textbasierte Befehlsansicht im Panel eingeordnet."
+      "highlightTooltip": "Das Terminal ist eine Ansicht im unteren Bereich und wird dort markiert, sobald dieser geöffnet ist.",
+      "successMessage": "Das Terminal ist als textbasierte Befehlsansicht im unteren Bereich eingeordnet."
     }
   ]
 }
