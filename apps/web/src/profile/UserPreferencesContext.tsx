@@ -29,7 +29,7 @@ interface UserPreferencesContextValue {
   error: string | null;
   selfAssessedAiLevel: SelfAssessedAiLevel | null;
   saveSelfAssessedAiLevel(level: SelfAssessedAiLevel): Promise<void>;
-  saveWeeklyContinuityPreferences(goalMinutes: number, reminderEnabled: boolean): Promise<void>;
+  saveWeeklyGoalMinutes(goalMinutes: number): Promise<void>;
 }
 
 const UserPreferencesContext = createContext<UserPreferencesContextValue | null>(null);
@@ -44,7 +44,6 @@ function currentValue(current: UserPreferencesRecord | null): UserPreferencesVal
     language: current?.language ?? null,
     preferredTrainingMode: current?.preferredTrainingMode ?? null,
     weeklyGoalMinutes: current?.weeklyGoalMinutes ?? null,
-    weeklyReminderEnabled: current?.weeklyReminderEnabled ?? null,
     accessibility: current?.accessibility ?? null,
     selfAssessedAiLevel: current?.selfAssessedAiLevel ?? null,
   };
@@ -133,16 +132,12 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     [preferences, savePreferences],
   );
 
-  const saveWeeklyContinuityPreferences = useCallback(
-    async (goalMinutes: number, reminderEnabled: boolean) => {
+  const saveWeeklyGoalMinutes = useCallback(
+    async (goalMinutes: number) => {
       if (!Number.isInteger(goalMinutes) || goalMinutes < 15 || goalMinutes > 600) {
         throw new Error("Das Wochenziel muss zwischen 15 und 600 Minuten liegen.");
       }
-      await savePreferences({
-        ...currentValue(preferences),
-        weeklyGoalMinutes: goalMinutes,
-        weeklyReminderEnabled: reminderEnabled,
-      });
+      await savePreferences({ ...currentValue(preferences), weeklyGoalMinutes: goalMinutes });
     },
     [preferences, savePreferences],
   );
@@ -156,16 +151,9 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       error,
       selfAssessedAiLevel,
       saveSelfAssessedAiLevel,
-      saveWeeklyContinuityPreferences,
+      saveWeeklyGoalMinutes,
     }),
-    [
-      preferences,
-      status,
-      error,
-      selfAssessedAiLevel,
-      saveSelfAssessedAiLevel,
-      saveWeeklyContinuityPreferences,
-    ],
+    [preferences, status, error, selfAssessedAiLevel, saveSelfAssessedAiLevel, saveWeeklyGoalMinutes],
   );
 
   return (
