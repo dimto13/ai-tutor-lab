@@ -38,7 +38,6 @@ function preferencesRecord(
     language?: unknown;
     preferredTrainingMode?: unknown;
     weeklyGoalMinutes?: unknown;
-    weeklyReminderEnabled?: unknown;
     accessibility?: unknown;
     selfAssessedAiLevel?: unknown;
     revision?: unknown;
@@ -67,21 +66,12 @@ function preferencesRecord(
   ) {
     throw new Error("Persisted user preferences have an invalid self-assessed AI level");
   }
-  if (
-    data.weeklyReminderEnabled !== null &&
-    data.weeklyReminderEnabled !== undefined &&
-    typeof data.weeklyReminderEnabled !== "boolean"
-  ) {
-    throw new Error("Persisted user preferences have an invalid weekly reminder consent");
-  }
 
   return {
     subject: { userId: subject.userId, tenantId: data.tenantId },
     language: typeof data.language === "string" ? data.language : null,
     preferredTrainingMode: trainingMode(data.preferredTrainingMode),
     weeklyGoalMinutes: typeof data.weeklyGoalMinutes === "number" ? data.weeklyGoalMinutes : null,
-    weeklyReminderEnabled:
-      typeof data.weeklyReminderEnabled === "boolean" ? data.weeklyReminderEnabled : null,
     accessibility: data.accessibility ?? null,
     selfAssessedAiLevel: data.selfAssessedAiLevel ?? null,
     revision: data.revision,
@@ -107,7 +97,6 @@ export function createAmplifyUserPreferencesRepository(): UserPreferencesReposit
         language: value.language,
         preferredTrainingMode: value.preferredTrainingMode,
         weeklyGoalMinutes: value.weeklyGoalMinutes,
-        weeklyReminderEnabled: value.weeklyReminderEnabled,
         accessibility: value.accessibility as AccessibilityArg,
         selfAssessedAiLevel: value.selfAssessedAiLevel,
         ...(expectedRevision === null ? {} : { expectedRevision }),
