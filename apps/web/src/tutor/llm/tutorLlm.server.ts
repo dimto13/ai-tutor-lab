@@ -11,13 +11,17 @@ import {
 } from "./tutorGuardrails";
 
 const budgetStore = new InMemoryTutorSessionBudgetStore();
-const jwksCache = new Map<string, Promise<JsonWebKey[]>>();
+const jwksCache = new Map<string, Promise<CognitoJwk[]>>();
 const authConfigCache = new Map<string, Promise<CognitoPublicConfig>>();
 
 interface CognitoPublicConfig {
   region: string;
   userPoolId: string;
   userPoolClientId: string;
+}
+
+interface CognitoJwk extends JsonWebKey {
+  kid?: string;
 }
 
 interface VerifiedTutorIdentity {
@@ -62,17 +66,21 @@ function nonNegativeInteger(value: string | undefined, fallback: number): number
 
 function budgetPolicy(env: NodeJS.ProcessEnv): TutorSessionBudgetPolicy {
   return {
-    maxRequests: positiveInteger(env.LLM_SESSION_MAX_REQUESTS, 20),
-    maxCostMicros: nonNegativeInteger(env.LLM_SESSION_MAX_COST_MICROS, 0),
-    maxOutputTokens: positiveInteger(env.LLM_MAX_OUTPUT_TOKENS, 500),
+    maxRequests: positiveInteger(env["LLM_SESSION_MAX_REQUESTS"], 20),
+    maxCostMicros: nonNegativeInteger(env["LLM_SESSION_MAX_COST_MICROS"], 0),
+    maxOutputTokens: positiveInteger(env["LLM_MAX_OUTPUT_TOKENS"], 500),
   };
 }
 
-function base64UrlBytes(value: string): Uint8Array {
+function base64UrlBytes(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
   const binary = atob(padded);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 function decodeJwtJson<T>(segment: string): T {
@@ -94,9 +102,9 @@ function tenantFromGroups(groups: unknown, userId: string): string {
 }
 
 function cognitoConfigFromEnvironment(env: NodeJS.ProcessEnv): CognitoPublicConfig | null {
-  const region = env.COGNITO_REGION ?? env.AWS_REGION;
-  const userPoolId = env.COGNITO_USER_POOL_ID;
-  const userPoolClientId = env.COGNITO_USER_POOL_CLIENT_ID;
+  const region = env["COGNITO_REGION"] ?? env["AWS_REGION"];
+  const userPoolId = env["COGNITO_USER_POOL_ID"];
+  const userPoolClientId = env["COGNITO_USER_POOL_CLIENT_ID"];
   const configured = [region, userPoolId, userPoolClientId].filter(Boolean).length;
   if (configured === 0) return null;
   if (!region || !userPoolId || !userPoolClientId) {
@@ -114,30 +122,31 @@ async function loadCognitoPublicConfig(
 
   let cached = authConfigCache.get(origin);
   if (!cached) {
-    const pending = (async () => {
-      const response = await fetch(new URL("/amplify_outputs.json", origin));
-      if (!response.ok) throw new Error("Live Cognito configuration is unavailable");
-      const source = (await response.json()) as Record<string, unknown>;
-      const auth = source["auth"] as Record<string, unknown> | undefined;
-      const region = auth?.["aws_region"];
-      const userPoolId = auth?.["user_pool_id"];
-      const userPoolClientId = auth?.["user_pool_client_id"];
-      if (
-        typeof region !== "string" ||
-        typeof userPoolId !== "string" ||
-        typeof userPoolClientId !== "string" ||
-        !region ||
-        !userPoolId ||
-        !userPoolClientId
-      ) {
-        throw new Error("Live Cognito configuration is incomplete");
+    cached = (async () => {
+      try {
+        const response = await fetch(new URL("/amplify_outputs.json", origin));
+        if (!response.ok) throw new Error("Live Cognito configuration is unavailable");
+        const source = (await response.json()) as Record<string, unknown>;
+        const auth = source["auth"] as Record<string, unknown> | undefined;
+        const region = auth?.["aws_region"];
+        const userPoolId = auth?.["user_pool_id"];
+        const userPoolClientId = auth?.["user_pool_client_id"];
+        if (
+          typeof region !== "string" ||
+          typeof userPoolId !== "string" ||
+          typeof userPoolClientId !== "string" ||
+          !region ||
+          !userPoolId ||
+          !userPoolClientId
+        ) {
+          throw new Error("Live Cognito configuration is incomplete");
+        }
+        return { region, userPoolId, userPoolClientId };
+      } catch (error) {
+        authConfigCache.delete(origin);
+        throw error;
       }
-      return { region, userPoolId, userPoolClientId };
     })();
-    cached = pending.catch((error) => {
-      if (authConfigCache.get(origin) === pending) authConfigCache.delete(origin);
-      throw error;
-    });
     authConfigCache.set(origin, cached);
   }
   return cached;
@@ -147,28 +156,29 @@ function cognitoIssuer(config: CognitoPublicConfig): string {
   return `https://cognito-idp.${config.region}.amazonaws.com/${config.userPoolId}`;
 }
 
-async function loadJwks(config: CognitoPublicConfig, forceRefresh = false): Promise<JsonWebKey[]> {
+async function loadJwks(config: CognitoPublicConfig, forceRefresh = false): Promise<CognitoJwk[]> {
   const issuer = cognitoIssuer(config);
   if (forceRefresh) jwksCache.delete(issuer);
   let cached = jwksCache.get(issuer);
   if (!cached) {
-    const pending = (async () => {
-      const response = await fetch(`${issuer}/.well-known/jwks.json`, { cache: "no-store" });
-      if (!response.ok) throw new Error("Cognito signing keys are unavailable");
-      const payload = (await response.json()) as { keys?: unknown };
-      if (!Array.isArray(payload.keys)) throw new Error("Cognito signing keys are invalid");
-      return payload.keys as JsonWebKey[];
+    cached = (async () => {
+      try {
+        const response = await fetch(`${issuer}/.well-known/jwks.json`, { cache: "no-store" });
+        if (!response.ok) throw new Error("Cognito signing keys are unavailable");
+        const payload = (await response.json()) as { keys?: unknown };
+        if (!Array.isArray(payload.keys)) throw new Error("Cognito signing keys are invalid");
+        return payload.keys as CognitoJwk[];
+      } catch (error) {
+        jwksCache.delete(issuer);
+        throw error;
+      }
     })();
-    cached = pending.catch((error) => {
-      if (jwksCache.get(issuer) === pending) jwksCache.delete(issuer);
-      throw error;
-    });
     jwksCache.set(issuer, cached);
   }
   return cached;
 }
 
-async function signingKeyFor(config: CognitoPublicConfig, kid: string): Promise<JsonWebKey> {
+async function signingKeyFor(config: CognitoPublicConfig, kid: string): Promise<CognitoJwk> {
   let keys = await loadJwks(config);
   let jwk = keys.find((candidate) => candidate.kid === kid);
   if (!jwk) {
@@ -233,7 +243,7 @@ async function verifyCognitoAccessToken(
 
 function optedInTenants(env: NodeJS.ProcessEnv): Set<string> {
   return new Set(
-    (env.LLM_USER_CODE_OPT_IN_TENANTS ?? "")
+    (env["LLM_USER_CODE_OPT_IN_TENANTS"] ?? "")
       .split(",")
       .map((tenantId) => tenantId.trim())
       .filter(Boolean),
@@ -288,7 +298,7 @@ export async function answerTutorQuestionOnServer(
   input: TutorLlmServerInput,
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<TutorLlmAnswer | { status: "unavailable" }> {
-  if (env.LLM_ENABLED !== "true" || !input.accessToken) return { status: "unavailable" };
+  if (env["LLM_ENABLED"] !== "true" || !input.accessToken) return { status: "unavailable" };
 
   let identity: VerifiedTutorIdentity;
   try {
