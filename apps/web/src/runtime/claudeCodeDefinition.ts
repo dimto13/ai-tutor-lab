@@ -25,8 +25,13 @@ export const CLAUDE_CODE_DEFINITION = {
       conceptKey: "cli_agent.transcript",
     },
     {
+      ref: "claude.activity",
+      label: "Aktivitätsprotokoll",
+      conceptKey: "cli_agent.activity_log",
+    },
+    {
       ref: "claude.prompt.input",
-      label: "Eingabezeile",
+      label: "Aufgaben- und Kommandozeile",
       conceptKey: "cli_agent.prompt",
     },
     {
@@ -35,9 +40,19 @@ export const CLAUDE_CODE_DEFINITION = {
       conceptKey: "cli_agent.plan",
     },
     {
+      ref: "claude.plan.review",
+      label: "Plan prüfen",
+      conceptKey: "cli_agent.plan",
+    },
+    {
       ref: "claude.diff",
       label: "Vorgeschlagene Dateiänderung",
       conceptKey: "cli_agent.proposed_change",
+    },
+    {
+      ref: "claude.permission",
+      label: "Berechtigungsentscheidung",
+      conceptKey: "cli_agent.permission",
     },
     {
       ref: "claude.approval.approve",
@@ -50,9 +65,19 @@ export const CLAUDE_CODE_DEFINITION = {
       conceptKey: "cli_agent.permission",
     },
     {
+      ref: "claude.task.stop",
+      label: "Laufende Aufgabe stoppen",
+      conceptKey: "cli_agent.control",
+    },
+    {
       ref: "claude.workspace.files",
       label: "Dateien im Arbeitsverzeichnis",
       conceptKey: "cli_agent.workspace",
+    },
+    {
+      ref: "claude.verification",
+      label: "Tests und Ergebnisprüfung",
+      conceptKey: "cli_agent.verification",
     },
   ],
   querySelectors: [
@@ -62,14 +87,23 @@ export const CLAUDE_CODE_DEFINITION = {
     "claude.transcript.entries",
     "claude.prompt.last",
     "claude.plan.steps",
+    "claude.plan.reviewed",
     "claude.pendingChange.id",
     "claude.pendingChange.path",
+    "claude.pendingChange.safety",
+    "claude.pendingChange.safetyReason",
     "claude.changes.viewed",
     "claude.changes.applied",
     "claude.changes.rejected",
+    "claude.security.unsafeApprovals",
+    "claude.task.status",
+    "claude.task.stoppedCount",
     "claude.commands.executed",
     "claude.files",
     "claude.files.contents",
+    "claude.tests.runs",
+    "claude.tests.lastPassed",
+    "claude.verification.passed",
   ],
 } as const satisfies RuntimeReferenceDefinition;
 
