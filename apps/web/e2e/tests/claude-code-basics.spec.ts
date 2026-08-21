@@ -65,13 +65,17 @@ test("Explore: Kontrollflächen erklären Wirkungsbereich, Sicherheit und Verifi
   await expect(page.getByRole("button", { name: "Ergebnis verifizieren" })).toBeVisible();
 
   await page.locator('[data-highlight="claude.session.header"]').click();
-  await expect(page.getByText(/Agentensitzung/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Agentensitzung", exact: true })).toBeVisible();
 
   await page.locator('[data-highlight="claude.diff"]').click();
-  await expect(page.getByText(/Änderungsvorschlag/)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Änderungsvorschlag", exact: true }),
+  ).toBeVisible();
 
   await page.locator('[data-highlight="claude.verification"]').click();
-  await expect(page.getByText(/Ergebnisverifikation/)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Ergebnisverifikation", exact: true }),
+  ).toBeVisible();
 });
 
 test("Guided: riskanter Entwurf wird abgelehnt, korrigiert, getestet und verifiziert", async ({
