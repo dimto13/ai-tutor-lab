@@ -40,6 +40,21 @@ export {
   resolveHighestMinimumLevel,
 } from "./classification.ts";
 export type {
+  DocumentClassificationOptions,
+  DocumentClassificationResult,
+  DocumentSource,
+  DocumentTextExtractor,
+  ExtractedDocument,
+  SupportedDocumentFormat,
+  TenantKeywordRule,
+} from "./document-classification.ts";
+export {
+  classifyDocument,
+  classifyExtractedDocument,
+  createUtf8TextExtractor,
+  supportedDocumentFormats,
+} from "./document-classification.ts";
+export type {
   CatalogEnvironmentReference,
   CatalogEnvironmentValidationIssue,
   CatalogIntegrationReference,
