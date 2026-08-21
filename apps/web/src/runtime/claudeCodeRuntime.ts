@@ -200,13 +200,34 @@ function initialState(seed?: RuntimeSeed): ClaudeCodeState {
   };
 }
 
+function normalizeCommand(command: string): string {
+  return command.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeContent(content: string): string {
+  return content.replace(/\r\n?/g, "\n");
+}
+
 function checkPasses(check: ClaudeCodeVerificationCheck, files: Record<string, string>): boolean {
-  const content = files[check.path] ?? "";
-  const hasRequiredContent = (check.includes ?? []).every((value) => content.includes(value));
+  const content = normalizeContent(files[check.path] ?? "");
+  const hasRequiredContent = (check.includes ?? []).every((value) =>
+    content.includes(normalizeContent(value)),
+  );
   const excludesForbiddenContent = (check.excludes ?? []).every(
-    (value) => !content.includes(value),
+    (value) => !content.includes(normalizeContent(value)),
   );
   return hasRequiredContent && excludesForbiddenContent;
+}
+
+function allChecksHavePassingLatestRun(
+  checks: readonly ClaudeCodeVerificationCheck[],
+  testRuns: readonly ClaudeCodeTestRun[],
+): boolean {
+  if (checks.length === 0) return false;
+  return checks.every((check) => {
+    const latestRun = [...testRuns].reverse().find((run) => run.id === check.id);
+    return latestRun?.passed === true;
+  });
 }
 
 export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
@@ -367,8 +388,9 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
     runCommand(command) {
       const trimmed = command.trim();
       if (!trimmed) return;
+      const normalizedCommand = normalizeCommand(trimmed);
       const check = state.checks.find(
-        (candidate) => candidate.command.toLowerCase() === trimmed.toLowerCase(),
+        (candidate) => normalizeCommand(candidate.command) === normalizedCommand,
       );
       const passed = check ? checkPasses(check, state.files) : null;
       const output = check ? (passed ? check.passingOutput : check.failingOutput) : null;
@@ -460,7 +482,7 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
           viewedProposalIds: state.viewedProposalIds.filter((id) => id !== proposal.id),
           appliedProposalIds: state.appliedProposalIds.filter((id) => id !== proposal.id),
           rejectedProposalIds: state.rejectedProposalIds.filter((id) => id !== proposal.id),
-          unsafeApprovalIds: state.unsafeApprovalIds.filter((id) => id !== proposal.id),
+          unsafeApprovalIds: state.unsafeApprovalIds,
           taskStatus: "running",
           verificationPassed: null,
           transcript: appendTranscript(state, [
@@ -571,9 +593,8 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
     },
 
     verifyResult() {
-      const lastTestRun = state.testRuns.at(-1) ?? null;
       const passed =
-        lastTestRun?.passed === true &&
+        allChecksHavePassingLatestRun(state.checks, state.testRuns) &&
         state.unsafeApprovalIds.length === 0 &&
         state.appliedProposalIds.length > 0 &&
         state.pendingProposalId === null;
