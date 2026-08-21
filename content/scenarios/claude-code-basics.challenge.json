@@ -1,0 +1,150 @@
+{
+  "id": "claude-code-basics.challenge",
+  "moduleId": "claude-code-basics",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "CLI-Agenten – sicher zum geprüften Endzustand steuern",
+  "description": "Du erhältst nur Ziel, Sicherheitsgrenze und Erfolgskriterien. Steuere den simulierten Agenten zu einer korrekten README, einem grünen Test und einer eigenen Ergebnisverifikation – ohne den angebotenen Geheimnisexport freizugeben.",
+  "learningObjectives": [
+    "formulate_cli_agent_task",
+    "review_cli_agent_plan",
+    "decide_on_agent_change",
+    "control_cli_agent_task",
+    "protect_cli_agent_context",
+    "verify_cli_agent_result"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "cli_agent.workspace",
+      "cli_agent.prompt",
+      "cli_agent.plan",
+      "cli_agent.activity_log",
+      "cli_agent.proposed_change",
+      "cli_agent.permission",
+      "cli_agent.control",
+      "cli_agent.safety",
+      "cli_agent.verification"
+    ]
+  },
+  "environment": {
+    "productId": "claude-code",
+    "version": "1.x",
+    "runtimeAdapterId": "claude-code-cli-simulator",
+    "seed": {
+      "claudeCode": {
+        "model": "claude-opus-5",
+        "cwd": "~/status-page",
+        "files": {
+          "README.md": "# Status Page\n\nSynthetisches Trainingsprojekt.\n",
+          "docs/status.md": "# Freigegebener Status\n\nSystem bereit.\n",
+          ".env.example": "DEMO_TOKEN=TRAINING-ONLY-SECRET\n"
+        },
+        "proposals": [
+          {
+            "id": "unsafe-status-export",
+            "path": "README.md",
+            "label": "Status samt Beispieltoken veröffentlichen",
+            "summary": "Der vorbereitete Vorschlag würde den synthetischen Geheimnis-Marker aus .env.example in README.md übernehmen.",
+            "planSteps": [
+              "docs/status.md lesen",
+              ".env.example lesen",
+              "Status und Beispieltoken in README.md schreiben"
+            ],
+            "nextContent": "# Status Page\n\nSynthetisches Trainingsprojekt.\n\n## Aktueller Status\n\nSystem bereit.\n\nDEMO_TOKEN=TRAINING-ONLY-SECRET\n",
+            "safety": "sensitive",
+            "safetyReason": "Der Vorschlag möchte einen Geheimnis-Marker aus .env.example in eine veröffentlichbare Datei kopieren."
+          },
+          {
+            "id": "safe-status-update",
+            "path": "README.md",
+            "label": "Freigegebenen Status ohne Geheimnisse ergänzen",
+            "summary": "Verwendet nur docs/status.md und übernimmt keine Inhalte aus .env.example.",
+            "promptMatch": ["status", "sicher", "ohne geheim", "ohne token", "docs/status"],
+            "planSteps": [
+              "docs/status.md als freigegebenen Kontext lesen",
+              ".env.example ausdrücklich ausschließen",
+              "Aktuellen Status in README.md ergänzen",
+              "Änderung zur Prüfung vorlegen"
+            ],
+            "nextContent": "# Status Page\n\nSynthetisches Trainingsprojekt.\n\n## Aktueller Status\n\nSystem bereit.\n",
+            "safety": "safe"
+          }
+        ],
+        "initialProposalId": "unsafe-status-export",
+        "checks": [
+          {
+            "id": "status-safety-test",
+            "command": "npm test",
+            "path": "README.md",
+            "includes": ["## Aktueller Status", "System bereit."],
+            "excludes": ["DEMO_TOKEN", "TRAINING-ONLY-SECRET"],
+            "passingOutput": "2 Tests bestanden – Status vorhanden und kein Geheimnis-Marker veröffentlicht.",
+            "failingOutput": "Test fehlgeschlagen – Status fehlt oder ein Geheimnis-Marker wurde veröffentlicht."
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 180,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "state",
+        "selector": "claude.changes.rejected",
+        "includes": "unsafe-status-export"
+      },
+      {
+        "kind": "state",
+        "selector": "claude.security.unsafeApprovals",
+        "excludes": "unsafe-status-export"
+      },
+      {
+        "kind": "state",
+        "selector": "claude.changes.applied",
+        "includes": "safe-status-update"
+      },
+      {
+        "kind": "state",
+        "selector": "claude.tests.lastPassed",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "claude.verification.passed",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "claude.files.contents",
+        "match": {
+          "README.md": "# Status Page\n\nSynthetisches Trainingsprojekt.\n\n## Aktueller Status\n\nSystem bereit.\n"
+        }
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Den vorbereiteten Vorschlag mit Geheimnis-Marker nicht freigeben.",
+    "Den Agenten auf den freigegebenen Kontext docs/status.md und das Ziel Aktueller Status fokussieren; die konkrete Promptformulierung ist frei.",
+    "Plan und Diff kontrollieren und nur den sicheren Vorschlag übernehmen.",
+    "Den synthetischen Prüflauf npm test ausführen und den grünen Status kontrollieren.",
+    "Den Abschlusszustand eigenständig verifizieren. Bewertet werden Endzustand, Prüfstatus und Sicherheitsentscheidungen – nicht die Reihenfolge oder eine feste Promptfolge."
+  ],
+  "steps": [
+    {
+      "id": "produce-safe-verified-status",
+      "title": "Sicheren und getesteten Status herstellen",
+      "description": "Ziel: README.md enthält den freigegebenen Status aus docs/status.md. Sicherheitsgrenze: Inhalte aus .env.example dürfen nicht in README.md übernommen werden. Erfolg: korrekter Dateiinhalt, grüner Test und eigenständige Verifikation.",
+      "instruction": "Steuere den Agenten selbstständig zum Ziel. Prüfe Entscheidungen, Plan und Diff nach Bedarf, lehne unzulässige Aktionen ab, korrigiere oder fokussiere den Auftrag und verifiziere den fertigen Zustand. Du darfst die verfügbaren Kontrollen in jeder fachlich sinnvollen Reihenfolge verwenden.",
+      "why": "Die Challenge prüft die Fähigkeit, agentische Arbeit anhand von Ergebnis, Test und Sicherheitsgrenzen zu kontrollieren – nicht das Reproduzieren eines vorgegebenen Klick- oder Promptpfads.",
+      "helpLevels": [
+        "Beginne mit der Sicherheitsgrenze: Welche vorbereitete Aktion darf auf keinen Fall wirksam werden?",
+        "Nach einer Ablehnung kannst du den Auftrag auf docs/status.md und einen sicheren Status ohne Geheimnisse fokussieren.",
+        "Für den Abschluss brauchst du den sicheren Diff, npm test mit grünem Ergebnis und anschließend Ergebnis verifizieren."
+      ],
+      "successMessage": "README.md enthält nur den freigegebenen Status; der Test ist grün und der Endzustand wurde ohne unzulässige Freigabe verifiziert."
+    }
+  ]
+}
