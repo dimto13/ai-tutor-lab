@@ -290,7 +290,7 @@ test("Challenge: alternativer Workspace-Pfad erfüllt denselben gespeicherten En
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(
     page.getByText(
-      "Der konkrete Klickweg darf abweichen; bewertet wird der vollständige gespeicherten Endzustand.",
+      "Der konkrete Klickweg darf abweichen; bewertet wird der vollständige gespeicherte Endzustand.",
       { exact: true },
     ),
   ).toBeVisible();
