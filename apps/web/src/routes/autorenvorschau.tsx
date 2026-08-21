@@ -175,16 +175,19 @@ function AuthorPreviewRoute() {
             <h2 id="author-step-title" className="mt-1 text-2xl font-semibold">
               {step.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {step.instruction}
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.instruction}</p>
           </div>
 
-          <section className="rounded-xl border border-border bg-card p-5 shadow-sm" aria-labelledby="target-title">
+          <section
+            className="rounded-xl border border-border bg-card p-5 shadow-sm"
+            aria-labelledby="target-title"
+          >
             <div className="flex items-start gap-3">
               <SearchCheck className="mt-0.5 h-5 w-5 text-accent" aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <h3 id="target-title" className="font-semibold">Highlight-Ziel</h3>
+                <h3 id="target-title" className="font-semibold">
+                  Highlight-Ziel
+                </h3>
                 {targetResolution.status === "resolved" ? (
                   <div className="mt-3 rounded-lg border border-border bg-background p-3">
                     <p className="flex items-center gap-2 text-sm font-medium">
@@ -217,11 +220,16 @@ function AuthorPreviewRoute() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-border bg-card p-5 shadow-sm" aria-labelledby="validator-title">
+          <section
+            className="rounded-xl border border-border bg-card p-5 shadow-sm"
+            aria-labelledby="validator-title"
+          >
             <div className="flex items-start gap-3">
               <Play className="mt-0.5 h-5 w-5 text-accent" aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <h3 id="validator-title" className="font-semibold">Validator simulieren</h3>
+                <h3 id="validator-title" className="font-semibold">
+                  Validator simulieren
+                </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Gib ein Runtime-Event und optional einen JSON-Payload ein. Der produktive
                   Validator wird mit diesem simulierten Event ausgeführt.
