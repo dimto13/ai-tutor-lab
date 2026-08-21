@@ -64,6 +64,13 @@ export type {
 } from "./tenant-document-check.ts";
 export { createTenantDocumentCheckService } from "./tenant-document-check.ts";
 export type {
+  BoundaryLlmClassificationOptions,
+  BoundaryLlmClassificationProposal,
+  BoundaryLlmClassificationRequest,
+  BoundaryLlmClassifier,
+} from "./tenant-llm-classification.ts";
+export { applyBoundaryLlmClassification } from "./tenant-llm-classification.ts";
+export type {
   CatalogEnvironmentReference,
   CatalogEnvironmentValidationIssue,
   CatalogIntegrationReference,
