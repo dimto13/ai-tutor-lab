@@ -1,27 +1,12 @@
 import type { ScenarioScoreService } from "@ai-train-lab/training-engine";
 import { createApplicationScenarioScoreService } from "./applicationScenarioScoreService";
+import {
+  ACCOUNT_SCORE_EVENT_WINDOW,
+  summarizeAccountScoreWindow,
+  type AccountScoreSummary,
+} from "./accountScoreSummaryPolicy";
 
-export const ACCOUNT_SCORE_EVENT_WINDOW = 100;
-
-export type AccountScoreSummary =
-  | {
-      kind: "unavailable";
-      reason: "local-mode";
-    }
-  | {
-      kind: "exact";
-      points: number;
-      eventCount: number;
-    }
-  | {
-      kind: "lower-bound";
-      points: number;
-      eventCount: number;
-    };
-
-function roundPoints(points: number): number {
-  return Math.round(points * 100) / 100;
-}
+export { ACCOUNT_SCORE_EVENT_WINDOW, type AccountScoreSummary } from "./accountScoreSummaryPolicy";
 
 /**
  * Loads the authenticated learner's personal score without pretending that the current bounded
@@ -34,19 +19,5 @@ export async function loadAccountScoreSummary(
   if (!service) return { kind: "unavailable", reason: "local-mode" };
 
   const events = await service.listScoreEvents(ACCOUNT_SCORE_EVENT_WINDOW);
-  const points = roundPoints(events.reduce((total, event) => total + event.points, 0));
-
-  if (events.length >= ACCOUNT_SCORE_EVENT_WINDOW) {
-    return {
-      kind: "lower-bound",
-      points,
-      eventCount: events.length,
-    };
-  }
-
-  return {
-    kind: "exact",
-    points,
-    eventCount: events.length,
-  };
+  return summarizeAccountScoreWindow(events);
 }
