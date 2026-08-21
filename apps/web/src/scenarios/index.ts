@@ -19,7 +19,9 @@ import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-wo
 import sourceControlPlatformExploreRaw from "../../../../content/scenarios/source-control-platform-basics.explore.json";
 import sourceControlPlatformGuidedRaw from "../../../../content/scenarios/source-control-platform-basics.guided.json";
 import sourceControlPlatformChallengeRaw from "../../../../content/scenarios/source-control-platform-basics.challenge.json";
+import claudeCodeBasicsExploreRaw from "../../../../content/scenarios/claude-code-basics.explore.json";
 import claudeCodeBasicsGuidedRaw from "../../../../content/scenarios/claude-code-basics.guided.json";
+import claudeCodeBasicsChallengeRaw from "../../../../content/scenarios/claude-code-basics.challenge.json";
 import dataClassificationExploreRaw from "../../../../content/scenarios/data-classification-ai-usage.explore.json";
 import dataClassificationGuidedRaw from "../../../../content/scenarios/data-classification-ai-usage.guided.json";
 import dataClassificationChallengeRaw from "../../../../content/scenarios/data-classification-ai-usage.challenge.json";
@@ -44,7 +46,9 @@ const [researchWorkflowExploreScenario, researchWorkflowChallengeScenario] =
 const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
 const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
 const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
+const claudeCodeBasicsExploreScenario = parseScenario(claudeCodeBasicsExploreRaw);
 const claudeCodeBasicsGuidedScenario = parseScenario(claudeCodeBasicsGuidedRaw);
+const claudeCodeBasicsChallengeScenario = parseScenario(claudeCodeBasicsChallengeRaw);
 const dataClassificationExploreScenario = parseScenario(dataClassificationExploreRaw);
 const dataClassificationGuidedScenario = parseScenario(dataClassificationGuidedRaw);
 const dataClassificationChallengeScenario = parseScenario(dataClassificationChallengeRaw);
@@ -70,7 +74,9 @@ const scenarios: Record<string, Scenario> = {
   [sourceControlPlatformExploreScenario.id]: sourceControlPlatformExploreScenario,
   [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
   [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,
+  [claudeCodeBasicsExploreScenario.id]: claudeCodeBasicsExploreScenario,
   [claudeCodeBasicsGuidedScenario.id]: claudeCodeBasicsGuidedScenario,
+  [claudeCodeBasicsChallengeScenario.id]: claudeCodeBasicsChallengeScenario,
   [dataClassificationExploreScenario.id]: dataClassificationExploreScenario,
   [dataClassificationGuidedScenario.id]: dataClassificationGuidedScenario,
   [dataClassificationChallengeScenario.id]: dataClassificationChallengeScenario,
