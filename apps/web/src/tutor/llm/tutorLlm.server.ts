@@ -1,4 +1,4 @@
-import { getCookies, getRequest, setCookie } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 import { getScenario } from "@/scenarios";
 import type { TrainingMode } from "@ai-train-lab/training-engine";
 import { createLlmProvider } from "./index";
@@ -10,8 +10,6 @@ import {
   type TutorSessionBudgetPolicy,
 } from "./tutorGuardrails";
 
-const SESSION_COOKIE = "ai_tutor_llm_session";
-const SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 8;
 const budgetStore = new InMemoryTutorSessionBudgetStore();
 const jwksCache = new Map<string, Promise<JsonWebKey[]>>();
 const authConfigCache = new Map<string, Promise<CognitoPublicConfig>>();
@@ -88,16 +86,35 @@ function tenantFromGroups(groups: unknown, userId: string): string {
   }
   const tenantGroups = groups.filter((group) => group.startsWith("tenant:"));
   if (tenantGroups.length === 0) return `personal:${userId}`;
-  if (tenantGroups.length !== 1) throw new Error("Cognito identity has ambiguous tenant membership");
+  if (tenantGroups.length !== 1)
+    throw new Error("Cognito identity has ambiguous tenant membership");
   const tenantId = tenantGroups[0]?.slice("tenant:".length).trim();
   if (!tenantId) throw new Error("Cognito tenant membership is empty");
   return tenantId;
 }
 
-async function loadCognitoPublicConfig(origin: string): Promise<CognitoPublicConfig> {
+function cognitoConfigFromEnvironment(env: NodeJS.ProcessEnv): CognitoPublicConfig | null {
+  const region = env.COGNITO_REGION ?? env.AWS_REGION;
+  const userPoolId = env.COGNITO_USER_POOL_ID;
+  const userPoolClientId = env.COGNITO_USER_POOL_CLIENT_ID;
+  const configured = [region, userPoolId, userPoolClientId].filter(Boolean).length;
+  if (configured === 0) return null;
+  if (!region || !userPoolId || !userPoolClientId) {
+    throw new Error("Server Cognito environment configuration is incomplete");
+  }
+  return { region, userPoolId, userPoolClientId };
+}
+
+async function loadCognitoPublicConfig(
+  origin: string,
+  env: NodeJS.ProcessEnv,
+): Promise<CognitoPublicConfig> {
+  const environmentConfig = cognitoConfigFromEnvironment(env);
+  if (environmentConfig) return environmentConfig;
+
   let cached = authConfigCache.get(origin);
   if (!cached) {
-    cached = (async () => {
+    const pending = (async () => {
       const response = await fetch(new URL("/amplify_outputs.json", origin));
       if (!response.ok) throw new Error("Live Cognito configuration is unavailable");
       const source = (await response.json()) as Record<string, unknown>;
@@ -117,28 +134,58 @@ async function loadCognitoPublicConfig(origin: string): Promise<CognitoPublicCon
       }
       return { region, userPoolId, userPoolClientId };
     })();
+    cached = pending.catch((error) => {
+      if (authConfigCache.get(origin) === pending) authConfigCache.delete(origin);
+      throw error;
+    });
     authConfigCache.set(origin, cached);
   }
   return cached;
 }
 
-async function loadJwks(config: CognitoPublicConfig): Promise<JsonWebKey[]> {
-  const issuer = `https://cognito-idp.${config.region}.amazonaws.com/${config.userPoolId}`;
+function cognitoIssuer(config: CognitoPublicConfig): string {
+  return `https://cognito-idp.${config.region}.amazonaws.com/${config.userPoolId}`;
+}
+
+async function loadJwks(
+  config: CognitoPublicConfig,
+  forceRefresh = false,
+): Promise<JsonWebKey[]> {
+  const issuer = cognitoIssuer(config);
+  if (forceRefresh) jwksCache.delete(issuer);
   let cached = jwksCache.get(issuer);
   if (!cached) {
-    cached = (async () => {
-      const response = await fetch(`${issuer}/.well-known/jwks.json`);
+    const pending = (async () => {
+      const response = await fetch(`${issuer}/.well-known/jwks.json`, { cache: "no-store" });
       if (!response.ok) throw new Error("Cognito signing keys are unavailable");
       const payload = (await response.json()) as { keys?: unknown };
       if (!Array.isArray(payload.keys)) throw new Error("Cognito signing keys are invalid");
       return payload.keys as JsonWebKey[];
     })();
+    cached = pending.catch((error) => {
+      if (jwksCache.get(issuer) === pending) jwksCache.delete(issuer);
+      throw error;
+    });
     jwksCache.set(issuer, cached);
   }
   return cached;
 }
 
-async function verifyCognitoAccessToken(token: string): Promise<VerifiedTutorIdentity> {
+async function signingKeyFor(config: CognitoPublicConfig, kid: string): Promise<JsonWebKey> {
+  let keys = await loadJwks(config);
+  let jwk = keys.find((candidate) => candidate.kid === kid);
+  if (!jwk) {
+    keys = await loadJwks(config, true);
+    jwk = keys.find((candidate) => candidate.kid === kid);
+  }
+  if (!jwk) throw new Error("Cognito signing key was not found");
+  return jwk;
+}
+
+async function verifyCognitoAccessToken(
+  token: string,
+  env: NodeJS.ProcessEnv,
+): Promise<VerifiedTutorIdentity> {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Cognito access token is malformed");
   const [encodedHeader, encodedPayload, encodedSignature] = parts;
@@ -153,11 +200,9 @@ async function verifyCognitoAccessToken(token: string): Promise<VerifiedTutorIde
 
   const request = getRequest();
   const origin = new URL(request.url).origin;
-  const config = await loadCognitoPublicConfig(origin);
-  const issuer = `https://cognito-idp.${config.region}.amazonaws.com/${config.userPoolId}`;
-  const keys = await loadJwks(config);
-  const jwk = keys.find((candidate) => candidate.kid === header.kid);
-  if (!jwk) throw new Error("Cognito signing key was not found");
+  const config = await loadCognitoPublicConfig(origin, env);
+  const issuer = cognitoIssuer(config);
+  const jwk = await signingKeyFor(config, header.kid);
   const key = await crypto.subtle.importKey(
     "jwk",
     jwk,
@@ -198,34 +243,16 @@ function optedInTenants(env: NodeJS.ProcessEnv): Set<string> {
   );
 }
 
-async function mayIncludeUserCode(
-  accessToken: string | null,
+function mayIncludeUserCode(
+  identity: VerifiedTutorIdentity,
   userCode: string | undefined,
   env: NodeJS.ProcessEnv,
-): Promise<boolean> {
-  if (!userCode || !accessToken) return false;
-  try {
-    const identity = await verifyCognitoAccessToken(accessToken);
-    return optedInTenants(env).has(identity.tenantId);
-  } catch {
-    return false;
-  }
+): boolean {
+  return Boolean(userCode) && optedInTenants(env).has(identity.tenantId);
 }
 
-function sessionKey(): string {
-  const request = getRequest();
-  const cookies = getCookies();
-  const existing = cookies[SESSION_COOKIE];
-  if (existing && /^[a-zA-Z0-9_-]{16,128}$/.test(existing)) return existing;
-  const created = crypto.randomUUID();
-  setCookie(SESSION_COOKIE, created, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: new URL(request.url).protocol === "https:",
-    path: "/",
-    maxAge: SESSION_COOKIE_MAX_AGE_SECONDS,
-  });
-  return created;
+function budgetSessionKey(identity: VerifiedTutorIdentity): string {
+  return `identity:${identity.tenantId}:${identity.userId}`;
 }
 
 function tutorContextFor(
@@ -235,7 +262,9 @@ function tutorContextFor(
 ): TutorLlmContext {
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error("Unknown tutor scenario");
-  const step = currentStepId ? (scenario.steps.find((candidate) => candidate.id === currentStepId) ?? null) : null;
+  const step = currentStepId
+    ? (scenario.steps.find((candidate) => candidate.id === currentStepId) ?? null)
+    : null;
   if (currentStepId && !step) throw new Error("Unknown tutor step");
   const allowedUiTargetRefs = new Set<string>();
   if (step?.highlightTarget) allowedUiTargetRefs.add(step.highlightTarget);
@@ -262,7 +291,15 @@ export async function answerTutorQuestionOnServer(
   input: TutorLlmServerInput,
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<TutorLlmAnswer | { status: "unavailable" }> {
-  if (env.LLM_ENABLED !== "true") return { status: "unavailable" };
+  if (env.LLM_ENABLED !== "true" || !input.accessToken) return { status: "unavailable" };
+
+  let identity: VerifiedTutorIdentity;
+  try {
+    identity = await verifyCognitoAccessToken(input.accessToken, env);
+  } catch {
+    return { status: "unavailable" };
+  }
+
   const provider = createLlmProvider(env);
   const service = new TutorLlmService({
     provider,
@@ -270,12 +307,12 @@ export async function answerTutorQuestionOnServer(
     policy: budgetPolicy(env),
   });
   return service.answer({
-    sessionKey: sessionKey(),
+    sessionKey: budgetSessionKey(identity),
     context: tutorContextFor(input.scenarioId, input.mode, input.currentStepId),
     question: {
       question: input.question,
       ...(input.userCode ? { userCode: input.userCode } : {}),
     },
-    includeUserCode: await mayIncludeUserCode(input.accessToken, input.userCode, env),
+    includeUserCode: mayIncludeUserCode(identity, input.userCode, env),
   });
 }
