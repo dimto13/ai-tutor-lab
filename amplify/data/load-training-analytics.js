@@ -1,34 +1,20 @@
 import { util } from "@aws-appsync/utils";
 
 const ABANDONMENT_AFTER_SECONDS = 15 * 60;
-const MIN_REPORTING_COHORT = 3;
+const MIN_REPORTING_COHORT = 5;
 
-function callerTenant(ctx) {
-  const identity = ctx.identity;
-  if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0) {
-    util.unauthorized();
+function reportingTenant(ctx) {
+  const subject = ctx.stash.scoreVisibilitySubject;
+  if (!subject || typeof subject.tenantId !== "string") {
+    util.error("Reporting authority context is missing", "TrainingAnalyticsContextError");
   }
-
-  const groups = identity.groups || [];
-  if (!groups.includes("role:trainer") && !groups.includes("role:tenant_admin")) {
-    util.unauthorized();
+  if (
+    typeof ctx.stash.analyticsTenantId === "string" &&
+    ctx.stash.analyticsTenantId !== subject.tenantId
+  ) {
+    util.error("Reporting authority contexts disagree", "TrainingAnalyticsScopeError");
   }
-
-  let tenantId = null;
-  for (const group of groups) {
-    if (typeof group === "string" && group.startsWith("tenant:")) {
-      const candidate = group.slice("tenant:".length);
-      if (candidate.length === 0) util.error("Invalid tenant membership", "TenantMembershipError");
-      if (tenantId !== null && tenantId !== candidate) {
-        util.error(
-          "Multiple tenant memberships require explicit tenant selection",
-          "TenantMembershipError",
-        );
-      }
-      tenantId = candidate;
-    }
-  }
-  return tenantId || `personal:${identity.sub}`;
+  return subject.tenantId;
 }
 
 function tenantScenarioKey(tenantId, scenarioId) {
@@ -40,6 +26,12 @@ function tenantScenarioKey(tenantId, scenarioId) {
 function requireScenarioId(ctx) {
   if (typeof ctx.args.scenarioId !== "string" || ctx.args.scenarioId.length === 0) {
     util.error("scenarioId is required", "TrainingAnalyticsError");
+  }
+  if (
+    typeof ctx.stash.analyticsScenarioId === "string" &&
+    ctx.stash.analyticsScenarioId !== ctx.args.scenarioId
+  ) {
+    util.error("Reporting scenario contexts disagree", "TrainingAnalyticsScopeError");
   }
   return ctx.args.scenarioId;
 }
@@ -60,7 +52,7 @@ function referenceEpochSeconds(to) {
 }
 
 export function request(ctx) {
-  const tenantId = callerTenant(ctx);
+  const tenantId = reportingTenant(ctx);
   const scenarioId = requireScenarioId(ctx);
   const from = optionalEpochMillis(ctx.args.from, "from");
   const to = optionalEpochMillis(ctx.args.to, "to");
@@ -124,6 +116,22 @@ function failurePattern(payload) {
   return outcome;
 }
 
+function suppressedResult(scenarioId) {
+  return {
+    scenarioId,
+    cohortSize: null,
+    sessionsStarted: 0,
+    sessionsCompleted: 0,
+    completionRate: null,
+    abandonmentCount: 0,
+    averageHintUsage: null,
+    averageDurationMs: null,
+    cohortSuppressed: true,
+    truncated: false,
+    steps: [],
+  };
+}
+
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   if (ctx.result && ctx.result.nextToken) {
@@ -136,11 +144,20 @@ export function response(ctx) {
   const tenantId = ctx.stash.analyticsTenantId;
   const scenarioId = ctx.stash.analyticsScenarioId;
   const referenceTime = ctx.stash.analyticsReferenceEpochSeconds;
+  const cohortSize = ctx.stash.analyticsCohortSize;
+  const cohortSuppressed =
+    ctx.stash.analyticsCohortSuppressed !== false ||
+    typeof cohortSize !== "number" ||
+    cohortSize < MIN_REPORTING_COHORT;
+
+  if (cohortSuppressed) return suppressedResult(scenarioId);
+
   const items = ctx.result && ctx.result.items ? ctx.result.items : [];
   const sessions = {};
   const steps = {};
   let scenarioDurationTotalMs = 0;
   let scenarioDurationCount = 0;
+  let totalHintUsageCount = 0;
 
   for (const item of items) {
     if (item.tenantId !== tenantId || item.scenarioId !== scenarioId) {
@@ -181,6 +198,7 @@ export function response(ctx) {
       }
       if (item.eventType === "analytics.hint.used" && stepId) {
         stepMetric(steps, stepId).hintUsageCount += 1;
+        totalHintUsageCount += 1;
       }
       if (item.eventType === "analytics.attempt.recorded" && stepId && payload.outcome !== "pass") {
         const metric = stepMetric(steps, stepId);
@@ -217,37 +235,35 @@ export function response(ctx) {
     }
   }
 
-  const cohortSuppressed = sessionsStarted < MIN_REPORTING_COHORT;
   const resultSteps = [];
-  if (!cohortSuppressed) {
-    for (const stepId of Object.keys(steps)) {
-      const metric = steps[stepId];
-      const patterns = [];
-      for (const pattern of Object.keys(metric.failurePatterns)) {
-        patterns.push({ pattern, count: metric.failurePatterns[pattern] });
-      }
-      resultSteps.push({
-        stepId,
-        abandonmentCount: metric.abandonmentCount,
-        hintUsageCount: metric.hintUsageCount,
-        averageDurationMs:
-          metric.durationCount === 0 ? null : metric.durationTotalMs / metric.durationCount,
-        failedAttemptCount: metric.failedAttemptCount,
-        failurePatterns: patterns,
-      });
+  for (const stepId of Object.keys(steps)) {
+    const metric = steps[stepId];
+    const patterns = [];
+    for (const pattern of Object.keys(metric.failurePatterns)) {
+      patterns.push({ pattern, count: metric.failurePatterns[pattern] });
     }
+    resultSteps.push({
+      stepId,
+      abandonmentCount: metric.abandonmentCount,
+      hintUsageCount: metric.hintUsageCount,
+      averageDurationMs:
+        metric.durationCount === 0 ? null : metric.durationTotalMs / metric.durationCount,
+      failedAttemptCount: metric.failedAttemptCount,
+      failurePatterns: patterns,
+    });
   }
 
   return {
     scenarioId,
+    cohortSize,
     sessionsStarted,
-    sessionsCompleted: cohortSuppressed ? 0 : sessionsCompleted,
-    abandonmentCount: cohortSuppressed ? 0 : abandonmentCount,
+    sessionsCompleted,
+    completionRate: sessionsStarted === 0 ? null : sessionsCompleted / sessionsStarted,
+    abandonmentCount,
+    averageHintUsage: sessionsStarted === 0 ? null : totalHintUsageCount / sessionsStarted,
     averageDurationMs:
-      cohortSuppressed || scenarioDurationCount === 0
-        ? null
-        : scenarioDurationTotalMs / scenarioDurationCount,
-    cohortSuppressed,
+      scenarioDurationCount === 0 ? null : scenarioDurationTotalMs / scenarioDurationCount,
+    cohortSuppressed: false,
     truncated: false,
     steps: resultSteps,
   };
