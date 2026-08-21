@@ -24,10 +24,7 @@ import { AI_LEVEL_OPTIONS, aiLevelLabel } from "@/profile/aiLevelOptions";
 import { contentRecommendationForAiLevel } from "@/profile/aiLevelRecommendation";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
-import {
-  loadAccountScoreSummary,
-  type AccountScoreSummary,
-} from "@/scoring/accountScoreSummary";
+import { loadAccountScoreSummary, type AccountScoreSummary } from "@/scoring/accountScoreSummary";
 
 function formatPoints(points: number): string {
   return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(points);
@@ -307,7 +304,10 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                   <UserRound className="h-4 w-4 text-accent" aria-hidden="true" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 id="account-menu-title" className="truncate text-sm font-semibold text-foreground">
+                  <h2
+                    id="account-menu-title"
+                    className="truncate text-sm font-semibold text-foreground"
+                  >
                     {identityDisplayName}
                   </h2>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground" title={tenantLabel}>
@@ -325,7 +325,10 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                     <h3 id="account-score-title" className="text-xs font-semibold text-foreground">
                       Mein Punktestand
                     </h3>
-                    <span data-testid="account-score-value" className="text-sm font-semibold text-foreground">
+                    <span
+                      data-testid="account-score-value"
+                      className="text-sm font-semibold text-foreground"
+                    >
                       {scoreError ? "Nicht verfügbar" : scoreValue(scoreSummary)}
                     </span>
                   </div>
@@ -357,12 +360,13 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             <div className="p-2">
               <button
                 type="button"
-                onClick={() =>
-                  openSettings({ returnFocusTo: menuTriggerRef.current })
-                }
+                onClick={() => openSettings({ returnFocusTo: menuTriggerRef.current })}
                 className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Settings className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <Settings
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span className="min-w-0">
                   <span className="block text-xs font-medium text-foreground">Einstellungen</span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
@@ -374,7 +378,10 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 href="/datentransparenz"
                 className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Database className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <Database
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span className="min-w-0">
                   <span className="block text-xs font-medium text-foreground">Meine Daten</span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
@@ -386,7 +393,10 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 href="/datentransparenz#konto-loeschen"
                 className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Trash2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <Trash2
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span className="min-w-0">
                   <span className="block text-xs font-medium text-foreground">Konto löschen</span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
@@ -408,6 +418,17 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             </div>
           </PopoverContent>
         </Popover>
+
+        <button
+          type="button"
+          onClick={() => void auth.signOut().catch(() => undefined)}
+          aria-label="Abmelden"
+          title="Abmelden"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Abmelden</span>
+        </button>
       </div>
 
       {settingsOpen ? (
@@ -426,7 +447,10 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 <UserRound className="h-4 w-4 text-accent" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 id="account-settings-title" className="text-base font-semibold text-foreground">
+                <h2
+                  id="account-settings-title"
+                  className="text-base font-semibold text-foreground"
+                >
                   Einstellungen
                 </h2>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
