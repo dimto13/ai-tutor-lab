@@ -100,7 +100,7 @@
       "helpLevels": [
         "Beginne beim Sitzungskopf und beim Arbeitsverzeichnis und arbeite dich anschließend durch Plan, Verlauf und Diff.",
         "Untersuche auch den Bereich Freigeben/Ablehnen, die Stop-Aktion und die Ergebnisansicht rechts.",
-        "Alle zehn markierten Bereiche dürfen in beliebiger Reihenfolge untersucht werden; es wird keine echte Shell oder externe Agenten-API verwendet."
+        "Klicke nacheinander auf die markierten Bereiche Sitzungskopf, Arbeitsverzeichnis, Eingabezeile, Plan, Plan prüfen, Aktivitätsprotokoll, Diff, Freigeben/Ablehnen, Aufgabe stoppen und Tests und Ergebnis; die Reihenfolge ist frei."
       ],
       "successMessage": "Du hast die zentralen Kontrollflächen eines CLI-Agenten und ihre Sicherheitsfunktion untersucht."
     }
