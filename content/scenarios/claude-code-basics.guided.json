@@ -174,7 +174,7 @@
       "helpLevels": [
         "Achte darauf, welche Dateien der Plan als Quellen verwenden will.",
         "config.example ist für das fachliche Ziel nicht erforderlich.",
-        "Lies den Plan und wähle Plan prüfen."
+        "Lies den gesamten Arbeitsplan, prüfe den unnötigen Bezug auf config.example und wähle anschließend Plan prüfen."
       ],
       "validation": {
         "kind": "state",
@@ -227,7 +227,7 @@
       "helpLevels": [
         "Vergleiche Freigeben und Ablehnen mit dem erkannten Risiko.",
         "Der DEMO_TOKEN-Marker gehört nicht in README.md.",
-        "Wähle Ablehnen."
+        "Prüfe den DEMO_TOKEN-Marker im geöffneten Diff und wähle danach ausdrücklich Ablehnen."
       ],
       "validation": {
         "kind": "event",
@@ -271,7 +271,7 @@
       "helpLevels": [
         "Suche im Plan nach dem ausdrücklichen Ausschluss von config.example.",
         "Prüfe, dass nur README.md und docs/setup.md als Kontext vorgesehen sind.",
-        "Wähle anschließend Plan prüfen."
+        "Prüfe im korrigierten Plan, dass config.example ausdrücklich ausgeschlossen ist, und wähle anschließend Plan prüfen."
       ],
       "validation": {
         "kind": "state",
@@ -291,7 +291,7 @@
       "helpLevels": [
         "Öffne den Vorschlag.",
         "Prüfe README.md auf Erste Schritte und auf das Fehlen des Tokens.",
-        "Der neue Diff darf weder DEMO_TOKEN noch TRAINING-ONLY-SECRET enthalten."
+        "Öffne Vorschlag ansehen und prüfe im Diff, dass weder DEMO_TOKEN noch TRAINING-ONLY-SECRET enthalten ist."
       ],
       "validation": {
         "kind": "all",
@@ -324,7 +324,7 @@
       "helpLevels": [
         "Der korrigierte Vorschlag ist als sicher markiert.",
         "README.md darf jetzt geändert werden.",
-        "Wähle Freigeben."
+        "Kontrolliere nochmals Zieldatei README.md und den sicheren Diff und wähle danach Freigeben."
       ],
       "validation": {
         "kind": "state",
@@ -344,7 +344,7 @@
       "helpLevels": [
         "Der Test wird wie ein gewöhnliches Kommando eingegeben.",
         "Tippe npm test in die Eingabezeile.",
-        "Der Simulator führt keinen echten Prozess aus; er bewertet ausschließlich die synthetische README-Fixture."
+        "Tippe npm test in die Eingabezeile, bestätige mit Enter und kontrolliere anschließend den grünen Prüflauf rechts."
       ],
       "validation": {
         "kind": "state",
@@ -364,7 +364,7 @@
       "helpLevels": [
         "Die Ergebnisansicht fasst den letzten Prüflauf zusammen.",
         "Verifiziere erst nach dem grünen Test.",
-        "Wähle rechts Ergebnis verifizieren."
+        "Kontrolliere zuerst den grünen Teststatus und wähle danach rechts Ergebnis verifizieren."
       ],
       "validation": {
         "kind": "state",
