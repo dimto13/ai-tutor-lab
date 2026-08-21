@@ -61,6 +61,12 @@ export async function applyBoundaryLlmClassification(
     return deterministic;
   }
 
+  // Model output is untrusted. An unknown/hallucinated level must never escape
+  // the optional stage or break the deterministic #68 fallback path.
+  if (!scheme.levels.some((level) => level.id === proposal.levelId)) {
+    return deterministic;
+  }
+
   const proposedRank = getClassificationLevelRank(scheme, proposal.levelId);
   const deterministicRank = getClassificationLevelRank(scheme, deterministic.levelId);
   if (proposedRank < deterministicRank) {
