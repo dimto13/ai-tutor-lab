@@ -1,19 +1,43 @@
 import { expect, test } from "../fixtures/browser-error-guard";
 
-test("authenticated shell persists account settings and protects the email display", async ({
+test("authenticated shell exposes a keyboard-safe account menu and persists settings", async ({
   page,
 }) => {
   await page.goto("/");
 
   await expect(page.getByText("Lokaler Lernender", { exact: true })).toBeVisible();
   await expect(page.getByText("Maria Schmidt", { exact: false })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Einstellungen öffnen" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Abmelden" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Einstellungen öffnen" }).click();
+  const menuTrigger = page.getByTestId("account-menu-trigger");
+  await expect(menuTrigger).toBeVisible();
+  await expect(menuTrigger).toHaveAccessibleName("Nutzermenü für Lokaler Lernender öffnen");
+
+  await menuTrigger.focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByTestId("account-menu-popover");
+  await expect(menu).toBeVisible();
+  await expect(menu.getByText("Mandant: local-tenant", { exact: true })).toBeVisible();
+  await expect(menu.getByTestId("account-score-value")).toHaveText("Nicht verfügbar");
+  await expect(menu.getByTestId("account-score-visibility")).toHaveText(
+    "Lokaler Modus – keine Tenant-Auswertung",
+  );
+  await expect(menu.getByRole("button", { name: "Einstellungen" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Meine Daten" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Konto löschen" })).toBeVisible();
+  await expect(menu.getByRole("button", { name: "Abmelden" })).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+  await expect(menuTrigger).toBeFocused();
+
+  await menuTrigger.click();
+  await menu.getByRole("button", { name: "Einstellungen" }).click();
   const dialog = page.getByRole("dialog", { name: "Einstellungen" });
   const emailDisplay = dialog.getByTestId("account-email");
   await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Einstellungen schließen" })).toBeFocused();
+  await expect(dialog.getByText("Deutsch", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("Mandant: local-tenant", { exact: true })).toBeVisible();
   await expect(emailDisplay).toContainText("@");
   await expect(emailDisplay).toContainText("*");
   await expect(emailDisplay).not.toHaveText("learner@local.test");
@@ -41,18 +65,25 @@ test("authenticated shell persists account settings and protects the email displ
   await dialog.getByRole("button", { name: "Speichern" }).click();
 
   await expect(dialog).toBeHidden();
-  await expect(page.getByText("Tobias Test", { exact: true })).toBeVisible();
+  await expect(menuTrigger).toBeFocused();
+  await expect(menuTrigger).toHaveAccessibleName("Nutzermenü für Lokaler Lernender öffnen");
 
   await page.reload();
-  await expect(page.getByText("Tobias Test", { exact: true })).toBeVisible();
+  await expect(menuTrigger).toHaveAccessibleName("Nutzermenü für Lokaler Lernender öffnen");
 
-  await page.getByRole("button", { name: "Einstellungen öffnen" }).click();
+  await menuTrigger.click();
+  await menu.getByRole("button", { name: "Einstellungen" }).click();
   await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("textbox", { name: "Name" })).toHaveValue("Tobias Test");
   await expect(dialog.getByRole("radio", { name: /Erfahren/ })).toBeChecked();
   await expect(emailDisplay).toContainText("*");
   await expect(emailDisplay).not.toHaveText("learner@local.test");
 
-  await dialog.getByRole("button", { name: "Einstellungen schließen" }).click();
-  await page.getByRole("button", { name: "Abmelden" }).click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(menuTrigger).toBeFocused();
+
+  await menuTrigger.click();
+  await menu.getByRole("button", { name: "Abmelden" }).click();
   await expect(page).toHaveURL(/\/willkommen$/);
 });

@@ -29,6 +29,7 @@ interface UserPreferencesContextValue {
   error: string | null;
   selfAssessedAiLevel: SelfAssessedAiLevel | null;
   saveSelfAssessedAiLevel(level: SelfAssessedAiLevel): Promise<void>;
+  saveWeeklyGoalMinutes(goalMinutes: number): Promise<void>;
 }
 
 const UserPreferencesContext = createContext<UserPreferencesContextValue | null>(null);
@@ -38,16 +39,13 @@ function subjectForSession(userId: string, tenantId: string | null): UserPrefere
   return { userId, tenantId };
 }
 
-function valueWithAiLevel(
-  current: UserPreferencesRecord | null,
-  selfAssessedAiLevel: SelfAssessedAiLevel,
-): UserPreferencesValue {
+function currentValue(current: UserPreferencesRecord | null): UserPreferencesValue {
   return {
     language: current?.language ?? null,
     preferredTrainingMode: current?.preferredTrainingMode ?? null,
     weeklyGoalMinutes: current?.weeklyGoalMinutes ?? null,
     accessibility: current?.accessibility ?? null,
-    selfAssessedAiLevel,
+    selfAssessedAiLevel: current?.selfAssessedAiLevel ?? null,
   };
 }
 
@@ -94,8 +92,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     void load();
   }, [load]);
 
-  const saveSelfAssessedAiLevel = useCallback(
-    async (level: SelfAssessedAiLevel) => {
+  const savePreferences = useCallback(
+    async (value: UserPreferencesValue) => {
       if (!subject) throw new Error("Kein angemeldeter Nutzer vorhanden.");
 
       const expectedRevision = expectedRevisionForWrite(
@@ -106,11 +104,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
       setError(null);
       try {
-        const saved = await repository.save(
-          subject,
-          valueWithAiLevel(preferences, level),
-          expectedRevision,
-        );
+        const saved = await repository.save(subject, value, expectedRevision);
         setPreferences(saved);
         setStatus("ready");
       } catch (cause) {
@@ -131,6 +125,23 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     [load, preferences, status, subject],
   );
 
+  const saveSelfAssessedAiLevel = useCallback(
+    async (level: SelfAssessedAiLevel) => {
+      await savePreferences({ ...currentValue(preferences), selfAssessedAiLevel: level });
+    },
+    [preferences, savePreferences],
+  );
+
+  const saveWeeklyGoalMinutes = useCallback(
+    async (goalMinutes: number) => {
+      if (!Number.isInteger(goalMinutes) || goalMinutes < 15 || goalMinutes > 600) {
+        throw new Error("Das Wochenziel muss zwischen 15 und 600 Minuten liegen.");
+      }
+      await savePreferences({ ...currentValue(preferences), weeklyGoalMinutes: goalMinutes });
+    },
+    [preferences, savePreferences],
+  );
+
   const selfAssessedAiLevel = preferences?.selfAssessedAiLevel ?? null;
 
   const value = useMemo<UserPreferencesContextValue>(
@@ -140,8 +151,16 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       error,
       selfAssessedAiLevel,
       saveSelfAssessedAiLevel,
+      saveWeeklyGoalMinutes,
     }),
-    [preferences, status, error, selfAssessedAiLevel, saveSelfAssessedAiLevel],
+    [
+      preferences,
+      status,
+      error,
+      selfAssessedAiLevel,
+      saveSelfAssessedAiLevel,
+      saveWeeklyGoalMinutes,
+    ],
   );
 
   return (

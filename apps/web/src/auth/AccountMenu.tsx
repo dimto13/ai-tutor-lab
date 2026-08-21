@@ -1,17 +1,81 @@
-import { Eye, EyeOff, LogOut, Settings, UserRound, X } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  ChevronDown,
+  Database,
+  Eye,
+  EyeOff,
+  Gauge,
+  LogOut,
+  Settings,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "./AuthContext";
 import { maskEmailAddress } from "./emailPrivacy";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  loadMyDataTransparencyContext,
+  type DataTransparencyContext,
+} from "@/data-transparency/userDataTransparency";
 import { AI_LEVEL_OPTIONS, aiLevelLabel } from "@/profile/aiLevelOptions";
 import { contentRecommendationForAiLevel } from "@/profile/aiLevelRecommendation";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
+import { loadAccountScoreSummary, type AccountScoreSummary } from "@/scoring/accountScoreSummary";
+
+function formatPoints(points: number): string {
+  return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(points);
+}
+
+function scoreVisibilityLabel(context: DataTransparencyContext): string {
+  if (context.storageMode === "browser-local") {
+    return "Lokaler Modus – keine Tenant-Auswertung";
+  }
+  if (context.scoreVisibility === "private") {
+    return "Privat – nur du siehst deine individuellen Punkte";
+  }
+  if (context.scoreVisibility === "aggregate") {
+    return "Team-Auswertung nur aggregiert ab 5 Personen";
+  }
+  return context.namedApprovalConfirmed
+    ? "Namentliche Tenant-Auswertung ist dokumentiert freigegeben"
+    : "Namentliche Tenant-Auswertung ist gesperrt";
+}
+
+function scoreValue(summary: AccountScoreSummary | null): string {
+  if (!summary) return "…";
+  if (summary.kind === "unavailable") return "Nicht verfügbar";
+  if (summary.kind === "lower-bound") return `≥ ${formatPoints(summary.points)} SP`;
+  return `${formatPoints(summary.points)} SP`;
+}
+
+function scoreDetail(summary: AccountScoreSummary | null): string {
+  if (!summary) return "Dein persönlicher Punktestand wird geladen.";
+  if (summary.kind === "unavailable") {
+    return "Im lokalen Entwicklungsmodus gibt es keinen serverautoritativen persönlichen Punktestand.";
+  }
+  if (summary.kind === "lower-bound") {
+    return `Mindestens ${formatPoints(summary.points)} SP aus den neuesten ${summary.eventCount} Score-Ereignissen. Eine exakte Gesamtsumme wird nicht behauptet, solange der Ledger-Read begrenzt ist.`;
+  }
+  return `${summary.eventCount} serverbestätigte Score-Ereignisse sind in dieser Summe enthalten.`;
+}
+
+function languageLabel(language: string | null | undefined): string {
+  const normalized = language?.trim().toLowerCase();
+  if (!normalized || normalized === "de" || normalized.startsWith("de-")) return "Deutsch";
+  return language?.trim() || "Deutsch";
+}
 
 export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const auth = useAuth();
   const profile = useUserProfile();
   const preferences = useUserPreferences();
+  const identity = auth.session?.identity ?? null;
+  const identityUserId = identity?.userId ?? null;
+  const identityTenantId = identity?.tenantId ?? null;
   const effectiveAiLevel =
     preferences.status === "ready" ? (preferences.selfAssessedAiLevel ?? "beginner") : null;
   const effectiveAiLevelLabel = effectiveAiLevel ? aiLevelLabel(effectiveAiLevel) : null;
@@ -22,6 +86,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     : preferences.status === "error"
       ? "Eigene KI-Erfahrung (Selbsteinschätzung): derzeit nicht verfügbar"
       : "Eigene KI-Erfahrung (Selbsteinschätzung) wird geladen";
+  const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftName, setDraftName] = useState(profile.displayName);
   const [draftAiLevel, setDraftAiLevel] = useState<SelfAssessedAiLevel | null>(
@@ -30,9 +95,23 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   const [emailVisible, setEmailVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [scoreSummary, setScoreSummary] = useState<AccountScoreSummary | null>(null);
+  const [scoreContext, setScoreContext] = useState<DataTransparencyContext | null>(null);
+  const [scoreError, setScoreError] = useState(false);
   const aiLevelInputRef = useRef<HTMLInputElement | null>(null);
   const focusAiLevelOnOpenRef = useRef(false);
   const settingsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
+  const settingsCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const closeSettings = useCallback(() => {
+    const returnFocusTo = settingsReturnFocusRef.current;
+    setEmailVisible(false);
+    setSettingsOpen(false);
+    focusAiLevelOnOpenRef.current = false;
+    settingsReturnFocusRef.current = null;
+    window.requestAnimationFrame(() => returnFocusTo?.focus());
+  }, []);
 
   useEffect(() => {
     if (!settingsOpen) {
@@ -43,19 +122,75 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
   }, [preferences.selfAssessedAiLevel, profile.displayName, settingsOpen]);
 
   useEffect(() => {
-    if (!settingsOpen || !focusAiLevelOnOpenRef.current) return;
+    if (!settingsOpen) return;
 
     const animationFrame = window.requestAnimationFrame(() => {
-      aiLevelInputRef.current?.focus();
-      focusAiLevelOnOpenRef.current = false;
+      if (focusAiLevelOnOpenRef.current) {
+        aiLevelInputRef.current?.focus();
+        focusAiLevelOnOpenRef.current = false;
+        return;
+      }
+      settingsCloseButtonRef.current?.focus();
     });
 
     return () => window.cancelAnimationFrame(animationFrame);
   }, [settingsOpen]);
 
-  const email = auth.session?.identity.email ?? profile.profile?.email ?? null;
+  useEffect(() => {
+    if (!settingsOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeSettings();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeSettings, settingsOpen]);
+
+  useEffect(() => {
+    if (auth.status !== "authenticated" || !identityUserId) {
+      setScoreSummary(null);
+      setScoreContext(null);
+      setScoreError(false);
+      return;
+    }
+
+    let active = true;
+    setScoreSummary(null);
+    setScoreContext(null);
+    setScoreError(false);
+
+    void Promise.all([loadAccountScoreSummary(), loadMyDataTransparencyContext()])
+      .then(([summary, context]) => {
+        if (!active) return;
+        setScoreSummary(summary);
+        setScoreContext(context);
+      })
+      .catch(() => {
+        if (!active) return;
+        setScoreSummary(null);
+        setScoreContext(null);
+        setScoreError(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [auth.status, identityTenantId, identityUserId]);
+
+  const email = identity?.email ?? null;
   const displayedEmail = email ? (emailVisible ? email : maskEmailAddress(email)) : null;
   const draftRecommendation = draftAiLevel ? contentRecommendationForAiLevel(draftAiLevel) : null;
+  const identityDisplayName =
+    identity?.displayName?.trim() || identity?.email || identity?.userId || "Nicht angemeldet";
+  const tenantLabel = !identityTenantId
+    ? "Kein Mandant zugeordnet"
+    : identityTenantId.startsWith("personal:")
+      ? "Persönlicher Bereich"
+      : `Mandant: ${identityTenantId}`;
+  const currentLanguage = languageLabel(preferences.preferences?.language);
 
   function openSettings({
     focusAiLevel = false,
@@ -64,6 +199,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     focusAiLevel?: boolean;
     returnFocusTo?: HTMLButtonElement | null;
   } = {}) {
+    setMenuOpen(false);
     setDraftName(profile.displayName);
     setDraftAiLevel(preferences.selfAssessedAiLevel);
     setEmailVisible(false);
@@ -71,15 +207,6 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     focusAiLevelOnOpenRef.current = focusAiLevel;
     settingsReturnFocusRef.current = returnFocusTo;
     setSettingsOpen(true);
-  }
-
-  function closeSettings() {
-    const returnFocusTo = settingsReturnFocusRef.current;
-    setEmailVisible(false);
-    setSettingsOpen(false);
-    focusAiLevelOnOpenRef.current = false;
-    settingsReturnFocusRef.current = null;
-    window.requestAnimationFrame(() => returnFocusTo?.focus());
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -105,15 +232,20 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     }
   }
 
+  if (!identity) {
+    return (
+      <span
+        data-testid="account-menu-anonymous"
+        className="inline-flex h-8 items-center rounded-md border border-border px-2 text-xs text-muted-foreground"
+      >
+        {auth.status === "loading" ? "Konto wird geladen …" : "Nicht angemeldet"}
+      </span>
+    );
+  }
+
   return (
     <>
       <div className="flex min-w-0 shrink items-center gap-1.5">
-        <span
-          className={`${compact ? "hidden 2xl:inline" : "hidden sm:inline"} max-w-52 truncate text-xs text-muted-foreground`}
-          title={profile.displayName}
-        >
-          {profile.displayName}
-        </span>
         <button
           type="button"
           data-testid="ai-level-navigation"
@@ -138,26 +270,154 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
             {aiLevelNavigationValue}
           </span>
         </button>
-        <button
-          type="button"
-          onClick={(event) => openSettings({ returnFocusTo: event.currentTarget })}
-          aria-label="Einstellungen öffnen"
-          title="Einstellungen"
-          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
-        >
-          <Settings className="h-3.5 w-3.5" />
-          <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Einstellungen</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => void auth.signOut().catch(() => undefined)}
-          aria-label="Abmelden"
-          title="Abmelden"
-          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          <span className={compact ? "hidden 2xl:inline" : "hidden md:inline"}>Abmelden</span>
-        </button>
+
+        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+          <PopoverTrigger asChild>
+            <button
+              ref={menuTriggerRef}
+              type="button"
+              data-testid="account-menu-trigger"
+              aria-label={`Nutzermenü für ${identityDisplayName} öffnen`}
+              title="Nutzermenü"
+              className="inline-flex h-8 min-w-0 shrink items-center justify-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span
+                className={`${compact ? "hidden 2xl:inline" : "hidden sm:inline"} max-w-40 truncate`}
+                aria-hidden="true"
+              >
+                {identityDisplayName}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            aria-labelledby="account-menu-title"
+            data-testid="account-menu-popover"
+            className="w-[min(20rem,calc(100vw-1rem))] p-0"
+          >
+            <div className="border-b border-border p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15">
+                  <UserRound className="h-4 w-4 text-accent" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2
+                    id="account-menu-title"
+                    className="truncate text-sm font-semibold text-foreground"
+                  >
+                    {identityDisplayName}
+                  </h2>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground" title={tenantLabel}>
+                    {tenantLabel}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <section aria-labelledby="account-score-title" className="border-b border-border p-4">
+              <div className="flex items-start gap-3">
+                <Gauge className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 id="account-score-title" className="text-xs font-semibold text-foreground">
+                      Mein Punktestand
+                    </h3>
+                    <span
+                      data-testid="account-score-value"
+                      className="text-sm font-semibold text-foreground"
+                    >
+                      {scoreError ? "Nicht verfügbar" : scoreValue(scoreSummary)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                    {scoreError
+                      ? "Punktestand und Sichtbarkeitsregel konnten nicht sicher geladen werden."
+                      : scoreDetail(scoreSummary)}
+                  </p>
+                  <div className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                    <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span data-testid="account-score-visibility">
+                      {scoreContext
+                        ? scoreVisibilityLabel(scoreContext)
+                        : scoreError
+                          ? "Sichtbarkeit nicht verfügbar"
+                          : "Sichtbarkeit wird geladen …"}
+                    </span>
+                  </div>
+                  <a
+                    href="/kompetenz"
+                    className="mt-2 inline-flex text-xs font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Kompetenzprofil öffnen
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => openSettings({ returnFocusTo: menuTriggerRef.current })}
+                className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Settings
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-foreground">Einstellungen</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    Sprache: {currentLanguage} · KI-Erfahrung: {aiLevelNavigationValue}
+                  </span>
+                </span>
+              </button>
+              <a
+                href="/datentransparenz"
+                className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Database
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-foreground">Meine Daten</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    Gespeicherte Daten, Empfänger und Aufbewahrung ansehen
+                  </span>
+                </span>
+              </a>
+              <a
+                href="/datentransparenz#konto-loeschen"
+                className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Trash2
+                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-foreground">Konto löschen</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    Informationen zum Löschprozess – keine Sofort-Löschung
+                  </span>
+                </span>
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void auth.signOut().catch(() => undefined);
+                }}
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <LogOut className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="text-xs font-medium text-foreground">Abmelden</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {settingsOpen ? (
@@ -173,7 +433,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
           >
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15">
-                <UserRound className="h-4 w-4 text-accent" />
+                <UserRound className="h-4 w-4 text-accent" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
                 <h2 id="account-settings-title" className="text-base font-semibold text-foreground">
@@ -184,12 +444,13 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 </p>
               </div>
               <button
+                ref={settingsCloseButtonRef}
                 type="button"
                 onClick={closeSettings}
                 aria-label="Einstellungen schließen"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -206,10 +467,17 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                     onChange={(event) => setDraftName(event.target.value)}
                     maxLength={80}
                     autoComplete="name"
-                    className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring"
+                    className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                     placeholder="Dein Name"
                   />
                 </label>
+
+                <div className="mt-4">
+                  <span className="text-xs font-medium text-foreground">Mandant</span>
+                  <p className="mt-1.5 truncate rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-sm text-muted-foreground">
+                    {tenantLabel}
+                  </p>
+                </div>
 
                 {email ? (
                   <div className="mt-4">
@@ -227,12 +495,12 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                         onClick={() => setEmailVisible((visible) => !visible)}
                         aria-label={emailVisible ? "E-Mail verbergen" : "E-Mail anzeigen"}
                         aria-pressed={emailVisible}
-                        className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted"
+                        className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground transition-colors hover:border-ring hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {emailVisible ? (
-                          <EyeOff className="h-3.5 w-3.5" />
+                          <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                         ) : (
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                         )}
                         <span className="hidden sm:inline">
                           {emailVisible ? "Verbergen" : "Anzeigen"}
@@ -240,10 +508,23 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                       </button>
                     </div>
                     <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                      Die Adresse ist standardmäßig anonymisiert und wird hier nicht geändert.
+                      Die Adresse stammt aus deiner angemeldeten Identität, ist standardmäßig
+                      anonymisiert und wird hier nicht geändert.
                     </p>
                   </div>
                 ) : null}
+              </section>
+
+              <section className="rounded-lg border border-border bg-background/35 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Sprache
+                </h3>
+                <p className="mt-2 text-sm font-medium text-foreground">{currentLanguage}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Die aktuelle Beta-Oberfläche ist auf Deutsch freigeschaltet. Eine gespeicherte
+                  abweichende Sprachpräferenz wird angezeigt, aber nicht als bereits übersetzte
+                  Oberfläche ausgegeben.
+                </p>
               </section>
 
               <fieldset className="rounded-lg border border-border bg-background/35 p-4">
@@ -314,6 +595,23 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
               <section className="rounded-lg border border-border bg-background/35 p-4">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Punktesichtbarkeit
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-foreground">
+                  {scoreContext
+                    ? scoreVisibilityLabel(scoreContext)
+                    : scoreError
+                      ? "Die aktuelle Sichtbarkeitsregel konnte nicht sicher geladen werden."
+                      : "Die aktuelle Sichtbarkeitsregel wird geladen …"}
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                  Diese Stufe ist eine serverseitige Tenant-Regel aus dem Datenschutzvertrag und
+                  wird nicht als persönliche Browser-Einstellung überschrieben.
+                </p>
+              </section>
+
+              <section className="rounded-lg border border-border bg-background/35 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Datentransparenz
                 </h3>
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
@@ -339,7 +637,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                 <button
                   type="button"
                   onClick={closeSettings}
-                  className="rounded-md border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="rounded-md border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Abbrechen
                 </button>
@@ -351,7 +649,7 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
                     preferences.status === "loading" ||
                     !draftName.trim()
                   }
-                  className="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {saving ? "Speichern …" : "Speichern"}
                 </button>

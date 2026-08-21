@@ -11,10 +11,10 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
   accessibility,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Einstellungen öffnen" }).first().click();
-  const dialog = page.getByRole("dialog", { name: "Einstellungen" });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole("link", { name: "Diese Daten werden über mich gespeichert" }).click();
+  await page.getByTestId("account-menu-trigger").click();
+  const menu = page.getByTestId("account-menu-popover");
+  await expect(menu).toBeVisible();
+  await menu.getByRole("link", { name: "Meine Daten" }).click();
 
   await expect(page).toHaveURL(/\/datentransparenz$/);
   await expect(
