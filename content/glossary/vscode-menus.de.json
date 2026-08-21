@@ -15,58 +15,58 @@
   "concepts": [
     {
       "key": "vscode.edit_menu",
-      "term": "Edit-Menü",
-      "aliases": ["Edit"],
-      "simple": "Das Edit-Menü entspricht weitgehend dem Bearbeiten-Menü aus Office: Hier findest du allgemeine Befehle wie Rückgängig, Wiederholen, Ausschneiden, Kopieren, Einfügen, Suchen und Ersetzen.",
-      "advanced": "Das Edit-Menü bündelt editorübergreifende Bearbeitungsbefehle. Einige Einträge sind kontextabhängig und wirken nur, wenn gerade Text oder ein Editor aktiv ist.",
+      "term": "Bearbeiten-Menü",
+      "aliases": ["Edit", "Edit-Menü"],
+      "simple": "Das Bearbeiten-Menü (Edit) entspricht weitgehend dem Bearbeiten-Menü aus Office: Hier findest du allgemeine Befehle wie Rückgängig, Wiederholen, Ausschneiden, Kopieren, Einfügen, Suchen und Ersetzen.",
+      "advanced": "Das Bearbeiten-Menü bündelt editorübergreifende Bearbeitungsbefehle. Einige Einträge sind kontextabhängig und wirken nur, wenn gerade Text oder ein Editor aktiv ist.",
       "uiTargets": ["vscode.menu.edit"]
     },
     {
       "key": "vscode.selection_menu",
-      "term": "Selection-Menü",
-      "aliases": ["Selection"],
-      "simple": "Im Selection-Menü steuerst du, welcher Text ausgewählt ist und wo Eingabemarken stehen. Das ist vergleichbar mit einer erweiterten Textauswahl in Word, ergänzt um Mehrfachauswahl für mehrere Stellen gleichzeitig.",
-      "advanced": "Selection enthält Befehle für Auswahlbereiche und Multi-Cursor-Bearbeitung, zum Beispiel Auswahl erweitern, alle Vorkommen markieren oder zusätzliche Cursor setzen.",
+      "term": "Auswahl-Menü",
+      "aliases": ["Selection", "Selection-Menü"],
+      "simple": "Im Auswahl-Menü (Selection) steuerst du, welcher Text ausgewählt ist und wo Eingabemarken stehen. Das ist vergleichbar mit einer erweiterten Textauswahl in Word, ergänzt um Mehrfachauswahl für mehrere Stellen gleichzeitig.",
+      "advanced": "Das Auswahl-Menü enthält Befehle für Auswahlbereiche und Multi-Cursor-Bearbeitung, zum Beispiel Auswahl erweitern, alle Vorkommen markieren oder zusätzliche Cursor setzen.",
       "uiTargets": ["vscode.menu.selection"]
     },
     {
       "key": "vscode.view_menu",
-      "term": "View-Menü",
-      "aliases": ["View"],
-      "simple": "Das View-Menü ist das Ansichts-Menü von VS Code. Wie unter Ansicht in Office blendest du dort Bereiche ein, wechselst Darstellungen und öffnest Werkzeuge wie Explorer, Search, Problems, Output oder Terminal.",
-      "advanced": "View steuert sichtbare Oberflächencontainer, Views, Editor-Layouts und Darstellungsoptionen. Es verändert in erster Linie die Oberfläche, nicht den Inhalt einer Datei.",
+      "term": "Ansicht-Menü",
+      "aliases": ["View", "View-Menü"],
+      "simple": "Das Ansicht-Menü (View) steuert die sichtbare Oberfläche von VS Code. Wie unter Ansicht in Office blendest du dort Bereiche ein, wechselst Darstellungen und öffnest Werkzeuge wie Explorer, Search, Problems, Output oder Terminal.",
+      "advanced": "Das Ansicht-Menü steuert sichtbare Oberflächencontainer, Ansichten, Editor-Layouts und Darstellungsoptionen. Es verändert in erster Linie die Oberfläche, nicht den Inhalt einer Datei.",
       "uiTargets": ["vscode.menu.view"]
     },
     {
       "key": "vscode.go_menu",
       "term": "Go-Menü",
-      "aliases": ["Go"],
-      "simple": "Das Go-Menü hilft dir, schnell zu einer anderen Stelle zu springen: etwa zu einer Datei, Zeile, Definition oder zum vorherigen Ort. Es ist vergleichbar mit Navigationsbefehlen in einem großen Dokument.",
+      "aliases": ["Go", "Navigations-Menü"],
+      "simple": "Das Go-Menü ist der Navigationsbereich der Menüleiste. Es hilft dir, schnell zu einer anderen Stelle zu springen, etwa zu einer Datei, Zeile, Definition oder zum vorherigen Ort.",
       "advanced": "Go bündelt Navigationsbefehle für Editor-Historie, Dateien, Symbole, Definitionen, Referenzen, Zeilen und diagnostische Sprungziele.",
       "uiTargets": ["vscode.menu.go"]
     },
     {
       "key": "vscode.run_menu",
-      "term": "Run-Menü",
-      "aliases": ["Run"],
-      "simple": "Im Run-Menü startest oder kontrollierst du Programme und die Fehlersuche. Für Einsteiger reicht zunächst die Einordnung: Hier geht es darum, etwas auszuführen und den Ablauf bei Bedarf Schritt für Schritt zu untersuchen.",
-      "advanced": "Run enthält Ausführungs- und Debugging-Befehle wie Start Debugging, Run Without Debugging, Step Over, Step Into und Breakpoint-Verwaltung.",
+      "term": "Ausführen-Menü",
+      "aliases": ["Run", "Run-Menü"],
+      "simple": "Im Ausführen-Menü (Run) startest oder kontrollierst du Programme und die Fehlersuche. Für Einsteiger reicht zunächst die Einordnung: Hier geht es darum, etwas auszuführen und den Ablauf bei Bedarf Schritt für Schritt zu untersuchen.",
+      "advanced": "Das Ausführen-Menü enthält Ausführungs- und Debugging-Befehle wie Start Debugging, Run Without Debugging, Step Over, Step Into und Breakpoint-Verwaltung.",
       "uiTargets": ["vscode.menu.run"]
     },
     {
       "key": "vscode.terminal_menu",
       "term": "Terminal-Menü",
-      "aliases": ["Terminal-Menü"],
+      "aliases": ["Terminal"],
       "simple": "Das Terminal-Menü verwaltet das integrierte Terminal und Aufgaben, die als Befehle ausgeführt werden. Dort kannst du zum Beispiel ein neues Terminal öffnen, es teilen oder vorbereitete Tasks starten.",
       "advanced": "Das Terminal-Menü enthält Lifecycle-Befehle für integrierte Terminals sowie Task-Runner-Funktionen und Profilkonfiguration.",
       "uiTargets": ["vscode.menu.terminal"]
     },
     {
       "key": "vscode.help_menu",
-      "term": "Help-Menü",
-      "aliases": ["Help"],
-      "simple": "Das Help-Menü ist die Hilfe- und Informationszentrale. Dort findest du Dokumentation, Lernmaterial, Tastenkürzel, Versionshinweise, Update-Funktionen und Informationen über die installierte VS-Code-Version.",
-      "advanced": "Help bündelt Dokumentations-, Diagnose-, Release-, Update- und About-Funktionen sowie Verweise auf externe Lern- und Support-Ressourcen.",
+      "term": "Hilfe-Menü",
+      "aliases": ["Help", "Help-Menü"],
+      "simple": "Das Hilfe-Menü (Help) ist die Hilfe- und Informationszentrale. Dort findest du Dokumentation, Lernmaterial, Tastenkürzel, Versionshinweise, Update-Funktionen und Informationen über die installierte VS-Code-Version.",
+      "advanced": "Das Hilfe-Menü bündelt Dokumentations-, Diagnose-, Release-, Update- und About-Funktionen sowie Verweise auf externe Lern- und Support-Ressourcen.",
       "uiTargets": ["vscode.menu.help"]
     }
   ]
