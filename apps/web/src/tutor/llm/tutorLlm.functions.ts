@@ -13,4 +13,13 @@ const tutorLlmInputSchema = z.object({
 
 export const askTutorLlm = createServerFn({ method: "POST" })
   .validator(tutorLlmInputSchema)
-  .handler(async ({ data }) => answerTutorQuestionOnServer(data));
+  .handler(async ({ data }) =>
+    answerTutorQuestionOnServer({
+      scenarioId: data.scenarioId,
+      mode: data.mode,
+      currentStepId: data.currentStepId,
+      question: data.question,
+      accessToken: data.accessToken,
+      ...(data.userCode === undefined ? {} : { userCode: data.userCode }),
+    }),
+  );
