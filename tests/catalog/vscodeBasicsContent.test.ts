@@ -29,6 +29,7 @@ interface Scenario {
   learningObjectives: string[];
   exploreTargets?: string[];
   steps?: Array<{
+    title?: string;
     description?: string;
     instruction?: string;
     rationale?: string;
@@ -38,6 +39,19 @@ interface Scenario {
 
 function readJson<T>(relativePath: string): T {
   return JSON.parse(readFileSync(new URL(relativePath, import.meta.url), "utf8")) as T;
+}
+
+function learnerFacingScenarioText(scenario: Scenario): string {
+  return (scenario.steps ?? [])
+    .flatMap((step) => [
+      step.title,
+      step.description,
+      step.instruction,
+      step.rationale,
+      ...(step.helpLevels ?? []),
+    ])
+    .filter((value): value is string => Boolean(value))
+    .join("\n");
 }
 
 const objectiveCatalog = readJson<LearningObjectiveCatalog>(
@@ -130,6 +144,7 @@ test("VS Code learner-facing glossary keeps German terms with original UI aliase
     ["vscode.output", "Ausgabe", "Output"],
     ["vscode.settings", "Einstellungen", "Settings"],
     ["vscode.view_menu", "Ansicht-Menü", "View"],
+    ["vscode.terminal_menu", "Terminal-Menü", "Terminal"],
   ] as const;
 
   for (const [key, germanTerm, englishAlias] of expectedTerms) {
@@ -141,6 +156,10 @@ test("VS Code learner-facing glossary keeps German terms with original UI aliase
       `${key} must preserve the original UI label as alias: ${englishAlias}`,
     );
   }
+
+  const terminalMenu = glossaryByKey.get("vscode.terminal_menu");
+  assert.ok(terminalMenu, "missing glossary concept: vscode.terminal_menu");
+  assert.ok(terminalMenu.aliases.includes("Terminal-Menü"), "Terminal-Menü alias must be retained");
 });
 
 test("VS Code content introduces German terms once while action labels stay product-accurate", () => {
@@ -152,7 +171,7 @@ test("VS Code content introduces German terms once while action labels stay prod
   assert.ok(viewIntroduction, "missing shared View introduction");
   assert.match(`${viewIntroduction.title} ${viewIntroduction.description}`, /Ansicht \(View\)/);
 
-  const guidedText = JSON.stringify(guided);
+  const guidedText = learnerFacingScenarioText(guided);
   for (const phrase of ["Ansichten (Views)", "Probleme (Problems)", "Ausgabe (Output)"]) {
     assert.ok(guidedText.includes(phrase), `Guided lost German-first introduction: ${phrase}`);
   }
@@ -168,7 +187,7 @@ test("VS Code content introduces German terms once while action labels stay prod
     );
   }
 
-  const exploreText = JSON.stringify(explore);
+  const exploreText = learnerFacingScenarioText(explore);
   for (const phrase of [
     "Suche (Search)",
     "Ansicht-Menü (View)",
