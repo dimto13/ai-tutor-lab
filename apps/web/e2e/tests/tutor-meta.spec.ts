@@ -71,7 +71,7 @@ test("Tutor attention resolves Claude Code targets through the same adapter cont
   await ready(page);
 
   const meta = page.getByTestId("tutor-meta-layer");
-  await expect(meta).toContainText("Schritt 1 · Sitzung starten");
+  await expect(meta).toContainText("Schritt 1 · Sitzung und Wirkungsbereich einordnen");
   await meta.getByRole("button", { name: "Im Werkzeug zeigen" }).click();
 
   const tutorAttention = page.getByTestId("tutor-attention-frame");
