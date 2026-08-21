@@ -113,15 +113,15 @@
       "term": "Side Bar",
       "aliases": ["Seitenleiste"],
       "simple": "Die Side Bar ist der größere Bereich direkt neben der Activity Bar. Wie der Navigationsbereich in Word zeigt sie den Inhalt der Funktion, die du in der Activity Bar ausgewählt hast, zum Beispiel den Dateibaum des Explorers.",
-      "advanced": "Die Side Bar ist ein Container für Views. Ihr Inhalt hängt von der Auswahl in der Activity Bar ab.",
+      "advanced": "Die Side Bar ist ein Container für Ansichten (Views). Ihr Inhalt hängt von der Auswahl in der Activity Bar ab.",
       "uiTargets": ["vscode.sideBar"]
     },
     {
       "key": "vscode.view",
-      "term": "View",
-      "aliases": ["Ansicht", "VS Code View"],
-      "simple": "Eine View ist eine spezialisierte Ansicht innerhalb eines größeren Bereichs wie Side Bar oder Panel. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
-      "advanced": "Views sind konkrete Oberflächeninhalte innerhalb von Containern. Explorer ist beispielsweise eine View in der Side Bar; Terminal, Problems und Output sind Views im Panel.",
+      "term": "Ansicht",
+      "aliases": ["View", "VS Code View"],
+      "simple": "Eine Ansicht (View) ist ein spezialisierter Inhalt innerhalb eines größeren Bereichs wie Side Bar oder Panel. Das ist vergleichbar mit einem eingeblendeten Navigations- oder Aufgabenbereich in Office, der genau eine bestimmte Art von Information zeigt.",
+      "advanced": "Ansichten sind konkrete Oberflächeninhalte innerhalb von Containern. Explorer ist beispielsweise eine Ansicht in der Side Bar; Terminal, Problems und Output sind Ansichten im unteren Bereich.",
       "uiTargets": []
     },
     {
@@ -129,7 +129,7 @@
       "term": "Explorer",
       "aliases": ["Datei-Explorer", "Dateibaum"],
       "simple": "Der Explorer zeigt Dateien und Ordner deines aktuellen Arbeitskontexts. Er funktioniert ähnlich wie der Windows-Datei-Explorer oder der Dialog Öffnen in Office, bleibt aber direkt in VS Code sichtbar und bietet Dateiaktionen wie Neue Datei.",
-      "advanced": "Der Explorer ist eine View in der Side Bar. Bei einem Multi-Root-Workspace kann er mehrere Stammordner gleichzeitig darstellen.",
+      "advanced": "Der Explorer ist eine Ansicht (View) in der Side Bar. Bei einem Multi-Root-Workspace kann er mehrere Stammordner gleichzeitig darstellen.",
       "uiTargets": [
         "vscode.activityBar.explorer",
         "vscode.explorer.tree",
@@ -149,7 +149,7 @@
       "term": "Source Control",
       "aliases": ["Quellcodeverwaltung", "SCM"],
       "simple": "Source Control zeigt erkannte Versionsverwaltungs-Änderungen im aktuellen Arbeitskontext.",
-      "advanced": "Die View stellt Funktionen eines Versionsverwaltungssystems wie Git dar. VS Code selbst ist dabei die Oberfläche; das Repository bleibt ein eigenes fachliches Konzept.",
+      "advanced": "Die Ansicht stellt Funktionen eines Versionsverwaltungssystems wie Git dar. VS Code selbst ist dabei die Oberfläche; das Repository bleibt ein eigenes fachliches Konzept.",
       "uiTargets": ["vscode.activityBar.scm"]
     },
     {
@@ -157,7 +157,7 @@
       "term": "Extensions",
       "aliases": ["Erweiterungen", "Extension Marketplace"],
       "simple": "Extensions erweitern VS Code um zusätzliche Sprachen, Werkzeuge und Funktionen.",
-      "advanced": "Extensions laufen als Erweiterungen der IDE und können Views, Befehle, Statusinformationen und Sprachunterstützung hinzufügen.",
+      "advanced": "Extensions laufen als Erweiterungen der IDE und können Ansichten, Befehle, Statusinformationen und Sprachunterstützung hinzufügen.",
       "uiTargets": ["vscode.activityBar.extensions"]
     },
     {
@@ -165,15 +165,15 @@
       "term": "Editor",
       "aliases": ["Editorbereich"],
       "simple": "Der Editor ist die große Arbeitsfläche in der Mitte. Er entspricht am ehesten dem Dokumentbereich in Word oder dem Arbeitsblatt in Excel: Hier öffnest, liest und bearbeitest du den Inhalt von Dateien.",
-      "advanced": "Editoren erscheinen in Editor Groups und besitzen Tabs. Der Editor ist vom Explorer und vom unteren Panel getrennt.",
+      "advanced": "Editoren erscheinen in Editor Groups und besitzen Tabs. Der Editor ist vom Explorer und vom unteren Bereich getrennt.",
       "uiTargets": ["vscode.editor"]
     },
     {
       "key": "vscode.panel",
-      "term": "Panel",
-      "aliases": ["Unteres Panel"],
-      "simple": "Das Panel ist ein zusätzlicher Bereich, meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt es Werkzeuge und Informationen, die du neben dem eigentlichen Dokument brauchst, zum Beispiel Terminal, Problems oder Output.",
-      "advanced": "Terminal, Problems und Output sind unterschiedliche Views innerhalb des Panels; das Terminal ist nicht das Panel selbst.",
+      "term": "Bereich",
+      "aliases": ["Panel", "Unteres Panel"],
+      "simple": "Der zusätzliche Bereich (Panel) liegt meist unter dem Editor. Vergleichbar mit einem eingeblendeten Zusatzbereich in Office zeigt er Werkzeuge und Informationen, die du neben dem eigentlichen Dokument brauchst, zum Beispiel Terminal, Problems oder Output.",
+      "advanced": "Terminal, Problems und Output sind unterschiedliche Ansichten innerhalb dieses Bereichs; das Terminal ist nicht der Bereich selbst.",
       "uiTargets": ["vscode.panel.terminal", "vscode.panel.problems", "vscode.panel.output"]
     },
     {
@@ -181,23 +181,23 @@
       "term": "Terminal",
       "aliases": ["Integrated Terminal", "Shell"],
       "simple": "Das integrierte Terminal hat keinen direkten Office-Gegenpart. Statt eine Funktion über Schaltflächen aufzurufen, gibst du Textbefehle ein. Der Grundgedanke ähnelt einer Excel-Formel: Du formulierst eine eindeutige Anweisung, die der Computer ausführt.",
-      "advanced": "Das Terminal ist eine View im Panel. Es startet eine Shell und übernimmt typischerweise den aktuellen Workspace-Ordner als Arbeitsverzeichnis.",
+      "advanced": "Das Terminal ist eine Ansicht im zusätzlichen Bereich. Es startet eine Shell und übernimmt typischerweise den aktuellen Workspace-Ordner als Arbeitsverzeichnis.",
       "uiTargets": ["vscode.panel.terminal"]
     },
     {
       "key": "vscode.problems",
-      "term": "Problems",
-      "aliases": ["Probleme", "Fehlerliste"],
-      "simple": "Problems sammelt erkannte Fehler und Warnungen aus Dateien deines Arbeitskontexts.",
+      "term": "Probleme",
+      "aliases": ["Problems", "Fehlerliste"],
+      "simple": "Probleme (Problems) sammelt erkannte Fehler und Warnungen aus Dateien deines Arbeitskontexts.",
       "advanced": "Diagnosen stammen beispielsweise von Sprachservern, Lintern oder Compilern und können direkt zu betroffenen Stellen im Editor führen.",
       "uiTargets": ["vscode.panel.problems"]
     },
     {
       "key": "vscode.output",
-      "term": "Output",
-      "aliases": ["Ausgabe"],
-      "simple": "Output zeigt Protokoll- und Statusausgaben von VS Code und installierten Erweiterungen.",
-      "advanced": "Verschiedene Komponenten stellen eigene Output Channels bereit. Das unterscheidet die View vom interaktiven Terminal.",
+      "term": "Ausgabe",
+      "aliases": ["Output"],
+      "simple": "Ausgabe (Output) zeigt Protokoll- und Statusausgaben von VS Code und installierten Erweiterungen.",
+      "advanced": "Verschiedene Komponenten stellen eigene Output Channels bereit. Das unterscheidet diese Ansicht vom interaktiven Terminal.",
       "uiTargets": ["vscode.panel.output"]
     },
     {
@@ -229,7 +229,7 @@
       "term": "Extension",
       "aliases": ["Erweiterung", "VS Code Extension"],
       "simple": "Eine Extension ist ein installierbares Zusatzmodul für VS Code.",
-      "advanced": "Extensions können neue Befehle, Editorfunktionen, Views, Sprachunterstützung und Integrationen bereitstellen. Sie laufen getrennt vom eigentlichen Projektinhalt.",
+      "advanced": "Extensions können neue Befehle, Editorfunktionen, Ansichten, Sprachunterstützung und Integrationen bereitstellen. Sie laufen getrennt vom eigentlichen Projektinhalt.",
       "uiTargets": ["vscode.activityBar.extensions"]
     },
     {

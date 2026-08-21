@@ -87,7 +87,7 @@ test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und bleibt 
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("Hello AI Training");
   await editor.press("Control+s");
-  await expectStep(page, 11, "Panel und seine Views unterscheiden");
+  await expectStep(page, 11, "Bereich und Ansichten unterscheiden");
   await expectOnePrimary(page, "runtime", "vscode.menu.terminal");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
@@ -95,11 +95,11 @@ test("Guided kennzeichnet pro Schritt genau eine primäre Lernaktion und bleibt 
     .getByRole("menuitem", { name: /New Terminal/ })
     .first()
     .click();
-  await expectStep(page, 12, "Problems-View verwenden");
+  await expectStep(page, 12, "Probleme-Ansicht verwenden");
   await expectOnePrimary(page, "runtime", "vscode.panel.problems");
 
   await page.getByRole("button", { name: "Problems", exact: true }).click();
-  await expectStep(page, 13, "Output-View verwenden");
+  await expectStep(page, 13, "Ausgabe-Ansicht verwenden");
   primary = await expectOnePrimary(page, "runtime", "vscode.panel.output");
   await expect(primary).toBeVisible();
 

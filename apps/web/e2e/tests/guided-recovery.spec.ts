@@ -34,17 +34,17 @@ async function finishGuidedScenarioFromEditor(page: Page): Promise<void> {
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("Hello AI Training");
   await editor.press("Control+s");
-  await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
+  await expectGuidedStep(page, 11, "Bereich und Ansichten unterscheiden");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
   await page
     .getByRole("menuitem", { name: /New Terminal/ })
     .first()
     .click();
-  await expectGuidedStep(page, 12, "Problems-View verwenden");
+  await expectGuidedStep(page, 12, "Probleme-Ansicht verwenden");
 
   await page.getByRole("button", { name: "Problems", exact: true }).click();
-  await expectGuidedStep(page, 13, "Output-View verwenden");
+  await expectGuidedStep(page, 13, "Ausgabe-Ansicht verwenden");
   await page.getByRole("button", { name: "Output", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 }
@@ -101,5 +101,5 @@ test("Guided-Recovery: geschlossener Editor wird repariert und bleibt nach Reloa
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("Hello AI Training");
   await editor.press("Control+s");
-  await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
+  await expectGuidedStep(page, 11, "Bereich und Ansichten unterscheiden");
 });

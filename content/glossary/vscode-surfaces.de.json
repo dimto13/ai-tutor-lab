@@ -9,16 +9,16 @@
       "key": "vscode.command_palette",
       "term": "Command Palette",
       "aliases": ["Befehlspalette", "Show All Commands"],
-      "simple": "Die Command Palette ist die zentrale Befehlssuche von VS Code. Du suchst nach der gewünschten Aktion und startest sie direkt, ohne wissen zu müssen, in welchem Menü der Befehl liegt.",
-      "advanced": "Die Command Palette bietet einen tastaturorientierten Einstieg in registrierte VS-Code-Befehle. Sie ergänzt Menüs und Shortcuts um eine durchsuchbare Befehlsoberfläche.",
+      "simple": "Die Command Palette (Befehlspalette) ist die zentrale Befehlssuche von VS Code. Du suchst nach der gewünschten Aktion und startest sie direkt, ohne wissen zu müssen, in welchem Menü der Befehl liegt.",
+      "advanced": "Die Command Palette bietet einen tastaturorientierten Einstieg in registrierte VS-Code-Befehle. Sie ergänzt Menüs und Tastenkürzel um eine durchsuchbare Befehlsoberfläche.",
       "uiTargets": ["vscode.commandPalette"]
     },
     {
       "key": "vscode.settings",
-      "term": "Settings",
-      "aliases": ["Einstellungen", "Preferences: Settings"],
-      "simple": "In den Settings stellst du ein, wie sich vorhandene VS-Code-Funktionen verhalten oder aussehen, zum Beispiel automatisches Speichern oder das Farbschema. Extensions fügen dagegen neue Funktionen hinzu.",
-      "advanced": "Settings bilden die Konfigurationsebene von VS Code für Benutzer-, Workspace- und sprachbezogene Einstellungen. Sie sind fachlich von Extensions als Erweiterungsmechanismus getrennt.",
+      "term": "Einstellungen",
+      "aliases": ["Settings", "Preferences: Settings"],
+      "simple": "In den Einstellungen (Settings) legst du fest, wie sich vorhandene VS-Code-Funktionen verhalten oder aussehen, zum Beispiel automatisches Speichern oder das Farbschema. Erweiterungen (Extensions) fügen dagegen neue Funktionen hinzu.",
+      "advanced": "Einstellungen bilden die Konfigurationsebene von VS Code für Benutzer-, Workspace- und sprachbezogene Konfiguration. Sie sind fachlich von Erweiterungen als Erweiterungsmechanismus getrennt.",
       "uiTargets": ["vscode.settings"]
     }
   ]

@@ -181,17 +181,17 @@ test("Guided: Explorer, Folder, Editor, Speichern und Panel laufen als Anfänger
   await expect(
     page.getByRole("status", { name: "notiz.txt: ungespeicherte Änderungen" }),
   ).toHaveCount(0);
-  await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
+  await expectGuidedStep(page, 11, "Bereich und Ansichten unterscheiden");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
   await page
     .getByRole("menuitem", { name: /New Terminal/ })
     .first()
     .click();
-  await expectGuidedStep(page, 12, "Problems-View verwenden");
+  await expectGuidedStep(page, 12, "Probleme-Ansicht verwenden");
 
   await page.getByRole("button", { name: "Problems", exact: true }).click();
-  await expectGuidedStep(page, 13, "Output-View verwenden");
+  await expectGuidedStep(page, 13, "Ausgabe-Ansicht verwenden");
 
   await page.getByRole("button", { name: "Output", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();

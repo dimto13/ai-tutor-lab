@@ -130,14 +130,14 @@ test.describe("Accessibility regressions", () => {
     const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
     await editor.fill("Hello AI Training");
     await editor.press("Control+s");
-    await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
+    await expectGuidedStep(page, 11, "Bereich und Ansichten unterscheiden");
 
     await activateWithKeyboard(page, page.getByRole("button", { name: "Terminal", exact: true }));
     await activateWithKeyboard(page, page.getByRole("menuitem", { name: /New Terminal/ }).first());
-    await expectGuidedStep(page, 12, "Problems-View verwenden");
+    await expectGuidedStep(page, 12, "Probleme-Ansicht verwenden");
 
     await activateWithKeyboard(page, page.getByRole("button", { name: "Problems", exact: true }));
-    await expectGuidedStep(page, 13, "Output-View verwenden");
+    await expectGuidedStep(page, 13, "Ausgabe-Ansicht verwenden");
 
     await activateWithKeyboard(page, page.getByRole("button", { name: "Output", exact: true }));
     await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();

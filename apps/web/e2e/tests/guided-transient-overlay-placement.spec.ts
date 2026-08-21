@@ -51,7 +51,7 @@ async function reachOpenTerminal(page: Page): Promise<void> {
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("Hello AI Training");
   await editor.press("Control+s");
-  await expectStep(page, 11, "Panel und seine Views unterscheiden");
+  await expectStep(page, 11, "Bereich und Ansichten unterscheiden");
 }
 
 test("Guided: handlungsrelevante transiente Ziele bleiben frei von Plattform-Overlays", async ({
@@ -106,6 +106,6 @@ test("Guided: handlungsrelevante transiente Ziele bleiben frei von Plattform-Ove
   });
   await reopenedNewTerminal.click();
 
-  await expectStep(page, 12, "Problems-View verwenden");
+  await expectStep(page, 12, "Probleme-Ansicht verwenden");
   await expect(page.getByLabel("Terminal-Eingabe")).toBeVisible();
 });

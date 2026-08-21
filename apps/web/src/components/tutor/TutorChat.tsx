@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, ChevronDown, MessageCircle, Send, User } from "lucide-react";
+import { useAuth } from "@/auth/AuthContext";
 import { findGlossaryConcept } from "@/lib/glossary";
 import { answerDeterministically } from "@/tutor/deterministicTutor";
+import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
 import { useTutorContext } from "@/tutor/tutorContext";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
 
@@ -18,6 +20,7 @@ const SUGGESTIONS = [
 ];
 
 export function TutorChat({ prominent = false }: { prominent?: boolean }) {
+  const auth = useAuth();
   const tutorContext = useTutorContext();
   const { mode } = tutorContext;
   const [open, setOpen] = useState(() => mode !== "guided");
@@ -32,6 +35,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         ],
   );
   const [input, setInput] = useState("");
+  const [pending, setPending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,16 +51,37 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     });
   }, [messages, open]);
 
-  const send = (text: string) => {
+  const send = async (text: string) => {
     const question = text.trim();
-    if (!question) return;
-    const answer = answerDeterministically(question, tutorContext, findGlossaryConcept);
+    if (!question || pending) return;
     setInput("");
-    setMessages((messages) => [
-      ...messages,
-      { role: "user", text: question },
-      { role: "tutor", text: answer },
-    ]);
+    setMessages((messages) => [...messages, { role: "user", text: question }]);
+    setPending(true);
+
+    try {
+      let answer = answerDeterministically(question, tutorContext, findGlossaryConcept);
+      const accessToken = auth.session?.accessToken ?? null;
+      if (accessToken) {
+        try {
+          const response = await askTutorLlm({
+            data: {
+              scenarioId: tutorContext.scenario.id,
+              mode: tutorContext.mode,
+              currentStepId: tutorContext.currentStep?.id ?? null,
+              question,
+              accessToken,
+            },
+          });
+          if (response.status !== "unavailable") answer = response.answer;
+        } catch {
+          // The deterministic tutor remains the safe fallback if the optional server LLM is unavailable.
+        }
+      }
+
+      setMessages((messages) => [...messages, { role: "tutor", text: answer }]);
+    } finally {
+      setPending(false);
+    }
   };
 
   const problemShortcut = (
@@ -171,14 +196,21 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
             </p>
           </div>
         ))}
+        {pending ? (
+          <p role="status" className="text-[12px] text-muted-foreground">
+            Tutor verarbeitet die Frage…
+          </p>
+        ) : null}
       </div>
       {mode !== "challenge" ? (
         <div className="flex flex-wrap gap-1.5 px-4 pb-2">
           {SUGGESTIONS.map((suggestion) => (
             <button
               key={suggestion}
-              onClick={() => send(suggestion)}
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground motion-reduce:transition-none"
+              type="button"
+              disabled={pending}
+              onClick={() => void send(suggestion)}
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             >
               {suggestion}
             </button>
@@ -188,15 +220,20 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       <div className="flex items-center gap-2 border-t border-border p-3">
         <input
           value={input}
+          disabled={pending}
           onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => event.key === "Enter" && send(input)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") void send(input);
+          }}
           placeholder="Frage an den Tutor…"
-          className="flex-1 rounded-md border border-border bg-input px-3 py-2 text-[13px] text-foreground outline-none focus:border-ring"
+          className="flex-1 rounded-md border border-border bg-input px-3 py-2 text-[13px] text-foreground outline-none focus:border-ring disabled:cursor-not-allowed disabled:opacity-60"
         />
         <button
-          onClick={() => send(input)}
+          type="button"
+          disabled={pending}
+          onClick={() => void send(input)}
           aria-label="Senden"
-          className="rounded-md bg-accent px-2.5 py-2 text-accent-foreground transition-opacity hover:opacity-90 motion-reduce:transition-none"
+          className="rounded-md bg-accent px-2.5 py-2 text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
         >
           <Send className="h-4 w-4" />
         </button>

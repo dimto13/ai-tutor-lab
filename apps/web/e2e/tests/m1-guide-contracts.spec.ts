@@ -172,7 +172,7 @@ test("Guided: Fehlversuche werden gezählt, lokale E2E-Wertung bleibt nicht auto
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("Hello AI Training");
   await editor.press("Control+s");
-  await expectGuidedStep(page, 11, "Panel und seine Views unterscheiden");
+  await expectGuidedStep(page, 11, "Bereich und Ansichten unterscheiden");
 
   await page.getByRole("button", { name: "Terminal", exact: true }).click();
   await page

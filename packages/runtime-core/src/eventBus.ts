@@ -2,10 +2,14 @@ import type { WorkspaceEvent, WorkspaceEventName } from "@ai-train-lab/training-
 
 export {
   InProcessTrainingEventBus,
+  InProcessTrainingEventTransport,
+  MockRemoteTrainingEventTransport,
+  TransportBackedTrainingEventBus,
   createTrainingEvent,
   type TelemetrySink,
   type TrainingEventBus,
   type TrainingEventHandler,
+  type TrainingEventTransport,
 } from "@ai-train-lab/training-engine";
 
 type Handler = (event: WorkspaceEvent) => void;
