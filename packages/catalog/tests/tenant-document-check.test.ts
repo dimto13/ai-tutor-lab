@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import type { ClassificationScheme } from "../src/classification.ts";
+import { createUtf8TextExtractor } from "../src/document-classification.ts";
 import type { DocumentCheckAuditRecord } from "../src/tenant-document-check.ts";
 import { createTenantDocumentCheckService } from "../src/tenant-document-check.ts";
-import { createUtf8TextExtractor } from "../src/document-classification.ts";
 
 const scheme: ClassificationScheme = {
   tenantId: "tenant-a",
@@ -37,7 +38,11 @@ describe("tenant document check", () => {
       tenantId: "tenant-a",
       scheme,
       extractors: [createUtf8TextExtractor()],
-      auditSink: { persist: (record) => records.push(record) },
+      auditSink: {
+        persist(record) {
+          records.push(record);
+        },
+      },
       learningUnitHref: "/training/classification",
       now: () => new Date("2026-08-21T20:00:00.000Z"),
     });
@@ -47,15 +52,15 @@ describe("tenant document check", () => {
       source("Intern: Projektstatus"),
     );
 
-    expect(result.levelId).toBe("internal");
-    expect(result.reasons).toContain("explizite interne Kennzeichnung erkannt");
-    expect(result.approvalMatrix).toEqual([
+    assert.equal(result.levelId, "internal");
+    assert.ok(result.reasons.includes("explizite interne Kennzeichnung erkannt"));
+    assert.deepEqual(result.approvalMatrix, [
       { tool: "approved-copilot", allowed: true },
       { tool: "public-ai", allowed: false },
     ]);
-    expect(result.disclaimer).toMatch(/Entscheidungshilfe/);
-    expect(result.learningUnitHref).toBe("/training/classification");
-    expect(records).toEqual([
+    assert.match(result.disclaimer, /Entscheidungshilfe/);
+    assert.equal(result.learningUnitHref, "/training/classification");
+    assert.deepEqual(records, [
       {
         timestamp: "2026-08-21T20:00:00.000Z",
         fileType: "txt",
@@ -67,54 +72,74 @@ describe("tenant document check", () => {
   });
 
   it("persists only reduced metadata and never document content, bytes or filename", async () => {
-    const persist = vi.fn<(record: DocumentCheckAuditRecord) => void>();
+    const records: DocumentCheckAuditRecord[] = [];
     const service = createTenantDocumentCheckService({
       tenantId: "tenant-a",
       scheme,
       extractors: [createUtf8TextExtractor()],
-      auditSink: { persist },
+      auditSink: {
+        persist(record) {
+          records.push(record);
+        },
+      },
       learningUnitHref: "/training/classification",
     });
     const sensitive = "Intern Max Mustermann max@example.test";
 
     await service.check({ tenantId: "tenant-a", userId: "user-7" }, source(sensitive));
 
-    const serialized = JSON.stringify(persist.mock.calls);
-    expect(serialized).not.toContain(sensitive);
-    expect(serialized).not.toContain("secret-name.txt");
-    expect(serialized).not.toContain("max@example.test");
-    expect(Object.keys(persist.mock.calls[0]![0]).sort()).toEqual(
+    const serialized = JSON.stringify(records);
+    assert.ok(!serialized.includes(sensitive));
+    assert.ok(!serialized.includes("secret-name.txt"));
+    assert.ok(!serialized.includes("max@example.test"));
+    assert.deepEqual(
+      Object.keys(records[0] ?? {}).sort(),
       ["fileType", "indicatorIds", "levelId", "timestamp", "userId"].sort(),
     );
   });
 
   it("fails closed before extraction for cross-tenant requests", async () => {
-    const extract = vi.fn(() => ({ format: "txt" as const, text: "Intern" }));
-    const persist = vi.fn();
+    let extractCalled = false;
+    let persistCalled = false;
     const service = createTenantDocumentCheckService({
       tenantId: "tenant-a",
       scheme,
-      extractors: [{ format: "txt", extract }],
-      auditSink: { persist },
+      extractors: [
+        {
+          format: "txt",
+          extract() {
+            extractCalled = true;
+            return { format: "txt", text: "Intern" };
+          },
+        },
+      ],
+      auditSink: {
+        persist() {
+          persistCalled = true;
+        },
+      },
       learningUnitHref: "/training/classification",
     });
 
-    await expect(
+    await assert.rejects(
       service.check({ tenantId: "tenant-b", userId: "user-7" }, source("Intern")),
-    ).rejects.toThrow("Cross-tenant document check denied");
-    expect(extract).not.toHaveBeenCalled();
-    expect(persist).not.toHaveBeenCalled();
+      /Cross-tenant document check denied/,
+    );
+    assert.equal(extractCalled, false);
+    assert.equal(persistCalled, false);
   });
 
   it("rejects a scheme from another tenant when constructing the boundary", () => {
-    expect(() =>
-      createTenantDocumentCheckService({
-        tenantId: "tenant-b",
-        scheme,
-        extractors: [createUtf8TextExtractor()],
-        auditSink: { persist: vi.fn() },
-        learningUnitHref: "/training/classification",
-      }),
-    ).toThrow("Document-check scheme tenant does not match boundary tenant");
+    assert.throws(
+      () =>
+        createTenantDocumentCheckService({
+          tenantId: "tenant-b",
+          scheme,
+          extractors: [createUtf8TextExtractor()],
+          auditSink: { persist() {} },
+          learningUnitHref: "/training/classification",
+        }),
+      /Document-check scheme tenant does not match boundary tenant/,
+    );
   });
 });
