@@ -41,8 +41,20 @@ describe("challengeAttemptHistory", () => {
     expect(shouldRecommendGuidedAfterChallenge({ version: 1, failedStartedAt: [10] })).toBe(false);
   });
 
-  it("records one failure per challenge start and persists through the existing state boundary", async () => {
+  it("keeps only the most recent bounded failure identities", () => {
+    const history = parseChallengeAttemptHistory({
+      version: 1,
+      failedStartedAt: Array.from({ length: 25 }, (_, index) => index + 1),
+    });
+    expect(history.failedStartedAt).toEqual(Array.from({ length: 20 }, (_, index) => index + 6));
+  });
+
+  it("records one valid failure per challenge start and persists through the existing state boundary", async () => {
     const { persistence, stored } = persistenceDouble();
+
+    const invalid = await recordFailedChallengeAttempt(persistence, Number.NaN);
+    expect(invalid.failedStartedAt).toEqual([]);
+    expect(stored()).toBeNull();
 
     const first = await recordFailedChallengeAttempt(persistence, 100);
     expect(first.failedStartedAt).toEqual([100]);
