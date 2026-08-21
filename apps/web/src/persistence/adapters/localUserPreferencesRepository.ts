@@ -35,7 +35,18 @@ function validStoredRecord(
   ) {
     return null;
   }
-  return parsed as UserPreferencesRecord;
+  if (
+    parsed.weeklyReminderEnabled !== null &&
+    parsed.weeklyReminderEnabled !== undefined &&
+    typeof parsed.weeklyReminderEnabled !== "boolean"
+  ) {
+    return null;
+  }
+
+  return {
+    ...(parsed as UserPreferencesRecord),
+    weeklyReminderEnabled: parsed.weeklyReminderEnabled ?? null,
+  };
 }
 
 export class LocalUserPreferencesRepository implements UserPreferencesRepository {
