@@ -12,6 +12,18 @@ const changeProposalSchema = z.object({
   promptMatch: z.array(z.string().min(1)).min(1).optional(),
   planSteps: z.array(z.string().min(1)).optional(),
   nextContent: z.string(),
+  safety: z.enum(["safe", "sensitive"]).optional(),
+  safetyReason: z.string().min(1).optional(),
+});
+
+const verificationCheckSchema = z.object({
+  id: z.string().min(1),
+  command: z.string().min(1),
+  path: z.string().min(1),
+  includes: z.array(z.string()).optional(),
+  excludes: z.array(z.string()).optional(),
+  passingOutput: z.string().min(1),
+  failingOutput: z.string().min(1),
 });
 
 const transcriptEntrySchema = z.object({
@@ -19,15 +31,26 @@ const transcriptEntrySchema = z.object({
   text: z.string(),
 });
 
+const testRunSchema = z.object({
+  id: z.string().min(1),
+  command: z.string().min(1),
+  passed: z.boolean(),
+  output: z.string(),
+});
+
 export const claudeCodeSeedSchema = z.object({
   model: z.string().min(1).optional(),
   cwd: z.string().min(1).optional(),
   files: z.record(z.string()).optional(),
   proposals: z.array(changeProposalSchema).optional(),
+  initialProposalId: z.string().min(1).optional(),
+  checks: z.array(verificationCheckSchema).optional(),
 });
 
 export type ClaudeCodeChangeProposal = z.infer<typeof changeProposalSchema>;
+export type ClaudeCodeVerificationCheck = z.infer<typeof verificationCheckSchema>;
 export type ClaudeCodeTranscriptEntry = z.infer<typeof transcriptEntrySchema>;
+export type ClaudeCodeTestRun = z.infer<typeof testRunSchema>;
 export type ClaudeCodeSeed = z.infer<typeof claudeCodeSeedSchema>;
 
 export interface ClaudeCodeState {
@@ -39,11 +62,18 @@ export interface ClaudeCodeState {
   commands: string[];
   lastPrompt: string | null;
   plan: string[];
+  planReviewed: boolean;
   proposals: ClaudeCodeChangeProposal[];
   pendingProposalId: string | null;
   viewedProposalIds: string[];
   appliedProposalIds: string[];
   rejectedProposalIds: string[];
+  unsafeApprovalIds: string[];
+  taskStatus: "idle" | "running" | "stopped" | "completed";
+  stoppedTaskCount: number;
+  checks: ClaudeCodeVerificationCheck[];
+  testRuns: ClaudeCodeTestRun[];
+  verificationPassed: boolean | null;
 }
 
 const stateSchema = z.object({
@@ -55,11 +85,18 @@ const stateSchema = z.object({
   commands: z.array(z.string()),
   lastPrompt: z.string().nullable(),
   plan: z.array(z.string()),
+  planReviewed: z.boolean().default(false),
   proposals: z.array(changeProposalSchema),
   pendingProposalId: z.string().nullable(),
   viewedProposalIds: z.array(z.string()),
   appliedProposalIds: z.array(z.string()),
   rejectedProposalIds: z.array(z.string()),
+  unsafeApprovalIds: z.array(z.string()).default([]),
+  taskStatus: z.enum(["idle", "running", "stopped", "completed"]).default("idle"),
+  stoppedTaskCount: z.number().int().nonnegative().default(0),
+  checks: z.array(verificationCheckSchema).default([]),
+  testRuns: z.array(testRunSchema).default([]),
+  verificationPassed: z.boolean().nullable().default(null),
 });
 
 export type ClaudeCodeStateChangeReason = "mount" | "reset" | "mutation" | "restore";
@@ -73,10 +110,13 @@ export interface ClaudeCodeRuntimeAdapter extends RuntimeAdapter {
   runCommand(command: string): void;
   submitPrompt(prompt: string): void;
   proposeChange(proposal: ClaudeCodeChangeProposal): void;
+  reviewPlan(): void;
   /** Opens the pending change for review; the guided prerequisite for approval. */
   openProposedChange(): void;
   approvePendingChange(): void;
   rejectPendingChange(): void;
+  stopTask(): void;
+  verifyResult(): boolean;
   reset(): void;
 }
 
@@ -99,6 +139,14 @@ function cloneProposal(proposal: ClaudeCodeChangeProposal): ClaudeCodeChangeProp
   };
 }
 
+function cloneCheck(check: ClaudeCodeVerificationCheck): ClaudeCodeVerificationCheck {
+  return {
+    ...check,
+    ...(check.includes ? { includes: [...check.includes] } : {}),
+    ...(check.excludes ? { excludes: [...check.excludes] } : {}),
+  };
+}
+
 function cloneState(state: ClaudeCodeState): ClaudeCodeState {
   return {
     ...state,
@@ -110,6 +158,9 @@ function cloneState(state: ClaudeCodeState): ClaudeCodeState {
     viewedProposalIds: [...state.viewedProposalIds],
     appliedProposalIds: [...state.appliedProposalIds],
     rejectedProposalIds: [...state.rejectedProposalIds],
+    unsafeApprovalIds: [...state.unsafeApprovalIds],
+    checks: state.checks.map(cloneCheck),
+    testRuns: state.testRuns.map((run) => ({ ...run })),
   };
 }
 
@@ -121,6 +172,10 @@ export function parseClaudeCodeSeed(seed?: RuntimeSeed): ClaudeCodeSeed | null {
 
 function initialState(seed?: RuntimeSeed): ClaudeCodeState {
   const parsed = parseClaudeCodeSeed(seed);
+  const proposals = (parsed?.proposals ?? []).map(cloneProposal);
+  const initialProposal = parsed?.initialProposalId
+    ? (proposals.find((proposal) => proposal.id === parsed.initialProposalId) ?? null)
+    : null;
   return {
     sessionActive: false,
     model: parsed?.model ?? DEFAULT_MODEL,
@@ -129,13 +184,29 @@ function initialState(seed?: RuntimeSeed): ClaudeCodeState {
     transcript: [],
     commands: [],
     lastPrompt: null,
-    plan: [],
-    proposals: (parsed?.proposals ?? []).map(cloneProposal),
-    pendingProposalId: null,
+    plan: initialProposal?.planSteps ? [...initialProposal.planSteps] : [],
+    planReviewed: false,
+    proposals,
+    pendingProposalId: initialProposal?.id ?? null,
     viewedProposalIds: [],
     appliedProposalIds: [],
     rejectedProposalIds: [],
+    unsafeApprovalIds: [],
+    taskStatus: initialProposal ? "running" : "idle",
+    stoppedTaskCount: 0,
+    checks: (parsed?.checks ?? []).map(cloneCheck),
+    testRuns: [],
+    verificationPassed: null,
   };
+}
+
+function checkPasses(check: ClaudeCodeVerificationCheck, files: Record<string, string>): boolean {
+  const content = files[check.path] ?? "";
+  const hasRequiredContent = (check.includes ?? []).every((value) => content.includes(value));
+  const excludesForbiddenContent = (check.excludes ?? []).every(
+    (value) => !content.includes(value),
+  );
+  return hasRequiredContent && excludesForbiddenContent;
 }
 
 export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
@@ -216,6 +287,7 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
 
     query<T = unknown>(selector: string): Promise<T> {
       const pending = pendingProposal();
+      const lastTestRun = state.testRuns.at(-1) ?? null;
       const values: Record<string, unknown> = {
         "claude.session.active": state.sessionActive,
         "claude.session.model": state.model,
@@ -223,14 +295,23 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
         "claude.transcript.entries": state.transcript.map((entry) => ({ ...entry })),
         "claude.prompt.last": state.lastPrompt,
         "claude.plan.steps": [...state.plan],
+        "claude.plan.reviewed": state.planReviewed,
         "claude.pendingChange.id": state.pendingProposalId,
         "claude.pendingChange.path": pending?.path ?? null,
+        "claude.pendingChange.safety": pending?.safety ?? "safe",
+        "claude.pendingChange.safetyReason": pending?.safetyReason ?? null,
         "claude.changes.viewed": [...state.viewedProposalIds],
         "claude.changes.applied": [...state.appliedProposalIds],
         "claude.changes.rejected": [...state.rejectedProposalIds],
+        "claude.security.unsafeApprovals": [...state.unsafeApprovalIds],
+        "claude.task.status": state.taskStatus,
+        "claude.task.stoppedCount": state.stoppedTaskCount,
         "claude.commands.executed": [...state.commands],
         "claude.files": Object.keys(state.files).sort(),
         "claude.files.contents": { ...state.files },
+        "claude.tests.runs": state.testRuns.map((run) => ({ ...run })),
+        "claude.tests.lastPassed": lastTestRun?.passed ?? null,
+        "claude.verification.passed": state.verificationPassed,
       };
       return Promise.resolve(values[selector] as T);
     },
@@ -286,15 +367,41 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
     runCommand(command) {
       const trimmed = command.trim();
       if (!trimmed) return;
+      const check = state.checks.find(
+        (candidate) => candidate.command.toLowerCase() === trimmed.toLowerCase(),
+      );
+      const passed = check ? checkPasses(check, state.files) : null;
+      const output = check ? (passed ? check.passingOutput : check.failingOutput) : null;
+      const nextRun = check
+        ? {
+            id: check.id,
+            command: trimmed,
+            passed: passed === true,
+            output: output ?? "",
+          }
+        : null;
+
       replaceState(
         {
           ...state,
           commands: [...state.commands, trimmed],
-          transcript: appendTranscript(state, [{ role: "user", text: `$ ${trimmed}` }]),
+          testRuns: nextRun ? [...state.testRuns, nextRun] : state.testRuns,
+          transcript: appendTranscript(state, [
+            { role: "user", text: `$ ${trimmed}` },
+            ...(output ? [{ role: "system" as const, text: output }] : []),
+          ]),
+          verificationPassed: check ? null : state.verificationPassed,
         },
         "mutation",
       );
-      emit("terminal.command.executed", { command: trimmed, cwd: state.cwd, exitCode: 0 });
+      emit("terminal.command.executed", {
+        command: trimmed,
+        cwd: state.cwd,
+        exitCode: passed === false ? 1 : 0,
+      });
+      if (check) {
+        emit("test.completed", { checkId: check.id, command: trimmed, passed });
+      }
     },
 
     submitPrompt(prompt) {
@@ -311,6 +418,9 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
           lastPrompt: trimmed,
           pendingProposalId: proposal?.id ?? null,
           plan: proposal?.planSteps ? [...proposal.planSteps] : [],
+          planReviewed: false,
+          taskStatus: proposal ? "running" : "idle",
+          verificationPassed: null,
           transcript: appendTranscript(state, [
             { role: "user", text: trimmed },
             { role: "agent", text: agentReply },
@@ -330,6 +440,7 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
           proposalId: proposal.id,
           path: proposal.path,
           label: proposal.label,
+          safety: proposal.safety ?? "safe",
         });
       }
     },
@@ -345,9 +456,13 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
           ],
           pendingProposalId: proposal.id,
           plan: proposal.planSteps ? [...proposal.planSteps] : [],
+          planReviewed: false,
           viewedProposalIds: state.viewedProposalIds.filter((id) => id !== proposal.id),
           appliedProposalIds: state.appliedProposalIds.filter((id) => id !== proposal.id),
           rejectedProposalIds: state.rejectedProposalIds.filter((id) => id !== proposal.id),
+          unsafeApprovalIds: state.unsafeApprovalIds.filter((id) => id !== proposal.id),
+          taskStatus: "running",
+          verificationPassed: null,
           transcript: appendTranscript(state, [
             { role: "agent", text: `Vorschlag: ${proposal.label} (${proposal.path})` },
           ]),
@@ -358,7 +473,14 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
         proposalId: proposal.id,
         path: proposal.path,
         label: proposal.label,
+        safety: proposal.safety ?? "safe",
       });
+    },
+
+    reviewPlan() {
+      if (state.plan.length === 0 || state.planReviewed) return;
+      replaceState({ ...state, planReviewed: true }, "mutation");
+      emit("ai.plan.reviewed", { proposalId: state.pendingProposalId, steps: [...state.plan] });
     },
 
     openProposedChange() {
@@ -376,20 +498,32 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
     approvePendingChange() {
       const proposal = pendingProposal();
       if (!proposal) return;
+      const unsafeApprovalIds =
+        proposal.safety === "sensitive" && !state.unsafeApprovalIds.includes(proposal.id)
+          ? [...state.unsafeApprovalIds, proposal.id]
+          : state.unsafeApprovalIds;
       replaceState(
         {
           ...state,
           files: { ...state.files, [proposal.path]: proposal.nextContent },
           pendingProposalId: null,
           plan: [],
+          planReviewed: false,
           appliedProposalIds: [...state.appliedProposalIds, proposal.id],
+          unsafeApprovalIds,
+          taskStatus: "completed",
+          verificationPassed: null,
           transcript: appendTranscript(state, [
             { role: "system", text: `Freigegeben: ${proposal.path}` },
           ]),
         },
         "mutation",
       );
-      emit("ai.suggestion.accepted", { proposalId: proposal.id, path: proposal.path });
+      emit("ai.suggestion.accepted", {
+        proposalId: proposal.id,
+        path: proposal.path,
+        safety: proposal.safety ?? "safe",
+      });
       emit("file.updated", { path: proposal.path, proposalId: proposal.id });
     },
 
@@ -401,14 +535,65 @@ export function createClaudeCodeRuntime(): ClaudeCodeRuntimeAdapter {
           ...state,
           pendingProposalId: null,
           plan: [],
+          planReviewed: false,
           rejectedProposalIds: [...state.rejectedProposalIds, proposal.id],
+          taskStatus: "idle",
+          verificationPassed: null,
           transcript: appendTranscript(state, [
             { role: "system", text: `Abgelehnt: ${proposal.path}` },
           ]),
         },
         "mutation",
       );
-      emit("ai.suggestion.rejected", { proposalId: proposal.id, path: proposal.path });
+      emit("ai.suggestion.rejected", {
+        proposalId: proposal.id,
+        path: proposal.path,
+        safety: proposal.safety ?? "safe",
+      });
+    },
+
+    stopTask() {
+      if (state.pendingProposalId === null && state.plan.length === 0) return;
+      replaceState(
+        {
+          ...state,
+          pendingProposalId: null,
+          plan: [],
+          planReviewed: false,
+          taskStatus: "stopped",
+          stoppedTaskCount: state.stoppedTaskCount + 1,
+          verificationPassed: null,
+          transcript: appendTranscript(state, [{ role: "system", text: "Aufgabe gestoppt." }]),
+        },
+        "mutation",
+      );
+      emit("ai.task.stopped", { stoppedTaskCount: state.stoppedTaskCount });
+    },
+
+    verifyResult() {
+      const lastTestRun = state.testRuns.at(-1) ?? null;
+      const passed =
+        lastTestRun?.passed === true &&
+        state.unsafeApprovalIds.length === 0 &&
+        state.appliedProposalIds.length > 0 &&
+        state.pendingProposalId === null;
+      replaceState(
+        {
+          ...state,
+          verificationPassed: passed,
+          transcript: appendTranscript(state, [
+            {
+              role: "system",
+              text: passed
+                ? "Ergebnis geprüft: Änderung und Teststatus sind plausibel."
+                : "Ergebnisprüfung fehlgeschlagen: Änderung, Test oder Sicherheitsentscheidung prüfen.",
+            },
+          ]),
+        },
+        "mutation",
+      );
+      emit("verification.completed", { passed });
+      return passed;
     },
 
     reset() {
