@@ -22,12 +22,15 @@ const context: TutorLlmContext = {
 
 class FakeProvider implements LlmProvider {
   readonly requests: LlmRequest[] = [];
+  readonly id: string;
+  private readonly response: LlmResponse;
+  private readonly maximumCostMicros: number;
 
-  constructor(
-    readonly id: string,
-    private readonly response: LlmResponse,
-    private readonly maximumCostMicros = 0,
-  ) {}
+  constructor(id: string, responseValue: LlmResponse, maximumCostMicros = 0) {
+    this.id = id;
+    this.response = responseValue;
+    this.maximumCostMicros = maximumCostMicros;
+  }
 
   estimateMaximumCostMicros(): number {
     return this.maximumCostMicros;
