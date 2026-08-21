@@ -3,7 +3,7 @@ import { util } from "@aws-appsync/utils";
 function csvCell(value) {
   if (value === null || value === undefined) return "";
   const text = String(value);
-  return `"${text.replace(/"/g, '""')}"`;
+  return `"${text.split('"').join('""')}"`;
 }
 
 function row(values) {
