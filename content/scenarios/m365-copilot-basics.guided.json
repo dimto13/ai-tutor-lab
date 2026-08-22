@@ -28,7 +28,7 @@
       "helpLevels": [
         "Suche links in der Anwendungsliste nach Teams.",
         "Teams ist der erste Einstieg für die Besprechungsnotiz.",
-        "Klicke auf Teams."
+        "Klicke links in der Anwendungsliste auf Teams, sodass Teams als aktive Anwendung angezeigt wird und du mit der Besprechungsnotiz beginnen kannst."
       ],
       "validation": {
         "kind": "state",
@@ -95,7 +95,7 @@
       "helpLevels": [
         "Im Ergebnisbereich gibt es eine Aktion für den aktuellen Teams-Kontext.",
         "Erzeuge die Zusammenfassung erst nach dem strukturierten Auftrag.",
-        "Klicke auf Teams-Entwurf erzeugen."
+        "Klicke im Ergebnisbereich auf „Teams-Entwurf erzeugen“ und warte, bis die Teams-Zusammenfassung als aktueller Entwurf angezeigt wird."
       ],
       "validation": {
         "kind": "state",
@@ -114,7 +114,7 @@
       "helpLevels": [
         "Wähle links Word.",
         "Der Ergebnisbereich passt sich an die aktive Anwendung an.",
-        "Wechsle zu Word und klicke auf Word-Entwurf erzeugen."
+        "Klicke links auf Word und anschließend im Ergebnisbereich auf „Word-Entwurf erzeugen“, sodass der zuvor freigegebene Kontext als Word-Entwurf weiterverarbeitet wird."
       ],
       "validation": {
         "kind": "all",
@@ -177,7 +177,7 @@
       "helpLevels": [
         "Wähle links Outlook.",
         "Der Ergebnisbereich erzeugt einen Entwurf für die aktive Anwendung.",
-        "Wechsle zu Outlook und klicke auf Outlook-Entwurf erzeugen."
+        "Klicke links auf Outlook und anschließend im Ergebnisbereich auf „Outlook-Entwurf erzeugen“, damit aus dem bereits geprüften Stand der synthetische Mail-Entwurf entsteht."
       ],
       "validation": {
         "kind": "all",
@@ -211,7 +211,7 @@
       "helpLevels": [
         "Die Freigabe befindet sich im rechten Qualitätsbereich.",
         "Freigeben ist erst nach Faktenprüfung und Verwerfen der unbelegten Aussage möglich.",
-        "Klicke auf Freigeben."
+        "Klicke im rechten Qualitätsbereich auf „Freigeben“, nachdem die Faktenprüfung bestätigt und die unbelegte Aussage verworfen wurde, um die menschliche Entscheidung ausdrücklich abzuschließen."
       ],
       "validation": {
         "kind": "state",
