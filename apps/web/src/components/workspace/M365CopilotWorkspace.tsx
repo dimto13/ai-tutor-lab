@@ -242,9 +242,7 @@ export function M365CopilotWorkspace() {
                     <input
                       type="checkbox"
                       checked={quality[key]}
-                      onChange={(event) =>
-                        setQuality({ ...quality, [key]: event.target.checked })
-                      }
+                      onChange={(event) => setQuality({ ...quality, [key]: event.target.checked })}
                     />
                     {labels[key]}
                   </label>
@@ -355,8 +353,7 @@ export function M365CopilotWorkspace() {
               </button>
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              Status:{" "}
-              {state.approvalDecision === "pending" ? "noch offen" : state.approvalDecision}
+              Status: {state.approvalDecision === "pending" ? "noch offen" : state.approvalDecision}
             </p>
           </div>
         </aside>
