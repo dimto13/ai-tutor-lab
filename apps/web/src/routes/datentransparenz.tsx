@@ -7,6 +7,7 @@ import {
   dataCategories,
   downloadOwnDataExport,
   loadMyDataTransparencyContext,
+  type DataStorageMode,
   type DataTransparencyContext,
 } from "@/data-transparency/userDataTransparency";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
@@ -30,6 +31,26 @@ function scoreVisibilityLabel(context: DataTransparencyContext): string {
   if (context.scoreVisibility === "private") return "Punkte: privat";
   if (context.scoreVisibility === "aggregate") return "Punkte: aggregiert ab n=5";
   return context.namedApprovalConfirmed ? "Punkte: namentlich freigegeben" : "Punkte: gesperrt";
+}
+
+function configuredStorageMode(): DataStorageMode {
+  const authMode = import.meta.env["VITE_AUTH_MODE"]?.trim().toLowerCase();
+  if (authMode === "local") return "browser-local";
+  if (authMode === "cognito") return "cloud";
+  return import.meta.env.PROD ? "cloud" : "browser-local";
+}
+
+function policyIndependentCategories() {
+  const storageMode = configuredStorageMode();
+  const categories = dataCategories({
+    storageMode,
+    scoreVisibility: "private",
+    leaderboardsEnabled: false,
+    namedApprovalConfirmed: false,
+    rawTelemetryRetentionDays: null,
+    telemetryPseudonymizationMode: null,
+  });
+  return categories.filter((category) => category.id !== "scores" && category.id !== "telemetry");
 }
 
 function DataTransparencyPage() {
@@ -64,7 +85,11 @@ function DataTransparencyPage() {
     };
   }, []);
 
-  const categories = useMemo(() => (context ? dataCategories(context) : []), [context]);
+  const categories = useMemo(() => {
+    if (context) return dataCategories(context);
+    if (contextError) return policyIndependentCategories();
+    return [];
+  }, [context, contextError]);
 
   async function exportOwnData() {
     if (!identity) {
@@ -152,7 +177,7 @@ function DataTransparencyPage() {
             <button
               type="button"
               onClick={() => void exportOwnData()}
-              disabled={exporting || !context || !identity}
+              disabled={exporting || !identity}
               className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
@@ -171,8 +196,9 @@ function DataTransparencyPage() {
             role="alert"
             className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive"
           >
-            Die aktuelle Tenant-Policy konnte nicht sicher geladen werden. Deshalb werden keine
-            möglicherweise falschen Sichtbarkeits- oder Retention-Angaben angezeigt. {contextError}
+            Die aktuelle Tenant-Policy konnte nicht sicher geladen werden. Deshalb bleiben
+            policyabhängige Angaben zu Punkte-Sichtbarkeit und Telemetrie-Retention ausgeblendet.
+            Die übrigen Datenkategorien und der bestehende Eigendatenexport bleiben verfügbar. {contextError}
           </div>
         ) : null}
 
@@ -183,72 +209,70 @@ function DataTransparencyPage() {
         ) : null}
 
         {context ? (
-          <>
-            <div className="mt-7 flex flex-wrap gap-2" aria-label="Aktueller Datenkontext">
+          <div className="mt-7 flex flex-wrap gap-2" aria-label="Aktueller Datenkontext">
+            <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
+              {context.storageMode === "cloud"
+                ? "Speichermodus: Cloud"
+                : "Speichermodus: Browser lokal"}
+            </span>
+            <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
+              {scoreVisibilityLabel(context)}
+            </span>
+            {context.rawTelemetryRetentionDays !== null ? (
               <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
-                {context.storageMode === "cloud"
-                  ? "Speichermodus: Cloud"
-                  : "Speichermodus: Browser lokal"}
+                Rohtelemetrie: {context.rawTelemetryRetentionDays} Tage
               </span>
-              <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
-                {scoreVisibilityLabel(context)}
-              </span>
-              {context.rawTelemetryRetentionDays !== null ? (
-                <span className="rounded-full border border-border bg-panel px-3 py-1 text-xs text-foreground">
-                  Rohtelemetrie: {context.rawTelemetryRetentionDays} Tage
-                </span>
-              ) : null}
-            </div>
+            ) : null}
+          </div>
+        ) : null}
 
-            <div
-              data-testid="data-transparency-categories"
-              className="mt-6 grid gap-4 lg:grid-cols-2"
-            >
-              {categories.map((category) => (
-                <section
-                  key={category.id}
-                  data-category={category.id}
-                  aria-labelledby={`data-category-${category.id}`}
-                  className="rounded-xl border border-border bg-panel p-5"
+        {categories.length > 0 ? (
+          <div
+            data-testid="data-transparency-categories"
+            className="mt-6 grid gap-4 lg:grid-cols-2"
+          >
+            {categories.map((category) => (
+              <section
+                key={category.id}
+                data-category={category.id}
+                aria-labelledby={`data-category-${category.id}`}
+                className="rounded-xl border border-border bg-panel p-5"
+              >
+                <h2
+                  id={`data-category-${category.id}`}
+                  className="text-base font-semibold text-foreground"
                 >
-                  <h2
-                    id={`data-category-${category.id}`}
-                    className="text-base font-semibold text-foreground"
-                  >
-                    {category.title}
-                  </h2>
-                  <dl className="mt-4 space-y-4 text-sm">
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Was wird gespeichert?
-                      </dt>
-                      <dd className="mt-1 leading-relaxed text-foreground">{category.stored}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Wo?
-                      </dt>
-                      <dd className="mt-1 leading-relaxed text-foreground">{category.storage}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Wer kann es sehen?
-                      </dt>
-                      <dd className="mt-1 leading-relaxed text-foreground">
-                        {category.recipients}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Aufbewahrung / Löschung
-                      </dt>
-                      <dd className="mt-1 leading-relaxed text-foreground">{category.retention}</dd>
-                    </div>
-                  </dl>
-                </section>
-              ))}
-            </div>
-          </>
+                  {category.title}
+                </h2>
+                <dl className="mt-4 space-y-4 text-sm">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Was wird gespeichert?
+                    </dt>
+                    <dd className="mt-1 leading-relaxed text-foreground">{category.stored}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Wo?
+                    </dt>
+                    <dd className="mt-1 leading-relaxed text-foreground">{category.storage}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Wer kann es sehen?
+                    </dt>
+                    <dd className="mt-1 leading-relaxed text-foreground">{category.recipients}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Aufbewahrung / Löschung
+                    </dt>
+                    <dd className="mt-1 leading-relaxed text-foreground">{category.retention}</dd>
+                  </div>
+                </dl>
+              </section>
+            ))}
+          </div>
         ) : null}
       </main>
     </div>
