@@ -1,5 +1,5 @@
 import type { Scenario, TrainingStep } from "@ai-train-lab/training-engine";
-import vscodeBasicsGuidedEn from "../../../../content/i18n/en/vscode-basics.guided.json";
+import vscodeBasicsGuidedEn from "../../../../content/i18n/en/vscode-basics.guided.json" with { type: "json" };
 import type { SupportedLanguage } from "./messages";
 
 type StepTranslation = Partial<
