@@ -53,10 +53,7 @@ describe("M365 Copilot runtime", () => {
     runtime.setSourceApproved("meeting-notes", true);
     runtime.setSourceApproved("project-brief", true);
     assert.equal(await runtime.query("m365.approvedSourceCount"), 2);
-    assert.equal(
-      events.filter((event) => event.type === "m365.source.approval.denied").length,
-      2,
-    );
+    assert.equal(events.filter((event) => event.type === "m365.source.approval.denied").length, 2);
   });
 
   it("keeps document, meeting, mail and prompt contents out of runtime events", () => {
