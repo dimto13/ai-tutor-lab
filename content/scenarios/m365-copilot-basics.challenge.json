@@ -21,51 +21,15 @@
   "completionValidation": {
     "kind": "all",
     "of": [
-      {
-        "kind": "state",
-        "selector": "m365.approvedSourceCount",
-        "equals": 2
-      },
-      {
-        "kind": "state",
-        "selector": "m365.prompt.qualityComplete",
-        "equals": true
-      },
-      {
-        "kind": "state",
-        "selector": "m365.drafts.createdKinds",
-        "includes": "meeting-summary"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.drafts.createdKinds",
-        "includes": "word-draft"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.drafts.createdKinds",
-        "includes": "outlook-draft"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.draft.kind",
-        "equals": "outlook-draft"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.review.factsChecked",
-        "equals": true
-      },
-      {
-        "kind": "state",
-        "selector": "m365.review.unsupportedRejected",
-        "equals": true
-      },
-      {
-        "kind": "state",
-        "selector": "m365.approval.decision",
-        "equals": "approved"
-      }
+      { "kind": "state", "selector": "m365.approvedSourceCount", "equals": 2 },
+      { "kind": "state", "selector": "m365.prompt.qualityComplete", "equals": true },
+      { "kind": "state", "selector": "m365.drafts.createdKinds", "includes": "meeting-summary" },
+      { "kind": "state", "selector": "m365.drafts.createdKinds", "includes": "word-draft" },
+      { "kind": "state", "selector": "m365.drafts.createdKinds", "includes": "outlook-draft" },
+      { "kind": "state", "selector": "m365.draft.kind", "equals": "outlook-draft" },
+      { "kind": "state", "selector": "m365.review.factsChecked", "equals": true },
+      { "kind": "state", "selector": "m365.review.unsupportedRejected", "equals": true },
+      { "kind": "state", "selector": "m365.approval.decision", "equals": "approved" }
     ]
   },
   "steps": [
@@ -83,51 +47,15 @@
       "validation": {
         "kind": "all",
         "of": [
-          {
-            "kind": "state",
-            "selector": "m365.approvedSourceCount",
-            "equals": 2
-          },
-          {
-            "kind": "state",
-            "selector": "m365.prompt.qualityComplete",
-            "equals": true
-          },
-          {
-            "kind": "state",
-            "selector": "m365.drafts.createdKinds",
-            "includes": "meeting-summary"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.drafts.createdKinds",
-            "includes": "word-draft"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.drafts.createdKinds",
-            "includes": "outlook-draft"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.draft.kind",
-            "equals": "outlook-draft"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.review.factsChecked",
-            "equals": true
-          },
-          {
-            "kind": "state",
-            "selector": "m365.review.unsupportedRejected",
-            "equals": true
-          },
-          {
-            "kind": "state",
-            "selector": "m365.approval.decision",
-            "equals": "approved"
-          }
+          { "kind": "state", "selector": "m365.approvedSourceCount", "equals": 2 },
+          { "kind": "state", "selector": "m365.prompt.qualityComplete", "equals": true },
+          { "kind": "state", "selector": "m365.drafts.createdKinds", "includes": "meeting-summary" },
+          { "kind": "state", "selector": "m365.drafts.createdKinds", "includes": "word-draft" },
+          { "kind": "state", "selector": "m365.drafts.createdKinds", "includes": "outlook-draft" },
+          { "kind": "state", "selector": "m365.draft.kind", "equals": "outlook-draft" },
+          { "kind": "state", "selector": "m365.review.factsChecked", "equals": true },
+          { "kind": "state", "selector": "m365.review.unsupportedRejected", "equals": true },
+          { "kind": "state", "selector": "m365.approval.decision", "equals": "approved" }
         ]
       },
       "successMessage": "Challenge bestanden: Datenfreigabe, Promptqualität, Teams-/Word-/Outlook-Workflow, Faktenprüfung, Halluzinationskontrolle und menschliche Freigabe sind im Endzustand erfüllt."
@@ -135,6 +63,6 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy"]
+    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"]
   }
 }
