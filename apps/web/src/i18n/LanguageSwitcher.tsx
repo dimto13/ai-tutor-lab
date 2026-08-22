@@ -1,3 +1,4 @@
+import { useLocation } from "@tanstack/react-router";
 import { Languages } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "./LanguageContext";
@@ -8,17 +9,22 @@ const options: Array<{ value: SupportedLanguage; labelKey: PlatformMessageKey }>
   { value: "en", labelKey: "english" },
 ];
 
+const PUBLIC_ROUTES = new Set(["/willkommen", "/anmelden"]);
+
 export function LanguageSwitcher() {
+  const { pathname } = useLocation();
   const { language, saving, setLanguage, t } = useLanguage();
   const [error, setError] = useState<string | null>(null);
+
+  if (PUBLIC_ROUTES.has(pathname)) return null;
 
   return (
     <div
       data-platform-ui="language-switcher"
-      className="relative z-[120] flex w-full items-center justify-end gap-2 border-b border-border bg-panel/95 px-3 py-2 backdrop-blur"
+      className="relative z-[120] flex h-5 w-full shrink-0 items-center justify-end gap-1 border-b border-border bg-panel/95 px-2 backdrop-blur"
     >
-      <Languages className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+      <Languages className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <label className="flex h-5 items-center gap-1 text-[11px] font-medium text-foreground">
         <span>{t("languageLabel")}</span>
         <select
           aria-label={t("changeLanguage")}
@@ -30,7 +36,7 @@ export function LanguageSwitcher() {
               setError(cause instanceof Error ? cause.message : t("genericError"));
             });
           }}
-          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          className="h-5 rounded border border-border bg-background px-1 py-0 text-[11px] leading-none text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
