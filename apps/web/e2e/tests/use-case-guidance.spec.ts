@@ -23,7 +23,9 @@ test("Einsatzbereich liefert drei Ergebnisblöcke, sechs Auftragsfelder und loka
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/einsatzbereiche");
 
-  await page.getByLabel("Gewünschtes Arbeitsergebnis").fill("Neue Regeln recherchieren und Quellen prüfen");
+  await page
+    .getByLabel("Gewünschtes Arbeitsergebnis")
+    .fill("Neue Regeln recherchieren und Quellen prüfen");
   await page.getByLabel("Werkzeuge oder Systeme heute").fill("Websuche");
   await page.getByLabel("Wichtige Vorgaben").fill("nur belastbare Quellen");
   await page.getByRole("button", { name: "Vorhaben einordnen" }).click();
@@ -48,6 +50,32 @@ test("Einsatzbereich liefert drei Ergebnisblöcke, sechs Auftragsfelder und loka
   await accessibility.check("use-case guidance recommendation");
 });
 
+test("Einsatzbereich-Eingaben bleiben transient und überstehen keinen Reload", async ({ page }) => {
+  await page.goto("/einsatzbereiche");
+  const beforeStorage = await page.evaluate(() => ({
+    local: Object.keys(localStorage).sort(),
+    session: Object.keys(sessionStorage).sort(),
+  }));
+
+  await page.getByLabel("Gewünschtes Arbeitsergebnis").fill("Softwareänderungen mit KI entwickeln");
+  await page.getByLabel("Werkzeuge oder Systeme heute").fill("VS Code");
+  await page.getByLabel("Wichtige Vorgaben").fill("nur lokaler Code");
+  await page.getByRole("button", { name: "Vorhaben einordnen" }).click();
+  await expect(page.getByRole("heading", { name: "Auftragsentwurf" })).toBeVisible();
+
+  const afterStorage = await page.evaluate(() => ({
+    local: Object.keys(localStorage).sort(),
+    session: Object.keys(sessionStorage).sort(),
+  }));
+  expect(afterStorage).toEqual(beforeStorage);
+
+  await page.reload();
+  await expect(page.getByLabel("Gewünschtes Arbeitsergebnis")).toHaveValue("");
+  await expect(page.getByLabel("Werkzeuge oder Systeme heute")).toHaveValue("");
+  await expect(page.getByLabel("Wichtige Vorgaben")).toHaveValue("");
+  await expect(page.getByRole("heading", { name: "Auftragsentwurf" })).toHaveCount(0);
+});
+
 test("Einsatzbereich bleibt bei 320px tastaturbedienbar und fragt bei vagem Ziel nach", async ({
   page,
 }) => {
@@ -61,7 +89,6 @@ test("Einsatzbereich bleibt bei 320px tastaturbedienbar und fragt bei vagem Ziel
   await page.keyboard.type("Browser");
   await page.keyboard.press("Tab");
   await page.keyboard.type("intern");
-  await page.keyboard.press("Tab");
 
   await page.getByRole("button", { name: "Vorhaben einordnen" }).focus();
   await page.keyboard.press("Enter");
