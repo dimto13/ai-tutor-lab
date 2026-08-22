@@ -38,50 +38,54 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function parseScenarioTranslation(value: unknown): ScenarioTranslation {
-  if (!isRecord(value) || typeof value.scenarioId !== "string" || !value.scenarioId.trim()) {
+  if (!isRecord(value)) {
     throw new Error("Scenario translation requires a non-empty scenarioId");
   }
-  if (value.title !== undefined && typeof value.title !== "string") {
-    throw new Error(`Scenario translation ${value.scenarioId}: title must be a string`);
+  const scenarioId = value["scenarioId"];
+  const title = value["title"];
+  const description = value["description"];
+  const rawSteps = value["steps"];
+
+  if (typeof scenarioId !== "string" || !scenarioId.trim()) {
+    throw new Error("Scenario translation requires a non-empty scenarioId");
   }
-  if (value.description !== undefined && typeof value.description !== "string") {
-    throw new Error(`Scenario translation ${value.scenarioId}: description must be a string`);
+  if (title !== undefined && typeof title !== "string") {
+    throw new Error(`Scenario translation ${scenarioId}: title must be a string`);
+  }
+  if (description !== undefined && typeof description !== "string") {
+    throw new Error(`Scenario translation ${scenarioId}: description must be a string`);
   }
 
   let steps: Record<string, StepTranslation> | undefined;
-  if (value.steps !== undefined) {
-    if (!isRecord(value.steps)) {
-      throw new Error(`Scenario translation ${value.scenarioId}: steps must be an object`);
+  if (rawSteps !== undefined) {
+    if (!isRecord(rawSteps)) {
+      throw new Error(`Scenario translation ${scenarioId}: steps must be an object`);
     }
     steps = {};
-    for (const [stepId, rawStep] of Object.entries(value.steps)) {
+    for (const [stepId, rawStep] of Object.entries(rawSteps)) {
       if (!stepId.trim() || !isRecord(rawStep)) {
-        throw new Error(`Scenario translation ${value.scenarioId}: invalid step translation`);
+        throw new Error(`Scenario translation ${scenarioId}: invalid step translation`);
       }
       for (const field of stringStepFields) {
         if (rawStep[field] !== undefined && typeof rawStep[field] !== "string") {
-          throw new Error(
-            `Scenario translation ${value.scenarioId}/${stepId}: ${field} must be a string`,
-          );
+          throw new Error(`Scenario translation ${scenarioId}/${stepId}: ${field} must be a string`);
         }
       }
+      const helpLevels = rawStep["helpLevels"];
       if (
-        rawStep.helpLevels !== undefined &&
-        (!Array.isArray(rawStep.helpLevels) ||
-          rawStep.helpLevels.some((level) => typeof level !== "string"))
+        helpLevels !== undefined &&
+        (!Array.isArray(helpLevels) || helpLevels.some((level) => typeof level !== "string"))
       ) {
-        throw new Error(
-          `Scenario translation ${value.scenarioId}/${stepId}: helpLevels must be strings`,
-        );
+        throw new Error(`Scenario translation ${scenarioId}/${stepId}: helpLevels must be strings`);
       }
       steps[stepId] = rawStep as StepTranslation;
     }
   }
 
   return {
-    scenarioId: value.scenarioId,
-    ...(value.title !== undefined ? { title: value.title } : {}),
-    ...(value.description !== undefined ? { description: value.description } : {}),
+    scenarioId,
+    ...(title !== undefined ? { title } : {}),
+    ...(description !== undefined ? { description } : {}),
     ...(steps !== undefined ? { steps } : {}),
   };
 }
