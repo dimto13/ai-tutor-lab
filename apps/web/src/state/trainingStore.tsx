@@ -43,6 +43,11 @@ import { useAuth } from "@/auth/AuthContext";
 import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import {
+  loadChallengeAttemptHistory,
+  recordTimedOutChallengeAttempt,
+  shouldRecommendGuidedAfterChallenge,
+} from "./challengeAttemptHistory";
 import { GuidedNavigationCoordinator } from "./guidedNavigationCoordinator";
 import { TrainingStatePersistence } from "./trainingStatePersistence";
 
@@ -133,6 +138,7 @@ interface TrainingContextValue {
   percent: number;
   isFinished: boolean;
   isChallengeFailed: boolean;
+  recommendGuidedAfterChallenge: boolean;
   isReady: boolean;
   isGuidedReplay: boolean;
   guidedNavigationPending: boolean;
@@ -228,6 +234,7 @@ export function TrainingProvider({
   const [feedback, setFeedback] = useState<TrainingContextValue["feedback"]>(null);
   const [visibleHelpLevel, setVisibleHelpLevel] = useState(0);
   const [challengeRemainingSeconds, setChallengeRemainingSeconds] = useState<number | null>(null);
+  const [recommendGuidedAfterChallenge, setRecommendGuidedAfterChallenge] = useState(false);
   const [stateRecovery, setStateRecovery] = useState<ActiveGuidedRecovery | null>(null);
   const [guidedReplayStepId, setGuidedReplayStepId] = useState<string | null>(null);
   const [guidedNavigationPending, setGuidedNavigationPending] = useState(false);
@@ -378,6 +385,16 @@ export function TrainingProvider({
     void persistence
       .loadSession()
       .then(async ({ session }) => {
+        let shouldRecommendGuided = false;
+        if (mode === "challenge") {
+          try {
+            shouldRecommendGuided = shouldRecommendGuidedAfterChallenge(
+              await loadChallengeAttemptHistory(persistence),
+            );
+          } catch {
+            // Challenge remains usable when recommendation history cannot be restored.
+          }
+        }
         const replayStepId =
           mode === "guided" && guidedNavigationCoordinator
             ? await guidedNavigationCoordinator.loadReplayStepId(session, scenario)
@@ -390,6 +407,7 @@ export function TrainingProvider({
         setFeedback(null);
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
+        setRecommendGuidedAfterChallenge(shouldRecommendGuided);
         setHydrated(true);
       })
       .catch(() => {
@@ -402,6 +420,7 @@ export function TrainingProvider({
         setFeedback(null);
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
+        setRecommendGuidedAfterChallenge(false);
         setHydrated(true);
       });
 
@@ -435,6 +454,32 @@ export function TrainingProvider({
       cancelled = true;
     };
   }, [progress, hydrated, persistence]);
+
+  useEffect(() => {
+    if (
+      !hydrated ||
+      mode !== "challenge" ||
+      !persistence ||
+      progress.challengeOutcome !== "timed_out"
+    ) {
+      return;
+    }
+    let cancelled = false;
+
+    void recordTimedOutChallengeAttempt(persistence, progress)
+      .then((history) => {
+        if (!cancelled) {
+          setRecommendGuidedAfterChallenge(shouldRecommendGuidedAfterChallenge(history));
+        }
+      })
+      .catch(() => {
+        // Persisted session remains authoritative even if recommendation history is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, mode, persistence, progress]);
 
   useEffect(() => {
     if (!hydrated || mode !== "guided") return;
@@ -943,6 +988,7 @@ export function TrainingProvider({
       percent: Math.round((completedCount / totalCount) * 100),
       isFinished,
       isChallengeFailed,
+      recommendGuidedAfterChallenge,
       isReady: hydrated,
       isGuidedReplay: guidedReplayStepId !== null,
       guidedNavigationPending,
@@ -1032,6 +1078,7 @@ export function TrainingProvider({
     feedback,
     visibleHelpLevel,
     challengeRemainingSeconds,
+    recommendGuidedAfterChallenge,
     completeStep,
     finishGuidedReplay,
     navigateToGuidedStep,
