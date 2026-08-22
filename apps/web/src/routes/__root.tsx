@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import { AuthGate } from "../auth/AuthGate";
 import { AuthProvider } from "../auth/AuthContext";
 import { createApplicationAuthService } from "../auth/applicationAuthService";
+import { LanguageProvider } from "../i18n/LanguageContext";
+import { LanguageSwitcher } from "../i18n/LanguageSwitcher";
 import { UserPreferencesProvider } from "../profile/UserPreferencesContext";
 import { UserProfileProvider } from "../profile/UserProfileContext";
 import appCss from "../styles.css?url";
@@ -121,7 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="de">
       <head>
         <HeadContent />
       </head>
@@ -141,10 +143,13 @@ function RootComponent() {
       <AuthProvider service={authService}>
         <UserProfileProvider>
           <UserPreferencesProvider>
-            <AuthGate>
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
-            </AuthGate>
+            <LanguageProvider>
+              <AuthGate>
+                <LanguageSwitcher />
+                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                <Outlet />
+              </AuthGate>
+            </LanguageProvider>
           </UserPreferencesProvider>
         </UserProfileProvider>
       </AuthProvider>
