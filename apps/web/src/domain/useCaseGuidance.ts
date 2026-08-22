@@ -39,7 +39,7 @@ const vagueGoalPattern =
 
 function ruleMatchesGoal(rule: UseCaseGuidanceRule, goal: string) {
   const normalizedGoal = goal.toLocaleLowerCase("de-DE");
-  const tokens = normalizedGoal.match(/[\p{L}\p{N}_-]+/gu) ?? [];
+  const tokens: string[] = normalizedGoal.match(/[\p{L}\p{N}_-]+/gu) ?? [];
 
   return rule.keywords.some((rawKeyword) => {
     const keyword = rawKeyword.toLocaleLowerCase("de-DE");
