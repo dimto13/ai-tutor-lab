@@ -1,0 +1,523 @@
+{
+  "id": "table-data-workflow.guided",
+  "moduleId": "table-data-workflow",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Tabellendaten auswerten – Annahmen, Zwischenwerte und Plausibilitätscheck",
+  "description": "Werte einen vollständig synthetischen Vertriebsdatensatz aus, bestätige drei Bereinigungsregeln einzeln, verfolge sichtbare Zwischenstände und finde eine unbemerkt verlorene Region.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["artifact.preview", "github.copilot", "copilot.chat", "platform.review"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["synthetische-vertriebsanalyse"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Synthetische Vertriebsanalyse\nAlle Namen und Zahlen in diesem Training sind frei erfunden. Ziel: Umsatz nach Region und Quartal auswerten, Retouren getrennt betrachten und das Ergebnis gegen die Ausgangsdaten prüfen."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "chatResponses": [
+        {
+          "response": "Vor der Berechnung sollten die Bereinigungsannahmen einzeln geprüft werden: Regionsschreibweisen, Datumsformate und Betrags-/Retourenlogik."
+        },
+        {
+          "promptContains": "ost",
+          "response": "Richtig erkannt: In der aktuellen Auswertung fehlt Ost, obwohl die Region in den synthetischen Ausgangsdaten vorhanden ist. Korrigiere nur diesen Verlust und behalte die übrige Iteration bei."
+        }
+      ],
+      "artifactPreview": {
+        "activeArtifactId": "source-table",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "source-table",
+            "type": "table",
+            "title": "Synthetische Ausgangsdaten",
+            "description": "Unveränderte Referenz mit vier Regionen, gemischten Schreibweisen, Datumsformaten und Retouren.",
+            "columns": [
+              { "key": "date", "label": "Datum" },
+              { "key": "region", "label": "Region" },
+              { "key": "kind", "label": "Art" },
+              { "key": "amount", "label": "Betrag" }
+            ],
+            "rows": [
+              { "date": "15.01.2026", "region": "Nord", "kind": "Umsatz", "amount": "120.000 €" },
+              { "date": "2026-04-15", "region": "NORD", "kind": "Umsatz", "amount": "130 000 EUR" },
+              { "date": "15/07/2026", "region": "Norden", "kind": "Umsatz", "amount": "125.000 €" },
+              { "date": "15.10.2026", "region": "Nord", "kind": "Umsatz", "amount": "135000 EUR" },
+              { "date": "30.04.2026", "region": "NORD", "kind": "Retoure", "amount": "-10.000 €" },
+              { "date": "16.01.2026", "region": "Süd", "kind": "Umsatz", "amount": "100000 EUR" },
+              { "date": "2026-04-16", "region": "Sued", "kind": "Umsatz", "amount": "105.000 €" },
+              { "date": "16/07/2026", "region": "SÜD", "kind": "Umsatz", "amount": "110 000 EUR" },
+              { "date": "16.10.2026", "region": "Süd", "kind": "Umsatz", "amount": "115.000 €" },
+              { "date": "30.04.2026", "region": "Sued", "kind": "Retoure", "amount": "-5000 EUR" },
+              { "date": "17.01.2026", "region": "Ost", "kind": "Umsatz", "amount": "80.000 €" },
+              { "date": "2026-04-17", "region": "OST", "kind": "Umsatz", "amount": "85000 EUR" },
+              { "date": "17/07/2026", "region": "Osten", "kind": "Umsatz", "amount": "90.000 €" },
+              { "date": "17.10.2026", "region": "Ost", "kind": "Umsatz", "amount": "95 000 EUR" },
+              { "date": "30.04.2026", "region": "OST", "kind": "Retoure", "amount": "-5.000 €" },
+              { "date": "18.01.2026", "region": "West", "kind": "Umsatz", "amount": "140000 EUR" },
+              { "date": "2026-04-18", "region": "WEST", "kind": "Umsatz", "amount": "145.000 €" },
+              { "date": "18/07/2026", "region": "Westen", "kind": "Umsatz", "amount": "150 000 EUR" },
+              { "date": "18.10.2026", "region": "West", "kind": "Umsatz", "amount": "155.000 €" },
+              { "date": "30.04.2026", "region": "WEST", "kind": "Retoure", "amount": "-15000 EUR" }
+            ]
+          },
+          {
+            "id": "working-table",
+            "type": "table",
+            "title": "Arbeitstabelle",
+            "description": "Arbeitskopie der synthetischen Ausgangsdaten. Jede Revision macht einen Zwischenschritt sichtbar.",
+            "columns": [
+              { "key": "date", "label": "Datum" },
+              { "key": "region", "label": "Region" },
+              { "key": "kind", "label": "Art" },
+              { "key": "amount", "label": "Betrag" }
+            ],
+            "rows": [
+              { "date": "15.01.2026", "region": "Nord", "kind": "Umsatz", "amount": "120.000 €" },
+              { "date": "2026-04-15", "region": "NORD", "kind": "Umsatz", "amount": "130 000 EUR" },
+              { "date": "15/07/2026", "region": "Norden", "kind": "Umsatz", "amount": "125.000 €" },
+              { "date": "15.10.2026", "region": "Nord", "kind": "Umsatz", "amount": "135000 EUR" },
+              { "date": "30.04.2026", "region": "NORD", "kind": "Retoure", "amount": "-10.000 €" },
+              { "date": "16.01.2026", "region": "Süd", "kind": "Umsatz", "amount": "100000 EUR" },
+              { "date": "2026-04-16", "region": "Sued", "kind": "Umsatz", "amount": "105.000 €" },
+              { "date": "16/07/2026", "region": "SÜD", "kind": "Umsatz", "amount": "110 000 EUR" },
+              { "date": "16.10.2026", "region": "Süd", "kind": "Umsatz", "amount": "115.000 €" },
+              { "date": "30.04.2026", "region": "Sued", "kind": "Retoure", "amount": "-5000 EUR" },
+              { "date": "17.01.2026", "region": "Ost", "kind": "Umsatz", "amount": "80.000 €" },
+              { "date": "2026-04-17", "region": "OST", "kind": "Umsatz", "amount": "85000 EUR" },
+              { "date": "17/07/2026", "region": "Osten", "kind": "Umsatz", "amount": "90.000 €" },
+              { "date": "17.10.2026", "region": "Ost", "kind": "Umsatz", "amount": "95 000 EUR" },
+              { "date": "30.04.2026", "region": "OST", "kind": "Retoure", "amount": "-5.000 €" },
+              { "date": "18.01.2026", "region": "West", "kind": "Umsatz", "amount": "140000 EUR" },
+              { "date": "2026-04-18", "region": "WEST", "kind": "Umsatz", "amount": "145.000 €" },
+              { "date": "18/07/2026", "region": "Westen", "kind": "Umsatz", "amount": "150 000 EUR" },
+              { "date": "18.10.2026", "region": "West", "kind": "Umsatz", "amount": "155.000 €" },
+              { "date": "30.04.2026", "region": "WEST", "kind": "Retoure", "amount": "-15000 EUR" }
+            ]
+          },
+          {
+            "id": "rule-regions",
+            "type": "data",
+            "title": "Bereinigungsregel 1 · Regionen",
+            "description": "Einzeln prüfen und bestätigen, bevor die Regel angewendet wird.",
+            "value": {
+              "Annahme": "Nord/NORD/Norden → Nord; Süd/Sued/SÜD → Süd; Ost/OST/Osten → Ost; West/WEST/Westen → West",
+              "Risiko": "Eine nicht erfasste Schreibweise kann bei der Aggregation als eigene oder fehlende Region enden."
+            }
+          },
+          {
+            "id": "rule-dates",
+            "type": "data",
+            "title": "Bereinigungsregel 2 · Datum",
+            "description": "Einzeln prüfen und bestätigen, bevor die Regel angewendet wird.",
+            "value": {
+              "Annahme": "DD.MM.YYYY, YYYY-MM-DD und DD/MM/YYYY werden als Kalenderdaten im Jahr 2026 interpretiert.",
+              "Quartale": "Jan–Mär = Q1, Apr–Jun = Q2, Jul–Sep = Q3, Okt–Dez = Q4"
+            }
+          },
+          {
+            "id": "rule-values",
+            "type": "data",
+            "title": "Bereinigungsregel 3 · Beträge und Retouren",
+            "description": "Einzeln prüfen und bestätigen, bevor die Regel angewendet wird.",
+            "value": {
+              "Annahme": "Punkt oder Leerzeichen sind Tausendertrenner; € und EUR bedeuten dieselbe Währung.",
+              "Retouren": "Negative Retouren mindern die Basisauswertung. Eine spätere Iteration darf sie ausdrücklich ausschließen."
+            }
+          }
+        ],
+        "revisions": [
+          {
+            "id": "normalize-regions",
+            "artifactId": "working-table",
+            "label": "Regionsschreibweisen vereinheitlichen",
+            "next": {
+              "id": "working-table",
+              "type": "table",
+              "title": "Arbeitstabelle · Regionen bereinigt",
+              "description": "Zwischenstand 1: Nur Regionsschreibweisen wurden vereinheitlicht.",
+              "columns": [
+                { "key": "date", "label": "Datum" },
+                { "key": "region", "label": "Region" },
+                { "key": "kind", "label": "Art" },
+                { "key": "amount", "label": "Betrag" }
+              ],
+              "rows": [
+                { "date": "15.01.2026", "region": "Nord", "kind": "Umsatz", "amount": "120.000 €" },
+                { "date": "2026-04-15", "region": "Nord", "kind": "Umsatz", "amount": "130 000 EUR" },
+                { "date": "15/07/2026", "region": "Nord", "kind": "Umsatz", "amount": "125.000 €" },
+                { "date": "15.10.2026", "region": "Nord", "kind": "Umsatz", "amount": "135000 EUR" },
+                { "date": "30.04.2026", "region": "Nord", "kind": "Retoure", "amount": "-10.000 €" },
+                { "date": "16.01.2026", "region": "Süd", "kind": "Umsatz", "amount": "100000 EUR" },
+                { "date": "2026-04-16", "region": "Süd", "kind": "Umsatz", "amount": "105.000 €" },
+                { "date": "16/07/2026", "region": "Süd", "kind": "Umsatz", "amount": "110 000 EUR" },
+                { "date": "16.10.2026", "region": "Süd", "kind": "Umsatz", "amount": "115.000 €" },
+                { "date": "30.04.2026", "region": "Süd", "kind": "Retoure", "amount": "-5000 EUR" },
+                { "date": "17.01.2026", "region": "Ost", "kind": "Umsatz", "amount": "80.000 €" },
+                { "date": "2026-04-17", "region": "Ost", "kind": "Umsatz", "amount": "85000 EUR" },
+                { "date": "17/07/2026", "region": "Ost", "kind": "Umsatz", "amount": "90.000 €" },
+                { "date": "17.10.2026", "region": "Ost", "kind": "Umsatz", "amount": "95 000 EUR" },
+                { "date": "30.04.2026", "region": "Ost", "kind": "Retoure", "amount": "-5.000 €" },
+                { "date": "18.01.2026", "region": "West", "kind": "Umsatz", "amount": "140000 EUR" },
+                { "date": "2026-04-18", "region": "West", "kind": "Umsatz", "amount": "145.000 €" },
+                { "date": "18/07/2026", "region": "West", "kind": "Umsatz", "amount": "150 000 EUR" },
+                { "date": "18.10.2026", "region": "West", "kind": "Umsatz", "amount": "155.000 €" },
+                { "date": "30.04.2026", "region": "West", "kind": "Retoure", "amount": "-15000 EUR" }
+              ]
+            }
+          },
+          {
+            "id": "normalize-dates",
+            "artifactId": "working-table",
+            "label": "Datumsformate und Quartale vereinheitlichen",
+            "next": {
+              "id": "working-table",
+              "type": "table",
+              "title": "Arbeitstabelle · Datum bereinigt",
+              "description": "Zwischenstand 2: Kalenderdaten sind einheitlich und jedem Datensatz ist ein Quartal zugeordnet.",
+              "columns": [
+                { "key": "date", "label": "Datum" },
+                { "key": "quarter", "label": "Quartal" },
+                { "key": "region", "label": "Region" },
+                { "key": "kind", "label": "Art" },
+                { "key": "amount", "label": "Betrag" }
+              ],
+              "rows": [
+                { "date": "2026-01-15", "quarter": "Q1", "region": "Nord", "kind": "Umsatz", "amount": "120.000 €" },
+                { "date": "2026-04-15", "quarter": "Q2", "region": "Nord", "kind": "Umsatz", "amount": "130 000 EUR" },
+                { "date": "2026-07-15", "quarter": "Q3", "region": "Nord", "kind": "Umsatz", "amount": "125.000 €" },
+                { "date": "2026-10-15", "quarter": "Q4", "region": "Nord", "kind": "Umsatz", "amount": "135000 EUR" },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "Nord", "kind": "Retoure", "amount": "-10.000 €" },
+                { "date": "2026-01-16", "quarter": "Q1", "region": "Süd", "kind": "Umsatz", "amount": "100000 EUR" },
+                { "date": "2026-04-16", "quarter": "Q2", "region": "Süd", "kind": "Umsatz", "amount": "105.000 €" },
+                { "date": "2026-07-16", "quarter": "Q3", "region": "Süd", "kind": "Umsatz", "amount": "110 000 EUR" },
+                { "date": "2026-10-16", "quarter": "Q4", "region": "Süd", "kind": "Umsatz", "amount": "115.000 €" },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "Süd", "kind": "Retoure", "amount": "-5000 EUR" },
+                { "date": "2026-01-17", "quarter": "Q1", "region": "Ost", "kind": "Umsatz", "amount": "80.000 €" },
+                { "date": "2026-04-17", "quarter": "Q2", "region": "Ost", "kind": "Umsatz", "amount": "85000 EUR" },
+                { "date": "2026-07-17", "quarter": "Q3", "region": "Ost", "kind": "Umsatz", "amount": "90.000 €" },
+                { "date": "2026-10-17", "quarter": "Q4", "region": "Ost", "kind": "Umsatz", "amount": "95 000 EUR" },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "Ost", "kind": "Retoure", "amount": "-5.000 €" },
+                { "date": "2026-01-18", "quarter": "Q1", "region": "West", "kind": "Umsatz", "amount": "140000 EUR" },
+                { "date": "2026-04-18", "quarter": "Q2", "region": "West", "kind": "Umsatz", "amount": "145.000 €" },
+                { "date": "2026-07-18", "quarter": "Q3", "region": "West", "kind": "Umsatz", "amount": "150 000 EUR" },
+                { "date": "2026-10-18", "quarter": "Q4", "region": "West", "kind": "Umsatz", "amount": "155.000 €" },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "West", "kind": "Retoure", "amount": "-15000 EUR" }
+              ]
+            }
+          },
+          {
+            "id": "normalize-values",
+            "artifactId": "working-table",
+            "label": "Beträge und Retouren numerisch bereinigen",
+            "next": {
+              "id": "working-table",
+              "type": "table",
+              "title": "Arbeitstabelle · vollständig bereinigt",
+              "description": "Zwischenstand 3: Beträge sind numerisch; Retouren bleiben in der Basisauswertung negative Werte.",
+              "columns": [
+                { "key": "date", "label": "Datum" },
+                { "key": "quarter", "label": "Quartal" },
+                { "key": "region", "label": "Region" },
+                { "key": "kind", "label": "Art" },
+                { "key": "amount", "label": "Betrag EUR" }
+              ],
+              "rows": [
+                { "date": "2026-01-15", "quarter": "Q1", "region": "Nord", "kind": "Umsatz", "amount": 120000 },
+                { "date": "2026-04-15", "quarter": "Q2", "region": "Nord", "kind": "Umsatz", "amount": 130000 },
+                { "date": "2026-07-15", "quarter": "Q3", "region": "Nord", "kind": "Umsatz", "amount": 125000 },
+                { "date": "2026-10-15", "quarter": "Q4", "region": "Nord", "kind": "Umsatz", "amount": 135000 },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "Nord", "kind": "Retoure", "amount": -10000 },
+                { "date": "2026-01-16", "quarter": "Q1", "region": "Süd", "kind": "Umsatz", "amount": 100000 },
+                { "date": "2026-04-16", "quarter": "Q2", "region": "Süd", "kind": "Umsatz", "amount": 105000 },
+                { "date": "2026-07-16", "quarter": "Q3", "region": "Süd", "kind": "Umsatz", "amount": 110000 },
+                { "date": "2026-10-16", "quarter": "Q4", "region": "Süd", "kind": "Umsatz", "amount": 115000 },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "Süd", "kind": "Retoure", "amount": -5000 },
+                { "date": "2026-01-17", "quarter": "Q1", "region": "Ost", "kind": "Umsatz", "amount": 80000 },
+                { "date": "2026-04-17", "quarter": "Q2", "region": "Ost", "kind": "Umsatz", "amount": 85000 },
+                { "date": "2026-07-17", "quarter": "Q3", "region": "Ost", "kind": "Umsatz", "amount": 90000 },
+                { "date": "2026-10-17", "quarter": "Q4", "region": "Ost", "kind": "Umsatz", "amount": 95000 },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "Ost", "kind": "Retoure", "amount": -5000 },
+                { "date": "2026-01-18", "quarter": "Q1", "region": "West", "kind": "Umsatz", "amount": 140000 },
+                { "date": "2026-04-18", "quarter": "Q2", "region": "West", "kind": "Umsatz", "amount": 145000 },
+                { "date": "2026-07-18", "quarter": "Q3", "region": "West", "kind": "Umsatz", "amount": 150000 },
+                { "date": "2026-10-18", "quarter": "Q4", "region": "West", "kind": "Umsatz", "amount": 155000 },
+                { "date": "2026-04-30", "quarter": "Q2", "region": "West", "kind": "Retoure", "amount": -15000 }
+              ]
+            }
+          },
+          {
+            "id": "aggregate-baseline",
+            "artifactId": "working-table",
+            "label": "Umsatz je Region und Quartal berechnen",
+            "next": {
+              "id": "working-table",
+              "type": "table",
+              "title": "Auswertung · mit Retouren",
+              "description": "Zwischenstand 4: Quartals- und Jahreswerte inklusive negativer Retouren. Die Einzelwerte bleiben sichtbar.",
+              "columns": [
+                { "key": "region", "label": "Region" },
+                { "key": "q1", "label": "Q1 EUR" },
+                { "key": "q2", "label": "Q2 EUR" },
+                { "key": "q3", "label": "Q3 EUR" },
+                { "key": "q4", "label": "Q4 EUR" },
+                { "key": "year", "label": "Jahr EUR" }
+              ],
+              "rows": [
+                { "region": "Nord", "q1": 120000, "q2": 120000, "q3": 125000, "q4": 135000, "year": 500000 },
+                { "region": "Süd", "q1": 100000, "q2": 100000, "q3": 110000, "q4": 115000, "year": 425000 },
+                { "region": "Ost", "q1": 80000, "q2": 80000, "q3": 90000, "q4": 95000, "year": 345000 },
+                { "region": "West", "q1": 140000, "q2": 130000, "q3": 150000, "q4": 155000, "year": 575000 }
+              ],
+              "formulas": {
+                "year": "Q1 + Q2 + Q3 + Q4; Retouren bleiben in ihrem Quartal negativ enthalten"
+              }
+            }
+          },
+          {
+            "id": "exclude-returns",
+            "artifactId": "working-table",
+            "label": "Iteration · ohne Retouren rechnen",
+            "next": {
+              "id": "working-table",
+              "type": "table",
+              "title": "Auswertung · ohne Retouren",
+              "description": "Iteration: Retouren sind ausgeschlossen. Der Stand wirkt plausibel, enthält aber absichtlich einen Vollständigkeitsfehler.",
+              "columns": [
+                { "key": "region", "label": "Region" },
+                { "key": "q1", "label": "Q1 EUR" },
+                { "key": "q2", "label": "Q2 EUR" },
+                { "key": "q3", "label": "Q3 EUR" },
+                { "key": "q4", "label": "Q4 EUR" },
+                { "key": "year", "label": "Jahr EUR" }
+              ],
+              "rows": [
+                { "region": "Nord", "q1": 120000, "q2": 130000, "q3": 125000, "q4": 135000, "year": 510000 },
+                { "region": "Süd", "q1": 100000, "q2": 105000, "q3": 110000, "q4": 115000, "year": 430000 },
+                { "region": "West", "q1": 140000, "q2": 145000, "q3": 150000, "q4": 155000, "year": 590000 }
+              ],
+              "formulas": {
+                "year": "Q1 + Q2 + Q3 + Q4; Retouren ausgeschlossen"
+              }
+            }
+          },
+          {
+            "id": "restore-east",
+            "artifactId": "working-table",
+            "label": "Gefundene Region wiederherstellen",
+            "next": {
+              "id": "working-table",
+              "type": "table",
+              "title": "Auswertung · korrigierter Endstand",
+              "description": "Korrigierter Endstand ohne Retouren und wieder mit allen vier Regionen.",
+              "columns": [
+                { "key": "region", "label": "Region" },
+                { "key": "q1", "label": "Q1 EUR" },
+                { "key": "q2", "label": "Q2 EUR" },
+                { "key": "q3", "label": "Q3 EUR" },
+                { "key": "q4", "label": "Q4 EUR" },
+                { "key": "year", "label": "Jahr EUR" }
+              ],
+              "rows": [
+                { "region": "Nord", "q1": 120000, "q2": 130000, "q3": 125000, "q4": 135000, "year": 510000 },
+                { "region": "Süd", "q1": 100000, "q2": 105000, "q3": 110000, "q4": 115000, "year": 430000 },
+                { "region": "Ost", "q1": 80000, "q2": 85000, "q3": 90000, "q4": 95000, "year": 350000 },
+                { "region": "West", "q1": 140000, "q2": 145000, "q3": 150000, "q4": 155000, "year": 590000 }
+              ],
+              "formulas": {
+                "year": "Q1 + Q2 + Q3 + Q4; Retouren ausgeschlossen"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 22,
+  "points": 220,
+  "steps": [
+    {
+      "id": "formulate-task",
+      "title": "Auswertung fachlich beauftragen",
+      "description": "Du beschreibst das Ziel der Analyse in Alltagssprache. Formeln oder Programmierkenntnisse sind nicht nötig.",
+      "instruction": "Öffne Copilot und beschreibe in eigenen Worten, dass du Umsatz nach Region und Quartal auswerten und Retouren nachvollziehbar behandeln möchtest.",
+      "why": "Der fachliche Auftrag beschreibt das gewünschte Ergebnis; die Datenannahmen werden danach separat geprüft.",
+      "helpLevels": ["Öffne Copilot Chat.", "Beschreibe Ziel, Regionen, Quartale und den Umgang mit Retouren.", "Formuliere einen eigenen fachlichen Auftrag und sende ihn ab. Keine Formel ist erforderlich."],
+      "successMessage": "Der fachliche Auftrag wurde gesendet.",
+      "validation": { "kind": "event", "type": "copilot.prompt.submitted" },
+      "highlightTarget": "copilot.chat.prompt"
+    },
+    {
+      "id": "inspect-source",
+      "title": "Unveränderte Referenz ansehen",
+      "description": "Die synthetischen Ausgangsdaten bleiben unverändert. Sie enthalten Nord, Süd, Ost und West.",
+      "instruction": "Schließe Copilot bei Bedarf und wähle die synthetischen Ausgangsdaten. Prüfe, welche Regionen und Schreibweisen vorkommen.",
+      "why": "Ohne Referenz ist später schwer zu erkennen, ob eine Bereinigung Datensätze verliert.",
+      "helpLevels": ["Die Ergebnisfläche steht rechts.", "Wähle den Reiter Synthetische Ausgangsdaten.", "Prüfe in der Referenz, dass Nord, Süd, Ost und West vorkommen."],
+      "successMessage": "Die unveränderte Referenz ist sichtbar.",
+      "validation": { "kind": "event", "type": "artifact.selected", "match": { "artifactId": "source-table", "artifactType": "table" } },
+      "highlightTarget": "artifact.preview.selector"
+    },
+    {
+      "id": "confirm-region-rule",
+      "title": "Bereinigungsregel 1 einzeln bestätigen",
+      "description": "Prüfe ausschließlich die Annahme zur Vereinheitlichung der Regionsnamen.",
+      "instruction": "Wähle Bereinigungsregel 1 · Regionen, lies Annahme und Risiko und klicke erst danach auf Ergebnis geprüft.",
+      "why": "Die Zusammenfassung von Schreibweisen ist eine fachliche Annahme und darf nicht still erfolgen.",
+      "helpLevels": ["Wähle die Regionsregel.", "Vergleiche die genannten Varianten mit der Referenz.", "Bestätige nur diese eine Regel über Ergebnis geprüft."],
+      "successMessage": "Die Regionsregel wurde einzeln geprüft und bestätigt.",
+      "validation": { "kind": "sequence", "ordered": true, "of": [
+        { "kind": "event", "type": "artifact.selected", "match": { "artifactId": "rule-regions", "artifactType": "data" } },
+        { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "rule-regions", "artifactType": "data" } }
+      ] },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "apply-region-rule",
+      "title": "Zwischenstand 1: Regionen bereinigen",
+      "description": "Jetzt wird nur die bestätigte Regionsregel angewendet.",
+      "instruction": "Wähle die Arbeitstabelle und wende Regionsschreibweisen vereinheitlichen an. Kontrolliere den sichtbaren Zwischenstand.",
+      "why": "Einzelne, sichtbare Schritte machen nachvollziehbar, welche Annahme welche Änderung verursacht.",
+      "helpLevels": ["Wechsle zur Arbeitstabelle.", "Nutze die Revision Regionsschreibweisen vereinheitlichen.", "Prüfe danach, dass nur noch Nord, Süd, Ost und West als Regionsnamen erscheinen."],
+      "successMessage": "Zwischenstand 1 ist sichtbar.",
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "working-table", "revisionId": "normalize-regions" } },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "confirm-date-rule",
+      "title": "Bereinigungsregel 2 einzeln bestätigen",
+      "description": "Prüfe ausschließlich die Annahme zu Datumsformaten und Quartalen.",
+      "instruction": "Wähle Bereinigungsregel 2 · Datum, lies die Interpretation und bestätige nur diese Regel.",
+      "why": "Ein falsch interpretiertes Datum verschiebt korrekte Werte in ein falsches Quartal.",
+      "helpLevels": ["Wähle die Datumsregel.", "Prüfe die drei Eingabeformate und die Quartalsgrenzen.", "Klicke erst danach auf Ergebnis geprüft."],
+      "successMessage": "Die Datumsregel wurde einzeln geprüft und bestätigt.",
+      "validation": { "kind": "sequence", "ordered": true, "of": [
+        { "kind": "event", "type": "artifact.selected", "match": { "artifactId": "rule-dates", "artifactType": "data" } },
+        { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "rule-dates", "artifactType": "data" } }
+      ] },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "apply-date-rule",
+      "title": "Zwischenstand 2: Datum und Quartal bereinigen",
+      "description": "Der zweite sichtbare Zwischenstand normalisiert Datumswerte und ergänzt die Quartalszuordnung.",
+      "instruction": "Wähle die Arbeitstabelle und wende Datumsformate und Quartale vereinheitlichen an.",
+      "why": "Der Zwischenstand zeigt direkt, wie sich die bestätigte Annahme auf die Daten auswirkt.",
+      "helpLevels": ["Wechsle zur Arbeitstabelle.", "Nutze die Revision zur Datumsbereinigung.", "Prüfe danach die zusätzliche Spalte Quartal."],
+      "successMessage": "Zwischenstand 2 ist sichtbar.",
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "working-table", "revisionId": "normalize-dates" } },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "confirm-value-rule",
+      "title": "Bereinigungsregel 3 einzeln bestätigen",
+      "description": "Prüfe ausschließlich die Annahme zu Betragsformaten und negativen Retouren.",
+      "instruction": "Wähle Bereinigungsregel 3 · Beträge und Retouren und bestätige die Regel nach der Prüfung einzeln.",
+      "why": "Ob Retouren abgezogen oder ignoriert werden, verändert das Ergebnis fachlich erheblich.",
+      "helpLevels": ["Wähle die Betragsregel.", "Prüfe Tausendertrenner, Währung und Vorzeichen der Retouren.", "Klicke danach auf Ergebnis geprüft."],
+      "successMessage": "Die Betrags- und Retourenregel wurde einzeln geprüft und bestätigt.",
+      "validation": { "kind": "sequence", "ordered": true, "of": [
+        { "kind": "event", "type": "artifact.selected", "match": { "artifactId": "rule-values", "artifactType": "data" } },
+        { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "rule-values", "artifactType": "data" } }
+      ] },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "apply-value-rule",
+      "title": "Zwischenstand 3: Beträge numerisch bereinigen",
+      "description": "Jetzt werden die bestätigten Betragsregeln sichtbar angewendet; negative Retouren bleiben erhalten.",
+      "instruction": "Wähle die Arbeitstabelle und wende Beträge und Retouren numerisch bereinigen an.",
+      "why": "Vor der Aggregation soll erkennbar sein, welche Werte tatsächlich gerechnet werden.",
+      "helpLevels": ["Wechsle zur Arbeitstabelle.", "Wende die Betragsrevision an.", "Prüfe, dass Beträge numerisch und Retouren weiterhin negativ sind."],
+      "successMessage": "Zwischenstand 3 ist sichtbar.",
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "working-table", "revisionId": "normalize-values" } },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "aggregate-baseline",
+      "title": "Zwischenwerte je Quartal berechnen",
+      "description": "Die Basisauswertung zeigt für jede Region Q1 bis Q4 und den Jahreswert. Retouren sind noch enthalten.",
+      "instruction": "Wende Umsatz je Region und Quartal berechnen an und prüfe die sichtbaren Quartalswerte und Jahreswerte.",
+      "why": "Ein Endergebnis ohne Zwischenwerte lässt sich schlechter plausibilisieren als eine nachvollziehbare Quartalsstruktur.",
+      "helpLevels": ["Nutze die nächste Revision der Arbeitstabelle.", "Vergleiche Q1 bis Q4 mit dem Jahreswert.", "Achte darauf, dass weiterhin alle vier Regionen vorhanden sind."],
+      "successMessage": "Die Quartals- und Jahreswerte sind als sichtbarer Zwischenstand vorhanden.",
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "working-table", "revisionId": "aggregate-baseline" } },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "iterate-without-returns",
+      "title": "Iteration: ohne Retouren rechnen",
+      "description": "Jetzt ändert sich die fachliche Vorgabe. Die neue Auswertung soll Retouren nicht berücksichtigen.",
+      "instruction": "Wende Iteration · ohne Retouren rechnen an. Vergleiche die Zahlen mit dem vorherigen Stand, aber markiere das Ergebnis noch nicht als geprüft.",
+      "why": "Auch eine kleine fachliche Änderung kann neben den gewünschten Zahlen unbeabsichtigt andere Teile des Ergebnisses verändern.",
+      "helpLevels": ["Nutze die nächste Revision.", "Die Q2- und Jahreswerte ändern sich.", "Prüfe zusätzlich, ob alle zuvor vorhandenen Regionen noch enthalten sind."],
+      "successMessage": "Die Iteration ist sichtbar; jetzt folgt der Plausibilitätscheck.",
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "working-table", "revisionId": "exclude-returns" } },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "find-missing-region",
+      "title": "Vollständigkeitsfehler selbst finden",
+      "description": "Die sichtbaren Zeilensummen sind rechnerisch plausibel. Prüfe deshalb zusätzlich die Vollständigkeit gegen die unveränderte Referenz.",
+      "instruction": "Vergleiche die aktuelle Auswertung mit den Ausgangsdaten. Öffne Copilot und nenne die fehlende Region mit ihrem Namen.",
+      "why": "Der eingebaute Fehler liegt nicht in der Arithmetik, sondern in der Datenbereinigung beziehungsweise Vollständigkeit.",
+      "helpLevels": ["Vergleiche die Regionsliste mit der Referenz.", "In der Ausgangstabelle stehen vier Regionen, jetzt nur drei.", "Die fehlende Region ist Ost; sende den Namen Ost in Copilot."],
+      "successMessage": "Der Vollständigkeitsfehler wurde korrekt erkannt.",
+      "validation": { "kind": "event", "type": "copilot.prompt.submitted", "contains": { "prompt": "Ost" } },
+      "highlightTarget": "copilot.chat.prompt",
+      "exactTextValidation": true
+    },
+    {
+      "id": "restore-region",
+      "title": "Gefundenen Verlust korrigieren",
+      "description": "Die gewünschte Retouren-Iteration bleibt bestehen; nur die verlorene Region wird wiederhergestellt.",
+      "instruction": "Schließe Copilot bei Bedarf, wähle die Arbeitstabelle und wende Gefundene Region wiederherstellen an.",
+      "why": "Eine gute Korrekturschleife repariert den Fehler, ohne die gewünschte fachliche Änderung zurückzunehmen.",
+      "helpLevels": ["Kehre zur Ergebnisfläche zurück.", "Nutze die letzte Korrekturrevision.", "Prüfe danach, dass Ost wieder enthalten ist und ohne Retouren 350000 EUR Jahreswert zeigt."],
+      "successMessage": "Der Vollständigkeitsfehler ist korrigiert.",
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "working-table", "revisionId": "restore-east" } },
+      "highlightTarget": "artifact.preview.applyRevision"
+    },
+    {
+      "id": "verify-final",
+      "title": "Korrigierten Endstand fachlich prüfen",
+      "description": "Der Endstand enthält wieder Nord, Süd, Ost und West sowie nachvollziehbare Quartals- und Jahreswerte ohne Retouren.",
+      "instruction": "Prüfe die vier Regionen und die sichtbaren Zwischenwerte. Markiere die Arbeitstabelle erst danach als geprüft.",
+      "why": "Die Freigabe folgt auf Vollständigkeits- und Plausibilitätsprüfung, nicht auf die bloße Berechnung.",
+      "helpLevels": ["Kontrolliere alle vier Regionszeilen.", "Vergleiche Q1 bis Q4 mit dem jeweiligen Jahreswert.", "Klicke erst nach dieser Prüfung auf Ergebnis geprüft."],
+      "successMessage": "Der korrigierte Endstand wurde fachlich geprüft.",
+      "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "working-table", "artifactType": "table" } },
+      "highlightTarget": "artifact.preview.verify"
+    },
+    {
+      "id": "classify-and-transfer",
+      "stepType": "explanation",
+      "title": "Datenklassifizierung und Verantwortung einordnen",
+      "description": "Dieses Training verwendet ausschließlich synthetische Daten. Echte Geschäftszahlen können vertraulich sein und dürfen nicht automatisch in einen KI-Dienst gelangen.",
+      "instruction": "Übertrage den Ablauf auf reale Arbeit: Vor einem Prompt Datenklassifizierung und freigegebenes KI-Werkzeug prüfen; bei wesentlichen Geschäftsentscheidungen eine zweite Person in die Ergebnisprüfung einbeziehen.",
+      "why": "Technisch mögliche Verarbeitung ist nicht automatisch organisatorisch oder datenschutzrechtlich zulässig. Datenklassifizierung entscheidet mit über den erlaubten Einsatz.",
+      "helpLevels": ["", "", ""],
+      "successMessage": "Du kannst Bereinigungsannahmen, Plausibilitätsprüfung und Datenklassifizierung zusammen einordnen."
+    }
+  ]
+}
