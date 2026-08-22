@@ -43,8 +43,14 @@ function assertTenantScope(actor: TenantActor, tenantId: string): void {
   }
 }
 
-function assertNonEmpty(value: string, label: string): void {
-  if (!value.trim()) throw new Error(`${label} must not be empty`);
+function normalizedId(value: string, label: string): string {
+  const normalized = value.trim();
+  if (!normalized) throw new Error(`${label} must not be empty`);
+  return normalized;
+}
+
+function assignmentKey(groupId: string, curriculumId: string): string {
+  return `${groupId.length}:${groupId}${curriculumId.length}:${curriculumId}`;
 }
 
 export async function assignCurriculumToGroup(input: {
@@ -60,18 +66,24 @@ export async function assignCurriculumToGroup(input: {
     throw new Error("Curriculum assignment requires tenant administration permission");
   }
 
-  assertNonEmpty(input.groupId, "groupId");
-  assertNonEmpty(input.curriculumId, "curriculumId");
+  const userId = normalizedId(input.actor.userId, "actor.userId");
+  const groupId = normalizedId(input.groupId, "groupId");
+  const curriculumId = normalizedId(input.curriculumId, "curriculumId");
   if (!Number.isFinite(input.assignedAt) || input.assignedAt <= 0) {
     throw new Error("assignedAt must be a positive timestamp");
   }
 
+  const existing = (await input.store.listAssignments(input.tenantId)).find(
+    (assignment) => assignment.groupId === groupId && assignment.curriculumId === curriculumId,
+  );
+  if (existing) return existing;
+
   const assignment: CurriculumGroupAssignment = {
     tenantId: input.tenantId,
-    groupId: input.groupId,
-    curriculumId: input.curriculumId,
+    groupId,
+    curriculumId,
     assignedAt: input.assignedAt,
-    assignedBy: input.actor.userId,
+    assignedBy: userId,
   };
 
   await input.store.saveAssignment(assignment);
@@ -94,20 +106,26 @@ export async function loadGroupCurriculumProgress(input: {
     input.store.listCompletions(input.tenantId),
   ]);
 
+  const completedByAssignment = new Map<string, Set<string>>();
+  for (const completion of completions) {
+    if (completion.tenantId !== input.tenantId || completion.completedAt === undefined) continue;
+    const key = assignmentKey(completion.groupId, completion.curriculumId);
+    const users = completedByAssignment.get(key) ?? new Set<string>();
+    users.add(completion.userId);
+    completedByAssignment.set(key, users);
+  }
+
   return assignments.map((assignment) => {
-    const assignedLearners = Math.max(0, input.groupSizes[assignment.groupId] ?? 0);
-    const completedUsers = new Set(
-      completions
-        .filter(
-          (completion) =>
-            completion.tenantId === input.tenantId &&
-            completion.groupId === assignment.groupId &&
-            completion.curriculumId === assignment.curriculumId &&
-            completion.completedAt !== undefined,
-        )
-        .map((completion) => completion.userId),
-    );
-    const completedLearners = Math.min(assignedLearners, completedUsers.size);
+    const rawGroupSize = input.groupSizes[assignment.groupId];
+    if (rawGroupSize !== undefined && (!Number.isInteger(rawGroupSize) || rawGroupSize < 0)) {
+      throw new Error(`Invalid group size for ${assignment.groupId}`);
+    }
+    const assignedLearners = rawGroupSize ?? 0;
+    const completedLearners =
+      completedByAssignment.get(assignmentKey(assignment.groupId, assignment.curriculumId))?.size ?? 0;
+    if (completedLearners > assignedLearners) {
+      throw new Error(`Completion count exceeds assigned learners for ${assignment.groupId}`);
+    }
     const completionPercent =
       assignedLearners === 0 ? 0 : Math.round((completedLearners / assignedLearners) * 100);
 
