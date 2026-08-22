@@ -74,7 +74,7 @@ test("Guided: Annahmen werden einzeln bestätigt, Zwischenstände sichtbar und O
 
   await expectGuidedStep(page, 9, "Zwischenwerte je Quartal berechnen");
   await page.getByRole("button", { name: /Umsatz je Region und Quartal berechnen/ }).click();
-  await expect(table(page).getByText("345000", { exact: true })).toBeVisible();
+  await expect(table(page).getByText("350000", { exact: true })).toBeVisible();
   await expect(table(page).getByText("Ost", { exact: true })).toBeVisible();
 
   await expectGuidedStep(page, 10, "Iteration: ohne Retouren rechnen");
