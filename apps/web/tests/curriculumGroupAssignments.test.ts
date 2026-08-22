@@ -6,7 +6,7 @@ import {
   type CurriculumAssignmentStore,
   type CurriculumCompletion,
   type CurriculumGroupAssignment,
-} from "../src/dashboard/curriculumGroupAssignments";
+} from "../src/dashboard/curriculumGroupAssignments.ts";
 
 function memoryStore(options?: {
   assignments?: CurriculumGroupAssignment[];
