@@ -30,9 +30,7 @@ test("Tabellendaten-Workflow ist in Explore, Guided und Challenge direkt verfüg
     await page.goto(`/training/table-data-workflow.${mode}`);
     await waitForTrainingReady(page);
     await expect(page.getByText("Ergebnis · simuliert", { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /Synthetische Ausgangsdaten/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /Synthetische Ausgangsdaten/ })).toBeVisible();
   }
 });
 
