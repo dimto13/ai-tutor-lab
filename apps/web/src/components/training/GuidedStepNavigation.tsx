@@ -11,24 +11,28 @@ import {
 } from "lucide-react";
 import { TutorAttentionOverlay } from "@/components/overlay/TutorAttentionOverlay";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { localizeScenarioContent } from "@/i18n/scenarioContent";
 import { useTraining } from "@/state/trainingStore";
 
 export function GuidedStepNavigation() {
   const { scenario, progress, isGuidedReplay, guidedNavigationPending, navigateToGuidedStep } =
     useTraining();
+  const { language } = useLanguage();
+  const displayScenario = localizeScenarioContent(scenario, language);
 
   const furthestStepId =
-    scenario.steps.find((step) => {
+    displayScenario.steps.find((step) => {
       const status = progress.statuses[step.id];
       return status === "ACTIVE" || status === "VALIDATION_FAILED";
     })?.id ?? null;
   const displayedStepId = progress.activeStepId;
-  const displayedStep = scenario.steps.find((step) => step.id === displayedStepId) ?? null;
+  const displayedStep = displayScenario.steps.find((step) => step.id === displayedStepId) ?? null;
   const displayedStepNumber = displayedStep
-    ? scenario.steps.findIndex((step) => step.id === displayedStep.id) + 1
+    ? displayScenario.steps.findIndex((step) => step.id === displayedStep.id) + 1
     : null;
 
-  const reachableStepIds = scenario.steps
+  const reachableStepIds = displayScenario.steps
     .filter((step) => progress.statuses[step.id] === "COMPLETED" || step.id === furthestStepId)
     .map((step) => step.id);
   const displayedReachableIndex = displayedStepId ? reachableStepIds.indexOf(displayedStepId) : -1;
@@ -56,6 +60,7 @@ export function GuidedStepNavigation() {
           <Bot className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate">
             <span className="font-semibold text-foreground">Tutor-Ebene · Lernplattform</span>
+            {` · ${displayScenario.title}`}
             {displayedStep && displayedStepNumber
               ? ` · Schritt ${displayedStepNumber} · ${displayedStep.title}`
               : ""}
@@ -123,7 +128,7 @@ export function GuidedStepNavigation() {
         ) : null}
 
         <ol className="flex min-w-0 gap-1 overflow-x-auto pb-0.5" aria-label="Schrittfolge">
-          {scenario.steps.map((step, index) => {
+          {displayScenario.steps.map((step, index) => {
             const status = progress.statuses[step.id] ?? "NOT_STARTED";
             const isDisplayed = step.id === displayedStepId;
             const isFurthest = step.id === furthestStepId;
@@ -182,8 +187,8 @@ export function GuidedStepNavigation() {
       </nav>
 
       <TutorAttentionOverlay
-        runtimeAdapterId={scenario.environment?.runtimeAdapterId}
-        integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
+        runtimeAdapterId={displayScenario.environment?.runtimeAdapterId}
+        integrationRuntimeAdapterIds={displayScenario.environment?.integrationRuntimeAdapterIds}
       />
     </>
   );

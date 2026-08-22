@@ -18,7 +18,11 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   ).toBeVisible();
   await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
   const currentStep = page.getByRole("heading", { name: "Schritt 7 – Explorer öffnen" });
+  const navigationStep = page.getByTestId("guided-step-navigation-open_explorer");
+  const tutorMetaLayer = page.getByTestId("tutor-meta-layer");
   await expect(currentStep).toBeVisible();
+  await expect(navigationStep).toContainText("Explorer öffnen");
+  await expect(tutorMetaLayer).toContainText("Visual Studio Code – Geführte Grundlagen");
 
   const language = page.getByRole("combobox", { name: "Sprache wechseln" });
   await expect(page.getByText("Sprache", { exact: true })).toBeVisible();
@@ -30,6 +34,8 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await expect(page.getByText("Language", { exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Change language" })).toHaveValue("en");
   await expect(currentStep).toBeVisible();
+  await expect(navigationStep).toContainText("Open Explorer");
+  await expect(tutorMetaLayer).toContainText("Visual Studio Code – Guided Basics");
 
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -41,7 +47,11 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await expect(page.getByText("Language", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Guide anzeigen" }).click();
   await expect(currentStep).toBeVisible();
+  await expect(navigationStep).toContainText("Open Explorer");
+  await expect(tutorMetaLayer).toContainText("Visual Studio Code – Guided Basics");
 
   await page.getByRole("combobox", { name: "Change language" }).selectOption("de");
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
+  await expect(navigationStep).toContainText("Explorer öffnen");
+  await expect(tutorMetaLayer).toContainText("Visual Studio Code – Geführte Grundlagen");
 });
