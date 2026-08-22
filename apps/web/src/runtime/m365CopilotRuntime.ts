@@ -23,6 +23,7 @@ export interface M365CopilotState {
   promptSubmitted: boolean;
   promptQuality: M365PromptQuality;
   draftKind: M365DraftKind | null;
+  createdDraftKinds: M365DraftKind[];
   factsChecked: boolean;
   unsupportedRejected: boolean;
   approvalDecision: M365ApprovalDecision;
@@ -47,6 +48,7 @@ function initialState(): M365CopilotState {
     promptSubmitted: false,
     promptQuality: { ...EMPTY_PROMPT_QUALITY },
     draftKind: null,
+    createdDraftKinds: [],
     factsChecked: false,
     unsupportedRejected: false,
     approvalDecision: "pending",
@@ -58,11 +60,16 @@ function cloneState(state: M365CopilotState): M365CopilotState {
     ...state,
     approvedSourceIds: [...state.approvedSourceIds],
     promptQuality: { ...state.promptQuality },
+    createdDraftKinds: [...state.createdDraftKinds],
   };
 }
 
 function promptQualityComplete(quality: M365PromptQuality): boolean {
   return Object.values(quality).every(Boolean);
+}
+
+function isDraftKind(value: unknown): value is M365DraftKind {
+  return value === "meeting-summary" || value === "word-draft" || value === "outlook-draft";
 }
 
 function isPromptQuality(value: unknown): value is M365PromptQuality {
@@ -88,10 +95,9 @@ function isRuntimeState(value: unknown): value is M365CopilotState {
     candidate.approvedSourceIds.every((id) => typeof id === "string") &&
     typeof candidate.promptSubmitted === "boolean" &&
     isPromptQuality(candidate.promptQuality) &&
-    (candidate.draftKind === null ||
-      candidate.draftKind === "meeting-summary" ||
-      candidate.draftKind === "word-draft" ||
-      candidate.draftKind === "outlook-draft") &&
+    (candidate.draftKind === null || isDraftKind(candidate.draftKind)) &&
+    Array.isArray(candidate.createdDraftKinds) &&
+    candidate.createdDraftKinds.every(isDraftKind) &&
     typeof candidate.factsChecked === "boolean" &&
     typeof candidate.unsupportedRejected === "boolean" &&
     (candidate.approvalDecision === "pending" ||
@@ -188,6 +194,8 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
             return promptQualityComplete(state.promptQuality);
           case "m365.draft.kind":
             return state.draftKind;
+          case "m365.drafts.createdKinds":
+            return [...state.createdDraftKinds];
           case "m365.review.factsChecked":
             return state.factsChecked;
           case "m365.review.unsupportedRejected":
@@ -242,7 +250,15 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     },
 
     createDraft(kind) {
-      replaceState({ ...state, draftKind: kind, approvalDecision: "pending" }, "mutation");
+      replaceState(
+        {
+          ...state,
+          draftKind: kind,
+          createdDraftKinds: [...new Set([...state.createdDraftKinds, kind])],
+          approvalDecision: "pending",
+        },
+        "mutation",
+      );
       emit("m365.draft.created", { kind });
     },
 
