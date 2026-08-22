@@ -1,0 +1,229 @@
+{
+  "id": "m365-copilot-basics.guided",
+  "moduleId": "m365-copilot-basics",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Microsoft 365 Copilot – Geführt",
+  "description": "Durchlaufe einen kontrollierten M365-Copilot-Workflow mit synthetischen Teams-Notizen, Word-Entwurf und Outlook-Entwurf. Quellenfreigabe, Promptqualität, Faktenprüfung und menschliche Freigabe bleiben explizit.",
+  "learningObjectives": [
+    "formulate_copilot_prompt",
+    "review_copilot_output",
+    "protect_copilot_context",
+    "decide_ai_usage_by_classification"
+  ],
+  "environment": {
+    "productId": "m365-copilot",
+    "version": "simulated-2026-08",
+    "runtimeAdapterId": "m365-copilot-simulator"
+  },
+  "estimatedMinutes": 15,
+  "points": 140,
+  "steps": [
+    {
+      "id": "guided-start-in-teams",
+      "title": "1. Teams als Ausgangspunkt wählen",
+      "description": "Teams-Copilot hilft hier, synthetische Besprechungsnotizen in Entscheidungen und offene Punkte zu strukturieren.",
+      "instruction": "Öffne Teams in der simulierten M365-Navigation.",
+      "rationale": "Die Anwendung bestimmt den fachlichen Arbeitskontext. In diesem Workflow beginnt die Verarbeitung bei einer Besprechungsnotiz.",
+      "helpLevels": [
+        "Suche links in der Anwendungsliste nach Teams.",
+        "Teams ist der erste Einstieg für die Besprechungsnotiz.",
+        "Klicke auf Teams."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.activeApp",
+        "equals": "teams"
+      },
+      "highlightTarget": "m365.nav.teams",
+      "successMessage": "Teams ist als Ausgangspunkt des simulierten Workflows gewählt."
+    },
+    {
+      "id": "guided-select-approved-sources",
+      "title": "2. Nur freigegebene Quellen verwenden",
+      "description": "Der Simulator enthält zwei freigegebene interne Quellen und einen ausdrücklich nicht für KI freigegebenen vertraulichen Anhang.",
+      "instruction": "Wähle die Teams-Besprechungsnotiz und den Projektsteckbrief als Quellen. Der vertrauliche Anhang muss ausgeschlossen bleiben.",
+      "rationale": "Copilot darf nur Kontext erhalten, der für die Aufgabe erforderlich und für die KI-Nutzung freigegeben ist. Eine höhere oder unklare Schutzanforderung darf nicht heruntergestuft werden.",
+      "helpLevels": [
+        "Prüfe bei jeder Quelle die angezeigte Klassifizierung und KI-Freigabe.",
+        "Die zwei Einträge mit „KI freigegeben“ gehören in den Kontext.",
+        "Wähle Besprechungsnotiz und Projektsteckbrief; der vertrauliche Anhang bleibt gesperrt."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.approvedSourceCount",
+        "equals": 2
+      },
+      "highlightTarget": "m365.sources",
+      "successMessage": "Nur die beiden freigegebenen synthetischen Quellen sind ausgewählt."
+    },
+    {
+      "id": "guided-build-quality-prompt",
+      "title": "3. Einen prüfbaren Arbeitsauftrag formulieren",
+      "description": "Ein belastbarer Copilot-Auftrag benennt Ziel, relevanten Kontext, Zielgruppe, Ton und gewünschtes Ausgabeformat.",
+      "instruction": "Markiere alle fünf Qualitätsmerkmale und gib den strukturierten Arbeitsauftrag an Copilot.",
+      "rationale": "Klare Randbedingungen machen das Ergebnis besser überprüfbar und reduzieren unnötige Annahmen.",
+      "helpLevels": [
+        "Prüfe die fünf Kriterien im Bereich Arbeitsauftrag.",
+        "Alle fünf Kriterien müssen erfüllt sein, bevor der Auftrag als vollständig gilt.",
+        "Aktiviere Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat und sende danach den Auftrag ab."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "m365.prompt.submitted",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.prompt.qualityComplete",
+            "equals": true
+          }
+        ]
+      },
+      "highlightTarget": "m365.prompt",
+      "successMessage": "Der Arbeitsauftrag enthält alle fünf Qualitätsmerkmale."
+    },
+    {
+      "id": "guided-create-meeting-summary",
+      "title": "4. Teams-Ergebnis als Entwurf erzeugen",
+      "description": "Copilot fasst die synthetische Notiz zusammen, bleibt aber eine Entwurfshilfe.",
+      "instruction": "Erzeuge den Teams-Entwurf und prüfe, ob Entscheidung und offene Punkte klar getrennt sind.",
+      "rationale": "Auch ein plausibler KI-Text ist noch keine freigegebene Wahrheit. Zuerst entsteht ein überprüfbarer Entwurf.",
+      "helpLevels": [
+        "Im Ergebnisbereich gibt es eine Aktion für den aktuellen Teams-Kontext.",
+        "Erzeuge die Zusammenfassung erst nach dem strukturierten Auftrag.",
+        "Klicke auf Teams-Entwurf erzeugen."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.draft.kind",
+        "equals": "meeting-summary"
+      },
+      "highlightTarget": "m365.result",
+      "successMessage": "Die synthetische Teams-Zusammenfassung liegt als Entwurf vor."
+    },
+    {
+      "id": "guided-create-word-draft",
+      "title": "5. Aus dem freigegebenen Kontext einen Word-Entwurf erstellen",
+      "description": "Der nächste Schritt überträgt die freigegebenen Fakten in einen strukturierten Word-Entwurf.",
+      "instruction": "Wechsle zu Word und erzeuge dort einen Entwurf.",
+      "rationale": "Der Wechsel der Anwendung ändert den Verwendungszweck, nicht die Datenfreigabe. Der zugelassene synthetische Kontext bleibt die Grenze.",
+      "helpLevels": [
+        "Wähle links Word.",
+        "Der Ergebnisbereich passt sich an die aktive Anwendung an.",
+        "Wechsle zu Word und klicke auf Word-Entwurf erzeugen."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "m365.activeApp",
+            "equals": "word"
+          },
+          {
+            "kind": "state",
+            "selector": "m365.draft.kind",
+            "equals": "word-draft"
+          },
+          {
+            "kind": "state",
+            "selector": "m365.drafts.createdKinds",
+            "includes": "meeting-summary"
+          }
+        ]
+      },
+      "highlightTarget": "m365.nav.word",
+      "successMessage": "Der Word-Entwurf wurde aus dem freigegebenen Workflow erzeugt."
+    },
+    {
+      "id": "guided-review-and-reject-hallucination",
+      "title": "6. Fakten prüfen und unbelegte Aussage verwerfen",
+      "description": "Der Simulator zeigt absichtlich eine plausible, aber durch keine freigegebene Quelle belegte Budgetaussage.",
+      "instruction": "Bestätige die Faktenprüfung und verwirf die unbelegte Aussage. Prüfe dabei Namen, Zahlen, Zusagen, Quellen und Ton.",
+      "rationale": "Plausibilität ist kein Beleg. Eine unbelegte Aussage darf nicht in den freigegebenen Entwurf gelangen.",
+      "helpLevels": [
+        "Der Qualitätsbereich rechts enthält zwei getrennte Prüfschritte.",
+        "Bestätige erst die Faktenprüfung und lehne danach die unbelegte Budgetaussage ab.",
+        "Nutze „Namen, Zahlen, Zusagen, Quellen und Ton geprüft“ sowie „Unbelegte Aussage verwerfen“."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "m365.review.factsChecked",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.review.unsupportedRejected",
+            "equals": true
+          }
+        ]
+      },
+      "highlightTarget": "m365.review.facts",
+      "successMessage": "Faktenprüfung abgeschlossen und unbelegte Aussage verworfen."
+    },
+    {
+      "id": "guided-create-outlook-draft",
+      "title": "7. Outlook-Entwurf aus dem geprüften Stand erzeugen",
+      "description": "Outlook nutzt den kontrollierten Stand für einen synthetischen Mail-Entwurf.",
+      "instruction": "Wechsle zu Outlook und erzeuge den Outlook-Entwurf.",
+      "rationale": "Vor einer Kommunikation muss klar sein, welche Aussagen belegt und welche Punkte noch offen sind.",
+      "helpLevels": [
+        "Wähle links Outlook.",
+        "Der Ergebnisbereich erzeugt einen Entwurf für die aktive Anwendung.",
+        "Wechsle zu Outlook und klicke auf Outlook-Entwurf erzeugen."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "m365.activeApp",
+            "equals": "outlook"
+          },
+          {
+            "kind": "state",
+            "selector": "m365.draft.kind",
+            "equals": "outlook-draft"
+          },
+          {
+            "kind": "state",
+            "selector": "m365.drafts.createdKinds",
+            "includes": "word-draft"
+          }
+        ]
+      },
+      "highlightTarget": "m365.nav.outlook",
+      "successMessage": "Der Outlook-Entwurf ist aus dem geprüften synthetischen Kontext entstanden."
+    },
+    {
+      "id": "guided-human-approval",
+      "title": "8. Menschliche Freigabe explizit abschließen",
+      "description": "Die KI entscheidet nicht über die fachliche oder kommunikative Freigabe.",
+      "instruction": "Gib den geprüften Entwurf explizit frei.",
+      "rationale": "Die Verantwortung bleibt beim Menschen. Copilot unterstützt die Erstellung, ersetzt aber weder Faktenprüfung noch Freigabeentscheidung.",
+      "helpLevels": [
+        "Die Freigabe befindet sich im rechten Qualitätsbereich.",
+        "Freigeben ist erst nach Faktenprüfung und Verwerfen der unbelegten Aussage möglich.",
+        "Klicke auf Freigeben."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.approval.decision",
+        "equals": "approved"
+      },
+      "highlightTarget": "m365.approval",
+      "successMessage": "Der Workflow endet mit einer expliziten menschlichen Freigabe."
+    }
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy"]
+  }
+}
