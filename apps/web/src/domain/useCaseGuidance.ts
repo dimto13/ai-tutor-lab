@@ -48,10 +48,13 @@ function ruleMatchesGoal(rule: UseCaseGuidanceRule, goal: string) {
       return tokens.some((token) => token.startsWith(stem));
     }
     if (keyword.includes(" ")) {
-      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
-      return new RegExp(`(?:^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, "u").test(
-        normalizedGoal,
-      );
+      const escaped = keyword
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\s+/g, "\\s+");
+      return new RegExp(
+        `(?:^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`,
+        "u",
+      ).test(normalizedGoal);
     }
     return tokens.includes(keyword);
   });
@@ -62,9 +65,11 @@ function buildTaskDraft(input: Required<UseCaseGuidanceInput>): UseCaseTaskDraft
     goal: input.goal,
     currentState: `Heute nutze ich dafür: ${input.tools}.`,
     inputs: "[hier ergänzen: Welche Dateien, Daten oder Systeme werden konkret benötigt?]",
-    outputFormat: "[hier ergänzen: In welcher Form und welchem Umfang soll das Ergebnis vorliegen?]",
+    outputFormat:
+      "[hier ergänzen: In welcher Form und welchem Umfang soll das Ergebnis vorliegen?]",
     constraints: input.constraints,
-    verification: "[hier ergänzen: Woran prüfst du fachlich, dass das Ergebnis korrekt und vollständig ist?]",
+    verification:
+      "[hier ergänzen: Woran prüfst du fachlich, dass das Ergebnis korrekt und vollständig ist?]",
   };
 }
 
