@@ -7,12 +7,7 @@
   "description": "Werte einen vollständig synthetischen Vertriebsdatensatz aus, bestätige drei Bereinigungsregeln einzeln, verfolge sichtbare Zwischenstände und finde eine unbemerkt verlorene Region.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "artifact.preview",
-      "github.copilot",
-      "copilot.chat",
-      "platform.review"
-    ]
+    "glossaryConcepts": ["artifact.preview", "github.copilot", "copilot.chat", "platform.review"]
   },
   "environment": {
     "productId": "vscode",
