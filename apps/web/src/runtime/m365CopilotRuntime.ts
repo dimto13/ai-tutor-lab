@@ -234,10 +234,7 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     },
 
     submitPrompt(quality) {
-      replaceState(
-        { ...state, promptSubmitted: true, promptQuality: { ...quality } },
-        "mutation",
-      );
+      replaceState({ ...state, promptSubmitted: true, promptQuality: { ...quality } }, "mutation");
       emit("m365.prompt.submitted", {
         qualityComplete: promptQualityComplete(quality),
         approvedSourceCount: state.approvedSourceIds.length,
