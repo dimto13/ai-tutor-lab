@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { SelfAssessedAiLevel } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
+import type { SupportedLanguage } from "@/i18n/messages";
 import { createApplicationUserPreferencesRepository } from "./applicationUserPreferencesRepository";
 import { expectedRevisionForWrite } from "./revisionGuard";
 import {
@@ -28,6 +29,7 @@ interface UserPreferencesContextValue {
   status: "idle" | "loading" | "ready" | "error";
   error: string | null;
   selfAssessedAiLevel: SelfAssessedAiLevel | null;
+  saveLanguage(language: SupportedLanguage): Promise<void>;
   saveSelfAssessedAiLevel(level: SelfAssessedAiLevel): Promise<void>;
   saveWeeklyGoalMinutes(goalMinutes: number): Promise<void>;
 }
@@ -125,6 +127,13 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     [load, preferences, status, subject],
   );
 
+  const saveLanguage = useCallback(
+    async (language: SupportedLanguage) => {
+      await savePreferences({ ...currentValue(preferences), language });
+    },
+    [preferences, savePreferences],
+  );
+
   const saveSelfAssessedAiLevel = useCallback(
     async (level: SelfAssessedAiLevel) => {
       await savePreferences({ ...currentValue(preferences), selfAssessedAiLevel: level });
@@ -150,6 +159,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       status,
       error,
       selfAssessedAiLevel,
+      saveLanguage,
       saveSelfAssessedAiLevel,
       saveWeeklyGoalMinutes,
     }),
@@ -158,6 +168,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       status,
       error,
       selfAssessedAiLevel,
+      saveLanguage,
       saveSelfAssessedAiLevel,
       saveWeeklyGoalMinutes,
     ],

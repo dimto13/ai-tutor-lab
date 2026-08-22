@@ -1,0 +1,20 @@
+{
+  "scenarioId": "vscode-basics.guided",
+  "title": "Visual Studio Code – Guided Basics",
+  "description": "Learn the most important parts of the VS Code interface, including the Primary and Secondary Side Bar, then practise a simple work context with one folder, files, the editor and the additional panel area.",
+  "steps": {
+    "open_explorer": {
+      "title": "Open Explorer",
+      "description": "You now know the roles of the Activity Bar, Primary Side Bar, Secondary Side Bar and Explorer. Next, open the file and folder view yourself.",
+      "instruction": "Open Explorer using its icon in the Activity Bar.",
+      "rationale": "The Activity Bar selects the main area; its content appears in the Primary Side Bar. The Secondary Side Bar remains separate and can host additional views.",
+      "helpLevels": [
+        "Look for the Explorer icon in the narrow Activity Bar on the far left.",
+        "Select the top icon showing two files.",
+        "The Explorer icon is highlighted. Select exactly that icon."
+      ],
+      "highlightTooltip": "Explorer: files and folders in the current work context.",
+      "successMessage": "Explorer opened. The Activity Bar and Primary Side Bar have different roles; the Secondary Side Bar is a separate additional area."
+    }
+  }
+}
