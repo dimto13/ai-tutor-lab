@@ -68,7 +68,9 @@ export function parseScenarioTranslation(value: unknown): ScenarioTranslation {
       }
       for (const field of stringStepFields) {
         if (rawStep[field] !== undefined && typeof rawStep[field] !== "string") {
-          throw new Error(`Scenario translation ${scenarioId}/${stepId}: ${field} must be a string`);
+          throw new Error(
+            `Scenario translation ${scenarioId}/${stepId}: ${field} must be a string`,
+          );
         }
       }
       const helpLevels = rawStep["helpLevels"];
