@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { TutorAttentionOverlay } from "@/components/overlay/TutorAttentionOverlay";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
+import { SpeechTextControl } from "@/components/training/SpeechTextControl";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { localizeScenarioContent } from "@/i18n/scenarioContent";
 import { useTraining } from "@/state/trainingStore";
@@ -112,6 +113,17 @@ export function GuidedStepNavigation() {
             ) : null}
           </div>
         </section>
+
+        {displayedStep ? (
+          <section
+            data-testid="guided-speech-explanation"
+            className="mb-1.5 rounded-md border border-border bg-card/60 px-2.5 py-2"
+            aria-label={language === "en" ? "Current guide explanation" : "Aktuelle Guide-Erklärung"}
+          >
+            <p className="text-[11px] leading-relaxed text-foreground">{displayedStep.instruction}</p>
+            <SpeechTextControl text={displayedStep.instruction} />
+          </section>
+        ) : null}
 
         {isGuidedReplay ? (
           <div
