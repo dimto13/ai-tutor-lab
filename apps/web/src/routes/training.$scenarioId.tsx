@@ -19,7 +19,7 @@ import { GuidePanel } from "@/components/training/GuidePanel";
 import { GuidedStepNavigation } from "@/components/training/GuidedStepNavigation";
 import { CompletionScreen } from "@/components/training/CompletionScreen";
 import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
-import { getScenario } from "@/scenarios";
+import { getScenario, getScenariosForModule } from "@/scenarios";
 
 const DESKTOP_LAYOUT_MEDIA_QUERY = "(min-width: 64rem)";
 
@@ -113,9 +113,14 @@ function TimedChallengeBriefing({
   retryAfterTimeout: boolean;
   onStart(): void;
 }) {
-  const { scenario } = useTraining();
+  const { scenario, recommendGuidedAfterChallenge } = useTraining();
   const goal = scenario.steps[0];
   const timeLimit = scenario.timeLimitSeconds ?? 0;
+  const guidedScenario = getScenariosForModule(scenario.moduleId).find(
+    (candidate) => (candidate.mode ?? "guided") === "guided",
+  );
+  const showGuidedRecommendation =
+    retryAfterTimeout && recommendGuidedAfterChallenge && Boolean(guidedScenario);
 
   return (
     <div
@@ -182,6 +187,29 @@ function TimedChallengeBriefing({
               </p>
             </div>
           </div>
+
+          {showGuidedRecommendation && guidedScenario ? (
+            <div
+              data-testid="guided-after-challenge-recommendation"
+              role="region"
+              aria-label="Guided-Modus empfohlen"
+              className="mt-4 rounded-xl border border-accent/40 bg-accent/10 p-4"
+            >
+              <p className="text-sm font-semibold text-foreground">Guided-Modus empfohlen</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                Nach mehreren fehlgeschlagenen Versuchen kann dir der geführte Modus die nötigen
+                Schritte noch einmal zeigen. Du kannst stattdessen weiterhin direkt einen neuen
+                Challenge-Versuch starten.
+              </p>
+              <Link
+                to="/training/$scenarioId"
+                params={{ scenarioId: guidedScenario.id }}
+                className="mt-3 inline-flex items-center justify-center rounded-md border border-accent/50 px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent/10"
+              >
+                Guided-Modus öffnen
+              </Link>
+            </div>
+          ) : null}
 
           <button
             type="button"
