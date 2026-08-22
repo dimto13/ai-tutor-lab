@@ -26,7 +26,10 @@ function persistenceDouble(initial: unknown = null) {
   return { persistence, stored: () => stored };
 }
 
-function challengeSession(startedAt: number, challengeOutcome: TrainingSession["challengeOutcome"]) {
+function challengeSession(
+  startedAt: number,
+  challengeOutcome: TrainingSession["challengeOutcome"],
+) {
   return { startedAt, challengeOutcome } as TrainingSession;
 }
 
@@ -86,7 +89,10 @@ describe("challengeAttemptHistory", () => {
   it("records only timed-out terminal challenge sessions and keeps retries idempotent", async () => {
     const { persistence, stored } = persistenceDouble();
 
-    const active = await recordTimedOutChallengeAttempt(persistence, challengeSession(100, "active"));
+    const active = await recordTimedOutChallengeAttempt(
+      persistence,
+      challengeSession(100, "active"),
+    );
     assert.deepEqual(active.failedStartedAt, []);
     assert.equal(stored(), null);
 
