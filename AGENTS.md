@@ -36,17 +36,20 @@
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
    `backlog/backlog.yaml`, `backlog/tickets.csv` und `docs/06-backlog.md` sind eingefrorenes
    Archiv des ursprünglichen Planungsstands und dürfen nicht mehr gepflegt werden. Das dauerhafte
-   Implementation-Control-Issue #201 ist davon bewusst ausgenommen: Es ist kein Backlog-Task,
-   sondern ein operatives Status- und Handoff-Artefakt und bleibt deshalb ohne Milestone offen.
+   Implementation-Control-Issue #370 ist davon bewusst ausgenommen: Es ist kein Backlog-Task,
+   sondern die operative Status-, Queue-, Evidence- und Handoff-SSOT und bleibt deshalb ohne Milestone offen.
 4. **Keine History-Rewrites und keine Force-Pushes**, sofern dies nicht ausdrücklich und bewusst
    für einen konkreten Git-Vorgang entschieden wurde.
 5. Szenarien sind Daten (YAML/JSON), kein Code. Keine CSS-Selektoren, keine
    Herstellernamen in Dateinamen, kein Fortschritt per Weiter-Button.
-6. **Nur Grünes nach `main`.** `npm run check` läuft nach der letzten inhaltlichen Änderung
-   eines Branches, nicht davor. Ein Pull Request wird erst gemergt, wenn die Jobs `validate`
-   **und** `e2e-training-modes` abgeschlossen und grün sind — ein noch laufender Workflow ist
-   kein grüner Workflow. Der Pre-Commit-Hook in `.githooks/` fängt Formatverstöße bereits beim
-   Commit ab; er wird durch `npm ci` automatisch aktiviert.
+6. **Nur Grünes nach `main` — einschließlich der nachgelagerten `push`-CI.** `npm run check` läuft nach
+   der letzten inhaltlichen Änderung eines Branches, nicht davor. Ein Pull Request wird erst gemergt,
+   wenn die konfigurierten PR-Jobs vollständig grün sind; ein noch laufender Workflow ist kein grüner
+   Workflow. Nach dem Merge bleibt der Block beim mergenden Stream, bis die `push`-CI auf dem daraus
+   entstandenen `main` vollständig grün ist. Solange diese Main-CI läuft, wird kein weiterer PR gemergt.
+   Eine rote Main-CI ist ein aktiver Blocker und wird vor dem nächsten Queue-Punkt repariert oder durch
+   CONTROL explizit einem querschnittlichen Quality-Block zugewiesen. Der Pre-Commit-Hook in `.githooks/`
+   fängt Formatverstöße bereits beim Commit ab; er wird durch `npm ci` automatisch aktiviert.
 7. **Automatische und menschliche Reviews sind Merge-Gates, nicht nur Information.** Vor jedem Merge
    werden alle PR-Reviews und PR-Kommentare seit der letzten relevanten Codeänderung geprüft. Das gilt
    ausdrücklich für das Jenkins-Review mit Marker `[agy-review]`, weitere Review-Bots und menschliche
@@ -61,7 +64,8 @@
    Ist Jenkins nicht verfügbar oder quittiert nach seinem konfigurierten Timeout ohne weiteres Review,
    darf nach dokumentierter manueller Prüfung weitergearbeitet werden; bereits vorhandene Findings
    bleiben trotzdem vollständig zu behandeln. Vor dem Merge darf kein unbehandeltes actionable Finding
-   und kein unresolved/requested-change-Review verbleiben.
+   und kein unresolved/requested-change-Review verbleiben. `auto-reviewed` plus vollständig grüne Gates
+   und keine actionable Findings erlaubt Self-Merge ohne zusätzlichen Owner-Review-Wartepunkt.
 8. **Lovable nicht verwenden** — weder für Codeänderungen noch für Preview, Publishing, Deployment,
    Synchronisation oder Fehlersuche.
 9. **Keine temporären GitHub-Actions-Workflows für Implementierungsarbeit.** Dateien unter
@@ -69,17 +73,18 @@
    Migrations-Runner angelegt werden. Solche Arbeiten erfolgen lokal auf dem Feature-Branch mit den
    dafür vorgesehenen Projektwerkzeugen. Neue oder geänderte Workflows müssen eine dauerhafte
    Repository-Funktion haben und Bestandteil des eigentlichen Review-Scopes sein.
-10. **Session- und Kontextmanagement über #201.** Bei längeren Implementierungsläufen wird der
-    operative Stand im Implementation-Control-Issue #201 gepflegt. Eine neue Session darf sich nicht
-    ausschließlich auf Chat-Historie oder Modellgedächtnis verlassen, sondern prüft mindestens den
-    aktuellen `main`-SHA, #201 inklusive letztem Handoff, die Issues des nächsten Arbeitsblocks sowie
-    relevante offene PRs/CI-Läufe. Ein Session-Cut erfolgt bevorzugt an natürlichen Grenzen
-    (abgeschlossener Architekturblock, ungefähr 2–4 Issues/PRs, grüner Merge vor Themenwechsel oder
-    früher bei hoher Kontextlast). Vor dem Cut wird in #201 ein Handoff mit Start-/End-SHA,
-    abgeschlossenen Arbeiten, Architekturentscheidungen, offenen Risiken und dem exakten nächsten
-    Arbeitsschritt hinterlegt. Die Session-Health-Werte `FRESH`, `ACTIVE`, `CUT-SOON` und `CUT` sind
-    qualitative Arbeitsmetriken und keine behauptete exakte Tokenmessung.
+10. **Session- und Kontextmanagement über #370.** Eine neue Session darf sich nicht ausschließlich auf
+    Chat-Historie oder Modellgedächtnis verlassen, sondern prüft mindestens live `main`, `deploy`,
+    offene PRs, PR-CI/Reviews, die letzte `push`-CI auf `main`, #370 und den eigenen Queue-/Handoff-Stand.
+    Ab ungefähr 50 Minuten aktiver Session wird kein neuer großer Queue-Punkt begonnen; bis ungefähr
+    60 Minuten wird ein sicherer Commit/PR/CI-Zustand hergestellt und ein präziser Handoff in #370
+    hinterlegt. Ein Session-Cut ist kein fachlicher STOP; die nächste Session übernimmt aus Git + CONTROL.
 11. **`deploy` ist ausschließlich Release-Zeiger.** KI-Agenten entwickeln nicht auf `deploy`, mergen
-    nicht nach `deploy` und verschieben diesen Ref nicht. Nach einem vollständig grünen Merge nach
-    `main` führt ausschließlich der Repository-Eigentümer die bewusste Deployment-Freigabe mit
-    `git push origin main:deploy` aus. Erst dieser Nutzer-Push darf AWS Amplify auslösen.
+    nicht nach `deploy` und verschieben diesen Ref nicht. Ausschließlich der Repository-Eigentümer führt
+    die bewusste Deployment-Freigabe aus. Ein `deploy`-SHA gilt erst nach commit-spezifisch erfolgreichem
+    Amplify-Deployment, frischer Cloud Acceptance und anschließender Cloud User Acceptance als real-cloud
+    validiert; Git-Zeiger oder ältere Evidence ersetzen diese Kette nicht.
+12. **`APPSYNC_JS` ist ein eingeschränktes Runtime-Subset.** Produktive AppSync Resolver/Functions müssen
+    die vorhandenen runtime-spezifischen Lint-/Validation-Gates bestehen; normale Node-/Browser-JS-
+    Kompatibilität genügt nicht. Nicht validierte Globals/Typkonverter, Funktionsreferenzen oder andere
+    Higher-Order-Muster dürfen nicht allein aufgrund allgemeiner JavaScript-Gültigkeit eingeführt werden.
