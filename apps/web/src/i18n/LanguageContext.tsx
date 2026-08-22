@@ -56,10 +56,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [language, preferences],
   );
 
-  const t = useCallback(
-    (key: PlatformMessageKey) => platformMessage(language, key),
-    [language],
-  );
+  const t = useCallback((key: PlatformMessageKey) => platformMessage(language, key), [language]);
 
   const value = useMemo<LanguageContextValue>(
     () => ({ language, saving, setLanguage, t }),
