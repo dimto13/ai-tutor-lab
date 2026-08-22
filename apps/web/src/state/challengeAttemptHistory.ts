@@ -1,3 +1,4 @@
+import type { TrainingSession } from "@ai-train-lab/training-engine";
 import type { TrainingStatePersistence } from "./trainingStatePersistence";
 
 const CHALLENGE_ATTEMPT_HISTORY_VERSION = 1 as const;
@@ -64,6 +65,17 @@ export async function recordFailedChallengeAttempt(
   };
   await persistence.saveRuntimeSnapshot(CHALLENGE_ATTEMPT_HISTORY_RUNTIME_ID, next);
   return next;
+}
+
+/** Records a terminal failed challenge exactly once by its stable session start identity. */
+export async function recordTimedOutChallengeAttempt(
+  persistence: TrainingStatePersistence,
+  session: TrainingSession,
+): Promise<ChallengeAttemptHistory> {
+  if (session.challengeOutcome !== "timed_out") {
+    return loadChallengeAttemptHistory(persistence);
+  }
+  return recordFailedChallengeAttempt(persistence, session.startedAt);
 }
 
 export function shouldRecommendGuidedAfterChallenge(
