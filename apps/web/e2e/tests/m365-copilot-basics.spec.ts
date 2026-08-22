@@ -44,9 +44,13 @@ test("Dashboard aktiviert M365 Copilot mit Explore, Guided und Challenge", async
   const card = page.getByRole("heading", { name: "M365 Copilot Grundlagen" }).locator("..");
   await expect(page.getByRole("heading", { name: "M365 Copilot Grundlagen" })).toBeVisible();
   await expect(page.getByText("Office Assistant · 3 Modi")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Explore.*Anwendungen und Kontrollpfad/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /Explore.*Anwendungen und Kontrollpfad/ }),
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: /Guided.*Teams → Word → Outlook/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Challenge.*Freigabefähigen Endzustand/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /Challenge.*Freigabefähigen Endzustand/ }),
+  ).toBeVisible();
   await expect(card).toBeVisible();
 });
 
@@ -54,19 +58,17 @@ test("M365 Copilot Explore vermittelt alle semantischen Kontrollflächen", async
   await page.goto("/training/m365-copilot-basics.explore");
   await waitForTraining(page);
 
-  for (const label of [
-    "Teams erkunden",
-    "Word erkunden",
-    "Outlook erkunden",
-    "Freigegebene Quellen erkunden",
-    "Copilot-Arbeitsauftrag erkunden",
-    "Copilot-Entwurf erkunden",
-    "Faktenprüfung erkunden",
-    "Unbelegte Aussage verwerfen erkunden",
-    "Freigabeentscheidung erkunden",
-  ]) {
-    await page.getByRole("button", { name: label }).click();
-  }
+  await page.getByRole("button", { name: "Teams", exact: true }).click();
+  await page.getByRole("button", { name: "Word", exact: true }).click();
+  await page.getByRole("button", { name: "Outlook", exact: true }).click();
+  await chooseApprovedSources(page);
+  await submitCompletePrompt(page);
+  await page.getByRole("button", { name: "Outlook-Entwurf erzeugen" }).click();
+  await page
+    .getByRole("button", { name: "Namen, Zahlen, Zusagen, Quellen und Ton geprüft" })
+    .click();
+  await page.getByRole("button", { name: "Unbelegte Aussage verwerfen" }).click();
+  await page.getByRole("button", { name: "Freigeben", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
