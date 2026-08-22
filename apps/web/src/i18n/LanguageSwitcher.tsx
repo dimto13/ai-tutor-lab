@@ -19,7 +19,7 @@ export function LanguageSwitcher() {
     >
       <Languages className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       <label className="flex items-center gap-2 text-xs font-medium text-foreground">
-        <span className="sr-only">{t("changeLanguage")}</span>
+        <span>{t("languageLabel")}</span>
         <select
           aria-label={t("changeLanguage")}
           value={language}
