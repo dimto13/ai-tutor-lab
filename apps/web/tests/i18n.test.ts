@@ -1,7 +1,10 @@
 import type { Scenario } from "@ai-train-lab/training-engine";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { localizeScenarioContent } from "../src/i18n/scenarioContent.ts";
+import {
+  localizeScenarioContent,
+  parseScenarioTranslation,
+} from "../src/i18n/scenarioContent.ts";
 import { normalizeLanguage, platformMessage, resolveLocalizedText } from "../src/i18n/messages.ts";
 
 function scenarioFixture(): Scenario {
@@ -50,6 +53,28 @@ describe("i18n language foundation", () => {
   it("keeps platform keys available in both initial languages", () => {
     assert.equal(platformMessage("de", "changeLanguage"), "Sprache wechseln");
     assert.equal(platformMessage("en", "changeLanguage"), "Change language");
+  });
+
+  it("validates translation JSON before it becomes scenario content", () => {
+    assert.equal(
+      parseScenarioTranslation({
+        scenarioId: "example.guided",
+        steps: { first: { title: "First", helpLevels: ["One", "Two"] } },
+      }).steps?.first?.title,
+      "First",
+    );
+    assert.throws(
+      () => parseScenarioTranslation({ scenarioId: "example.guided", steps: { first: { title: 1 } } }),
+      /title must be a string/,
+    );
+    assert.throws(
+      () =>
+        parseScenarioTranslation({
+          scenarioId: "example.guided",
+          steps: { first: { helpLevels: ["One", 2] } },
+        }),
+      /helpLevels must be strings/,
+    );
   });
 
   it("stores scenario copy per language and falls back field-by-field to German", () => {
