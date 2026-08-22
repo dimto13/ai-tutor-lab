@@ -11,12 +11,14 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await expect(currentStep).toBeVisible();
 
   const language = page.getByRole("combobox", { name: "Sprache wechseln" });
+  await expect(page.getByText("Sprache", { exact: true })).toBeVisible();
   await expect(language).toBeVisible();
   await language.focus();
   await expect(language).toBeFocused();
   await language.selectOption("en");
 
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByText("Language", { exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Change language" })).toHaveValue("en");
   await expect(currentStep).toBeVisible();
 
@@ -27,6 +29,7 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Training bereit");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByText("Language", { exact: true })).toBeVisible();
   await expect(currentStep).toBeVisible();
 
   await page.getByRole("combobox", { name: "Change language" }).selectOption("de");
