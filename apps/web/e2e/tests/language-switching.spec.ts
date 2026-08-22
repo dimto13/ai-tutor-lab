@@ -1,11 +1,15 @@
 import { expect, test } from "../fixtures/browser-error-guard";
 
-test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zurück", async ({ page }) => {
+test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zurück", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 
-  await expect(page.getByRole("heading", { name: "Schritt 1 – Activity Bar einordnen" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Schritt 1 – Activity Bar einordnen" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
   const currentStep = page.getByRole("heading", { name: "Schritt 7 – Explorer öffnen" });
   await expect(currentStep).toBeVisible();
