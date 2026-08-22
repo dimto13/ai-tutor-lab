@@ -198,7 +198,8 @@ function DataTransparencyPage() {
           >
             Die aktuelle Tenant-Policy konnte nicht sicher geladen werden. Deshalb bleiben
             policyabhängige Angaben zu Punkte-Sichtbarkeit und Telemetrie-Retention ausgeblendet.
-            Die übrigen Datenkategorien und der bestehende Eigendatenexport bleiben verfügbar. {contextError}
+            Die übrigen Datenkategorien und der bestehende Eigendatenexport bleiben verfügbar.{" "}
+            {contextError}
           </div>
         ) : null}
 
