@@ -39,7 +39,7 @@
       "helpLevels": [
         "Beginne mit den drei Anwendungen und vergleiche ihre unterschiedlichen Rollen.",
         "Prüfe danach die Quellen: Eine ausdrücklich gesperrte Quelle darf nicht an die simulierte KI übergeben werden.",
-        "Erkunde zuletzt Prompt, Ergebnis, Faktenprüfung, Halluzinationsverwerfung und Freigabe."
+        "Klicke nacheinander auf Teams, Word und Outlook, wähle nur die beiden als „KI freigegeben“ markierten Quellen, aktiviere im Arbeitsauftrag Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat und sende ihn ab. Erzeuge anschließend die Entwürfe, bestätige die Faktenprüfung, verwirf die unbelegte Aussage und schließe den Ablauf mit einer ausdrücklichen Freigabeentscheidung ab."
       ],
       "successMessage": "Du hast den M365-Copilot-Arbeitsablauf von der Quellenfreigabe bis zur menschlichen Entscheidung erkundet."
     }
