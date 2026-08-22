@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import type { TrainingSession } from "@ai-train-lab/training-engine";
 import type { TrainingStatePersistence } from "../src/state/trainingStatePersistence.ts";
 import {
   CHALLENGE_ATTEMPT_HISTORY_RUNTIME_ID,
   loadChallengeAttemptHistory,
   parseChallengeAttemptHistory,
   recordFailedChallengeAttempt,
+  recordTimedOutChallengeAttempt,
   shouldRecommendGuidedAfterChallenge,
 } from "../src/state/challengeAttemptHistory.ts";
 
@@ -22,6 +24,10 @@ function persistenceDouble(initial: unknown = null) {
     },
   } as unknown as TrainingStatePersistence;
   return { persistence, stored: () => stored };
+}
+
+function challengeSession(startedAt: number, challengeOutcome: TrainingSession["challengeOutcome"]) {
+  return { startedAt, challengeOutcome } as TrainingSession;
 }
 
 describe("challengeAttemptHistory", () => {
@@ -75,5 +81,32 @@ describe("challengeAttemptHistory", () => {
 
     const restored = await loadChallengeAttemptHistory(persistence);
     assert.deepEqual(restored, second);
+  });
+
+  it("records only timed-out terminal challenge sessions and keeps retries idempotent", async () => {
+    const { persistence, stored } = persistenceDouble();
+
+    const active = await recordTimedOutChallengeAttempt(persistence, challengeSession(100, "active"));
+    assert.deepEqual(active.failedStartedAt, []);
+    assert.equal(stored(), null);
+
+    const firstTimeout = await recordTimedOutChallengeAttempt(
+      persistence,
+      challengeSession(100, "timed_out"),
+    );
+    assert.deepEqual(firstTimeout.failedStartedAt, [100]);
+
+    const duplicateTimeout = await recordTimedOutChallengeAttempt(
+      persistence,
+      challengeSession(100, "timed_out"),
+    );
+    assert.deepEqual(duplicateTimeout.failedStartedAt, [100]);
+
+    const secondTimeout = await recordTimedOutChallengeAttempt(
+      persistence,
+      challengeSession(200, "timed_out"),
+    );
+    assert.deepEqual(secondTimeout.failedStartedAt, [100, 200]);
+    assert.equal(shouldRecommendGuidedAfterChallenge(secondTimeout), true);
   });
 });
