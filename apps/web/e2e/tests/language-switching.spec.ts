@@ -7,6 +7,11 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 
+  const initialLanguage = page.getByRole("combobox", { name: /Sprache wechseln|Change language/ });
+  await expect(initialLanguage).toBeVisible();
+  await initialLanguage.selectOption("de");
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
+
   await expect(
     page.getByRole("heading", { name: "Schritt 1 – Activity Bar einordnen" }),
   ).toBeVisible();
@@ -16,7 +21,6 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
 
   const language = page.getByRole("combobox", { name: "Sprache wechseln" });
   await expect(page.getByText("Sprache", { exact: true })).toBeVisible();
-  await expect(language).toBeVisible();
   await language.focus();
   await expect(language).toBeFocused();
   await language.selectOption("en");
