@@ -1,10 +1,7 @@
 import type { Scenario } from "@ai-train-lab/training-engine";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  localizeScenarioContent,
-  parseScenarioTranslation,
-} from "../src/i18n/scenarioContent.ts";
+import { localizeScenarioContent, parseScenarioTranslation } from "../src/i18n/scenarioContent.ts";
 import { normalizeLanguage, platformMessage, resolveLocalizedText } from "../src/i18n/messages.ts";
 
 function scenarioFixture(): Scenario {
@@ -64,7 +61,8 @@ describe("i18n language foundation", () => {
       "First",
     );
     assert.throws(
-      () => parseScenarioTranslation({ scenarioId: "example.guided", steps: { first: { title: 1 } } }),
+      () =>
+        parseScenarioTranslation({ scenarioId: "example.guided", steps: { first: { title: 1 } } }),
       /title must be a string/,
     );
     assert.throws(
