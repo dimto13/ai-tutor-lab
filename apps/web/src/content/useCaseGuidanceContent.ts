@@ -18,7 +18,16 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "development",
     title: "Kontrollierter KI-Entwicklungsworkflow",
-    keywords: ["code", "software", "entwick", "repository", "github", "vscode", "vs code", "terminal"],
+    keywords: [
+      "code",
+      "software",
+      "entwick*",
+      "repository",
+      "github",
+      "vscode",
+      "vs code",
+      "terminal",
+    ],
     rationale:
       "Dein Ziel ist Entwicklungsarbeit. KI sollte Änderungen in kleinen, überprüfbaren Schritten vorbereiten; Diff, Berechtigungen und Tests bleiben deine Kontrollpunkte.",
     modules: [
@@ -37,7 +46,7 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "research",
     title: "Recherche mit Quellenprüfung",
-    keywords: ["recherch", "quelle", "wissen", "vergleich", "information", "regel", "markt"],
+    keywords: ["recherch*", "quelle*", "wissen", "vergleich*", "information*", "regel*", "markt*"],
     rationale:
       "Bei Recherche zählt nicht nur die Antwort, sondern die nachvollziehbare Trennung zwischen Fundstelle, Bewertung und Schlussfolgerung.",
     modules: [{ scenarioId: "research-workflow.guided", label: "Mit KI recherchieren – Guided" }],
@@ -53,7 +62,7 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "document",
     title: "Dokumentarbeit mit klarer Freigabegrenze",
-    keywords: ["dokument", "bericht", "text", "word", "präsent", "zusammenfass", "protokoll"],
+    keywords: ["dokument*", "bericht*", "text", "word", "präsent*", "zusammenfass*", "protokoll*"],
     rationale:
       "KI kann Entwurf und Überarbeitung beschleunigen. Fakten, Freigaben und vertrauliche Inhalte bleiben dabei unter menschlicher Kontrolle.",
     modules: [{ scenarioId: "research-workflow.explore", label: "Quellen und Prüfung – Explore" }],
@@ -69,7 +78,7 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "workflow",
     title: "Kleinen KI-Pilot mit Prüfschritt aufsetzen",
-    keywords: ["prozess", "ablauf", "automatis", "workflow", "e-mail", "email", "anfrage"],
+    keywords: ["prozess*", "ablauf*", "automatis*", "workflow*", "e-mail*", "email*", "anfrage*"],
     rationale:
       "Für einen wiederkehrenden Ablauf ist ein begrenzter Pilot mit eindeutigem Eingang, Ergebnis und menschlichem Prüfschritt sinnvoller als sofortige Vollautomatisierung.",
     modules: [{ scenarioId: "developer-workflow-basics.explore", label: "KI-Workflow – Explore" }],
