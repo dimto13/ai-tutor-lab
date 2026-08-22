@@ -116,7 +116,9 @@ export function localizeScenarioContent(scenario: Scenario, language: SupportedL
   if (!translation || translation.scenarioId !== scenario.id) return scenario;
 
   const knownStepIds = new Set(scenario.steps.map(({ id }) => id));
-  const unknownStepId = Object.keys(translation.steps ?? {}).find((stepId) => !knownStepIds.has(stepId));
+  const unknownStepId = Object.keys(translation.steps ?? {}).find(
+    (stepId) => !knownStepIds.has(stepId),
+  );
   if (unknownStepId) {
     throw new Error(`Scenario translation ${scenario.id}: unknown step ${unknownStepId}`);
   }
