@@ -17,6 +17,7 @@ export function SpeechTextControl({ text }: { text: string }) {
   }, []);
 
   useEffect(() => {
+    setState("idle");
     return () => {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
