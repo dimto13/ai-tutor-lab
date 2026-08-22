@@ -2,6 +2,7 @@ import { artifactPreviewRuntime } from "./artifactPreviewRuntime.ts";
 import { classificationRuntime } from "./classificationRuntime.ts";
 import { claudeCodeRuntime } from "./claudeCodeRuntime.ts";
 import { copilotRuntime } from "./copilotRuntime.ts";
+import { m365CopilotRuntime } from "./m365CopilotRuntime.ts";
 import { getRuntimeReferenceDefinition } from "./referenceCatalog.ts";
 import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime.ts";
 import { vscodeRuntime } from "./vscodeRuntime.ts";
@@ -16,6 +17,14 @@ export type {
 } from "./runtimeAdapter.ts";
 export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime.ts";
 export type { CopilotProductProfile } from "./copilotProductProfile.ts";
+export type {
+  M365App,
+  M365ApprovalDecision,
+  M365CopilotRuntimeAdapter,
+  M365CopilotState,
+  M365DraftKind,
+  M365PromptQuality,
+} from "./m365CopilotRuntime.ts";
 export type {
   ArtifactPreviewRuntimeAdapter,
   ArtifactPreviewState,
@@ -121,6 +130,7 @@ const registeredCopilotRuntime: RuntimeAdapter = {
 const runtimes: Record<string, RuntimeAdapter> = {
   [vscodeRuntime.id]: vscodeRuntime,
   [registeredCopilotRuntime.id]: registeredCopilotRuntime,
+  [m365CopilotRuntime.id]: m365CopilotRuntime,
   [artifactPreviewRuntime.id]: artifactPreviewRuntime,
   [sourceControlPlatformRuntime.id]: sourceControlPlatformRuntime,
   [claudeCodeRuntime.id]: claudeCodeRuntime,
