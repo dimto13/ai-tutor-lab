@@ -27,7 +27,9 @@ async function submitCompletePrompt(page: Page) {
     await page.getByRole("checkbox", { name: criterion }).check();
   }
   await page.getByRole("button", { name: "Arbeitsauftrag an Copilot geben" }).click();
-  await expect(page.getByText("Auftrag enthält alle fünf Qualitätsmerkmale.")).toBeVisible();
+  await expect(
+    page.getByText("Auftrag enthält alle fünf Qualitätsmerkmale.", { exact: true }),
+  ).toBeVisible();
 }
 
 async function createThreeDrafts(page: Page) {
