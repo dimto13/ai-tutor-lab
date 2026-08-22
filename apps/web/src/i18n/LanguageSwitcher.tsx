@@ -15,7 +15,7 @@ export function LanguageSwitcher() {
   return (
     <div
       data-platform-ui="language-switcher"
-      className="fixed bottom-3 left-3 z-[120] flex items-center gap-2 rounded-lg border border-border bg-panel/95 px-2.5 py-2 shadow-lg backdrop-blur"
+      className="relative z-[120] flex w-full items-center justify-end gap-2 border-b border-border bg-panel/95 px-3 py-2 backdrop-blur"
     >
       <Languages className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       <label className="flex items-center gap-2 text-xs font-medium text-foreground">
