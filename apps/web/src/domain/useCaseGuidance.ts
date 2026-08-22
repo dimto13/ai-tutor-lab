@@ -17,11 +17,19 @@ export type UseCaseGuidanceResult =
 const normalize = (value: unknown) =>
   typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 
-const word = (source: string) => new RegExp(`(?:^|[^\\p{L}\\p{N}_])(?:${source})(?=$|[^\\p{L}\\p{N}_])`, "iu");
-const vagueGoalPattern = /^(?:e-?mails?|texte?|daten|code|recherche|dokumente?|automatisierung)[\s.!?,;:]*$/iu;
-const researchPattern = word("recherch[\\p{L}\\p{N}_]*|quelle[\\p{L}\\p{N}_]*|wissen|vergleich[\\p{L}\\p{N}_]*|information[\\p{L}\\p{N}_]*");
-const documentPattern = word("dokument[\\p{L}\\p{N}_]*|bericht[\\p{L}\\p{N}_]*|text|word|präsent[\\p{L}\\p{N}_]*|zusammenfass[\\p{L}\\p{N}_]*");
-const developmentPattern = word("code|software|entwick[\\p{L}\\p{N}_]*|repository|github|vs\\s?code|vscode|terminal");
+const word = (source: string) =>
+  new RegExp(`(?:^|[^\\p{L}\\p{N}_])(?:${source})(?=$|[^\\p{L}\\p{N}_])`, "iu");
+const vagueGoalPattern =
+  /^(?:e-?mails?|texte?|daten|code|recherche|dokumente?|automatisierung)[\s.!?,;:]*$/iu;
+const researchPattern = word(
+  "recherch[\\p{L}\\p{N}_]*|quelle[\\p{L}\\p{N}_]*|wissen|vergleich[\\p{L}\\p{N}_]*|information[\\p{L}\\p{N}_]*",
+);
+const documentPattern = word(
+  "dokument[\\p{L}\\p{N}_]*|bericht[\\p{L}\\p{N}_]*|text|word|präsent[\\p{L}\\p{N}_]*|zusammenfass[\\p{L}\\p{N}_]*",
+);
+const developmentPattern = word(
+  "code|software|entwick[\\p{L}\\p{N}_]*|repository|github|vs\\s?code|vscode|terminal",
+);
 
 export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGuidanceResult {
   const goal = normalize(input.goal);
@@ -29,15 +37,22 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
   const constraints = normalize(input.constraints);
 
   if (!goal || vagueGoalPattern.test(goal)) {
-    return { kind: "clarify", question: "Welches konkrete Arbeitsergebnis möchtest du mit KI erreichen?" };
+    return {
+      kind: "clarify",
+      question: "Welches konkrete Arbeitsergebnis möchtest du mit KI erreichen?",
+    };
   }
   if (!tools) {
-    return { kind: "clarify", question: "Welche Werkzeuge oder Systeme nutzt du für diese Aufgabe heute?" };
+    return {
+      kind: "clarify",
+      question: "Welche Werkzeuge oder Systeme nutzt du für diese Aufgabe heute?",
+    };
   }
   if (!constraints) {
     return {
       kind: "clarify",
-      question: "Welche Vorgaben sind wichtig, zum Beispiel Datenschutz, Freigaben oder erlaubte Systeme?",
+      question:
+        "Welche Vorgaben sind wichtig, zum Beispiel Datenschutz, Freigaben oder erlaubte Systeme?",
     };
   }
 
@@ -53,7 +68,8 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
   if (matches.length > 1) {
     return {
       kind: "clarify",
-      question: "Was steht bei deinem Vorhaben im Vordergrund: Recherche, Dokumentarbeit oder Softwareentwicklung?",
+      question:
+        "Was steht bei deinem Vorhaben im Vordergrund: Recherche, Dokumentarbeit oder Softwareentwicklung?",
     };
   }
 
@@ -62,7 +78,8 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
       kind: "recommendation",
       recommendation: {
         title: "Kontrollierter KI-Entwicklungsworkflow",
-        rationale: "Dein Vorhaben verbindet Entwicklungswerkzeuge mit KI-Unterstützung. Plane deshalb einen überprüfbaren Workflow statt eines autonomen End-to-End-Laufs.",
+        rationale:
+          "Dein Vorhaben verbindet Entwicklungswerkzeuge mit KI-Unterstützung. Plane deshalb einen überprüfbaren Workflow statt eines autonomen End-to-End-Laufs.",
         nextSteps: [
           "Grenze den gewünschten Endzustand und erlaubte Dateien oder Systeme ein.",
           "Lass Änderungen in kleinen Schritten erzeugen und prüfe Diff sowie Berechtigungen.",
@@ -76,7 +93,8 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
       kind: "recommendation",
       recommendation: {
         title: "Recherche mit Quellenprüfung",
-        rationale: "Für dein Vorhaben ist nicht nur eine schnelle Antwort wichtig, sondern eine nachvollziehbare Trennung zwischen Fundstellen, Bewertung und Schlussfolgerung.",
+        rationale:
+          "Für dein Vorhaben ist nicht nur eine schnelle Antwort wichtig, sondern eine nachvollziehbare Trennung zwischen Fundstellen, Bewertung und Schlussfolgerung.",
         nextSteps: [
           "Formuliere Fragestellung, Zeitraum und zulässige Quellen.",
           "Sammle Ergebnisse mit Quellenbezug und markiere Unsicherheiten.",
@@ -90,7 +108,8 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
       kind: "recommendation",
       recommendation: {
         title: "Dokumentarbeit mit klarer Freigabegrenze",
-        rationale: "KI kann Entwurf und Überarbeitung beschleunigen. Inhalte und Freigaben sollten dabei bewusst in deiner Kontrolle bleiben.",
+        rationale:
+          "KI kann Entwurf und Überarbeitung beschleunigen. Inhalte und Freigaben sollten dabei bewusst in deiner Kontrolle bleiben.",
         nextSteps: [
           "Definiere Zielgruppe, Zweck und verbindliche Vorgaben des Dokuments.",
           "Erzeuge zunächst einen begrenzten Entwurf ohne unnötige vertrauliche Inhalte.",
@@ -104,7 +123,8 @@ export function evaluateUseCaseGuidance(input: UseCaseGuidanceInput): UseCaseGui
     kind: "recommendation",
     recommendation: {
       title: "Kleinen KI-Pilot mit Prüfschritt aufsetzen",
-      rationale: "Dein Vorhaben lässt sich sinnvoll als begrenzter Pilot testen, ohne daraus vorschnell einen vollautomatischen Prozess zu machen.",
+      rationale:
+        "Dein Vorhaben lässt sich sinnvoll als begrenzter Pilot testen, ohne daraus vorschnell einen vollautomatischen Prozess zu machen.",
       nextSteps: [
         "Beschreibe einen wiederkehrenden Arbeitsschritt mit eindeutigem Eingang und Ergebnis.",
         "Teste KI-Unterstützung zunächst mit unkritischen Beispieldaten.",
