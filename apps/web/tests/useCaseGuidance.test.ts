@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { evaluateUseCaseGuidance } from "../src/domain/useCaseGuidance.ts";
+import { evaluateUseCaseGuidance, formatTaskDraft } from "../src/domain/useCaseGuidance.ts";
 
 describe("evaluateUseCaseGuidance", () => {
   it("asks a targeted question when the goal is too vague, including punctuation", () => {
@@ -42,37 +42,64 @@ describe("evaluateUseCaseGuidance", () => {
     );
   });
 
-  it("maps development work to a controlled workflow", () => {
-    const result = evaluateUseCaseGuidance({
+  const cases = [
+    {
       goal: "Softwareänderungen mit KI entwickeln",
       tools: "VS Code und GitHub",
       constraints: "prüfen und testen",
-    });
-    assert.equal(result.kind, "recommendation");
-    if (result.kind === "recommendation")
-      assert.equal(result.recommendation.title, "Kontrollierter KI-Entwicklungsworkflow");
-  });
-
-  it("maps research work to source verification", () => {
-    const result = evaluateUseCaseGuidance({
+      title: "Kontrollierter KI-Entwicklungsworkflow",
+    },
+    {
       goal: "Informationen zu neuen Regeln recherchieren",
       tools: "Websuche",
       constraints: "belastbare Quellen",
-    });
-    assert.equal(result.kind, "recommendation");
-    if (result.kind === "recommendation")
-      assert.equal(result.recommendation.title, "Recherche mit Quellenprüfung");
-  });
-
-  it("recognizes German words with umlauts without relying on ASCII word boundaries", () => {
-    const result = evaluateUseCaseGuidance({
+      title: "Recherche mit Quellenprüfung",
+    },
+    {
       goal: "Präsentationen für Schulungen zusammenfassen",
       tools: "PowerPoint",
       constraints: "intern",
-    });
+      title: "Dokumentarbeit mit klarer Freigabegrenze",
+    },
+  ] as const;
+
+  it("maps at least three maintained use-case families to deterministic recommendations", () => {
+    for (const useCase of cases) {
+      const result = evaluateUseCaseGuidance(useCase);
+      assert.equal(result.kind, "recommendation");
+      if (result.kind !== "recommendation") continue;
+      assert.equal(result.recommendation.title, useCase.title);
+      assert.ok(result.recommendation.modules.length > 0);
+      assert.equal(result.recommendation.checklist.length, 6);
+    }
+  });
+
+  it("builds the reusable six-field task draft and keeps unknown details visibly open", () => {
+    const result = evaluateUseCaseGuidance(cases[0]);
     assert.equal(result.kind, "recommendation");
-    if (result.kind === "recommendation")
-      assert.equal(result.recommendation.title, "Dokumentarbeit mit klarer Freigabegrenze");
+    if (result.kind !== "recommendation") return;
+
+    const formatted = formatTaskDraft(result.recommendation.taskDraft);
+    for (const field of [
+      "Ziel:",
+      "Ausgangslage:",
+      "Eingaben:",
+      "Ergebnisformat:",
+      "Randbedingungen:",
+      "Prüfkriterium:",
+    ]) {
+      assert.match(formatted, new RegExp(field));
+    }
+    assert.match(formatted, /\[hier ergänzen:/);
+  });
+
+  it("keeps checklists specific to the selected use-case family", () => {
+    const development = evaluateUseCaseGuidance(cases[0]);
+    const research = evaluateUseCaseGuidance(cases[1]);
+    assert.equal(development.kind, "recommendation");
+    assert.equal(research.kind, "recommendation");
+    if (development.kind !== "recommendation" || research.kind !== "recommendation") return;
+    assert.notDeepEqual(development.recommendation.checklist, research.recommendation.checklist);
   });
 
   it("classifies intent from the goal rather than tools or constraints", () => {
