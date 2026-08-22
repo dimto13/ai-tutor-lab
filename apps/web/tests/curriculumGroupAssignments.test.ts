@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import {
   assignCurriculumToGroup,
   loadGroupCurriculumProgress,
@@ -39,13 +40,13 @@ describe("curriculum group assignments", () => {
       store,
     });
 
-    expect(assignment.assignedBy).toBe("admin-1");
-    expect(assignments).toEqual([assignment]);
+    assert.equal(assignment.assignedBy, "admin-1");
+    assert.deepEqual(assignments, [assignment]);
   });
 
   it("denies assignment without tenant administration permission", async () => {
     const { store } = memoryStore();
-    await expect(
+    await assert.rejects(
       assignCurriculumToGroup({
         actor: { tenantId: "tenant-a", userId: "trainer-1", roles: ["trainer"] },
         tenantId: "tenant-a",
@@ -54,14 +55,15 @@ describe("curriculum group assignments", () => {
         assignedAt: 1_800_000_000_000,
         store,
       }),
-    ).rejects.toThrow("tenant administration permission");
+      /tenant administration permission/,
+    );
   });
 
   it("fails closed for cross-tenant assignment and reporting", async () => {
     const { store } = memoryStore();
     const actor = { tenantId: "tenant-a", userId: "admin-1", roles: ["tenant_admin"] } as const;
 
-    await expect(
+    await assert.rejects(
       assignCurriculumToGroup({
         actor,
         tenantId: "tenant-b",
@@ -70,11 +72,13 @@ describe("curriculum group assignments", () => {
         assignedAt: 1_800_000_000_000,
         store,
       }),
-    ).rejects.toThrow("tenant scope");
+      /tenant scope/,
+    );
 
-    await expect(
+    await assert.rejects(
       loadGroupCurriculumProgress({ actor, tenantId: "tenant-b", groupSizes: {}, store }),
-    ).rejects.toThrow("tenant scope");
+      /tenant scope/,
+    );
   });
 
   it("exposes aggregate completion per assigned group without person-specific output", async () => {
@@ -88,34 +92,10 @@ describe("curriculum group assignments", () => {
     const { store } = memoryStore({
       assignments: [assignment],
       completions: [
-        {
-          tenantId: "tenant-a",
-          groupId: "finance",
-          curriculumId: "copilot-basics",
-          userId: "u1",
-          completedAt: 10,
-        },
-        {
-          tenantId: "tenant-a",
-          groupId: "finance",
-          curriculumId: "copilot-basics",
-          userId: "u1",
-          completedAt: 11,
-        },
-        {
-          tenantId: "tenant-a",
-          groupId: "finance",
-          curriculumId: "copilot-basics",
-          userId: "u2",
-          completedAt: 12,
-        },
-        {
-          tenantId: "tenant-a",
-          groupId: "finance",
-          curriculumId: "other",
-          userId: "u3",
-          completedAt: 13,
-        },
+        { tenantId: "tenant-a", groupId: "finance", curriculumId: "copilot-basics", userId: "u1", completedAt: 10 },
+        { tenantId: "tenant-a", groupId: "finance", curriculumId: "copilot-basics", userId: "u1", completedAt: 11 },
+        { tenantId: "tenant-a", groupId: "finance", curriculumId: "copilot-basics", userId: "u2", completedAt: 12 },
+        { tenantId: "tenant-a", groupId: "finance", curriculumId: "other", userId: "u3", completedAt: 13 },
       ],
     });
 
@@ -126,7 +106,7 @@ describe("curriculum group assignments", () => {
       store,
     });
 
-    expect(progress).toEqual([
+    assert.deepEqual(progress, [
       {
         tenantId: "tenant-a",
         groupId: "finance",
@@ -136,18 +116,19 @@ describe("curriculum group assignments", () => {
         completionPercent: 50,
       },
     ]);
-    expect(progress[0]).not.toHaveProperty("userId");
+    assert.equal(Object.hasOwn(progress[0], "userId"), false);
   });
 
   it("denies aggregate progress to learners", async () => {
     const { store } = memoryStore();
-    await expect(
+    await assert.rejects(
       loadGroupCurriculumProgress({
         actor: { tenantId: "tenant-a", userId: "learner-1", roles: ["learner"] },
         tenantId: "tenant-a",
         groupSizes: {},
         store,
       }),
-    ).rejects.toThrow("aggregate reporting permission");
+      /aggregate reporting permission/,
+    );
   });
 });
