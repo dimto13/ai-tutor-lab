@@ -46,7 +46,19 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "research",
     title: "Recherche mit Quellenprüfung",
-    keywords: ["recherch*", "quelle*", "wissen", "vergleich*", "information*", "regel*", "markt*"],
+    keywords: [
+      "recherch*",
+      "quelle",
+      "quellen",
+      "quellenprüfung",
+      "wissen",
+      "vergleich*",
+      "information*",
+      "regel",
+      "regeln",
+      "markt",
+      "märkte",
+    ],
     rationale:
       "Bei Recherche zählt nicht nur die Antwort, sondern die nachvollziehbare Trennung zwischen Fundstelle, Bewertung und Schlussfolgerung.",
     modules: [{ scenarioId: "research-workflow.guided", label: "Mit KI recherchieren – Guided" }],
