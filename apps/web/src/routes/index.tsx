@@ -384,11 +384,16 @@ function Dashboard() {
                 Aktion · kein Training
               </span>
             </div>
-            <h2 id="use-case-guidance-heading" className="mt-3 text-base font-semibold text-foreground">
+            <h2
+              id="use-case-guidance-heading"
+              className="mt-3 text-base font-semibold text-foreground"
+            >
               Eigenes Vorhaben einordnen
             </h2>
             <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
-              Beschreibe eine Aufgabe aus deinem Arbeitsalltag und erhalte lokal eine Werkzeug-Empfehlung, einen strukturierten Auftragsentwurf und eine konkrete Vorab-Checkliste.
+              Beschreibe eine Aufgabe aus deinem Arbeitsalltag und erhalte lokal eine
+              Werkzeug-Empfehlung, einen strukturierten Auftragsentwurf und eine konkrete
+              Vorab-Checkliste.
             </p>
             <Link
               to="/einsatzbereiche"
