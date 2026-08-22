@@ -122,7 +122,8 @@ export async function loadGroupCurriculumProgress(input: {
     }
     const assignedLearners = rawGroupSize ?? 0;
     const completedLearners =
-      completedByAssignment.get(assignmentKey(assignment.groupId, assignment.curriculumId))?.size ?? 0;
+      completedByAssignment.get(assignmentKey(assignment.groupId, assignment.curriculumId))?.size ??
+      0;
     if (completedLearners > assignedLearners) {
       throw new Error(`Completion count exceeds assigned learners for ${assignment.groupId}`);
     }
