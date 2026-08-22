@@ -6,6 +6,7 @@ import {
   GitBranch,
   Github,
   GraduationCap,
+  Lightbulb,
   PlayCircle,
   Route as RouteIcon,
   Search,
@@ -372,6 +373,36 @@ function Dashboard() {
           description="Weitere Technologien und Arbeitskontexte werden nach demselben Prinzip als eigenständige Lernmodule ergänzt."
           trainings={otherTrainings}
         />
+
+        <section className="mt-6" aria-labelledby="use-case-guidance-heading">
+          <article className="min-w-0 rounded-xl border border-border bg-card p-5 transition-colors hover:border-ring/60">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent/15">
+                <Lightbulb className="h-4 w-4 text-accent" />
+              </span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Aktion · kein Training
+              </span>
+            </div>
+            <h2
+              id="use-case-guidance-heading"
+              className="mt-3 text-base font-semibold text-foreground"
+            >
+              Eigenes Vorhaben einordnen
+            </h2>
+            <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+              Beschreibe eine Aufgabe aus deinem Arbeitsalltag und erhalte lokal eine
+              Werkzeug-Empfehlung, einen strukturierten Auftragsentwurf und eine konkrete
+              Vorab-Checkliste.
+            </p>
+            <Link
+              to="/einsatzbereiche"
+              className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Vorhaben einordnen <ArrowRight className="h-4 w-4" />
+            </Link>
+          </article>
+        </section>
       </main>
     </div>
   );
