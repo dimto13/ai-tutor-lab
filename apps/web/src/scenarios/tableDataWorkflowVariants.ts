@@ -53,7 +53,8 @@ const challengeStep: TrainingStep = {
     "Nach der Iteration ohne Retouren enthält die Auswertung nur noch drei statt vier Regionen.",
     "Benenne Ost in Copilot, stelle die Region wieder her und markiere erst den korrigierten Endstand als geprüft.",
   ],
-  successMessage: "Die Tabellenanalyse wurde mit bestätigten Annahmen, sichtbaren Zwischenständen und korrigiertem Vollständigkeitsfehler abgeschlossen.",
+  successMessage:
+    "Die Tabellenanalyse wurde mit bestätigten Annahmen, sichtbaren Zwischenständen und korrigiertem Vollständigkeitsfehler abgeschlossen.",
 };
 
 const challengeCompletion: Validation = {
