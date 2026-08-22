@@ -48,13 +48,10 @@ function ruleMatchesGoal(rule: UseCaseGuidanceRule, goal: string) {
       return tokens.some((token) => token.startsWith(stem));
     }
     if (keyword.includes(" ")) {
-      const escaped = keyword
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        .replace(/\s+/g, "\\s+");
-      return new RegExp(
-        `(?:^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`,
-        "u",
-      ).test(normalizedGoal);
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      return new RegExp(`(?:^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, "u").test(
+        normalizedGoal,
+      );
     }
     return tokens.includes(keyword);
   });
