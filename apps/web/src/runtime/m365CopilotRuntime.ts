@@ -153,6 +153,16 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     for (const listener of eventListeners) listener(event);
   };
 
+  const inspect = (ref: UiTargetRef): void => {
+    const target = getM365CopilotSurfaceTarget(ref);
+    if (!target) return;
+    emit("ui.element.inspected", {
+      ref,
+      label: target.label,
+      conceptKey: target.conceptKey,
+    });
+  };
+
   return {
     id: M365_COPILOT_RUNTIME_DEFINITION.id,
     productId: M365_COPILOT_RUNTIME_DEFINITION.productId,
@@ -231,6 +241,7 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
 
     selectApp(app) {
       replaceState({ ...state, activeApp: app }, "mutation");
+      inspect(`m365.nav.${app}`);
       emit("m365.app.selected", { app });
     },
 
@@ -239,11 +250,13 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
       if (approved) sourceIds.add(sourceId);
       else sourceIds.delete(sourceId);
       replaceState({ ...state, approvedSourceIds: [...sourceIds].sort() }, "mutation");
+      inspect("m365.sources");
       emit("m365.source.approval.changed", { sourceId, approved });
     },
 
     submitPrompt(quality) {
       replaceState({ ...state, promptSubmitted: true, promptQuality: { ...quality } }, "mutation");
+      inspect("m365.prompt");
       emit("m365.prompt.submitted", {
         qualityComplete: promptQualityComplete(quality),
         approvedSourceCount: state.approvedSourceIds.length,
@@ -260,21 +273,25 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
         },
         "mutation",
       );
+      inspect("m365.result");
       emit("m365.draft.created", { kind });
     },
 
     markFactsChecked() {
       replaceState({ ...state, factsChecked: true }, "mutation");
+      inspect("m365.review.facts");
       emit("m365.review.facts.checked", { checked: true });
     },
 
     rejectUnsupportedSuggestion() {
       replaceState({ ...state, unsupportedRejected: true }, "mutation");
+      inspect("m365.unsupported.reject");
       emit("m365.review.unsupported.rejected", { rejected: true });
     },
 
     decideApproval(decision) {
       replaceState({ ...state, approvalDecision: decision }, "mutation");
+      inspect("m365.approval");
       emit("m365.approval.decided", { decision });
     },
 
