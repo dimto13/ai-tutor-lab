@@ -88,10 +88,34 @@ describe("curriculum group assignments", () => {
     const { store } = memoryStore({
       assignments: [assignment],
       completions: [
-        { tenantId: "tenant-a", groupId: "finance", curriculumId: "copilot-basics", userId: "u1", completedAt: 10 },
-        { tenantId: "tenant-a", groupId: "finance", curriculumId: "copilot-basics", userId: "u1", completedAt: 11 },
-        { tenantId: "tenant-a", groupId: "finance", curriculumId: "copilot-basics", userId: "u2", completedAt: 12 },
-        { tenantId: "tenant-a", groupId: "finance", curriculumId: "other", userId: "u3", completedAt: 13 },
+        {
+          tenantId: "tenant-a",
+          groupId: "finance",
+          curriculumId: "copilot-basics",
+          userId: "u1",
+          completedAt: 10,
+        },
+        {
+          tenantId: "tenant-a",
+          groupId: "finance",
+          curriculumId: "copilot-basics",
+          userId: "u1",
+          completedAt: 11,
+        },
+        {
+          tenantId: "tenant-a",
+          groupId: "finance",
+          curriculumId: "copilot-basics",
+          userId: "u2",
+          completedAt: 12,
+        },
+        {
+          tenantId: "tenant-a",
+          groupId: "finance",
+          curriculumId: "other",
+          userId: "u3",
+          completedAt: 13,
+        },
       ],
     });
 
