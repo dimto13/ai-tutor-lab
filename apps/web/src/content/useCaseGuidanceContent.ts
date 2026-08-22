@@ -77,15 +77,7 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "document",
     title: "Dokumentarbeit mit klarer Freigabegrenze",
-    keywords: [
-      "dokument*",
-      "bericht*",
-      "text",
-      "word",
-      "präsent*",
-      "zusammenfass*",
-      "protokoll*",
-    ],
+    keywords: ["dokument*", "bericht*", "text", "word", "präsent*", "zusammenfass*", "protokoll*"],
     rationale:
       "KI kann Entwurf und Überarbeitung beschleunigen. Fakten, Freigaben und vertrauliche Inhalte bleiben dabei unter menschlicher Kontrolle.",
     modules: [{ scenarioId: "research-workflow.explore", label: "Quellen und Prüfung – Explore" }],
@@ -101,15 +93,7 @@ export const useCaseGuidanceRules: readonly UseCaseGuidanceRule[] = [
   {
     id: "workflow",
     title: "Kleinen KI-Pilot mit Prüfschritt aufsetzen",
-    keywords: [
-      "prozess*",
-      "ablauf*",
-      "automatis*",
-      "workflow*",
-      "e-mail*",
-      "email*",
-      "anfrage*",
-    ],
+    keywords: ["prozess*", "ablauf*", "automatis*", "workflow*", "e-mail*", "email*", "anfrage*"],
     rationale:
       "Für einen wiederkehrenden Ablauf ist ein begrenzter Pilot mit eindeutigem Eingang, Ergebnis und menschlichem Prüfschritt sinnvoller als sofortige Vollautomatisierung.",
     modules: [{ scenarioId: "developer-workflow-basics.explore", label: "KI-Workflow – Explore" }],
