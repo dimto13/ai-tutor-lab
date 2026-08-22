@@ -18,6 +18,56 @@
   },
   "estimatedMinutes": 10,
   "points": 180,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "state",
+        "selector": "m365.approvedSourceCount",
+        "equals": 2
+      },
+      {
+        "kind": "state",
+        "selector": "m365.prompt.qualityComplete",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "m365.drafts.createdKinds",
+        "includes": "meeting-summary"
+      },
+      {
+        "kind": "state",
+        "selector": "m365.drafts.createdKinds",
+        "includes": "word-draft"
+      },
+      {
+        "kind": "state",
+        "selector": "m365.drafts.createdKinds",
+        "includes": "outlook-draft"
+      },
+      {
+        "kind": "state",
+        "selector": "m365.draft.kind",
+        "equals": "outlook-draft"
+      },
+      {
+        "kind": "state",
+        "selector": "m365.review.factsChecked",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "m365.review.unsupportedRejected",
+        "equals": true
+      },
+      {
+        "kind": "state",
+        "selector": "m365.approval.decision",
+        "equals": "approved"
+      }
+    ]
+  },
   "steps": [
     {
       "id": "challenge-complete-controlled-m365-workflow",
