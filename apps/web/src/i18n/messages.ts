@@ -10,10 +10,7 @@ export function normalizeLanguage(language: string | null | undefined): Supporte
   return "de";
 }
 
-export function resolveLocalizedText(
-  value: LocalizedText,
-  language: SupportedLanguage,
-): string {
+export function resolveLocalizedText(value: LocalizedText, language: SupportedLanguage): string {
   if (typeof value === "string") return value;
   return value[language] ?? value.de ?? value.en ?? "";
 }
@@ -49,9 +46,6 @@ export const platformMessages = {
 
 export type PlatformMessageKey = keyof (typeof platformMessages)["de"];
 
-export function platformMessage(
-  language: SupportedLanguage,
-  key: PlatformMessageKey,
-): string {
+export function platformMessage(language: SupportedLanguage, key: PlatformMessageKey): string {
   return platformMessages[language]?.[key] ?? platformMessages.de[key];
 }
