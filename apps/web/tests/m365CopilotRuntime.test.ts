@@ -41,6 +41,24 @@ describe("M365 Copilot runtime", () => {
     assert.equal(await runtime.query("m365.approval.decision"), "approved");
   });
 
+  it("never promotes an unapproved or unknown source into Copilot context", async () => {
+    const runtime = createM365CopilotRuntime();
+    const events: TrainingEvent[] = [];
+    runtime.subscribe((event) => events.push(event));
+
+    runtime.setSourceApproved("restricted-appendix", true);
+    runtime.setSourceApproved("unknown-source", true);
+    assert.equal(await runtime.query("m365.approvedSourceCount"), 0);
+
+    runtime.setSourceApproved("meeting-notes", true);
+    runtime.setSourceApproved("project-brief", true);
+    assert.equal(await runtime.query("m365.approvedSourceCount"), 2);
+    assert.equal(
+      events.filter((event) => event.type === "m365.source.approval.denied").length,
+      2,
+    );
+  });
+
   it("keeps document, meeting, mail and prompt contents out of runtime events", () => {
     const runtime = createM365CopilotRuntime();
     const events: TrainingEvent[] = [];
