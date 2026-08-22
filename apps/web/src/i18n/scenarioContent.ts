@@ -24,17 +24,25 @@ type ScenarioTranslation = {
 };
 
 const englishScenarioTranslations: Record<string, ScenarioTranslation> = {
-  [vscodeBasicsGuidedEn.scenarioId]: vscodeBasicsGuidedEn as ScenarioTranslation,
+  [vscodeBasicsGuidedEn.scenarioId]: vscodeBasicsGuidedEn as unknown as ScenarioTranslation,
 };
 
 function localizedStep(step: TrainingStep, translation: StepTranslation | undefined): TrainingStep {
   if (!translation) return step;
   return {
     ...step,
-    ...translation,
-    onFailure: step.onFailure,
-    recovery: step.recovery,
-    validation: step.validation,
+    ...(translation.title !== undefined ? { title: translation.title } : {}),
+    ...(translation.description !== undefined ? { description: translation.description } : {}),
+    ...(translation.instruction !== undefined ? { instruction: translation.instruction } : {}),
+    ...(translation.rationale !== undefined ? { rationale: translation.rationale } : {}),
+    ...(translation.why !== undefined ? { why: translation.why } : {}),
+    ...(translation.helpLevels !== undefined ? { helpLevels: translation.helpLevels } : {}),
+    ...(translation.highlightTooltip !== undefined
+      ? { highlightTooltip: translation.highlightTooltip }
+      : {}),
+    ...(translation.successMessage !== undefined
+      ? { successMessage: translation.successMessage }
+      : {}),
   };
 }
 
