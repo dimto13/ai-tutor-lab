@@ -24,6 +24,35 @@ function createModeVariant(base: Scenario, variant: ModeVariant): Scenario {
   return { ...shared, ...variant };
 }
 
+const guidedRuleArtifactByStepId: Record<string, string> = {
+  "confirm-region-rule": "rule-regions",
+  "confirm-date-rule": "rule-dates",
+  "confirm-value-rule": "rule-values",
+};
+
+/**
+ * A rule can only be verified while it is the active artifact. Matching the
+ * verification event therefore proves both explicit selection and explicit
+ * confirmation without requiring cross-event history in a Guided step.
+ */
+export function createTableDataWorkflowGuidedScenario(base: Scenario): Scenario {
+  return {
+    ...base,
+    steps: base.steps.map((step) => {
+      const artifactId = guidedRuleArtifactByStepId[step.id];
+      if (!artifactId) return step;
+      return {
+        ...step,
+        validation: {
+          kind: "event",
+          type: "artifact.verified",
+          match: { artifactId, artifactType: "data" },
+        },
+      };
+    }),
+  };
+}
+
 const exploreStep: TrainingStep = {
   id: "explore-table-analysis",
   title: "Tabellenauswertung frei untersuchen",
@@ -57,6 +86,7 @@ const challengeStep: TrainingStep = {
     "Die Tabellenanalyse wurde mit bestätigten Annahmen, sichtbaren Zwischenständen und korrigiertem Vollständigkeitsfehler abgeschlossen.",
 };
 
+/** Challenge completion is an end-state contract, independent of click order. */
 const challengeCompletion: Validation = {
   kind: "all",
   of: [
@@ -67,28 +97,10 @@ const challengeCompletion: Validation = {
     { kind: "state", selector: "artifact.verifiedIds", includes: "rule-values" },
     { kind: "state", selector: "artifact.appliedRevisionIds", includes: "normalize-values" },
     { kind: "state", selector: "artifact.appliedRevisionIds", includes: "aggregate-baseline" },
-    {
-      kind: "sequence",
-      ordered: true,
-      of: [
-        {
-          kind: "event",
-          type: "artifact.updated",
-          match: { artifactId: "working-table", revisionId: "exclude-returns" },
-        },
-        { kind: "event", type: "copilot.prompt.submitted", contains: { prompt: "Ost" } },
-        {
-          kind: "event",
-          type: "artifact.updated",
-          match: { artifactId: "working-table", revisionId: "restore-east" },
-        },
-        {
-          kind: "event",
-          type: "artifact.verified",
-          match: { artifactId: "working-table", artifactType: "table" },
-        },
-      ],
-    },
+    { kind: "state", selector: "artifact.appliedRevisionIds", includes: "exclude-returns" },
+    { kind: "state", selector: "copilot.prompt.last", includes: "Ost" },
+    { kind: "state", selector: "artifact.appliedRevisionIds", includes: "restore-east" },
+    { kind: "state", selector: "artifact.verifiedIds", includes: "working-table" },
   ],
 };
 
