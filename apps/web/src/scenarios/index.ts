@@ -13,6 +13,9 @@ import developerWorkflowChallengeRaw from "../../../../content/scenarios/develop
 import copilotBasicsExploreRaw from "../../../../content/scenarios/copilot-basics.explore.json";
 import copilotBasicsGuidedRaw from "../../../../content/scenarios/copilot-basics.guided.json";
 import copilotBasicsChallengeRaw from "../../../../content/scenarios/copilot-basics.challenge.json";
+import m365CopilotBasicsExploreRaw from "../../../../content/scenarios/m365-copilot-basics.explore.json";
+import m365CopilotBasicsGuidedRaw from "../../../../content/scenarios/m365-copilot-basics.guided.json";
+import m365CopilotBasicsChallengeRaw from "../../../../content/scenarios/m365-copilot-basics.challenge.json";
 import artifactPreviewFoundationRaw from "../../../../content/scenarios/artifact-preview-foundation.guided.json";
 import htmlPageWorkflowGuidedRaw from "../../../../content/scenarios/html-page-workflow.guided.json";
 import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-workflow.guided.json";
@@ -36,6 +39,9 @@ const developerWorkflowChallengeScenario = parseScenario(developerWorkflowChalle
 const copilotBasicsExploreScenario = parseScenario(copilotBasicsExploreRaw);
 const copilotBasicsGuidedScenario = parseScenario(copilotBasicsGuidedRaw);
 const copilotBasicsChallengeScenario = parseScenario(copilotBasicsChallengeRaw);
+const m365CopilotBasicsExploreScenario = parseScenario(m365CopilotBasicsExploreRaw);
+const m365CopilotBasicsGuidedScenario = parseScenario(m365CopilotBasicsGuidedRaw);
+const m365CopilotBasicsChallengeScenario = parseScenario(m365CopilotBasicsChallengeRaw);
 const artifactPreviewFoundationScenario = parseScenario(artifactPreviewFoundationRaw);
 const htmlPageWorkflowGuidedScenario = parseScenario(htmlPageWorkflowGuidedRaw);
 const [htmlPageWorkflowExploreScenario, htmlPageWorkflowChallengeScenario] =
@@ -64,6 +70,9 @@ const scenarios: Record<string, Scenario> = {
   [copilotBasicsExploreScenario.id]: copilotBasicsExploreScenario,
   [copilotBasicsGuidedScenario.id]: copilotBasicsGuidedScenario,
   [copilotBasicsChallengeScenario.id]: copilotBasicsChallengeScenario,
+  [m365CopilotBasicsExploreScenario.id]: m365CopilotBasicsExploreScenario,
+  [m365CopilotBasicsGuidedScenario.id]: m365CopilotBasicsGuidedScenario,
+  [m365CopilotBasicsChallengeScenario.id]: m365CopilotBasicsChallengeScenario,
   [artifactPreviewFoundationScenario.id]: artifactPreviewFoundationScenario,
   [htmlPageWorkflowExploreScenario.id]: htmlPageWorkflowExploreScenario,
   [htmlPageWorkflowGuidedScenario.id]: htmlPageWorkflowGuidedScenario,

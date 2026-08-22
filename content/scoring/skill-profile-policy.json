@@ -51,6 +51,14 @@
     {
       "technologyId": "artifact_preview",
       "scenarioIds": ["artifact-preview-foundation.guided"]
+    },
+    {
+      "technologyId": "office_assistant",
+      "scenarioIds": [
+        "m365-copilot-basics.explore",
+        "m365-copilot-basics.guided",
+        "m365-copilot-basics.challenge"
+      ]
     }
   ]
 }

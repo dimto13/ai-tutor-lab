@@ -130,6 +130,30 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "m365-copilot-basics.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 180,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "m365-copilot-basics.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 70,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "m365-copilot-basics.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 140,
+      "estimatedMinutes": 15,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "research-workflow.challenge",
       "mode": "challenge",
       "version": "1",
