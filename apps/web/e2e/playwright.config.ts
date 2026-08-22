@@ -26,7 +26,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm --prefix .. run dev:local",
+    command: "npm --prefix .. run dev:local -- --mode e2e",
     url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
