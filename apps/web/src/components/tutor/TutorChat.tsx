@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, ChevronDown, MessageCircle, Send, User } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { findGlossaryConcept } from "@/lib/glossary";
 import { answerDeterministically } from "@/tutor/deterministicTutor";
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
@@ -21,6 +22,7 @@ const SUGGESTIONS = [
 
 export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const auth = useAuth();
+  const { t } = useLanguage();
   const tutorContext = useTutorContext();
   const { mode } = tutorContext;
   const [open, setOpen] = useState(() => mode !== "guided");
@@ -167,7 +169,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       <div
         ref={listRef}
         role="region"
-        aria-label="Tutor-Verlauf"
+        aria-label={t("tutorHistory")}
         tabIndex={0}
         className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
