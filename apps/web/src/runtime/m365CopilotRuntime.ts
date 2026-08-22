@@ -33,6 +33,8 @@ type StateChangeReason = "mount" | "reset" | "mutation" | "restore";
 type StateListener = (state: M365CopilotState, reason: StateChangeReason) => void;
 type EventListener = (event: TrainingEvent) => void;
 
+const APPROVED_SOURCE_IDS = new Set(["meeting-notes", "project-brief"]);
+
 const EMPTY_PROMPT_QUALITY: M365PromptQuality = {
   goal: false,
   context: false,
@@ -40,6 +42,10 @@ const EMPTY_PROMPT_QUALITY: M365PromptQuality = {
   tone: false,
   outputFormat: false,
 };
+
+function isApprovedSourceId(sourceId: unknown): sourceId is string {
+  return typeof sourceId === "string" && APPROVED_SOURCE_IDS.has(sourceId);
+}
 
 function initialState(): M365CopilotState {
   return {
@@ -93,7 +99,7 @@ function isRuntimeState(value: unknown): value is M365CopilotState {
       candidate.activeApp === "word" ||
       candidate.activeApp === "outlook") &&
     Array.isArray(candidate.approvedSourceIds) &&
-    candidate.approvedSourceIds.every((id) => typeof id === "string") &&
+    candidate.approvedSourceIds.every(isApprovedSourceId) &&
     typeof candidate.promptSubmitted === "boolean" &&
     isPromptQuality(candidate.promptQuality) &&
     (candidate.draftKind === null || isDraftKind(candidate.draftKind)) &&
@@ -246,11 +252,15 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     },
 
     setSourceApproved(sourceId, approved) {
+      inspect("m365.sources");
+      if (approved && !isApprovedSourceId(sourceId)) {
+        emit("m365.source.approval.denied", { sourceId });
+        return;
+      }
       const sourceIds = new Set(state.approvedSourceIds);
       if (approved) sourceIds.add(sourceId);
       else sourceIds.delete(sourceId);
       replaceState({ ...state, approvedSourceIds: [...sourceIds].sort() }, "mutation");
-      inspect("m365.sources");
       emit("m365.source.approval.changed", { sourceId, approved });
     },
 
