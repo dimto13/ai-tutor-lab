@@ -224,6 +224,6 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy"]
+    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"]
   }
 }
