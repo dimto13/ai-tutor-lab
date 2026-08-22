@@ -164,7 +164,13 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           ) : null}
         </div>
       </div>
-      <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3">
+      <div
+        ref={listRef}
+        role="region"
+        aria-label="Tutor-Verlauf"
+        tabIndex={0}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         {messages.length === 0 ? (
           <p className="py-3 text-[12px] leading-relaxed text-muted-foreground">
             In der Challenge gibt der Tutor keine automatische Hilfestellung. Stelle eine Frage,
