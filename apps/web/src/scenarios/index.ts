@@ -3,7 +3,10 @@ import type { LearningLayer, Scenario } from "@/types/training";
 import { parseScenario } from "./contentLoader";
 import { createHtmlPageWorkflowVariants } from "./htmlPageWorkflowVariants";
 import { createResearchWorkflowVariants } from "./researchWorkflowVariants";
-import { createTableDataWorkflowVariants } from "./tableDataWorkflowVariants";
+import {
+  createTableDataWorkflowGuidedScenario,
+  createTableDataWorkflowVariants,
+} from "./tableDataWorkflowVariants";
 import vscodeExploreRaw from "../../../../content/scenarios/vscode-basics.explore.json";
 import vscodeGuidedRaw from "../../../../content/scenarios/vscode-basics.guided.json";
 import vscodeChallengeRaw from "../../../../content/scenarios/vscode-basics.challenge.json";
@@ -51,7 +54,9 @@ const [htmlPageWorkflowExploreScenario, htmlPageWorkflowChallengeScenario] =
 const researchWorkflowGuidedScenario = parseScenario(researchWorkflowGuidedRaw);
 const [researchWorkflowExploreScenario, researchWorkflowChallengeScenario] =
   createResearchWorkflowVariants(researchWorkflowGuidedScenario);
-const tableDataWorkflowGuidedScenario = parseScenario(tableDataWorkflowGuidedRaw);
+const tableDataWorkflowGuidedScenario = createTableDataWorkflowGuidedScenario(
+  parseScenario(tableDataWorkflowGuidedRaw),
+);
 const [tableDataWorkflowExploreScenario, tableDataWorkflowChallengeScenario] =
   createTableDataWorkflowVariants(tableDataWorkflowGuidedScenario);
 const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
