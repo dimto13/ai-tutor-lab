@@ -1,4 +1,4 @@
-import { hasApplicationPermission, type ApplicationRole } from "../auth/roles";
+import { hasApplicationPermission, type ApplicationRole } from "../auth/roles.ts";
 
 export type CurriculumGroupAssignment = Readonly<{
   tenantId: string;
