@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
 import { Route as AutorenvorschauRouteImport } from './routes/autorenvorschau'
 import { Route as DatentransparenzRouteImport } from './routes/datentransparenz'
+import { Route as EinsatzbereicheRouteImport } from './routes/einsatzbereiche'
 import { Route as KompetenzRouteImport } from './routes/kompetenz'
 import { Route as WillkommenRouteImport } from './routes/willkommen'
 import { Route as TrainingScenarioIdRouteImport } from './routes/training.$scenarioId'
@@ -37,6 +38,11 @@ const DatentransparenzRoute = DatentransparenzRouteImport.update({
   path: '/datentransparenz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EinsatzbereicheRoute = EinsatzbereicheRouteImport.update({
+  id: '/einsatzbereiche',
+  path: '/einsatzbereiche',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KompetenzRoute = KompetenzRouteImport.update({
   id: '/kompetenz',
   path: '/kompetenz',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/anmelden': typeof AnmeldenRoute
   '/autorenvorschau': typeof AutorenvorschauRoute
   '/datentransparenz': typeof DatentransparenzRoute
+  '/einsatzbereiche': typeof EinsatzbereicheRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/anmelden': typeof AnmeldenRoute
   '/autorenvorschau': typeof AutorenvorschauRoute
   '/datentransparenz': typeof DatentransparenzRoute
+  '/einsatzbereiche': typeof EinsatzbereicheRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/anmelden': typeof AnmeldenRoute
   '/autorenvorschau': typeof AutorenvorschauRoute
   '/datentransparenz': typeof DatentransparenzRoute
+  '/einsatzbereiche': typeof EinsatzbereicheRoute
   '/kompetenz': typeof KompetenzRoute
   '/willkommen': typeof WillkommenRoute
   '/training/$scenarioId': typeof TrainingScenarioIdRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/anmelden'
     | '/autorenvorschau'
     | '/datentransparenz'
+    | '/einsatzbereiche'
     | '/kompetenz'
     | '/willkommen'
     | '/training/$scenarioId'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/anmelden'
     | '/autorenvorschau'
     | '/datentransparenz'
+    | '/einsatzbereiche'
     | '/kompetenz'
     | '/willkommen'
     | '/training/$scenarioId'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/anmelden'
     | '/autorenvorschau'
     | '/datentransparenz'
+    | '/einsatzbereiche'
     | '/kompetenz'
     | '/willkommen'
     | '/training/$scenarioId'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   AnmeldenRoute: typeof AnmeldenRoute
   AutorenvorschauRoute: typeof AutorenvorschauRoute
   DatentransparenzRoute: typeof DatentransparenzRoute
+  EinsatzbereicheRoute: typeof EinsatzbereicheRoute
   KompetenzRoute: typeof KompetenzRoute
   WillkommenRoute: typeof WillkommenRoute
   TrainingScenarioIdRoute: typeof TrainingScenarioIdRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DatentransparenzRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/einsatzbereiche': {
+      id: '/einsatzbereiche'
+      path: '/einsatzbereiche'
+      fullPath: '/einsatzbereiche'
+      preLoaderRoute: typeof EinsatzbereicheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kompetenz': {
       id: '/kompetenz'
       path: '/kompetenz'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnmeldenRoute: AnmeldenRoute,
   AutorenvorschauRoute: AutorenvorschauRoute,
   DatentransparenzRoute: DatentransparenzRoute,
+  EinsatzbereicheRoute: EinsatzbereicheRoute,
   KompetenzRoute: KompetenzRoute,
   WillkommenRoute: WillkommenRoute,
   TrainingScenarioIdRoute: TrainingScenarioIdRoute,
