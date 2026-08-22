@@ -668,7 +668,7 @@
       "helpLevels": [
         "Wähle die Datumsregel.",
         "Prüfe die drei Eingabeformate und die Quartalszuordnung.",
-        "Klicke erst danach auf Ergebnis geprüft."
+        "Prüfe DD.MM.YYYY, YYYY-MM-DD und DD/MM/YYYY sowie Q1/Q2; klicke erst danach auf Ergebnis geprüft."
       ],
       "successMessage": "Die Datumsregel wurde einzeln geprüft und bestätigt.",
       "validation": {
@@ -726,7 +726,7 @@
       "helpLevels": [
         "Wähle die Betragsregel.",
         "Prüfe Tausendertrenner, Währung und Vorzeichen der Retouren.",
-        "Klicke danach auf Ergebnis geprüft."
+        "Prüfe Punkt/Leerzeichen als Tausendertrenner, EUR/€ und negative Retouren; klicke erst danach auf Ergebnis geprüft."
       ],
       "successMessage": "Die Betrags- und Retourenregel wurde einzeln geprüft und bestätigt.",
       "validation": {
