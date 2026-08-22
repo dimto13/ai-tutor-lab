@@ -40,7 +40,8 @@ const SYNTHETIC_SOURCES = [
     label: "Projektsteckbrief",
     classification: "Intern · KI freigegeben",
     approved: true,
-    summary: "Ziel: verständliche Einführung für eine interne Pilotgruppe; Ton: sachlich und knapp.",
+    summary:
+      "Ziel: verständliche Einführung für eine interne Pilotgruppe; Ton: sachlich und knapp.",
   },
   {
     id: "restricted-appendix",
@@ -126,7 +127,9 @@ export function M365CopilotWorkspace() {
       <header className="flex shrink-0 items-center gap-3 border-b border-border bg-panel px-4 py-2.5">
         <Sparkles className="h-4 w-4 text-accent" />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">Microsoft 365 Copilot · Simulation</p>
+          <p className="text-sm font-semibold text-foreground">
+            Microsoft 365 Copilot · Simulation
+          </p>
           <p className="text-[11px] text-muted-foreground">
             ausschließlich synthetische Trainingsdaten · keine Microsoft-365-Verbindung
           </p>
@@ -167,10 +170,14 @@ export function M365CopilotWorkspace() {
         </nav>
 
         <main className="min-h-0 overflow-y-auto p-4 sm:p-5">
-          <section data-runtime-target="m365.sources" className="rounded-lg border border-border bg-card p-4">
+          <section
+            data-runtime-target="m365.sources"
+            className="rounded-lg border border-border bg-card p-4"
+          >
             <h2 className="text-sm font-semibold text-foreground">1. Quellen und Berechtigungen</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Wähle nur freigegebene synthetische Quellen. Unsicherheit bedeutet: höhere Schutzstufe.
+              Wähle nur freigegebene synthetische Quellen. Unsicherheit bedeutet: höhere
+              Schutzstufe.
             </p>
             <div className="mt-3 space-y-2">
               {SYNTHETIC_SOURCES.map((source) => {
@@ -182,9 +189,7 @@ export function M365CopilotWorkspace() {
                         type="button"
                         aria-pressed={selected}
                         disabled={!source.approved}
-                        onClick={() =>
-                          m365CopilotRuntime.setSourceApproved(source.id, !selected)
-                        }
+                        onClick={() => m365CopilotRuntime.setSourceApproved(source.id, !selected)}
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                           selected
                             ? "border-accent bg-accent text-accent-foreground"
@@ -199,7 +204,9 @@ export function M365CopilotWorkspace() {
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
                           {source.classification}
                         </p>
-                        <p className="mt-2 text-xs leading-5 text-muted-foreground">{source.summary}</p>
+                        <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                          {source.summary}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -208,8 +215,13 @@ export function M365CopilotWorkspace() {
             </div>
           </section>
 
-          <section data-runtime-target="m365.prompt" className="mt-4 rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">2. Arbeitsauftrag strukturieren</h2>
+          <section
+            data-runtime-target="m365.prompt"
+            className="mt-4 rounded-lg border border-border bg-card p-4"
+          >
+            <h2 className="text-sm font-semibold text-foreground">
+              2. Arbeitsauftrag strukturieren
+            </h2>
             <p className="mt-1 text-xs text-muted-foreground">
               Ein belastbarer Auftrag benennt Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat.
             </p>
@@ -223,11 +235,16 @@ export function M365CopilotWorkspace() {
                   outputFormat: "Ausgabeformat festgelegt",
                 };
                 return (
-                  <label key={key} className="flex items-center gap-2 rounded border border-border px-3 py-2 text-xs text-foreground">
+                  <label
+                    key={key}
+                    className="flex items-center gap-2 rounded border border-border px-3 py-2 text-xs text-foreground"
+                  >
                     <input
                       type="checkbox"
                       checked={quality[key]}
-                      onChange={(event) => setQuality({ ...quality, [key]: event.target.checked })}
+                      onChange={(event) =>
+                        setQuality({ ...quality, [key]: event.target.checked })
+                      }
                     />
                     {labels[key]}
                   </label>
@@ -252,10 +269,15 @@ export function M365CopilotWorkspace() {
             ) : null}
           </section>
 
-          <section data-runtime-target="m365.result" className="mt-4 rounded-lg border border-border bg-card p-4">
+          <section
+            data-runtime-target="m365.result"
+            className="mt-4 rounded-lg border border-border bg-card p-4"
+          >
             <div className="flex items-center gap-2">
               <ActiveIcon className="h-4 w-4 text-accent" />
-              <h2 className="text-sm font-semibold text-foreground">3. Ergebnis als Entwurf behandeln</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                3. Ergebnis als Entwurf behandeln
+              </h2>
             </div>
             <button
               type="button"
@@ -306,7 +328,10 @@ export function M365CopilotWorkspace() {
             {state.unsupportedRejected ? <X className="h-4 w-4 text-accent" /> : null}
           </button>
 
-          <div data-runtime-target="m365.approval" className="mt-4 rounded-lg border border-border bg-card p-3">
+          <div
+            data-runtime-target="m365.approval"
+            className="mt-4 rounded-lg border border-border bg-card p-3"
+          >
             <p className="text-xs font-semibold text-foreground">Explizite Freigabeentscheidung</p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               Freigabe erst nach Quellen-, Fakten- und Datenprüfung.
@@ -330,7 +355,8 @@ export function M365CopilotWorkspace() {
               </button>
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">
-              Status: {state.approvalDecision === "pending" ? "noch offen" : state.approvalDecision}
+              Status:{" "}
+              {state.approvalDecision === "pending" ? "noch offen" : state.approvalDecision}
             </p>
           </div>
         </aside>
