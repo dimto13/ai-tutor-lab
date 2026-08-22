@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  normalizeLanguage,
-  platformMessage,
-  resolveLocalizedText,
-} from "../src/i18n/messages.ts";
+import { normalizeLanguage, platformMessage, resolveLocalizedText } from "../src/i18n/messages.ts";
 
 describe("i18n language foundation", () => {
   it("normalizes supported language variants and falls back visibly to German", () => {
