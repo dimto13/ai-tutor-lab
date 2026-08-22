@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Check, Clipboard, Lightbulb } from "lucide-react";
 import { AccountMenu } from "@/auth/AccountMenu";
@@ -64,16 +64,23 @@ function UseCaseGuidancePage() {
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="max-w-3xl">
-          <p className="text-xs font-medium uppercase tracking-wider text-accent">Weitere Einsatzbereiche</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-accent">
+            Weitere Einsatzbereiche
+          </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
             Eigenes Vorhaben einordnen
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Beschreibe dein gewünschtes Arbeitsergebnis, die heute genutzten Werkzeuge und wichtige Vorgaben. Die Einordnung läuft ausschließlich lokal im Browser und wird nicht gespeichert oder an einen Dienst übertragen.
+            Beschreibe dein gewünschtes Arbeitsergebnis, die heute genutzten Werkzeuge und wichtige
+            Vorgaben. Die Einordnung läuft ausschließlich lokal im Browser und wird nicht
+            gespeichert oder an einen Dienst übertragen.
           </p>
         </div>
 
-        <section className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6" aria-labelledby="describe-heading">
+        <section
+          className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6"
+          aria-labelledby="describe-heading"
+        >
           <h2 id="describe-heading" className="text-base font-semibold text-foreground">
             1. Vorhaben beschreiben
           </h2>
@@ -134,7 +141,10 @@ function UseCaseGuidancePage() {
         </section>
 
         {result?.kind === "clarify" ? (
-          <section className="mt-6 rounded-xl border border-accent/40 bg-accent/10 p-5" aria-live="polite">
+          <section
+            className="mt-6 rounded-xl border border-accent/40 bg-accent/10 p-5"
+            aria-live="polite"
+          >
             <h2 className="text-base font-semibold text-foreground">Noch eine Angabe fehlt</h2>
             <p className="mt-2 text-sm text-foreground">{result.question}</p>
           </section>
@@ -198,7 +208,7 @@ function UseCaseGuidancePage() {
   );
 }
 
-function ResultCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ResultCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <article className="min-w-0 rounded-xl border border-border bg-card p-5">
       <h3 className="text-sm font-semibold text-foreground">{title}</h3>
