@@ -66,10 +66,28 @@ const challengeCompletion: Validation = {
     { kind: "state", selector: "artifact.verifiedIds", includes: "rule-values" },
     { kind: "state", selector: "artifact.appliedRevisionIds", includes: "normalize-values" },
     { kind: "state", selector: "artifact.appliedRevisionIds", includes: "aggregate-baseline" },
-    { kind: "state", selector: "artifact.appliedRevisionIds", includes: "exclude-returns" },
-    { kind: "state", selector: "copilot.prompt.last", includes: "Ost" },
-    { kind: "state", selector: "artifact.appliedRevisionIds", includes: "restore-east" },
-    { kind: "state", selector: "artifact.verifiedIds", includes: "working-table" },
+    {
+      kind: "sequence",
+      ordered: true,
+      of: [
+        {
+          kind: "event",
+          type: "artifact.updated",
+          match: { artifactId: "working-table", revisionId: "exclude-returns" },
+        },
+        { kind: "event", type: "copilot.prompt.submitted", contains: { prompt: "Ost" } },
+        {
+          kind: "event",
+          type: "artifact.updated",
+          match: { artifactId: "working-table", revisionId: "restore-east" },
+        },
+        {
+          kind: "event",
+          type: "artifact.verified",
+          match: { artifactId: "working-table", artifactType: "table" },
+        },
+      ],
+    },
   ],
 };
 
@@ -86,7 +104,7 @@ export function createTableDataWorkflowVariants(base: Scenario): [Scenario, Scen
       exploreTargets: [
         "artifact.preview.panel",
         "artifact.preview.selector",
-        "artifact.preview.rendered",
+        "artifact.preview.table",
         "artifact.preview.applyRevision",
         "artifact.preview.verify",
         "copilot.chat.prompt",
