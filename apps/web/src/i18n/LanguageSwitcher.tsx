@@ -1,11 +1,11 @@
 import { Languages } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "./LanguageContext";
-import type { SupportedLanguage } from "./messages";
+import type { PlatformMessageKey, SupportedLanguage } from "./messages";
 
-const options: Array<{ value: SupportedLanguage; label: string }> = [
-  { value: "de", label: "Deutsch" },
-  { value: "en", label: "English" },
+const options: Array<{ value: SupportedLanguage; labelKey: PlatformMessageKey }> = [
+  { value: "de", labelKey: "german" },
+  { value: "en", labelKey: "english" },
 ];
 
 export function LanguageSwitcher() {
@@ -34,7 +34,7 @@ export function LanguageSwitcher() {
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </option>
           ))}
         </select>
