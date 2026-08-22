@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { classificationRuntime } from "@/runtime/classificationRuntime";
 import { claudeCodeRuntime } from "@/runtime/claudeCodeRuntime";
+import { m365CopilotRuntime } from "@/runtime/m365CopilotRuntime";
 import { sourceControlPlatformRuntime } from "@/runtime/sourceControlPlatformRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
 import { useTraining } from "@/state/trainingStore";
 import { ClassificationWorkspace } from "./ClassificationWorkspace";
 import { ClaudeCodeWorkspace } from "./ClaudeCodeWorkspace";
+import { M365CopilotWorkspace } from "./M365CopilotWorkspace";
 import { SourceControlPlatformWorkspace } from "./SourceControlPlatformWorkspace";
 import { Workspace } from "./Workspace";
 
@@ -134,6 +136,9 @@ export function RuntimeWorkspace() {
   const { scenario } = useTraining();
   if (scenario.environment?.runtimeAdapterId === classificationRuntime.id) {
     return <ClassificationWorkspace />;
+  }
+  if (scenario.environment?.runtimeAdapterId === m365CopilotRuntime.id) {
+    return <M365CopilotWorkspace />;
   }
   if (scenario.environment?.runtimeAdapterId === sourceControlPlatformRuntime.id) {
     return <PersistedSourceControlPlatformWorkspace />;

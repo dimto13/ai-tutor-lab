@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "language": "de",
+  "technologyConcepts": {
+    "office_assistant": [
+      "m365.teams",
+      "m365.word",
+      "m365.outlook",
+      "ai.result",
+      "ai.review",
+      "ai.approval"
+    ]
+  },
+  "concepts": [
+    {
+      "key": "m365.teams",
+      "term": "Copilot in Teams",
+      "aliases": ["Teams Copilot"],
+      "simple": "In Teams unterstützt Copilot dabei, freigegebene Besprechungsinhalte zusammenzufassen und Entscheidungen von offenen Punkten zu trennen.",
+      "advanced": "Die Teams-Rolle im Trainingssimulator nutzt ausschließlich synthetische, ausdrücklich freigegebene Besprechungsnotizen als Kontext und erzeugt daraus einen prüfbaren Zusammenfassungsentwurf.",
+      "uiTargets": ["m365.nav.teams"]
+    },
+    {
+      "key": "m365.word",
+      "term": "Copilot in Word",
+      "aliases": ["Word Copilot"],
+      "simple": "In Word hilft Copilot dabei, aus freigegebenem Kontext einen strukturierten Entwurf zu erstellen und fachlich zu überarbeiten.",
+      "advanced": "Die Word-Rolle im Trainingssimulator überführt freigegebene synthetische Quellen in einen Dokumententwurf, der vor weiterer Nutzung auf Fakten, Aussagen und Ton geprüft werden muss.",
+      "uiTargets": ["m365.nav.word"]
+    },
+    {
+      "key": "m365.outlook",
+      "term": "Copilot in Outlook",
+      "aliases": ["Outlook Copilot"],
+      "simple": "In Outlook kann Copilot aus freigegebenem Kontext einen E-Mail-Entwurf vorbereiten, der vor dem Versand vom Menschen geprüft wird.",
+      "advanced": "Die Outlook-Rolle im Trainingssimulator erstellt einen synthetischen Mailentwurf aus dem vorher geprüften Arbeitskontext; eine ausdrückliche menschliche Freigabe bleibt erforderlich.",
+      "uiTargets": ["m365.nav.outlook"]
+    },
+    {
+      "key": "ai.result",
+      "term": "KI-Ergebnis",
+      "aliases": ["Copilot-Ergebnis", "KI-Entwurf"],
+      "simple": "Ein KI-Ergebnis ist ein Entwurf. Es muss geprüft werden, bevor du es übernimmst oder weitergibst.",
+      "advanced": "Generierte Ergebnisse sind nicht automatisch verifiziert. Quellenbezug, Namen, Zahlen, Zusagen, Vollständigkeit und Tonalität müssen gegen den freigegebenen Kontext geprüft werden.",
+      "uiTargets": ["m365.result"]
+    },
+    {
+      "key": "ai.review",
+      "term": "KI-Ergebnisprüfung",
+      "aliases": ["Faktenprüfung", "Review"],
+      "simple": "Bei der Ergebnisprüfung vergleichst du den KI-Entwurf mit den freigegebenen Quellen und verwirfst unbelegte Aussagen.",
+      "advanced": "Die fachliche Prüfung trennt belegte Aussagen von Halluzinationen oder unzulässigen Ergänzungen und kontrolliert insbesondere Namen, Zahlen, Zusagen, Quellen und Tonalität.",
+      "uiTargets": ["m365.review.facts", "m365.unsupported.reject"]
+    },
+    {
+      "key": "ai.approval",
+      "term": "Menschliche Freigabe",
+      "aliases": ["Freigabeentscheidung", "Human Approval"],
+      "simple": "Vor der Weitergabe entscheidest du selbst, ob der geprüfte Entwurf freigegeben oder verworfen wird.",
+      "advanced": "Die Freigabeentscheidung bleibt eine menschliche Verantwortungsgrenze: KI-Unterstützung erzeugt einen Entwurf, ersetzt aber weder fachliche Prüfung noch Verantwortung für die endgültige Nutzung.",
+      "uiTargets": ["m365.approval"]
+    }
+  ]
+}

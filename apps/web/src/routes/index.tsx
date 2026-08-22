@@ -314,13 +314,37 @@ const aiWorkflowTrainings = aiWorkflowModuleLine.moduleIds.map((moduleId) => {
 
 const otherTrainings: TrainingCardModel[] = [
   {
-    id: "m365-copilot",
+    id: "m365-copilot-basics",
     scenarioId: null,
     title: "M365 Copilot Grundlagen",
-    description: "Copilot in Outlook, Teams und Word produktiv und richtlinienkonform einsetzen.",
+    description:
+      "Copilot in Teams, Word und Outlook mit freigegebenem Kontext, klaren Arbeitsaufträgen, Faktenprüfung und expliziter menschlicher Freigabe einsetzen. Alle Inhalte sind synthetisch.",
     icon: Bot,
-    available: false,
-    label: "Office Assistant",
+    available: true,
+    label: "Office Assistant · 3 Modi",
+    modes: [
+      {
+        scenarioId: "m365-copilot-basics.explore",
+        label: "Explore",
+        description: "Anwendungen und Kontrollpfad frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "m365-copilot-basics.guided",
+        label: "Guided",
+        description: "Teams → Word → Outlook kontrolliert durchlaufen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "m365-copilot-basics.challenge",
+        label: "Challenge",
+        description: "Freigabefähigen Endzustand selbst herstellen",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
   },
 ];
 

@@ -1,0 +1,51 @@
+{
+  "id": "m365-copilot-basics.explore",
+  "moduleId": "m365-copilot-basics",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "Microsoft 365 Copilot – Erkunden",
+  "description": "Erkunde mit ausschließlich synthetischen Trainingsdaten die Rollen von Copilot in Teams, Word und Outlook. Prüfe Quellenfreigabe, Promptqualität, Entwurfscharakter, Faktenkontrolle und menschliche Freigabe.",
+  "learningObjectives": [
+    "formulate_copilot_prompt",
+    "review_copilot_output",
+    "protect_copilot_context",
+    "decide_ai_usage_by_classification"
+  ],
+  "environment": {
+    "productId": "m365-copilot",
+    "version": "simulated-2026-08",
+    "runtimeAdapterId": "m365-copilot-simulator"
+  },
+  "estimatedMinutes": 10,
+  "points": 70,
+  "exploreTargets": [
+    "m365.nav.teams",
+    "m365.nav.word",
+    "m365.nav.outlook",
+    "m365.sources",
+    "m365.prompt",
+    "m365.result",
+    "m365.review.facts",
+    "m365.unsupported.reject",
+    "m365.approval"
+  ],
+  "steps": [
+    {
+      "id": "explore-m365-copilot-workflow",
+      "title": "M365-Copilot-Arbeitsablauf frei erkunden",
+      "description": "Untersuche die drei simulierten Anwendungen und den vollständigen Kontrollpfad von der Datenfreigabe bis zur menschlichen Freigabe.",
+      "instruction": "Erkunde Teams, Word und Outlook in beliebiger Reihenfolge. Prüfe die Quellenfreigabe, strukturiere einen Arbeitsauftrag mit Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat, erzeuge Entwürfe und untersuche anschließend Faktenprüfung, das Verwerfen einer unbelegten Aussage und die explizite Freigabeentscheidung.",
+      "rationale": "Microsoft 365 Copilot ist kein autonomer Freigabemechanismus. Gute Nutzung verbindet zulässigen Kontext, präzise Aufgabenstellung, kritische Ergebnisprüfung und menschliche Verantwortung.",
+      "helpLevels": [
+        "Beginne mit den drei Anwendungen und vergleiche ihre unterschiedlichen Rollen.",
+        "Prüfe danach die Quellen: Eine ausdrücklich gesperrte Quelle darf nicht an die simulierte KI übergeben werden.",
+        "Klicke nacheinander auf Teams, Word und Outlook, wähle nur die beiden als „KI freigegeben“ markierten Quellen, aktiviere im Arbeitsauftrag Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat und sende ihn ab. Erzeuge anschließend die Entwürfe, bestätige die Faktenprüfung, verwirf die unbelegte Aussage und schließe den Ablauf mit einer ausdrücklichen Freigabeentscheidung ab."
+      ],
+      "successMessage": "Du hast den M365-Copilot-Arbeitsablauf von der Quellenfreigabe bis zur menschlichen Entscheidung erkundet."
+    }
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"]
+  }
+}

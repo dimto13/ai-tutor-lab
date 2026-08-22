@@ -26,6 +26,11 @@ const TECHNOLOGY_SCENARIOS = {
     "source-control-platform-basics.challenge",
   ],
   artifact_preview: ["artifact-preview-foundation.guided"],
+  office_assistant: [
+    "m365-copilot-basics.explore",
+    "m365-copilot-basics.guided",
+    "m365-copilot-basics.challenge",
+  ],
 };
 
 function technologyByScenario() {

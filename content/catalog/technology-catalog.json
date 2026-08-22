@@ -17,6 +17,10 @@
       "name": "Source Control"
     },
     {
+      "id": "office_assistant",
+      "name": "Office AI Assistant"
+    },
+    {
       "id": "artifact_preview",
       "name": "Artifact Preview"
     }
@@ -51,6 +55,12 @@
       "providerId": "github",
       "technologyId": "ai_coding_assistant",
       "name": "GitHub Copilot"
+    },
+    {
+      "id": "m365-copilot",
+      "providerId": "microsoft",
+      "technologyId": "office_assistant",
+      "name": "Microsoft 365 Copilot"
     },
     {
       "id": "claude-code",
@@ -91,6 +101,13 @@
       "version": "2026.08",
       "capabilities": ["chat", "inline_completion", "agent_mode"],
       "runtimeAdapterIds": ["github-copilot-vscode-simulator"]
+    },
+    {
+      "id": "m365-copilot@simulated-2026-08",
+      "productId": "m365-copilot",
+      "version": "simulated-2026-08",
+      "capabilities": ["chat", "editor"],
+      "runtimeAdapterIds": ["m365-copilot-simulator"]
     },
     {
       "id": "claude-code@1.x",
@@ -148,6 +165,12 @@
       "integrationId": "github-copilot-in-vscode",
       "kind": "simulator",
       "capabilities": ["chat", "inline_completion", "agent_mode"]
+    },
+    {
+      "id": "m365-copilot-simulator",
+      "productId": "m365-copilot",
+      "kind": "simulator",
+      "capabilities": ["chat", "editor"]
     },
     {
       "id": "source-control-platform-simulator",
