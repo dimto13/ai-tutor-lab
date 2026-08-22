@@ -12,6 +12,7 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await initialLanguage.selectOption("de");
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
 
+  await page.getByRole("button", { name: "Guide anzeigen" }).click();
   await expect(
     page.getByRole("heading", { name: "Schritt 1 – Activity Bar einordnen" }),
   ).toBeVisible();
@@ -38,6 +39,7 @@ test("Sprachwechsel bleibt im Training erreichbar und setzt Fortschritt nicht zu
   await expect(page.getByRole("status")).toHaveText("Training bereit");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByText("Language", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Guide anzeigen" }).click();
   await expect(currentStep).toBeVisible();
 
   await page.getByRole("combobox", { name: "Change language" }).selectOption("de");
