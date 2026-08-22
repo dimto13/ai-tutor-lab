@@ -1,6 +1,8 @@
 import { expect, test } from "../fixtures/accessibility-regression";
 
-test("Dashboard bietet eigenes Vorhaben als Aktion ohne Trainingsfortschritt an", async ({ page }) => {
+test("Dashboard bietet eigenes Vorhaben als Aktion ohne Trainingsfortschritt an", async ({
+  page,
+}) => {
   await page.goto("/");
 
   const card = page
