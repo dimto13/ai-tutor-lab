@@ -38,10 +38,7 @@ function localizedStep(step: TrainingStep, translation: StepTranslation | undefi
   };
 }
 
-export function localizeScenarioContent(
-  scenario: Scenario,
-  language: SupportedLanguage,
-): Scenario {
+export function localizeScenarioContent(scenario: Scenario, language: SupportedLanguage): Scenario {
   if (language === "de") return scenario;
   const translation = englishScenarioTranslations[scenario.id];
   if (!translation || translation.scenarioId !== scenario.id) return scenario;
