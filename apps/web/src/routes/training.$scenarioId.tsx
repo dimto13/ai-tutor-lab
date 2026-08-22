@@ -116,9 +116,11 @@ function TimedChallengeBriefing({
   const { scenario, recommendGuidedAfterChallenge } = useTraining();
   const goal = scenario.steps[0];
   const timeLimit = scenario.timeLimitSeconds ?? 0;
-  const guidedScenario = getScenariosForModule(scenario.moduleId).find(
-    (candidate) => (candidate.mode ?? "guided") === "guided",
-  );
+  const guidedScenario = scenario.moduleId
+    ? getScenariosForModule(scenario.moduleId).find(
+        (candidate) => (candidate.mode ?? "guided") === "guided",
+      )
+    : undefined;
   const showGuidedRecommendation =
     retryAfterTimeout && recommendGuidedAfterChallenge && Boolean(guidedScenario);
 
