@@ -27,6 +27,7 @@ export const M365_COPILOT_RUNTIME_DEFINITION = {
     "m365.prompt.submitted",
     "m365.prompt.qualityComplete",
     "m365.draft.kind",
+    "m365.drafts.createdKinds",
     "m365.review.factsChecked",
     "m365.review.unsupportedRejected",
     "m365.approval.decision",
