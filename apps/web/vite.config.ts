@@ -9,7 +9,7 @@ import { defineConfig } from "vite";
  * src/server.ts remains the custom server entry used by TanStack Start.
  * Production builds target Amplify Hosting Compute through Nitro's deployment preset.
  */
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   server: {
     fs: { allow: ["../.."] },
     port: 3001,
@@ -20,6 +20,17 @@ export default defineConfig(({ command }) => ({
       clientPort: 3001,
     },
   },
+  ...(mode === "e2e"
+    ? {
+        optimizeDeps: {
+          // #369: The full Playwright suite traverses many lazily loaded routes.
+          // Scan every app source entry before serving the first page so Vite
+          // does not discover a new dependency mid-suite and invalidate already
+          // served optimized chunks with `504 Outdated Optimize Dep` responses.
+          entries: ["src/**/*.{ts,tsx}"],
+        },
+      }
+    : {}),
   resolve: {
     tsconfigPaths: true,
   },
