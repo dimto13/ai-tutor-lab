@@ -2,12 +2,16 @@ import { util } from "@aws-appsync/utils";
 
 function csvCell(value) {
   if (value === null || value === undefined) return "";
-  const text = String(value);
+  const text = `${value}`;
   return `"${text.split('"').join('""')}"`;
 }
 
 function row(values) {
-  return values.map(csvCell).join(",");
+  const cells = [];
+  for (const value of values) {
+    cells.push(csvCell(value));
+  }
+  return cells.join(",");
 }
 
 export function request(ctx) {
