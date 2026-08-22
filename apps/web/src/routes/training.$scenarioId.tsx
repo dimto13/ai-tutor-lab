@@ -86,7 +86,7 @@ function TrainingEntry() {
   const { scenario, mode, restart, isReady, isChallengeFailed } = useTraining();
   const requiresBriefing = mode === "challenge" && scenario.timeLimitSeconds !== undefined;
   const [attemptStarted, setAttemptStarted] = useState(!requiresBriefing);
-  const retryAfterTimeout = attemptStarted && isChallengeFailed;
+  const retryAfterTimeout = isChallengeFailed;
 
   if (requiresBriefing && (!attemptStarted || isChallengeFailed)) {
     return (
