@@ -118,9 +118,13 @@ export function GuidedStepNavigation() {
           <section
             data-testid="guided-speech-explanation"
             className="mb-1.5 rounded-md border border-border bg-card/60 px-2.5 py-2"
-            aria-label={language === "en" ? "Current guide explanation" : "Aktuelle Guide-Erklärung"}
+            aria-label={
+              language === "en" ? "Current guide explanation" : "Aktuelle Guide-Erklärung"
+            }
           >
-            <p className="text-[11px] leading-relaxed text-foreground">{displayedStep.instruction}</p>
+            <p className="text-[11px] leading-relaxed text-foreground">
+              {displayedStep.instruction}
+            </p>
             <SpeechTextControl text={displayedStep.instruction} />
           </section>
         ) : null}

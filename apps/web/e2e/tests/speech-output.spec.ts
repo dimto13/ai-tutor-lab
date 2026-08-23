@@ -64,9 +64,11 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
   await expect
     .poll(() =>
       page.evaluate(() => {
-        const state = (window as typeof window & {
-          __speechTestState: { spoken: unknown[] };
-        }).__speechTestState;
+        const state = (
+          window as typeof window & {
+            __speechTestState: { spoken: unknown[] };
+          }
+        ).__speechTestState;
         return state.spoken.length;
       }),
     )
@@ -78,9 +80,11 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
   await expect(control).toHaveAccessibleName("Pause");
 
   const germanSpeech = await page.evaluate(() => {
-    const state = (window as typeof window & {
-      __speechTestState: { spoken: Array<{ text: string; lang: string }> };
-    }).__speechTestState;
+    const state = (
+      window as typeof window & {
+        __speechTestState: { spoken: Array<{ text: string; lang: string }> };
+      }
+    ).__speechTestState;
     return state.spoken.at(-1);
   });
   expect(germanSpeech).toEqual({ text: visibleGermanText, lang: "de-DE" });
@@ -91,9 +95,11 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
     .poll(() =>
       page.evaluate(
         () =>
-          (window as typeof window & {
-            __speechTestState: { pauseCount: number };
-          }).__speechTestState.pauseCount,
+          (
+            window as typeof window & {
+              __speechTestState: { pauseCount: number };
+            }
+          ).__speechTestState.pauseCount,
       ),
     )
     .toBe(1);
@@ -104,18 +110,22 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
     .poll(() =>
       page.evaluate(
         () =>
-          (window as typeof window & {
-            __speechTestState: { resumeCount: number };
-          }).__speechTestState.resumeCount,
+          (
+            window as typeof window & {
+              __speechTestState: { resumeCount: number };
+            }
+          ).__speechTestState.resumeCount,
       ),
     )
     .toBe(1);
 
   const cancelBeforeLanguageChange = await page.evaluate(
     () =>
-      (window as typeof window & {
-        __speechTestState: { cancelCount: number };
-      }).__speechTestState.cancelCount,
+      (
+        window as typeof window & {
+          __speechTestState: { cancelCount: number };
+        }
+      ).__speechTestState.cancelCount,
   );
   await page.getByRole("combobox", { name: "Sprache wechseln" }).selectOption("en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -124,9 +134,11 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
     .poll(() =>
       page.evaluate(
         () =>
-          (window as typeof window & {
-            __speechTestState: { cancelCount: number };
-          }).__speechTestState.cancelCount,
+          (
+            window as typeof window & {
+              __speechTestState: { cancelCount: number };
+            }
+          ).__speechTestState.cancelCount,
       ),
     )
     .toBeGreaterThan(cancelBeforeLanguageChange);
@@ -136,9 +148,11 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
   await control.press("Enter");
 
   const englishSpeech = await page.evaluate(() => {
-    const state = (window as typeof window & {
-      __speechTestState: { spoken: Array<{ text: string; lang: string }> };
-    }).__speechTestState;
+    const state = (
+      window as typeof window & {
+        __speechTestState: { spoken: Array<{ text: string; lang: string }> };
+      }
+    ).__speechTestState;
     return state.spoken.at(-1);
   });
   expect(englishSpeech).toEqual({ text: visibleEnglishText, lang: "en-US" });
