@@ -52,15 +52,14 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status")).toHaveText("Training bereit");
   await page.getByRole("combobox", { name: /Sprache wechseln|Change language/ }).selectOption("de");
-  await page.getByRole("button", { name: "Guide anzeigen" }).click();
 
-  const explanation = page.getByTestId("guided-speech-explanation");
+  const visibleText = page.getByTestId("guided-speech-text");
   const control = page.getByTestId("speech-text-control");
-  await expect(explanation).toBeVisible();
+  await expect(visibleText).toBeVisible();
   await expect(control).toBeEnabled();
   await expect(control).toHaveAccessibleName("Vorlesen");
 
-  const visibleGermanText = (await explanation.locator("p").innerText()).trim();
+  const visibleGermanText = (await visibleText.innerText()).trim();
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -143,7 +142,7 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
     )
     .toBeGreaterThan(cancelBeforeLanguageChange);
 
-  const visibleEnglishText = (await explanation.locator("p").innerText()).trim();
+  const visibleEnglishText = (await visibleText.innerText()).trim();
   expect(visibleEnglishText).not.toBe(visibleGermanText);
   await control.press("Enter");
 
