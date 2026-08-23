@@ -34,6 +34,7 @@
     "typecheck:amplify": "tsc --noEmit -p amplify/tsconfig.json",
     "typecheck": "npm run typecheck:amplify && npm run typecheck --workspaces --if-present",
     "validate:content": "node --experimental-strip-types scripts/validate-content.ts && node --experimental-strip-types scripts/validate-module-lines.ts && node --experimental-strip-types scripts/validate-catalog-references.ts && node --experimental-strip-types scripts/validate-help-escalation.ts && node --experimental-strip-types scripts/validate-freetext-policy.ts && node --experimental-strip-types scripts/validate-persona-audit.ts",
+    "validate:control-plane": "node scripts/validate-control-plane-contract.mjs",
     "validate:simulator-currency": "node --experimental-strip-types scripts/check-simulator-currency.ts",
     "validate:amplify-schema": "node --experimental-strip-types scripts/validate-amplify-schema.mjs",
     "validate:amplify-function-bundles": "node scripts/validate-amplify-function-bundles.mjs",
@@ -48,7 +49,7 @@
     "test:runtime-contracts": "node --experimental-strip-types --test tests/runtime/*.test.ts",
     "test:architecture": "node --experimental-strip-types --test tests/architecture/*.test.ts",
     "test:packages": "npm run test --workspaces --if-present",
-    "check": "npm run check:runtime-versions && npm run format:check && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run validate:amplify-schema && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run validate:amplify-cloudformation-graph && npm run build",
+    "check": "npm run check:runtime-versions && npm run format:check && npm run validate:control-plane && npm run validate:content && npm run validate:simulator-currency && npm run lint && npm run typecheck && npm run validate:amplify-schema && npm run test:packages && npm run test:catalog && npm run test:runtime-contracts && npm run test:architecture && npm run validate:amplify-cloudformation-graph && npm run build",
     "lint": "eslint amplify apps packages scripts tests",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -56,8 +57,8 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.1107.0",
     "aws-amplify": "^6.20.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "zod": "^3.25.17"
   },
   "devDependencies": {
@@ -72,12 +73,12 @@
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^15.15.0",
+    "eslint-plugin-react-hooks": "^6.1.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^16.4.0",
     "prettier": "^3.7.3",
     "tsx": "^4.23.12",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
   },
   "overrides": {
