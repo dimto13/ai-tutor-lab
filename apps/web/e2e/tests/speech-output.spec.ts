@@ -52,6 +52,7 @@ test("Guide-Sprachausgabe nutzt sichtbaren lokalisierten Text und stoppt bei Spr
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status")).toHaveText("Training bereit");
   await page.getByRole("combobox", { name: /Sprache wechseln|Change language/ }).selectOption("de");
+  await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
 
   const visibleText = page.getByTestId("guided-speech-text");
   const control = page.getByTestId("speech-text-control");
