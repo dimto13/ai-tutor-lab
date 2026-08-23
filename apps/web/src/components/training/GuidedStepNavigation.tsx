@@ -61,14 +61,13 @@ export function GuidedStepNavigation() {
           <Bot className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate">
             <span className="font-semibold text-foreground">Tutor-Ebene · Lernplattform</span>
+            {` · ${displayScenario.title}`}
             {displayedStep && displayedStepNumber ? (
               <>
-                {` · Schritt ${displayedStepNumber} · `}
+                {` · Schritt ${displayedStepNumber} · ${displayedStep.title} · `}
                 <span data-testid="guided-speech-text">{displayedStep.instruction}</span>
               </>
-            ) : (
-              ` · ${displayScenario.title}`
-            )}
+            ) : null}
           </p>
           <div
             className="flex shrink-0 items-center gap-1"
