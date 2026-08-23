@@ -2,11 +2,17 @@ import { Pause, Play, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 
+const SPEECH_LOCALES = {
+  de: "de-DE",
+  en: "en-US",
+} as const;
+
 export function SpeechTextControl({ text }: { text: string }) {
   const { language, t } = useLanguage();
   const [available, setAvailable] = useState(false);
   const [state, setState] = useState<"idle" | "speaking" | "paused">("idle");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const readableText = text.trim();
 
   useEffect(() => {
     setAvailable(
@@ -27,7 +33,7 @@ export function SpeechTextControl({ text }: { text: string }) {
   }, [text, language]);
 
   const handleToggle = () => {
-    if (!available) return;
+    if (!available || !readableText) return;
 
     if (state === "speaking") {
       window.speechSynthesis.pause();
@@ -42,8 +48,8 @@ export function SpeechTextControl({ text }: { text: string }) {
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language === "en" ? "en-US" : "de-DE";
+    const utterance = new SpeechSynthesisUtterance(readableText);
+    utterance.lang = SPEECH_LOCALES[language];
     utterance.onend = () => {
       utteranceRef.current = null;
       setState("idle");
@@ -65,7 +71,7 @@ export function SpeechTextControl({ text }: { text: string }) {
     <button
       type="button"
       data-testid="speech-text-control"
-      disabled={!available}
+      disabled={!available || !readableText}
       onClick={handleToggle}
       aria-label={available ? label : t("speechUnavailable")}
       title={available ? label : t("speechUnavailable")}
