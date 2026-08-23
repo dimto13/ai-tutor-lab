@@ -20,7 +20,8 @@
 ## Arbeitsregeln für KI-Agenten in diesem Repository
 
 1. **Vor jeder Aufgabe lesen:** [`prompts/model-briefing.md`](prompts/model-briefing.md)
-   (die Architekturregeln) und bei Codearbeit zusätzlich
+   (die Architekturregeln), [`docs/24-control-plane.md`](docs/24-control-plane.md)
+   (operative CONTROL-Discovery und Rollover) und bei Codearbeit zusätzlich
    [`docs/02-domaenenmodell.md`](docs/02-domaenenmodell.md). Bei Arbeit an `amplify.yml`,
    Amplify-Backend-Code, Auth/Identity, Persistenz, Cloud-SDKs oder Deployment zusätzlich
    [`docs/19-aws-amplify-konventionen.md`](docs/19-aws-amplify-konventionen.md) und
@@ -35,9 +36,11 @@
    als Issue angelegt — mit Epic-Label, Prio-Label, Typ-Label und Milestone, und als Sub-Issue
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
    `backlog/backlog.yaml`, `backlog/tickets.csv` und `docs/06-backlog.md` sind eingefrorenes
-   Archiv des ursprünglichen Planungsstands und dürfen nicht mehr gepflegt werden. Das dauerhafte
-   Implementation-Control-Issue #370 ist davon bewusst ausgenommen: Es ist kein Backlog-Task,
-   sondern die operative Status-, Queue-, Evidence- und Handoff-SSOT und bleibt deshalb ohne Milestone offen.
+   Archiv des ursprünglichen Planungsstands und dürfen nicht mehr gepflegt werden. Das operative
+   Implementation-Control ist kein Backlog-Task, sondern die Status-, Queue-, Evidence- und
+   Handoff-SSOT. Es wird **nicht über eine Issue-Nummer**, sondern ausschließlich als das genau eine
+   offene Issue mit dem Label `control:active` gefunden. Existieren null oder mehrere offene Issues
+   mit diesem Label, ist das ein Control-Plane-Blocker; Agenten dürfen dann kein CONTROL erraten.
 4. **Keine History-Rewrites und keine Force-Pushes**, sofern dies nicht ausdrücklich und bewusst
    für einen konkreten Git-Vorgang entschieden wurde.
 5. Szenarien sind Daten (YAML/JSON), kein Code. Keine CSS-Selektoren, keine
@@ -73,12 +76,14 @@
    Migrations-Runner angelegt werden. Solche Arbeiten erfolgen lokal auf dem Feature-Branch mit den
    dafür vorgesehenen Projektwerkzeugen. Neue oder geänderte Workflows müssen eine dauerhafte
    Repository-Funktion haben und Bestandteil des eigentlichen Review-Scopes sein.
-10. **Session- und Kontextmanagement über #370.** Eine neue Session darf sich nicht ausschließlich auf
-    Chat-Historie oder Modellgedächtnis verlassen, sondern prüft mindestens live `main`, `deploy`,
-    offene PRs, PR-CI/Reviews, die letzte `push`-CI auf `main`, #370 und den eigenen Queue-/Handoff-Stand.
-    Ab ungefähr 50 Minuten aktiver Session wird kein neuer großer Queue-Punkt begonnen; bis ungefähr
-    60 Minuten wird ein sicherer Commit/PR/CI-Zustand hergestellt und ein präziser Handoff in #370
-    hinterlegt. Ein Session-Cut ist kein fachlicher STOP; die nächste Session übernimmt aus Git + CONTROL.
+10. **Session- und Kontextmanagement erfolgt über das dynamisch entdeckte ACTIVE CONTROL.** Eine neue
+    Session darf sich nicht ausschließlich auf Chat-Historie oder Modellgedächtnis verlassen. Sie findet
+    zuerst das genau eine offene `control:active`-Issue und prüft danach mindestens live `main`, `deploy`,
+    offene PRs, PR-CI/Reviews, die letzte verfügbare `push`-CI auf `main` sowie den eigenen
+    Queue-/Handoff-Stand. Ab ungefähr 50 Minuten aktiver Session wird kein neuer großer Queue-Punkt
+    begonnen; bis ungefähr 60 Minuten wird ein sicherer Commit/PR/CI-Zustand hergestellt und ein
+    präziser Handoff im aktuell aktiven CONTROL hinterlegt. Ein Session-Cut ist kein fachlicher STOP;
+    die nächste Session übernimmt aus Git + CONTROL.
 11. **`deploy` ist ausschließlich Release-Zeiger.** KI-Agenten entwickeln nicht auf `deploy`, mergen
     nicht nach `deploy` und verschieben diesen Ref nicht. Ausschließlich der Repository-Eigentümer führt
     die bewusste Deployment-Freigabe aus. Ein `deploy`-SHA gilt erst nach commit-spezifisch erfolgreichem
@@ -88,3 +93,8 @@
     die vorhandenen runtime-spezifischen Lint-/Validation-Gates bestehen; normale Node-/Browser-JS-
     Kompatibilität genügt nicht. Nicht validierte Globals/Typkonverter, Funktionsreferenzen oder andere
     Higher-Order-Muster dürfen nicht allein aufgrund allgemeiner JavaScript-Gültigkeit eingeführt werden.
+13. **CONTROL-Rollover ist issue-nummernunabhängig.** Ein Nachfolger wird vollständig vorbereitet, dann
+    mit `control:active` aktiviert; das Label wird unmittelbar vom Vorgänger entfernt und der Vorgänger
+    archiviert/geschlossen. Ein kurzzeitiger Zustand mit null oder mehreren aktiven CONTROL-Issues muss
+    fail-closed behandelt werden. Repository-Dokumente, CI und Scheduler dürfen keine konkrete
+    CONTROL-Issue-Nummer als dauerhaften Vertrag hardcodieren.
