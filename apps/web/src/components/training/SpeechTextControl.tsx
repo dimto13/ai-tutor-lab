@@ -69,7 +69,7 @@ export function SpeechTextControl({ text }: { text: string }) {
       onClick={handleToggle}
       aria-label={available ? label : t("speechUnavailable")}
       title={available ? label : t("speechUnavailable")}
-      className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border bg-background text-[11px] font-medium text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-9 sm:w-auto sm:px-2.5 sm:py-1.5"
     >
       {speaking ? (
         <Pause className="h-3.5 w-3.5" aria-hidden="true" />
@@ -78,7 +78,7 @@ export function SpeechTextControl({ text }: { text: string }) {
       ) : (
         <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
       )}
-      {label}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
