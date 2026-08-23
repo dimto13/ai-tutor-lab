@@ -1,6 +1,6 @@
 ---
 name: Aufgabe
-about: Neue Aufgabe außerhalb des generierten Backlogs
+about: Neue Aufgabe für das GitHub-Issue-basierte Backlog
 labels: "type: task"
 ---
 
@@ -14,6 +14,7 @@ labels: "type: task"
 
 Anforderung (FR/NFR): —
 Epic: —
+Abhängigkeiten: —
 
-> Hinweis: Geplante Backlog-Tickets (AITP-x) entstehen in `backlog/backlog.yaml`
-> und werden per Sync erzeugt — nicht von Hand anlegen.
+> Aufgaben und ihr inhaltlicher Status werden ausschließlich in GitHub Issues gepflegt.
+> `backlog/` und `docs/06-backlog.md` sind eingefrorenes Archiv und werden nicht synchronisiert.
