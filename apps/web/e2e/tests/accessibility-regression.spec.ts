@@ -75,6 +75,11 @@ test.describe("Accessibility regressions", () => {
     await expect(page.getByRole("heading", { name: "Oberfläche frei untersuchen" })).toBeVisible();
     await expect(page.locator('[data-platform-ui="guide"]')).toBeVisible();
 
+    const tutorHistory = page.getByRole("region", { name: "Tutor-Verlauf" });
+    await expect(tutorHistory).toHaveAttribute("tabindex", "0");
+    await tutorHistory.focus();
+    await expect(tutorHistory).toBeFocused();
+
     await accessibility.check("vscode-basics.explore with platform guide");
   });
 
