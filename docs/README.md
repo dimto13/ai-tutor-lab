@@ -42,11 +42,16 @@ vom POC zur produktreifen Plattform.
 | `19-aws-amplify-konventionen.md`     | Verbindliche AWS-Amplify-, Build-, Release- und Gen-2-Regeln                                    | Entwicklung, LLM-Agenten |
 | `20-cloud-provider-boundary.md`      | Cloud-neutrale Ports/Adapter-Grenze; AWS heute, weitere Provider später                         | Entwicklung, LLM-Agenten |
 | `23-cloud-abnahme-kanal.md`          | Lesender OIDC-Zugang von GitHub Actions zu AWS für die Cloud-Abnahme                            | Entwicklung, Security    |
+| `24-control-plane.md`                | Dynamische CONTROL-Discovery, Handoffs, Scheduler-Vertrag und Rollover                          | Steuerung, LLM-Agenten   |
 | `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich, LLM-Agenten        |
 | `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
 
 Die **aktuelle** Aufgabenlage steht nicht in einer Datei, sondern in den
 [GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues).
+
+Das operative Implementation-Control wird ebenfalls nicht über eine fest codierte Issue-Nummer gefunden.
+Kanonisch ist genau das eine offene Issue mit dem Label `control:active`; Details stehen in
+[`24-control-plane.md`](24-control-plane.md).
 
 ## Aufgabenverwaltung mit GitHub
 
@@ -99,8 +104,9 @@ View-Eigenschaft nicht schreiben kann.
    Dadurch bleibt nachvollziehbar, welche Anforderung wo umgesetzt wird.
 3. **Beim Arbeiten mit einem neuen Modell** zuerst `../prompts/model-briefing.md` +
    `02-domaenenmodell.md` einspielen. Bei Cloud-, Auth-, Persistenz-, Amplify- oder Deployment-Arbeit
-   zusätzlich `19-aws-amplify-konventionen.md` und `20-cloud-provider-boundary.md`. Dadurch bleibt
-   insbesondere die Abhängigkeitsrichtung `Anwendung -> eigener Port <- Cloud-Adapter` verbindlich.
+   zusätzlich `19-aws-amplify-konventionen.md` und `20-cloud-provider-boundary.md`. Für operative Queue,
+   Handoffs und CONTROL-Rollover zusätzlich `24-control-plane.md` lesen. Dadurch bleibt insbesondere die
+   Abhängigkeitsrichtung `Anwendung -> eigener Port <- Cloud-Adapter` verbindlich.
 4. **Alles in ein Git-Repository.** Diese Doku gehört neben den Code, nicht in ein separates Wiki.
 
 ## Empfohlene Repository-Struktur
