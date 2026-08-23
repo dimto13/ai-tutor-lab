@@ -19,6 +19,10 @@ Stack: React, TypeScript, Tailwind, Monorepo, AWS Amplify Hosting. Sprache DE.
 ## Projektbetrieb und Entwicklungsumgebung (verbindlich)
 
 - **Single Source of Truth ist ausschließlich das Git-Repository `dimto13/ai-tutor-lab`.**
+- Operative Arbeit beginnt mit der Discovery des genau einen offenen GitHub Issues mit dem Label
+  `control:active`. Dieses Issue ist die aktuelle Implementation-Control-SSOT; eine konkrete
+  CONTROL-Issue-Nummer darf nicht dauerhaft vorausgesetzt werden. Details und Rollover-Regeln stehen in
+  [`docs/24-control-plane.md`](../docs/24-control-plane.md).
 - Entwicklung, Builds und Tests erfolgen auf dem lokalen Entwicklungsrechner und auf Basis eines
   explizit ausgecheckten Git-Branches.
 - Zusammenarbeit und Integration erfolgen über Git/GitHub mit Branches, Commits und Pull Requests.
