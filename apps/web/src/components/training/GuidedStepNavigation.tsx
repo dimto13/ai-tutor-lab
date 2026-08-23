@@ -61,16 +61,21 @@ export function GuidedStepNavigation() {
           <Bot className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate">
             <span className="font-semibold text-foreground">Tutor-Ebene · Lernplattform</span>
-            {` · ${displayScenario.title}`}
-            {displayedStep && displayedStepNumber
-              ? ` · Schritt ${displayedStepNumber} · ${displayedStep.title}`
-              : ""}
+            {displayedStep && displayedStepNumber ? (
+              <>
+                {` · Schritt ${displayedStepNumber} · `}
+                <span data-testid="guided-speech-text">{displayedStep.instruction}</span>
+              </>
+            ) : (
+              ` · ${displayScenario.title}`
+            )}
           </p>
           <div
             className="flex shrink-0 items-center gap-1"
             role="group"
             aria-label="Sekundäre Tutorführung und Wiederholung"
           >
+            {displayedStep ? <SpeechTextControl text={displayedStep.instruction} /> : null}
             <button
               type="button"
               data-learning-role="replay-navigation"
@@ -113,21 +118,6 @@ export function GuidedStepNavigation() {
             ) : null}
           </div>
         </section>
-
-        {displayedStep ? (
-          <section
-            data-testid="guided-speech-explanation"
-            className="mb-1.5 rounded-md border border-border bg-card/60 px-2.5 py-2"
-            aria-label={
-              language === "en" ? "Current guide explanation" : "Aktuelle Guide-Erklärung"
-            }
-          >
-            <p className="text-[11px] leading-relaxed text-foreground">
-              {displayedStep.instruction}
-            </p>
-            <SpeechTextControl text={displayedStep.instruction} />
-          </section>
-        ) : null}
 
         {isGuidedReplay ? (
           <div
