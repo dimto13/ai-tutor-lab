@@ -21,7 +21,7 @@ ACTIVE_STATUSES="CREATED PENDING PROVISIONING RUNNING CANCELLING"
 TAB=$(printf '\t')
 
 WATCH=true
-INTERVAL=5
+INTERVAL=30
 
 while [ $# -gt 0 ]; do
   case "$1" in
