@@ -84,6 +84,7 @@ Pflichtfelder:
 
 ```md
 ## CHAT-X HANDOFF — YYYY-MM-DD HH:MM Europe/Berlin
+
 - Issue / Queue-Position:
 - Branch / PR / Head:
 - Status: IN PROGRESS | WAIT | BLOCKED | MERGED_PENDING_MAIN_CI | DONE
