@@ -49,12 +49,12 @@ einen kanonischen Scheduler reduziert. Unverwandte Automationen des Owners werde
 
 Kanonischer Satz:
 
-| Rolle | Scheduler | Takt Europe/Berlin |
-| --- | --- | --- |
-| PLAN/WATCHDOG | `ai-train-lab Zentral-Watchdog` | stündlich `:00` |
-| CHAT1 | `ai-train-lab CHAT1 Worker` | stündlich `:30` |
-| CHAT2 | `ai-train-lab CHAT2 Worker` | stündlich `:40` |
-| CHAT3 | `ai-train-lab CHAT3 Worker` | stündlich `:50` |
+| Rolle         | Scheduler                       | Takt Europe/Berlin |
+| ------------- | ------------------------------- | ------------------ |
+| PLAN/WATCHDOG | `ai-train-lab Zentral-Watchdog` | stündlich `:00`    |
+| CHAT1         | `ai-train-lab CHAT1 Worker`     | stündlich `:30`    |
+| CHAT2         | `ai-train-lab CHAT2 Worker`     | stündlich `:40`    |
+| CHAT3         | `ai-train-lab CHAT3 Worker`     | stündlich `:50`    |
 
 WAIT, BLOCKED, laufende CI, temporär fehlende Evidence, `MERGED_PENDING_MAIN_CI` oder SESSION-CUT dürfen
 einen Worker niemals automatisch deaktivieren.
