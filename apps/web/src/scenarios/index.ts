@@ -3,6 +3,10 @@ import type { LearningLayer, Scenario } from "@/types/training";
 import { parseScenario } from "./contentLoader";
 import { createHtmlPageWorkflowVariants } from "./htmlPageWorkflowVariants";
 import { createResearchWorkflowVariants } from "./researchWorkflowVariants";
+import {
+  createTableDataWorkflowGuidedScenario,
+  createTableDataWorkflowVariants,
+} from "./tableDataWorkflowVariants";
 import vscodeExploreRaw from "../../../../content/scenarios/vscode-basics.explore.json";
 import vscodeGuidedRaw from "../../../../content/scenarios/vscode-basics.guided.json";
 import vscodeChallengeRaw from "../../../../content/scenarios/vscode-basics.challenge.json";
@@ -19,6 +23,7 @@ import m365CopilotBasicsChallengeRaw from "../../../../content/scenarios/m365-co
 import artifactPreviewFoundationRaw from "../../../../content/scenarios/artifact-preview-foundation.guided.json";
 import htmlPageWorkflowGuidedRaw from "../../../../content/scenarios/html-page-workflow.guided.json";
 import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-workflow.guided.json";
+import tableDataWorkflowGuidedRaw from "../../../../content/scenarios/table-data-workflow.guided.json";
 import sourceControlPlatformExploreRaw from "../../../../content/scenarios/source-control-platform-basics.explore.json";
 import sourceControlPlatformGuidedRaw from "../../../../content/scenarios/source-control-platform-basics.guided.json";
 import sourceControlPlatformChallengeRaw from "../../../../content/scenarios/source-control-platform-basics.challenge.json";
@@ -49,6 +54,11 @@ const [htmlPageWorkflowExploreScenario, htmlPageWorkflowChallengeScenario] =
 const researchWorkflowGuidedScenario = parseScenario(researchWorkflowGuidedRaw);
 const [researchWorkflowExploreScenario, researchWorkflowChallengeScenario] =
   createResearchWorkflowVariants(researchWorkflowGuidedScenario);
+const tableDataWorkflowGuidedScenario = createTableDataWorkflowGuidedScenario(
+  parseScenario(tableDataWorkflowGuidedRaw),
+);
+const [tableDataWorkflowExploreScenario, tableDataWorkflowChallengeScenario] =
+  createTableDataWorkflowVariants(tableDataWorkflowGuidedScenario);
 const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
 const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
 const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
@@ -80,6 +90,9 @@ const scenarios: Record<string, Scenario> = {
   [researchWorkflowExploreScenario.id]: researchWorkflowExploreScenario,
   [researchWorkflowGuidedScenario.id]: researchWorkflowGuidedScenario,
   [researchWorkflowChallengeScenario.id]: researchWorkflowChallengeScenario,
+  [tableDataWorkflowExploreScenario.id]: tableDataWorkflowExploreScenario,
+  [tableDataWorkflowGuidedScenario.id]: tableDataWorkflowGuidedScenario,
+  [tableDataWorkflowChallengeScenario.id]: tableDataWorkflowChallengeScenario,
   [sourceControlPlatformExploreScenario.id]: sourceControlPlatformExploreScenario,
   [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
   [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,
