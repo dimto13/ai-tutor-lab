@@ -1,6 +1,14 @@
 import { defineBackend } from "@aws-amplify/backend";
+import { UserPoolOperation } from "aws-cdk-lib/aws-cognito";
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
-import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import {
+  Code,
+  EventSourceMapping,
+  Function as LambdaFunction,
+  Runtime,
+  StartingPosition,
+} from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
@@ -22,6 +30,34 @@ export const backend = defineBackend({
 
 const { cfnIdentityPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
+
+const bootstrapTenantGroup = "tenant:default";
+const tenantProvisioner = new LambdaFunction(backend.auth.stack, "TenantPostConfirmationProvisioner", {
+  runtime: Runtime.NODEJS_22_X,
+  handler: "index.handler",
+  code: Code.fromInline(`
+const { CognitoIdentityProviderClient, AdminAddUserToGroupCommand } = require("@aws-sdk/client-cognito-identity-provider");
+const client = new CognitoIdentityProviderClient({});
+exports.handler = async (event) => {
+  await client.send(new AdminAddUserToGroupCommand({
+    UserPoolId: event.userPoolId,
+    Username: event.userName,
+    GroupName: process.env.BOOTSTRAP_TENANT_GROUP,
+  }));
+  return event;
+};
+`),
+  environment: {
+    BOOTSTRAP_TENANT_GROUP: bootstrapTenantGroup,
+  },
+});
+tenantProvisioner.addToRolePolicy(
+  new PolicyStatement({
+    actions: ["cognito-idp:AdminAddUserToGroup"],
+    resources: [backend.auth.resources.userPool.userPoolArn],
+  }),
+);
+backend.auth.resources.userPool.addTrigger(UserPoolOperation.POST_CONFIRMATION, tenantProvisioner);
 
 const { amplifyDynamoDbTables } = backend.data.resources.cfnResources;
 const rawTelemetryCfnTable = requiredResource(
