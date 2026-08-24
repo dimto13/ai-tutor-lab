@@ -84,12 +84,11 @@ test("confirmed self-service users receive one server-managed bootstrap tenant",
   ]);
 
   assert.match(authResource, /["']tenant:default["']/);
-  assert.match(authResource, /postConfirmation:\s*tenantProvisioner/);
   assert.match(backend, /bootstrapTenantGroup = ["']tenant:default["']/);
   assert.match(backend, /AdminAddUserToGroupCommand/);
   assert.match(backend, /cognito-idp:AdminAddUserToGroup/);
   assert.match(backend, /cfnUserPool\.lambdaConfig/);
-  assert.match(backend, /tenantProvisioner\.functionArn/);
+  assert.match(backend, /postConfirmation: tenantProvisioner\.functionArn/);
   assert.match(backend, /ServicePrincipal\(["']cognito-idp\.amazonaws\.com["']\)/);
   assert.doesNotMatch(backend, /AdminCreateUser|AdminUpdateUserAttributes/);
 });
