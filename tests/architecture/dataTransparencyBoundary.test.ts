@@ -21,10 +21,13 @@ const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
 const authResourceUrl = new URL("../../amplify/auth/resource.ts", import.meta.url);
 
 function definitionBlock(source: string, name: string): string {
-  const start = source.indexOf(`${name}:`);
+  const start = source.indexOf(`  ${name}:`);
   assert.notEqual(start, -1, `missing definition for ${name}`);
-  const nextDefinition = source.indexOf("\n  ", start + name.length + 1);
-  return source.slice(start, nextDefinition === -1 ? source.length : nextDefinition);
+  const remainder = source.slice(start + name.length + 3);
+  const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
+  const end =
+    nextDefinition >= 0 ? start + name.length + 3 + nextDefinition : source.indexOf("\n});", start);
+  return source.slice(start, end >= 0 ? end : source.length);
 }
 
 test("data transparency is a fixed account-accessible platform route", async () => {
