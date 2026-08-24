@@ -101,6 +101,14 @@
           "observedVersion": "2026-08 / VS Code 1.131",
           "scenarioIds": ["copilot-basics.guided"],
           "status": "resolved"
+        },
+        {
+          "id": "copilot-chat-view-chrome-2026-08",
+          "summary": "Copilot-Chat-View weicht bei Kopfbereich, Composer, Verlauf und Statuszeile von der aktuellen VS-Code-Oberfläche ab",
+          "details": "Die Chat-View verwendete simulator-eigene Kopf- und Dauersteuerungen, getrennte Modus-/Modellfelder, keinen vollständigen Gesprächsverlauf und keine lokale Sandkasten-Statuszeile. #379 führt diese Elemente in die produktnahe Chat-Informationsarchitektur zurück, erhält semantische Highlight-Ziele und Produktprofil-Autorität und trennt nicht produktentsprechende Steuerung von der Produktoberfläche.",
+          "observedVersion": "2026-08 / VS Code 1.131",
+          "scenarioIds": ["copilot-basics.guided", "git-basics"],
+          "status": "resolved"
         }
       ]
     },
