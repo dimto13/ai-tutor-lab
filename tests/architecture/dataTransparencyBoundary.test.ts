@@ -3,8 +3,14 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const routeUrl = new URL("../../apps/web/src/routes/datentransparenz.tsx", import.meta.url);
-const catalogUrl = new URL("../../apps/web/src/privacy/dataTransparencyCatalog.ts", import.meta.url);
-const compositionUrl = new URL("../../apps/web/src/persistence/createTrainingStateRepository.ts", import.meta.url);
+const catalogUrl = new URL(
+  "../../apps/web/src/privacy/dataTransparencyCatalog.ts",
+  import.meta.url,
+);
+const compositionUrl = new URL(
+  "../../apps/web/src/persistence/createTrainingStateRepository.ts",
+  import.meta.url,
+);
 const amplifyAdapterUrl = new URL(
   "../../apps/web/src/persistence/adapters/amplifyDataTransparency.ts",
   import.meta.url,
