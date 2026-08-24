@@ -1,5 +1,4 @@
 import { defineBackend } from "@aws-amplify/backend";
-import { UserPoolOperation } from "aws-cdk-lib/aws-cognito";
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import {
@@ -28,7 +27,7 @@ export const backend = defineBackend({
   userDataExport,
 });
 
-const { cfnIdentityPool } = backend.auth.resources.cfnResources;
+const { cfnIdentityPool, cfnUserPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
 
 const bootstrapTenantGroup = "tenant:default";
@@ -61,7 +60,14 @@ tenantProvisioner.addToRolePolicy(
     resources: [backend.auth.resources.userPool.userPoolArn],
   }),
 );
-backend.auth.resources.userPool.addTrigger(UserPoolOperation.POST_CONFIRMATION, tenantProvisioner);
+tenantProvisioner.addPermission("AllowCognitoPostConfirmation", {
+  principal: { service: "cognito-idp.amazonaws.com" },
+  sourceArn: backend.auth.resources.userPool.userPoolArn,
+});
+cfnUserPool.lambdaConfig = {
+  ...cfnUserPool.lambdaConfig,
+  postConfirmation: tenantProvisioner.functionArn,
+};
 
 const { amplifyDynamoDbTables } = backend.data.resources.cfnResources;
 const rawTelemetryCfnTable = requiredResource(
