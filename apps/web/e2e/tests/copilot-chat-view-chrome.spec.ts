@@ -52,3 +52,22 @@ test("Copilot Composer behält Kontext und zugängliche Inline-Picker", async ({
   await expect(mode).toHaveValue("plan");
   await expect(model).toHaveValue("auto");
 });
+
+test("Copilot Composer bleibt auf schmalem Viewport vollständig bedienbar", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openCopilotChat(page);
+
+  const chat = page.locator('[data-highlight="copilot.chat"]');
+  const secondarySideBar = page.locator('[data-highlight="vscode.secondarySideBar"]');
+  const mode = chat.locator('[data-highlight="copilot.chat.modeSelector"]');
+  const model = chat.locator('[data-highlight="copilot.chat.modelSelector"]');
+
+  await expect(chat.getByRole("textbox", { name: "Copilot-Prompt" })).toBeVisible();
+  await expect(mode).toBeVisible();
+  await expect(model).toBeVisible();
+  await expect(chat.getByRole("button", { name: "Prompt senden" })).toBeVisible();
+  await expect(secondarySideBar).toBeVisible();
+
+  const width = await secondarySideBar.evaluate((element) => element.getBoundingClientRect().width);
+  expect(width).toBeGreaterThanOrEqual(256);
+});
