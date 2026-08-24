@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const resourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
+const authResourceUrl = new URL("../../amplify/auth/resource.ts", import.meta.url);
 const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
 const handlerUrl = new URL("../../amplify/functions/user-data-export/handler.js", import.meta.url);
 const accountMenuUrl = new URL("../../apps/web/src/auth/AccountMenu.tsx", import.meta.url);
@@ -96,6 +97,29 @@ test("cloud data access stays lazy and behind the existing persistence adapter b
   assert.match(adapter, /from ["']aws-amplify\/data["']/);
   assert.match(adapter, /JSON\.parse\(result\.data\)/);
   assert.match(adapter, /Amplify Data returned invalid JSON for the own-data export/);
+});
+
+test("tenant membership failures are mapped at the cloud adapter boundary", async () => {
+  const adapter = await readFile(amplifyAdapterUrl, "utf8");
+
+  assert.match(adapter, /isTenantMembershipFailure/);
+  assert.match(adapter, /Dein Datenkontext ist noch nicht verfügbar/);
+  assert.match(adapter, /providerBoundaryError\(result\.errors\)/);
+  assert.doesNotMatch(adapter, /new Error\(errorText\(result\.errors\)\)/);
+});
+
+test("confirmed self-service users receive one server-managed bootstrap tenant", async () => {
+  const [authResource, backend] = await Promise.all([
+    readFile(authResourceUrl, "utf8"),
+    readFile(backendUrl, "utf8"),
+  ]);
+
+  assert.match(authResource, /["']tenant:default["']/);
+  assert.match(backend, /bootstrapTenantGroup = ["']tenant:default["']/);
+  assert.match(backend, /AdminAddUserToGroupCommand/);
+  assert.match(backend, /cognito-idp:AdminAddUserToGroup/);
+  assert.match(backend, /UserPoolOperation\.POST_CONFIRMATION/);
+  assert.doesNotMatch(backend, /AdminCreateUser|AdminUpdateUserAttributes/);
 });
 
 test("own-data operations are authenticated, argumentless and server-authoritative", async () => {
