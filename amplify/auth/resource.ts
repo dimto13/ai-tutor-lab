@@ -46,8 +46,10 @@ const oidc = readOidcConfiguration();
  * the dedicated AWS auth adapter.
  *
  * Tenant membership is server-managed through `tenant:<tenantId>` Cognito
- * groups. Application roles use the separate finite `role:<roleId>` group
- * namespace and are normalized to cloud-neutral role IDs at the auth boundary.
+ * groups. `tenant:default` is the bootstrap tenant for self-service email
+ * registrations and is assigned only by the backend post-confirmation trigger.
+ * Application roles use the separate finite `role:<roleId>` group namespace and
+ * are normalized to cloud-neutral role IDs at the auth boundary.
  */
 export const auth = defineAuth({
   loginWith: {
@@ -69,7 +71,13 @@ export const auth = defineAuth({
         }
       : {}),
   },
-  groups: ["role:learner", "role:author", "role:trainer", "role:tenant_admin"],
+  groups: [
+    "tenant:default",
+    "role:learner",
+    "role:author",
+    "role:trainer",
+    "role:tenant_admin",
+  ],
   accountRecovery: "EMAIL_ONLY",
   userAttributes: {
     fullname: {
