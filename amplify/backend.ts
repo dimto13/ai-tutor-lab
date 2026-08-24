@@ -32,10 +32,13 @@ const { cfnIdentityPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
 
 const bootstrapTenantGroup = "tenant:default";
-const tenantProvisioner = new LambdaFunction(backend.auth.stack, "TenantPostConfirmationProvisioner", {
-  runtime: Runtime.NODEJS_22_X,
-  handler: "index.handler",
-  code: Code.fromInline(`
+const tenantProvisioner = new LambdaFunction(
+  backend.auth.stack,
+  "TenantPostConfirmationProvisioner",
+  {
+    runtime: Runtime.NODEJS_22_X,
+    handler: "index.handler",
+    code: Code.fromInline(`
 const { CognitoIdentityProviderClient, AdminAddUserToGroupCommand } = require("@aws-sdk/client-cognito-identity-provider");
 const client = new CognitoIdentityProviderClient({});
 exports.handler = async (event) => {
@@ -47,10 +50,11 @@ exports.handler = async (event) => {
   return event;
 };
 `),
-  environment: {
-    BOOTSTRAP_TENANT_GROUP: bootstrapTenantGroup,
+    environment: {
+      BOOTSTRAP_TENANT_GROUP: bootstrapTenantGroup,
+    },
   },
-});
+);
 tenantProvisioner.addToRolePolicy(
   new PolicyStatement({
     actions: ["cognito-idp:AdminAddUserToGroup"],
