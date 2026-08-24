@@ -9,7 +9,7 @@ test("Recherche akzeptiert sinngleiche Formulierung ohne Magic Word", async ({ p
   await waitForTrainingReady(page);
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill(
     "Stelle drei aktuelle Optionen mit Belegen aus dem letzten Jahr tabellarisch gegenüber.",
   );
@@ -27,7 +27,7 @@ test("HTML-Workflow akzeptiert eigenen Auftrag ohne Begriff Teamübersicht", asy
   await waitForTrainingReady(page);
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill(
     "Erzeuge eine interne Übersicht der Personen mit ihren Namen, Funktionen und Statusangaben.",
   );
