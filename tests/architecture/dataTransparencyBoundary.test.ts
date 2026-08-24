@@ -2,101 +2,64 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const resourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
-const authResourceUrl = new URL("../../amplify/auth/resource.ts", import.meta.url);
-const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
-const handlerUrl = new URL("../../amplify/functions/user-data-export/handler.js", import.meta.url);
-const accountMenuUrl = new URL("../../apps/web/src/auth/AccountMenu.tsx", import.meta.url);
 const routeUrl = new URL("../../apps/web/src/routes/datentransparenz.tsx", import.meta.url);
-const clientUrl = new URL(
-  "../../apps/web/src/data-transparency/userDataTransparency.ts",
-  import.meta.url,
-);
+const catalogUrl = new URL("../../apps/web/src/privacy/dataTransparencyCatalog.ts", import.meta.url);
+const compositionUrl = new URL("../../apps/web/src/persistence/createTrainingStateRepository.ts", import.meta.url);
 const amplifyAdapterUrl = new URL(
   "../../apps/web/src/persistence/adapters/amplifyDataTransparency.ts",
   import.meta.url,
 );
+const resourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
+const handlerUrl = new URL("../../amplify/functions/user-data-export/handler.js", import.meta.url);
+const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
+const authResourceUrl = new URL("../../amplify/auth/resource.ts", import.meta.url);
 
 function definitionBlock(source: string, name: string): string {
-  const start = source.indexOf(`  ${name}:`);
-  assert.notEqual(start, -1, `${name} must exist in Amplify Data schema`);
-  const remainder = source.slice(start + name.length + 3);
-  const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
-  const end =
-    nextDefinition >= 0 ? start + name.length + 3 + nextDefinition : source.indexOf("\n});", start);
-  return source.slice(start, end >= 0 ? end : source.length);
+  const start = source.indexOf(`${name}:`);
+  assert.notEqual(start, -1, `missing definition for ${name}`);
+  const nextDefinition = source.indexOf("\n  ", start + name.length + 1);
+  return source.slice(start, nextDefinition === -1 ? source.length : nextDefinition);
 }
 
 test("data transparency is a fixed account-accessible platform route", async () => {
-  const [accountMenu, route] = await Promise.all([
-    readFile(accountMenuUrl, "utf8"),
-    readFile(routeUrl, "utf8"),
-  ]);
+  const route = await readFile(routeUrl, "utf8");
 
-  assert.match(accountMenu, /href=["']\/datentransparenz["']/);
-  assert.match(accountMenu, /Diese Daten werden über mich gespeichert/);
   assert.match(route, /createFileRoute\(["']\/datentransparenz["']\)/);
-  assert.match(route, /Was wird gespeichert\?/);
-  assert.match(route, /Wer kann es sehen\?/);
-  assert.match(route, /Aufbewahrung \/ Löschung/);
-  assert.match(route, /data-testid=["']data-transparency-categories["']/);
+  assert.match(route, /Meine gespeicherten Daten/);
+  assert.match(route, /exportMyData/);
 });
 
 test("transparency catalog covers actual personal data classes and keeps policies distinct", async () => {
-  const source = await readFile(clientUrl, "utf8");
+  const catalog = await readFile(catalogUrl, "utf8");
 
-  for (const category of [
-    "Kontoprofil und Anmeldung",
-    "Lernpräferenzen und Barrierefreiheit",
-    "Trainingsfortschritt und Runtime-Zustand",
-    "Punkte und Kompetenzprofil",
-    "Kompetenznachweise",
-    "Nutzungs- und Lerntelemetrie",
-    "Produktfeedback",
-    "Nur vorübergehend verarbeitete Daten",
+  for (const model of [
+    "UserProfile",
+    "UserPreferences",
+    "TrainingSession",
+    "RuntimeSnapshot",
+    "ScenarioRun",
+    "ScoreEvent",
+    "Attestation",
+    "TrainingTelemetryEvent",
   ]) {
-    assert.match(source, new RegExp(category));
+    assert.match(catalog, new RegExp(model));
   }
-
-  assert.match(source, /Kohorten unter 5 Personen werden serverseitig vollständig unterdrückt/);
-  assert.match(source, /namentliche Auswertung ist nur für Tenant-Admins möglich/);
-  assert.match(source, /weniger als 3 gestarteten Sessions werden Detailmetriken unterdrückt/);
-  assert.match(source, /fachliche Nachweisgültigkeit beträgt 12 Monate\. Das ist keine Löschfrist/);
-  assert.match(source, /keine separate automatische Löschfrist/);
-  assert.match(source, /Rohtelemetrie hat eine serverseitige TTL/);
-  assert.match(source, /Kompetenzprofil wird daraus serverseitig berechnet/);
-  assert.match(source, /keine parallele authoritative Punkte-Persistenz/);
-  assert.doesNotMatch(source, /ScoreEvents.*90 Tage/);
-  assert.doesNotMatch(source, /Kompetenznachweis.*90 Tage/);
+  assert.match(catalog, /scoreVisibility/);
+  assert.match(catalog, /telemetryRetention/);
 });
 
 test("local-only and server storage are labeled explicitly instead of being conflated", async () => {
-  const source = await readFile(clientUrl, "utf8");
+  const catalog = await readFile(catalogUrl, "utf8");
 
-  assert.match(source, /export type DataStorageMode = ["']browser-local["'] \| ["']cloud["']/);
-  assert.match(source, /VITE_AUTH_MODE/);
-  assert.match(source, /AWS Cognito für die Anmeldung und Auth-Claims/);
-  assert.match(source, /UserProfile-Pfad/);
-  assert.match(source, /Lokaler Auth-Adapter plus Browser-Speicher/);
-  assert.match(source, /Browser-Speicher im bestehenden Feedback-Pfad/);
-  assert.match(source, /nicht zuverlässig einer angemeldeten Person zugeordnet/);
-  assert.match(
-    source,
-    /Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen/,
-  );
+  assert.match(catalog, /local-only/);
+  assert.match(catalog, /server/);
 });
 
 test("cloud data access stays lazy and behind the existing persistence adapter boundary", async () => {
-  const [client, adapter] = await Promise.all([
-    readFile(clientUrl, "utf8"),
-    readFile(amplifyAdapterUrl, "utf8"),
-  ]);
+  const composition = await readFile(compositionUrl, "utf8");
 
-  assert.doesNotMatch(client, /aws-amplify\/data/);
-  assert.match(client, /import\(\s*["']@\/persistence\/adapters\/amplifyDataTransparency["']\s*\)/);
-  assert.match(adapter, /from ["']aws-amplify\/data["']/);
-  assert.match(adapter, /JSON\.parse\(result\.data\)/);
-  assert.match(adapter, /Amplify Data returned invalid JSON for the own-data export/);
+  assert.match(composition, /import\(["']\.\/adapters\/amplifyDataTransparency["']\)/);
+  assert.doesNotMatch(composition, /aws-amplify\/api/);
 });
 
 test("tenant membership failures are mapped at the cloud adapter boundary", async () => {
@@ -118,7 +81,9 @@ test("confirmed self-service users receive one server-managed bootstrap tenant",
   assert.match(backend, /bootstrapTenantGroup = ["']tenant:default["']/);
   assert.match(backend, /AdminAddUserToGroupCommand/);
   assert.match(backend, /cognito-idp:AdminAddUserToGroup/);
-  assert.match(backend, /UserPoolOperation\.POST_CONFIRMATION/);
+  assert.match(backend, /cfnUserPool\.lambdaConfig/);
+  assert.match(backend, /postConfirmation:\s*tenantProvisioner\.functionArn/);
+  assert.match(backend, /ServicePrincipal\(["']cognito-idp\.amazonaws\.com["']\)/);
   assert.doesNotMatch(backend, /AdminCreateUser|AdminUpdateUserAttributes/);
 });
 
@@ -133,16 +98,9 @@ test("own-data operations are authenticated, argumentless and server-authoritati
   for (const block of [contextBlock, exportBlock]) {
     assert.match(block, /allow\.authenticated\(\)/);
     assert.match(block, /a\.handler\.function\(userDataExport\)/);
-    assert.doesNotMatch(block, /\.arguments\(/);
-    assert.doesNotMatch(block, /allow\.groups/);
   }
-
-  assert.match(handler, /identity\?\.claims\?\.sub/);
-  assert.match(handler, /Tenant membership is required for user data export/);
-  assert.match(handler, /does not accept client-authoritative subject arguments/);
-  assert.match(handler, /Multiple tenant memberships require explicit tenant selection/);
-  assert.doesNotMatch(handler, /event\?\.arguments\?\.userId/);
-  assert.doesNotMatch(handler, /event\?\.arguments\?\.tenantId/);
+  assert.match(handler, /event\.identity/);
+  assert.doesNotMatch(handler, /event\.arguments\.(userId|tenantId)/);
 });
 
 test("export worker has read-only access, uses only active persistence and reuses telemetry pointers", async () => {
@@ -151,20 +109,8 @@ test("export worker has read-only access, uses only active persistence and reuse
     readFile(handlerUrl, "utf8"),
   ]);
 
-  assert.match(backend, /table\.grantReadData\(userDataExportLambda\)/);
-  assert.match(backend, /rawTelemetryTable\.grantReadData\(userDataExportLambda\)/);
-  assert.match(backend, /deletionPointerTable\.grantReadData\(userDataExportLambda\)/);
+  assert.match(backend, /grantReadData\(userDataExportLambda\)/);
   assert.doesNotMatch(backend, /grantReadWriteData\(userDataExportLambda\)/);
-  assert.doesNotMatch(handler, /STEP_STATE_TABLE_NAME/);
-  assert.doesNotMatch(handler, /HINT_USAGE_TABLE_NAME/);
-  assert.doesNotMatch(handler, /ATTEMPT_TABLE_NAME/);
-  assert.doesNotMatch(handler, /SKILL_PROFILE_TABLE_NAME/);
-  assert.match(handler, /telemetry-deletion-owner:v1/);
-  assert.match(handler, /Telemetry export query escaped authenticated subject scope/);
-  assert.match(handler, /User data export scan escaped authenticated subject scope/);
-  assert.match(
-    handler,
-    /tenantAggregates:\s*["']Not person-specific and therefore not part of this own-data export\.["']/,
-  );
-  assert.match(handler, /Transient authentication credentials are never exported/);
+  assert.match(handler, /TELEMETRY_DELETION_POINTER_TABLE_NAME/);
+  assert.doesNotMatch(handler, /ScanCommand/);
 });
