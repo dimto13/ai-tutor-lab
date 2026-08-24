@@ -1,6 +1,6 @@
 import { defineBackend } from "@aws-amplify/backend";
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
-import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { PolicyStatement, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import {
   Code,
   EventSourceMapping,
@@ -61,7 +61,7 @@ tenantProvisioner.addToRolePolicy(
   }),
 );
 tenantProvisioner.addPermission("AllowCognitoPostConfirmation", {
-  principal: { service: "cognito-idp.amazonaws.com" },
+  principal: new ServicePrincipal("cognito-idp.amazonaws.com"),
   sourceArn: backend.auth.resources.userPool.userPoolArn,
 });
 cfnUserPool.lambdaConfig = {
