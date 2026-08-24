@@ -29,6 +29,10 @@ export const platformMessages = {
     pageLoadError: "Diese Seite konnte nicht geladen werden",
     tryAgain: "Erneut versuchen",
     genericError: "Es ist ein unerwarteter Fehler aufgetreten.",
+    speechPlay: "Vorlesen",
+    speechPause: "Pause",
+    speechResume: "Fortsetzen",
+    speechUnavailable: "Sprachausgabe ist in diesem Browser nicht verfügbar",
   },
   en: {
     languageLabel: "Language",
@@ -43,6 +47,10 @@ export const platformMessages = {
     pageLoadError: "This page could not be loaded",
     tryAgain: "Try again",
     genericError: "Something unexpected went wrong.",
+    speechPlay: "Read aloud",
+    speechPause: "Pause",
+    speechResume: "Resume",
+    speechUnavailable: "Speech output is not available in this browser",
   },
 } as const;
 

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { TutorAttentionOverlay } from "@/components/overlay/TutorAttentionOverlay";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
+import { SpeechTextControl } from "@/components/training/SpeechTextControl";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { localizeScenarioContent } from "@/i18n/scenarioContent";
 import { useTraining } from "@/state/trainingStore";
@@ -61,15 +62,19 @@ export function GuidedStepNavigation() {
           <p className="min-w-0 flex-1 truncate">
             <span className="font-semibold text-foreground">Tutor-Ebene · Lernplattform</span>
             {` · ${displayScenario.title}`}
-            {displayedStep && displayedStepNumber
-              ? ` · Schritt ${displayedStepNumber} · ${displayedStep.title}`
-              : ""}
+            {displayedStep && displayedStepNumber ? (
+              <>
+                {` · Schritt ${displayedStepNumber} · ${displayedStep.title} · `}
+                <span data-testid="guided-speech-text">{displayedStep.instruction}</span>
+              </>
+            ) : null}
           </p>
           <div
             className="flex shrink-0 items-center gap-1"
             role="group"
             aria-label="Sekundäre Tutorführung und Wiederholung"
           >
+            {displayedStep ? <SpeechTextControl text={displayedStep.instruction} /> : null}
             <button
               type="button"
               data-learning-role="replay-navigation"
