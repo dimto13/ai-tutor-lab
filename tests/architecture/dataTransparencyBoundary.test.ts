@@ -108,8 +108,11 @@ test("own-data operations are authenticated, argumentless and server-authoritati
     assert.match(block, /allow\.authenticated\(\)/);
     assert.match(block, /a\.handler\.function\(userDataExport\)/);
   }
-  assert.match(handler, /event\.identity/);
-  assert.doesNotMatch(handler, /event\.arguments\.(userId|tenantId)/);
+  assert.match(handler, /event\?\.identity/);
+  assert.match(handler, /identity\?\.claims\?\.sub/);
+  assert.match(handler, /Tenant membership is required for user data export/);
+  assert.match(handler, /does not accept client-authoritative subject arguments/);
+  assert.doesNotMatch(handler, /event\?\.arguments\?\.(userId|tenantId)/);
 });
 
 test("export worker has read-only access, uses only active persistence and reuses telemetry pointers", async () => {
