@@ -22,12 +22,12 @@ import {
 } from "@/runtime/m365CopilotRuntime";
 import { useTraining } from "@/state/trainingStore";
 
-const COMPLETE_QUALITY: M365PromptQuality = {
-  goal: true,
-  context: true,
-  audience: true,
-  tone: true,
-  outputFormat: true,
+const EMPTY_QUALITY: M365PromptQuality = {
+  goal: false,
+  context: false,
+  audience: false,
+  tone: false,
+  outputFormat: false,
 };
 
 const EMPTY_STATE: M365CopilotState = {
@@ -35,7 +35,7 @@ const EMPTY_STATE: M365CopilotState = {
   contextSourceIds: [],
   restrictedSourceAttempted: false,
   promptSubmitted: false,
-  promptQuality: { ...COMPLETE_QUALITY },
+  promptQuality: { ...EMPTY_QUALITY },
   responseVisible: false,
   factsChecked: false,
   unsupportedRejected: false,
@@ -54,6 +54,23 @@ const NAV_ITEMS = [
   { target: "m365.nav.library", label: "Library", icon: Library },
   { target: "m365.nav.create", label: "Create", icon: Sparkles },
 ] as const;
+
+function assessPromptQuality(prompt: string, state: M365CopilotState): M365PromptQuality {
+  const normalized = prompt.trim().toLocaleLowerCase("de-DE");
+  const words = normalized.split(/\s+/).filter(Boolean);
+  const hasAny = (terms: string[]) => terms.some((term) => normalized.includes(term));
+
+  return {
+    goal: words.length >= 5 && hasAny(["erstelle", "fasse", "analys", "vergleiche", "entwurf", "liste", "schreib"]),
+    context:
+      state.groundingMode === "work"
+        ? state.contextSourceIds.length > 0 || hasAny(["kontext", "projekt", "besprechung", "pilot"])
+        : hasAny(["web", "öffentlich", "quelle"]),
+    audience: hasAny(["für ", "team", "leitung", "management", "kunde", "kolleg"]),
+    tone: hasAny(["sachlich", "professionell", "kurz", "prägnant", "freundlich", "neutral", "ton"]),
+    outputFormat: hasAny(["liste", "tabelle", "punkte", "stichpunkt", "absatz", "mail", "zusammenfassung", "format"]),
+  };
+}
 
 export function M365CopilotWorkspace() {
   const { persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
@@ -84,29 +101,21 @@ export function M365CopilotWorkspace() {
 
   const sendPrompt = () => {
     if (!prompt.trim()) return;
-    m365CopilotRuntime.submitPrompt(COMPLETE_QUALITY);
+    m365CopilotRuntime.submitPrompt(assessPromptQuality(prompt, state));
   };
 
   return (
-    <div
-      ref={runtimeRootRef}
-      className="flex min-h-0 min-w-0 flex-1 bg-[#f7f7fb] text-slate-900"
-      aria-label="Microsoft 365 Copilot Simulation"
-    >
+    <div ref={runtimeRootRef} className="flex min-h-0 min-w-0 flex-1 bg-[#f7f7fb] text-slate-900" aria-label="Microsoft 365 Copilot Simulation">
       <nav className="hidden w-56 shrink-0 border-r border-slate-200 bg-[#f1f1f7] p-3 sm:block" aria-label="Copilot Navigation">
-        <div className="mb-4 flex items-center gap-2 px-2 py-1 text-sm font-semibold">
-          <Sparkles className="h-4 w-4" /> Microsoft 365 Copilot
-        </div>
+        <div className="mb-4 flex items-center gap-2 px-2 py-1 text-sm font-semibold"><Sparkles className="h-4 w-4" /> Microsoft 365 Copilot</div>
         {NAV_ITEMS.map(({ target, label, icon: Icon }) => (
-          <button key={target} type="button" data-runtime-target={target} className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-white">
+          <div key={target} data-runtime-target={target} className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-slate-700">
             <Icon className="h-4 w-4" /> {label}
-          </button>
+          </div>
         ))}
         <div data-runtime-target="m365.nav.agents" className="mt-5 border-t border-slate-200 pt-4">
           <p className="px-3 text-xs font-semibold text-slate-500">Agents</p>
-          {["Researcher", "Analyst", "Cowork", "Excel", "Word", "PowerPoint"].map((agent) => (
-            <div key={agent} className="px-3 py-1.5 text-sm text-slate-700">{agent}</div>
-          ))}
+          {["Researcher", "Analyst", "Cowork", "Excel", "Word", "PowerPoint"].map((agent) => <div key={agent} className="px-3 py-1.5 text-sm text-slate-700">{agent}</div>)}
           <p className="mt-4 px-3 text-xs font-semibold text-slate-500">Notebooks</p>
           <p className="mt-4 px-3 text-xs font-semibold text-slate-500">Chats</p>
           <div className="px-3 py-1.5 text-sm">All chats</div>
@@ -123,8 +132,7 @@ export function M365CopilotWorkspace() {
             ))}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" className="flex items-center gap-1 rounded-md px-2 py-1 text-xs">Auto <ChevronDown className="h-3 w-3" /></button>
-            <button type="button" aria-label="New chat" className="rounded-md p-2"><Plus className="h-4 w-4" /></button>
+            <span className="flex items-center gap-1 rounded-md px-2 py-1 text-xs">Auto <ChevronDown className="h-3 w-3" /></span>
             <ShieldCheck className="h-4 w-4" aria-label="Enterprise Data Protection" />
             <MoreHorizontal className="h-4 w-4" />
           </div>
@@ -173,7 +181,7 @@ export function M365CopilotWorkspace() {
                 <div className="mt-2 flex items-center gap-2">
                   <button type="button" aria-label="Kontext hinzufügen" onClick={() => setContextOpen((open) => !open)} className="rounded-full p-2 hover:bg-slate-100"><Paperclip className="h-4 w-4" /></button>
                   <span className="text-xs text-slate-500">{state.groundingMode === "work" ? "Work nutzt freigegebenen Mandantenkontext" : "Web nutzt keinen Mandantenkontext"}</span>
-                  <button type="button" aria-label="Voice" className="ml-auto rounded-full p-2"><Mic className="h-4 w-4" /></button>
+                  <span aria-hidden="true" className="ml-auto rounded-full p-2"><Mic className="h-4 w-4" /></span>
                   <button type="button" data-runtime-target="m365.prompt.submit" aria-label="Nachricht senden" disabled={!prompt.trim()} onClick={sendPrompt} className="rounded-full bg-slate-900 p-2 text-white disabled:opacity-30"><Send className="h-4 w-4" /></button>
                 </div>
               </div>
