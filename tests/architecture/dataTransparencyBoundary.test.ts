@@ -34,8 +34,9 @@ test("data transparency is a fixed account-accessible platform route", async () 
   const route = await readFile(routeUrl, "utf8");
 
   assert.match(route, /createFileRoute\(["']\/datentransparenz["']\)/);
-  assert.match(route, /Meine gespeicherten Daten/);
-  assert.match(route, /exportMyData/);
+  assert.match(route, /Diese Daten werden über mich gespeichert/);
+  assert.match(route, /downloadOwnDataExport/);
+  assert.match(route, /Meine Daten als JSON exportieren/);
 });
 
 test("transparency catalog covers actual personal data classes and keeps policies distinct", async () => {
