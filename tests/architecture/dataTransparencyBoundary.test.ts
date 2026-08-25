@@ -64,10 +64,7 @@ test("local-only and server storage are labeled explicitly instead of being conf
 test("cloud data access stays lazy and behind the existing persistence adapter boundary", async () => {
   const catalog = await readFile(catalogUrl, "utf8");
 
-  assert.match(
-    catalog,
-    /import\(["']@\/persistence\/adapters\/amplifyDataTransparency["']\)/,
-  );
+  assert.match(catalog, /import\(["']@\/persistence\/adapters\/amplifyDataTransparency["']\)/);
   assert.doesNotMatch(catalog, /aws-amplify\/api/);
 });
 
