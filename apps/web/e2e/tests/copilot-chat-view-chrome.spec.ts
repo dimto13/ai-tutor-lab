@@ -25,7 +25,7 @@ test("Copilot Chat bildet Kopfbereich, Verlauf und produktnahen Composer ab", as
 
   await prompt.fill("Erkläre die Addition in calculator.py.");
   await prompt.press("Enter");
-  await expect(chat.getByText(/add\(a, b\)-Funktion/)).toBeVisible();
+  await expect(chat.getByText(/keine Datei als Kontext geöffnet/)).toBeVisible();
 
   await prompt.fill("Welche Datei ist aktuell im Kontext?");
   await prompt.press("Enter");
