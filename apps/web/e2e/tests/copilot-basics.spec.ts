@@ -132,7 +132,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst hinzufügen")).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Kontext", exact: true })).toHaveCount(0);
 
-  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await attachCalculatorContext(page);
   await prompt.fill("test");
   await prompt.press("Enter");
@@ -222,7 +222,7 @@ test("Copilot verwirft Inline-Vorschläge bei Datei- oder Quellzustandswechsel",
   await clickCurrentConceptButton(page);
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
   await attachCalculatorContext(page);
-  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill("Was macht diese Datei?");
   await prompt.press("Enter");
   await page.getByLabel("Modus").selectOption("plan");
@@ -247,7 +247,7 @@ test("Copilot Grundlagen verwendet Modelloptionen aus dem versionierten Produktp
   await clickCurrentConceptButton(page);
   await page.getByRole("button", { name: "Neue Copilot-Unterhaltung" }).click();
   await attachCalculatorContext(page);
-  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill("Was macht diese Datei?");
   await prompt.press("Enter");
   await page.getByLabel("Modus").selectOption("plan");

@@ -122,7 +122,7 @@ test("Guided: Spotlight folgt dem integrierten Workflow bis zum handoff-ready Zu
   await expectGuidedStep(page, 6, "Auftrag an Copilot formulieren");
   const promptTarget = page.locator('[data-highlight="copilot.chat.prompt"]');
   await expectSpotlightAround(spotlight, promptTarget);
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill("Implementiere bitte die Addition für zwei Zahlen in calculator.py.");
   await prompt.press("Enter");
 

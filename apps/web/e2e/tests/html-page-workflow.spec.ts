@@ -53,7 +53,7 @@ test("Guided: Seite wird dreifach iteriert, im Quelltext geprüft und ein stille
   await expectGuidedStep(page, 1, "Auftrag in eigenen Worten formulieren");
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  const copilotPrompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await copilotPrompt.fill(
     "Erstelle eine interne Teamübersicht mit Name, Rolle und Status für Projekt Atlas.",
   );
@@ -116,7 +116,7 @@ test("Challenge: Abschluss gelingt erst nach Korrektur des stillen Verlusts und 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  const copilotPrompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await copilotPrompt.fill("Nora Berger fehlt in der aktuellen Tabelle.");
   await copilotPrompt.press("Enter");
   await page.getByRole("button", { name: "Copilot Chat schließen", exact: true }).click();
