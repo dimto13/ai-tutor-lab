@@ -4,9 +4,9 @@ Die Cloud-Autorität erwartet für Eigendaten- und Transparenzpfade genau eine C
 
 ## Self-Service-Registrierung
 
-Für per E-Mail registrierte und bestätigte Nutzer existiert der Bootstrap-Tenant `tenant:default`. `amplify/auth/resource.ts` deklariert diese Gruppe als Backend-Ressource. `amplify/backend.ts` hängt einen serverseitigen Cognito-Post-Confirmation-Trigger an den User Pool. Der Trigger besitzt ausschließlich `cognito-idp:AdminAddUserToGroup` auf genau diesen User Pool und fügt den bestätigten Nutzer zu `tenant:default` hinzu.
+Für per E-Mail registrierte und bestätigte Nutzer existiert der Bootstrap-Tenant `tenant:default`. `amplify/auth/resource.ts` deklariert diese Gruppe als Backend-Ressource und verdrahtet `tenantPostConfirmation` über den nativen Amplify-Gen2-Vertrag `defineAuth.triggers.postConfirmation`. Die Trigger-Funktion ist mit `defineFunction` in `amplify/auth/post-confirmation/resource.ts` definiert. Ihre Resource-Berechtigung ist auf `addUserToGroup` begrenzt; der Handler fügt den bestätigten Nutzer serverseitig zu `tenant:default` hinzu.
 
-Damit ist die Provisionierung Bestandteil des reproduzierbaren Amplify-Deployments; ein manueller Einzelgriff in der AWS-Konsole ist nicht erforderlich.
+Damit ist die Provisionierung Bestandteil des reproduzierbaren Amplify-Deployments; ein manueller Einzelgriff in der AWS-Konsole ist nicht erforderlich. Die native Trigger-Verdrahtung vermeidet außerdem eine manuell erzeugte CloudFormation-Abhängigkeit vom User Pool zurück auf die Trigger-Lambda.
 
 ## Autoritätsgrenzen
 
