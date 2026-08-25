@@ -1,4 +1,5 @@
 import { defineAuth, secret } from "@aws-amplify/backend";
+import { tenantPostConfirmation } from "./post-confirmation/resource";
 
 interface OidcConfiguration {
   providerName: string;
@@ -72,6 +73,10 @@ export const auth = defineAuth({
       : {}),
   },
   groups: ["tenant:default", "role:learner", "role:author", "role:trainer", "role:tenant_admin"],
+  triggers: {
+    postConfirmation: tenantPostConfirmation,
+  },
+  access: (allow) => [allow.resource(tenantPostConfirmation).to(["addUserToGroup"])],
   accountRecovery: "EMAIL_ONLY",
   userAttributes: {
     fullname: {
