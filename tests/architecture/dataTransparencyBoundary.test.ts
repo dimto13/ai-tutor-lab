@@ -121,5 +121,8 @@ test("export worker has read-only access, uses only active persistence and reuse
   assert.match(backend, /grantReadData\(userDataExportLambda\)/);
   assert.doesNotMatch(backend, /grantReadWriteData\(userDataExportLambda\)/);
   assert.match(handler, /TELEMETRY_DELETION_POINTER_TABLE_NAME/);
-  assert.doesNotMatch(handler, /ScanCommand/);
+  assert.match(handler, /async function loadTelemetryPointers/);
+  assert.match(handler, /queryDescriptor/);
+  assert.match(handler, /async function batchGetRawTelemetry/);
+  assert.match(handler, /batchGetDescriptor/);
 });
