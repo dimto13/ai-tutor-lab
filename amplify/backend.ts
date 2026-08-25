@@ -1,11 +1,7 @@
 import { defineBackend } from "@aws-amplify/backend";
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
-import { PolicyStatement, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import {
-  Code,
   EventSourceMapping,
-  Function as LambdaFunction,
-  Runtime,
   StartingPosition,
 } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
@@ -27,47 +23,8 @@ export const backend = defineBackend({
   userDataExport,
 });
 
-const { cfnIdentityPool, cfnUserPool } = backend.auth.resources.cfnResources;
+const { cfnIdentityPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
-
-const bootstrapTenantGroup = "tenant:default";
-const tenantProvisioner = new LambdaFunction(
-  backend.auth.stack,
-  "TenantPostConfirmationProvisioner",
-  {
-    runtime: Runtime.NODEJS_22_X,
-    handler: "index.handler",
-    code: Code.fromInline(`
-const { CognitoIdentityProviderClient, AdminAddUserToGroupCommand } = require("@aws-sdk/client-cognito-identity-provider");
-const client = new CognitoIdentityProviderClient({});
-exports.handler = async (event) => {
-  await client.send(new AdminAddUserToGroupCommand({
-    UserPoolId: event.userPoolId,
-    Username: event.userName,
-    GroupName: process.env.BOOTSTRAP_TENANT_GROUP,
-  }));
-  return event;
-};
-`),
-    environment: {
-      BOOTSTRAP_TENANT_GROUP: bootstrapTenantGroup,
-    },
-  },
-);
-tenantProvisioner.addToRolePolicy(
-  new PolicyStatement({
-    actions: ["cognito-idp:AdminAddUserToGroup"],
-    resources: [backend.auth.resources.userPool.userPoolArn],
-  }),
-);
-tenantProvisioner.addPermission("AllowCognitoPostConfirmation", {
-  principal: new ServicePrincipal("cognito-idp.amazonaws.com"),
-  sourceArn: backend.auth.resources.userPool.userPoolArn,
-});
-cfnUserPool.lambdaConfig = {
-  ...cfnUserPool.lambdaConfig,
-  postConfirmation: tenantProvisioner.functionArn,
-};
 
 const { amplifyDynamoDbTables } = backend.data.resources.cfnResources;
 const rawTelemetryCfnTable = requiredResource(
