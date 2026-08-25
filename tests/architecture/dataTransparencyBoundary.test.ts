@@ -86,19 +86,15 @@ test("tenant membership failures are mapped at the cloud adapter boundary", asyn
 });
 
 test("confirmed self-service users receive one server-managed bootstrap tenant", async () => {
-  const [authResource, postConfirmationResource, postConfirmationHandler] =
-    await Promise.all([
-      readFile(authResourceUrl, "utf8"),
-      readFile(postConfirmationResourceUrl, "utf8"),
-      readFile(postConfirmationHandlerUrl, "utf8"),
-    ]);
+  const [authResource, postConfirmationResource, postConfirmationHandler] = await Promise.all([
+    readFile(authResourceUrl, "utf8"),
+    readFile(postConfirmationResourceUrl, "utf8"),
+    readFile(postConfirmationHandlerUrl, "utf8"),
+  ]);
 
   assert.match(authResource, /["']tenant:default["']/);
   assert.match(authResource, /postConfirmation: tenantPostConfirmation/);
-  assert.match(
-    authResource,
-    /allow\.resource\(tenantPostConfirmation\)\.to\(\[["']addUserToGroup["']\]\)/,
-  );
+  assert.match(authResource, /allow\.resource\(tenantPostConfirmation\)\.to\(\[["']addUserToGroup["']\]\)/);
   assert.match(postConfirmationResource, /resourceGroupName: ["']auth["']/);
   assert.match(postConfirmationResource, /BOOTSTRAP_TENANT_GROUP: ["']tenant:default["']/);
   assert.match(postConfirmationHandler, /AdminAddUserToGroupCommand/);
