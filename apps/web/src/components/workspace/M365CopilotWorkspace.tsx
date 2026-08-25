@@ -1,98 +1,65 @@
-import { Check, FileText, Mail, MessageSquareText, ShieldCheck, Sparkles, X } from "lucide-react";
+import {
+  Bot,
+  Check,
+  ChevronDown,
+  FileText,
+  Library,
+  Mic,
+  MoreHorizontal,
+  Paperclip,
+  Plus,
+  Search,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   m365CopilotRuntime,
-  type M365App,
   type M365CopilotState,
-  type M365DraftKind,
   type M365PromptQuality,
 } from "@/runtime/m365CopilotRuntime";
 import { useTraining } from "@/state/trainingStore";
 
+const COMPLETE_QUALITY: M365PromptQuality = {
+  goal: true,
+  context: true,
+  audience: true,
+  tone: true,
+  outputFormat: true,
+};
+
 const EMPTY_STATE: M365CopilotState = {
-  activeApp: "teams",
-  approvedSourceIds: [],
+  groundingMode: "work",
+  contextSourceIds: [],
+  restrictedSourceAttempted: false,
   promptSubmitted: false,
-  promptQuality: {
-    goal: false,
-    context: false,
-    audience: false,
-    tone: false,
-    outputFormat: false,
-  },
-  draftKind: null,
+  promptQuality: { ...COMPLETE_QUALITY },
+  responseVisible: false,
   factsChecked: false,
   unsupportedRejected: false,
   approvalDecision: "pending",
 };
 
-const SYNTHETIC_SOURCES = [
-  {
-    id: "meeting-notes",
-    label: "Teams-Besprechungsnotiz",
-    classification: "Intern · KI freigegeben",
-    approved: true,
-    summary:
-      "Entscheidung: Pilotstart im Oktober. Offene Punkte: Schulungstermin und Verantwortlichkeit für die FAQ.",
-  },
-  {
-    id: "project-brief",
-    label: "Projektsteckbrief",
-    classification: "Intern · KI freigegeben",
-    approved: true,
-    summary:
-      "Ziel: verständliche Einführung für eine interne Pilotgruppe; Ton: sachlich und knapp.",
-  },
-  {
-    id: "restricted-appendix",
-    label: "Vertraulicher Anhang",
-    classification: "Vertraulich · nicht für KI freigegeben",
-    approved: false,
-    summary: "Für diese Übung gesperrte Quelle. Inhalt darf nicht an Copilot übergeben werden.",
-  },
+const SOURCES = [
+  { id: "meeting-notes", label: "Besprechungsnotiz", allowed: true },
+  { id: "project-brief", label: "Projektsteckbrief", allowed: true },
+  { id: "restricted-appendix", label: "Vertraulicher Anhang", allowed: false },
 ] as const;
 
-const APP_COPY: Record<M365App, { label: string; role: string; icon: typeof FileText }> = {
-  teams: {
-    label: "Teams",
-    role: "Besprechungsnotizen zusammenfassen und Entscheidungen von offenen Punkten trennen.",
-    icon: MessageSquareText,
-  },
-  word: {
-    label: "Word",
-    role: "Aus freigegebenem Kontext einen Entwurf erzeugen und fachlich überarbeiten.",
-    icon: FileText,
-  },
-  outlook: {
-    label: "Outlook",
-    role: "Einen Mail-Entwurf erstellen und Fakten, Zusagen sowie Ton vor Versand prüfen.",
-    icon: Mail,
-  },
-};
-
-const DRAFT_COPY: Record<M365DraftKind, string> = {
-  "meeting-summary":
-    "Entscheidung: Der Pilot soll im Oktober starten. Offen sind Schulungstermin und FAQ-Verantwortlichkeit.",
-  "word-draft":
-    "Der interne Pilot startet im Oktober. Die Einführung richtet sich an die Pilotgruppe und soll sachlich sowie knapp erläutert werden.",
-  "outlook-draft":
-    "Betreff: Nächste Schritte zum Pilotstart\n\nDer Pilot ist für Oktober vorgesehen. Schulungstermin und FAQ-Verantwortlichkeit sind noch offen.",
-};
-
-function draftKindForApp(app: M365App): M365DraftKind {
-  if (app === "teams") return "meeting-summary";
-  if (app === "word") return "word-draft";
-  return "outlook-draft";
-}
-
-function allPromptFieldsComplete(quality: M365PromptQuality): boolean {
-  return Object.values(quality).every(Boolean);
-}
+const NAV_ITEMS = [
+  { target: "m365.nav.newChat", label: "New chat", icon: Plus },
+  { target: "m365.nav.search", label: "Search", icon: Search },
+  { target: "m365.nav.library", label: "Library", icon: Library },
+  { target: "m365.nav.create", label: "Create", icon: Sparkles },
+] as const;
 
 export function M365CopilotWorkspace() {
   const { persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
   const [state, setState] = useState<M365CopilotState>(EMPTY_STATE);
-  const [quality, setQuality] = useState<M365PromptQuality>(EMPTY_STATE.promptQuality);
+  const [prompt, setPrompt] = useState("");
+  const [contextOpen, setContextOpen] = useState(false);
   const runtimeRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,15 +69,12 @@ export function M365CopilotWorkspace() {
     const unsubscribe = m365CopilotRuntime.subscribeState((nextState, reason) => {
       if (disposed) return;
       setState(nextState);
-      setQuality(nextState.promptQuality);
       if (reason === "mutation") persistRuntimeSnapshot(m365CopilotRuntime.id, nextState);
     });
-
     void (async () => {
       await m365CopilotRuntime.mount(container);
       if (!disposed) await restoreRuntimeSnapshot(m365CopilotRuntime.id);
     })();
-
     return () => {
       disposed = true;
       unsubscribe();
@@ -118,245 +82,118 @@ export function M365CopilotWorkspace() {
     };
   }, [persistRuntimeSnapshot, restoreRuntimeSnapshot]);
 
-  const activeCopy = APP_COPY[state.activeApp];
-  const ActiveIcon = activeCopy.icon;
-  const visibleDraft = state.draftKind ? DRAFT_COPY[state.draftKind] : null;
+  const sendPrompt = () => {
+    if (!prompt.trim()) return;
+    m365CopilotRuntime.submitPrompt(COMPLETE_QUALITY);
+  };
 
   return (
-    <div ref={runtimeRootRef} className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <header className="flex shrink-0 items-center gap-3 border-b border-border bg-panel px-4 py-2.5">
-        <Sparkles className="h-4 w-4 text-accent" />
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">
-            Microsoft 365 Copilot · Simulation
-          </p>
-          <p className="text-[11px] text-muted-foreground">
-            ausschließlich synthetische Trainingsdaten · keine Microsoft-365-Verbindung
-          </p>
+    <div
+      ref={runtimeRootRef}
+      className="flex min-h-0 min-w-0 flex-1 bg-[#f7f7fb] text-slate-900"
+      aria-label="Microsoft 365 Copilot Simulation"
+    >
+      <nav className="hidden w-56 shrink-0 border-r border-slate-200 bg-[#f1f1f7] p-3 sm:block" aria-label="Copilot Navigation">
+        <div className="mb-4 flex items-center gap-2 px-2 py-1 text-sm font-semibold">
+          <Sparkles className="h-4 w-4" /> Microsoft 365 Copilot
         </div>
-        <span className="ml-auto inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[10px] text-muted-foreground">
-          <ShieldCheck className="h-3 w-3" /> Datenfreigabe prüfen
-        </span>
-      </header>
+        {NAV_ITEMS.map(({ target, label, icon: Icon }) => (
+          <button key={target} type="button" data-runtime-target={target} className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-white">
+            <Icon className="h-4 w-4" /> {label}
+          </button>
+        ))}
+        <div data-runtime-target="m365.nav.agents" className="mt-5 border-t border-slate-200 pt-4">
+          <p className="px-3 text-xs font-semibold text-slate-500">Agents</p>
+          {["Researcher", "Analyst", "Cowork", "Excel", "Word", "PowerPoint"].map((agent) => (
+            <div key={agent} className="px-3 py-1.5 text-sm text-slate-700">{agent}</div>
+          ))}
+          <p className="mt-4 px-3 text-xs font-semibold text-slate-500">Notebooks</p>
+          <p className="mt-4 px-3 text-xs font-semibold text-slate-500">Chats</p>
+          <div className="px-3 py-1.5 text-sm">All chats</div>
+        </div>
+      </nav>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[190px_minmax(0,1fr)_320px]">
-        <nav className="border-r border-border bg-panel p-3" aria-label="M365 Anwendungen">
-          <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Anwendungen
-          </p>
-          {(Object.keys(APP_COPY) as M365App[]).map((app) => {
-            const item = APP_COPY[app];
-            const Icon = item.icon;
-            return (
-              <button
-                key={app}
-                type="button"
-                data-runtime-target={`m365.nav.${app}`}
-                onClick={() => m365CopilotRuntime.selectApp(app)}
-                className={`mb-1 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs ${
-                  state.activeApp === app
-                    ? "bg-accent/15 text-foreground"
-                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-4 w-4" /> {item.label}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4">
+          <div data-runtime-target="m365.grounding" className="flex rounded-full bg-slate-100 p-1" aria-label="Grounding auswählen">
+            {(["work", "web"] as const).map((mode) => (
+              <button key={mode} type="button" aria-pressed={state.groundingMode === mode} onClick={() => m365CopilotRuntime.setGroundingMode(mode)} className={`rounded-full px-4 py-1.5 text-xs font-semibold ${state.groundingMode === mode ? "bg-white shadow-sm" : "text-slate-500"}`}>
+                {mode === "work" ? "Work" : "Web"}
               </button>
-            );
-          })}
-          <div className="mt-4 rounded-md border border-border p-3 text-[11px] leading-5 text-muted-foreground">
-            <p className="font-semibold text-foreground">Rolle von {activeCopy.label}</p>
-            <p className="mt-1">{activeCopy.role}</p>
+            ))}
           </div>
-        </nav>
+          <div className="ml-auto flex items-center gap-2">
+            <button type="button" className="flex items-center gap-1 rounded-md px-2 py-1 text-xs">Auto <ChevronDown className="h-3 w-3" /></button>
+            <button type="button" aria-label="New chat" className="rounded-md p-2"><Plus className="h-4 w-4" /></button>
+            <ShieldCheck className="h-4 w-4" aria-label="Enterprise Data Protection" />
+            <MoreHorizontal className="h-4 w-4" />
+          </div>
+        </header>
 
-        <main className="min-h-0 overflow-y-auto p-4 sm:p-5">
-          <section
-            data-runtime-target="m365.sources"
-            className="rounded-lg border border-border bg-card p-4"
-          >
-            <h2 className="text-sm font-semibold text-foreground">1. Quellen und Berechtigungen</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Wähle nur freigegebene synthetische Quellen. Unsicherheit bedeutet: höhere
-              Schutzstufe.
-            </p>
-            <div className="mt-3 space-y-2">
-              {SYNTHETIC_SOURCES.map((source) => {
-                const selected = state.approvedSourceIds.includes(source.id);
-                return (
-                  <div key={source.id} className="rounded-md border border-border p-3">
-                    <div className="flex items-start gap-3">
-                      <button
-                        type="button"
-                        aria-pressed={selected}
-                        disabled={!source.approved}
-                        onClick={() => m365CopilotRuntime.setSourceApproved(source.id, !selected)}
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                          selected
-                            ? "border-accent bg-accent text-accent-foreground"
-                            : "border-border text-muted-foreground"
-                        } disabled:cursor-not-allowed disabled:opacity-40`}
-                        aria-label={`${source.label} ${selected ? "abwählen" : "freigeben"}`}
-                      >
-                        {selected ? <Check className="h-3 w-3" /> : null}
-                      </button>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground">{source.label}</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {source.classification}
-                        </p>
-                        <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                          {source.summary}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          <section
-            data-runtime-target="m365.prompt"
-            className="mt-4 rounded-lg border border-border bg-card p-4"
-          >
-            <h2 className="text-sm font-semibold text-foreground">
-              2. Arbeitsauftrag strukturieren
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Ein belastbarer Auftrag benennt Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat.
-            </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {(Object.keys(quality) as (keyof M365PromptQuality)[]).map((key) => {
-                const labels: Record<keyof M365PromptQuality, string> = {
-                  goal: "Ziel klar benannt",
-                  context: "freigegebenen Kontext eingegrenzt",
-                  audience: "Zielgruppe benannt",
-                  tone: "Ton festgelegt",
-                  outputFormat: "Ausgabeformat festgelegt",
-                };
-                return (
-                  <label
-                    key={key}
-                    className="flex items-center gap-2 rounded border border-border px-3 py-2 text-xs text-foreground"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={quality[key]}
-                      onChange={(event) => setQuality({ ...quality, [key]: event.target.checked })}
-                    />
-                    {labels[key]}
-                  </label>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              data-runtime-target="m365.prompt.submit"
-              disabled={state.approvedSourceIds.length === 0}
-              onClick={() => m365CopilotRuntime.submitPrompt(quality)}
-              className="mt-3 rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground disabled:opacity-40"
-            >
-              Arbeitsauftrag an Copilot geben
-            </button>
-            {state.promptSubmitted ? (
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                {allPromptFieldsComplete(state.promptQuality)
-                  ? "Auftrag enthält alle fünf Qualitätsmerkmale."
-                  : "Auftrag ist unvollständig. Prüfe Ziel, Kontext, Zielgruppe, Ton und Format."}
-              </p>
-            ) : null}
-          </section>
-
-          <section
-            data-runtime-target="m365.result"
-            className="mt-4 rounded-lg border border-border bg-card p-4"
-          >
-            <div className="flex items-center gap-2">
-              <ActiveIcon className="h-4 w-4 text-accent" />
-              <h2 className="text-sm font-semibold text-foreground">
-                3. Ergebnis als Entwurf behandeln
-              </h2>
-            </div>
-            <button
-              type="button"
-              disabled={!state.promptSubmitted}
-              onClick={() => m365CopilotRuntime.createDraft(draftKindForApp(state.activeApp))}
-              className="mt-3 rounded-md border border-border px-3 py-2 text-xs font-medium text-foreground disabled:opacity-40"
-            >
-              {activeCopy.label}-Entwurf erzeugen
-            </button>
-            {visibleDraft ? (
-              <div className="mt-3 rounded-md border border-border bg-background p-3 text-xs leading-5 text-foreground">
-                <p className="whitespace-pre-wrap">{visibleDraft}</p>
-                {!state.unsupportedRejected ? (
-                  <p className="mt-3 rounded border border-warning/40 bg-warning/10 p-2 text-warning">
-                    Unbelegter Vorschlag: „Das Budget ist bereits verbindlich freigegeben.“
-                  </p>
-                ) : null}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6">
+          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
+            {!state.responseVisible ? (
+              <div className="my-auto py-8 text-center">
+                <Bot className="mx-auto mb-3 h-8 w-8" />
+                <h1 className="text-2xl font-semibold">Hi, what can I help you with?</h1>
+                <p className="mt-2 text-sm text-slate-500">Simulation mit ausschließlich synthetischen Trainingsdaten</p>
               </div>
-            ) : null}
-          </section>
-        </main>
+            ) : (
+              <div className="space-y-5 pb-6" aria-live="polite">
+                <div className="ml-auto max-w-xl rounded-2xl bg-slate-200 px-4 py-3 text-sm">{prompt}</div>
+                <article data-runtime-target="m365.result" className="max-w-2xl text-sm leading-6">
+                  <div className="mb-2 flex items-center gap-2 font-semibold"><Sparkles className="h-4 w-4" /> Copilot</div>
+                  <p>Der Pilot soll im Oktober starten. Offen sind der Schulungstermin und die Verantwortlichkeit für die FAQ. Behandle dieses Ergebnis als Entwurf und prüfe Fakten und Zusagen vor der Freigabe.</p>
+                  {!state.unsupportedRejected ? <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">Unbelegte Aussage: „Das Budget ist bereits verbindlich freigegeben.“</p> : null}
+                  <div data-runtime-target="m365.result.sources" className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                    {state.groundingMode === "work" && state.contextSourceIds.length > 0 ? state.contextSourceIds.map((source) => <span key={source} className="rounded-full border border-slate-200 bg-white px-2 py-1">{source === "meeting-notes" ? "Besprechungsnotiz" : "Projektsteckbrief"}</span>) : <span>Keine Mandantenquelle verwendet</span>}
+                  </div>
+                </article>
+              </div>
+            )}
 
-        <aside className="min-h-0 overflow-y-auto border-l border-border bg-panel p-4">
-          <h2 className="text-sm font-semibold text-foreground">Qualitäts- und Freigabecheck</h2>
-          <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-            Copilot liefert einen Entwurf. Verantwortung und Freigabe bleiben beim Menschen.
-          </p>
-
-          <button
-            type="button"
-            data-runtime-target="m365.review.facts"
-            disabled={!state.draftKind}
-            onClick={() => m365CopilotRuntime.markFactsChecked()}
-            className="mt-4 flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-xs text-foreground disabled:opacity-40"
-          >
-            Namen, Zahlen, Zusagen, Quellen und Ton geprüft
-            {state.factsChecked ? <Check className="h-4 w-4 text-accent" /> : null}
-          </button>
-
-          <button
-            type="button"
-            data-runtime-target="m365.unsupported.reject"
-            disabled={!state.draftKind}
-            onClick={() => m365CopilotRuntime.rejectUnsupportedSuggestion()}
-            className="mt-2 flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-xs text-foreground disabled:opacity-40"
-          >
-            Unbelegte Aussage verwerfen
-            {state.unsupportedRejected ? <X className="h-4 w-4 text-accent" /> : null}
-          </button>
-
-          <div
-            data-runtime-target="m365.approval"
-            className="mt-4 rounded-lg border border-border bg-card p-3"
-          >
-            <p className="text-xs font-semibold text-foreground">Explizite Freigabeentscheidung</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Freigabe erst nach Quellen-, Fakten- und Datenprüfung.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                disabled={!state.factsChecked || !state.unsupportedRejected}
-                onClick={() => m365CopilotRuntime.decideApproval("approved")}
-                className="rounded-md bg-accent px-2 py-2 text-xs font-semibold text-accent-foreground disabled:opacity-40"
-              >
-                Freigeben
-              </button>
-              <button
-                type="button"
-                disabled={!state.draftKind}
-                onClick={() => m365CopilotRuntime.decideApproval("rejected")}
-                className="rounded-md border border-border px-2 py-2 text-xs font-medium text-foreground disabled:opacity-40"
-              >
-                Verwerfen
-              </button>
+            <div className="sticky bottom-0 mt-auto">
+              {contextOpen ? (
+                <div className="mb-2 rounded-xl border border-slate-200 bg-white p-3 shadow-lg" data-runtime-target="m365.context">
+                  <p className="mb-2 text-xs font-semibold">Kontext hinzufügen</p>
+                  {SOURCES.map((source) => {
+                    const selected = state.contextSourceIds.includes(source.id);
+                    return (
+                      <button key={source.id} type="button" data-runtime-target={source.allowed ? undefined : "m365.context.restricted"} onClick={() => m365CopilotRuntime.setContextSource(source.id, !selected)} className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50">
+                        <span className="flex items-center gap-2"><FileText className="h-4 w-4" />{source.label}</span>
+                        {!source.allowed ? <span className="text-xs text-slate-500">Gesperrt</span> : selected ? <Check className="h-4 w-4" /> : null}
+                      </button>
+                    );
+                  })}
+                  {state.restrictedSourceAttempted ? <p className="mt-2 text-xs text-amber-700">Der vertrauliche Anhang darf nicht an Copilot übergeben werden.</p> : null}
+                </div>
+              ) : null}
+              <div data-runtime-target="m365.prompt" className="rounded-2xl border border-slate-300 bg-white p-3 shadow-sm">
+                <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Message Copilot" aria-label="Message Copilot" rows={2} className="w-full resize-none bg-transparent px-1 text-sm outline-none" />
+                <div className="mt-2 flex items-center gap-2">
+                  <button type="button" aria-label="Kontext hinzufügen" onClick={() => setContextOpen((open) => !open)} className="rounded-full p-2 hover:bg-slate-100"><Paperclip className="h-4 w-4" /></button>
+                  <span className="text-xs text-slate-500">{state.groundingMode === "work" ? "Work nutzt freigegebenen Mandantenkontext" : "Web nutzt keinen Mandantenkontext"}</span>
+                  <button type="button" aria-label="Voice" className="ml-auto rounded-full p-2"><Mic className="h-4 w-4" /></button>
+                  <button type="button" data-runtime-target="m365.prompt.submit" aria-label="Nachricht senden" disabled={!prompt.trim()} onClick={sendPrompt} className="rounded-full bg-slate-900 p-2 text-white disabled:opacity-30"><Send className="h-4 w-4" /></button>
+                </div>
+              </div>
             </div>
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              Status: {state.approvalDecision === "pending" ? "noch offen" : state.approvalDecision}
-            </p>
           </div>
-        </aside>
+        </div>
+
+        {state.responseVisible ? (
+          <aside className="border-t border-slate-200 bg-white px-4 py-3" aria-label="Trainingsprüfung">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
+              <span className="mr-2 text-xs font-semibold text-slate-500">Plattform-Prüfschritt</span>
+              <button type="button" data-runtime-target="m365.review.facts" onClick={() => m365CopilotRuntime.markFactsChecked()} className="rounded-lg border px-3 py-2 text-xs">Fakten prüfen {state.factsChecked ? <Check className="ml-1 inline h-3 w-3" /> : null}</button>
+              <button type="button" data-runtime-target="m365.unsupported.reject" onClick={() => m365CopilotRuntime.rejectUnsupportedSuggestion()} className="rounded-lg border px-3 py-2 text-xs">Unbelegte Aussage verwerfen {state.unsupportedRejected ? <X className="ml-1 inline h-3 w-3" /> : null}</button>
+              <div data-runtime-target="m365.approval" className="ml-auto flex gap-2">
+                <button type="button" disabled={!state.factsChecked || !state.unsupportedRejected} onClick={() => m365CopilotRuntime.decideApproval("approved")} className="rounded-lg bg-slate-900 px-3 py-2 text-xs text-white disabled:opacity-30">Freigeben</button>
+                <button type="button" onClick={() => m365CopilotRuntime.decideApproval("rejected")} className="rounded-lg border px-3 py-2 text-xs">Verwerfen</button>
+              </div>
+            </div>
+          </aside>
+        ) : null}
       </div>
     </div>
   );
