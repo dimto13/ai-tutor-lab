@@ -1,9 +1,6 @@
 import { defineBackend } from "@aws-amplify/backend";
 import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
-import {
-  EventSourceMapping,
-  StartingPosition,
-} from "aws-cdk-lib/aws-lambda";
+import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
