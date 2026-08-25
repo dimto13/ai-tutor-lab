@@ -245,7 +245,10 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
       const sourceIds = new Set(state.contextSourceIds);
       if (selected) sourceIds.add(sourceId);
       else sourceIds.delete(sourceId);
-      replaceState({ ...state, contextSourceIds: [...sourceIds].sort() }, "mutation");
+      replaceState(
+        { ...state, contextSourceIds: [...sourceIds].sort(), restrictedSourceAttempted: false },
+        "mutation",
+      );
       emit("m365.context.changed", { sourceId, selected });
     },
 
