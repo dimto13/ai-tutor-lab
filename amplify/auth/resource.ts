@@ -82,9 +82,7 @@ export const auth = defineAuth({
   triggers: {
     postConfirmation: tenantPostConfirmation,
   },
-  access: (allow) => [
-    allow.resource(tenantPostConfirmation).to(["addUserToGroup"]),
-  ],
+  access: (allow) => [allow.resource(tenantPostConfirmation).to(["addUserToGroup"])],
   accountRecovery: "EMAIL_ONLY",
   userAttributes: {
     fullname: {
