@@ -4,7 +4,7 @@ import test from "node:test";
 
 const routeUrl = new URL("../../apps/web/src/routes/datentransparenz.tsx", import.meta.url);
 const catalogUrl = new URL(
-  "../../apps/web/src/privacy/dataTransparencyCatalog.ts",
+  "../../apps/web/src/data-transparency/userDataTransparency.ts",
   import.meta.url,
 );
 const compositionUrl = new URL(
@@ -42,27 +42,27 @@ test("data transparency is a fixed account-accessible platform route", async () 
 test("transparency catalog covers actual personal data classes and keeps policies distinct", async () => {
   const catalog = await readFile(catalogUrl, "utf8");
 
-  for (const model of [
+  for (const dataClass of [
     "UserProfile",
     "UserPreferences",
     "TrainingSession",
     "RuntimeSnapshot",
-    "ScenarioRun",
-    "ScoreEvent",
+    "ScenarioRuns",
+    "ScoreEvents",
     "Attestation",
-    "TrainingTelemetryEvent",
+    "Rohereignisse",
   ]) {
-    assert.match(catalog, new RegExp(model));
+    assert.match(catalog, new RegExp(dataClass));
   }
   assert.match(catalog, /scoreVisibility/);
-  assert.match(catalog, /telemetryRetention/);
+  assert.match(catalog, /rawTelemetryRetentionDays/);
 });
 
 test("local-only and server storage are labeled explicitly instead of being conflated", async () => {
   const catalog = await readFile(catalogUrl, "utf8");
 
-  assert.match(catalog, /local-only/);
-  assert.match(catalog, /server/);
+  assert.match(catalog, /browser-local/);
+  assert.match(catalog, /cloud/);
 });
 
 test("cloud data access stays lazy and behind the existing persistence adapter boundary", async () => {
