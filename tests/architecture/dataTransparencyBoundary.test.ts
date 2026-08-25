@@ -7,10 +7,6 @@ const catalogUrl = new URL(
   "../../apps/web/src/data-transparency/userDataTransparency.ts",
   import.meta.url,
 );
-const compositionUrl = new URL(
-  "../../apps/web/src/persistence/createTrainingStateRepository.ts",
-  import.meta.url,
-);
 const amplifyAdapterUrl = new URL(
   "../../apps/web/src/persistence/adapters/amplifyDataTransparency.ts",
   import.meta.url,
@@ -66,10 +62,13 @@ test("local-only and server storage are labeled explicitly instead of being conf
 });
 
 test("cloud data access stays lazy and behind the existing persistence adapter boundary", async () => {
-  const composition = await readFile(compositionUrl, "utf8");
+  const catalog = await readFile(catalogUrl, "utf8");
 
-  assert.match(composition, /import\(["']\.\/adapters\/amplifyDataTransparency["']\)/);
-  assert.doesNotMatch(composition, /aws-amplify\/api/);
+  assert.match(
+    catalog,
+    /import\(["']@\/persistence\/adapters\/amplifyDataTransparency["']\)/,
+  );
+  assert.doesNotMatch(catalog, /aws-amplify\/api/);
 });
 
 test("tenant membership failures are mapped at the cloud adapter boundary", async () => {
