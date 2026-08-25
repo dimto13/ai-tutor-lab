@@ -41,7 +41,8 @@ test("Copilot Chat öffnet als View innerhalb der Secondary Side Bar", async ({ 
 
   const chat = page.locator('[data-highlight="copilot.chat"]');
   await expect(chat).toBeVisible();
-  await expect(secondarySideBar).toContainText("GitHub Copilot Chat");
+  await expect(secondarySideBar.getByText("Chat", { exact: true })).toBeVisible();
+  await expect(secondarySideBar.getByText("Sitzungen", { exact: true })).toBeVisible();
   expect(
     await chat.evaluate(
       (element) => element.closest('[data-highlight="vscode.secondarySideBar"]') !== null,

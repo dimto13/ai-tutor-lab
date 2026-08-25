@@ -18,7 +18,7 @@ async function runResearchRevisions(page: Page): Promise<void> {
 
 async function submitTransferRecommendation(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const prompt = page.getByPlaceholder("Ask Copilot...");
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill(
     "Herstellerdokumentation als Primärquelle prüfen, den offiziellen Blog als aktuelle offizielle Sekundärquelle einordnen und den Community-Beitrag wegen seines Alters nur als Kontext nutzen. Meine Empfehlung: vor der Team-Entscheidung den Zahlenwert korrigieren und aktuelle Kosten erneut belegen.",
   );
@@ -52,7 +52,7 @@ test("Guided: Recherche wird iteriert, beide Mängel werden geprüft und Transfe
   await expectGuidedStep(page, 1, "Rechercheauftrag selbst formulieren");
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  const copilotPrompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await copilotPrompt.fill(
     "Vergleiche drei Optionen der letzten 12 Monate als Vergleichstabelle mit Quellen.",
   );

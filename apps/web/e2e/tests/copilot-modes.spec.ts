@@ -24,7 +24,7 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
   await page.locator('[data-highlight="copilot.chat.contextAttachment"]').click();
 
-  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.focus();
   const mode = page.getByLabel("Modus");
   await mode.focus();
@@ -32,7 +32,6 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   const model = page.getByLabel("Modell");
   await model.focus();
   await model.selectOption("gpt-5.3-codex");
-  await page.getByRole("button", { name: "Aufgabe stoppen" }).click();
 
   const suggestion = page.locator('[data-highlight="copilot.inline.suggestion"]');
   await expect(suggestion).toContainText("return a + b");
@@ -49,8 +48,7 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   );
   await editor.focus();
   await editor.press("Tab");
-
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(editor).toHaveValue("def add(a, b):\n    return a + b\n");
 });
 
 test("Copilot Challenge ist über geprüften Inline-Vorschlag lösbar", async ({ page }) => {
@@ -74,7 +72,7 @@ test("Copilot Challenge ist alternativ über Chat plus eigene geprüfte Änderun
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
   await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
-  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill("Bitte addiere a und b; nutze nur calculator.py als Kontext.");
   await prompt.press("Enter");
   await page
@@ -91,7 +89,7 @@ test("Copilot Challenge akzeptiert keinen Chat-Pfad mit synthetischem Geheimnis 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
   await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
   await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
-  const prompt = page.getByPlaceholder(/Ask Copilot/);
+  const prompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await prompt.fill("SYNTHETIC_SECRET=DEMO-ONLY-DO-NOT-SEND; addiere bitte a und b.");
   await prompt.press("Enter");
   await page

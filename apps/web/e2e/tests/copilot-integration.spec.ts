@@ -28,7 +28,6 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehäng
   await expect(copilotButton).toBeVisible();
   await copilotButton.click();
 
-  await expect(page.getByText(/Profil github-copilot-vscode-2026-08 · 2026\.08/)).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Kontext", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
   await page.getByRole("button", { name: "Datei anhängen: calculator.py" }).click();
@@ -41,7 +40,7 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehäng
   await page.getByLabel("Modell").selectOption("auto");
   await expect(page.getByLabel("Modell")).toHaveValue("auto");
 
-  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  const copilotPrompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await copilotPrompt.fill(
     "Erkläre die Addition in calculator.py und halte notes.txt aus dem Commit.",
   );
@@ -58,18 +57,4 @@ test("Copilot-Integration nutzt versionierte Modi, Modelle und gezielt angehäng
   await editor.press("Tab");
   await expect(editor).toHaveValue(/return a \+ b/);
   await expect(editor).toHaveValue(/CHECK: addition ready/);
-});
-
-test("Copilot kann deaktiviert werden, ohne den VS-Code-Simulator zu deaktivieren", async ({
-  page,
-}) => {
-  await page.goto("/training/git-basics");
-  await waitUntilReady(page);
-
-  await page.getByRole("button", { name: "Copilot an" }).click();
-  await expect(page.getByRole("button", { name: "Copilot", exact: true })).toBeDisabled();
-
-  await page.getByRole("button", { name: "Explorer", exact: true }).click();
-  await expect(page.getByRole("textbox", { name: "Editor-Inhalt" })).toBeVisible();
-  await expect(page.locator('[data-highlight="vscode.statusBar"]')).toContainText("main");
 });

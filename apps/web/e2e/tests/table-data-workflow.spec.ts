@@ -42,7 +42,7 @@ test("Guided: Annahmen werden einzeln bestätigt, Zwischenstände sichtbar und O
   await expectGuidedStep(page, 1, "Auswertung fachlich beauftragen");
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  const copilotPrompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await copilotPrompt.fill(
     "Werte den synthetischen Umsatz nach Region und Quartal aus und behandle Retouren nachvollziehbar.",
   );
@@ -127,7 +127,7 @@ test("Challenge: ein vorzeitiger Check reicht nicht; Ost muss vor Korrektur und 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Copilot", exact: true }).click();
-  const copilotPrompt = page.getByPlaceholder("Ask Copilot...");
+  const copilotPrompt = page.getByRole("textbox", { name: "Copilot-Prompt" });
   await copilotPrompt.fill("Ost fehlt in der aktuellen Auswertung.");
   await copilotPrompt.press("Enter");
   await page.getByRole("button", { name: "Copilot Chat schließen", exact: true }).click();
