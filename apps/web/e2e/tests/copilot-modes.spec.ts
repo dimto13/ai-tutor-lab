@@ -48,8 +48,7 @@ test("Copilot Explore macht Funktionen und Kontrollpunkte frei untersuchbar", as
   );
   await editor.focus();
   await editor.press("Tab");
-
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(editor).toHaveValue("def add(a, b):\n    return a + b\n");
 });
 
 test("Copilot Challenge ist über geprüften Inline-Vorschlag lösbar", async ({ page }) => {
