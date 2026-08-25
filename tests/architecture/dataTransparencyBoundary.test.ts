@@ -15,6 +15,14 @@ const resourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
 const handlerUrl = new URL("../../amplify/functions/user-data-export/handler.js", import.meta.url);
 const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
 const authResourceUrl = new URL("../../amplify/auth/resource.ts", import.meta.url);
+const postConfirmationResourceUrl = new URL(
+  "../../amplify/auth/post-confirmation/resource.ts",
+  import.meta.url,
+);
+const postConfirmationHandlerUrl = new URL(
+  "../../amplify/auth/post-confirmation/handler.js",
+  import.meta.url,
+);
 
 function definitionBlock(source: string, name: string): string {
   const start = source.indexOf(`  ${name}:`);
@@ -78,19 +86,22 @@ test("tenant membership failures are mapped at the cloud adapter boundary", asyn
 });
 
 test("confirmed self-service users receive one server-managed bootstrap tenant", async () => {
-  const [authResource, backend] = await Promise.all([
+  const [authResource, postConfirmationResource, postConfirmationHandler] = await Promise.all([
     readFile(authResourceUrl, "utf8"),
-    readFile(backendUrl, "utf8"),
+    readFile(postConfirmationResourceUrl, "utf8"),
+    readFile(postConfirmationHandlerUrl, "utf8"),
   ]);
 
   assert.match(authResource, /["']tenant:default["']/);
-  assert.match(backend, /bootstrapTenantGroup = ["']tenant:default["']/);
-  assert.match(backend, /AdminAddUserToGroupCommand/);
-  assert.match(backend, /cognito-idp:AdminAddUserToGroup/);
-  assert.match(backend, /cfnUserPool\.lambdaConfig/);
-  assert.match(backend, /postConfirmation: tenantProvisioner\.functionArn/);
-  assert.match(backend, /ServicePrincipal\(["']cognito-idp\.amazonaws\.com["']\)/);
-  assert.doesNotMatch(backend, /AdminCreateUser|AdminUpdateUserAttributes/);
+  assert.match(authResource, /postConfirmation: tenantPostConfirmation/);
+  assert.match(authResource, /allow\.resource\(tenantPostConfirmation\)\.to\(\[["']addUserToGroup["']\]\)/);
+  assert.match(postConfirmationResource, /resourceGroupName: ["']auth["']/);
+  assert.match(postConfirmationResource, /BOOTSTRAP_TENANT_GROUP: ["']tenant:default["']/);
+  assert.match(postConfirmationHandler, /AdminAddUserToGroupCommand/);
+  assert.match(postConfirmationHandler, /event\.userPoolId/);
+  assert.match(postConfirmationHandler, /event\.userName/);
+  assert.match(postConfirmationHandler, /process\.env\.BOOTSTRAP_TENANT_GROUP/);
+  assert.doesNotMatch(postConfirmationHandler, /AdminCreateUser|AdminUpdateUserAttributes/);
 });
 
 test("own-data operations are authenticated, argumentless and server-authoritative", async () => {
