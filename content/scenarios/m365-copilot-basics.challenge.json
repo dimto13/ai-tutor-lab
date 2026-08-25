@@ -4,137 +4,37 @@
   "mode": "challenge",
   "learningLayer": "ai_workflow",
   "title": "Microsoft 365 Copilot – Challenge",
-  "description": "Führe einen vollständigen synthetischen M365-Copilot-Workflow selbstständig durch. Die Bewertung prüft ausschließlich den Endzustand, nicht deine Klickreihenfolge.",
-  "learningObjectives": [
-    "formulate_copilot_prompt",
-    "review_copilot_output",
-    "protect_copilot_context",
-    "decide_ai_usage_by_classification"
-  ],
-  "environment": {
-    "productId": "m365-copilot",
-    "version": "simulated-2026-08",
-    "runtimeAdapterId": "m365-copilot-simulator"
-  },
+  "description": "Führe einen vollständigen synthetischen Copilot-Chat-Workflow selbstständig durch. Bewertet wird der Endzustand, nicht die Klickreihenfolge.",
+  "learningObjectives": ["formulate_copilot_prompt", "review_copilot_output", "protect_copilot_context", "decide_ai_usage_by_classification"],
+  "environment": { "productId": "m365-copilot", "version": "simulated-2026-08", "runtimeAdapterId": "m365-copilot-simulator" },
   "estimatedMinutes": 10,
   "points": 180,
-  "completionValidation": {
-    "kind": "all",
-    "of": [
-      {
-        "kind": "state",
-        "selector": "m365.approvedSourceCount",
-        "equals": 2
-      },
-      {
-        "kind": "state",
-        "selector": "m365.prompt.qualityComplete",
-        "equals": true
-      },
-      {
-        "kind": "state",
-        "selector": "m365.drafts.createdKinds",
-        "includes": "meeting-summary"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.drafts.createdKinds",
-        "includes": "word-draft"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.drafts.createdKinds",
-        "includes": "outlook-draft"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.draft.kind",
-        "equals": "outlook-draft"
-      },
-      {
-        "kind": "state",
-        "selector": "m365.review.factsChecked",
-        "equals": true
-      },
-      {
-        "kind": "state",
-        "selector": "m365.review.unsupportedRejected",
-        "equals": true
-      },
-      {
-        "kind": "state",
-        "selector": "m365.approval.decision",
-        "equals": "approved"
-      }
-    ]
-  },
-  "steps": [
-    {
-      "id": "challenge-complete-controlled-m365-workflow",
-      "title": "Einen freigabefähigen Outlook-Entwurf herstellen",
-      "description": "Nutze die synthetische Teams-Besprechungsnotiz und den Projektsteckbrief, ohne den vertraulichen Anhang in den KI-Kontext zu übernehmen. Erzeuge den Arbeitsablauf über Teams, Word und Outlook, prüfe die Fakten und verwerfe die absichtlich unbelegte Budgetaussage.",
-      "instruction": "Stelle selbstständig folgenden Endzustand her: genau die zwei KI-freigegebenen Quellen sind ausgewählt; der Copilot-Auftrag enthält Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat; im Workflow wurden Teams-Zusammenfassung, Word-Entwurf und Outlook-Entwurf erzeugt; Namen, Zahlen, Zusagen, Quellen und Ton wurden geprüft; die unbelegte Budgetaussage wurde verworfen; der Outlook-Entwurf wurde anschließend ausdrücklich freigegeben. Die Reihenfolge deiner Bedienhandlungen ist für die Bewertung nicht vorgegeben.",
-      "rationale": "Ein produktiver Copilot-Workflow ist nur dann belastbar, wenn zulässiger Kontext, Aufgabenqualität, Ergebnisprüfung, Halluzinationskontrolle und menschliche Verantwortung gemeinsam erfüllt sind.",
-      "helpLevels": [
-        "Prüfe zuerst Datenfreigabe und den gewünschten Endzustand, bevor du Entwürfe erzeugst.",
-        "Der Endzustand verlangt alle drei Entwurfsarten sowie Faktenprüfung und das Verwerfen der unbelegten Aussage.",
-        "Wähle nur Besprechungsnotiz und Projektsteckbrief, erfülle alle fünf Promptmerkmale, erzeuge Teams-, Word- und Outlook-Entwurf, prüfe Fakten, verwerfe die Budgetaussage und gib den Outlook-Entwurf frei."
-      ],
-      "validation": {
-        "kind": "all",
-        "of": [
-          {
-            "kind": "state",
-            "selector": "m365.approvedSourceCount",
-            "equals": 2
-          },
-          {
-            "kind": "state",
-            "selector": "m365.prompt.qualityComplete",
-            "equals": true
-          },
-          {
-            "kind": "state",
-            "selector": "m365.drafts.createdKinds",
-            "includes": "meeting-summary"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.drafts.createdKinds",
-            "includes": "word-draft"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.drafts.createdKinds",
-            "includes": "outlook-draft"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.draft.kind",
-            "equals": "outlook-draft"
-          },
-          {
-            "kind": "state",
-            "selector": "m365.review.factsChecked",
-            "equals": true
-          },
-          {
-            "kind": "state",
-            "selector": "m365.review.unsupportedRejected",
-            "equals": true
-          },
-          {
-            "kind": "state",
-            "selector": "m365.approval.decision",
-            "equals": "approved"
-          }
-        ]
-      },
-      "successMessage": "Challenge bestanden: Datenfreigabe, Promptqualität, Teams-/Word-/Outlook-Workflow, Faktenprüfung, Halluzinationskontrolle und menschliche Freigabe sind im Endzustand erfüllt."
-    }
-  ],
-  "audience": {
-    "personaId": "non-programmer",
-    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"]
-  }
+  "completionValidation": { "kind": "all", "of": [
+    { "kind": "state", "selector": "m365.grounding.mode", "equals": "work" },
+    { "kind": "state", "selector": "m365.context.sourceCount", "equals": 2 },
+    { "kind": "state", "selector": "m365.prompt.qualityComplete", "equals": true },
+    { "kind": "state", "selector": "m365.chat.responseVisible", "equals": true },
+    { "kind": "state", "selector": "m365.review.factsChecked", "equals": true },
+    { "kind": "state", "selector": "m365.review.unsupportedRejected", "equals": true },
+    { "kind": "state", "selector": "m365.approval.decision", "equals": "approved" }
+  ] },
+  "steps": [{
+    "id": "challenge-complete-controlled-m365-workflow",
+    "title": "Einen freigabefähigen Copilot-Entwurf herstellen",
+    "description": "Nutze Work mit den zwei freigegebenen synthetischen Quellen, ohne den vertraulichen Anhang in den KI-Kontext zu übernehmen. Sende einen prüfbaren Auftrag, prüfe die Antwort und verwerfe die absichtlich unbelegte Budgetaussage.",
+    "instruction": "Stelle selbstständig folgenden Endzustand her: Work ist aktiv; genau die zwei freigegebenen Quellen sind im Kontext; ein konkreter Prompt wurde gesendet und die Antwort ist sichtbar; Fakten wurden geprüft; die unbelegte Aussage wurde verworfen; der Entwurf wurde ausdrücklich freigegeben. Die Reihenfolge deiner Bedienhandlungen ist nicht vorgegeben.",
+    "rationale": "Ein belastbarer Copilot-Workflow verbindet zulässigen Kontext, klare Aufgabenstellung, Ergebnisprüfung, Halluzinationskontrolle und menschliche Verantwortung.",
+    "helpLevels": ["Prüfe zuerst Grounding und Kontextgrenzen.", "Der Endzustand verlangt Antwort, Faktenprüfung und das Verwerfen der unbelegten Aussage.", "Aktiviere Work, füge nur Besprechungsnotiz und Projektsteckbrief hinzu, sende einen konkreten Prompt, prüfe Fakten, verwerfe die Budgetaussage und gib den Entwurf frei."],
+    "validation": { "kind": "all", "of": [
+      { "kind": "state", "selector": "m365.grounding.mode", "equals": "work" },
+      { "kind": "state", "selector": "m365.context.sourceCount", "equals": 2 },
+      { "kind": "state", "selector": "m365.prompt.qualityComplete", "equals": true },
+      { "kind": "state", "selector": "m365.chat.responseVisible", "equals": true },
+      { "kind": "state", "selector": "m365.review.factsChecked", "equals": true },
+      { "kind": "state", "selector": "m365.review.unsupportedRejected", "equals": true },
+      { "kind": "state", "selector": "m365.approval.decision", "equals": "approved" }
+    ] },
+    "successMessage": "Challenge bestanden: Grounding, Kontextgrenzen, Prompt, Quellenprüfung, Halluzinationskontrolle und menschliche Freigabe sind erfüllt."
+  }],
+  "audience": { "personaId": "non-programmer", "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"] }
 }
