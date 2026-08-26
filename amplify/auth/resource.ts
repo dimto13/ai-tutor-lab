@@ -72,13 +72,7 @@ export const auth = defineAuth({
         }
       : {}),
   },
-  groups: [
-    "tenant:default",
-    "role:learner",
-    "role:author",
-    "role:trainer",
-    "role:tenant_admin",
-  ],
+  groups: ["tenant:default", "role:learner", "role:author", "role:trainer", "role:tenant_admin"],
   triggers: {
     postConfirmation: tenantPostConfirmation,
   },
