@@ -15,7 +15,12 @@ test("simulator currency policy maps every product review to real scenarios and 
   assert.equal(context.policy.cadenceMonths, 6);
   assert.deepEqual(
     context.policy.products.map((product) => product.runtimeAdapterId),
-    ["vscode-simulator", "github-copilot-vscode-simulator", "claude-code-cli-simulator"],
+    [
+      "vscode-simulator",
+      "github-copilot-vscode-simulator",
+      "claude-code-cli-simulator",
+      "m365-copilot-simulator",
+    ],
   );
   assert.doesNotThrow(() => validateScenarioMappings(context.policy, context.scenarios));
 });

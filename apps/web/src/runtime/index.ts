@@ -18,11 +18,10 @@ export type {
 export type { CopilotRuntimeAdapter, CopilotRuntimeState } from "./copilotRuntime.ts";
 export type { CopilotProductProfile } from "./copilotProductProfile.ts";
 export type {
-  M365App,
   M365ApprovalDecision,
   M365CopilotRuntimeAdapter,
   M365CopilotState,
-  M365DraftKind,
+  M365GroundingMode,
   M365PromptQuality,
 } from "./m365CopilotRuntime.ts";
 export type {

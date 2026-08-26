@@ -20,6 +20,7 @@ import {
   type M365CopilotState,
   type M365PromptQuality,
 } from "@/runtime/m365CopilotRuntime";
+import { ExploreInspectButton } from "./ExploreInspectButton";
 import { useTraining } from "@/state/trainingStore";
 
 const EMPTY_QUALITY: M365PromptQuality = {
@@ -133,7 +134,7 @@ function assessPromptQuality(prompt: string, state: M365CopilotState): M365Promp
 }
 
 export function M365CopilotWorkspace() {
-  const { persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
+  const { mode, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
   const [state, setState] = useState<M365CopilotState>(EMPTY_STATE);
   const [prompt, setPrompt] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
@@ -164,6 +165,12 @@ export function M365CopilotWorkspace() {
     m365CopilotRuntime.submitPrompt(assessPromptQuality(prompt, state));
   };
 
+  // Product chrome without state mutation stays non-interactive in the simulation. Explore mode
+  // adds the shared inspect affordance so these surfaces remain learnable and keyboard reachable.
+  const inspect = (targetRef: string) => {
+    if (mode === "explore") m365CopilotRuntime.inspect(targetRef);
+  };
+
   return (
     <div
       ref={runtimeRootRef}
@@ -184,10 +191,24 @@ export function M365CopilotWorkspace() {
             className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-muted-foreground"
           >
             <Icon className="h-4 w-4" /> {label}
+            {mode === "explore" ? (
+              <span className="ml-auto">
+                <ExploreInspectButton targetRef={target} label={label} onInspect={inspect} />
+              </span>
+            ) : null}
           </div>
         ))}
         <div data-runtime-target="m365.nav.agents" className="mt-5 border-t border-border pt-4">
-          <p className="px-3 text-xs font-semibold text-muted-foreground">Agents</p>
+          <div className="flex items-center justify-between gap-2 px-3">
+            <p className="text-xs font-semibold text-muted-foreground">Agents</p>
+            {mode === "explore" ? (
+              <ExploreInspectButton
+                targetRef="m365.nav.agents"
+                label="Agents"
+                onInspect={inspect}
+              />
+            ) : null}
+          </div>
           {["Researcher", "Analyst", "Cowork", "Excel", "Word", "PowerPoint"].map((agent) => (
             <div key={agent} className="px-3 py-1.5 text-sm text-muted-foreground">
               {agent}
@@ -247,8 +268,9 @@ export function M365CopilotWorkspace() {
                     <Sparkles className="h-4 w-4" /> Copilot
                   </div>
                   <p>
-                    Der Pilot soll im Oktober starten. Offen sind der Schulungstermin und die Verantwortlichkeit für die FAQ.
-                    Behandle dieses Ergebnis als Entwurf und prüfe Fakten und Zusagen vor der Freigabe.
+                    Der Pilot soll im Oktober starten. Offen sind der Schulungstermin und die
+                    Verantwortlichkeit für die FAQ. Behandle dieses Ergebnis als Entwurf und prüfe
+                    Fakten und Zusagen vor der Freigabe.
                   </p>
                   {!state.unsupportedRejected ? (
                     <p className="mt-3 rounded-lg border border-border bg-muted p-3">
@@ -257,17 +279,27 @@ export function M365CopilotWorkspace() {
                   ) : null}
                   <div
                     data-runtime-target="m365.result.sources"
-                    className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground"
+                    className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
                   >
                     {state.groundingMode === "work" && state.contextSourceIds.length > 0 ? (
                       state.contextSourceIds.map((source) => (
-                        <span key={source} className="rounded-full border border-border bg-background px-2 py-1">
+                        <span
+                          key={source}
+                          className="rounded-full border border-border bg-background px-2 py-1"
+                        >
                           {source === "meeting-notes" ? "Besprechungsnotiz" : "Projektsteckbrief"}
                         </span>
                       ))
                     ) : (
                       <span>Keine Mandantenquelle verwendet</span>
                     )}
+                    {mode === "explore" ? (
+                      <ExploreInspectButton
+                        targetRef="m365.result.sources"
+                        label="Verwendete Quellen"
+                        onInspect={inspect}
+                      />
+                    ) : null}
                   </div>
                 </article>
               </div>
@@ -361,16 +393,22 @@ export function M365CopilotWorkspace() {
         </div>
 
         {state.responseVisible ? (
-          <aside className="border-t border-border bg-background px-4 py-3" aria-label="Trainingsprüfung">
+          <aside
+            className="border-t border-border bg-background px-4 py-3"
+            aria-label="Trainingsprüfung"
+          >
             <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
-              <span className="mr-2 text-xs font-semibold text-muted-foreground">Plattform-Prüfschritt</span>
+              <span className="mr-2 text-xs font-semibold text-muted-foreground">
+                Plattform-Prüfschritt
+              </span>
               <button
                 type="button"
                 data-runtime-target="m365.review.facts"
                 onClick={() => m365CopilotRuntime.markFactsChecked()}
                 className="rounded-lg border px-3 py-2 text-xs"
               >
-                Fakten prüfen {state.factsChecked ? <Check className="ml-1 inline h-3 w-3" /> : null}
+                Fakten prüfen{" "}
+                {state.factsChecked ? <Check className="ml-1 inline h-3 w-3" /> : null}
               </button>
               <button
                 type="button"
@@ -378,7 +416,8 @@ export function M365CopilotWorkspace() {
                 onClick={() => m365CopilotRuntime.rejectUnsupportedSuggestion()}
                 className="rounded-lg border px-3 py-2 text-xs"
               >
-                Unbelegte Aussage verwerfen {state.unsupportedRejected ? <X className="ml-1 inline h-3 w-3" /> : null}
+                Unbelegte Aussage verwerfen{" "}
+                {state.unsupportedRejected ? <X className="ml-1 inline h-3 w-3" /> : null}
               </button>
               <div data-runtime-target="m365.approval" className="ml-auto flex gap-2">
                 <button

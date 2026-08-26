@@ -3,9 +3,11 @@
   "language": "de",
   "technologyConcepts": {
     "office_assistant": [
-      "m365.teams",
-      "m365.word",
-      "m365.outlook",
+      "m365.chat",
+      "m365.search",
+      "m365.library",
+      "m365.create",
+      "m365.agents",
       "ai.result",
       "ai.review",
       "ai.approval"
@@ -13,28 +15,44 @@
   },
   "concepts": [
     {
-      "key": "m365.teams",
-      "term": "Copilot in Teams",
-      "aliases": ["Teams Copilot"],
-      "simple": "In Teams unterstützt Copilot dabei, freigegebene Besprechungsinhalte zusammenzufassen und Entscheidungen von offenen Punkten zu trennen.",
-      "advanced": "Die Teams-Rolle im Trainingssimulator nutzt ausschließlich synthetische, ausdrücklich freigegebene Besprechungsnotizen als Kontext und erzeugt daraus einen prüfbaren Zusammenfassungsentwurf.",
-      "uiTargets": ["m365.nav.teams"]
+      "key": "m365.chat",
+      "term": "Copilot-Chat",
+      "aliases": ["New chat", "Neuer Chat"],
+      "simple": "Der Chat ist der Einstieg in Microsoft 365 Copilot: Du stellst eine Aufgabe im Eingabefeld und erhältst einen Entwurf als Antwort.",
+      "advanced": "Die eigenständige Copilot-App führt Aufgaben im Chatverlauf statt in App-Formularen. Ein neuer Chat beginnt ohne vorherigen Verlauf; der Trainingssimulator bildet diesen Einstieg mit synthetischen Daten nach.",
+      "uiTargets": ["m365.nav.newChat"]
     },
     {
-      "key": "m365.word",
-      "term": "Copilot in Word",
-      "aliases": ["Word Copilot"],
-      "simple": "In Word hilft Copilot dabei, aus freigegebenem Kontext einen strukturierten Entwurf zu erstellen und fachlich zu überarbeiten.",
-      "advanced": "Die Word-Rolle im Trainingssimulator überführt freigegebene synthetische Quellen in einen Dokumententwurf, der vor weiterer Nutzung auf Fakten, Aussagen und Ton geprüft werden muss.",
-      "uiTargets": ["m365.nav.word"]
+      "key": "m365.search",
+      "term": "Copilot-Suche",
+      "aliases": ["Search"],
+      "simple": "Die Suche findet Inhalte, auf die du bereits Zugriff hast — sie erweitert deine Berechtigungen nicht.",
+      "advanced": "Suchergebnisse bleiben an die bestehenden Berechtigungen der angemeldeten Identität gebunden. Der Trainingssimulator zeigt diesen Navigationsbereich zur Orientierung und simuliert keine Trefferlisten.",
+      "uiTargets": ["m365.nav.search"]
     },
     {
-      "key": "m365.outlook",
-      "term": "Copilot in Outlook",
-      "aliases": ["Outlook Copilot"],
-      "simple": "In Outlook kann Copilot aus freigegebenem Kontext einen E-Mail-Entwurf vorbereiten, der vor dem Versand vom Menschen geprüft wird.",
-      "advanced": "Die Outlook-Rolle im Trainingssimulator erstellt einen synthetischen Mailentwurf aus dem vorher geprüften Arbeitskontext; eine ausdrückliche menschliche Freigabe bleibt erforderlich.",
-      "uiTargets": ["m365.nav.outlook"]
+      "key": "m365.library",
+      "term": "Library",
+      "aliases": ["Bibliothek"],
+      "simple": "In der Library findest du Inhalte wieder, die du mit Copilot erzeugt oder abgelegt hast.",
+      "advanced": "Die Library sammelt wiederverwendbare Copilot-Ergebnisse. Auch abgelegte Ergebnisse bleiben Entwürfe: Der Prüf- und Freigabeschritt entfällt durch das Speichern nicht. Der Trainingssimulator stellt den Bereich nur dar.",
+      "uiTargets": ["m365.nav.library"]
+    },
+    {
+      "key": "m365.create",
+      "term": "Create",
+      "aliases": ["Erstellen"],
+      "simple": "Create bündelt Einstiege zum Erzeugen von Inhalten, zum Beispiel für Texte oder Bilder.",
+      "advanced": "Create ist ein Einstiegspunkt für erzeugende Aufgaben und ändert die Verantwortungsgrenze nicht: erzeugte Inhalte sind Entwürfe und werden vor Nutzung geprüft. Der Trainingssimulator stellt den Bereich nur dar.",
+      "uiTargets": ["m365.nav.create"]
+    },
+    {
+      "key": "m365.agents",
+      "term": "Agents",
+      "aliases": ["Copilot-Agents", "Agenten"],
+      "simple": "Agents sind auf bestimmte Aufgaben zugeschnittene Copilot-Varianten, zum Beispiel für Recherche oder Auswertung.",
+      "advanced": "Ein Agent arbeitet mit einem festgelegten Aufgabenzuschnitt und den Berechtigungen der aufrufenden Identität. Auswahl und Zuschnitt ersetzen weder Quellenprüfung noch menschliche Freigabe. Der Trainingssimulator zeigt die Agent-Liste zur Orientierung.",
+      "uiTargets": ["m365.nav.agents"]
     },
     {
       "key": "ai.result",

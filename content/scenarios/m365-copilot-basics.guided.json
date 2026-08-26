@@ -5,9 +5,18 @@
   "learningLayer": "ai_workflow",
   "title": "Microsoft 365 Copilot – Geführt",
   "description": "Durchlaufe einen kontrollierten Copilot-Chat-Workflow mit synthetischem Work-Kontext, prüfbarem Prompt, Quellenprüfung und menschlicher Freigabe.",
-  "learningObjectives": ["formulate_copilot_prompt", "review_copilot_output", "protect_copilot_context", "decide_ai_usage_by_classification"],
-  "environment": { "productId": "m365-copilot", "version": "simulated-2026-08", "runtimeAdapterId": "m365-copilot-simulator" },
-  "estimatedMinutes": 12,
+  "learningObjectives": [
+    "formulate_copilot_prompt",
+    "review_copilot_output",
+    "protect_copilot_context",
+    "decide_ai_usage_by_classification"
+  ],
+  "environment": {
+    "productId": "m365-copilot",
+    "version": "simulated-2026-08",
+    "runtimeAdapterId": "m365-copilot-simulator"
+  },
+  "estimatedMinutes": 15,
   "points": 140,
   "steps": [
     {
@@ -16,8 +25,16 @@
       "description": "Work kann freigegebenen synthetischen Mandantenkontext verwenden; Web verwendet diesen Kontext nicht.",
       "instruction": "Stelle den Grounding-Umschalter auf Work.",
       "rationale": "Die Grounding-Wahl bestimmt, ob freigegebener Organisationskontext in die simulierte Antwort einfließen darf.",
-      "helpLevels": ["Suche im Kopfbereich nach Work und Web.", "Work ist für freigegebenen Mandantenkontext gedacht.", "Wähle im Kopfbereich „Work“."],
-      "validation": { "kind": "state", "selector": "m365.grounding.mode", "equals": "work" },
+      "helpLevels": [
+        "Suche im Kopfbereich nach Work und Web.",
+        "Work ist für freigegebenen Mandantenkontext gedacht.",
+        "Klicke im Kopfbereich auf „Work“; der Umschalter zeigt Work danach als aktive Auswahl."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.grounding.mode",
+        "equals": "work"
+      },
       "highlightTarget": "m365.grounding",
       "successMessage": "Work-Grounding ist aktiv."
     },
@@ -27,8 +44,16 @@
       "description": "Zwei synthetische Quellen sind freigegeben; der vertrauliche Anhang bleibt gesperrt.",
       "instruction": "Füge Besprechungsnotiz und Projektsteckbrief zum Kontext hinzu. Der vertrauliche Anhang darf nicht in den Kontext gelangen.",
       "rationale": "Copilot darf nur erforderlichen und für KI-Nutzung freigegebenen Kontext erhalten.",
-      "helpLevels": ["Öffne den Kontext über das Anhang-Symbol.", "Wähle die beiden nicht gesperrten Einträge.", "Füge Besprechungsnotiz und Projektsteckbrief hinzu; der vertrauliche Anhang bleibt ausgeschlossen."],
-      "validation": { "kind": "state", "selector": "m365.context.sourceCount", "equals": 2 },
+      "helpLevels": [
+        "Öffne den Kontext über das Anhang-Symbol.",
+        "Wähle die beiden nicht gesperrten Einträge.",
+        "Füge Besprechungsnotiz und Projektsteckbrief hinzu; der vertrauliche Anhang bleibt ausgeschlossen."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.context.sourceCount",
+        "equals": 2
+      },
       "highlightTarget": "m365.context",
       "successMessage": "Genau die beiden freigegebenen Quellen sind im Kontext."
     },
@@ -38,8 +63,31 @@
       "description": "Der Auftrag soll Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat klar machen.",
       "instruction": "Formuliere im Composer einen konkreten Auftrag und sende ihn ab.",
       "rationale": "Klare Randbedingungen machen die deterministische Antwort besser überprüfbar.",
-      "helpLevels": ["Nutze das Feld „Message Copilot“.", "Formuliere Ziel und gewünschte Ausgabe konkret.", "Gib einen konkreten Auftrag in „Message Copilot“ ein und sende ihn über die Senden-Schaltfläche."],
-      "validation": { "kind": "all", "of": [{ "kind": "state", "selector": "m365.prompt.submitted", "equals": true }, { "kind": "state", "selector": "m365.prompt.qualityComplete", "equals": true }, { "kind": "state", "selector": "m365.chat.responseVisible", "equals": true }] },
+      "helpLevels": [
+        "Nutze das Feld „Message Copilot“.",
+        "Formuliere Ziel und gewünschte Ausgabe konkret.",
+        "Gib einen konkreten Auftrag in „Message Copilot“ ein und sende ihn über die Senden-Schaltfläche."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "m365.prompt.submitted",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.prompt.qualityComplete",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.chat.responseVisible",
+            "equals": true
+          }
+        ]
+      },
       "highlightTarget": "m365.prompt",
       "successMessage": "Der Auftrag wurde gesendet und die Antwort ist im Chat sichtbar."
     },
@@ -49,8 +97,26 @@
       "description": "Die Antwort enthält absichtlich eine plausible, aber unbelegte Budgetaussage.",
       "instruction": "Bestätige die Faktenprüfung und verwirf die unbelegte Aussage.",
       "rationale": "Plausibilität ist kein Beleg. Die Plattform-Prüfschritte bleiben bewusst außerhalb der simulierten Produktoberfläche.",
-      "helpLevels": ["Suche unterhalb der Produktfläche nach dem Plattform-Prüfschritt.", "Führe Faktenprüfung und Halluzinationskontrolle getrennt aus.", "Klicke „Fakten prüfen“ und anschließend „Unbelegte Aussage verwerfen“."],
-      "validation": { "kind": "all", "of": [{ "kind": "state", "selector": "m365.review.factsChecked", "equals": true }, { "kind": "state", "selector": "m365.review.unsupportedRejected", "equals": true }] },
+      "helpLevels": [
+        "Suche unterhalb der Produktfläche nach dem Plattform-Prüfschritt.",
+        "Führe Faktenprüfung und Halluzinationskontrolle getrennt aus.",
+        "Klicke „Fakten prüfen“ und anschließend „Unbelegte Aussage verwerfen“."
+      ],
+      "validation": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "m365.review.factsChecked",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.review.unsupportedRejected",
+            "equals": true
+          }
+        ]
+      },
       "highlightTarget": "m365.review.facts",
       "successMessage": "Faktenprüfung abgeschlossen und unbelegte Aussage verworfen."
     },
@@ -60,11 +126,22 @@
       "description": "Copilot entscheidet nicht über die fachliche Freigabe.",
       "instruction": "Gib den geprüften Entwurf explizit frei.",
       "rationale": "Die Verantwortung bleibt beim Menschen; Copilot unterstützt, ersetzt aber weder Prüfung noch Entscheidung.",
-      "helpLevels": ["Die Freigabe gehört zum Plattform-Prüfschritt.", "Sie wird erst nach beiden Prüfhandlungen aktiv.", "Klicke nach Faktenprüfung und Verwerfen der unbelegten Aussage auf „Freigeben“."],
-      "validation": { "kind": "state", "selector": "m365.approval.decision", "equals": "approved" },
+      "helpLevels": [
+        "Die Freigabe gehört zum Plattform-Prüfschritt.",
+        "Sie wird erst nach beiden Prüfhandlungen aktiv.",
+        "Klicke nach Faktenprüfung und Verwerfen der unbelegten Aussage auf „Freigeben“."
+      ],
+      "validation": {
+        "kind": "state",
+        "selector": "m365.approval.decision",
+        "equals": "approved"
+      },
       "highlightTarget": "m365.approval",
       "successMessage": "Der Workflow endet mit einer expliziten menschlichen Freigabe."
     }
   ],
-  "audience": { "personaId": "non-programmer", "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"] }
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["research.source_evidence", "classification.ai_policy", "github.copilot"]
+  }
 }

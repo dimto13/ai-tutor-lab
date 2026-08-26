@@ -318,7 +318,7 @@ const otherTrainings: TrainingCardModel[] = [
     scenarioId: null,
     title: "M365 Copilot Grundlagen",
     description:
-      "Copilot in Teams, Word und Outlook mit freigegebenem Kontext, klaren Arbeitsaufträgen, Faktenprüfung und expliziter menschlicher Freigabe einsetzen. Alle Inhalte sind synthetisch.",
+      "Den Microsoft-365-Copilot-Chat mit freigegebenem Work-Kontext, klaren Arbeitsaufträgen, Quellenprüfung und expliziter menschlicher Freigabe einsetzen. Alle Inhalte sind synthetisch.",
     icon: Bot,
     available: true,
     label: "Office Assistant · 3 Modi",
@@ -326,14 +326,14 @@ const otherTrainings: TrainingCardModel[] = [
       {
         scenarioId: "m365-copilot-basics.explore",
         label: "Explore",
-        description: "Anwendungen und Kontrollpfad frei erkunden",
+        description: "Chatfläche, Grounding und Kontrollpfad erkunden",
         icon: Search,
         multiplier: "×0,5",
       },
       {
         scenarioId: "m365-copilot-basics.guided",
         label: "Guided",
-        description: "Teams → Word → Outlook kontrolliert durchlaufen",
+        description: "Work-Kontext → Auftrag → Freigabe durchlaufen",
         icon: RouteIcon,
         multiplier: "×1,0",
       },

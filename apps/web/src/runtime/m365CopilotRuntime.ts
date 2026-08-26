@@ -111,6 +111,7 @@ function id(prefix: string): string {
 
 export interface M365CopilotRuntimeAdapter extends RuntimeAdapter {
   subscribeState(handler: StateListener): () => void;
+  inspect(ref: UiTargetRef): void;
   setGroundingMode(mode: M365GroundingMode): void;
   setContextSource(sourceId: string, selected: boolean): void;
   submitPrompt(quality: M365PromptQuality): void;
@@ -219,6 +220,10 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     describeSurface(): RuntimeSurfaceDescription[] {
       return [...M365_COPILOT_RUNTIME_DEFINITION.surface];
     },
+
+    // Explore mode records product chrome that carries no state mutation, such as the
+    // navigation, the agent list and the source references of an answer.
+    inspect,
 
     async snapshot(): Promise<M365CopilotState> {
       return cloneState(state);
