@@ -16,6 +16,10 @@ dist-ssr
 .nitro
 *.local
 
+# Playwright local run artifacts
+apps/web/e2e/test-results
+apps/web/e2e/playwright-report
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

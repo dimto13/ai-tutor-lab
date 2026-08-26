@@ -15,81 +15,116 @@ describe("M365 Copilot runtime", () => {
   it("exposes semantic end state independent of interaction order", async () => {
     const runtime = createM365CopilotRuntime();
 
-    runtime.selectApp("word");
-    runtime.setSourceApproved("project-brief", true);
+    runtime.setGroundingMode("web");
+    runtime.setContextSource("project-brief", true);
     runtime.submitPrompt(COMPLETE_PROMPT);
-    runtime.createDraft("word-draft");
-    runtime.selectApp("teams");
-    runtime.setSourceApproved("meeting-notes", true);
-    runtime.createDraft("meeting-summary");
-    runtime.rejectUnsupportedSuggestion();
     runtime.markFactsChecked();
-    runtime.selectApp("outlook");
-    runtime.createDraft("outlook-draft");
+    runtime.setGroundingMode("work");
+    runtime.setContextSource("meeting-notes", true);
+    runtime.rejectUnsupportedSuggestion();
     runtime.decideApproval("approved");
 
-    assert.equal(await runtime.query("m365.approvedSourceCount"), 2);
+    assert.equal(await runtime.query("m365.grounding.mode"), "work");
+    assert.equal(await runtime.query("m365.context.sourceCount"), 2);
+    assert.equal(await runtime.query("m365.prompt.submitted"), true);
     assert.equal(await runtime.query("m365.prompt.qualityComplete"), true);
-    assert.deepEqual(await runtime.query("m365.drafts.createdKinds"), [
-      "word-draft",
-      "meeting-summary",
-      "outlook-draft",
-    ]);
-    assert.equal(await runtime.query("m365.draft.kind"), "outlook-draft");
+    assert.equal(await runtime.query("m365.chat.responseVisible"), true);
     assert.equal(await runtime.query("m365.review.factsChecked"), true);
     assert.equal(await runtime.query("m365.review.unsupportedRejected"), true);
     assert.equal(await runtime.query("m365.approval.decision"), "approved");
   });
 
-  it("never promotes an unapproved or unknown source into Copilot context", async () => {
+  it("starts without prompt quality and derives it from the submitted request", async () => {
     const runtime = createM365CopilotRuntime();
-    const events: TrainingEvent[] = [];
-    runtime.subscribe((event) => events.push(event));
 
-    runtime.setSourceApproved("restricted-appendix", true);
-    runtime.setSourceApproved("unknown-source", true);
-    assert.equal(await runtime.query("m365.approvedSourceCount"), 0);
+    assert.equal(await runtime.query("m365.prompt.qualityComplete"), false);
+    assert.equal(await runtime.query("m365.chat.responseVisible"), false);
 
-    runtime.setSourceApproved("meeting-notes", true);
-    runtime.setSourceApproved("project-brief", true);
-    assert.equal(await runtime.query("m365.approvedSourceCount"), 2);
-    assert.equal(events.filter((event) => event.type === "m365.source.approval.denied").length, 2);
+    runtime.submitPrompt({ ...COMPLETE_PROMPT, audience: false });
+
+    assert.equal(await runtime.query("m365.prompt.submitted"), true);
+    assert.equal(await runtime.query("m365.prompt.qualityComplete"), false);
+    assert.equal(await runtime.query("m365.chat.responseVisible"), true);
   });
 
-  it("keeps document, meeting, mail and prompt contents out of runtime events", () => {
+  it("never promotes a restricted or unknown source into Copilot context", async () => {
     const runtime = createM365CopilotRuntime();
     const events: TrainingEvent[] = [];
     runtime.subscribe((event) => events.push(event));
 
-    runtime.setSourceApproved("meeting-notes", true);
-    runtime.setSourceApproved("project-brief", true);
+    runtime.setContextSource("restricted-appendix", true);
+    runtime.setContextSource("unknown-source", true);
+    assert.equal(await runtime.query("m365.context.sourceCount"), 0);
+    assert.equal(await runtime.query("m365.context.restrictedAttempted"), true);
+
+    runtime.setContextSource("meeting-notes", true);
+    runtime.setContextSource("project-brief", true);
+    assert.equal(await runtime.query("m365.context.sourceCount"), 2);
+    assert.equal(await runtime.query("m365.context.restrictedAttempted"), false);
+
+    runtime.setContextSource("meeting-notes", false);
+    assert.equal(await runtime.query("m365.context.sourceCount"), 1);
+    assert.equal(events.filter((event) => event.type === "m365.context.denied").length, 2);
+  });
+
+  it("keeps synthetic document, answer and prompt contents out of runtime events", () => {
+    const runtime = createM365CopilotRuntime();
+    const events: TrainingEvent[] = [];
+    runtime.subscribe((event) => events.push(event));
+
+    runtime.setGroundingMode("work");
+    runtime.setContextSource("meeting-notes", true);
+    runtime.setContextSource("project-brief", true);
+    runtime.setContextSource("restricted-appendix", true);
     runtime.submitPrompt(COMPLETE_PROMPT);
-    runtime.createDraft("meeting-summary");
-    runtime.createDraft("word-draft");
-    runtime.createDraft("outlook-draft");
     runtime.markFactsChecked();
     runtime.rejectUnsupportedSuggestion();
     runtime.decideApproval("approved");
 
     const serialized = JSON.stringify(events);
     for (const forbidden of [
-      "Pilotstart im Oktober",
+      "Der Pilot soll im Oktober starten",
       "Schulungstermin",
       "Das Budget ist bereits verbindlich freigegeben",
-      "Betreff:",
-      "Projektsteckbrief",
-      "Besprechungsnotiz zusammenfassen",
+      "Deine Anfrage wurde gesendet",
     ]) {
       assert.equal(serialized.includes(forbidden), false, `event leaked content: ${forbidden}`);
     }
+
+    const submitted = events.filter((event) => event.type === "m365.prompt.submitted");
+    assert.equal(submitted.length, 1);
+    assert.deepEqual(Object.keys(submitted[0]!.payload).sort(), [
+      "contextSourceCount",
+      "groundingMode",
+      "qualityComplete",
+    ]);
 
     assert.ok(events.length > 0);
     assert.ok(events.every((event) => event.source === "m365-copilot-simulator"));
     assert.ok(events.every((event) => event.sessionId.length > 0));
   });
 
-  it("restores privacy-safe state and accepts snapshots from before draft-history tracking", async () => {
+  it("reports explored product chrome without mutating training state", async () => {
     const runtime = createM365CopilotRuntime();
+    const events: TrainingEvent[] = [];
+    runtime.subscribe((event) => events.push(event));
+
+    runtime.inspect("m365.nav.agents");
+    runtime.inspect("m365.result.sources");
+    runtime.inspect("m365.unknown.target");
+
+    const inspected = events.filter((event) => event.type === "ui.element.inspected");
+    assert.deepEqual(
+      inspected.map((event) => event.payload.ref),
+      ["m365.nav.agents", "m365.result.sources"],
+    );
+    assert.equal(await runtime.query("m365.prompt.submitted"), false);
+    assert.equal(await runtime.query("m365.approval.decision"), "pending");
+  });
+
+  it("restores privacy-safe state and rejects snapshots of the superseded app workflow", async () => {
+    const runtime = createM365CopilotRuntime();
+
     await runtime.restore({
       activeApp: "word",
       approvedSourceIds: ["meeting-notes"],
@@ -100,13 +135,25 @@ describe("M365 Copilot runtime", () => {
       unsupportedRejected: true,
       approvalDecision: "pending",
     });
+    assert.equal(await runtime.query("m365.prompt.submitted"), false);
+    assert.equal(await runtime.query("m365.context.sourceCount"), 0);
 
-    assert.equal(await runtime.query("m365.activeApp"), "word");
-    assert.deepEqual(await runtime.query("m365.drafts.createdKinds"), []);
+    await runtime.restore({
+      groundingMode: "work",
+      contextSourceIds: ["meeting-notes"],
+      restrictedSourceAttempted: false,
+      promptSubmitted: true,
+      promptQuality: COMPLETE_PROMPT,
+      responseVisible: true,
+      factsChecked: true,
+      unsupportedRejected: true,
+      approvalDecision: "pending",
+    });
 
-    runtime.createDraft("outlook-draft");
+    assert.equal(await runtime.query("m365.context.sourceCount"), 1);
+    assert.equal(await runtime.query("m365.chat.responseVisible"), true);
+
     const snapshot = await runtime.snapshot();
-    assert.deepEqual(snapshot.createdDraftKinds, ["outlook-draft"]);
     assert.equal("prompt" in snapshot, false);
     assert.equal("documentBody" in snapshot, false);
     assert.equal("mailBody" in snapshot, false);

@@ -108,6 +108,33 @@ test.describe("Accessibility regressions", () => {
     await accessibility.check("vscode-basics.challenge with platform guide");
   });
 
+  test("M365-Copilot-Chatfläche bleibt per Tastatur bedienbar und ohne unapproved axe-Verstöße", async ({
+    page,
+    accessibility,
+  }) => {
+    await page.goto("/training/m365-copilot-basics.guided");
+    await waitForTrainingReady(page);
+
+    const work = page.getByRole("button", { name: "Work", exact: true });
+    await activateWithKeyboard(page, work);
+    await expect(work).toHaveAttribute("aria-pressed", "true");
+
+    await activateWithKeyboard(page, page.getByRole("button", { name: "Kontext hinzufügen" }));
+    await activateWithKeyboard(page, page.getByRole("button", { name: /Besprechungsnotiz/ }));
+    await activateWithKeyboard(page, page.getByRole("button", { name: /Projektsteckbrief/ }));
+
+    const composer = page.getByRole("textbox", { name: "Message Copilot" });
+    await composer.focus();
+    await expect(composer).toBeFocused();
+    await composer.fill(
+      "Fasse die freigegebenen Projektunterlagen für das Team sachlich in einer kurzen Liste zusammen.",
+    );
+    await activateWithKeyboard(page, page.getByRole("button", { name: "Nachricht senden" }));
+    await expect(page.getByText("Deine Anfrage wurde gesendet.")).toBeVisible();
+
+    await accessibility.check("m365-copilot-basics.guided chat surface");
+  });
+
   test("Guided VS-Code-Grundlagen sind ohne Maus vollständig abschließbar", async ({ page }) => {
     await page.goto("/training/vscode-basics.guided");
     await waitForTrainingReady(page);

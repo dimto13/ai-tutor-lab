@@ -5,8 +5,7 @@ import {
   getM365CopilotSurfaceTarget,
 } from "./m365CopilotDefinition.ts";
 
-export type M365App = "teams" | "word" | "outlook";
-export type M365DraftKind = "meeting-summary" | "word-draft" | "outlook-draft";
+export type M365GroundingMode = "work" | "web";
 export type M365ApprovalDecision = "pending" | "approved" | "rejected";
 
 export interface M365PromptQuality {
@@ -18,12 +17,12 @@ export interface M365PromptQuality {
 }
 
 export interface M365CopilotState {
-  activeApp: M365App;
-  approvedSourceIds: string[];
+  groundingMode: M365GroundingMode;
+  contextSourceIds: string[];
+  restrictedSourceAttempted: boolean;
   promptSubmitted: boolean;
   promptQuality: M365PromptQuality;
-  draftKind: M365DraftKind | null;
-  createdDraftKinds?: M365DraftKind[];
+  responseVisible: boolean;
   factsChecked: boolean;
   unsupportedRejected: boolean;
   approvalDecision: M365ApprovalDecision;
@@ -33,8 +32,7 @@ type StateChangeReason = "mount" | "reset" | "mutation" | "restore";
 type StateListener = (state: M365CopilotState, reason: StateChangeReason) => void;
 type EventListener = (event: TrainingEvent) => void;
 
-const APPROVED_SOURCE_IDS = new Set(["meeting-notes", "project-brief"]);
-
+const ALLOWED_CONTEXT_IDS = new Set(["meeting-notes", "project-brief"]);
 const EMPTY_PROMPT_QUALITY: M365PromptQuality = {
   goal: false,
   context: false,
@@ -43,18 +41,18 @@ const EMPTY_PROMPT_QUALITY: M365PromptQuality = {
   outputFormat: false,
 };
 
-function isApprovedSourceId(sourceId: unknown): sourceId is string {
-  return typeof sourceId === "string" && APPROVED_SOURCE_IDS.has(sourceId);
+function isAllowedContextId(sourceId: unknown): sourceId is string {
+  return typeof sourceId === "string" && ALLOWED_CONTEXT_IDS.has(sourceId);
 }
 
 function initialState(): M365CopilotState {
   return {
-    activeApp: "teams",
-    approvedSourceIds: [],
+    groundingMode: "work",
+    contextSourceIds: [],
+    restrictedSourceAttempted: false,
     promptSubmitted: false,
     promptQuality: { ...EMPTY_PROMPT_QUALITY },
-    draftKind: null,
-    createdDraftKinds: [],
+    responseVisible: false,
     factsChecked: false,
     unsupportedRejected: false,
     approvalDecision: "pending",
@@ -64,18 +62,13 @@ function initialState(): M365CopilotState {
 function cloneState(state: M365CopilotState): M365CopilotState {
   return {
     ...state,
-    approvedSourceIds: [...state.approvedSourceIds],
+    contextSourceIds: [...state.contextSourceIds],
     promptQuality: { ...state.promptQuality },
-    createdDraftKinds: [...(state.createdDraftKinds ?? [])],
   };
 }
 
 function promptQualityComplete(quality: M365PromptQuality): boolean {
   return Object.values(quality).every(Boolean);
-}
-
-function isDraftKind(value: unknown): value is M365DraftKind {
-  return value === "meeting-summary" || value === "word-draft" || value === "outlook-draft";
 }
 
 function isPromptQuality(value: unknown): value is M365PromptQuality {
@@ -93,18 +86,14 @@ function isPromptQuality(value: unknown): value is M365PromptQuality {
 function isRuntimeState(value: unknown): value is M365CopilotState {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Partial<M365CopilotState>;
-  const createdDraftKinds = candidate.createdDraftKinds;
   return (
-    (candidate.activeApp === "teams" ||
-      candidate.activeApp === "word" ||
-      candidate.activeApp === "outlook") &&
-    Array.isArray(candidate.approvedSourceIds) &&
-    candidate.approvedSourceIds.every(isApprovedSourceId) &&
+    (candidate.groundingMode === "work" || candidate.groundingMode === "web") &&
+    Array.isArray(candidate.contextSourceIds) &&
+    candidate.contextSourceIds.every(isAllowedContextId) &&
+    typeof candidate.restrictedSourceAttempted === "boolean" &&
     typeof candidate.promptSubmitted === "boolean" &&
     isPromptQuality(candidate.promptQuality) &&
-    (candidate.draftKind === null || isDraftKind(candidate.draftKind)) &&
-    (createdDraftKinds === undefined ||
-      (Array.isArray(createdDraftKinds) && createdDraftKinds.every(isDraftKind))) &&
+    typeof candidate.responseVisible === "boolean" &&
     typeof candidate.factsChecked === "boolean" &&
     typeof candidate.unsupportedRejected === "boolean" &&
     (candidate.approvalDecision === "pending" ||
@@ -122,10 +111,10 @@ function id(prefix: string): string {
 
 export interface M365CopilotRuntimeAdapter extends RuntimeAdapter {
   subscribeState(handler: StateListener): () => void;
-  selectApp(app: M365App): void;
-  setSourceApproved(sourceId: string, approved: boolean): void;
+  inspect(ref: UiTargetRef): void;
+  setGroundingMode(mode: M365GroundingMode): void;
+  setContextSource(sourceId: string, selected: boolean): void;
   submitPrompt(quality: M365PromptQuality): void;
-  createDraft(kind: M365DraftKind): void;
   markFactsChecked(): void;
   rejectUnsupportedSuggestion(): void;
   decideApproval(decision: Exclude<M365ApprovalDecision, "pending">): void;
@@ -145,8 +134,8 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     for (const listener of stateListeners) listener(snapshot, reason);
   };
 
-  // Privacy contract: events contain only semantic action metadata and fixture IDs,
-  // never prompt text, document bodies, meeting notes, e-mail text or person names.
+  // Privacy contract: telemetry contains semantic action metadata and synthetic fixture IDs only.
+  // Prompt text and source bodies never leave the simulated product surface.
   const emit = (type: string, payload: Record<string, unknown>): void => {
     const event: TrainingEvent = {
       id: id("m365-event"),
@@ -162,11 +151,7 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
   const inspect = (ref: UiTargetRef): void => {
     const target = getM365CopilotSurfaceTarget(ref);
     if (!target) return;
-    emit("ui.element.inspected", {
-      ref,
-      label: target.label,
-      conceptKey: target.conceptKey,
-    });
+    emit("ui.element.inspected", { ref, label: target.label, conceptKey: target.conceptKey });
   };
 
   return {
@@ -201,18 +186,18 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
     async query<T = unknown>(selector: string): Promise<T> {
       const value: unknown = (() => {
         switch (selector) {
-          case "m365.activeApp":
-            return state.activeApp;
-          case "m365.approvedSourceCount":
-            return state.approvedSourceIds.length;
+          case "m365.grounding.mode":
+            return state.groundingMode;
+          case "m365.context.sourceCount":
+            return state.contextSourceIds.length;
+          case "m365.context.restrictedAttempted":
+            return state.restrictedSourceAttempted;
           case "m365.prompt.submitted":
             return state.promptSubmitted;
           case "m365.prompt.qualityComplete":
             return promptQualityComplete(state.promptQuality);
-          case "m365.draft.kind":
-            return state.draftKind;
-          case "m365.drafts.createdKinds":
-            return [...(state.createdDraftKinds ?? [])];
+          case "m365.chat.responseVisible":
+            return state.responseVisible;
           case "m365.review.factsChecked":
             return state.factsChecked;
           case "m365.review.unsupportedRejected":
@@ -236,6 +221,10 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
       return [...M365_COPILOT_RUNTIME_DEFINITION.surface];
     },
 
+    // Explore mode records product chrome that carries no state mutation, such as the
+    // navigation, the agent list and the source references of an answer.
+    inspect,
+
     async snapshot(): Promise<M365CopilotState> {
       return cloneState(state);
     },
@@ -245,46 +234,47 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
       replaceState(snapshot, "restore");
     },
 
-    selectApp(app) {
-      replaceState({ ...state, activeApp: app }, "mutation");
-      inspect(`m365.nav.${app}`);
-      emit("m365.app.selected", { app });
+    setGroundingMode(mode) {
+      replaceState({ ...state, groundingMode: mode }, "mutation");
+      inspect("m365.grounding");
+      emit("m365.grounding.changed", { mode });
     },
 
-    setSourceApproved(sourceId, approved) {
-      inspect("m365.sources");
-      if (approved && !isApprovedSourceId(sourceId)) {
-        emit("m365.source.approval.denied", { sourceId });
+    setContextSource(sourceId, selected) {
+      inspect(sourceId === "restricted-appendix" ? "m365.context.restricted" : "m365.context");
+      if (selected && !isAllowedContextId(sourceId)) {
+        replaceState({ ...state, restrictedSourceAttempted: true }, "mutation");
+        emit("m365.context.denied", { sourceId });
         return;
       }
-      const sourceIds = new Set(state.approvedSourceIds);
-      if (approved) sourceIds.add(sourceId);
+      const sourceIds = new Set(state.contextSourceIds);
+      if (selected) sourceIds.add(sourceId);
       else sourceIds.delete(sourceId);
-      replaceState({ ...state, approvedSourceIds: [...sourceIds].sort() }, "mutation");
-      emit("m365.source.approval.changed", { sourceId, approved });
+      replaceState(
+        { ...state, contextSourceIds: [...sourceIds].sort(), restrictedSourceAttempted: false },
+        "mutation",
+      );
+      emit("m365.context.changed", { sourceId, selected });
     },
 
     submitPrompt(quality) {
-      replaceState({ ...state, promptSubmitted: true, promptQuality: { ...quality } }, "mutation");
-      inspect("m365.prompt");
-      emit("m365.prompt.submitted", {
-        qualityComplete: promptQualityComplete(quality),
-        approvedSourceCount: state.approvedSourceIds.length,
-      });
-    },
-
-    createDraft(kind) {
       replaceState(
         {
           ...state,
-          draftKind: kind,
-          createdDraftKinds: [...new Set([...(state.createdDraftKinds ?? []), kind])],
+          promptSubmitted: true,
+          promptQuality: { ...quality },
+          responseVisible: true,
           approvalDecision: "pending",
         },
         "mutation",
       );
+      inspect("m365.prompt");
       inspect("m365.result");
-      emit("m365.draft.created", { kind });
+      emit("m365.prompt.submitted", {
+        qualityComplete: promptQualityComplete(quality),
+        contextSourceCount: state.contextSourceIds.length,
+        groundingMode: state.groundingMode,
+      });
     },
 
     markFactsChecked() {

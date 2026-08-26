@@ -4,7 +4,7 @@
   "mode": "explore",
   "learningLayer": "ai_workflow",
   "title": "Microsoft 365 Copilot – Erkunden",
-  "description": "Erkunde mit ausschließlich synthetischen Trainingsdaten die Rollen von Copilot in Teams, Word und Outlook. Prüfe Quellenfreigabe, Promptqualität, Entwurfscharakter, Faktenkontrolle und menschliche Freigabe.",
+  "description": "Erkunde die eigenständige Copilot-Chatfläche mit synthetischen Trainingsdaten: Navigation, Work/Web, Kontext, Composer, Quellen und menschliche Prüfung.",
   "learningObjectives": [
     "formulate_copilot_prompt",
     "review_copilot_output",
@@ -19,12 +19,17 @@
   "estimatedMinutes": 10,
   "points": 70,
   "exploreTargets": [
-    "m365.nav.teams",
-    "m365.nav.word",
-    "m365.nav.outlook",
-    "m365.sources",
+    "m365.nav.newChat",
+    "m365.nav.search",
+    "m365.nav.library",
+    "m365.nav.create",
+    "m365.nav.agents",
+    "m365.grounding",
+    "m365.context",
+    "m365.context.restricted",
     "m365.prompt",
     "m365.result",
+    "m365.result.sources",
     "m365.review.facts",
     "m365.unsupported.reject",
     "m365.approval"
@@ -32,16 +37,16 @@
   "steps": [
     {
       "id": "explore-m365-copilot-workflow",
-      "title": "M365-Copilot-Arbeitsablauf frei erkunden",
-      "description": "Untersuche die drei simulierten Anwendungen und den vollständigen Kontrollpfad von der Datenfreigabe bis zur menschlichen Freigabe.",
-      "instruction": "Erkunde Teams, Word und Outlook in beliebiger Reihenfolge. Prüfe die Quellenfreigabe, strukturiere einen Arbeitsauftrag mit Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat, erzeuge Entwürfe und untersuche anschließend Faktenprüfung, das Verwerfen einer unbelegten Aussage und die explizite Freigabeentscheidung.",
-      "rationale": "Microsoft 365 Copilot ist kein autonomer Freigabemechanismus. Gute Nutzung verbindet zulässigen Kontext, präzise Aufgabenstellung, kritische Ergebnisprüfung und menschliche Verantwortung.",
+      "title": "Copilot-Chat und Kontrollpfad frei erkunden",
+      "description": "Untersuche die simulierte Copilot-App vom Grounding und Kontext bis zur menschlichen Freigabe.",
+      "instruction": "Erkunde Navigation und Agents, vergleiche Work mit Web, öffne den Kontextdialog und prüfe, warum der vertrauliche Anhang gesperrt bleibt. Sende anschließend einen prüfbaren Prompt und untersuche Antwort, Quellen, Faktenprüfung, das Verwerfen einer unbelegten Aussage und die explizite Freigabeentscheidung.",
+      "rationale": "Produktgetreue Bedienung und verantwortliche KI-Nutzung gehören zusammen: zulässiger Kontext, präziser Auftrag, Quellenprüfung und menschliche Verantwortung bleiben getrennte Schritte.",
       "helpLevels": [
-        "Beginne mit den drei Anwendungen und vergleiche ihre unterschiedlichen Rollen.",
-        "Prüfe danach die Quellen: Eine ausdrücklich gesperrte Quelle darf nicht an die simulierte KI übergeben werden.",
-        "Klicke nacheinander auf Teams, Word und Outlook, wähle nur die beiden als „KI freigegeben“ markierten Quellen, aktiviere im Arbeitsauftrag Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat und sende ihn ab. Erzeuge anschließend die Entwürfe, bestätige die Faktenprüfung, verwirf die unbelegte Aussage und schließe den Ablauf mit einer ausdrücklichen Freigabeentscheidung ab."
+        "Beginne bei Navigation und Work/Web.",
+        "Öffne danach über das Anhang-Symbol den synthetischen Kontext.",
+        "Wähle freigegebene Quellen, sende im Feld „Message Copilot“ einen konkreten Auftrag und nutze nach der Antwort die getrennten Plattform-Prüfschritte."
       ],
-      "successMessage": "Du hast den M365-Copilot-Arbeitsablauf von der Quellenfreigabe bis zur menschlichen Entscheidung erkundet."
+      "successMessage": "Du hast Copilot-Chat, Kontextgrenzen und menschliche Prüfung erkundet."
     }
   ],
   "audience": {
