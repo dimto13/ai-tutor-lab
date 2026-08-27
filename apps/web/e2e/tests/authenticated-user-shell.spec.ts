@@ -1,5 +1,10 @@
 import { expect, test } from "../fixtures/browser-error-guard";
-import { accountMenu, accountMenuTrigger, openAccountSettings } from "../helpers/account-settings";
+import {
+  accountMenu,
+  accountMenuTrigger,
+  openAccountSettings,
+  settingsCloseButton,
+} from "../helpers/account-settings";
 
 test("authenticated shell exposes a keyboard-safe account menu and persists settings", async ({
   page,
@@ -33,7 +38,7 @@ test("authenticated shell exposes a keyboard-safe account menu and persists sett
 
   const dialog = await openAccountSettings(page);
   const emailDisplay = dialog.getByTestId("account-email");
-  await expect(dialog.getByRole("button", { name: "Einstellungen schließen" })).toBeFocused();
+  await expect(settingsCloseButton(dialog)).toBeFocused();
   await expect(dialog.getByText("Deutsch", { exact: true })).toBeVisible();
   await expect(dialog.getByText("Mandant: local-tenant", { exact: true })).toBeVisible();
   await expect(emailDisplay).toContainText("@");

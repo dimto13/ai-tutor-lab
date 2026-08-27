@@ -1,11 +1,6 @@
 {
   "extends": "../../../tsconfig.base.json",
-  "include": [
-    "cloud-env.d.ts",
-    "cloud.playwright.config.ts",
-    "cloud-tests/**/*.ts",
-    "helpers/account-settings.ts"
-  ],
+  "include": ["cloud-env.d.ts", "cloud.playwright.config.ts", "cloud-tests/**/*.ts"],
   "compilerOptions": {
     "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],

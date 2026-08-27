@@ -26,3 +26,12 @@ export async function openAccountSettings(page: Page): Promise<Locator> {
   await expect(dialog).toBeVisible();
   return dialog;
 }
+
+export function settingsCloseButton(dialog: Locator): Locator {
+  return dialog.getByRole("button", { name: "Einstellungen schließen" });
+}
+
+export async function closeAccountSettings(dialog: Locator): Promise<void> {
+  await settingsCloseButton(dialog).click();
+  await expect(dialog).toBeHidden();
+}

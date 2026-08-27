@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { openAccountSettings } from "../helpers/account-settings";
+import { closeAccountSettings, openAccountSettings } from "../helpers/account-settings";
 
 type CloudEnvironmentName = "CLOUD_BASE_URL" | "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD";
 
@@ -84,7 +84,7 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   if (originalRadioIndex >= 0) {
     const restoredDialog = await openAccountSettings(secondPage);
     await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
-    await restoredDialog.getByRole("button", { name: "Einstellungen schließen" }).click();
+    await closeAccountSettings(restoredDialog);
   }
 
   await secondPage.getByRole("button", { name: "Abmelden" }).click();
