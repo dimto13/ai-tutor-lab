@@ -1,4 +1,5 @@
 import { expect, test } from "../fixtures/browser-error-guard";
+import { accountMenu, accountMenuTrigger, openAccountSettings } from "../helpers/account-settings";
 
 test("authenticated shell exposes a keyboard-safe account menu and persists settings", async ({
   page,
@@ -8,13 +9,13 @@ test("authenticated shell exposes a keyboard-safe account menu and persists sett
   await expect(page.getByText("Lokaler Lernender", { exact: true })).toBeVisible();
   await expect(page.getByText("Maria Schmidt", { exact: false })).toHaveCount(0);
 
-  const menuTrigger = page.getByTestId("account-menu-trigger");
+  const menuTrigger = accountMenuTrigger(page);
   await expect(menuTrigger).toBeVisible();
   await expect(menuTrigger).toHaveAccessibleName("Nutzermenü für Lokaler Lernender öffnen");
 
   await menuTrigger.focus();
   await page.keyboard.press("Enter");
-  const menu = page.getByTestId("account-menu-popover");
+  const menu = accountMenu(page);
   await expect(menu).toBeVisible();
   await expect(menu.getByText("Mandant: local-tenant", { exact: true })).toBeVisible();
   await expect(menu.getByTestId("account-score-value")).toHaveText("Nicht verfügbar");
@@ -30,11 +31,8 @@ test("authenticated shell exposes a keyboard-safe account menu and persists sett
   await expect(menu).toBeHidden();
   await expect(menuTrigger).toBeFocused();
 
-  await menuTrigger.click();
-  await menu.getByRole("button", { name: "Einstellungen" }).click();
-  const dialog = page.getByRole("dialog", { name: "Einstellungen" });
+  const dialog = await openAccountSettings(page);
   const emailDisplay = dialog.getByTestId("account-email");
-  await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Einstellungen schließen" })).toBeFocused();
   await expect(dialog.getByText("Deutsch", { exact: true })).toBeVisible();
   await expect(dialog.getByText("Mandant: local-tenant", { exact: true })).toBeVisible();
