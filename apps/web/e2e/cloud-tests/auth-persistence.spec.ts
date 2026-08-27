@@ -1,5 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { closeAccountSettings, openAccountSettings } from "../helpers/account-settings";
+import {
+  closeAccountSettings,
+  openAccountSettings,
+  signOutFromAccountMenu,
+} from "../helpers/account-settings";
 
 type CloudEnvironmentName = "CLOUD_BASE_URL" | "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD";
 
@@ -59,14 +63,19 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   await firstRadios.nth(changedRadioIndex).check();
   await firstDialog.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(firstDialog).toBeHidden();
-  await expect(firstPage.getByText(changedName, { exact: true })).toBeVisible();
+
+  // Das Seiten-Chrome zeigt den Identitätsnamen aus der authentifizierten Identität, nicht den
+  // editierbaren Profilnamen (AccountMenu: identityDisplayName vs. profile.displayName). Die
+  // Speicherung wird deshalb dort belegt, wo der Profilwert tatsächlich gilt: im Dialog.
+  const firstReopenedDialog = await openAccountSettings(firstPage);
+  await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
+  await closeAccountSettings(firstReopenedDialog);
 
   await firstContext.close();
 
   const secondContext = await browser.newContext({ baseURL });
   const secondPage = await secondContext.newPage();
   await signIn(secondPage, email, password);
-  await expect(secondPage.getByText(changedName, { exact: true })).toBeVisible();
 
   const secondDialog = await openAccountSettings(secondPage);
   const secondNameInput = secondDialog.getByRole("textbox", { name: "Name" });
@@ -80,14 +89,14 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   await expect(secondDialog).toBeHidden();
 
   await secondPage.reload();
-  await expect(secondPage.getByText(originalName, { exact: true })).toBeVisible();
+  const restoredDialog = await openAccountSettings(secondPage);
+  await expect(restoredDialog.getByRole("textbox", { name: "Name" })).toHaveValue(originalName);
   if (originalRadioIndex >= 0) {
-    const restoredDialog = await openAccountSettings(secondPage);
     await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
-    await closeAccountSettings(restoredDialog);
   }
+  await closeAccountSettings(restoredDialog);
 
-  await secondPage.getByRole("button", { name: "Abmelden" }).click();
+  await signOutFromAccountMenu(secondPage);
   await expect(secondPage).toHaveURL(/\/willkommen$/);
   await secondContext.close();
 });

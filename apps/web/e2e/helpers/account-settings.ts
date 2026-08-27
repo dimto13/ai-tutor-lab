@@ -35,3 +35,10 @@ export async function closeAccountSettings(dialog: Locator): Promise<void> {
   await settingsCloseButton(dialog).click();
   await expect(dialog).toBeHidden();
 }
+
+export async function signOutFromAccountMenu(page: Page): Promise<void> {
+  await accountMenuTrigger(page).click();
+  const menu = accountMenu(page);
+  await expect(menu).toBeVisible();
+  await menu.getByRole("button", { name: "Abmelden" }).click();
+}
