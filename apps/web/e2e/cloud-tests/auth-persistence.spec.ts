@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   closeAccountSettings,
@@ -5,12 +6,17 @@ import {
   signOutFromAccountMenu,
 } from "../helpers/account-settings";
 
-type CloudEnvironmentName = "CLOUD_BASE_URL" | "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD";
+type CloudEnvironmentName =
+  | "CLOUD_BASE_URL"
+  | "CLOUD_TEST_EMAIL"
+  | "CLOUD_TEST_PASSWORD"
+  | "CLOUD_TEST_PERSONAL_EMAIL"
+  | "CLOUD_TEST_PERSONAL_PASSWORD";
 
 function requireEnvironmentValue(name: CloudEnvironmentName): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is required for authenticated cloud acceptance.`);
-  return name === "CLOUD_TEST_PASSWORD" ? value : value.trim();
+  return name.endsWith("PASSWORD") ? value : value.trim();
 }
 
 async function signIn(page: Page, email: string, password: string) {
@@ -99,4 +105,68 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   await signOutFromAccountMenu(secondPage);
   await expect(secondPage).toHaveURL(/\/willkommen$/);
   await secondContext.close();
+});
+
+test("cloud data transparency loads the real tenant policy and exports only the signed-in subject", async ({
+  browser,
+}) => {
+  const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
+  const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
+  const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
+  const context = await browser.newContext({ baseURL });
+  const page = await context.newPage();
+  await signIn(page, email, password);
+
+  await page.goto("/datentransparenz");
+  await expect(
+    page.getByRole("heading", { name: "Diese Daten werden über mich gespeichert" }),
+  ).toBeVisible();
+  await expect(page.getByText("Speichermodus: Cloud", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByText(/^Rohtelemetrie: \d+ Tage$/)).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Meine Daten als JSON exportieren" }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+  if (!downloadPath) throw new Error("Expected cloud own-data export path.");
+  const exported = JSON.parse(await readFile(downloadPath, "utf8")) as {
+    subject: { userId: string; tenantId: string };
+    storageMode: string;
+    serverData: { subject?: { userId?: string; tenantId?: string } } | null;
+    excluded: { authTokens: string; tenantAggregates: string };
+  };
+
+  expect(exported.storageMode).toBe("cloud");
+  expect(exported.subject.userId).toBeTruthy();
+  expect(exported.subject.tenantId).toBeTruthy();
+  expect(exported.serverData?.subject).toEqual(exported.subject);
+  expect(exported.excluded.authTokens).toContain("never exported");
+  expect(exported.excluded.tenantAggregates).toContain("not person-specific");
+  await expect(page.getByRole("status")).toContainText(
+    "Eigendatenexport wurde als JSON-Datei erstellt",
+  );
+  await context.close();
+});
+
+test("cloud data transparency maps missing tenant membership without leaking provider errors", async ({
+  browser,
+}) => {
+  const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
+  const email = requireEnvironmentValue("CLOUD_TEST_PERSONAL_EMAIL");
+  const password = requireEnvironmentValue("CLOUD_TEST_PERSONAL_PASSWORD");
+  const context = await browser.newContext({ baseURL });
+  const page = await context.newPage();
+  await signIn(page, email, password);
+
+  await page.goto("/datentransparenz");
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("Dein Datenkontext ist noch nicht verfügbar");
+  await expect(alert).not.toContainText("Lambda:Unhandled");
+  await expect(alert).not.toContainText("Tenant membership is required");
+  await expect(alert).not.toContainText("Exactly one tenant membership is required");
+  await expect(page.getByTestId("data-transparency-categories")).toBeVisible();
+  await expect(page.getByText("Speichermodus: Cloud", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/^Rohtelemetrie: \d+ Tage$/)).toHaveCount(0);
+  await context.close();
 });
