@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { closeAccountSettings, openAccountSettings } from "../helpers/account-settings";
 
 type CloudEnvironmentName = "CLOUD_BASE_URL" | "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD";
 
@@ -15,13 +16,6 @@ async function signIn(page: Page, email: string, password: string) {
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
-}
-
-async function openSettings(page: Page): Promise<Locator> {
-  await page.getByRole("button", { name: "Einstellungen öffnen" }).click();
-  const dialog = page.getByRole("dialog", { name: "Einstellungen" });
-  await expect(dialog).toBeVisible();
-  return dialog;
 }
 
 async function checkedRadioIndex(radios: Locator): Promise<number> {
@@ -45,7 +39,7 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   const firstPage = await firstContext.newPage();
   await signIn(firstPage, email, password);
 
-  const firstDialog = await openSettings(firstPage);
+  const firstDialog = await openAccountSettings(firstPage);
   const firstNameInput = firstDialog.getByRole("textbox", { name: "Name" });
   const originalName = await firstNameInput.inputValue();
   if (!originalName.trim())
@@ -74,7 +68,7 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   await signIn(secondPage, email, password);
   await expect(secondPage.getByText(changedName, { exact: true })).toBeVisible();
 
-  const secondDialog = await openSettings(secondPage);
+  const secondDialog = await openAccountSettings(secondPage);
   const secondNameInput = secondDialog.getByRole("textbox", { name: "Name" });
   const secondRadios = secondDialog.getByRole("radio");
   await expect(secondNameInput).toHaveValue(changedName);
@@ -88,9 +82,9 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   await secondPage.reload();
   await expect(secondPage.getByText(originalName, { exact: true })).toBeVisible();
   if (originalRadioIndex >= 0) {
-    const restoredDialog = await openSettings(secondPage);
+    const restoredDialog = await openAccountSettings(secondPage);
     await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
-    await restoredDialog.getByRole("button", { name: "Einstellungen schließen" }).click();
+    await closeAccountSettings(restoredDialog);
   }
 
   await secondPage.getByRole("button", { name: "Abmelden" }).click();
