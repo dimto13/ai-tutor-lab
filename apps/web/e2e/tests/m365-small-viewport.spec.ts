@@ -58,9 +58,15 @@ test.describe("M365 Copilot small viewport", () => {
     await activateWithKeyboard(page, page.getByRole("button", { name: "Nachricht senden" }));
     await expect(page.getByText("Deine Anfrage wurde gesendet.")).toBeVisible();
 
-    await activateWithKeyboard(page, page.getByRole("button", { name: "Verwendete Quellen erkunden" }));
+    await activateWithKeyboard(
+      page,
+      page.getByRole("button", { name: "Verwendete Quellen erkunden" }),
+    );
     await activateWithKeyboard(page, page.getByRole("button", { name: /Fakten prüfen/ }));
-    await activateWithKeyboard(page, page.getByRole("button", { name: /Unbelegte Aussage verwerfen/ }));
+    await activateWithKeyboard(
+      page,
+      page.getByRole("button", { name: /Unbelegte Aussage verwerfen/ }),
+    );
     await activateWithKeyboard(page, page.getByRole("button", { name: "Freigeben", exact: true }));
 
     await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
