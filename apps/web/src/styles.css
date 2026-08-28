@@ -236,6 +236,50 @@
   --sidebar-ring: var(--platform-ring);
 }
 
+/*
+ * Microsoft 365 Copilot is intentionally a light product surface even when the
+ * surrounding training shell is dark. Keep this scope separate from .platform-ui
+ * so the simulated product cannot inherit tutor/platform chrome by accident.
+ */
+.m365-product-ui {
+  --background: oklch(0.985 0.004 265);
+  --foreground: oklch(0.25 0.025 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.025 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.025 270);
+  --primary: oklch(0.49 0.17 285);
+  --primary-foreground: oklch(0.99 0.003 285);
+  --secondary: oklch(0.955 0.012 280);
+  --secondary-foreground: oklch(0.31 0.04 280);
+  --muted: oklch(0.95 0.008 270);
+  --muted-foreground: oklch(0.47 0.025 270);
+  --accent: oklch(0.91 0.04 285);
+  --accent-foreground: oklch(0.3 0.08 285);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.99 0.004 25);
+  --success: oklch(0.55 0.13 150);
+  --success-foreground: oklch(0.22 0.04 150);
+  --warning: oklch(0.7 0.13 80);
+  --border: oklch(0.86 0.012 270);
+  --input: oklch(0.9 0.012 270);
+  --ring: oklch(0.57 0.16 285);
+  --editor: oklch(1 0 0);
+  --panel: oklch(0.97 0.007 270);
+  --activity: oklch(0.955 0.012 280);
+  --terminal: oklch(0.985 0.004 265);
+  --statusbar: oklch(0.95 0.012 280);
+  --sidebar: oklch(0.96 0.012 280);
+  --sidebar-foreground: oklch(0.28 0.03 280);
+  --sidebar-primary: oklch(0.49 0.17 285);
+  --sidebar-primary-foreground: oklch(0.99 0.003 285);
+  --sidebar-accent: oklch(0.91 0.04 285);
+  --sidebar-accent-foreground: oklch(0.3 0.08 285);
+  --sidebar-border: oklch(0.86 0.012 270);
+  --sidebar-ring: oklch(0.57 0.16 285);
+  color-scheme: light;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
