@@ -4,6 +4,7 @@ import {
   ChevronDown,
   FileText,
   Library,
+  Menu,
   Mic,
   MoreHorizontal,
   Paperclip,
@@ -138,7 +139,10 @@ export function M365CopilotWorkspace() {
   const [state, setState] = useState<M365CopilotState>(EMPTY_STATE);
   const [prompt, setPrompt] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const runtimeRootRef = useRef<HTMLDivElement>(null);
+  const mobileNavToggleRef = useRef<HTMLButtonElement>(null);
+  const mobileNavCloseRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const container = runtimeRootRef.current;
@@ -160,9 +164,18 @@ export function M365CopilotWorkspace() {
     };
   }, [persistRuntimeSnapshot, restoreRuntimeSnapshot]);
 
+  useEffect(() => {
+    if (mobileNavOpen) mobileNavCloseRef.current?.focus();
+  }, [mobileNavOpen]);
+
   const sendPrompt = () => {
     if (!prompt.trim()) return;
     m365CopilotRuntime.submitPrompt(assessPromptQuality(prompt, state));
+  };
+
+  const closeMobileNavigation = () => {
+    setMobileNavOpen(false);
+    window.requestAnimationFrame(() => mobileNavToggleRef.current?.focus());
   };
 
   // Product chrome without state mutation stays non-interactive in the simulation. Explore mode
@@ -174,15 +187,29 @@ export function M365CopilotWorkspace() {
   return (
     <div
       ref={runtimeRootRef}
-      className="flex min-h-0 min-w-0 flex-1 bg-background text-foreground"
+      className="relative flex min-h-0 min-w-0 flex-1 bg-background text-foreground"
       aria-label="Microsoft 365 Copilot Simulation"
     >
       <nav
-        className="hidden w-56 shrink-0 border-r border-border bg-muted/40 p-3 sm:block"
+        id="m365-copilot-navigation"
+        className={`${mobileNavOpen ? "absolute inset-y-0 left-0 z-30 block shadow-xl" : "hidden"} w-56 max-w-[calc(100vw-2rem)] shrink-0 overflow-y-auto border-r border-border bg-background p-3 sm:static sm:block sm:max-w-none sm:bg-muted/40 sm:shadow-none`}
         aria-label="Copilot Navigation"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && mobileNavOpen) closeMobileNavigation();
+        }}
       >
         <div className="mb-4 flex items-center gap-2 px-2 py-1 text-sm font-semibold">
-          <Sparkles className="h-4 w-4" /> Microsoft 365 Copilot
+          <Sparkles className="h-4 w-4" />
+          <span>Microsoft 365 Copilot</span>
+          <button
+            ref={mobileNavCloseRef}
+            type="button"
+            aria-label="Navigation schließen"
+            onClick={closeMobileNavigation}
+            className="ml-auto rounded-md p-1 hover:bg-muted sm:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         {NAV_ITEMS.map(({ target, label, icon: Icon }) => (
           <div
@@ -221,7 +248,18 @@ export function M365CopilotWorkspace() {
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-border bg-background px-4">
+        <header className="flex min-h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-3 sm:gap-3 sm:px-4">
+          <button
+            ref={mobileNavToggleRef}
+            type="button"
+            aria-controls="m365-copilot-navigation"
+            aria-expanded={mobileNavOpen}
+            aria-label="Navigation öffnen"
+            onClick={() => setMobileNavOpen(true)}
+            className="shrink-0 rounded-md p-2 hover:bg-muted sm:hidden"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
           <div
             data-runtime-target="m365.grounding"
             className="flex rounded-full bg-muted p-1"
@@ -233,18 +271,18 @@ export function M365CopilotWorkspace() {
                 type="button"
                 aria-pressed={state.groundingMode === mode}
                 onClick={() => m365CopilotRuntime.setGroundingMode(mode)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold ${state.groundingMode === mode ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold sm:px-4 ${state.groundingMode === mode ? "bg-background shadow-sm" : "text-muted-foreground"}`}
               >
                 {mode === "work" ? "Work" : "Web"}
               </button>
             ))}
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="flex items-center gap-1 rounded-md px-2 py-1 text-xs">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <span className="hidden items-center gap-1 rounded-md px-2 py-1 text-xs sm:flex">
               Auto <ChevronDown className="h-3 w-3" />
             </span>
             <ShieldCheck className="h-4 w-4" aria-label="Enterprise Data Protection" />
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="hidden h-4 w-4 sm:block" />
           </div>
         </header>
 
