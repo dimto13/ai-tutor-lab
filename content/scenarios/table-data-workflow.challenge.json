@@ -184,7 +184,7 @@
       "helpLevels": [
         "Vergleiche zuerst die Zahl der Regionsgruppen in Zwischenwerten und Aggregation.",
         "Die Differenz zwischen Kontrollsumme und Aggregation entspricht genau einem sichtbaren Regionswert.",
-        "345.000 € gehören zu Ost; diese Region fehlt in der Aggregation."
+        "Identifiziere Ost mit 345.000 € als fehlende Region, wähle die Kontrollrechnung und wende anschließend „Fehlende Region identifizieren · Ost“ an."
       ],
       "successMessage": "Fehlende Region identifiziert."
     },
@@ -197,7 +197,7 @@
       "helpLevels": [
         "Trenne die fachliche Richtigkeit der Auswertung von der Frage, ob die Daten in einem KI-Werkzeug verarbeitet werden dürfen.",
         "Nutze Klassifizierungsstufe und Tenant-KI-Policy als Entscheidungskriterien.",
-        "Bei unklarer Freigabe nicht hochladen; bei entscheidungsrelevanten Ergebnissen kann eine zweite fachliche Prüfung erforderlich sein."
+        "Prüfe Klassifizierungsstufe und Tenant-KI-Policy; lade bei unklarer Freigabe nichts hoch und plane bei entscheidungsrelevanten Ergebnissen eine zweite fachliche Prüfung ein."
       ],
       "successMessage": "Datenklassifizierung eingeordnet."
     },
