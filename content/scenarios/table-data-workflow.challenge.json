@@ -13,11 +13,7 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "artifact.preview",
-      "classification.level",
-      "classification.ai_policy"
-    ]
+    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
   },
   "environment": {
     "productId": "vscode",
@@ -32,18 +28,12 @@
     ],
     "seed": {
       "workspaceMode": "folder",
-      "folders": [
-        "synthetische-vertriebsanalyse"
-      ],
-      "files": [
-        "auftrag.md"
-      ],
+      "folders": ["synthetische-vertriebsanalyse"],
+      "files": ["auftrag.md"],
       "contents": {
         "auftrag.md": "# Challenge\nPrüfe die vorliegende synthetische Auswertung. Keine Programmierung nötig. Kontrolliere Annahmen, Zwischenwerte, Aggregation und Datenfreigabe."
       },
-      "openTabs": [
-        "auftrag.md"
-      ],
+      "openTabs": ["auftrag.md"],
       "activeFile": "auftrag.md",
       "artifactPreview": {
         "activeArtifactId": "rules",
@@ -144,6 +134,14 @@
       "successMessage": "Fehlende Region identifiziert."
     },
     {
+      "id": "classify",
+      "title": "Datenfreigabe einordnen",
+      "description": "Übertrage den Prüfansatz auf echte Geschäftszahlen.",
+      "instruction": "Lies die EP-13-Datenklassifizierungsnotiz und prüfe, wann ein KI-Werkzeug bzw. eine zweite Person zulässig oder nötig ist.",
+      "why": "Eine korrekte Analyse hebt Datenschutz-, Freigabe- und Verantwortungsgrenzen nicht auf.",
+      "successMessage": "Datenklassifizierung eingeordnet."
+    },
+    {
       "id": "verify-finding",
       "title": "Befund verifizieren",
       "description": "Bestätige den korrigierten Kontrollbefund als fachlich geprüft.",
@@ -159,14 +157,6 @@
       },
       "highlightTarget": "artifact.preview.verify",
       "successMessage": "Plausibilitätsfehler korrekt gefunden und verifiziert."
-    },
-    {
-      "id": "classify",
-      "title": "Datenfreigabe einordnen",
-      "description": "Übertrage den Prüfansatz auf echte Geschäftszahlen.",
-      "instruction": "Lies die EP-13-Datenklassifizierungsnotiz und prüfe, wann ein KI-Werkzeug bzw. eine zweite Person zulässig oder nötig ist.",
-      "why": "Eine korrekte Analyse hebt Datenschutz-, Freigabe- und Verantwortungsgrenzen nicht auf.",
-      "successMessage": "Datenklassifizierung eingeordnet."
     }
   ]
 }
