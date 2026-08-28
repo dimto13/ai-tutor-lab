@@ -187,7 +187,7 @@ export function M365CopilotWorkspace() {
   return (
     <div
       ref={runtimeRootRef}
-      className="relative flex min-h-0 min-w-0 flex-1 bg-background text-foreground"
+      className="m365-product-ui relative flex min-h-0 min-w-0 flex-1 bg-background text-foreground"
       aria-label="Microsoft 365 Copilot Simulation"
     >
       <nav
