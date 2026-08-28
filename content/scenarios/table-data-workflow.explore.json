@@ -7,11 +7,7 @@
   "description": "Erkunde ohne Programmierung eine synthetische Umsatztabelle, Bereinigungsannahmen, sichtbare Zwischenwerte und eine fehlerhafte Aggregation.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "artifact.preview",
-      "classification.level",
-      "classification.ai_policy"
-    ]
+    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
   },
   "environment": {
     "productId": "vscode",
