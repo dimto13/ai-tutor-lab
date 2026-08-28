@@ -7,7 +7,11 @@
   "description": "Erkunde ohne Programmierung eine synthetische Umsatztabelle, Bereinigungsannahmen, sichtbare Zwischenwerte und eine fehlerhafte Aggregation.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
+    "glossaryConcepts": [
+      "artifact.preview",
+      "classification.level",
+      "classification.ai_policy"
+    ]
   },
   "environment": {
     "productId": "vscode",
@@ -38,16 +42,48 @@
             "type": "table",
             "title": "Rohdaten · Regionsgruppen",
             "columns": [
-              { "key": "region", "label": "Schreibweisen" },
-              { "key": "gross", "label": "Umsatz" },
-              { "key": "returns", "label": "Retouren" },
-              { "key": "net", "label": "Netto" }
+              {
+                "key": "region",
+                "label": "Schreibweisen"
+              },
+              {
+                "key": "gross",
+                "label": "Umsatz"
+              },
+              {
+                "key": "returns",
+                "label": "Retouren"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
             ],
             "rows": [
-              { "region": "Nord / NORD / Norden", "gross": 510000, "returns": -10000, "net": 500000 },
-              { "region": "Süd / Sued / SÜD", "gross": 430000, "returns": -5000, "net": 425000 },
-              { "region": "Ost / OST / Osten", "gross": 350000, "returns": -5000, "net": 345000 },
-              { "region": "West / WEST / Westen", "gross": 590000, "returns": -15000, "net": 575000 }
+              {
+                "region": "Nord / NORD / Norden",
+                "gross": 510000,
+                "returns": -10000,
+                "net": 500000
+              },
+              {
+                "region": "Süd / Sued / SÜD",
+                "gross": 430000,
+                "returns": -5000,
+                "net": 425000
+              },
+              {
+                "region": "Ost / OST / Osten",
+                "gross": 350000,
+                "returns": -5000,
+                "net": 345000
+              },
+              {
+                "region": "West / WEST / Westen",
+                "gross": 590000,
+                "returns": -15000,
+                "net": 575000
+              }
             ]
           },
           {
@@ -61,16 +97,48 @@
             "type": "table",
             "title": "Zwischenwerte",
             "columns": [
-              { "key": "region", "label": "Region" },
-              { "key": "gross", "label": "Umsatz" },
-              { "key": "returns", "label": "Retouren" },
-              { "key": "net", "label": "Netto" }
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "gross",
+                "label": "Umsatz"
+              },
+              {
+                "key": "returns",
+                "label": "Retouren"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
             ],
             "rows": [
-              { "region": "Nord", "gross": 510000, "returns": -10000, "net": 500000 },
-              { "region": "Süd", "gross": 430000, "returns": -5000, "net": 425000 },
-              { "region": "Ost", "gross": 350000, "returns": -5000, "net": 345000 },
-              { "region": "West", "gross": 590000, "returns": -15000, "net": 575000 }
+              {
+                "region": "Nord",
+                "gross": 510000,
+                "returns": -10000,
+                "net": 500000
+              },
+              {
+                "region": "Süd",
+                "gross": 430000,
+                "returns": -5000,
+                "net": 425000
+              },
+              {
+                "region": "Ost",
+                "gross": 350000,
+                "returns": -5000,
+                "net": 345000
+              },
+              {
+                "region": "West",
+                "gross": 590000,
+                "returns": -15000,
+                "net": 575000
+              }
             ]
           },
           {
@@ -78,14 +146,32 @@
             "type": "table",
             "title": "Aggregation · mit eingebautem Schwachpunkt",
             "columns": [
-              { "key": "region", "label": "Region" },
-              { "key": "year", "label": "Jahreswert" }
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "year",
+                "label": "Jahreswert"
+              }
             ],
             "rows": [
-              { "region": "Nord", "year": 500000 },
-              { "region": "Süd", "year": 425000 },
-              { "region": "West", "year": 575000 },
-              { "region": "Summe", "year": 1500000 }
+              {
+                "region": "Nord",
+                "year": 500000
+              },
+              {
+                "region": "Süd",
+                "year": 425000
+              },
+              {
+                "region": "West",
+                "year": 575000
+              },
+              {
+                "region": "Summe",
+                "year": 1500000
+              }
             ]
           },
           {
