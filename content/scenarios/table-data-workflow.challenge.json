@@ -5,12 +5,6 @@
   "learningLayer": "ai_workflow",
   "title": "Challenge: Tabellenanalyse plausibilisieren",
   "description": "Prüfe eine synthetische Umsatzanalyse selbstständig. Bestanden ist die Challenge erst, wenn du die fehlende Region identifiziert und den Kontrollbefund verifiziert hast.",
-  "learningObjectives": [
-    "review_data_cleaning_assumptions",
-    "inspect_intermediate_calculation_values",
-    "verify_table_analysis_plausibility",
-    "decide_ai_usage_by_classification"
-  ],
   "audience": {
     "personaId": "non-programmer",
     "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
