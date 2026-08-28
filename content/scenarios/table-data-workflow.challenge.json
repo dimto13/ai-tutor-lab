@@ -13,11 +13,7 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "artifact.preview",
-      "classification.level",
-      "classification.ai_policy"
-    ]
+    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
   },
   "environment": {
     "productId": "vscode",
