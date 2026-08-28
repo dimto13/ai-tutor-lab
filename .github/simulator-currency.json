@@ -162,6 +162,18 @@
             "m365-copilot-basics.challenge"
           ],
           "status": "resolved"
+        },
+        {
+          "id": "m365-copilot-product-look-2026-08",
+          "summary": "M365 Copilot verwendete das dunkle Plattform-Theme statt einer eigenständigen hellen Produktpalette",
+          "details": "Die eigenständige Copilot-Chatfläche teilte zuvor die globalen Plattform-Tokens für Hintergrund, Text, Muted-Flächen und Borders. #410 führt eine isolierte helle M365-Produkt-Token-Ebene ein, scoped die Produktoberfläche darauf und ergänzt Differentiation- sowie Accessibility-E2E für Explore, Guided und Challenge, ohne Szenario-, Highlight- oder Validierungsverträge zu verändern.",
+          "observedVersion": "2026-08",
+          "scenarioIds": [
+            "m365-copilot-basics.explore",
+            "m365-copilot-basics.guided",
+            "m365-copilot-basics.challenge"
+          ],
+          "status": "resolved"
         }
       ]
     }

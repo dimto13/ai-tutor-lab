@@ -65,6 +65,24 @@ test("Claude Code: dieselbe Plattform-Ebene bleibt vom CLI-RuntimeAdapter getren
   );
 });
 
+test("M365 Copilot: Explore, Guided und Challenge nutzen eine eigenständige helle Produktpalette", async ({
+  page,
+}) => {
+  for (const mode of ["explore", "guided", "challenge"] as const) {
+    await page.goto(`/training/m365-copilot-basics.${mode}`);
+    await waitForTrainingReady(page);
+
+    const runtime = page.locator(".m365-product-ui");
+    await expectPlatformSeparatedFromRuntime(page, runtime);
+
+    const [background, foreground] = await Promise.all([
+      cssVariable(runtime, "--background"),
+      cssVariable(runtime, "--foreground"),
+    ]);
+    expect(background).not.toBe(foreground);
+  }
+});
+
 test("kleiner Viewport: Guide bleibt erreichbar, differenziert und ohne horizontales Overflow", async ({
   page,
 }) => {
