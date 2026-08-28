@@ -28,6 +28,10 @@ export default defineConfig(({ command, mode }) => ({
           // does not discover a new dependency mid-suite and invalidate already
           // served optimized chunks with `504 Outdated Optimize Dep` responses.
           entries: ["src/**/*.{ts,tsx}"],
+          // #421 reproduced the historical race specifically for js-yaml even
+          // with the source scan enabled. Force this transitive dependency into
+          // the initial E2E prebundle rather than letting Vite discover it lazily.
+          include: ["js-yaml"],
         },
       }
     : {}),
