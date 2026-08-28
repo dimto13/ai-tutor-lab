@@ -13,7 +13,11 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
+    "glossaryConcepts": [
+      "artifact.preview",
+      "classification.level",
+      "classification.ai_policy"
+    ]
   },
   "environment": {
     "productId": "vscode",
@@ -50,16 +54,48 @@
             "type": "table",
             "title": "Zwischenwerte nach Bereinigung",
             "columns": [
-              { "key": "region", "label": "Region" },
-              { "key": "gross", "label": "Umsatz" },
-              { "key": "returns", "label": "Retouren" },
-              { "key": "net", "label": "Netto" }
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "gross",
+                "label": "Umsatz"
+              },
+              {
+                "key": "returns",
+                "label": "Retouren"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
             ],
             "rows": [
-              { "region": "Nord", "gross": 510000, "returns": -10000, "net": 500000 },
-              { "region": "Süd", "gross": 430000, "returns": -5000, "net": 425000 },
-              { "region": "Ost", "gross": 350000, "returns": -5000, "net": 345000 },
-              { "region": "West", "gross": 590000, "returns": -15000, "net": 575000 }
+              {
+                "region": "Nord",
+                "gross": 510000,
+                "returns": -10000,
+                "net": 500000
+              },
+              {
+                "region": "Süd",
+                "gross": 430000,
+                "returns": -5000,
+                "net": 425000
+              },
+              {
+                "region": "Ost",
+                "gross": 350000,
+                "returns": -5000,
+                "net": 345000
+              },
+              {
+                "region": "West",
+                "gross": 590000,
+                "returns": -15000,
+                "net": 575000
+              }
             ]
           },
           {
@@ -67,14 +103,32 @@
             "type": "table",
             "title": "Auswertung Region × Jahr",
             "columns": [
-              { "key": "region", "label": "Region" },
-              { "key": "net", "label": "Netto" }
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
             ],
             "rows": [
-              { "region": "Nord", "net": 500000 },
-              { "region": "Süd", "net": 425000 },
-              { "region": "West", "net": 575000 },
-              { "region": "Summe", "net": 1500000 }
+              {
+                "region": "Nord",
+                "net": 500000
+              },
+              {
+                "region": "Süd",
+                "net": 425000
+              },
+              {
+                "region": "West",
+                "net": 575000
+              },
+              {
+                "region": "Summe",
+                "net": 1500000
+              }
             ]
           },
           {
