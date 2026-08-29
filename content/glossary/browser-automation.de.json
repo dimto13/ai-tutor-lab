@@ -2,17 +2,9 @@
   "version": 1,
   "language": "de",
   "technologyConcepts": {
-    "browser_automation": ["ai.agent", "browser.automation"]
+    "ai_coding_assistant": ["browser.automation"]
   },
   "concepts": [
-    {
-      "key": "ai.agent",
-      "term": "Agent",
-      "aliases": ["KI-Agent", "AI Agent"],
-      "simple": "Ein Agent verfolgt ein Ziel und kann dafür mehrere Werkzeugschritte selbstständig nacheinander ausführen. Seine Berechtigungen und Prüfschritte müssen trotzdem ausdrücklich begrenzt sein.",
-      "advanced": "Ein agentisches System kombiniert Modellentscheidungen mit Werkzeugaufrufen und Zustandsübergängen. Es handelt nicht außerhalb der bereitgestellten Identität, Berechtigungen und technischen Guards.",
-      "uiTargets": []
-    },
     {
       "key": "browser.automation",
       "term": "Browser-Automatisierung",
