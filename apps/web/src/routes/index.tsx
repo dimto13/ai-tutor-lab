@@ -301,6 +301,39 @@ const workflowTrainings: TrainingCardModel[] = [
       },
     ],
   },
+  {
+    id: "table-data-workflow",
+    scenarioId: null,
+    title: "Tabellendaten mit KI auswerten und prüfen",
+    description:
+      "Unaufgeräumte Geschäftsdaten fachlich auswerten: Bereinigungsannahmen einzeln prüfen, Zwischenwerte nachvollziehen, Varianten vergleichen und die Aggregation vor der Freigabe plausibilisieren.",
+    icon: Bot,
+    available: true,
+    label: "AI Workflow · 3 Modi",
+    modes: [
+      {
+        scenarioId: "table-data-workflow.explore",
+        label: "Explore",
+        description: "Daten, Annahmen und Zwischenwerte frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "table-data-workflow.guided",
+        label: "Guided",
+        description: "Bereinigung und Auswertung Schritt für Schritt prüfen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "table-data-workflow.challenge",
+        label: "Challenge",
+        description: "Fehlende Region selbstständig finden und Ergebnis absichern",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
+  },
 ];
 
 const aiWorkflowModuleLine = getModuleLineById(moduleLineCatalog, "ai-workflows-in-practice");

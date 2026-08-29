@@ -202,6 +202,22 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "table-data-workflow.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 220,
+      "estimatedMinutes": 12,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "table-data-workflow.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 80,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "vscode-basics.challenge",
       "mode": "challenge",
       "version": "1",

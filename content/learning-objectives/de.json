@@ -221,6 +221,11 @@
       "id": "apply_uncertainty_escalation",
       "title": "Bei Unsicherheit höher einstufen",
       "description": "Die Regel „Im Zweifel höher einstufen“ auf Grenzfälle anwenden und erkennen, wann eine Unsicherheit eine höhere Schutzstufe und menschliche Prüfung erfordert."
+    },
+    {
+      "id": "verify_table_analysis_plausibility",
+      "title": "Tabellenauswertungen durch Kontrollrechnung plausibilisieren",
+      "description": "Zwischenwerte und Aggregation gegeneinander prüfen, eine fehlende Datenkategorie anhand der Differenz identifizieren und den fachlichen Endbefund bewusst verifizieren."
     }
   ]
 }

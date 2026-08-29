@@ -1,0 +1,227 @@
+{
+  "id": "table-data-workflow.challenge",
+  "moduleId": "table-data-workflow",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "Challenge: Tabellenanalyse plausibilisieren",
+  "description": "Prüfe eine synthetische Umsatzanalyse selbstständig. Bestanden ist die Challenge erst, wenn du die fehlende Region identifiziert und den Kontrollbefund verifiziert hast.",
+  "learningObjectives": ["verify_table_analysis_plausibility"],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["synthetische-vertriebsanalyse"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Challenge\nPrüfe die vorliegende synthetische Auswertung. Keine Programmierung nötig. Kontrolliere Annahmen, Zwischenwerte, Aggregation und Datenfreigabe."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "artifactPreview": {
+        "activeArtifactId": "rules",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "rules",
+            "type": "data",
+            "title": "Bereinigungsregeln",
+            "value": "Regel 1: Nord/NORD/Norden → Nord; Süd/Sued/SÜD → Süd; Ost/OST/Osten → Ost; West/WEST/Westen → West.\nRegel 2: gemischte Datumsformate → Kalenderdatum + Quartal.\nRegel 3: € / EUR und Tausendertrenner → numerischer EUR-Wert; Retouren negativ.\nPrüfe jede Regel bewusst gegen die Zwischenwerte."
+          },
+          {
+            "id": "intermediate",
+            "type": "table",
+            "title": "Zwischenwerte nach Bereinigung",
+            "columns": [
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "gross",
+                "label": "Umsatz"
+              },
+              {
+                "key": "returns",
+                "label": "Retouren"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
+            ],
+            "rows": [
+              {
+                "region": "Nord",
+                "gross": 510000,
+                "returns": -10000,
+                "net": 500000
+              },
+              {
+                "region": "Süd",
+                "gross": 430000,
+                "returns": -5000,
+                "net": 425000
+              },
+              {
+                "region": "Ost",
+                "gross": 350000,
+                "returns": -5000,
+                "net": 345000
+              },
+              {
+                "region": "West",
+                "gross": 590000,
+                "returns": -15000,
+                "net": 575000
+              }
+            ]
+          },
+          {
+            "id": "result",
+            "type": "table",
+            "title": "Auswertung Region × Jahr",
+            "columns": [
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
+            ],
+            "rows": [
+              {
+                "region": "Nord",
+                "net": 500000
+              },
+              {
+                "region": "Süd",
+                "net": 425000
+              },
+              {
+                "region": "West",
+                "net": 575000
+              },
+              {
+                "region": "Summe",
+                "net": 1500000
+              }
+            ]
+          },
+          {
+            "id": "control",
+            "type": "data",
+            "title": "Kontrollrechnung",
+            "value": "Kontrollsumme der vier bereinigten Regionswerte: 1.845.000 €. Aggregation: 1.500.000 €. Differenz: 345.000 €."
+          },
+          {
+            "id": "classification-note",
+            "type": "data",
+            "title": "Datenklassifizierung · EP-13",
+            "value": "Vor Verarbeitung echter Geschäftszahlen: Klassifizierungsstufe und Tenant-KI-Policy prüfen. Unklare Freigabe bedeutet nicht hochladen. Entscheidungsrelevante Auswertungen benötigen je nach Prozess eine zweite fachliche Prüfung."
+          }
+        ],
+        "revisions": [
+          {
+            "id": "identify-east",
+            "artifactId": "control",
+            "label": "Fehlende Region identifizieren · Ost",
+            "next": {
+              "id": "control",
+              "type": "data",
+              "title": "Kontrollrechnung · Ost gefunden",
+              "value": "Befund: Ost mit 345.000 € netto fehlt in der Aggregation. 1.500.000 € + 345.000 € = 1.845.000 €. Die Einzelwerte und Arithmetik sind korrekt; die Aggregation hat wegen einer unvollständigen Bereinigungs-/Zuordnungsannahme eine Region verloren."
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 12,
+  "points": 220,
+  "completionValidation": {
+    "kind": "event",
+    "type": "artifact.verified",
+    "match": {
+      "artifactId": "control",
+      "revisionId": "identify-east"
+    }
+  },
+  "steps": [
+    {
+      "id": "inspect-rules",
+      "title": "Bereinigungsannahmen prüfen",
+      "description": "Prüfe die drei Regeln einzeln gegen den sichtbaren Datenzustand.",
+      "instruction": "Wähle Bereinigungsregeln und vergleiche jede Regel mit den Zwischenwerten.",
+      "why": "Die Rechnung ist nur so gut wie die Annahmen über die Daten.",
+      "helpLevels": [
+        "Prüfe die Regeln nacheinander statt sie als einen Block zu übernehmen.",
+        "Vergleiche Regionsalias, Datumsnormalisierung und Zahlenformat jeweils mit den sichtbaren Zwischenwerten.",
+        "Achte besonders darauf, ob alle vier Regionsgruppen nach der Bereinigung noch als eigene Werte sichtbar sind."
+      ],
+      "successMessage": "Bereinigungsannahmen geprüft."
+    },
+    {
+      "id": "find-missing-region",
+      "title": "Fehlende Region finden",
+      "description": "Die Kontrollsumme passt nicht zur Aggregation. Finde die konkrete fehlende Region.",
+      "instruction": "Vergleiche Zwischenwerte, Auswertung und Kontrollrechnung. Wende „Fehlende Region identifizieren · Ost“ nur an, wenn du den Unterschied gefunden hast.",
+      "why": "Ein plausibler Gesamtwert ist kein Ersatz für eine Kontrollrechnung.",
+      "helpLevels": [
+        "Vergleiche zuerst die Zahl der Regionsgruppen in Zwischenwerten und Aggregation.",
+        "Die Differenz zwischen Kontrollsumme und Aggregation entspricht genau einem sichtbaren Regionswert.",
+        "Identifiziere Ost mit 345.000 € als fehlende Region, wähle die Kontrollrechnung und wende anschließend „Fehlende Region identifizieren · Ost“ an."
+      ],
+      "successMessage": "Fehlende Region identifiziert."
+    },
+    {
+      "id": "classify",
+      "title": "Datenfreigabe einordnen",
+      "description": "Übertrage den Prüfansatz auf echte Geschäftszahlen.",
+      "instruction": "Lies die EP-13-Datenklassifizierungsnotiz und prüfe, wann ein KI-Werkzeug bzw. eine zweite Person zulässig oder nötig ist.",
+      "why": "Eine korrekte Analyse hebt Datenschutz-, Freigabe- und Verantwortungsgrenzen nicht auf.",
+      "helpLevels": [
+        "Trenne die fachliche Richtigkeit der Auswertung von der Frage, ob die Daten in einem KI-Werkzeug verarbeitet werden dürfen.",
+        "Nutze Klassifizierungsstufe und Tenant-KI-Policy als Entscheidungskriterien.",
+        "Prüfe Klassifizierungsstufe und Tenant-KI-Policy; lade bei unklarer Freigabe nichts hoch und plane bei entscheidungsrelevanten Ergebnissen eine zweite fachliche Prüfung ein."
+      ],
+      "successMessage": "Datenklassifizierung eingeordnet."
+    },
+    {
+      "id": "verify-finding",
+      "title": "Befund verifizieren",
+      "description": "Bestätige den korrigierten Kontrollbefund als fachlich geprüft.",
+      "instruction": "Markiere die Kontrollrechnung nach der Ost-Korrektur als geprüft.",
+      "why": "Die Challenge bewertet den fachlichen Endbefund, nicht eine vorgegebene Klickfolge.",
+      "helpLevels": [
+        "Verifiziere erst, wenn du die Differenz fachlich erklären kannst.",
+        "Der korrigierte Befund muss die Aggregation wieder auf die Kontrollsumme von 1.845.000 € bringen.",
+        "Wende zuerst „Fehlende Region identifizieren · Ost“ auf die Kontrollrechnung an und markiere danach genau diesen korrigierten Befund als geprüft."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "control",
+          "revisionId": "identify-east"
+        }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Plausibilitätsfehler korrekt gefunden und verifiziert."
+    }
+  ]
+}
