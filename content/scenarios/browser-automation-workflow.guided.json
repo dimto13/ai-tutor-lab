@@ -180,6 +180,7 @@
         "contains": { "prompt": "A-102" }
       },
       "highlightTarget": "copilot.chat.prompt",
+      "exactTextValidation": true,
       "successMessage": "Der veraltete A-102-Eintrag wurde korrekt erkannt."
     },
     {
