@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "language": "de",
+  "technologyConcepts": {
+    "ai_coding_assistant": ["browser.automation"]
+  },
+  "concepts": [
+    {
+      "key": "browser.automation",
+      "term": "Browser-Automatisierung",
+      "aliases": ["Browser Automation", "Browser-Agent"],
+      "simple": "Browser-Automatisierung lässt Software Webseiten ähnlich wie ein Mensch bedienen, zum Beispiel Seiten öffnen, Felder lesen oder Formulare ausfüllen. Vor verändernden Aktionen sollte eine Freigabe erforderlich sein.",
+      "advanced": "Browser-Automatisierung steuert Browserzustände programmatisch. Dynamisches Laden, Sessions und Berechtigungen können zu falschen oder veralteten Ergebnissen führen; robuste Automatisierung braucht deshalb Wartebedingungen, Validierung und Freigabegrenzen.",
+      "uiTargets": []
+    }
+  ]
+}
