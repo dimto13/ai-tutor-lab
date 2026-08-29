@@ -1,0 +1,201 @@
+{
+  "id": "browser-automation-workflow.guided",
+  "moduleId": "browser-automation-workflow",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Browser-Automatisierung – Agent handeln und Ergebnis prüfen",
+  "description": "Formuliere ein Ziel statt einer Klickfolge, führe eine deterministisch simulierte Browser-Automatisierung Schritt für Schritt aus und erkenne einen veralteten Status, bevor du Identität, Berechtigungen und Freigabegrenzen einordnest.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["ai.agent", "copilot.mcp", "browser.automation", "artifact.preview"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["browser-automation-demo"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Wiederkehrende Statusabfrage\nHole für A-101, A-102 und A-103 den Status aus dem simulierten internen Portal und erstelle eine Übersicht. Beschreibe das Ziel, nicht die Klickfolge. Kein echter Browser und kein echter MCP-Server werden verwendet."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "chatResponses": [
+        {
+          "response": "Ziel verstanden: drei Vorgangsstatus lesen und als Übersicht sammeln. Die Browserhandlungen sind deterministisch simuliert und werden einzeln sichtbar ausgeführt; es gibt keinen Live-Browser- oder MCP-Zugriff."
+        }
+      ],
+      "artifactPreview": {
+        "activeArtifactId": "agent-log",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "agent-log",
+            "type": "data",
+            "title": "Agentenprotokoll · simulierte Browserbedienung",
+            "value": "Bereit. Jeder Browser-Schritt wird erst durch eine eigene Nutzeraktion ausgelöst."
+          },
+          {
+            "id": "status-overview",
+            "type": "table",
+            "title": "Gesammelte Statusübersicht",
+            "columns": [
+              { "key": "case", "label": "Vorgang" },
+              { "key": "status", "label": "Status" }
+            ],
+            "rows": [
+              { "case": "A-101", "status": "Freigegeben" },
+              { "case": "A-102", "status": "In Prüfung" },
+              { "case": "A-103", "status": "Abgeschlossen" }
+            ]
+          },
+          {
+            "id": "portal-reference",
+            "type": "table",
+            "title": "Portal-Referenz · vollständig geladen",
+            "columns": [
+              { "key": "case", "label": "Vorgang" },
+              { "key": "status", "label": "Tatsächlicher Status" }
+            ],
+            "rows": [
+              { "case": "A-101", "status": "Freigegeben" },
+              { "case": "A-102", "status": "Freigegeben" },
+              { "case": "A-103", "status": "Abgeschlossen" }
+            ]
+          },
+          {
+            "id": "responsibility",
+            "type": "data",
+            "title": "Einordnung · unter deiner Identität",
+            "value": "Der Agent handelt unter der Identität des angemeldeten Nutzers und kann nur dessen Berechtigungen nutzen. Eine Leseberechtigung macht eine gelesene Information nicht automatisch korrekt. Schreibende Aktionen wie Absenden, Ändern oder Löschen brauchen vor der Ausführung einen expliziten Freigabeschritt. Die fachliche und organisatorische Verantwortung bleibt beim Menschen beziehungsweise bei der Organisation."
+          }
+        ],
+        "revisions": [
+          {
+            "id": "case-a101",
+            "artifactId": "agent-log",
+            "label": "Schritt 1 · A-101 öffnen, Feld lesen",
+            "next": {
+              "id": "agent-log",
+              "type": "data",
+              "title": "Agentenprotokoll · simulierte Browserbedienung",
+              "value": "1/3 · A-101 geöffnet → Statusfeld gelesen → Freigegeben. Angehalten."
+            }
+          },
+          {
+            "id": "case-a102",
+            "artifactId": "agent-log",
+            "label": "Schritt 2 · A-102 öffnen, Feld lesen",
+            "next": {
+              "id": "agent-log",
+              "type": "data",
+              "title": "Agentenprotokoll · simulierte Browserbedienung",
+              "value": "2/3 · A-102 geöffnet → sichtbares Statusfeld gelesen → In Prüfung. Die Seite lädt verzögert; der Agent wartet fälschlich nicht auf den endgültigen Zustand. Angehalten."
+            }
+          },
+          {
+            "id": "case-a103",
+            "artifactId": "agent-log",
+            "label": "Schritt 3 · A-103 öffnen, Feld lesen",
+            "next": {
+              "id": "agent-log",
+              "type": "data",
+              "title": "Agentenprotokoll · simulierte Browserbedienung",
+              "value": "3/3 · A-103 geöffnet → Statusfeld gelesen → Abgeschlossen. Übersicht erzeugt. Jetzt fachlich prüfen."
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 15,
+  "points": 140,
+  "steps": [
+    {
+      "id": "task",
+      "title": "Ziel statt Klickfolge formulieren",
+      "description": "Die Aufgabe ist fachlich: drei Statuswerte sammeln und als Übersicht bereitstellen.",
+      "instruction": "Öffne Copilot Chat und formuliere in eigenen Worten das Ziel, die drei Vorgänge A-101 bis A-103 zu prüfen und als Übersicht zusammenzufassen. Beschreibe nicht einzelne Klicks.",
+      "why": "Agentische Arbeit beginnt mit einem Ziel und überprüfbaren Bedingungen statt einer starren Bedienungsanweisung.",
+      "helpLevels": [
+        "Nenne die drei Vorgänge und das gewünschte Ergebnis.",
+        "Formuliere einen Auftrag zum Lesen der Statuswerte und Erstellen einer Übersicht.",
+        "Sende einen eigenen Prompt, der A-101, A-102 und A-103 als Statusabfrage und eine Übersicht als Ergebnis verlangt."
+      ],
+      "validation": { "kind": "event", "type": "copilot.prompt.submitted" },
+      "highlightTarget": "copilot.chat.prompt",
+      "successMessage": "Der Zielauftrag wurde formuliert."
+    },
+    {
+      "id": "agent-steps",
+      "title": "Agentenschritte einzeln sichtbar ausführen",
+      "description": "Jeder simulierte Browserzugriff ist eine separate, pausierbare Aktion.",
+      "instruction": "Wähle das Agentenprotokoll und führe Schritt 1, Schritt 2 und Schritt 3 nacheinander aus. Lies nach jedem Schritt den sichtbaren Zwischenstand, bevor du fortfährst.",
+      "why": "Einzelne Schritte machen sichtbar, wo ein Agent falsche Annahmen oder zu frühe Zustände übernehmen kann.",
+      "helpLevels": [
+        "Öffne das Agentenprotokoll.",
+        "Nutze die drei Revisionsaktionen nacheinander.",
+        "Klicke nacheinander auf Schritt 1, Schritt 2 und Schritt 3; jeder Klick ist eine eigene Pausegrenze."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.updated",
+        "match": { "artifactId": "agent-log", "revisionId": "case-a103" }
+      },
+      "highlightTarget": "artifact.preview.applyRevision",
+      "successMessage": "Alle drei Agentenschritte wurden einzeln nachvollzogen."
+    },
+    {
+      "id": "verify-stale-status",
+      "title": "Veralteten Zwischenstand finden",
+      "description": "Bei A-102 wurde der Status gelesen, bevor die simulierte Seite vollständig geladen war.",
+      "instruction": "Vergleiche die Statusübersicht mit der vollständig geladenen Portal-Referenz. Öffne A-102 in der Referenz, erkenne den Unterschied und markiere die Portal-Referenz als geprüft.",
+      "why": "Automatisierung kann einen Fehler schneller vervielfältigen; deshalb braucht das Ergebnis einen unabhängigen Prüfschritt.",
+      "helpLevels": [
+        "Vergleiche A-101, A-102 und A-103 zeilenweise.",
+        "Nur A-102 unterscheidet sich zwischen Übersicht und Referenz.",
+        "Die Übersicht enthält für A-102 „In Prüfung“, die vollständig geladene Referenz „Freigegeben“. Wähle danach Ergebnis geprüft."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "portal-reference" }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Der veraltete A-102-Eintrag wurde erkannt und geprüft."
+    },
+    {
+      "id": "transfer",
+      "title": "Identität, Berechtigungen und Freigabe einordnen",
+      "description": "Browserzugriff erweitert nicht das Urteilsvermögen des Agenten. Er handelt mit den Rechten des Nutzers.",
+      "instruction": "Öffne die Einordnung. Prüfe besonders den Unterschied zwischen Lesen und Schreiben sowie die notwendige Freigabe vor Absenden, Ändern oder Löschen und markiere die Einordnung anschließend als geprüft.",
+      "why": "Berechtigung beantwortet, was technisch möglich ist; eine Freigabe beantwortet, was der Agent in diesem konkreten Fall tun darf.",
+      "helpLevels": [
+        "Öffne das Artefakt „Einordnung · unter deiner Identität“.",
+        "Achte auf Identität, Leserechte und schreibende Aktionen.",
+        "Lies die Einordnung vollständig: Der Agent nutzt Nutzerrechte; Schreiben braucht explizite Freigabe; Verantwortung bleibt bestehen. Markiere sie danach als geprüft."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "responsibility" }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Du hast Berechtigungs- und Freigabegrenzen der Browser-Automatisierung eingeordnet."
+    }
+  ]
+}
