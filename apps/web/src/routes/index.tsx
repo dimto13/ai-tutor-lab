@@ -334,6 +334,32 @@ const workflowTrainings: TrainingCardModel[] = [
       },
     ],
   },
+  {
+    id: "browser-automation-workflow",
+    scenarioId: null,
+    title: "Browser-Automatisierung mit einem Agenten",
+    description:
+      "Erlebe eine deterministisch simulierte Browser-Automatisierung Schritt für Schritt: Statuswerte lesen, einen veralteten Zwischenstand erkennen und Identität, Berechtigungen sowie Freigabegrenzen einordnen.",
+    icon: Bot,
+    available: true,
+    label: "AI Workflow · 2 Modi",
+    modes: [
+      {
+        scenarioId: "browser-automation-workflow.explore",
+        label: "Explore",
+        description: "Agentenschritte, Ergebnis und Fehlerquelle erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "browser-automation-workflow.guided",
+        label: "Guided",
+        description: "Browser-Agent kontrolliert ausführen und Ergebnis prüfen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+    ],
+  },
 ];
 
 const aiWorkflowModuleLine = getModuleLineById(moduleLineCatalog, "ai-workflows-in-practice");

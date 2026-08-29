@@ -24,6 +24,8 @@ import artifactPreviewFoundationRaw from "../../../../content/scenarios/artifact
 import htmlPageWorkflowGuidedRaw from "../../../../content/scenarios/html-page-workflow.guided.json";
 import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-workflow.guided.json";
 import tableDataWorkflowGuidedRaw from "../../../../content/scenarios/table-data-workflow.guided.json";
+import browserAutomationExploreRaw from "../../../../content/scenarios/browser-automation-workflow.explore.json";
+import browserAutomationGuidedRaw from "../../../../content/scenarios/browser-automation-workflow.guided.json";
 import sourceControlPlatformExploreRaw from "../../../../content/scenarios/source-control-platform-basics.explore.json";
 import sourceControlPlatformGuidedRaw from "../../../../content/scenarios/source-control-platform-basics.guided.json";
 import sourceControlPlatformChallengeRaw from "../../../../content/scenarios/source-control-platform-basics.challenge.json";
@@ -59,6 +61,8 @@ const tableDataWorkflowGuidedScenario = createTableDataWorkflowGuidedScenario(
 );
 const [tableDataWorkflowExploreScenario, tableDataWorkflowChallengeScenario] =
   createTableDataWorkflowVariants(tableDataWorkflowGuidedScenario);
+const browserAutomationExploreScenario = parseScenario(browserAutomationExploreRaw);
+const browserAutomationGuidedScenario = parseScenario(browserAutomationGuidedRaw);
 const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
 const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
 const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
@@ -93,6 +97,8 @@ const scenarios: Record<string, Scenario> = {
   [tableDataWorkflowExploreScenario.id]: tableDataWorkflowExploreScenario,
   [tableDataWorkflowGuidedScenario.id]: tableDataWorkflowGuidedScenario,
   [tableDataWorkflowChallengeScenario.id]: tableDataWorkflowChallengeScenario,
+  [browserAutomationExploreScenario.id]: browserAutomationExploreScenario,
+  [browserAutomationGuidedScenario.id]: browserAutomationGuidedScenario,
   [sourceControlPlatformExploreScenario.id]: sourceControlPlatformExploreScenario,
   [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
   [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,

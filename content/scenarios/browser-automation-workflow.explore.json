@@ -1,0 +1,137 @@
+{
+  "id": "browser-automation-workflow.explore",
+  "moduleId": "browser-automation-workflow",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "Browser-Automatisierung – Agentenschritte erkunden",
+  "description": "Erkunde eine deterministisch simulierte Browser-Automatisierung: Der Agent liest Vorgangsstatus unter deiner Identität, jeder Schritt bleibt einzeln nachvollziehbar, und ein verzögert geladener Vorgang erzeugt bewusst einen veralteten Eintrag.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["ai.agent", "copilot.mcp", "browser.automation", "artifact.preview"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["browser-automation-demo"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Statusübersicht\nHole den Status der Vorgänge A-101, A-102 und A-103 aus dem simulierten internen Portal und sammle ihn in einer Übersicht. Es wird kein echter Browser und kein echter MCP-Server verwendet."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "artifactPreview": {
+        "activeArtifactId": "agent-log",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "agent-log",
+            "type": "data",
+            "title": "Agentenprotokoll · simulierte Browserbedienung",
+            "value": "Startzustand. Noch kein Vorgang gelesen. Jeder angebotene Schritt ist eine einzeln auslösbare, deterministische Simulation."
+          },
+          {
+            "id": "status-overview",
+            "type": "table",
+            "title": "Gesammelte Statusübersicht",
+            "columns": [
+              { "key": "case", "label": "Vorgang" },
+              { "key": "status", "label": "Status" }
+            ],
+            "rows": [
+              { "case": "A-101", "status": "Freigegeben" },
+              { "case": "A-102", "status": "In Prüfung" },
+              { "case": "A-103", "status": "Abgeschlossen" }
+            ]
+          },
+          {
+            "id": "portal-reference",
+            "type": "table",
+            "title": "Portal-Referenz · nach vollständigem Laden",
+            "columns": [
+              { "key": "case", "label": "Vorgang" },
+              { "key": "status", "label": "Tatsächlicher Status" }
+            ],
+            "rows": [
+              { "case": "A-101", "status": "Freigegeben" },
+              { "case": "A-102", "status": "Freigegeben" },
+              { "case": "A-103", "status": "Abgeschlossen" }
+            ]
+          },
+          {
+            "id": "responsibility",
+            "type": "data",
+            "title": "Einordnung · Identität, Berechtigung und Freigabe",
+            "value": "Ein Browser-Agent handelt mit den Berechtigungen des angemeldeten Nutzers. Lesen und Statusabfragen sind von verändernden Aktionen zu unterscheiden. Vor Absenden, Ändern oder Löschen ist ein expliziter Freigabeschritt erforderlich. Verantwortung verschwindet durch Automatisierung nicht."
+          }
+        ],
+        "revisions": [
+          {
+            "id": "case-a101",
+            "artifactId": "agent-log",
+            "label": "Schritt 1 · A-101 öffnen und lesen",
+            "next": {
+              "id": "agent-log",
+              "type": "data",
+              "title": "Agentenprotokoll · simulierte Browserbedienung",
+              "value": "1/3 · Seite A-101 geöffnet → Statusfeld gelesen → Freigegeben. Pause: Der nächste Vorgang startet erst nach deiner Aktion."
+            }
+          },
+          {
+            "id": "case-a102",
+            "artifactId": "agent-log",
+            "label": "Schritt 2 · A-102 öffnen und lesen",
+            "next": {
+              "id": "agent-log",
+              "type": "data",
+              "title": "Agentenprotokoll · simulierte Browserbedienung",
+              "value": "2/3 · Seite A-102 geöffnet → Statusfeld sofort gelesen → In Prüfung. Achtung: Die Seite lädt verzögert; der gelesene Wert ist ein Zwischenstand. Pause vor dem nächsten Vorgang."
+            }
+          },
+          {
+            "id": "case-a103",
+            "artifactId": "agent-log",
+            "label": "Schritt 3 · A-103 öffnen und lesen",
+            "next": {
+              "id": "agent-log",
+              "type": "data",
+              "title": "Agentenprotokoll · simulierte Browserbedienung",
+              "value": "3/3 · Seite A-103 geöffnet → Statusfeld gelesen → Abgeschlossen. Die Übersicht ist erstellt; prüfe sie jetzt gegen die vollständig geladene Portal-Referenz."
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 80,
+  "exploreTargets": [
+    "artifact.preview.selector",
+    "artifact.preview.applyRevision",
+    "artifact.preview.verify"
+  ],
+  "steps": [
+    {
+      "id": "explore-browser-agent",
+      "title": "Sichtbare Agentenschritte und Grenzen erkunden",
+      "description": "Untersuche die einzeln auslösbaren Browser-Schritte, die erzeugte Übersicht, die Portal-Referenz und die Verantwortungseinordnung.",
+      "instruction": "Führe die drei Agentenschritte einzeln aus. Vergleiche danach Statusübersicht und Portal-Referenz, finde den veralteten Eintrag und lies die Einordnung zu Identität, Berechtigungen sowie Freigaben vor schreibenden Aktionen.",
+      "why": "Ein Agent ist nachvollziehbarer, wenn seine einzelnen Handlungen, Fehlerquellen und Berechtigungsgrenzen sichtbar bleiben.",
+      "helpLevels": [
+        "Beginne im Agentenprotokoll und löse jeden Schritt separat aus.",
+        "Vergleiche nach Schritt 3 besonders A-102 zwischen Übersicht und Portal-Referenz.",
+        "A-102 wurde vor vollständigem Laden als „In Prüfung“ gelesen; tatsächlich ist der Status „Freigegeben“. Lies anschließend die Verantwortungseinordnung."
+      ],
+      "successMessage": "Du hast die simulierte Browser-Automatisierung und ihren eingebauten Schwachpunkt erkundet."
+    }
+  ]
+}

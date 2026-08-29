@@ -60,7 +60,8 @@
         "developer-workflow-basics",
         "research-workflow",
         "html-page-workflow",
-        "table-data-workflow"
+        "table-data-workflow",
+        "browser-automation-workflow"
       ]
     }
   ]
