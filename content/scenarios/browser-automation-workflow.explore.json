@@ -115,7 +115,11 @@
   },
   "estimatedMinutes": 10,
   "points": 80,
-  "exploreTargets": ["artifact.preview.selector", "artifact.preview.applyRevision", "artifact.preview.verify"],
+  "exploreTargets": [
+    "artifact.preview.selector",
+    "artifact.preview.applyRevision",
+    "artifact.preview.verify"
+  ],
   "steps": [
     {
       "id": "explore-browser-agent",
