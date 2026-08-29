@@ -56,7 +56,12 @@
       "description": "Realistische Arbeitsabläufe mit KI durchführen, sichtbare Arbeitsprodukte iterieren und Ergebnisse aktiv fachlich prüfen.",
       "learningLayer": "ai_workflow",
       "patternId": "ai-workflow-seven-step",
-      "moduleIds": ["developer-workflow-basics", "research-workflow", "html-page-workflow"]
+      "moduleIds": [
+        "developer-workflow-basics",
+        "research-workflow",
+        "html-page-workflow",
+        "table-data-workflow"
+      ]
     }
   ]
 }

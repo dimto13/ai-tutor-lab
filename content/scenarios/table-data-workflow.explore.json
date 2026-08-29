@@ -1,0 +1,207 @@
+{
+  "id": "table-data-workflow.explore",
+  "moduleId": "table-data-workflow",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "Tabellendaten auswerten – frei erkunden",
+  "description": "Erkunde ohne Programmierung eine synthetische Umsatztabelle, Bereinigungsannahmen, sichtbare Zwischenwerte und eine fehlerhafte Aggregation.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["artifact.preview", "classification.level", "classification.ai_policy"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["synthetische-vertriebsanalyse"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Synthetische Vertriebsanalyse\nErkunde Rohdaten, Bereinigungsannahmen, Zwischenwerte und Ergebnis. Alle Zahlen sind frei erfunden."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "artifactPreview": {
+        "activeArtifactId": "source-summary",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "source-summary",
+            "type": "table",
+            "title": "Rohdaten · Regionsgruppen",
+            "columns": [
+              {
+                "key": "region",
+                "label": "Schreibweisen"
+              },
+              {
+                "key": "gross",
+                "label": "Umsatz"
+              },
+              {
+                "key": "returns",
+                "label": "Retouren"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
+            ],
+            "rows": [
+              {
+                "region": "Nord / NORD / Norden",
+                "gross": 510000,
+                "returns": -10000,
+                "net": 500000
+              },
+              {
+                "region": "Süd / Sued / SÜD",
+                "gross": 430000,
+                "returns": -5000,
+                "net": 425000
+              },
+              {
+                "region": "Ost / OST / Osten",
+                "gross": 350000,
+                "returns": -5000,
+                "net": 345000
+              },
+              {
+                "region": "West / WEST / Westen",
+                "gross": 590000,
+                "returns": -15000,
+                "net": 575000
+              }
+            ]
+          },
+          {
+            "id": "assumptions",
+            "type": "data",
+            "title": "Bereinigungsannahmen · einzeln prüfen",
+            "value": "1. Regionsalias zusammenfassen.\n2. DD.MM.YYYY, YYYY-MM-DD und DD/MM/YYYY vereinheitlichen.\n3. € / EUR und Tausendertrenner numerisch normalisieren; Retouren bleiben negativ.\nJede Regel ist eine Annahme, keine Magie."
+          },
+          {
+            "id": "intermediate",
+            "type": "table",
+            "title": "Zwischenwerte",
+            "columns": [
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "gross",
+                "label": "Umsatz"
+              },
+              {
+                "key": "returns",
+                "label": "Retouren"
+              },
+              {
+                "key": "net",
+                "label": "Netto"
+              }
+            ],
+            "rows": [
+              {
+                "region": "Nord",
+                "gross": 510000,
+                "returns": -10000,
+                "net": 500000
+              },
+              {
+                "region": "Süd",
+                "gross": 430000,
+                "returns": -5000,
+                "net": 425000
+              },
+              {
+                "region": "Ost",
+                "gross": 350000,
+                "returns": -5000,
+                "net": 345000
+              },
+              {
+                "region": "West",
+                "gross": 590000,
+                "returns": -15000,
+                "net": 575000
+              }
+            ]
+          },
+          {
+            "id": "aggregation",
+            "type": "table",
+            "title": "Aggregation · mit eingebautem Schwachpunkt",
+            "columns": [
+              {
+                "key": "region",
+                "label": "Region"
+              },
+              {
+                "key": "year",
+                "label": "Jahreswert"
+              }
+            ],
+            "rows": [
+              {
+                "region": "Nord",
+                "year": 500000
+              },
+              {
+                "region": "Süd",
+                "year": 425000
+              },
+              {
+                "region": "West",
+                "year": 575000
+              },
+              {
+                "region": "Summe",
+                "year": 1500000
+              }
+            ]
+          },
+          {
+            "id": "control",
+            "type": "data",
+            "title": "Plausibilitätscheck",
+            "value": "Summe der vier bereinigten Einzelwerte: 1.845.000 €. Aggregation: 1.500.000 €. Differenz: 345.000 €. Welche Region fehlt?"
+          },
+          {
+            "id": "classification-note",
+            "type": "data",
+            "title": "Einordnung · EP-13 Datenklassifizierung",
+            "value": "Geschäftszahlen nur in freigegebenen KI-Werkzeugen verarbeiten, wenn Klassifizierungsstufe und Tenant-KI-Policy dies erlauben. Bei unklarer Freigabe oder entscheidungsrelevanten Ergebnissen fachliche zweite Prüfung einplanen."
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 80,
+  "exploreTargets": ["artifact.preview.selector", "artifact.preview.verify"],
+  "steps": [
+    {
+      "id": "explore-table-analysis",
+      "title": "Annahmen, Zwischenwerte und Kontrollsumme erkunden",
+      "description": "Untersuche die Artefakte in beliebiger Reihenfolge. Die Aggregation wirkt plausibel, enthält aber nicht alle bereinigten Regionsgruppen.",
+      "instruction": "Vergleiche Rohdaten, Annahmen, Zwischenwerte, Aggregation, Kontrollsumme und Datenklassifizierungs-Einordnung. Finde heraus, warum 345.000 € fehlen.",
+      "why": "Der Lernkern ist nicht Rechnen, sondern das Prüfen der Annahmen, aus denen die Rechnung entsteht.",
+      "helpLevels": [
+        "Beginne mit Rohdaten und Zwischenwerten.",
+        "Vergleiche die vier Regionsgruppen mit der Aggregation.",
+        "Ost fehlt in der Aggregation; lies danach die EP-13-Einordnung zur Datenklassifizierung."
+      ],
+      "successMessage": "Du hast den Tabellenworkflow frei erkundet."
+    }
+  ]
+}
