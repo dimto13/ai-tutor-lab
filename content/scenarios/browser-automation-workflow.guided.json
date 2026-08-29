@@ -36,6 +36,10 @@
       "activeFile": "auftrag.md",
       "chatResponses": [
         {
+          "promptContains": "A-102",
+          "response": "Richtig erkannt: A-102 ist der veraltete Eintrag. Die Übersicht enthält „In Prüfung“, während die vollständig geladene Portal-Referenz „Freigegeben“ zeigt."
+        },
+        {
           "response": "Ziel verstanden: drei Vorgangsstatus lesen und als Übersicht sammeln. Die Browserhandlungen sind deterministisch simuliert und werden einzeln sichtbar ausgeführt; es gibt keinen Live-Browser- oder MCP-Zugriff."
         }
       ],
@@ -162,21 +166,21 @@
     {
       "id": "verify-stale-status",
       "title": "Veralteten Zwischenstand finden",
-      "description": "Bei A-102 wurde der Status gelesen, bevor die simulierte Seite vollständig geladen war.",
-      "instruction": "Vergleiche die Statusübersicht mit der vollständig geladenen Portal-Referenz. Öffne A-102 in der Referenz, erkenne den Unterschied und markiere die Portal-Referenz als geprüft.",
+      "description": "Bei einem Vorgang wurde der Status gelesen, bevor die simulierte Seite vollständig geladen war.",
+      "instruction": "Vergleiche die Statusübersicht mit der vollständig geladenen Portal-Referenz. Öffne danach Copilot Chat und nenne den Vorgang, dessen Status in der Übersicht veraltet ist.",
       "why": "Automatisierung kann einen Fehler schneller vervielfältigen; deshalb braucht das Ergebnis einen unabhängigen Prüfschritt.",
       "helpLevels": [
         "Vergleiche A-101, A-102 und A-103 zeilenweise.",
-        "Nur A-102 unterscheidet sich zwischen Übersicht und Referenz.",
-        "Die Übersicht enthält für A-102 „In Prüfung“, die vollständig geladene Referenz „Freigegeben“. Wähle danach Ergebnis geprüft."
+        "Nur ein Vorgang unterscheidet sich zwischen Übersicht und Referenz.",
+        "Die Übersicht enthält für A-102 „In Prüfung“, die vollständig geladene Referenz „Freigegeben“. Sende A-102 in Copilot."
       ],
       "validation": {
         "kind": "event",
-        "type": "artifact.verified",
-        "match": { "artifactId": "portal-reference" }
+        "type": "copilot.prompt.submitted",
+        "contains": { "prompt": "A-102" }
       },
-      "highlightTarget": "artifact.preview.verify",
-      "successMessage": "Der veraltete A-102-Eintrag wurde erkannt und geprüft."
+      "highlightTarget": "copilot.chat.prompt",
+      "successMessage": "Der veraltete A-102-Eintrag wurde korrekt erkannt."
     },
     {
       "id": "transfer",
