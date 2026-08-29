@@ -1,6 +1,9 @@
 {
   "version": 1,
   "language": "de",
+  "technologyConcepts": {
+    "browser_automation": ["ai.agent", "browser.automation"]
+  },
   "concepts": [
     {
       "key": "ai.agent",
