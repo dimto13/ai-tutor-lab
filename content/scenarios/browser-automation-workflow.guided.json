@@ -7,7 +7,13 @@
   "description": "Formuliere ein Ziel statt einer Klickfolge, führe eine deterministisch simulierte Browser-Automatisierung Schritt für Schritt aus und erkenne einen veralteten Status, bevor du Identität, Berechtigungen und Freigabegrenzen einordnest.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["ai.agent", "copilot.mcp", "browser.automation", "artifact.preview"]
+    "glossaryConcepts": [
+      "ai.agent",
+      "copilot.mcp",
+      "github.copilot",
+      "browser.automation",
+      "artifact.preview"
+    ]
   },
   "environment": {
     "productId": "vscode",
