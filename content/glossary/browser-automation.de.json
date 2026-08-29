@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "language": "de",
+  "concepts": [
+    {
+      "key": "ai.agent",
+      "term": "Agent",
+      "aliases": ["KI-Agent", "AI Agent"],
+      "simple": "Ein Agent verfolgt ein Ziel und kann dafür mehrere Werkzeugschritte selbstständig nacheinander ausführen. Seine Berechtigungen und Prüfschritte müssen trotzdem ausdrücklich begrenzt sein.",
+      "advanced": "Ein agentisches System kombiniert Modellentscheidungen mit Werkzeugaufrufen und Zustandsübergängen. Es handelt nicht außerhalb der bereitgestellten Identität, Berechtigungen und technischen Guards.",
+      "uiTargets": []
+    },
+    {
+      "key": "browser.automation",
+      "term": "Browser-Automatisierung",
+      "aliases": ["Browser Automation", "Browser-Agent"],
+      "simple": "Browser-Automatisierung lässt Software Webseiten ähnlich wie ein Mensch bedienen, zum Beispiel Seiten öffnen, Felder lesen oder Formulare ausfüllen. Vor verändernden Aktionen sollte eine Freigabe erforderlich sein.",
+      "advanced": "Browser-Automatisierung steuert Browserzustände programmatisch. Dynamisches Laden, Sessions und Berechtigungen können zu falschen oder veralteten Ergebnissen führen; robuste Automatisierung braucht deshalb Wartebedingungen, Validierung und Freigabegrenzen.",
+      "uiTargets": []
+    }
+  ]
+}
