@@ -45,13 +45,12 @@
             "title": "Gesammelte Statusübersicht",
             "columns": [
               { "key": "case", "label": "Vorgang" },
-              { "key": "status", "label": "Status" },
-              { "key": "note", "label": "Hinweis" }
+              { "key": "status", "label": "Status" }
             ],
             "rows": [
-              { "case": "A-101", "status": "Freigegeben", "note": "aktuell gelesen" },
-              { "case": "A-102", "status": "In Prüfung", "note": "veralteter Zwischenstand" },
-              { "case": "A-103", "status": "Abgeschlossen", "note": "aktuell gelesen" }
+              { "case": "A-101", "status": "Freigegeben" },
+              { "case": "A-102", "status": "In Prüfung" },
+              { "case": "A-103", "status": "Abgeschlossen" }
             ]
           },
           {
