@@ -12,12 +12,7 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "ai.agent",
-      "copilot.mcp",
-      "github.copilot",
-      "artifact.preview"
-    ]
+    "glossaryConcepts": ["ai.agent", "copilot.mcp", "github.copilot", "artifact.preview"]
   },
   "environment": {
     "productId": "vscode",
