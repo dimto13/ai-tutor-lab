@@ -81,7 +81,7 @@
             "id": "ticket-report",
             "type": "data",
             "title": "Artefakt · Ticketauswertung",
-            "value": "7 offene Passwort-Reset-Tickets im Service-Desk Nord. Quelle: tickets.search. Nicht als unternehmensweite Gesamtzahl verwenden."
+            "value": "7 offene Passwort-Reset-Tickets im Service-Desk Nord. Quelle: tickets.search. Prüfe, ob diese Zahl als unternehmensweite Gesamtzahl verwendet werden darf."
           },
           {
             "id": "governance",
@@ -90,7 +90,19 @@
             "value": "Prüfe Betreiber, Datenzugriff und erlaubte Aktionen. Ein Server mit Schreibrechten benötigt strengere Freigabe als ein reiner Lesezugriff. Serverregistrierung sollte administrativ kontrolliert sein. Werkzeugparameter und Rückgaben können Unternehmensdaten enthalten; bei extern betriebenen Servern muss deshalb klar sein, welche Daten die kontrollierte Umgebung verlassen."
           }
         ],
-        "revisions": []
+        "revisions": [
+          {
+            "id": "recognize-north-scope",
+            "artifactId": "ticket-report",
+            "label": "Datenzuschnitt erkennen · Service-Desk Nord",
+            "next": {
+              "id": "ticket-report",
+              "type": "data",
+              "title": "Ticketauswertung · Scope geprüft",
+              "value": "Befund: Im Service-Desk Nord sind 7 passende Passwort-Reset-Tickets offen. Diese Zahl ist nicht als unternehmensweite Gesamtzahl belegt, weil tickets.search nur diesen Teilbereich abdeckt."
+            }
+          }
+        ]
       }
     }
   },
@@ -154,19 +166,22 @@
       "id": "verify-scope",
       "title": "Unvollständigkeit erkennen",
       "description": "Die Antwort ist innerhalb des Werkzeugzuschnitts korrekt, aber nicht unternehmensweit vollständig.",
-      "instruction": "Vergleiche Werkzeugbeschreibung und Ticketauswertung. Öffne danach Copilot Chat und nenne den Bereich, auf den die Antwort tatsächlich beschränkt ist.",
+      "instruction": "Vergleiche Werkzeugbeschreibung und Ticketauswertung. Wenn du den begrenzten Datenzuschnitt erkannt hast, wende „Datenzuschnitt erkennen · Service-Desk Nord“ auf die Ticketauswertung an und markiere den korrigierten Befund als geprüft.",
       "why": "Ein Werkzeug bestimmt durch seinen Datenzuschnitt die Grenzen der daraus erzeugten Antwort.",
       "helpLevels": [
         "Lies die Beschreibung von tickets.search erneut.",
-        "Der Scope ist nicht das gesamte Unternehmen.",
-        "Sende „Service-Desk Nord“ in Copilot Chat, damit der tatsächliche Datenumfang ausdrücklich benannt ist."
+        "Der Scope ist nicht das gesamte Unternehmen; die Ticketauswertung muss diese Grenze ausdrücklich festhalten.",
+        "Wähle die Ticketauswertung, wende „Datenzuschnitt erkennen · Service-Desk Nord“ an und markiere anschließend genau diesen korrigierten Befund als geprüft."
       ],
       "validation": {
         "kind": "event",
-        "type": "copilot.prompt.submitted",
-        "contains": { "prompt": "Service-Desk Nord" }
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "ticket-report",
+          "revisionId": "recognize-north-scope"
+        }
       },
-      "highlightTarget": "copilot.chat.prompt",
+      "highlightTarget": "artifact.preview.verify",
       "successMessage": "Du hast erkannt, dass die Antwort nur Service-Desk Nord abdeckt."
     },
     {
