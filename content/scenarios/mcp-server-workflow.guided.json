@@ -167,7 +167,6 @@
         "contains": { "prompt": "Service-Desk Nord" }
       },
       "highlightTarget": "copilot.chat.prompt",
-      "exactTextValidation": true,
       "successMessage": "Du hast erkannt, dass die Antwort nur Service-Desk Nord abdeckt."
     },
     {
