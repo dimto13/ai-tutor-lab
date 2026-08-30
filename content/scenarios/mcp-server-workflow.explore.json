@@ -7,11 +7,7 @@
   "description": "Erkunde eine deterministische MCP-Simulation: ohne Fachsystem-Anbindung bleibt eine Ticketfrage unbeantwortbar; nach Aktivierung werden Werkzeuge, Rechte, Aufruf und Rückgabe sichtbar – einschließlich eines absichtlich eingeschränkten Datenzuschnitts.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": [
-      "ai.agent",
-      "copilot.mcp",
-      "artifact.preview"
-    ]
+    "glossaryConcepts": ["ai.agent", "copilot.mcp", "artifact.preview"]
   },
   "environment": {
     "productId": "vscode",
