@@ -75,8 +75,12 @@ async function scanAccessibility(
   state: string,
   attach: (name: string, options: { body: string; contentType: string }) => Promise<void>,
 ): Promise<void> {
-  const results = await new AxeBuilder({ page }).withTags([...wcagTags]).analyze();
   const route = pagePath(page.url());
+  if (route === "/willkommen") {
+    await page.locator(".lp-dots button:not([disabled])").first().waitFor({ state: "visible" });
+  }
+
+  const results = await new AxeBuilder({ page }).withTags([...wcagTags]).analyze();
   const allowedFindings: AllowedFinding[] = [];
   const unexpectedViolations: AxeViolation[] = [];
 
