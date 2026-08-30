@@ -106,7 +106,7 @@
       "helpLevels": [
         "Stelle die Fachfrage aus frage.md.",
         "Frage nach offenen Passwort-Reset-Tickets dieser Woche.",
-        "Sende die Ticketfrage in Copilot Chat."
+        "Öffne Copilot Chat und sende dort die Ticketfrage aus frage.md nach den offenen Passwort-Reset-Tickets dieser Woche."
       ],
       "validation": { "kind": "event", "type": "copilot.prompt.submitted" },
       "highlightTarget": "copilot.chat.prompt",
@@ -159,7 +159,7 @@
       "helpLevels": [
         "Lies die Beschreibung von tickets.search erneut.",
         "Der Scope ist nicht das gesamte Unternehmen.",
-        "Sende „Service-Desk Nord“ in Copilot Chat."
+        "Sende „Service-Desk Nord“ in Copilot Chat, damit der tatsächliche Datenumfang ausdrücklich benannt ist."
       ],
       "validation": {
         "kind": "event",
