@@ -341,7 +341,7 @@ export function createUserDataExportHandler(send, now = () => Date.now()) {
   return async (event) => {
     const subject = caller(event);
     const context = await loadTransparencyContext(subject, send);
-    const fieldName = event?.info?.fieldName;
+    const fieldName = event?.fieldName ?? event?.info?.fieldName;
     if (fieldName === "loadMyDataTransparencyContext") return context;
     if (fieldName !== "exportMyData") throw new Error("Unsupported user data export operation");
 
