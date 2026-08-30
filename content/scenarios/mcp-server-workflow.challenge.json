@@ -81,13 +81,31 @@
             "value": "tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' }) → { count: 7, scope: 'Service-Desk Nord' }"
           },
           {
+            "id": "ticket-report",
+            "type": "data",
+            "title": "Antwortentwurf · Ticketauswertung",
+            "value": "Diese Woche sind 7 Passwort-Reset-Tickets offen. Prüfe anhand der Werkzeugbeschreibung, ob diese Aussage für das gesamte Unternehmen belegt ist."
+          },
+          {
             "id": "governance",
             "type": "data",
             "title": "Governance-Hinweis",
             "value": "Serverbetreiber und Datenfluss müssen freigegeben sein. Schreibende Werkzeuge benötigen eine strengere Freigabe als reine Lesezugriffe. Werkzeugparameter können Unternehmensdaten an den Server übertragen."
           }
         ],
-        "revisions": []
+        "revisions": [
+          {
+            "id": "recognize-north-scope",
+            "artifactId": "ticket-report",
+            "label": "Datenzuschnitt erkennen · Service-Desk Nord",
+            "next": {
+              "id": "ticket-report",
+              "type": "data",
+              "title": "Ticketauswertung · Scope geprüft",
+              "value": "Befund: Im Service-Desk Nord sind 7 passende Passwort-Reset-Tickets offen. Diese Zahl ist nicht als unternehmensweite Gesamtzahl belegt, weil tickets.search nur diesen Teilbereich abdeckt."
+            }
+          }
+        ]
       }
     }
   },
@@ -98,8 +116,11 @@
     "of": [
       {
         "kind": "event",
-        "type": "copilot.prompt.submitted",
-        "contains": { "prompt": "Service-Desk Nord" }
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "ticket-report",
+          "revisionId": "recognize-north-scope"
+        }
       },
       {
         "kind": "event",
@@ -117,13 +138,13 @@
     {
       "id": "challenge-mcp-scope",
       "title": "Werkzeugantwort und Governance eigenständig prüfen",
-      "description": "Bewerte die gemeldete Ticketzahl anhand von Werkzeugbeschreibung und sichtbarem Aufruf.",
-      "instruction": "Untersuche Werkzeugbeschreibung und Werkzeugaufruf. Sende anschließend im Copilot Chat den exakten Bereich, für den die Zahl 7 belegt ist. Öffne danach den Governance-Hinweis und markiere ihn als geprüft. Die Reihenfolge der Artefaktprüfung ist dir überlassen.",
+      "description": "Bewerte die gemeldete Ticketzahl anhand von Werkzeugbeschreibung, sichtbarem Aufruf und Antwortentwurf.",
+      "instruction": "Untersuche Werkzeugbeschreibung, Werkzeugaufruf und Antwortentwurf. Wenn du den begrenzten Datenzuschnitt erkannt hast, wende „Datenzuschnitt erkennen · Service-Desk Nord“ auf die Ticketauswertung an und markiere den korrigierten Befund als geprüft. Öffne außerdem den Governance-Hinweis und markiere ihn als geprüft. Die Reihenfolge der Artefaktprüfung ist dir überlassen.",
       "why": "Die Challenge bewertet den fachlichen Endzustand: korrekter Scope erkannt und Governance-Grenzen geprüft – nicht eine bestimmte Klickfolge.",
       "helpLevels": [
-        "Vergleiche den scope in Werkzeugbeschreibung und Rückgabe.",
-        "Die Zahl 7 gilt nicht unternehmensweit.",
-        "Sende „Service-Desk Nord“ in Copilot Chat und markiere danach den Governance-Hinweis als geprüft."
+        "Vergleiche den scope in Werkzeugbeschreibung und Rückgabe mit dem Antwortentwurf.",
+        "Die Zahl 7 gilt nicht unternehmensweit; der Werkzeug-Scope nennt nur einen Teilbereich.",
+        "Wähle die Ticketauswertung, wende „Datenzuschnitt erkennen · Service-Desk Nord“ an, markiere den korrigierten Befund als geprüft und prüfe anschließend auch den Governance-Hinweis."
       ],
       "successMessage": "Du hast den begrenzten Werkzeug-Scope und die Governance-Folgen korrekt erkannt."
     }
