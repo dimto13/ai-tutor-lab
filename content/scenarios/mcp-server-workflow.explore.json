@@ -7,14 +7,22 @@
   "description": "Erkunde eine deterministische MCP-Simulation: ohne Fachsystem-Anbindung bleibt eine Ticketfrage unbeantwortbar; nach Aktivierung werden Werkzeuge, Rechte, Aufruf und Rückgabe sichtbar – einschließlich eines absichtlich eingeschränkten Datenzuschnitts.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["ai.agent", "copilot.mcp", "artifact.preview"]
+    "glossaryConcepts": [
+      "ai.agent",
+      "copilot.mcp",
+      "artifact.preview"
+    ]
   },
   "environment": {
     "productId": "vscode",
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator",
     "integrations": [
-      { "productId": "artifact-preview", "version": "1.x", "runtimeAdapterId": "artifact-preview-simulator" }
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
     ],
     "seed": {
       "workspaceMode": "folder",
@@ -29,11 +37,52 @@
         "activeArtifactId": "without-connection",
         "viewMode": "preview",
         "artifacts": [
-          { "id": "without-connection", "type": "data", "title": "Ohne Fachsystem-Anbindung", "value": "Die Zahl offener Tickets ist nicht aus dem Modellwissen ableitbar. Eine konkrete Zahl wäre unbelegt." },
-          { "id": "server-tools", "type": "table", "title": "MCP-Server · angebotene Werkzeuge", "columns": [{ "key": "tool", "label": "Werkzeug" }, { "key": "right", "label": "Recht" }, { "key": "scope", "label": "Datenumfang" }], "rows": [{ "tool": "tickets.search", "right": "Lesen", "scope": "Nur Service-Desk Nord; keine Tickets anderer Bereiche" }, { "tool": "tickets.comment", "right": "Schreiben", "scope": "Kommentar an Ticket anhängen" }] },
-          { "id": "tool-call", "type": "data", "title": "Sichtbarer Werkzeugaufruf", "value": "tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' }) → { count: 7, scope: 'Service-Desk Nord' }. Antwort: Im Service-Desk Nord sind 7 passende Tickets offen." },
-          { "id": "ticket-report", "type": "data", "title": "Artefakt · Ticketauswertung", "value": "7 offene Passwort-Reset-Tickets im Service-Desk Nord. Quelle: simuliertes Werkzeug tickets.search. Diese Zahl ist nicht die unternehmensweite Gesamtzahl." },
-          { "id": "governance", "type": "data", "title": "Einordnung · Vertrauen und Governance", "value": "Ein MCP-Server ist eine Vertrauensentscheidung: Betreiber, sichtbare Daten und erlaubte Aktionen müssen geprüft werden. Schreibrechte brauchen eine andere Freigabe als Leserechte. Nicht jeder Mitarbeiter sollte beliebige Server eintragen dürfen. Daten aus Werkzeugparametern können den Unternehmenskontext verlassen, wenn der Server außerhalb der kontrollierten Umgebung betrieben wird." }
+          {
+            "id": "without-connection",
+            "type": "data",
+            "title": "Ohne Fachsystem-Anbindung",
+            "value": "Die Zahl offener Tickets ist nicht aus dem Modellwissen ableitbar. Eine konkrete Zahl wäre unbelegt."
+          },
+          {
+            "id": "server-tools",
+            "type": "table",
+            "title": "MCP-Server · angebotene Werkzeuge",
+            "columns": [
+              { "key": "tool", "label": "Werkzeug" },
+              { "key": "right", "label": "Recht" },
+              { "key": "scope", "label": "Datenumfang" }
+            ],
+            "rows": [
+              {
+                "tool": "tickets.search",
+                "right": "Lesen",
+                "scope": "Nur Service-Desk Nord; keine Tickets anderer Bereiche"
+              },
+              {
+                "tool": "tickets.comment",
+                "right": "Schreiben",
+                "scope": "Kommentar an Ticket anhängen"
+              }
+            ]
+          },
+          {
+            "id": "tool-call",
+            "type": "data",
+            "title": "Sichtbarer Werkzeugaufruf",
+            "value": "tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' }) → { count: 7, scope: 'Service-Desk Nord' }. Antwort: Im Service-Desk Nord sind 7 passende Tickets offen."
+          },
+          {
+            "id": "ticket-report",
+            "type": "data",
+            "title": "Artefakt · Ticketauswertung",
+            "value": "7 offene Passwort-Reset-Tickets im Service-Desk Nord. Quelle: simuliertes Werkzeug tickets.search. Diese Zahl ist nicht die unternehmensweite Gesamtzahl."
+          },
+          {
+            "id": "governance",
+            "type": "data",
+            "title": "Einordnung · Vertrauen und Governance",
+            "value": "Ein MCP-Server ist eine Vertrauensentscheidung: Betreiber, sichtbare Daten und erlaubte Aktionen müssen geprüft werden. Schreibrechte brauchen eine andere Freigabe als Leserechte. Nicht jeder Mitarbeiter sollte beliebige Server eintragen dürfen. Daten aus Werkzeugparametern können den Unternehmenskontext verlassen, wenn der Server außerhalb der kontrollierten Umgebung betrieben wird."
+          }
         ],
         "revisions": []
       }
@@ -49,7 +98,11 @@
       "description": "Vergleiche den Zustand ohne Anbindung mit Werkzeugliste, Werkzeugaufruf, Ergebnisartefakt und Governance-Einordnung.",
       "instruction": "Öffne nacheinander Ohne Fachsystem-Anbindung, MCP-Server · angebotene Werkzeuge, Sichtbarer Werkzeugaufruf, Artefakt · Ticketauswertung und die Governance-Einordnung. Achte besonders auf Lesen versus Schreiben und auf den Datenumfang von tickets.search.",
       "why": "Die Qualität einer agentischen Antwort hängt davon ab, welche Werkzeuge tatsächlich verfügbar sind und welchen Datenzuschnitt sie liefern.",
-      "helpLevels": ["Beginne mit dem Zustand ohne Anbindung.", "Vergleiche Werkzeugrecht und Datenumfang in der Werkzeugliste.", "tickets.search liest nur Service-Desk Nord; die Zahl 7 ist daher keine unternehmensweite Gesamtzahl."],
+      "helpLevels": [
+        "Beginne mit dem Zustand ohne Anbindung.",
+        "Vergleiche Werkzeugrecht und Datenumfang in der Werkzeugliste.",
+        "tickets.search liest nur Service-Desk Nord; die Zahl 7 ist daher keine unternehmensweite Gesamtzahl."
+      ],
       "successMessage": "Du hast Werkzeugzugriff, Datenfluss und den eingeschränkten Datenzuschnitt erkundet."
     }
   ]
