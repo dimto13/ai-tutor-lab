@@ -508,23 +508,36 @@ export const landingStyles = `
   z-index: 20;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 .lp-dots button {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.lp-dots button::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 8px;
   height: 8px;
-  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--lp-line-2);
   background: transparent;
-  cursor: pointer;
+  transform: translate(-50%, -50%);
   transition: all 300ms;
 }
-.lp-dots button.is-on {
+.lp-dots button.is-on::before {
   background: var(--lp-tutor);
   border-color: var(--lp-tutor);
   box-shadow: 0 0 14px var(--lp-tutor);
-  transform: scale(1.3);
+  transform: translate(-50%, -50%) scale(1.3);
 }
 .lp-hint {
   position: absolute;
@@ -561,7 +574,7 @@ export const landingStyles = `
   .lp-scene { align-items: end; }
   .lp h1, .lp h2 { font-size: clamp(30px, 8.6vw, 46px); }
   .lp-body { font-size: 14.5px; }
-  .lp-dots { right: 12px; }
+  .lp-dots { right: 0; }
   .lp-rings { width: 460px; height: 460px; margin: -230px 0 0 -230px; }
 }
 
@@ -579,7 +592,7 @@ export const landingStyles = `
   .lp-cta,
   .lp-beam,
   .lp-signin,
-  .lp-dots button,
+  .lp-dots button::before,
   .lp-hint { transition: none; }
   .lp-ring,
   .lp-caret,

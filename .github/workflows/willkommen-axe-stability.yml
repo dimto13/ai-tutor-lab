@@ -1,0 +1,49 @@
+name: Willkommen axe stability
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/web/src/landing/**"
+      - "apps/web/e2e/fixtures/accessibility-regression.ts"
+      - "apps/web/e2e/tests/accessibility-regression.spec.ts"
+      - ".github/workflows/willkommen-axe-stability.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  willkommen-axe-stability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Verify pinned runtime toolchain
+        run: node scripts/check-runtime-versions.mjs --toolchain-only
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Install pinned Playwright test runner
+        run: npm install --prefix apps/web/e2e --package-lock=false --ignore-scripts --no-audit --no-fund
+
+      - name: Install Chromium
+        run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run /willkommen axe suite ten consecutive times
+        run: |
+          set -euo pipefail
+          for iteration in $(seq 1 10); do
+            echo "::group::/willkommen axe suite ${iteration}/10"
+            npm test --prefix apps/web/e2e -- --grep "public landing /willkommen has no unapproved axe violations$" --workers=1 --retries=0
+            echo "::endgroup::"
+          done
