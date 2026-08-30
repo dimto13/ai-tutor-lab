@@ -97,7 +97,7 @@
       "helpLevels": [
         "Beginne mit dem Zustand ohne Anbindung.",
         "Vergleiche Werkzeugrecht und Datenumfang in der Werkzeugliste.",
-        "tickets.search liest nur Service-Desk Nord; die Zahl 7 ist daher keine unternehmensweite Gesamtzahl."
+        "Öffne die Werkzeugbeschreibung und prüfe: tickets.search liest nur Service-Desk Nord; die Zahl 7 ist daher keine unternehmensweite Gesamtzahl."
       ],
       "successMessage": "Du hast Werkzeugzugriff, Datenfluss und den eingeschränkten Datenzuschnitt erkundet."
     }
