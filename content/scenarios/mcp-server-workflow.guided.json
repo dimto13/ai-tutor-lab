@@ -5,35 +5,90 @@
   "learningLayer": "ai_workflow",
   "title": "MCP-Server anbinden und Werkzeuge verstehen",
   "description": "Erlebe den Kontrast ohne und mit Fachsystem-Anbindung, prüfe Werkzeugrechte und den sichtbaren Datenfluss und erkenne, warum eine formal korrekte Werkzeugantwort trotzdem unvollständig sein kann.",
-  "audience": { "personaId": "non-programmer", "glossaryConcepts": ["ai.agent", "copilot.mcp", "github.copilot", "artifact.preview"] },
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["ai.agent", "copilot.mcp", "github.copilot", "artifact.preview"]
+  },
   "environment": {
     "productId": "vscode",
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator",
     "integrations": [
-      { "productId": "github-copilot", "version": "2026.08", "runtimeAdapterId": "github-copilot-vscode-simulator" },
-      { "productId": "artifact-preview", "version": "1.x", "runtimeAdapterId": "artifact-preview-simulator" }
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
     ],
     "seed": {
       "workspaceMode": "folder",
       "folders": ["mcp-ticket-demo"],
       "files": ["frage.md"],
-      "contents": { "frage.md": "# Fachfrage\nWie viele Tickets sind diese Woche zum Thema Passwort-Reset offen? Die simulierte Anbindung soll zeigen, was MCP-Werkzeuge beitragen und wo ihre Grenzen liegen." },
+      "contents": {
+        "frage.md": "# Fachfrage\nWie viele Tickets sind diese Woche zum Thema Passwort-Reset offen? Die simulierte Anbindung soll zeigen, was MCP-Werkzeuge beitragen und wo ihre Grenzen liegen."
+      },
       "openTabs": ["frage.md"],
       "activeFile": "frage.md",
       "chatResponses": [
-        { "promptContains": "Service-Desk Nord", "response": "Richtig: Die Antwort ist nur für Service-Desk Nord belegt. Die Werkzeugbeschreibung kündigt diesen Datenzuschnitt ausdrücklich an; eine unternehmensweite Aussage wäre unvollständig." },
-        { "response": "Ohne angebundenes Fachsystem kann ich die aktuelle Ticketzahl nicht belegen. Eine konkrete Zahl würde ich erfinden." }
+        {
+          "promptContains": "Service-Desk Nord",
+          "response": "Richtig: Die Antwort ist nur für Service-Desk Nord belegt. Die Werkzeugbeschreibung kündigt diesen Datenzuschnitt ausdrücklich an; eine unternehmensweite Aussage wäre unvollständig."
+        },
+        {
+          "response": "Ohne angebundenes Fachsystem kann ich die aktuelle Ticketzahl nicht belegen. Eine konkrete Zahl würde ich erfinden."
+        }
       ],
       "artifactPreview": {
         "activeArtifactId": "connection",
         "viewMode": "preview",
         "artifacts": [
-          { "id": "connection", "type": "data", "title": "MCP-Konfiguration · Simulation", "value": "Server: ServiceDesk MCP · Status: aktiviert. Dies ist eine deterministische Lernsimulation, kein echter Server." },
-          { "id": "server-tools", "type": "table", "title": "Werkzeugliste · Rechte und Datenumfang", "columns": [{ "key": "tool", "label": "Werkzeug" }, { "key": "right", "label": "Recht" }, { "key": "scope", "label": "Datenumfang" }], "rows": [{ "tool": "tickets.search", "right": "Lesen", "scope": "Nur Service-Desk Nord" }, { "tool": "tickets.comment", "right": "Schreiben", "scope": "Kommentar an Ticket anhängen; verändert das Fachsystem" }] },
-          { "id": "tool-call", "type": "data", "title": "Werkzeugaufruf und Rückgabe", "value": "Aufruf: tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' })\nRückgabe: { count: 7, scope: 'Service-Desk Nord' }\nBelegte Antwort: Im Service-Desk Nord sind 7 passende Tickets offen." },
-          { "id": "ticket-report", "type": "data", "title": "Artefakt · Ticketauswertung", "value": "7 offene Passwort-Reset-Tickets im Service-Desk Nord. Quelle: tickets.search. Nicht als unternehmensweite Gesamtzahl verwenden." },
-          { "id": "governance", "type": "data", "title": "Governance · MCP ist eine Vertrauensentscheidung", "value": "Prüfe Betreiber, Datenzugriff und erlaubte Aktionen. Ein Server mit Schreibrechten benötigt strengere Freigabe als ein reiner Lesezugriff. Serverregistrierung sollte administrativ kontrolliert sein. Werkzeugparameter und Rückgaben können Unternehmensdaten enthalten; bei extern betriebenen Servern muss deshalb klar sein, welche Daten die kontrollierte Umgebung verlassen." }
+          {
+            "id": "connection",
+            "type": "data",
+            "title": "MCP-Konfiguration · Simulation",
+            "value": "Server: ServiceDesk MCP · Status: aktiviert. Dies ist eine deterministische Lernsimulation, kein echter Server."
+          },
+          {
+            "id": "server-tools",
+            "type": "table",
+            "title": "Werkzeugliste · Rechte und Datenumfang",
+            "columns": [
+              { "key": "tool", "label": "Werkzeug" },
+              { "key": "right", "label": "Recht" },
+              { "key": "scope", "label": "Datenumfang" }
+            ],
+            "rows": [
+              { "tool": "tickets.search", "right": "Lesen", "scope": "Nur Service-Desk Nord" },
+              {
+                "tool": "tickets.comment",
+                "right": "Schreiben",
+                "scope": "Kommentar an Ticket anhängen; verändert das Fachsystem"
+              }
+            ]
+          },
+          {
+            "id": "tool-call",
+            "type": "data",
+            "title": "Werkzeugaufruf und Rückgabe",
+            "value": "Aufruf: tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' })\nRückgabe: { count: 7, scope: 'Service-Desk Nord' }\nBelegte Antwort: Im Service-Desk Nord sind 7 passende Tickets offen."
+          },
+          {
+            "id": "ticket-report",
+            "type": "data",
+            "title": "Artefakt · Ticketauswertung",
+            "value": "7 offene Passwort-Reset-Tickets im Service-Desk Nord. Quelle: tickets.search. Nicht als unternehmensweite Gesamtzahl verwenden."
+          },
+          {
+            "id": "governance",
+            "type": "data",
+            "title": "Governance · MCP ist eine Vertrauensentscheidung",
+            "value": "Prüfe Betreiber, Datenzugriff und erlaubte Aktionen. Ein Server mit Schreibrechten benötigt strengere Freigabe als ein reiner Lesezugriff. Serverregistrierung sollte administrativ kontrolliert sein. Werkzeugparameter und Rückgaben können Unternehmensdaten enthalten; bei extern betriebenen Servern muss deshalb klar sein, welche Daten die kontrollierte Umgebung verlassen."
+          }
         ],
         "revisions": []
       }
@@ -42,10 +97,97 @@
   "estimatedMinutes": 15,
   "points": 150,
   "steps": [
-    { "id": "without-connection", "title": "Dieselbe Frage ohne Anbindung stellen", "description": "Ohne aktuelle Fachsystemdaten ist eine konkrete Zahl nicht belegbar.", "instruction": "Öffne Copilot Chat und frage nach der Zahl offener Passwort-Reset-Tickets dieser Woche.", "why": "Der Kontrast zeigt, warum ein Sprachmodell aktuelle interne Fakten nicht aus eigenem Wissen kennen kann.", "helpLevels": ["Stelle die Fachfrage aus frage.md.", "Frage nach offenen Passwort-Reset-Tickets dieser Woche.", "Sende die Ticketfrage in Copilot Chat."], "validation": { "kind": "event", "type": "copilot.prompt.submitted" }, "highlightTarget": "copilot.chat.prompt", "successMessage": "Ohne Anbindung bleibt die aktuelle Ticketzahl unbelegt." },
-    { "id": "inspect-tools", "title": "Server und Werkzeugrechte prüfen", "description": "Der simulierte Server macht ein Lese- und ein Schreibwerkzeug sichtbar.", "instruction": "Öffne zuerst die MCP-Konfiguration und danach die Werkzeugliste. Prüfe für beide Werkzeuge Recht und Datenumfang und markiere die Werkzeugliste als geprüft.", "why": "Vor Nutzung eines Werkzeugs musst du wissen, was es lesen, verändern und überhaupt sehen kann.", "helpLevels": ["Öffne MCP-Konfiguration und Werkzeugliste.", "Vergleiche tickets.search mit tickets.comment.", "tickets.search liest nur Service-Desk Nord; tickets.comment schreibt ins Fachsystem. Markiere die Werkzeugliste als geprüft."], "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "server-tools" } }, "highlightTarget": "artifact.preview.verify", "successMessage": "Werkzeugrechte und Datenumfang sind geprüft." },
-    { "id": "inspect-call", "title": "Werkzeugaufruf und Rückgabe nachvollziehen", "description": "Aufruf, Parameter, Rückgabe und belegte Antwort bleiben sichtbar.", "instruction": "Öffne Werkzeugaufruf und Rückgabe, lies Parameter und scope und markiere den Aufruf als geprüft.", "why": "Nur ein sichtbarer Datenfluss erlaubt dir zu beurteilen, worauf eine Antwort tatsächlich beruht.", "helpLevels": ["Öffne das Artefakt Werkzeugaufruf und Rückgabe.", "Achte auf count und scope.", "Die Rückgabe lautet count 7 und scope Service-Desk Nord; markiere sie als geprüft."], "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "tool-call" } }, "highlightTarget": "artifact.preview.verify", "successMessage": "Werkzeugaufruf und Rückgabe wurden nachvollzogen." },
-    { "id": "verify-scope", "title": "Unvollständigkeit erkennen", "description": "Die Antwort ist innerhalb des Werkzeugzuschnitts korrekt, aber nicht unternehmensweit vollständig.", "instruction": "Vergleiche Werkzeugbeschreibung und Ticketauswertung. Öffne danach Copilot Chat und nenne den Bereich, auf den die Antwort tatsächlich beschränkt ist.", "why": "Ein Werkzeug bestimmt durch seinen Datenzuschnitt die Grenzen der daraus erzeugten Antwort.", "helpLevels": ["Lies die Beschreibung von tickets.search erneut.", "Der Scope ist nicht das gesamte Unternehmen.", "Sende „Service-Desk Nord“ in Copilot Chat."], "validation": { "kind": "event", "type": "copilot.prompt.submitted", "contains": { "prompt": "Service-Desk Nord" } }, "highlightTarget": "copilot.chat.prompt", "exactTextValidation": true, "successMessage": "Du hast erkannt, dass die Antwort nur Service-Desk Nord abdeckt." },
-    { "id": "governance", "title": "Vertrauen, Schreibrechte und Datenabfluss einordnen", "description": "MCP-Anbindung ist zugleich eine technische und organisatorische Vertrauensentscheidung.", "instruction": "Öffne die Governance-Einordnung. Prüfe Betreiber, Lesen versus Schreiben, kontrollierte Serverregistrierung und welche Daten über Werkzeugaufrufe die Unternehmensumgebung verlassen können. Markiere die Einordnung als geprüft.", "why": "Ein technisch verfügbares Werkzeug ist nicht automatisch organisatorisch freigegeben.", "helpLevels": ["Öffne Governance · MCP ist eine Vertrauensentscheidung.", "Achte auf Betreiber, Schreibrechte und Werkzeugparameter.", "Lies die Governance-Einordnung vollständig und markiere sie als geprüft."], "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "governance" } }, "highlightTarget": "artifact.preview.verify", "successMessage": "Du hast die Governance-Grenzen der MCP-Anbindung eingeordnet." }
+    {
+      "id": "without-connection",
+      "title": "Dieselbe Frage ohne Anbindung stellen",
+      "description": "Ohne aktuelle Fachsystemdaten ist eine konkrete Zahl nicht belegbar.",
+      "instruction": "Öffne Copilot Chat und frage nach der Zahl offener Passwort-Reset-Tickets dieser Woche.",
+      "why": "Der Kontrast zeigt, warum ein Sprachmodell aktuelle interne Fakten nicht aus eigenem Wissen kennen kann.",
+      "helpLevels": [
+        "Stelle die Fachfrage aus frage.md.",
+        "Frage nach offenen Passwort-Reset-Tickets dieser Woche.",
+        "Sende die Ticketfrage in Copilot Chat."
+      ],
+      "validation": { "kind": "event", "type": "copilot.prompt.submitted" },
+      "highlightTarget": "copilot.chat.prompt",
+      "successMessage": "Ohne Anbindung bleibt die aktuelle Ticketzahl unbelegt."
+    },
+    {
+      "id": "inspect-tools",
+      "title": "Server und Werkzeugrechte prüfen",
+      "description": "Der simulierte Server macht ein Lese- und ein Schreibwerkzeug sichtbar.",
+      "instruction": "Öffne zuerst die MCP-Konfiguration und danach die Werkzeugliste. Prüfe für beide Werkzeuge Recht und Datenumfang und markiere die Werkzeugliste als geprüft.",
+      "why": "Vor Nutzung eines Werkzeugs musst du wissen, was es lesen, verändern und überhaupt sehen kann.",
+      "helpLevels": [
+        "Öffne MCP-Konfiguration und Werkzeugliste.",
+        "Vergleiche tickets.search mit tickets.comment.",
+        "tickets.search liest nur Service-Desk Nord; tickets.comment schreibt ins Fachsystem. Markiere die Werkzeugliste als geprüft."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "server-tools" }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Werkzeugrechte und Datenumfang sind geprüft."
+    },
+    {
+      "id": "inspect-call",
+      "title": "Werkzeugaufruf und Rückgabe nachvollziehen",
+      "description": "Aufruf, Parameter, Rückgabe und belegte Antwort bleiben sichtbar.",
+      "instruction": "Öffne Werkzeugaufruf und Rückgabe, lies Parameter und scope und markiere den Aufruf als geprüft.",
+      "why": "Nur ein sichtbarer Datenfluss erlaubt dir zu beurteilen, worauf eine Antwort tatsächlich beruht.",
+      "helpLevels": [
+        "Öffne das Artefakt Werkzeugaufruf und Rückgabe.",
+        "Achte auf count und scope.",
+        "Die Rückgabe lautet count 7 und scope Service-Desk Nord; markiere sie als geprüft."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "tool-call" }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Werkzeugaufruf und Rückgabe wurden nachvollzogen."
+    },
+    {
+      "id": "verify-scope",
+      "title": "Unvollständigkeit erkennen",
+      "description": "Die Antwort ist innerhalb des Werkzeugzuschnitts korrekt, aber nicht unternehmensweit vollständig.",
+      "instruction": "Vergleiche Werkzeugbeschreibung und Ticketauswertung. Öffne danach Copilot Chat und nenne den Bereich, auf den die Antwort tatsächlich beschränkt ist.",
+      "why": "Ein Werkzeug bestimmt durch seinen Datenzuschnitt die Grenzen der daraus erzeugten Antwort.",
+      "helpLevels": [
+        "Lies die Beschreibung von tickets.search erneut.",
+        "Der Scope ist nicht das gesamte Unternehmen.",
+        "Sende „Service-Desk Nord“ in Copilot Chat."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "copilot.prompt.submitted",
+        "contains": { "prompt": "Service-Desk Nord" }
+      },
+      "highlightTarget": "copilot.chat.prompt",
+      "exactTextValidation": true,
+      "successMessage": "Du hast erkannt, dass die Antwort nur Service-Desk Nord abdeckt."
+    },
+    {
+      "id": "governance",
+      "title": "Vertrauen, Schreibrechte und Datenabfluss einordnen",
+      "description": "MCP-Anbindung ist zugleich eine technische und organisatorische Vertrauensentscheidung.",
+      "instruction": "Öffne die Governance-Einordnung. Prüfe Betreiber, Lesen versus Schreiben, kontrollierte Serverregistrierung und welche Daten über Werkzeugaufrufe die Unternehmensumgebung verlassen können. Markiere die Einordnung als geprüft.",
+      "why": "Ein technisch verfügbares Werkzeug ist nicht automatisch organisatorisch freigegeben.",
+      "helpLevels": [
+        "Öffne Governance · MCP ist eine Vertrauensentscheidung.",
+        "Achte auf Betreiber, Schreibrechte und Werkzeugparameter.",
+        "Lies die Governance-Einordnung vollständig und markiere sie als geprüft."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "governance" }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Du hast die Governance-Grenzen der MCP-Anbindung eingeordnet."
+    }
   ]
 }
