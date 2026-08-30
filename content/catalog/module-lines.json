@@ -61,7 +61,8 @@
         "research-workflow",
         "html-page-workflow",
         "table-data-workflow",
-        "browser-automation-workflow"
+        "browser-automation-workflow",
+        "mcp-server-workflow"
       ]
     }
   ]

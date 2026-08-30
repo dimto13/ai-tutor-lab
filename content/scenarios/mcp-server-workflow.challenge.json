@@ -1,0 +1,152 @@
+{
+  "id": "mcp-server-workflow.challenge",
+  "moduleId": "mcp-server-workflow",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "MCP-Server – Challenge",
+  "description": "Prüfe selbstständig, ob eine werkzeuggestützte Ticketantwort vollständig ist. Entscheidend ist, dass du den eingeschränkten Datenzuschnitt erkennst und die Governance-Folgen korrekt einordnest.",
+  "learningObjectives": [
+    "control_copilot_context",
+    "review_copilot_output",
+    "protect_copilot_context"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["ai.agent", "copilot.mcp", "github.copilot", "artifact.preview"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["mcp-ticket-demo"],
+      "files": ["challenge.md"],
+      "contents": {
+        "challenge.md": "# Prüfauftrag\nEin Assistent meldet nach einem MCP-Werkzeugaufruf: „Diese Woche sind 7 Passwort-Reset-Tickets offen.“ Prüfe, ob diese Aussage vollständig belegt ist und welche Freigabegrenzen gelten."
+      },
+      "openTabs": ["challenge.md"],
+      "activeFile": "challenge.md",
+      "chatResponses": [
+        {
+          "promptContains": "Service-Desk Nord",
+          "response": "Korrekt. tickets.search deckt nur Service-Desk Nord ab; die Zahl 7 darf deshalb nicht als unternehmensweite Gesamtzahl dargestellt werden."
+        },
+        {
+          "response": "Prüfe die Werkzeugbeschreibung und den dokumentierten scope, bevor du die Aussage bewertest."
+        }
+      ],
+      "artifactPreview": {
+        "activeArtifactId": "server-tools",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "server-tools",
+            "type": "table",
+            "title": "Werkzeugbeschreibung",
+            "columns": [
+              { "key": "tool", "label": "Werkzeug" },
+              { "key": "right", "label": "Recht" },
+              { "key": "scope", "label": "Datenumfang" }
+            ],
+            "rows": [
+              {
+                "tool": "tickets.search",
+                "right": "Lesen",
+                "scope": "Nur Service-Desk Nord"
+              },
+              {
+                "tool": "tickets.comment",
+                "right": "Schreiben",
+                "scope": "Kommentar an Ticket anhängen"
+              }
+            ]
+          },
+          {
+            "id": "tool-call",
+            "type": "data",
+            "title": "Werkzeugaufruf",
+            "value": "tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' }) → { count: 7, scope: 'Service-Desk Nord' }"
+          },
+          {
+            "id": "ticket-report",
+            "type": "data",
+            "title": "Antwortentwurf · Ticketauswertung",
+            "value": "Diese Woche sind 7 Passwort-Reset-Tickets offen. Prüfe anhand der Werkzeugbeschreibung, ob diese Aussage für das gesamte Unternehmen belegt ist."
+          },
+          {
+            "id": "governance",
+            "type": "data",
+            "title": "Governance-Hinweis",
+            "value": "Serverbetreiber und Datenfluss müssen freigegeben sein. Schreibende Werkzeuge benötigen eine strengere Freigabe als reine Lesezugriffe. Werkzeugparameter können Unternehmensdaten an den Server übertragen."
+          }
+        ],
+        "revisions": [
+          {
+            "id": "recognize-north-scope",
+            "artifactId": "ticket-report",
+            "label": "Datenzuschnitt erkennen · Service-Desk Nord",
+            "next": {
+              "id": "ticket-report",
+              "type": "data",
+              "title": "Ticketauswertung · Scope geprüft",
+              "value": "Befund: Im Service-Desk Nord sind 7 passende Passwort-Reset-Tickets offen. Diese Zahl ist nicht als unternehmensweite Gesamtzahl belegt, weil tickets.search nur diesen Teilbereich abdeckt."
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 180,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "ticket-report",
+          "revisionId": "recognize-north-scope"
+        }
+      },
+      {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "governance" }
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Die Zahl 7 ist nur für Service-Desk Nord belegt; die Werkzeugbeschreibung begrenzt den Datenumfang ausdrücklich.",
+    "tickets.search ist ein Lesezugriff, tickets.comment dagegen ein schreibender Eingriff und braucht eine strengere Freigabe.",
+    "MCP-Server, Betreiber und übertragene Werkzeugdaten sind Teil der Vertrauens- und Datenschutzentscheidung."
+  ],
+  "steps": [
+    {
+      "id": "challenge-mcp-scope",
+      "title": "Werkzeugantwort und Governance eigenständig prüfen",
+      "description": "Bewerte die gemeldete Ticketzahl anhand von Werkzeugbeschreibung, sichtbarem Aufruf und Antwortentwurf.",
+      "instruction": "Untersuche Werkzeugbeschreibung, Werkzeugaufruf und Antwortentwurf. Wenn du den begrenzten Datenzuschnitt erkannt hast, wende „Datenzuschnitt erkennen · Service-Desk Nord“ auf die Ticketauswertung an und markiere den korrigierten Befund als geprüft. Öffne außerdem den Governance-Hinweis und markiere ihn als geprüft. Die Reihenfolge der Artefaktprüfung ist dir überlassen.",
+      "why": "Die Challenge bewertet den fachlichen Endzustand: korrekter Scope erkannt und Governance-Grenzen geprüft – nicht eine bestimmte Klickfolge.",
+      "helpLevels": [
+        "Vergleiche den scope in Werkzeugbeschreibung und Rückgabe mit dem Antwortentwurf.",
+        "Die Zahl 7 gilt nicht unternehmensweit; der Werkzeug-Scope nennt nur einen Teilbereich.",
+        "Wähle die Ticketauswertung, wende „Datenzuschnitt erkennen · Service-Desk Nord“ an, markiere den korrigierten Befund als geprüft und prüfe anschließend auch den Governance-Hinweis."
+      ],
+      "successMessage": "Du hast den begrenzten Werkzeug-Scope und die Governance-Folgen korrekt erkannt."
+    }
+  ]
+}

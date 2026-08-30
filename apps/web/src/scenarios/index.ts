@@ -26,6 +26,9 @@ import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-wo
 import tableDataWorkflowGuidedRaw from "../../../../content/scenarios/table-data-workflow.guided.json";
 import browserAutomationExploreRaw from "../../../../content/scenarios/browser-automation-workflow.explore.json";
 import browserAutomationGuidedRaw from "../../../../content/scenarios/browser-automation-workflow.guided.json";
+import mcpServerExploreRaw from "../../../../content/scenarios/mcp-server-workflow.explore.json";
+import mcpServerGuidedRaw from "../../../../content/scenarios/mcp-server-workflow.guided.json";
+import mcpServerChallengeRaw from "../../../../content/scenarios/mcp-server-workflow.challenge.json";
 import sourceControlPlatformExploreRaw from "../../../../content/scenarios/source-control-platform-basics.explore.json";
 import sourceControlPlatformGuidedRaw from "../../../../content/scenarios/source-control-platform-basics.guided.json";
 import sourceControlPlatformChallengeRaw from "../../../../content/scenarios/source-control-platform-basics.challenge.json";
@@ -63,6 +66,9 @@ const [tableDataWorkflowExploreScenario, tableDataWorkflowChallengeScenario] =
   createTableDataWorkflowVariants(tableDataWorkflowGuidedScenario);
 const browserAutomationExploreScenario = parseScenario(browserAutomationExploreRaw);
 const browserAutomationGuidedScenario = parseScenario(browserAutomationGuidedRaw);
+const mcpServerExploreScenario = parseScenario(mcpServerExploreRaw);
+const mcpServerGuidedScenario = parseScenario(mcpServerGuidedRaw);
+const mcpServerChallengeScenario = parseScenario(mcpServerChallengeRaw);
 const sourceControlPlatformExploreScenario = parseScenario(sourceControlPlatformExploreRaw);
 const sourceControlPlatformGuidedScenario = parseScenario(sourceControlPlatformGuidedRaw);
 const sourceControlPlatformChallengeScenario = parseScenario(sourceControlPlatformChallengeRaw);
@@ -99,6 +105,9 @@ const scenarios: Record<string, Scenario> = {
   [tableDataWorkflowChallengeScenario.id]: tableDataWorkflowChallengeScenario,
   [browserAutomationExploreScenario.id]: browserAutomationExploreScenario,
   [browserAutomationGuidedScenario.id]: browserAutomationGuidedScenario,
+  [mcpServerExploreScenario.id]: mcpServerExploreScenario,
+  [mcpServerGuidedScenario.id]: mcpServerGuidedScenario,
+  [mcpServerChallengeScenario.id]: mcpServerChallengeScenario,
   [sourceControlPlatformExploreScenario.id]: sourceControlPlatformExploreScenario,
   [sourceControlPlatformGuidedScenario.id]: sourceControlPlatformGuidedScenario,
   [sourceControlPlatformChallengeScenario.id]: sourceControlPlatformChallengeScenario,

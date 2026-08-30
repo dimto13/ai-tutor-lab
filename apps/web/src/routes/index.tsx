@@ -360,6 +360,39 @@ const workflowTrainings: TrainingCardModel[] = [
       },
     ],
   },
+  {
+    id: "mcp-server-workflow",
+    scenarioId: null,
+    title: "MCP-Server: Fachsysteme kontrolliert anbinden",
+    description:
+      "Voraussetzung: Copilot-Grundlagen. Erkunde in einer deterministischen Simulation, wie ein Fachsystem Werkzeuge bereitstellt, welche Lese- und Schreibrechte gelten, wie Aufruf und Rückgabe sichtbar bleiben und warum der Datenzuschnitt sowie Governance-Grenzen geprüft werden müssen.",
+    icon: Bot,
+    available: true,
+    label: "AI Workflow · 3 Modi · Voraussetzung: Copilot-Grundlagen",
+    modes: [
+      {
+        scenarioId: "mcp-server-workflow.explore",
+        label: "Explore",
+        description: "Werkzeuge, Rechte, Datenfluss und Scope frei erkunden",
+        icon: Search,
+        multiplier: "×0,5",
+      },
+      {
+        scenarioId: "mcp-server-workflow.guided",
+        label: "Guided",
+        description: "MCP-Anbindung kontrolliert prüfen und Grenzen erkennen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+      {
+        scenarioId: "mcp-server-workflow.challenge",
+        label: "Challenge",
+        description: "Begrenzten Daten-Scope und Governance selbstständig absichern",
+        icon: Target,
+        multiplier: "×2,0",
+      },
+    ],
+  },
 ];
 
 const aiWorkflowModuleLine = getModuleLineById(moduleLineCatalog, "ai-workflows-in-practice");

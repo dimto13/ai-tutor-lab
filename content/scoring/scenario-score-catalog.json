@@ -154,6 +154,14 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "mcp-server-workflow.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 180,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "research-workflow.challenge",
       "mode": "challenge",
       "version": "1",

@@ -347,7 +347,7 @@
       "title": "MCP als Erweiterungskonzept verstehen",
       "description": "Das Model Context Protocol (MCP) ist kein Chat-Modus und kein KI-Modell.",
       "instruction": "Merke dir: MCP ist ein offener Standard, über den agentische KI-Systeme zusätzliche Werkzeuge und Datenquellen über definierte MCP-Server nutzen können.",
-      "why": "MCP erweitert die Reichweite eines Agenten. In Unternehmen muss deshalb klar geregelt sein, welche Server, Werkzeuge und Datenquellen zugelassen sind. Die praktische Konfiguration folgt später in einem Advanced-Modul.",
+      "why": "MCP erweitert die Reichweite eines Agenten. In Unternehmen muss deshalb klar geregelt sein, welche Server, Werkzeuge und Datenquellen zugelassen sind. Die praktische Konfiguration folgt im Advanced-Modul `mcp-server-workflow`.",
       "helpLevels": ["", "", ""],
       "successMessage": "MCP ist als Erweiterungsschnittstelle und nicht als Chat-Modus eingeordnet."
     },
