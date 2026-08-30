@@ -5,6 +5,7 @@
   "learningLayer": "ai_workflow",
   "title": "MCP-Server – Challenge",
   "description": "Prüfe selbstständig, ob eine werkzeuggestützte Ticketantwort vollständig ist. Entscheidend ist, dass du den eingeschränkten Datenzuschnitt erkennst und die Governance-Folgen korrekt einordnest.",
+  "learningObjectives": ["control_copilot_context", "review_copilot_output", "protect_copilot_context"],
   "audience": { "personaId": "non-programmer", "glossaryConcepts": ["ai.agent", "copilot.mcp", "github.copilot", "artifact.preview"] },
   "environment": {
     "productId": "vscode", "version": "1.x", "runtimeAdapterId": "vscode-simulator",
