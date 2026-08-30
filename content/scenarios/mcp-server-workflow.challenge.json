@@ -5,31 +5,132 @@
   "learningLayer": "ai_workflow",
   "title": "MCP-Server – Challenge",
   "description": "Prüfe selbstständig, ob eine werkzeuggestützte Ticketantwort vollständig ist. Entscheidend ist, dass du den eingeschränkten Datenzuschnitt erkennst und die Governance-Folgen korrekt einordnest.",
-  "learningObjectives": ["control_copilot_context", "review_copilot_output", "protect_copilot_context"],
-  "audience": { "personaId": "non-programmer", "glossaryConcepts": ["ai.agent", "copilot.mcp", "github.copilot", "artifact.preview"] },
+  "learningObjectives": [
+    "control_copilot_context",
+    "review_copilot_output",
+    "protect_copilot_context"
+  ],
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": [
+      "ai.agent",
+      "copilot.mcp",
+      "github.copilot",
+      "artifact.preview"
+    ]
+  },
   "environment": {
-    "productId": "vscode", "version": "1.x", "runtimeAdapterId": "vscode-simulator",
-    "integrations": [{ "productId": "github-copilot", "version": "2026.08", "runtimeAdapterId": "github-copilot-vscode-simulator" }, { "productId": "artifact-preview", "version": "1.x", "runtimeAdapterId": "artifact-preview-simulator" }],
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "github-copilot",
+        "version": "2026.08",
+        "runtimeAdapterId": "github-copilot-vscode-simulator"
+      },
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
     "seed": {
-      "workspaceMode": "folder", "folders": ["mcp-ticket-demo"], "files": ["challenge.md"],
-      "contents": { "challenge.md": "# Prüfauftrag\nEin Assistent meldet nach einem MCP-Werkzeugaufruf: „Diese Woche sind 7 Passwort-Reset-Tickets offen.“ Prüfe, ob diese Aussage vollständig belegt ist und welche Freigabegrenzen gelten." },
-      "openTabs": ["challenge.md"], "activeFile": "challenge.md",
-      "chatResponses": [{ "promptContains": "Service-Desk Nord", "response": "Korrekt. tickets.search deckt nur Service-Desk Nord ab; die Zahl 7 darf deshalb nicht als unternehmensweite Gesamtzahl dargestellt werden." }, { "response": "Prüfe die Werkzeugbeschreibung und den dokumentierten scope, bevor du die Aussage bewertest." }],
-      "artifactPreview": { "activeArtifactId": "server-tools", "viewMode": "preview", "artifacts": [
-        { "id": "server-tools", "type": "table", "title": "Werkzeugbeschreibung", "columns": [{ "key": "tool", "label": "Werkzeug" }, { "key": "right", "label": "Recht" }, { "key": "scope", "label": "Datenumfang" }], "rows": [{ "tool": "tickets.search", "right": "Lesen", "scope": "Nur Service-Desk Nord" }, { "tool": "tickets.comment", "right": "Schreiben", "scope": "Kommentar an Ticket anhängen" }] },
-        { "id": "tool-call", "type": "data", "title": "Werkzeugaufruf", "value": "tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' }) → { count: 7, scope: 'Service-Desk Nord' }" },
-        { "id": "governance", "type": "data", "title": "Governance-Hinweis", "value": "Serverbetreiber und Datenfluss müssen freigegeben sein. Schreibende Werkzeuge benötigen eine strengere Freigabe als reine Lesezugriffe. Werkzeugparameter können Unternehmensdaten an den Server übertragen." }
-      ], "revisions": [] }
+      "workspaceMode": "folder",
+      "folders": ["mcp-ticket-demo"],
+      "files": ["challenge.md"],
+      "contents": {
+        "challenge.md": "# Prüfauftrag\nEin Assistent meldet nach einem MCP-Werkzeugaufruf: „Diese Woche sind 7 Passwort-Reset-Tickets offen.“ Prüfe, ob diese Aussage vollständig belegt ist und welche Freigabegrenzen gelten."
+      },
+      "openTabs": ["challenge.md"],
+      "activeFile": "challenge.md",
+      "chatResponses": [
+        {
+          "promptContains": "Service-Desk Nord",
+          "response": "Korrekt. tickets.search deckt nur Service-Desk Nord ab; die Zahl 7 darf deshalb nicht als unternehmensweite Gesamtzahl dargestellt werden."
+        },
+        {
+          "response": "Prüfe die Werkzeugbeschreibung und den dokumentierten scope, bevor du die Aussage bewertest."
+        }
+      ],
+      "artifactPreview": {
+        "activeArtifactId": "server-tools",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "server-tools",
+            "type": "table",
+            "title": "Werkzeugbeschreibung",
+            "columns": [
+              { "key": "tool", "label": "Werkzeug" },
+              { "key": "right", "label": "Recht" },
+              { "key": "scope", "label": "Datenumfang" }
+            ],
+            "rows": [
+              {
+                "tool": "tickets.search",
+                "right": "Lesen",
+                "scope": "Nur Service-Desk Nord"
+              },
+              {
+                "tool": "tickets.comment",
+                "right": "Schreiben",
+                "scope": "Kommentar an Ticket anhängen"
+              }
+            ]
+          },
+          {
+            "id": "tool-call",
+            "type": "data",
+            "title": "Werkzeugaufruf",
+            "value": "tickets.search({ topic: 'Passwort-Reset', state: 'open', period: 'this-week' }) → { count: 7, scope: 'Service-Desk Nord' }"
+          },
+          {
+            "id": "governance",
+            "type": "data",
+            "title": "Governance-Hinweis",
+            "value": "Serverbetreiber und Datenfluss müssen freigegeben sein. Schreibende Werkzeuge benötigen eine strengere Freigabe als reine Lesezugriffe. Werkzeugparameter können Unternehmensdaten an den Server übertragen."
+          }
+        ],
+        "revisions": []
+      }
     }
   },
-  "estimatedMinutes": 10, "points": 180,
-  "completionValidation": { "kind": "all", "of": [{ "kind": "event", "type": "copilot.prompt.submitted", "contains": { "prompt": "Service-Desk Nord" } }, { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "governance" } }] },
-  "solutionComparison": ["Die Zahl 7 ist nur für Service-Desk Nord belegt; die Werkzeugbeschreibung begrenzt den Datenumfang ausdrücklich.", "tickets.search ist ein Lesezugriff, tickets.comment dagegen ein schreibender Eingriff und braucht eine strengere Freigabe.", "MCP-Server, Betreiber und übertragene Werkzeugdaten sind Teil der Vertrauens- und Datenschutzentscheidung."],
-  "steps": [{
-    "id": "challenge-mcp-scope", "title": "Werkzeugantwort und Governance eigenständig prüfen", "description": "Bewerte die gemeldete Ticketzahl anhand von Werkzeugbeschreibung und sichtbarem Aufruf.",
-    "instruction": "Untersuche Werkzeugbeschreibung und Werkzeugaufruf. Sende anschließend im Copilot Chat den exakten Bereich, für den die Zahl 7 belegt ist. Öffne danach den Governance-Hinweis und markiere ihn als geprüft. Die Reihenfolge der Artefaktprüfung ist dir überlassen.",
-    "why": "Die Challenge bewertet den fachlichen Endzustand: korrekter Scope erkannt und Governance-Grenzen geprüft – nicht eine bestimmte Klickfolge.",
-    "helpLevels": ["Vergleiche den scope in Werkzeugbeschreibung und Rückgabe.", "Die Zahl 7 gilt nicht unternehmensweit.", "Sende „Service-Desk Nord“ in Copilot Chat und markiere danach den Governance-Hinweis als geprüft."],
-    "successMessage": "Du hast den begrenzten Werkzeug-Scope und die Governance-Folgen korrekt erkannt."
-  }]
+  "estimatedMinutes": 10,
+  "points": 180,
+  "completionValidation": {
+    "kind": "all",
+    "of": [
+      {
+        "kind": "event",
+        "type": "copilot.prompt.submitted",
+        "contains": { "prompt": "Service-Desk Nord" }
+      },
+      {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "governance" }
+      }
+    ]
+  },
+  "solutionComparison": [
+    "Die Zahl 7 ist nur für Service-Desk Nord belegt; die Werkzeugbeschreibung begrenzt den Datenumfang ausdrücklich.",
+    "tickets.search ist ein Lesezugriff, tickets.comment dagegen ein schreibender Eingriff und braucht eine strengere Freigabe.",
+    "MCP-Server, Betreiber und übertragene Werkzeugdaten sind Teil der Vertrauens- und Datenschutzentscheidung."
+  ],
+  "steps": [
+    {
+      "id": "challenge-mcp-scope",
+      "title": "Werkzeugantwort und Governance eigenständig prüfen",
+      "description": "Bewerte die gemeldete Ticketzahl anhand von Werkzeugbeschreibung und sichtbarem Aufruf.",
+      "instruction": "Untersuche Werkzeugbeschreibung und Werkzeugaufruf. Sende anschließend im Copilot Chat den exakten Bereich, für den die Zahl 7 belegt ist. Öffne danach den Governance-Hinweis und markiere ihn als geprüft. Die Reihenfolge der Artefaktprüfung ist dir überlassen.",
+      "why": "Die Challenge bewertet den fachlichen Endzustand: korrekter Scope erkannt und Governance-Grenzen geprüft – nicht eine bestimmte Klickfolge.",
+      "helpLevels": [
+        "Vergleiche den scope in Werkzeugbeschreibung und Rückgabe.",
+        "Die Zahl 7 gilt nicht unternehmensweit.",
+        "Sende „Service-Desk Nord“ in Copilot Chat und markiere danach den Governance-Hinweis als geprüft."
+      ],
+      "successMessage": "Du hast den begrenzten Werkzeug-Scope und die Governance-Folgen korrekt erkannt."
+    }
+  ]
 }
