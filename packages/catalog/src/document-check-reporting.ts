@@ -37,6 +37,7 @@ export interface DocumentCheckReportBucket {
 }
 
 export interface DocumentCheckTrendBucket {
+  /** UTC calendar date in YYYY-MM-DD form. */
   date: string;
   count: number;
 }
@@ -94,12 +95,17 @@ function assertVisibility(
 
 function assertAuditRecord(record: DocumentCheckAuditRecord): void {
   if (
+    typeof record.timestamp !== "string" ||
     !record.timestamp ||
     !Number.isFinite(Date.parse(record.timestamp)) ||
+    typeof record.levelId !== "string" ||
     !record.levelId.trim() ||
+    typeof record.userId !== "string" ||
     !record.userId.trim() ||
     !Array.isArray(record.indicatorIds) ||
-    record.indicatorIds.some((indicatorId) => !indicatorId.trim())
+    record.indicatorIds.some(
+      (indicatorId) => typeof indicatorId !== "string" || !indicatorId.trim(),
+    )
   ) {
     throw new Error("Document-check reporting evidence is invalid");
   }
