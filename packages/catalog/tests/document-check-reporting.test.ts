@@ -84,10 +84,7 @@ describe("document-check reporting", () => {
   });
 
   it("keeps document reporting aggregate even when the server policy is named", async () => {
-    const reporting = service(
-      [record(1), record(2), record(3), record(4), record(5)],
-      "named",
-    );
+    const reporting = service([record(1), record(2), record(3), record(4), record(5)], "named");
 
     const result = await reporting.loadReport({ tenantId: "tenant-a", role: "tenant_admin" });
     const serialized = JSON.stringify(result);
