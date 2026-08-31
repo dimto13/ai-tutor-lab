@@ -19,9 +19,7 @@ export interface DocumentCheckReportingVisibilityPolicy {
  * service never accepts visibility or tenant scope as a report/query argument.
  */
 export interface DocumentCheckReportingVisibilitySource {
-  load():
-    | Promise<DocumentCheckReportingVisibilityPolicy>
-    | DocumentCheckReportingVisibilityPolicy;
+  load(): Promise<DocumentCheckReportingVisibilityPolicy> | DocumentCheckReportingVisibilityPolicy;
 }
 
 /**
@@ -58,9 +56,7 @@ export interface TenantDocumentCheckReportingServiceOptions {
   visibilitySource: DocumentCheckReportingVisibilitySource;
 }
 
-function suppressedReport(
-  visibility: DocumentCheckReportingVisibility,
-): TenantDocumentCheckReport {
+function suppressedReport(visibility: DocumentCheckReportingVisibility): TenantDocumentCheckReport {
   return {
     visibility,
     cohortSuppressed: true,
@@ -113,10 +109,9 @@ function share(count: number, total: number): number {
   return Math.round((count / total) * 10_000) / 10_000;
 }
 
-function aggregate(records: readonly DocumentCheckAuditRecord[]): Omit<
-  TenantDocumentCheckReport,
-  "visibility" | "cohortSuppressed"
-> {
+function aggregate(
+  records: readonly DocumentCheckAuditRecord[],
+): Omit<TenantDocumentCheckReport, "visibility" | "cohortSuppressed"> {
   const levelCounts = new Map<string, number>();
   const indicatorCounts = new Map<string, number>();
   const trendCounts = new Map<string, number>();
@@ -139,9 +134,7 @@ function aggregate(records: readonly DocumentCheckAuditRecord[]): Omit<
       .map(([id, count]) => ({ id, count, share: share(count, checkCount) })),
     frequentIndicators: [...indicatorCounts.entries()]
       .sort(([leftId, leftCount], [rightId, rightCount]) =>
-        rightCount === leftCount
-          ? leftId.localeCompare(rightId)
-          : rightCount - leftCount,
+        rightCount === leftCount ? leftId.localeCompare(rightId) : rightCount - leftCount,
       )
       .map(([id, count]) => ({ id, count, share: share(count, checkCount) })),
     trend: [...trendCounts.entries()]
@@ -158,18 +151,12 @@ function toCsv(report: TenantDocumentCheckReport): string {
   const rows: Array<readonly (string | number)[]> = [
     ["section", "key", "count", "share"],
     ["summary", "checks", report.checkCount ?? 0, ""],
-    ...report.levelDistribution.map((bucket) => [
-      "level",
-      bucket.id,
-      bucket.count,
-      bucket.share,
-    ] as const),
-    ...report.frequentIndicators.map((bucket) => [
-      "indicator",
-      bucket.id,
-      bucket.count,
-      bucket.share,
-    ] as const),
+    ...report.levelDistribution.map(
+      (bucket) => ["level", bucket.id, bucket.count, bucket.share] as const,
+    ),
+    ...report.frequentIndicators.map(
+      (bucket) => ["indicator", bucket.id, bucket.count, bucket.share] as const,
+    ),
     ...report.trend.map((bucket) => ["trend", bucket.date, bucket.count, ""] as const),
   ];
   return `${rows.map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
