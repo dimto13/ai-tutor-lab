@@ -105,11 +105,16 @@ export class GuidedNavigationCoordinator {
   }
 
   async ensureStepEntryCheckpoints(stepId: string): Promise<void> {
-    for (const runtime of this.runtimes) {
+    // Capture every runtime before the first persistence read. Remote repositories can take long
+    // enough that the learner performs the step while a load is in flight; snapshotting after that
+    // I/O would persist the post-action state as the step-entry checkpoint and make replay appear to
+    // do nothing. Capturing the complete runtime set first also keeps integration runtimes aligned.
+    const entrySnapshots = await this.captureRuntimeSnapshots();
+
+    for (const { runtime, snapshot } of entrySnapshots) {
       const slot = stepCheckpointRuntimeId(runtime.id, stepId);
       const existing = parseStepCheckpoint(await this.persistence.loadRuntimeSnapshot(slot));
       if (existing?.stepId === stepId) continue;
-      const snapshot = await runtime.snapshot();
       await this.persistence.saveRuntimeSnapshot(slot, {
         version: GUIDED_NAVIGATION_VERSION,
         stepId,
