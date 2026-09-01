@@ -55,6 +55,22 @@ export {
   supportedDocumentFormats,
 } from "./document-classification.ts";
 export type {
+  DocumentCheckAuditReportSource,
+  DocumentCheckReportBucket,
+  DocumentCheckReportingRole,
+  DocumentCheckReportingVisibility,
+  DocumentCheckReportingVisibilityPolicy,
+  DocumentCheckReportingVisibilitySource,
+  DocumentCheckTrendBucket,
+  TenantDocumentCheckReport,
+  TenantDocumentCheckReportingContext,
+  TenantDocumentCheckReportingServiceOptions,
+} from "./document-check-reporting.ts";
+export {
+  createTenantDocumentCheckReportingService,
+  MIN_DOCUMENT_CHECK_REPORTING_COHORT,
+} from "./document-check-reporting.ts";
+export type {
   DocumentCheckAuditRecord,
   DocumentCheckAuditSink,
   DocumentCheckToolDecision,
