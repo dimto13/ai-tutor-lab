@@ -52,7 +52,9 @@ test("language switch during guided training preserves the active step and local
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toBeVisible();
 
-  await expect(page.getByText("Visual Studio Code – Geführte Grundlagen", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Visual Studio Code – Geführte Grundlagen", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/Schritt 1 von/)).toBeVisible();
 
   await page.getByRole("combobox", { name: "Sprache wechseln" }).selectOption("en");
