@@ -47,11 +47,10 @@ test("language switcher is keyboard operable and can return to German", async ({
 test("language switch during guided training preserves the active step and localizes scenario content", async ({
   page,
 }) => {
-  await page.goto("/training/vscode-basics.guided");
-  await expect(
-    page.getByRole("status").filter({ hasText: /Training bereit|Training ready/ }),
-  ).toBeVisible();
+  await page.goto("/");
   await selectGerman(page);
+  await page.goto("/training/vscode-basics.guided");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toBeVisible();
 
   await expect(page.getByText("Visual Studio Code – Grundlagen", { exact: true })).toBeVisible();
   await expect(page.getByText(/Schritt 1 von/)).toBeVisible();
