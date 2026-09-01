@@ -6,7 +6,11 @@ import {
   type Locator,
   type Page,
 } from "@playwright/test";
-import { closeAccountSettings, openAccountSettings } from "../helpers/account-settings";
+import {
+  closeAccountSettings,
+  openAccountSettings,
+  signOutFromAccountMenu,
+} from "../helpers/account-settings";
 
 type CloudEnvironmentName =
   | "CLOUD_BASE_URL"
@@ -38,7 +42,9 @@ async function checkedRadioIndex(radios: Locator): Promise<number> {
   return -1;
 }
 
-test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({ browser }, testInfo) => {
+test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({
+  browser,
+}, testInfo) => {
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
@@ -76,9 +82,9 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
 
     await firstNameInput.fill(changedName);
     await firstRadios.nth(changedRadioIndex).check();
+    stateWasChanged = true;
     await firstDialog.getByRole("button", { name: "Speichern", exact: true }).click();
     await expect(firstDialog).toBeHidden();
-    stateWasChanged = true;
 
     const firstReopenedDialog = await openAccountSettings(firstPage);
     await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
@@ -92,6 +98,9 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
     const secondDialog = await openAccountSettings(secondPage);
     await expect(secondDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
     await expect(secondDialog.getByRole("radio").nth(changedRadioIndex)).toBeChecked();
+    await closeAccountSettings(secondDialog);
+    await signOutFromAccountMenu(secondPage);
+    await expect(secondPage).toHaveURL(/\/willkommen$/);
   } catch (error) {
     primaryError = error;
   } finally {
