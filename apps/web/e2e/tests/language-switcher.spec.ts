@@ -35,3 +35,21 @@ test("language switcher is keyboard operable and can return to German", async ({
   await expect(page.getByText("Sprache", { exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Sprache wechseln" })).toHaveValue("de");
 });
+
+test("language switch during guided training preserves the active step and localizes scenario content", async ({
+  page,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
+    "Training bereit",
+  );
+
+  await expect(page.getByText("Visual Studio Code – Grundlagen", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Schritt 1 von/)).toBeVisible();
+
+  await page.getByRole("combobox", { name: "Sprache wechseln" }).selectOption("en");
+
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByText("Visual Studio Code – Guided Basics", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Schritt 1 von/)).toBeVisible();
+});
