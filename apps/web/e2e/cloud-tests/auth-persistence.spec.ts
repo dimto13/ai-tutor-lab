@@ -50,6 +50,7 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   let originalRadioIndex = -1;
   let stateWasChanged = false;
   let primaryError: unknown;
+  let cleanupError: unknown;
 
   try {
     const firstContext = await browser.newContext({ baseURL });
@@ -103,7 +104,6 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
     testInfo.setTimeout(testInfo.timeout + 60_000);
     await Promise.allSettled(contexts.map((context) => context.close()));
 
-    let cleanupError: unknown;
     if (stateWasChanged && originalName !== null) {
       const restoreContext = await browser.newContext({ baseURL });
       try {
@@ -131,15 +131,15 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
         await restoreContext.close().catch(() => undefined);
       }
     }
-
-    if (primaryError !== undefined) {
-      if (cleanupError !== undefined) {
-        console.error("Cloud acceptance account restoration also failed:", cleanupError);
-      }
-      throw primaryError;
-    }
-    if (cleanupError !== undefined) throw cleanupError;
   }
+
+  if (primaryError !== undefined) {
+    if (cleanupError !== undefined) {
+      console.error("Cloud acceptance account restoration also failed:", cleanupError);
+    }
+    throw primaryError;
+  }
+  if (cleanupError !== undefined) throw cleanupError;
 });
 
 test("cloud data transparency loads the real tenant policy and exports only the signed-in subject", async ({
