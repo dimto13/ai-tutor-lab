@@ -347,10 +347,7 @@ function rememberPreferenceRestore(
   preferenceRestoreByTestId.set(testId, entries);
 }
 
-async function restorePreferences(
-  browser: Browser,
-  entry: PreferenceRestoreEntry,
-): Promise<void> {
+async function restorePreferences(browser: Browser, entry: PreferenceRestoreEntry): Promise<void> {
   const signedIn = await signedInPage(browser, entry.baseURL, entry.account);
   try {
     const current = await loadPreferences(signedIn.page);
@@ -476,10 +473,9 @@ async function assertNoForeignEvidence(
   expect(scores.every((score) => score.userId === expectedUserId)).toBe(true);
 }
 
-test("preferences, scenario runs and score events stay isolated across users and tenants", async (
-  { browser },
-  testInfo,
-) => {
+test("preferences, scenario runs and score events stay isolated across users and tenants", async ({
+  browser,
+}, testInfo) => {
   test.setTimeout(240_000);
 
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
