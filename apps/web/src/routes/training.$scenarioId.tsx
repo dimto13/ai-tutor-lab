@@ -22,6 +22,7 @@ import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
 import { getScenario, getScenariosForModule } from "@/scenarios";
 
 const DESKTOP_LAYOUT_MEDIA_QUERY = "(min-width: 64rem)";
+const TUTOR_ATTENTION_TIMEOUT_MS = 2500;
 
 export const Route = createFileRoute("/training/$scenarioId")({
   loader: ({ params: { scenarioId } }) => {
@@ -260,6 +261,8 @@ function TrainingLayout() {
   } = useTraining();
   const [highlightsOn, setHighlightsOn] = useState(true);
   const [mobileSurface, setMobileSurface] = useState<"workspace" | "guide">("workspace");
+  const [attentionTarget, setAttentionTarget] = useState<string | null>(null);
+  const [attentionRun, setAttentionRun] = useState(0);
   const step = scenario.steps.find((s) => s.id === progress.activeStepId);
   const failureTarget = feedback?.kind === "error" ? step?.onFailure?.markTarget : undefined;
   const highlightTarget = failureTarget ?? step?.highlightTarget;
@@ -278,6 +281,26 @@ function TrainingLayout() {
     desktopLayout.addEventListener("change", restoreWorkspaceOnDesktop);
     return () => desktopLayout.removeEventListener("change", restoreWorkspaceOnDesktop);
   }, []);
+
+  useEffect(() => {
+    setAttentionTarget(null);
+  }, [step?.id, step?.highlightTarget]);
+
+  useEffect(() => {
+    if (!attentionTarget) return;
+    const timeout = window.setTimeout(() => setAttentionTarget(null), TUTOR_ATTENTION_TIMEOUT_MS);
+    return () => window.clearTimeout(timeout);
+  }, [attentionTarget, attentionRun]);
+
+  const showCurrentTarget = () => {
+    if (!step?.highlightTarget) return;
+    setMobileSurface("workspace");
+    setAttentionTarget(step.highlightTarget);
+    setAttentionRun((run) => run + 1);
+  };
+
+  const overlayTarget = attentionTarget ?? highlightTarget;
+  const showOverlay = Boolean(attentionTarget) || highlightsOn;
 
   return (
     <div
@@ -347,14 +370,37 @@ function TrainingLayout() {
             )}
           </button>
           {mode === "guided" ? (
-            <button
-              onClick={() => setHighlightsOn((v) => !v)}
-              className="hidden items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground lg:inline-flex"
-              title="Visuelle Führung ein-/ausschalten"
-            >
-              {highlightsOn ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-              Highlights
-            </button>
+            <>
+              <button
+                type="button"
+                data-testid="show-current-target"
+                onClick={showCurrentTarget}
+                disabled={!step?.highlightTarget}
+                aria-label={
+                  step?.highlightTarget
+                    ? "Aktuelles Lernziel zeigen"
+                    : "Für diesen Schritt ist kein visuelles Ziel verfügbar"
+                }
+                title={
+                  step?.highlightTarget
+                    ? "Aktuelles Lernziel zeigen"
+                    : "Für diesen Schritt ist kein visuelles Ziel verfügbar"
+                }
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Target className="h-3.5 w-3.5" aria-hidden="true" />
+                Ziel zeigen
+              </button>
+              <button
+                type="button"
+                onClick={() => setHighlightsOn((v) => !v)}
+                className="hidden items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground lg:inline-flex"
+                title="Visuelle Führung ein-/ausschalten"
+              >
+                {highlightsOn ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                Highlights
+              </button>
+            </>
           ) : null}
           <AccountMenu compact />
           <Link
@@ -447,15 +493,22 @@ function TrainingLayout() {
 
       {!isFinished &&
       mode === "guided" &&
-      highlightsOn &&
+      showOverlay &&
       mobileSurface === "workspace" &&
-      highlightTarget ? (
+      overlayTarget ? (
         <HighlightOverlay
-          targetId={highlightTarget}
+          key={`${overlayTarget}:${attentionRun}`}
+          targetId={overlayTarget}
           runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
-          tooltip={failureTarget ? feedback?.message : step?.highlightTooltip}
-          strong={Boolean(failureTarget) || helpLevel >= 3}
+          tooltip={
+            attentionTarget
+              ? "Hier findest du das aktuelle Lernziel."
+              : failureTarget
+                ? feedback?.message
+                : step?.highlightTooltip
+          }
+          strong={Boolean(attentionTarget) || Boolean(failureTarget) || helpLevel >= 3}
         />
       ) : null}
 
