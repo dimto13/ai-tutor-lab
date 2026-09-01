@@ -1,9 +1,16 @@
 import { expect, test } from "../fixtures/browser-error-guard";
 
+async function selectGerman(page: import("@playwright/test").Page): Promise<void> {
+  const languageSelect = page.getByRole("combobox", { name: /Sprache wechseln|Change language/ });
+  await languageSelect.selectOption("de");
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
+}
+
 test("language switcher applies English immediately and persists across reload", async ({
   page,
 }) => {
   await page.goto("/");
+  await selectGerman(page);
 
   const select = page.getByRole("combobox", { name: "Sprache wechseln" });
   await expect(select).toHaveValue("de");
@@ -21,6 +28,7 @@ test("language switcher applies English immediately and persists across reload",
 
 test("language switcher is keyboard operable and can return to German", async ({ page }) => {
   await page.goto("/");
+  await selectGerman(page);
 
   const select = page.getByRole("combobox", { name: "Sprache wechseln" });
   await select.focus();
@@ -40,9 +48,8 @@ test("language switch during guided training preserves the active step and local
   page,
 }) => {
   await page.goto("/training/vscode-basics.guided");
-  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toContainText(
-    "Training bereit",
-  );
+  await expect(page.getByRole("status").filter({ hasText: /Training bereit|Training ready/ })).toBeVisible();
+  await selectGerman(page);
 
   await expect(page.getByText("Visual Studio Code – Grundlagen", { exact: true })).toBeVisible();
   await expect(page.getByText(/Schritt 1 von/)).toBeVisible();
