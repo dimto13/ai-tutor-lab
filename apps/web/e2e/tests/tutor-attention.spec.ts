@@ -27,7 +27,7 @@ async function expectAttentionAvailable(page: Page): Promise<void> {
 test.describe("Tutor attention", () => {
   test.describe.configure({ retries: 0 });
 
-  test("Ziel zeigen resolves the current VS Code UiTargetRef, retriggers, and times out", async ({
+  test("Ziel zeigen resolves the current VS Code UiTargetRef, retriggers, and returns to the guided highlight", async ({
     page,
   }) => {
     await openGuidedScenario(page, "vscode-basics.guided");
@@ -38,7 +38,8 @@ test.describe("Tutor attention", () => {
     await button.click();
     await page.waitForTimeout(1_200);
     await expect(page.getByTestId("highlight-frame")).toBeVisible();
-    await expect(page.getByTestId("highlight-frame")).toHaveCount(0, { timeout: 3_000 });
+    await page.waitForTimeout(2_000);
+    await expect(page.getByTestId("highlight-frame")).toBeVisible();
   });
 
   test("Ziel zeigen uses the same generic attention path for the M365 runtime adapter", async ({
@@ -46,7 +47,7 @@ test.describe("Tutor attention", () => {
   }) => {
     await openGuidedScenario(page, "m365-copilot-basics.guided");
     await expectAttentionAvailable(page);
-    await expect(page.getByTestId("highlight-tooltip")).toContainText("aktuellen Lernziel");
+    await expect(page.getByTestId("highlight-tooltip")).toContainText("aktuelle Lernziel");
   });
 
   test("reduced motion keeps a visible target frame without pulse animation", async ({ page }) => {
