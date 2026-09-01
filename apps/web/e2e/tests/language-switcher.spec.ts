@@ -1,8 +1,5 @@
 import { expect, test } from "../fixtures/browser-error-guard";
 
-const languageSelect = (page: Parameters<typeof test>[0] extends never ? never : any) =>
-  page.getByRole("combobox", { name: "Sprache wechseln" });
-
 test("language switcher applies English immediately and persists across reload", async ({ page }) => {
   await page.goto("/");
 
