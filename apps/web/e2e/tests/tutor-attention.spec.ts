@@ -19,7 +19,9 @@ async function expectAttentionAvailable(page: Page): Promise<void> {
   await expect(button).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("highlight-frame")).toBeVisible();
-  await expect(page.getByTestId("highlight-announcement")).toContainText(/Lernziel|Hervorgehobenes Ziel/i);
+  await expect(page.getByTestId("highlight-announcement")).toContainText(
+    /Lernziel|Hervorgehobenes Ziel/i,
+  );
 }
 
 test.describe("Tutor attention", () => {
