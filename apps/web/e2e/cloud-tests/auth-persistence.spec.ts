@@ -1,11 +1,5 @@
 import { readFile } from "node:fs/promises";
-import {
-  expect,
-  test,
-  type BrowserContext,
-  type Locator,
-  type Page,
-} from "@playwright/test";
+import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import {
   closeAccountSettings,
   openAccountSettings,
@@ -87,7 +81,9 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
     await expect(firstDialog).toBeHidden();
 
     const firstReopenedDialog = await openAccountSettings(firstPage);
-    await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
+    await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(
+      changedName,
+    );
     await closeAccountSettings(firstReopenedDialog);
     await firstContext.close();
 
@@ -122,7 +118,9 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
         await expect(restoreDialog).toBeHidden();
         await restorePage.reload();
         const restoredDialog = await openAccountSettings(restorePage);
-        await expect(restoredDialog.getByRole("textbox", { name: "Name" })).toHaveValue(originalName);
+        await expect(restoredDialog.getByRole("textbox", { name: "Name" })).toHaveValue(
+          originalName,
+        );
         if (originalRadioIndex >= 0) {
           await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
         }
