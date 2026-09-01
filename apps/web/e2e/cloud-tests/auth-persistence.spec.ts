@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import {
   closeAccountSettings,
   openAccountSettings,
@@ -38,73 +38,108 @@ async function checkedRadioIndex(radios: Locator): Promise<number> {
 
 test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({
   browser,
-}) => {
+}, testInfo) => {
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
   const runMarker = process.env.GITHUB_RUN_ID?.trim() || "local";
   const changedName = `Cloud Acceptance ${runMarker}`;
+  const contexts: BrowserContext[] = [];
 
-  const firstContext = await browser.newContext({ baseURL });
-  const firstPage = await firstContext.newPage();
-  await signIn(firstPage, email, password);
+  let originalName: string | null = null;
+  let originalRadioIndex = -1;
+  let stateWasChanged = false;
+  let primaryError: unknown;
+  let cleanupError: unknown;
 
-  const firstDialog = await openAccountSettings(firstPage);
-  const firstNameInput = firstDialog.getByRole("textbox", { name: "Name" });
-  const originalName = await firstNameInput.inputValue();
-  if (!originalName.trim())
-    throw new Error("Cloud test account must have a non-empty display name.");
+  try {
+    const firstContext = await browser.newContext({ baseURL });
+    contexts.push(firstContext);
+    const firstPage = await firstContext.newPage();
+    await signIn(firstPage, email, password);
 
-  const firstEmailDisplay = firstDialog.getByTestId("account-email");
-  await expect(firstEmailDisplay).toContainText("@");
-  await expect(firstEmailDisplay).toContainText("*");
+    const firstDialog = await openAccountSettings(firstPage);
+    const firstNameInput = firstDialog.getByRole("textbox", { name: "Name" });
+    originalName = await firstNameInput.inputValue();
+    if (!originalName.trim()) {
+      throw new Error("Cloud test account must have a non-empty display name.");
+    }
 
-  const firstRadios = firstDialog.getByRole("radio");
-  const radioCount = await firstRadios.count();
-  if (radioCount < 2) throw new Error("Expected at least two self-assessed AI-level options.");
-  const originalRadioIndex = await checkedRadioIndex(firstRadios);
-  const changedRadioIndex = originalRadioIndex >= 0 ? (originalRadioIndex + 1) % radioCount : 0;
+    const firstEmailDisplay = firstDialog.getByTestId("account-email");
+    await expect(firstEmailDisplay).toContainText("@");
+    await expect(firstEmailDisplay).toContainText("*");
 
-  await firstNameInput.fill(changedName);
-  await firstRadios.nth(changedRadioIndex).check();
-  await firstDialog.getByRole("button", { name: "Speichern", exact: true }).click();
-  await expect(firstDialog).toBeHidden();
+    const firstRadios = firstDialog.getByRole("radio");
+    const radioCount = await firstRadios.count();
+    if (radioCount < 2) throw new Error("Expected at least two self-assessed AI-level options.");
+    originalRadioIndex = await checkedRadioIndex(firstRadios);
+    const changedRadioIndex = originalRadioIndex >= 0 ? (originalRadioIndex + 1) % radioCount : 0;
 
-  // Das Seiten-Chrome zeigt den Identitätsnamen aus der authentifizierten Identität, nicht den
-  // editierbaren Profilnamen (AccountMenu: identityDisplayName vs. profile.displayName). Die
-  // Speicherung wird deshalb dort belegt, wo der Profilwert tatsächlich gilt: im Dialog.
-  const firstReopenedDialog = await openAccountSettings(firstPage);
-  await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
-  await closeAccountSettings(firstReopenedDialog);
+    await firstNameInput.fill(changedName);
+    await firstRadios.nth(changedRadioIndex).check();
+    stateWasChanged = true;
+    await firstDialog.getByRole("button", { name: "Speichern", exact: true }).click();
+    await expect(firstDialog).toBeHidden();
 
-  await firstContext.close();
+    const firstReopenedDialog = await openAccountSettings(firstPage);
+    await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(
+      changedName,
+    );
+    await closeAccountSettings(firstReopenedDialog);
+    await firstContext.close();
 
-  const secondContext = await browser.newContext({ baseURL });
-  const secondPage = await secondContext.newPage();
-  await signIn(secondPage, email, password);
+    const secondContext = await browser.newContext({ baseURL });
+    contexts.push(secondContext);
+    const secondPage = await secondContext.newPage();
+    await signIn(secondPage, email, password);
+    const secondDialog = await openAccountSettings(secondPage);
+    await expect(secondDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
+    await expect(secondDialog.getByRole("radio").nth(changedRadioIndex)).toBeChecked();
+    await closeAccountSettings(secondDialog);
+    await signOutFromAccountMenu(secondPage);
+    await expect(secondPage).toHaveURL(/\/willkommen$/);
+  } catch (error) {
+    primaryError = error;
+  } finally {
+    testInfo.setTimeout(testInfo.timeout + 60_000);
+    await Promise.allSettled(contexts.map((context) => context.close()));
 
-  const secondDialog = await openAccountSettings(secondPage);
-  const secondNameInput = secondDialog.getByRole("textbox", { name: "Name" });
-  const secondRadios = secondDialog.getByRole("radio");
-  await expect(secondNameInput).toHaveValue(changedName);
-  await expect(secondRadios.nth(changedRadioIndex)).toBeChecked();
-
-  await secondNameInput.fill(originalName);
-  if (originalRadioIndex >= 0) await secondRadios.nth(originalRadioIndex).check();
-  await secondDialog.getByRole("button", { name: "Speichern", exact: true }).click();
-  await expect(secondDialog).toBeHidden();
-
-  await secondPage.reload();
-  const restoredDialog = await openAccountSettings(secondPage);
-  await expect(restoredDialog.getByRole("textbox", { name: "Name" })).toHaveValue(originalName);
-  if (originalRadioIndex >= 0) {
-    await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
+    if (stateWasChanged && originalName !== null) {
+      const restoreContext = await browser.newContext({ baseURL });
+      try {
+        const restorePage = await restoreContext.newPage();
+        await signIn(restorePage, email, password);
+        const restoreDialog = await openAccountSettings(restorePage);
+        await restoreDialog.getByRole("textbox", { name: "Name" }).fill(originalName);
+        if (originalRadioIndex >= 0) {
+          await restoreDialog.getByRole("radio").nth(originalRadioIndex).check();
+        }
+        await restoreDialog.getByRole("button", { name: "Speichern", exact: true }).click();
+        await expect(restoreDialog).toBeHidden();
+        await restorePage.reload();
+        const restoredDialog = await openAccountSettings(restorePage);
+        await expect(restoredDialog.getByRole("textbox", { name: "Name" })).toHaveValue(
+          originalName,
+        );
+        if (originalRadioIndex >= 0) {
+          await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
+        }
+        await closeAccountSettings(restoredDialog);
+      } catch (error) {
+        cleanupError = error;
+      } finally {
+        await restoreContext.close().catch(() => undefined);
+      }
+    }
   }
-  await closeAccountSettings(restoredDialog);
 
-  await signOutFromAccountMenu(secondPage);
-  await expect(secondPage).toHaveURL(/\/willkommen$/);
-  await secondContext.close();
+  if (primaryError !== undefined) {
+    if (cleanupError !== undefined) {
+      console.error("Cloud acceptance account restoration also failed:", cleanupError);
+    }
+    throw primaryError;
+  }
+  if (cleanupError !== undefined) throw cleanupError;
 });
 
 test("cloud data transparency loads the real tenant policy and exports only the signed-in subject", async ({
