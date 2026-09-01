@@ -59,6 +59,14 @@ interface ScoreAwardEnvelope {
   event: ScoreEventEnvelope;
 }
 
+interface PreferenceRestoreEntry {
+  baseURL: string;
+  account: TestCredentials;
+  original: UserPreferencesEnvelope | null;
+}
+
+const preferenceRestoreByTestId = new Map<string, PreferenceRestoreEntry[]>();
+
 function requireEnvironmentValue(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is required for authenticated cloud acceptance.`);
@@ -75,6 +83,11 @@ function credentials(prefix: string): TestCredentials {
 function decodeAwsJson(value: unknown): unknown {
   if (typeof value !== "string") return value;
   return JSON.parse(value) as unknown;
+}
+
+function encodeAwsJson(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return typeof value === "string" ? value : JSON.stringify(value);
 }
 
 async function signIn(page: Page, account: TestCredentials): Promise<void> {
@@ -323,6 +336,62 @@ async function savePreferenceMarker(
   };
 }
 
+function rememberPreferenceRestore(
+  testId: string,
+  baseURL: string,
+  account: TestCredentials,
+  original: UserPreferencesEnvelope | null,
+): void {
+  const entries = preferenceRestoreByTestId.get(testId) ?? [];
+  entries.push({ baseURL, account, original });
+  preferenceRestoreByTestId.set(testId, entries);
+}
+
+async function restorePreferences(
+  browser: Browser,
+  entry: PreferenceRestoreEntry,
+): Promise<void> {
+  const signedIn = await signedInPage(browser, entry.baseURL, entry.account);
+  try {
+    const current = await loadPreferences(signedIn.page);
+    if (!current && !entry.original) return;
+    const original = entry.original;
+    await graphQL(signedIn.page, saveUserPreferencesDocument, {
+      language: original?.language ?? null,
+      preferredTrainingMode: original?.preferredTrainingMode ?? null,
+      weeklyGoalMinutes: original?.weeklyGoalMinutes ?? null,
+      accessibility: encodeAwsJson(original?.accessibility ?? null),
+      selfAssessedAiLevel: original?.selfAssessedAiLevel ?? null,
+      expectedRevision: current?.revision ?? null,
+    });
+  } finally {
+    await signedIn.context.close();
+  }
+}
+
+test.afterEach(async ({ browser }, testInfo) => {
+  const entries = preferenceRestoreByTestId.get(testInfo.testId) ?? [];
+  preferenceRestoreByTestId.delete(testInfo.testId);
+  const failures: unknown[] = [];
+
+  for (const entry of entries.reverse()) {
+    try {
+      await restorePreferences(browser, entry);
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+
+  if (failures.length === 0) return;
+  if (testInfo.status === testInfo.expectedStatus) {
+    throw new AggregateError(failures, "Cloud preference cleanup failed.");
+  }
+  console.error(
+    "Cloud preference cleanup failed after an already failed acceptance test.",
+    ...failures,
+  );
+});
+
 async function preparePrimaryScoreEvidence(
   page: Page,
   marker: string,
@@ -407,9 +476,10 @@ async function assertNoForeignEvidence(
   expect(scores.every((score) => score.userId === expectedUserId)).toBe(true);
 }
 
-test("preferences, scenario runs and score events stay isolated across users and tenants", async ({
-  browser,
-}) => {
+test("preferences, scenario runs and score events stay isolated across users and tenants", async (
+  { browser },
+  testInfo,
+) => {
   test.setTimeout(240_000);
 
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
@@ -422,7 +492,13 @@ test("preferences, scenario runs and score events stay isolated across users and
   try {
     const primary = await signedInPage(browser, baseURL, primaryAccount);
     contexts.push(primary.context);
+    const primaryBefore = await loadPreferences(primary.page);
+    rememberPreferenceRestore(testInfo.testId, baseURL, primaryAccount, primaryBefore);
     const primaryPreferences = await savePreferenceMarker(primary.page, marker, "primary");
+
+    // Training-state, ScenarioRun and ScoreEvent records below are intentionally dedicated
+    // acceptance evidence. ScenarioRun/ScoreEvent are append-only audit evidence and have no
+    // client-authorized deletion path; the mutable account preferences are restored in afterEach.
     const primaryEvidence = await preparePrimaryScoreEvidence(primary.page, marker);
     expect(primaryEvidence.state.userId).toBe(primaryPreferences.userId);
     expect(primaryEvidence.state.tenantId).toBe(primaryPreferences.tenantId);
@@ -430,6 +506,7 @@ test("preferences, scenario runs and score events stay isolated across users and
     const peer = await signedInPage(browser, baseURL, peerAccount);
     contexts.push(peer.context);
     const peerBefore = await loadPreferences(peer.page);
+    rememberPreferenceRestore(testInfo.testId, baseURL, peerAccount, peerBefore);
     expect(peerBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
     const peerPreferences = await savePreferenceMarker(peer.page, marker, "peer");
     expect(peerPreferences.tenantId).toBe(primaryPreferences.tenantId);
@@ -446,6 +523,7 @@ test("preferences, scenario runs and score events stay isolated across users and
     const otherTenant = await signedInPage(browser, baseURL, otherTenantAccount);
     contexts.push(otherTenant.context);
     const otherTenantBefore = await loadPreferences(otherTenant.page);
+    rememberPreferenceRestore(testInfo.testId, baseURL, otherTenantAccount, otherTenantBefore);
     expect(otherTenantBefore?.accessibility).not.toEqual(primaryPreferences.accessibility);
     const otherTenantPreferences = await savePreferenceMarker(
       otherTenant.page,
