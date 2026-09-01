@@ -275,10 +275,9 @@ async function checkedRadioIndex(radios: Locator): Promise<number> {
   return -1;
 }
 
-test("Cognito login and AppSync profile/preferences survive a fresh browser context", async (
-  { browser },
-  testInfo,
-) => {
+test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({
+  browser,
+}, testInfo) => {
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
