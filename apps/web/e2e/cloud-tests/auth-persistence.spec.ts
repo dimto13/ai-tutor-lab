@@ -76,24 +76,17 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
     await expect(firstDialog).toBeHidden();
     stateWasChanged = true;
 
-    // Das Seiten-Chrome zeigt den Identitätsnamen aus der authentifizierten Identität, nicht den
-    // editierbaren Profilnamen (AccountMenu: identityDisplayName vs. profile.displayName). Die
-    // Speicherung wird deshalb dort belegt, wo der Profilwert tatsächlich gilt: im Dialog.
     const firstReopenedDialog = await openAccountSettings(firstPage);
     await expect(firstReopenedDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
     await closeAccountSettings(firstReopenedDialog);
-
     await firstContext.close();
 
     const secondContext = await browser.newContext({ baseURL });
     const secondPage = await secondContext.newPage();
     await signIn(secondPage, email, password);
-
     const secondDialog = await openAccountSettings(secondPage);
-    const secondNameInput = secondDialog.getByRole("textbox", { name: "Name" });
-    const secondRadios = secondDialog.getByRole("radio");
-    await expect(secondNameInput).toHaveValue(changedName);
-    await expect(secondRadios.nth(changedRadioIndex)).toBeChecked();
+    await expect(secondDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
+    await expect(secondDialog.getByRole("radio").nth(changedRadioIndex)).toBeChecked();
     await secondContext.close();
   } finally {
     if (stateWasChanged && originalName !== null) {
@@ -108,7 +101,6 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
         }
         await restoreDialog.getByRole("button", { name: "Speichern", exact: true }).click();
         await expect(restoreDialog).toBeHidden();
-
         await restorePage.reload();
         const restoredDialog = await openAccountSettings(restorePage);
         await expect(restoredDialog.getByRole("textbox", { name: "Name" })).toHaveValue(originalName);
@@ -125,24 +117,18 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
   }
 });
 
-test("cloud data transparency loads the real tenant policy and exports only the signed-in subject", async ({
-  browser,
-}) => {
+test("cloud data transparency loads the real tenant policy and exports only the signed-in subject", async ({ browser }) => {
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
   await signIn(page, email, password);
-
   await page.goto("/datentransparenz");
-  await expect(
-    page.getByRole("heading", { name: "Diese Daten werden über mich gespeichert" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diese Daten werden über mich gespeichert" })).toBeVisible();
   await expect(page.getByText("Speichermodus: Cloud", { exact: true })).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByText(/^Rohtelemetrie: \d+ Tage$/)).toBeVisible();
-
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Meine Daten als JSON exportieren" }).click();
   const download = await downloadPromise;
@@ -154,29 +140,23 @@ test("cloud data transparency loads the real tenant policy and exports only the 
     serverData: { subject?: { userId?: string; tenantId?: string } } | null;
     excluded: { authTokens: string; tenantAggregates: string };
   };
-
   expect(exported.storageMode).toBe("cloud");
   expect(exported.subject.userId).toBeTruthy();
   expect(exported.subject.tenantId).toBeTruthy();
   expect(exported.serverData?.subject).toEqual(exported.subject);
   expect(exported.excluded.authTokens).toContain("never exported");
   expect(exported.excluded.tenantAggregates).toContain("not person-specific");
-  await expect(page.getByRole("status")).toContainText(
-    "Eigendatenexport wurde als JSON-Datei erstellt",
-  );
+  await expect(page.getByRole("status")).toContainText("Eigendatenexport wurde als JSON-Datei erstellt");
   await context.close();
 });
 
-test("cloud data transparency maps missing tenant membership without leaking provider errors", async ({
-  browser,
-}) => {
+test("cloud data transparency maps missing tenant membership without leaking provider errors", async ({ browser }) => {
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_PERSONAL_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PERSONAL_PASSWORD");
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
   await signIn(page, email, password);
-
   await page.goto("/datentransparenz");
   const alert = page.getByRole("alert");
   await expect(alert).toContainText("Dein Datenkontext ist noch nicht verfügbar");
