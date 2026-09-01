@@ -1,5 +1,11 @@
 import { readFile } from "node:fs/promises";
-import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 import { closeAccountSettings, openAccountSettings } from "../helpers/account-settings";
 
 type CloudEnvironmentName =
