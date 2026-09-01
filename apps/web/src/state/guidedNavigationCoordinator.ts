@@ -90,10 +90,13 @@ function parseReturnCheckpoint(value: unknown): GuidedReturnCheckpoint | null {
  * Runtime snapshots stay opaque and all product semantics remain in adapters.
  */
 export class GuidedNavigationCoordinator {
-  constructor(
-    private readonly persistence: TrainingStatePersistence,
-    private readonly runtimes: readonly RuntimeAdapter[],
-  ) {}
+  private readonly persistence: TrainingStatePersistence;
+  private readonly runtimes: readonly RuntimeAdapter[];
+
+  constructor(persistence: TrainingStatePersistence, runtimes: readonly RuntimeAdapter[]) {
+    this.persistence = persistence;
+    this.runtimes = runtimes;
+  }
 
   async loadReplayStepId(session: TrainingSession, scenario: Scenario): Promise<string | null> {
     const state = parseNavigationState(
