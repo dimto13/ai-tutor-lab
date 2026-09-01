@@ -284,7 +284,7 @@ function TrainingLayout() {
 
   useEffect(() => {
     setAttentionTarget(null);
-  }, [step?.id, step?.highlightTarget]);
+  }, [step?.id, highlightTarget]);
 
   useEffect(() => {
     if (!attentionTarget) return;
@@ -293,13 +293,13 @@ function TrainingLayout() {
   }, [attentionTarget, attentionRun]);
 
   const showCurrentTarget = () => {
-    if (!step?.highlightTarget) return;
+    if (!highlightTarget) return;
     setMobileSurface("workspace");
-    setAttentionTarget(step.highlightTarget);
+    setAttentionTarget(highlightTarget);
     setAttentionRun((run) => run + 1);
   };
 
-  const overlayTarget = attentionTarget ?? highlightTarget;
+  const overlayTarget = failureTarget ?? attentionTarget ?? highlightTarget;
   const showOverlay = Boolean(attentionTarget) || highlightsOn;
 
   return (
@@ -375,14 +375,14 @@ function TrainingLayout() {
                 type="button"
                 data-testid="show-current-target"
                 onClick={showCurrentTarget}
-                disabled={!step?.highlightTarget}
+                disabled={!highlightTarget}
                 aria-label={
-                  step?.highlightTarget
+                  highlightTarget
                     ? "Aktuelles Lernziel zeigen"
                     : "Für diesen Schritt ist kein visuelles Ziel verfügbar"
                 }
                 title={
-                  step?.highlightTarget
+                  highlightTarget
                     ? "Aktuelles Lernziel zeigen"
                     : "Für diesen Schritt ist kein visuelles Ziel verfügbar"
                 }
@@ -397,7 +397,11 @@ function TrainingLayout() {
                 className="hidden items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground lg:inline-flex"
                 title="Visuelle Führung ein-/ausschalten"
               >
-                {highlightsOn ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                {highlightsOn ? (
+                  <Eye className="h-3.5 w-3.5" />
+                ) : (
+                  <EyeOff className="h-3.5 w-3.5" />
+                )}
                 Highlights
               </button>
             </>
@@ -502,10 +506,10 @@ function TrainingLayout() {
           runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
           tooltip={
-            attentionTarget
-              ? "Hier findest du das aktuelle Lernziel."
-              : failureTarget
-                ? feedback?.message
+            failureTarget
+              ? feedback?.message
+              : attentionTarget
+                ? "Hier findest du das aktuelle Lernziel."
                 : step?.highlightTooltip
           }
           strong={Boolean(attentionTarget) || Boolean(failureTarget) || helpLevel >= 3}
