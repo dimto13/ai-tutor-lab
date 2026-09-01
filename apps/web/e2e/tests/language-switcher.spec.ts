@@ -48,7 +48,9 @@ test("language switch during guided training preserves the active step and local
   page,
 }) => {
   await page.goto("/training/vscode-basics.guided");
-  await expect(page.getByRole("status").filter({ hasText: /Training bereit|Training ready/ })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: /Training bereit|Training ready/ }),
+  ).toBeVisible();
   await selectGerman(page);
 
   await expect(page.getByText("Visual Studio Code – Grundlagen", { exact: true })).toBeVisible();
