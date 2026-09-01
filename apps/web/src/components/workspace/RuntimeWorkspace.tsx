@@ -89,17 +89,19 @@ function useRuntimePersistence(
     if (!runtimeReady || mode !== "guided" || !progress.activeStepId || isGuidedReplay) {
       return;
     }
+
+    // Navigation checkpoints must start at the exact step-entry state. Waiting for another animation
+    // frame leaves a window in which a fast learner action can complete the step and cancel the
+    // checkpoint effect before it ever runs.
+    void ensureGuidedNavigationCheckpoints();
+
     let active = true;
-    const frame = window.requestAnimationFrame(() => {
-      void snapshot().then((currentSnapshot) => {
-        if (!active) return;
-        void ensureGuidedRecoveryCheckpoint(runtimeId, currentSnapshot);
-        void ensureGuidedNavigationCheckpoints();
-      });
+    void snapshot().then((currentSnapshot) => {
+      if (!active) return;
+      void ensureGuidedRecoveryCheckpoint(runtimeId, currentSnapshot);
     });
     return () => {
       active = false;
-      window.cancelAnimationFrame(frame);
     };
   }, [
     runtimeReady,
