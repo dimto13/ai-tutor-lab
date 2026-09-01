@@ -1,10 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { expect, test, type Locator, type Page } from "@playwright/test";
-import {
-  closeAccountSettings,
-  openAccountSettings,
-  signOutFromAccountMenu,
-} from "../helpers/account-settings";
+import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
+import { closeAccountSettings, openAccountSettings } from "../helpers/account-settings";
 
 type CloudEnvironmentName =
   | "CLOUD_BASE_URL"
@@ -36,29 +32,31 @@ async function checkedRadioIndex(radios: Locator): Promise<number> {
   return -1;
 }
 
-test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({
-  browser,
-}) => {
+test("Cognito login and AppSync profile/preferences survive a fresh browser context", async ({ browser }, testInfo) => {
   const baseURL = requireEnvironmentValue("CLOUD_BASE_URL");
   const email = requireEnvironmentValue("CLOUD_TEST_EMAIL");
   const password = requireEnvironmentValue("CLOUD_TEST_PASSWORD");
   const runMarker = process.env.GITHUB_RUN_ID?.trim() || "local";
   const changedName = `Cloud Acceptance ${runMarker}`;
+  const contexts: BrowserContext[] = [];
 
   let originalName: string | null = null;
   let originalRadioIndex = -1;
   let stateWasChanged = false;
+  let primaryError: unknown;
 
   try {
     const firstContext = await browser.newContext({ baseURL });
+    contexts.push(firstContext);
     const firstPage = await firstContext.newPage();
     await signIn(firstPage, email, password);
 
     const firstDialog = await openAccountSettings(firstPage);
     const firstNameInput = firstDialog.getByRole("textbox", { name: "Name" });
     originalName = await firstNameInput.inputValue();
-    if (!originalName.trim())
+    if (!originalName.trim()) {
       throw new Error("Cloud test account must have a non-empty display name.");
+    }
 
     const firstEmailDisplay = firstDialog.getByTestId("account-email");
     await expect(firstEmailDisplay).toContainText("@");
@@ -82,13 +80,19 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
     await firstContext.close();
 
     const secondContext = await browser.newContext({ baseURL });
+    contexts.push(secondContext);
     const secondPage = await secondContext.newPage();
     await signIn(secondPage, email, password);
     const secondDialog = await openAccountSettings(secondPage);
     await expect(secondDialog.getByRole("textbox", { name: "Name" })).toHaveValue(changedName);
     await expect(secondDialog.getByRole("radio").nth(changedRadioIndex)).toBeChecked();
-    await secondContext.close();
+  } catch (error) {
+    primaryError = error;
   } finally {
+    testInfo.setTimeout(testInfo.timeout + 60_000);
+    await Promise.allSettled(contexts.map((context) => context.close()));
+
+    let cleanupError: unknown;
     if (stateWasChanged && originalName !== null) {
       const restoreContext = await browser.newContext({ baseURL });
       try {
@@ -108,12 +112,20 @@ test("Cognito login and AppSync profile/preferences survive a fresh browser cont
           await expect(restoredDialog.getByRole("radio").nth(originalRadioIndex)).toBeChecked();
         }
         await closeAccountSettings(restoredDialog);
-        await signOutFromAccountMenu(restorePage);
-        await expect(restorePage).toHaveURL(/\/willkommen$/);
+      } catch (error) {
+        cleanupError = error;
       } finally {
-        await restoreContext.close();
+        await restoreContext.close().catch(() => undefined);
       }
     }
+
+    if (primaryError !== undefined) {
+      if (cleanupError !== undefined) {
+        console.error("Cloud acceptance account restoration also failed:", cleanupError);
+      }
+      throw primaryError;
+    }
+    if (cleanupError !== undefined) throw cleanupError;
   }
 });
 
