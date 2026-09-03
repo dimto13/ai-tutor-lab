@@ -1,8 +1,15 @@
 export type UserFacingErrorKind = "temporary" | "conflict" | "forbidden" | "unexpected";
 
-export interface UserFacingError {
-  kind: UserFacingErrorKind;
-  diagnosticMessage: string;
+export class UserFacingError extends Error {
+  readonly kind: UserFacingErrorKind;
+  readonly diagnosticMessage: string;
+
+  constructor(kind: UserFacingErrorKind, diagnosticMessage: string, cause?: unknown) {
+    super("A provider operation failed", { cause });
+    this.name = "UserFacingError";
+    this.kind = kind;
+    this.diagnosticMessage = diagnosticMessage;
+  }
 }
 
 const CONFLICT_PATTERN = /ConditionalCheckFailed|conditional request failed|\bconflict\b/i;
@@ -16,9 +23,13 @@ function technicalMessage(cause: unknown): string {
 
 export function userFacingError(cause: unknown): UserFacingError {
   const diagnosticMessage = technicalMessage(cause);
-  if (CONFLICT_PATTERN.test(diagnosticMessage)) return { kind: "conflict", diagnosticMessage };
-  if (FORBIDDEN_PATTERN.test(diagnosticMessage)) return { kind: "forbidden", diagnosticMessage };
-  return { kind: "unexpected", diagnosticMessage };
+  if (CONFLICT_PATTERN.test(diagnosticMessage)) {
+    return new UserFacingError("conflict", diagnosticMessage, cause);
+  }
+  if (FORBIDDEN_PATTERN.test(diagnosticMessage)) {
+    return new UserFacingError("forbidden", diagnosticMessage, cause);
+  }
+  return new UserFacingError("unexpected", diagnosticMessage, cause);
 }
 
 export function userFacingErrorMessage(
