@@ -13,6 +13,7 @@ import {
   Target,
 } from "lucide-react";
 import { useTraining } from "@/state/trainingStore";
+import { useLocalizedScenario } from "@/i18n/useLocalizedScenario";
 import { TutorChat } from "@/components/tutor/TutorChat";
 import { getRuntimeAdapter } from "@/runtime";
 import { getGlossaryConceptByKey, getGlossaryConceptForTarget } from "@/lib/glossary";
@@ -48,7 +49,7 @@ export function GuidePanel() {
 
 function GuidedGuide() {
   const {
-    scenario,
+    scenario: canonicalScenario,
     progress,
     feedback,
     helpLevel,
@@ -56,6 +57,7 @@ function GuidedGuide() {
     completeExplanationStep,
     skipOptionalSteps,
   } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const step = scenario.steps.find((candidate) => candidate.id === progress.activeStepId);
   const [showWhy, setShowWhy] = useState(false);
   const stepIndex = step ? scenario.steps.findIndex((candidate) => candidate.id === step.id) : -1;
@@ -318,7 +320,8 @@ function GuidedGuide() {
 }
 
 function ExploreGuide() {
-  const { scenario, progress, percent } = useTraining();
+  const { scenario: canonicalScenario, progress, percent } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const runtimeIds = [
     scenario.environment?.runtimeAdapterId,
     ...(scenario.environment?.integrations ?? []).map(
@@ -448,8 +451,14 @@ function formatRemainingTime(seconds: number): string {
 }
 
 function ChallengeGuide() {
-  const { scenario, feedback, challengeOutcome, challengeRemainingSeconds, restart } =
-    useTraining();
+  const {
+    scenario: canonicalScenario,
+    feedback,
+    challengeOutcome,
+    challengeRemainingSeconds,
+    restart,
+  } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const goal = scenario.steps[0];
   const timedOut = challengeOutcome === "timed_out";
 
