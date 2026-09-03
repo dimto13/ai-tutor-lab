@@ -1,5 +1,4 @@
-export type UserFacingErrorKind =
-  "temporary" | "conflict" | "forbidden" | "tenant-context" | "unexpected";
+export type UserFacingErrorKind = "conflict" | "forbidden" | "tenant-context" | "unexpected";
 
 export class UserFacingError extends Error {
   readonly kind: UserFacingErrorKind;
