@@ -12,15 +12,13 @@ import {
 import { TutorAttentionOverlay } from "@/components/overlay/TutorAttentionOverlay";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
 import { SpeechTextControl } from "@/components/training/SpeechTextControl";
-import { useLanguage } from "@/i18n/LanguageContext";
-import { localizeScenarioContent } from "@/i18n/scenarioContent";
+import { useLocalizedScenario } from "@/i18n/useLocalizedScenario";
 import { useTraining } from "@/state/trainingStore";
 
 export function GuidedStepNavigation() {
   const { scenario, progress, isGuidedReplay, guidedNavigationPending, navigateToGuidedStep } =
     useTraining();
-  const { language } = useLanguage();
-  const displayScenario = localizeScenarioContent(scenario, language);
+  const displayScenario = useLocalizedScenario(scenario);
 
   const furthestStepId =
     displayScenario.steps.find((step) => {
