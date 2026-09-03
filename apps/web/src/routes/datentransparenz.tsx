@@ -10,6 +10,12 @@ import {
   type DataStorageMode,
   type DataTransparencyContext,
 } from "@/data-transparency/userDataTransparency";
+import {
+  UserFacingError,
+  userFacingError,
+  userFacingErrorMessage,
+} from "@/errors/userFacingError";
+import { normalizeLanguage } from "@/i18n/messages";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
 
@@ -53,15 +59,21 @@ function policyIndependentCategories() {
   return categories.filter((category) => category.id !== "scores" && category.id !== "telemetry");
 }
 
+function safeError(cause: unknown): UserFacingError {
+  return cause instanceof UserFacingError ? cause : userFacingError(cause);
+}
+
 function DataTransparencyPage() {
   const auth = useAuth();
   const profile = useUserProfile();
   const preferences = useUserPreferences();
   const [context, setContext] = useState<DataTransparencyContext | null>(null);
-  const [contextError, setContextError] = useState<string | null>(null);
+  const [contextError, setContextError] = useState<UserFacingError | null>(null);
+  const [contextReload, setContextReload] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const identity = auth.session?.identity ?? null;
+  const language = normalizeLanguage(preferences.preferences?.language);
 
   useEffect(() => {
     let active = true;
@@ -74,16 +86,12 @@ function DataTransparencyPage() {
       .catch((cause) => {
         if (!active) return;
         setContext(null);
-        setContextError(
-          cause instanceof Error
-            ? cause.message
-            : "Die aktuelle Sichtbarkeits- und Aufbewahrungspolicy konnte nicht geladen werden.",
-        );
+        setContextError(safeError(cause));
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [contextReload]);
 
   const categories = useMemo(() => {
     if (context) return dataCategories(context);
@@ -93,7 +101,11 @@ function DataTransparencyPage() {
 
   async function exportOwnData() {
     if (!identity) {
-      setExportStatus("Eigendatenexport erfordert eine aktive Anmeldung.");
+      setExportStatus(
+        language === "en"
+          ? "Sign in to export your own data."
+          : "Eigendatenexport erfordert eine aktive Anmeldung.",
+      );
       return;
     }
     setExporting(true);
@@ -104,13 +116,13 @@ function DataTransparencyPage() {
         profile: profile.profile,
         preferences: preferences.preferences,
       });
-      setExportStatus("Dein Eigendatenexport wurde als JSON-Datei erstellt.");
-    } catch (cause) {
       setExportStatus(
-        cause instanceof Error
-          ? cause.message
-          : "Der Eigendatenexport konnte nicht erstellt werden.",
+        language === "en"
+          ? "Your data export was created as a JSON file."
+          : "Dein Eigendatenexport wurde als JSON-Datei erstellt.",
       );
+    } catch (cause) {
+      setExportStatus(userFacingErrorMessage(safeError(cause), language, "export"));
     } finally {
       setExporting(false);
     }
@@ -196,10 +208,21 @@ function DataTransparencyPage() {
             role="alert"
             className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive"
           >
-            Die aktuelle Tenant-Policy konnte nicht sicher geladen werden. Deshalb bleiben
-            policyabhängige Angaben zu Punkte-Sichtbarkeit und Telemetrie-Retention ausgeblendet.
-            Die übrigen Datenkategorien und der bestehende Eigendatenexport bleiben verfügbar.{" "}
-            {contextError}
+            <p>
+              {userFacingErrorMessage(contextError, language, "read")} {language === "en"
+                ? "Policy-dependent score visibility and telemetry retention remain hidden; no data was changed."
+                : "Policyabhängige Angaben zu Punkte-Sichtbarkeit und Telemetrie-Retention bleiben ausgeblendet; es wurden keine Daten verändert."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setContextError(null);
+                setContextReload((value) => value + 1);
+              }}
+              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md border border-destructive/40 px-3 py-2 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {language === "en" ? "Try again" : "Erneut versuchen"}
+            </button>
           </div>
         ) : null}
 
