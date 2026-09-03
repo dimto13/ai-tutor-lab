@@ -11,10 +11,7 @@ const amplifyAdapterUrl = new URL(
   "../../apps/web/src/persistence/adapters/amplifyDataTransparency.ts",
   import.meta.url,
 );
-const userFacingErrorUrl = new URL(
-  "../../apps/web/src/errors/userFacingError.ts",
-  import.meta.url,
-);
+const userFacingErrorUrl = new URL("../../apps/web/src/errors/userFacingError.ts", import.meta.url);
 const resourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
 const handlerUrl = new URL("../../amplify/functions/user-data-export/handler.js", import.meta.url);
 const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
@@ -34,9 +31,7 @@ function definitionBlock(source: string, name: string): string {
   const remainder = source.slice(start + name.length + 3);
   const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
   const end =
-    nextDefinition >= 0
-      ? start + name.length + 3 + nextDefinition
-      : source.indexOf("\n});", start);
+    nextDefinition >= 0 ? start + name.length + 3 + nextDefinition : source.indexOf("\n});", start);
   return source.slice(start, end >= 0 ? end : source.length);
 }
 
