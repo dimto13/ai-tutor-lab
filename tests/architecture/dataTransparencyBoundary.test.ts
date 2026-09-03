@@ -11,6 +11,10 @@ const amplifyAdapterUrl = new URL(
   "../../apps/web/src/persistence/adapters/amplifyDataTransparency.ts",
   import.meta.url,
 );
+const userFacingErrorUrl = new URL(
+  "../../apps/web/src/errors/userFacingError.ts",
+  import.meta.url,
+);
 const resourceUrl = new URL("../../amplify/data/resource.ts", import.meta.url);
 const handlerUrl = new URL("../../amplify/functions/user-data-export/handler.js", import.meta.url);
 const backendUrl = new URL("../../amplify/backend.ts", import.meta.url);
@@ -76,11 +80,17 @@ test("cloud data access stays lazy and behind the existing persistence adapter b
   assert.doesNotMatch(catalog, /aws-amplify\/api/);
 });
 
-test("tenant membership failures are mapped at the cloud adapter boundary", async () => {
-  const adapter = await readFile(amplifyAdapterUrl, "utf8");
+test("tenant membership failures keep dedicated safe recovery semantics", async () => {
+  const [adapter, errorContract] = await Promise.all([
+    readFile(amplifyAdapterUrl, "utf8"),
+    readFile(userFacingErrorUrl, "utf8"),
+  ]);
 
   assert.match(adapter, /isTenantMembershipFailure/);
-  assert.match(adapter, /Dein Datenkontext ist noch nicht verfügbar/);
+  assert.match(adapter, /new UserFacingError\("tenant-context"/);
+  assert.match(errorContract, /"tenant-context"/);
+  assert.match(errorContract, /Dein Datenkontext ist noch nicht verfügbar/);
+  assert.match(errorContract, /Your data context is not available yet/);
   assert.match(adapter, /providerBoundaryError\(result\.errors\)/);
   assert.doesNotMatch(adapter, /new Error\(errorText\(result\.errors\)\)/);
 });
