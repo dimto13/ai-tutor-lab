@@ -9,9 +9,7 @@ import {
   userFacingErrorMessage,
 } from "../src/errors/userFacingError.ts";
 
-const routePath = fileURLToPath(
-  new URL("../src/routes/datentransparenz.tsx", import.meta.url),
-);
+const routePath = fileURLToPath(new URL("../src/routes/datentransparenz.tsx", import.meta.url));
 
 const rawProviderError =
   "Lambda:Unhandled GraphQL resolver failed at /var/task/index.js for tenant-123";
@@ -37,10 +35,7 @@ test("data transparency UI renders the safe contract and exposes keyboard retry"
 
   assert.match(routeSource, /role="alert"/);
   assert.match(routeSource, /userFacingErrorMessage\(contextError, language, "read"\)/);
-  assert.match(
-    routeSource,
-    /type="button"[\s\S]*?setContextError\(null\)[\s\S]*?setContextReload/,
-  );
+  assert.match(routeSource, /type="button"[\s\S]*?setContextError\(null\)[\s\S]*?setContextReload/);
   assert.doesNotMatch(routeSource, /contextError\.message|cause\.message/);
 });
 
