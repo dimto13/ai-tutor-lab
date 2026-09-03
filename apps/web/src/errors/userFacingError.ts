@@ -44,7 +44,8 @@ export function userFacingErrorMessage(
     read: "Diese Information ist derzeit nicht verfügbar. Versuche es erneut.",
     write:
       "Die Änderung konnte gerade nicht gespeichert werden. Deine bisherigen Daten bleiben erhalten. Versuche es erneut.",
-    export: "Der Export konnte gerade nicht erstellt werden. Deine Daten wurden nicht verändert. Versuche es erneut.",
+    export:
+      "Der Export konnte gerade nicht erstellt werden. Deine Daten wurden nicht verändert. Versuche es erneut.",
   } as const;
   const en = {
     conflict: "The data changed in the meantime. Reload the current state and try again.",
