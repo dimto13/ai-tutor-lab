@@ -34,7 +34,9 @@ function definitionBlock(source: string, name: string): string {
   const remainder = source.slice(start + name.length + 3);
   const nextDefinition = remainder.search(/\n {2}[A-Za-z][A-Za-z0-9]*:/);
   const end =
-    nextDefinition >= 0 ? start + name.length + 3 + nextDefinition : source.indexOf("\n});", start);
+    nextDefinition >= 0
+      ? start + name.length + 3 + nextDefinition
+      : source.indexOf("\n});", start);
   return source.slice(start, end >= 0 ? end : source.length);
 }
 
