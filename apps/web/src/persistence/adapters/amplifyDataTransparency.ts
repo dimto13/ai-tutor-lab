@@ -27,7 +27,9 @@ function providerBoundaryError(errors: unknown) {
   return userFacingError(new Error(errorText(errors)));
 }
 
-export async function loadAmplifyDataTransparencyContext(): Promise<AmplifyDataTransparencyContext> {
+export async function loadAmplifyDataTransparencyContext(): Promise<
+  AmplifyDataTransparencyContext
+> {
   const client = generateClient<Schema>();
   const result = await client.queries.loadMyDataTransparencyContext();
   if (result.errors?.length) throw providerBoundaryError(result.errors);
