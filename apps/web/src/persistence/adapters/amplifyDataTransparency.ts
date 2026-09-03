@@ -27,13 +27,13 @@ function providerBoundaryError(errors: unknown) {
   return userFacingError(new Error(errorText(errors)));
 }
 
-export async function loadAmplifyDataTransparencyContext(): Promise<
-  AmplifyDataTransparencyContext
-> {
+export async function loadAmplifyDataTransparencyContext(): Promise<AmplifyDataTransparencyContext> {
   const client = generateClient<Schema>();
   const result = await client.queries.loadMyDataTransparencyContext();
   if (result.errors?.length) throw providerBoundaryError(result.errors);
-  if (!result.data) throw userFacingError(new Error("Amplify Data returned no transparency context"));
+  if (!result.data) {
+    throw userFacingError(new Error("Amplify Data returned no transparency context"));
+  }
 
   return {
     scoreVisibility: result.data.scoreVisibility,
