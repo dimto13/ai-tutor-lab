@@ -20,6 +20,7 @@ import { GuidedStepNavigation } from "@/components/training/GuidedStepNavigation
 import { CompletionScreen } from "@/components/training/CompletionScreen";
 import { HighlightOverlay } from "@/components/overlay/HighlightOverlay";
 import { getScenario, getScenariosForModule } from "@/scenarios";
+import { useLocalizedScenario } from "@/i18n/useLocalizedScenario";
 
 const DESKTOP_LAYOUT_MEDIA_QUERY = "(min-width: 64rem)";
 const TUTOR_ATTENTION_TIMEOUT_MS = 2500;
@@ -84,7 +85,8 @@ function TrainingRoute() {
 }
 
 function TrainingEntry() {
-  const { scenario, mode, restart, isReady, isChallengeFailed } = useTraining();
+  const { scenario: canonicalScenario, mode, restart, isReady, isChallengeFailed } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const requiresBriefing = mode === "challenge" && scenario.timeLimitSeconds !== undefined;
   const [attemptStarted, setAttemptStarted] = useState(!requiresBriefing);
   const retryAfterTimeout = isChallengeFailed;
@@ -114,7 +116,8 @@ function TimedChallengeBriefing({
   retryAfterTimeout: boolean;
   onStart(): void;
 }) {
-  const { scenario, recommendGuidedAfterChallenge } = useTraining();
+  const { scenario: canonicalScenario, recommendGuidedAfterChallenge } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const goal = scenario.steps[0];
   const timeLimit = scenario.timeLimitSeconds ?? 0;
   const guidedScenario = scenario.moduleId
@@ -245,7 +248,7 @@ function formatChallengeTime(seconds: number): string {
 
 function TrainingLayout() {
   const {
-    scenario,
+    scenario: canonicalScenario,
     mode,
     progress,
     percent,
@@ -259,6 +262,7 @@ function TrainingLayout() {
     recovery,
     performGuidedRecovery,
   } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const [highlightsOn, setHighlightsOn] = useState(true);
   const [mobileSurface, setMobileSurface] = useState<"workspace" | "guide">("workspace");
   const [attentionTarget, setAttentionTarget] = useState<string | null>(null);

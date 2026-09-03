@@ -29,6 +29,7 @@ import {
   type ScenarioScoreAwardStatus,
 } from "@/scoring/useScenarioScoreAward";
 import { scoredTechnologyIdForScenario } from "@/skill-profile/skillProfilePolicy";
+import { useLocalizedScenario } from "@/i18n/useLocalizedScenario";
 import { useSkillProfiles, type SkillProfilesState } from "@/skill-profile/useSkillProfiles";
 import { useTraining } from "@/state/trainingStore";
 
@@ -47,7 +48,8 @@ function technologyName(technologyId: string): string {
 }
 
 export function CompletionScreen() {
-  const { scenario, mode, progress, restart, completedCount } = useTraining();
+  const { scenario: canonicalScenario, mode, progress, restart, completedCount } = useTraining();
+  const scenario = useLocalizedScenario(canonicalScenario);
   const competencyBaseline = useSkillProfiles();
   const scoreFinishedAt = competencyBaseline.status === "loading" ? null : progress.finishedAt;
   const score = useScenarioScoreAward(scenario.id, mode, scoreFinishedAt);
