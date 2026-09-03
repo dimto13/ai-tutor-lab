@@ -1,6 +1,6 @@
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../../../../../amplify/data/resource";
-import { userFacingError } from "../../errors/userFacingError";
+import { UserFacingError, userFacingError } from "../../errors/userFacingError";
 
 export interface AmplifyDataTransparencyContext {
   scoreVisibility: "private" | "aggregate" | "named";
@@ -23,8 +23,25 @@ function errorText(errors: unknown): string {
     .join("; ");
 }
 
+function isTenantMembershipFailure(errors: unknown): boolean {
+  if (!Array.isArray(errors)) return false;
+  return errors.some((error) => {
+    if (typeof error !== "object" || error === null) return false;
+    const message = Reflect.get(error, "message");
+    return (
+      typeof message === "string" &&
+      (message.includes("Tenant membership is required") ||
+        message.includes("Exactly one tenant membership is required"))
+    );
+  });
+}
+
 function providerBoundaryError(errors: unknown) {
-  return userFacingError(new Error(errorText(errors)));
+  const cause = new Error(errorText(errors));
+  if (isTenantMembershipFailure(errors)) {
+    return new UserFacingError("tenant-context", cause.message, cause);
+  }
+  return userFacingError(cause);
 }
 
 export async function loadAmplifyDataTransparencyContext(): Promise<AmplifyDataTransparencyContext> {
