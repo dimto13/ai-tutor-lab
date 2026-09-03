@@ -1,4 +1,9 @@
-export type UserFacingErrorKind = "temporary" | "conflict" | "forbidden" | "unexpected";
+export type UserFacingErrorKind =
+  | "temporary"
+  | "conflict"
+  | "forbidden"
+  | "tenant-context"
+  | "unexpected";
 
 export class UserFacingError extends Error {
   readonly kind: UserFacingErrorKind;
@@ -41,6 +46,8 @@ export function userFacingErrorMessage(
     conflict:
       "Die Daten wurden zwischenzeitlich geändert. Lade den aktuellen Stand und versuche es erneut.",
     forbidden: "Diese Aktion ist für dein Konto nicht verfügbar. Wende dich an die Administration.",
+    tenantContext:
+      "Dein Datenkontext ist noch nicht verfügbar. Bitte melde dich erneut an oder wende dich an die Administration.",
     read: "Diese Information ist derzeit nicht verfügbar. Versuche es erneut.",
     write:
       "Die Änderung konnte gerade nicht gespeichert werden. Deine bisherigen Daten bleiben erhalten. Versuche es erneut.",
@@ -50,6 +57,8 @@ export function userFacingErrorMessage(
   const en = {
     conflict: "The data changed in the meantime. Reload the current state and try again.",
     forbidden: "This action is not available for your account. Contact your administrator.",
+    tenantContext:
+      "Your data context is not available yet. Sign in again or contact your administrator.",
     read: "This information is currently unavailable. Try again.",
     write: "The change could not be saved. Your existing data remains unchanged. Try again.",
     export: "The export could not be created. Your data was not changed. Try again.",
@@ -57,5 +66,6 @@ export function userFacingErrorMessage(
   const messages = language === "en" ? en : de;
   if (error.kind === "conflict") return messages.conflict;
   if (error.kind === "forbidden") return messages.forbidden;
+  if (error.kind === "tenant-context") return messages.tenantContext;
   return messages[action];
 }
