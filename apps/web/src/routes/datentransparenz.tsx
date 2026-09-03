@@ -10,11 +10,7 @@ import {
   type DataStorageMode,
   type DataTransparencyContext,
 } from "@/data-transparency/userDataTransparency";
-import {
-  UserFacingError,
-  userFacingError,
-  userFacingErrorMessage,
-} from "@/errors/userFacingError";
+import { UserFacingError, userFacingError, userFacingErrorMessage } from "@/errors/userFacingError";
 import { normalizeLanguage } from "@/i18n/messages";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 import { useUserProfile } from "@/profile/UserProfileContext";
@@ -209,7 +205,8 @@ function DataTransparencyPage() {
             className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive"
           >
             <p>
-              {userFacingErrorMessage(contextError, language, "read")} {language === "en"
+              {userFacingErrorMessage(contextError, language, "read")}{" "}
+              {language === "en"
                 ? "Policy-dependent score visibility and telemetry retention remain hidden; no data was changed."
                 : "Policyabhängige Angaben zu Punkte-Sichtbarkeit und Telemetrie-Retention bleiben ausgeblendet; es wurden keine Daten verändert."}
             </p>
