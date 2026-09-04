@@ -28,7 +28,10 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
     "SYN-Q2-2026",
     "SYN-Q3-2026",
   ]);
-  assert.equal(review.value.sharedBasis.audience, "Geschäftsführung der fiktiven Beispiel GmbH");
+  assert.equal(
+    review.value.sharedBasis.audience,
+    "Geschäftsführung der fiktiven Beispiel GmbH",
+  );
   assert.match(free.html, /12,0/);
   assert.match(skilled.html, /12,0/);
   assert.match(review.value.inventionPolicy, /gelten als Fehler/);
