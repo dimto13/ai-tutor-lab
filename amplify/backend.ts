@@ -1,8 +1,9 @@
 import { defineBackend } from "@aws-amplify/backend";
-import { StreamViewType } from "aws-cdk-lib/aws-dynamodb";
+import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
+import { runtimeIncidentReporter } from "./functions/runtime-incident-reporter/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
 import { telemetryDeletionWorker } from "./functions/telemetry-deletion-worker/resource";
 import { userDataExport } from "./functions/user-data-export/resource";
@@ -15,6 +16,7 @@ function requiredResource<T>(resource: T | undefined, name: string): T {
 export const backend = defineBackend({
   auth,
   data,
+  runtimeIncidentReporter,
   telemetryAggregateProjector,
   telemetryDeletionWorker,
   userDataExport,
@@ -69,6 +71,23 @@ const rawTelemetryStreamArn = requiredResource(
 const projectorLambda = backend.telemetryAggregateProjector.resources.lambda;
 const deletionLambda = backend.telemetryDeletionWorker.resources.lambda;
 const userDataExportLambda = backend.userDataExport.resources.lambda;
+const incidentLambda = backend.runtimeIncidentReporter.resources.lambda;
+
+const runtimeIncidentTable = new Table(backend.data.stack, "RuntimeIncidentAggregate", {
+  partitionKey: { name: "fingerprint", type: AttributeType.STRING },
+  billingMode: BillingMode.PAY_PER_REQUEST,
+});
+runtimeIncidentTable.grantReadWriteData(incidentLambda);
+backend.runtimeIncidentReporter.addEnvironment(
+  "RUNTIME_INCIDENT_TABLE_NAME",
+  runtimeIncidentTable.tableName,
+);
+// Repository is an explicit allowlist. The token is injected only into this server-side function
+// by deployment configuration and must carry issues:write for this repository only.
+backend.runtimeIncidentReporter.addEnvironment(
+  "RUNTIME_INCIDENT_GITHUB_REPOSITORY",
+  "dimto13/ai-tutor-lab",
+);
 
 aggregateTable.grantReadWriteData(projectorLambda);
 projectionReceiptTable.grantReadWriteData(projectorLambda);
