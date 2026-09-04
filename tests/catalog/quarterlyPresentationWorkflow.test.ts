@@ -23,7 +23,11 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
   const review = artifacts.find((artifact: any) => artifact.id === "presentation-review");
 
   assert.ok(free && skilled && review, "A, B and review artifacts must exist");
-  assert.deepEqual(review.value.sharedBasis.sources, ["SYN-Q1-2026", "SYN-Q2-2026", "SYN-Q3-2026"]);
+  assert.deepEqual(review.value.sharedBasis.sources, [
+    "SYN-Q1-2026",
+    "SYN-Q2-2026",
+    "SYN-Q3-2026",
+  ]);
   assert.equal(review.value.sharedBasis.audience, "Geschäftsführung der fiktiven Beispiel GmbH");
   assert.match(free.html, /12,0/);
   assert.match(skilled.html, /12,0/);
@@ -39,7 +43,12 @@ test("quarterly presentation workflow exposes the required comparison dimensions
   );
   const criteria = comparison.rows.map((row: any) => row.criterion);
 
-  for (const required of ["Nachvollziehbarkeit", "Bearbeitbarkeit", "Quellenbezug", "Visuelle Qualität"]) {
+  for (const required of [
+    "Nachvollziehbarkeit",
+    "Bearbeitbarkeit",
+    "Quellenbezug",
+    "Visuelle Qualität",
+  ]) {
     assert.ok(criteria.includes(required), `missing comparison criterion: ${required}`);
   }
 });
