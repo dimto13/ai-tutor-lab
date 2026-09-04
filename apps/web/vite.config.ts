@@ -32,12 +32,14 @@ export default defineConfig(({ command, mode }) => ({
           // with the source scan enabled. Force this transitive dependency into
           // the initial E2E prebundle rather than letting Vite discover it lazily.
           //
-          // The TanStack Start client runtime is pulled in through the framework's
-          // generated client entry, which the source scan above cannot see. Vite
-          // therefore discovered these on the first client navigation, re-optimized
-          // and reloaded, which invalidated every already served chunk - the
-          // `504 Outdated Optimize Dep` that js-yaml then reported. Pin them into
-          // the initial prebundle so the optimized set never changes mid-suite.
+          // #444: The TanStack Start client runtime is pulled in through the
+          // framework's generated client entry, which the source scan above cannot
+          // see. Vite therefore discovered these on the first client navigation,
+          // re-optimized and reloaded, which invalidated every already served chunk
+          // - the `504 Outdated Optimize Dep` that js-yaml then reported. Pin them
+          // into the initial prebundle so the optimized set never changes mid-suite.
+          // Recheck on every Vite or TanStack Start upgrade: if the entries scan
+          // starts covering the generated client entry, drop these again.
           include: [
             "js-yaml",
             "@tanstack/router-core",
