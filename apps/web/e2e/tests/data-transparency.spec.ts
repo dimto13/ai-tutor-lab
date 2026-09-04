@@ -42,7 +42,9 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
   await expect(categories).toContainText("keine separate automatische Löschfrist");
   await expect(categories).toContainText("Browserprofil, das du gerade verwendest");
   await expect(categories).toContainText("nicht fest mit deinem angemeldeten Konto verknüpft");
-  await expect(categories).not.toContainText(/Cognito|Auth-Claims|UserProfile|AWS|Persistenzadapter/);
+  await expect(categories).not.toContainText(
+    /Cognito|Auth-Claims|UserProfile|AWS|Persistenzadapter/,
+  );
   await expect(categories).not.toContainText(/serverautoritativ|subject-gescop|TTL|Tenant-Admin/);
   await accessibility.check("data transparency account route");
 });
