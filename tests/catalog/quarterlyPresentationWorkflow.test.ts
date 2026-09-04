@@ -6,10 +6,7 @@ const scenarioPath = new URL(
   "../../content/scenarios/quarterly-presentation-workflow.guided.json",
   import.meta.url,
 );
-const skillPath = new URL(
-  "../../content/skills/management-presentation.v1.json",
-  import.meta.url,
-);
+const skillPath = new URL("../../content/skills/management-presentation.v1.json", import.meta.url);
 
 async function readJson(path: URL): Promise<any> {
   return JSON.parse(await readFile(path, "utf8"));
@@ -19,21 +16,12 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
   const scenario = await readJson(scenarioPath);
   const artifacts = scenario.environment.seed.artifactPreview.artifacts;
   const free = artifacts.find((artifact: any) => artifact.id === "presentation-free");
-  const skilled = artifacts.find(
-    (artifact: any) => artifact.id === "presentation-skilled",
-  );
+  const skilled = artifacts.find((artifact: any) => artifact.id === "presentation-skilled");
   const review = artifacts.find((artifact: any) => artifact.id === "presentation-review");
 
   assert.ok(free && skilled && review, "A, B and review artifacts must exist");
-  assert.deepEqual(review.value.sharedBasis.sources, [
-    "SYN-Q1-2026",
-    "SYN-Q2-2026",
-    "SYN-Q3-2026",
-  ]);
-  assert.equal(
-    review.value.sharedBasis.audience,
-    "Geschäftsführung der fiktiven Beispiel GmbH",
-  );
+  assert.deepEqual(review.value.sharedBasis.sources, ["SYN-Q1-2026", "SYN-Q2-2026", "SYN-Q3-2026"]);
+  assert.equal(review.value.sharedBasis.audience, "Geschäftsführung der fiktiven Beispiel GmbH");
   assert.match(free.html, /12,0/);
   assert.match(skilled.html, /12,0/);
   assert.match(review.value.inventionPolicy, /gelten als Fehler/);
@@ -54,10 +42,7 @@ test("quarterly presentation workflow exposes the required comparison dimensions
     "Quellenbezug",
     "Visuelle Qualität",
   ]) {
-    assert.ok(
-      criteria.includes(required),
-      `missing comparison criterion: ${required}`,
-    );
+    assert.ok(criteria.includes(required), `missing comparison criterion: ${required}`);
   }
 });
 
