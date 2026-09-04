@@ -23,7 +23,11 @@ test("redacts secrets, PII and identity values before external issue constructio
       safeContext:
         "userId=person-123 tenantId=tenant-456 email jane@example.com Authorization:Bearer abc.def Cookie=session-secret",
     },
-    { count: 2, firstSeen: "2026-09-04T04:00:00Z", lastSeen: "2026-09-04T04:01:00Z" },
+    {
+      count: 2,
+      firstSeen: "2026-09-04T04:00:00Z",
+      lastSeen: "2026-09-04T04:01:00Z",
+    },
   );
 
   assert.match(issue.body, /\[REDACTED\]/);
@@ -54,7 +58,12 @@ test("fingerprint is stable across release and user-controlled context changes",
 
 test("requires a safe deterministic incident identity", () => {
   assert.throws(
-    () => sanitizeRuntimeIncident({ errorCode: "BROKEN", component: "x", releaseSha: "sha" }),
+    () =>
+      sanitizeRuntimeIncident({
+        errorCode: "BROKEN",
+        component: "x",
+        releaseSha: "sha",
+      }),
     /required/,
   );
 });
@@ -72,7 +81,10 @@ test("circuit breaker opens after repeated delivery failures and can be explicit
   gate.recordDelivery(false);
   assert.equal(gate.admit(100).allowed, true);
   gate.recordDelivery(false);
-  assert.deepEqual(gate.admit(200), { allowed: false, reason: "circuit-open" });
+  assert.deepEqual(gate.admit(200), {
+    allowed: false,
+    reason: "circuit-open",
+  });
   gate.resetCircuit();
   assert.equal(gate.admit(300).allowed, true);
 });
