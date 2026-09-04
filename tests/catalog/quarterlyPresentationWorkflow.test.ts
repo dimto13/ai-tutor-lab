@@ -19,7 +19,9 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
   const scenario = await readJson(scenarioPath);
   const artifacts = scenario.environment.seed.artifactPreview.artifacts;
   const free = artifacts.find((artifact: any) => artifact.id === "presentation-free");
-  const skilled = artifacts.find((artifact: any) => artifact.id === "presentation-skilled");
+  const skilled = artifacts.find(
+    (artifact: any) => artifact.id === "presentation-skilled",
+  );
   const review = artifacts.find((artifact: any) => artifact.id === "presentation-review");
 
   assert.ok(free && skilled && review, "A, B and review artifacts must exist");
@@ -52,7 +54,10 @@ test("quarterly presentation workflow exposes the required comparison dimensions
     "Quellenbezug",
     "Visuelle Qualität",
   ]) {
-    assert.ok(criteria.includes(required), `missing comparison criterion: ${required}`);
+    assert.ok(
+      criteria.includes(required),
+      `missing comparison criterion: ${required}`,
+    );
   }
 });
 
