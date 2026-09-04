@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -74,4 +75,18 @@ test("circuit breaker opens after repeated delivery failures and can be explicit
   assert.deepEqual(gate.admit(200), { allowed: false, reason: "circuit-open" });
   gate.resetCircuit();
   assert.equal(gate.admit(300).allowed, true);
+});
+
+test("runtime handler uses atomic aggregation and persistent conditional delivery admission", () => {
+  const handler = readFileSync(
+    "amplify/functions/runtime-incident-reporter/handler.js",
+    "utf8",
+  );
+
+  assert.match(handler, /UpdateItemCommand/);
+  assert.match(handler, /ADD #count :one/);
+  assert.match(handler, /ConditionExpression/);
+  assert.match(handler, /deliveryLeaseUntil/);
+  assert.match(handler, /ConditionalCheckFailedException/);
+  assert.doesNotMatch(handler, /GetItemCommand|PutItemCommand/);
 });
