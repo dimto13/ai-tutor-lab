@@ -1,7 +1,6 @@
 import {
   DynamoDBClient,
-  GetItemCommand,
-  PutItemCommand,
+  UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import {
   buildRuntimeIncidentIssue,
@@ -12,6 +11,7 @@ import {
 const ddb = new DynamoDBClient({});
 const FAILURE_THRESHOLD = 5;
 const CIRCUIT_MS = 5 * 60_000;
+const DELIVERY_LEASE_MS = 30_000;
 
 function requiredEnvironment(name) {
   const value = process.env[name];
@@ -35,17 +35,45 @@ function fromItem(item) {
   };
 }
 
-function toItem(fingerprint, aggregate) {
-  const item = {
-    fingerprint: { S: fingerprint },
-    count: { N: String(aggregate.count) },
-    firstSeen: { S: aggregate.firstSeen },
-    lastSeen: { S: aggregate.lastSeen },
-    deliveryFailures: { N: String(aggregate.deliveryFailures ?? 0) },
-    circuitUntil: { N: String(aggregate.circuitUntil ?? 0) },
-  };
-  if (aggregate.issueNumber) item.issueNumber = { N: String(aggregate.issueNumber) };
-  return item;
+async function recordOccurrence(tableName, fingerprint, now) {
+  const result = await ddb.send(
+    new UpdateItemCommand({
+      TableName: tableName,
+      Key: { fingerprint: { S: fingerprint } },
+      UpdateExpression:
+        "ADD #count :one SET firstSeen = if_not_exists(firstSeen, :seen), lastSeen = :seen, deliveryFailures = if_not_exists(deliveryFailures, :zero), circuitUntil = if_not_exists(circuitUntil, :zero)",
+      ExpressionAttributeNames: { "#count": "count" },
+      ExpressionAttributeValues: {
+        ":one": { N: "1" },
+        ":zero": { N: "0" },
+        ":seen": { S: iso(now) },
+      },
+      ReturnValues: "ALL_NEW",
+    }),
+  );
+  return fromItem(result.Attributes);
+}
+
+async function claimDelivery(tableName, fingerprint, now) {
+  try {
+    await ddb.send(
+      new UpdateItemCommand({
+        TableName: tableName,
+        Key: { fingerprint: { S: fingerprint } },
+        UpdateExpression: "SET deliveryLeaseUntil = :leaseUntil",
+        ConditionExpression:
+          "circuitUntil <= :now AND (attribute_not_exists(deliveryLeaseUntil) OR deliveryLeaseUntil <= :now)",
+        ExpressionAttributeValues: {
+          ":now": { N: String(now) },
+          ":leaseUntil": { N: String(now + DELIVERY_LEASE_MS) },
+        },
+      }),
+    );
+    return true;
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") return false;
+    throw error;
+  }
 }
 
 async function githubRequest(path, method, body) {
@@ -79,57 +107,68 @@ async function deliver(issue, issueNumber) {
   return githubRequest(base, "POST", issue);
 }
 
+async function markDeliverySuccess(tableName, fingerprint, issueNumber) {
+  await ddb.send(
+    new UpdateItemCommand({
+      TableName: tableName,
+      Key: { fingerprint: { S: fingerprint } },
+      UpdateExpression:
+        "SET issueNumber = :issueNumber, deliveryFailures = :zero, circuitUntil = :zero REMOVE deliveryLeaseUntil",
+      ExpressionAttributeValues: {
+        ":issueNumber": { N: String(issueNumber) },
+        ":zero": { N: "0" },
+      },
+    }),
+  );
+}
+
+async function markDeliveryFailure(tableName, fingerprint, now) {
+  const result = await ddb.send(
+    new UpdateItemCommand({
+      TableName: tableName,
+      Key: { fingerprint: { S: fingerprint } },
+      UpdateExpression: "ADD deliveryFailures :one REMOVE deliveryLeaseUntil",
+      ExpressionAttributeValues: { ":one": { N: "1" } },
+      ReturnValues: "ALL_NEW",
+    }),
+  );
+  const failures = Number(result.Attributes?.deliveryFailures?.N ?? 1);
+  if (failures >= FAILURE_THRESHOLD) {
+    await ddb.send(
+      new UpdateItemCommand({
+        TableName: tableName,
+        Key: { fingerprint: { S: fingerprint } },
+        UpdateExpression: "SET circuitUntil = :until",
+        ExpressionAttributeValues: { ":until": { N: String(now + CIRCUIT_MS) } },
+      }),
+    );
+  }
+}
+
 export async function handler(event) {
   const tableName = requiredEnvironment("RUNTIME_INCIDENT_TABLE_NAME");
   const safe = sanitizeRuntimeIncident(event?.incident);
   const fingerprint = fingerprintRuntimeIncident(safe);
   const now = Date.now();
-  const existing = fromItem(
-    (
-      await ddb.send(
-        new GetItemCommand({
-          TableName: tableName,
-          Key: { fingerprint: { S: fingerprint } },
-          ConsistentRead: true,
-        }),
-      )
-    ).Item,
-  );
-  const aggregate = {
-    count: (existing?.count ?? 0) + 1,
-    firstSeen: existing?.firstSeen ?? iso(now),
-    lastSeen: iso(now),
-    issueNumber: existing?.issueNumber ?? null,
-    deliveryFailures: existing?.deliveryFailures ?? 0,
-    circuitUntil: existing?.circuitUntil ?? 0,
-  };
 
-  // Persist evidence before external delivery so a GitHub outage cannot erase occurrence history.
-  await ddb.send(
-    new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }),
-  );
-  if (aggregate.circuitUntil > now) {
-    return { recorded: true, delivered: false, reason: "circuit-open", fingerprint };
+  // Atomic write-ahead aggregation preserves every occurrence under Lambda concurrency.
+  const aggregate = await recordOccurrence(tableName, fingerprint, now);
+  if (!aggregate) throw new Error("Runtime incident aggregate was not persisted");
+
+  // Persistent conditional admission prevents concurrent Lambdas from creating duplicate issues.
+  // A held lease also rate-limits external delivery while occurrences continue to aggregate.
+  if (!(await claimDelivery(tableName, fingerprint, now))) {
+    const reason = aggregate.circuitUntil > now ? "circuit-open" : "rate-limited";
+    return { recorded: true, delivered: false, reason, fingerprint };
   }
 
   try {
     const issue = buildRuntimeIncidentIssue(safe, aggregate);
     const delivered = await deliver(issue, aggregate.issueNumber);
-    aggregate.issueNumber = Number(delivered.number);
-    aggregate.deliveryFailures = 0;
-    aggregate.circuitUntil = 0;
-    await ddb.send(
-      new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }),
-    );
+    await markDeliverySuccess(tableName, fingerprint, Number(delivered.number));
     return { recorded: true, delivered: true, fingerprint };
   } catch (error) {
-    aggregate.deliveryFailures += 1;
-    if (aggregate.deliveryFailures >= FAILURE_THRESHOLD) {
-      aggregate.circuitUntil = now + CIRCUIT_MS;
-    }
-    await ddb.send(
-      new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }),
-    );
+    await markDeliveryFailure(tableName, fingerprint, now);
     console.error("Runtime incident delivery failed", {
       fingerprint,
       error: error instanceof Error ? error.message : "unknown delivery error",
