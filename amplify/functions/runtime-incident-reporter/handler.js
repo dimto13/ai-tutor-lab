@@ -56,11 +56,14 @@ async function githubRequest(path, method, body) {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "User-Agent": "ai-tutor-lab-runtime-incident-reporter",
       "X-GitHub-Api-Version": "2022-11-28",
     },
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(`GitHub incident adapter failed with ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`GitHub incident adapter failed with ${response.status}`);
+  }
   return response.json();
 }
 
@@ -70,7 +73,9 @@ async function deliver(issue, issueNumber) {
     throw new Error("Invalid incident repository allowlist");
   }
   const base = `/repos/${repository}/issues`;
-  if (issueNumber) return githubRequest(`${base}/${issueNumber}`, "PATCH", issue);
+  if (issueNumber) {
+    return githubRequest(`${base}/${issueNumber}`, "PATCH", { ...issue, state: "open" });
+  }
   return githubRequest(base, "POST", issue);
 }
 
@@ -100,7 +105,9 @@ export async function handler(event) {
   };
 
   // Persist evidence before external delivery so a GitHub outage cannot erase occurrence history.
-  await ddb.send(new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }));
+  await ddb.send(
+    new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }),
+  );
   if (aggregate.circuitUntil > now) {
     return { recorded: true, delivered: false, reason: "circuit-open", fingerprint };
   }
@@ -111,12 +118,18 @@ export async function handler(event) {
     aggregate.issueNumber = Number(delivered.number);
     aggregate.deliveryFailures = 0;
     aggregate.circuitUntil = 0;
-    await ddb.send(new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }));
+    await ddb.send(
+      new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }),
+    );
     return { recorded: true, delivered: true, fingerprint };
   } catch (error) {
     aggregate.deliveryFailures += 1;
-    if (aggregate.deliveryFailures >= FAILURE_THRESHOLD) aggregate.circuitUntil = now + CIRCUIT_MS;
-    await ddb.send(new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }));
+    if (aggregate.deliveryFailures >= FAILURE_THRESHOLD) {
+      aggregate.circuitUntil = now + CIRCUIT_MS;
+    }
+    await ddb.send(
+      new PutItemCommand({ TableName: tableName, Item: toItem(fingerprint, aggregate) }),
+    );
     console.error("Runtime incident delivery failed", {
       fingerprint,
       error: error instanceof Error ? error.message : "unknown delivery error",
