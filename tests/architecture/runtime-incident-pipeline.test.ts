@@ -90,10 +90,7 @@ test("circuit breaker opens after repeated delivery failures and can be explicit
 });
 
 test("runtime handler uses atomic aggregation and persistent conditional delivery admission", () => {
-  const handler = readFileSync(
-    "amplify/functions/runtime-incident-reporter/handler.js",
-    "utf8",
-  );
+  const handler = readFileSync("amplify/functions/runtime-incident-reporter/handler.js", "utf8");
 
   assert.match(handler, /UpdateItemCommand/);
   assert.match(handler, /ADD #count :one/);
