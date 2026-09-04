@@ -55,7 +55,8 @@ export function fingerprintRuntimeIncident(incident) {
 
 export function buildRuntimeIncidentIssue(incident, aggregate) {
   const safe = sanitizeRuntimeIncident(incident);
-  const count = Number.isSafeInteger(aggregate?.count) && aggregate.count > 0 ? aggregate.count : 1;
+  const count =
+    Number.isSafeInteger(aggregate?.count) && aggregate.count > 0 ? aggregate.count : 1;
   const firstSeen = cleanText(aggregate?.firstSeen) ?? "unknown";
   const lastSeen = cleanText(aggregate?.lastSeen) ?? firstSeen;
   const fingerprint = fingerprintRuntimeIncident(safe);
@@ -70,7 +71,11 @@ export function buildRuntimeIncidentIssue(incident, aggregate) {
   });
 }
 
-export function createIncidentGate({ maxEvents = 20, windowMs = 60_000, failureThreshold = 5 } = {}) {
+export function createIncidentGate({
+  maxEvents = 20,
+  windowMs = 60_000,
+  failureThreshold = 5,
+} = {}) {
   const events = [];
   let consecutiveFailures = 0;
   let circuitOpen = false;
