@@ -1,7 +1,4 @@
-import {
-  DynamoDBClient,
-  UpdateItemCommand,
-} from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import {
   buildRuntimeIncidentIssue,
   fingerprintRuntimeIncident,
