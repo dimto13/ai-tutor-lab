@@ -31,7 +31,20 @@ export default defineConfig(({ command, mode }) => ({
           // #421 reproduced the historical race specifically for js-yaml even
           // with the source scan enabled. Force this transitive dependency into
           // the initial E2E prebundle rather than letting Vite discover it lazily.
-          include: ["js-yaml"],
+          //
+          // The TanStack Start client runtime is pulled in through the framework's
+          // generated client entry, which the source scan above cannot see. Vite
+          // therefore discovered these on the first client navigation, re-optimized
+          // and reloaded, which invalidated every already served chunk - the
+          // `504 Outdated Optimize Dep` that js-yaml then reported. Pin them into
+          // the initial prebundle so the optimized set never changes mid-suite.
+          include: [
+            "js-yaml",
+            "@tanstack/router-core",
+            "@tanstack/router-core/isServer",
+            "@tanstack/router-core/ssr/client",
+            "seroval",
+          ],
         },
       }
     : {}),
