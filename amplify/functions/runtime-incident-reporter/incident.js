@@ -21,7 +21,10 @@ function cleanText(value) {
   for (const pattern of [...secretPatterns, ...piiPatterns]) {
     result = result.replace(pattern, REDACTED);
   }
-  result = result.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+  result = result
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   return result.slice(0, MAX_TEXT) || undefined;
 }
 
@@ -55,8 +58,7 @@ export function fingerprintRuntimeIncident(incident) {
 
 export function buildRuntimeIncidentIssue(incident, aggregate) {
   const safe = sanitizeRuntimeIncident(incident);
-  const count =
-    Number.isSafeInteger(aggregate?.count) && aggregate.count > 0 ? aggregate.count : 1;
+  const count = Number.isSafeInteger(aggregate?.count) && aggregate.count > 0 ? aggregate.count : 1;
   const firstSeen = cleanText(aggregate?.firstSeen) ?? "unknown";
   const lastSeen = cleanText(aggregate?.lastSeen) ?? firstSeen;
   const fingerprint = fingerprintRuntimeIncident(safe);
