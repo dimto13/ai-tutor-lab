@@ -60,11 +60,31 @@
               { "key": "skilled", "label": "Durchlauf B" }
             ],
             "rows": [
-              { "criterion": "Nachvollziehbarkeit", "free": "Fakten sichtbar, Schlussfolgerung nicht getrennt", "skilled": "Fakten, Beleg und offene Entscheidung getrennt" },
-              { "criterion": "Bearbeitbarkeit", "free": "Textblöcke ohne klare Aussagehierarchie", "skilled": "Eine Hauptaussage je Abschnitt, konsistente Formate" },
-              { "criterion": "Quellenbezug", "free": "Nur allgemeine Sammelquelle", "skilled": "Kennzahlen mit SYN-Q1/Q2/Q3-Quellen-IDs" },
-              { "criterion": "Konsistenz", "free": "Generische Titel und gemischte Aussagearten", "skilled": "Aussagetitel und einheitliche Zahlen-/Entscheidungslogik" },
-              { "criterion": "Visuelle Qualität", "free": "Lesbar, aber wenig priorisiert", "skilled": "Klare Hierarchie und kompakte Kernaussagen" }
+              {
+                "criterion": "Nachvollziehbarkeit",
+                "free": "Fakten sichtbar, Schlussfolgerung nicht getrennt",
+                "skilled": "Fakten, Beleg und offene Entscheidung getrennt"
+              },
+              {
+                "criterion": "Bearbeitbarkeit",
+                "free": "Textblöcke ohne klare Aussagehierarchie",
+                "skilled": "Eine Hauptaussage je Abschnitt, konsistente Formate"
+              },
+              {
+                "criterion": "Quellenbezug",
+                "free": "Nur allgemeine Sammelquelle",
+                "skilled": "Kennzahlen mit SYN-Q1/Q2/Q3-Quellen-IDs"
+              },
+              {
+                "criterion": "Konsistenz",
+                "free": "Generische Titel und gemischte Aussagearten",
+                "skilled": "Aussagetitel und einheitliche Zahlen-/Entscheidungslogik"
+              },
+              {
+                "criterion": "Visuelle Qualität",
+                "free": "Lesbar, aber wenig priorisiert",
+                "skilled": "Klare Hierarchie und kompakte Kernaussagen"
+              }
             ]
           },
           {
@@ -105,11 +125,18 @@
       "description": "Beide Durchläufe müssen auf derselben synthetischen Fakten-, Quellen- und Zielgruppenbasis beruhen.",
       "instruction": "Wähle „Durchlauf A – freier Auftrag“ und prüfe, welche Aussagen Fakten sind und welche fachliche Freigabe bräuchten.",
       "why": "Eine professionell wirkende Folie kann fachlich trotzdem einen unbelegten Entscheidungssatz enthalten.",
-      "helpLevels": ["Nutze die Artefakt-Reiter.", "Wähle den freien Durchlauf.", "Achte besonders auf den Abschnitt „Nächster Schritt“."],
+      "helpLevels": [
+        "Nutze die Artefakt-Reiter.",
+        "Wähle den freien Durchlauf.",
+        "Achte besonders auf den Abschnitt „Nächster Schritt“."
+      ],
       "validation": {
         "kind": "event",
         "type": "artifact.selected",
-        "match": { "artifactId": "presentation-free", "artifactType": "html" }
+        "match": {
+          "artifactId": "presentation-free",
+          "artifactType": "html"
+        }
       },
       "highlightTarget": "artifact.preview.selector",
       "highlightTooltip": "Prüfe zuerst den freien Durchlauf.",
@@ -121,11 +148,18 @@
       "description": "management-presentation.v1 macht Storyline, Aussagetitel, Layout, Quellen und technische Qualität zu wiederverwendbaren Regeln.",
       "instruction": "Wähle „Durchlauf B – mit Presentation-Skill“ und vergleiche Quellenbezug und Trennung von Fakten und Entscheidung.",
       "why": "Wiederverwendbare Regeln machen Qualitätsanforderungen explizit, statt sie bei jedem Auftrag neu zu hoffen.",
-      "helpLevels": ["Wechsle zum zweiten Präsentationsartefakt.", "Prüfe die Quellen-IDs an den Kennzahlen.", "Beachte die ausdrücklich offene Managemententscheidung."],
+      "helpLevels": [
+        "Wechsle zum zweiten Präsentationsartefakt.",
+        "Prüfe die Quellen-IDs an den Kennzahlen.",
+        "Beachte die ausdrücklich offene Managemententscheidung."
+      ],
       "validation": {
         "kind": "event",
         "type": "artifact.selected",
-        "match": { "artifactId": "presentation-skilled", "artifactType": "html" }
+        "match": {
+          "artifactId": "presentation-skilled",
+          "artifactType": "html"
+        }
       },
       "highlightTarget": "artifact.preview.selector",
       "highlightTooltip": "Vergleiche denselben Auftrag mit dem wiederverwendbaren Skill.",
@@ -137,11 +171,18 @@
       "description": "Der Vergleich bewertet Nachvollziehbarkeit, Bearbeitbarkeit, Quellenbezug, Konsistenz und visuelle Qualität getrennt.",
       "instruction": "Öffne den „Qualitätsvergleich A/B“.",
       "why": "Ein expliziter Kriterienvergleich zeigt, welche Regeln tatsächlich helfen und wo ein Ergebnis nur besser aussieht.",
-      "helpLevels": ["Suche das Tabellenartefakt.", "Wähle „Qualitätsvergleich A/B“.", "Vergleiche mindestens Nachvollziehbarkeit, Bearbeitbarkeit, Quellenbezug und visuelle Qualität."],
+      "helpLevels": [
+        "Suche das Tabellenartefakt.",
+        "Wähle „Qualitätsvergleich A/B“.",
+        "Vergleiche mindestens Nachvollziehbarkeit, Bearbeitbarkeit, Quellenbezug und visuelle Qualität."
+      ],
       "validation": {
         "kind": "event",
         "type": "artifact.selected",
-        "match": { "artifactId": "presentation-comparison", "artifactType": "table" }
+        "match": {
+          "artifactId": "presentation-comparison",
+          "artifactType": "table"
+        }
       },
       "highlightTarget": "artifact.preview.selector",
       "highlightTooltip": "Öffne den Kriterienvergleich.",
@@ -153,11 +194,18 @@
       "description": "Der freie Entwurf fordert eine Kapazitätsfreigabe, obwohl die synthetischen Quellen dafür weder Entscheidung noch ausreichenden Beleg liefern.",
       "instruction": "Öffne das „Prüfprotokoll“ und kontrolliere den Qualitätsbefund sowie mindestens drei wirksame Skill-Regeln.",
       "why": "Nicht belegte Zahlen, Prognosen oder Entscheidungen sind Fehler; ein Review muss sie auch bei überzeugender Darstellung erkennen.",
-      "helpLevels": ["Wähle das strukturierte Prüfprotokoll.", "Lies qualityFinding und inventionPolicy.", "Prüfe anschließend mindestens drei Einträge unter effectiveSkillRules."],
+      "helpLevels": [
+        "Wähle das strukturierte Prüfprotokoll.",
+        "Lies qualityFinding und inventionPolicy.",
+        "Prüfe anschließend mindestens drei Einträge unter effectiveSkillRules."
+      ],
       "validation": {
         "kind": "event",
         "type": "artifact.selected",
-        "match": { "artifactId": "presentation-review", "artifactType": "data" }
+        "match": {
+          "artifactId": "presentation-review",
+          "artifactType": "data"
+        }
       },
       "highlightTarget": "artifact.preview.selector",
       "highlightTooltip": "Öffne den fachlichen Review.",
@@ -169,11 +217,18 @@
       "description": "Die Präsentation bleibt ein prüfbarer Entwurf; Nutzerfreigabe und fachliche Verantwortung werden nicht an den Skill delegiert.",
       "instruction": "Markiere das Prüfprotokoll als geprüft.",
       "why": "Der Skill erhöht Konsistenz, ersetzt aber keine fachliche Freigabe.",
-      "helpLevels": ["Bleibe im Prüfprotokoll.", "Nutze die Prüfaktion.", "Klicke auf „Ergebnis geprüft“."],
+      "helpLevels": [
+        "Bleibe im Prüfprotokoll.",
+        "Nutze die Prüfaktion.",
+        "Klicke auf „Ergebnis geprüft“."
+      ],
       "validation": {
         "kind": "event",
         "type": "artifact.verified",
-        "match": { "artifactId": "presentation-review", "artifactType": "data" }
+        "match": {
+          "artifactId": "presentation-review",
+          "artifactType": "data"
+        }
       },
       "highlightTarget": "artifact.preview.verify",
       "highlightTooltip": "Schließe die fachliche Prüfung bewusst ab.",
