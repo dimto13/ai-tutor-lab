@@ -8,18 +8,39 @@ const scenarioPath = new URL(
 );
 const skillPath = new URL("../../content/skills/management-presentation.v1.json", import.meta.url);
 
-async function readJson(path: URL): Promise<any> {
-  return JSON.parse(await readFile(path, "utf8"));
+type JsonRecord = Record<string, unknown>;
+type Artifact = {
+  id: string;
+  html?: string;
+  rows?: Array<{ criterion: string }>;
+  value?: {
+    sharedBasis: { sources: string[]; audience: string };
+    inventionPolicy: string;
+    qualityFinding: string;
+    effectiveSkillRules: string[];
+  };
+};
+type Scenario = {
+  environment: {
+    seed: {
+      contents: Record<string, string>;
+      artifactPreview: { artifacts: Artifact[] };
+    };
+  };
+};
+
+async function readJson<T extends JsonRecord>(path: URL): Promise<T> {
+  return JSON.parse(await readFile(path, "utf8")) as T;
 }
 
 test("quarterly presentation workflow keeps A/B evidence on one shared synthetic basis", async () => {
-  const scenario = await readJson(scenarioPath);
+  const scenario = await readJson<Scenario>(scenarioPath);
   const artifacts = scenario.environment.seed.artifactPreview.artifacts;
-  const free = artifacts.find((artifact: any) => artifact.id === "presentation-free");
-  const skilled = artifacts.find((artifact: any) => artifact.id === "presentation-skilled");
-  const review = artifacts.find((artifact: any) => artifact.id === "presentation-review");
+  const free = artifacts.find((artifact) => artifact.id === "presentation-free");
+  const skilled = artifacts.find((artifact) => artifact.id === "presentation-skilled");
+  const review = artifacts.find((artifact) => artifact.id === "presentation-review");
 
-  assert.ok(free && skilled && review, "A, B and review artifacts must exist");
+  assert.ok(free?.html && skilled?.html && review?.value, "A, B and review artifacts must exist");
   assert.deepEqual(review.value.sharedBasis.sources, ["SYN-Q1-2026", "SYN-Q2-2026", "SYN-Q3-2026"]);
   assert.equal(review.value.sharedBasis.audience, "Geschäftsführung der fiktiven Beispiel GmbH");
   assert.match(free.html, /12,0/);
@@ -30,11 +51,12 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
 });
 
 test("quarterly presentation workflow exposes the required comparison dimensions", async () => {
-  const scenario = await readJson(scenarioPath);
+  const scenario = await readJson<Scenario>(scenarioPath);
   const comparison = scenario.environment.seed.artifactPreview.artifacts.find(
-    (artifact: any) => artifact.id === "presentation-comparison",
+    (artifact) => artifact.id === "presentation-comparison",
   );
-  const criteria = comparison.rows.map((row: any) => row.criterion);
+  assert.ok(comparison?.rows, "comparison artifact must expose rows");
+  const criteria = comparison.rows.map((row) => row.criterion);
 
   for (const required of [
     "Nachvollziehbarkeit",
@@ -47,8 +69,10 @@ test("quarterly presentation workflow exposes the required comparison dimensions
 });
 
 test("management presentation skill is reusable and keeps invention guards explicit", async () => {
-  const skill = await readJson(skillPath);
+  const scenario = await readJson<Scenario>(scenarioPath);
+  const skill = await readJson<JsonRecord>(skillPath);
   const serialized = JSON.stringify(skill);
+  const seededSkill = scenario.environment.seed.contents["presentation-skill.md"];
 
   assert.match(serialized, /Storyline/i);
   assert.match(serialized, /Folientitel/i);
@@ -56,4 +80,8 @@ test("management presentation skill is reusable and keeps invention guards expli
   assert.match(serialized, /Quellen/i);
   assert.match(serialized, /technische/i);
   assert.match(serialized, /Prognosen/i);
+  assert.match(seededSkill, /management-presentation\.v1/);
+  for (const contractTerm of ["Storyline", "Folientitel", "Layout", "Quellen", "Technische Qualität", "Keine Erfindungen"]) {
+    assert.match(seededSkill, new RegExp(contractTerm, "i"), `seeded skill must preserve ${contractTerm}`);
+  }
 });
