@@ -1,0 +1,238 @@
+{
+  "id": "quarterly-presentation-workflow.guided",
+  "moduleId": "quarterly-presentation-workflow",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Quartalszahlen in eine belastbare Entscheidungspräsentation überführen",
+  "description": "Vergleiche zwei Präsentationen aus exakt denselben synthetischen Fakten und erkenne, wie ein wiederverwendbarer Presentation-Skill Quellenbezug, Konsistenz und Prüfbarkeit verbessert.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["artifact.preview", "platform.review"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["synthetische-quartalsanalyse"],
+      "files": ["auftrag.md", "quartalsdaten.md", "presentation-skill.md"],
+      "contents": {
+        "auftrag.md": "# Auftrag\nZielgruppe: Geschäftsführung der fiktiven Beispiel GmbH. Erstelle eine kurze Entscheidungspräsentation ausschließlich aus den freigegebenen synthetischen Quartalsdaten. Keine erfundenen Kennzahlen, Prognosen oder Entscheidungen.",
+        "quartalsdaten.md": "# Freigegebene synthetische Fakten\nQuelle SYN-Q1-2026: Q1 Umsatz 12,0 Mio. EUR; Bruttomarge 38 %; operativer Cashflow 1,4 Mio. EUR.\nQuelle SYN-Q2-2026: Q2 Umsatz 12,8 Mio. EUR; Bruttomarge 39 %; operativer Cashflow 1,6 Mio. EUR.\nQuelle SYN-Q3-2026: Q3 Umsatz 13,1 Mio. EUR; Bruttomarge 39 %; operativer Cashflow 1,5 Mio. EUR.\nEs existiert keine freigegebene Q4-Prognose und keine freigegebene Investitionsentscheidung.",
+        "presentation-skill.md": "# management-presentation.v1\nStoryline: Ausgangslage → belegte Entwicklung → offene Entscheidung.\nFolientitel: überprüfbare Kernaussage.\nLayout: eine Hauptaussage je Folie, konsistente Zahlenformate.\nQuellen: wesentliche Aussagen mit Quellen-ID.\nTechnische Qualität: Lesbarkeit, Überläufe, Einheiten und Bearbeitbarkeit prüfen.\nKeine Erfindungen: unbelegte Zahlen, Prognosen oder Entscheidungen entfernen oder klar als Hypothese/offene Entscheidung markieren."
+      },
+      "openTabs": ["quartalsdaten.md", "presentation-skill.md"],
+      "activeFile": "quartalsdaten.md",
+      "artifactPreview": {
+        "activeArtifactId": "presentation-free",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "presentation-free",
+            "type": "html",
+            "title": "Durchlauf A – freier Auftrag",
+            "description": "Präsentationsentwurf ohne expliziten Skill. Er verwendet nur die freigegebenen Fakten, enthält aber absichtlich einen unzureichend belegten Entscheidungssatz.",
+            "html": "<article><h1>Beispiel GmbH – Q1 bis Q3 2026</h1><p>Zielgruppe: Geschäftsführung</p><section><h2>Quartalsentwicklung</h2><p>Umsatz: Q1 12,0 | Q2 12,8 | Q3 13,1 Mio. EUR</p><p>Bruttomarge: 38 % | 39 % | 39 %</p><p>Operativer Cashflow: 1,4 | 1,6 | 1,5 Mio. EUR</p></section><section><h2>Nächster Schritt</h2><p>Die Geschäftsführung sollte jetzt zusätzliche Kapazität freigeben.</p><p>Quellen: synthetische Quartalsdaten Q1–Q3 2026</p></section></article>"
+          },
+          {
+            "id": "presentation-skilled",
+            "type": "html",
+            "title": "Durchlauf B – mit Presentation-Skill",
+            "description": "Derselbe Datensatz und dieselbe Zielgruppe, strukturiert nach management-presentation.v1.",
+            "html": "<article><h1>Umsatz steigt bis Q3; Marge bleibt seit Q2 bei 39 %</h1><p>Zielgruppe: Geschäftsführung der fiktiven Beispiel GmbH</p><section><h2>Belegte Entwicklung</h2><p>Umsatz: Q1 12,0 Mio. EUR [SYN-Q1-2026] → Q2 12,8 Mio. EUR [SYN-Q2-2026] → Q3 13,1 Mio. EUR [SYN-Q3-2026].</p><p>Bruttomarge: 38 % [SYN-Q1-2026] → 39 % [SYN-Q2-2026] → 39 % [SYN-Q3-2026].</p><p>Operativer Cashflow: 1,4 → 1,6 → 1,5 Mio. EUR [SYN-Q1-2026; SYN-Q2-2026; SYN-Q3-2026].</p></section><section><h2>Offene Entscheidung statt erfundener Prognose</h2><p>Die Daten belegen keine Q4-Prognose und keine Investitionsfreigabe. Ob Kapazität angepasst werden soll, bleibt eine fachlich zu prüfende Managemententscheidung.</p></section></article>"
+          },
+          {
+            "id": "presentation-comparison",
+            "type": "table",
+            "title": "Qualitätsvergleich A/B",
+            "description": "Vergleich derselben Faktenbasis nach den geforderten Qualitätsdimensionen.",
+            "columns": [
+              { "key": "criterion", "label": "Kriterium" },
+              { "key": "free", "label": "Durchlauf A" },
+              { "key": "skilled", "label": "Durchlauf B" }
+            ],
+            "rows": [
+              {
+                "criterion": "Nachvollziehbarkeit",
+                "free": "Fakten sichtbar, Schlussfolgerung nicht getrennt",
+                "skilled": "Fakten, Beleg und offene Entscheidung getrennt"
+              },
+              {
+                "criterion": "Bearbeitbarkeit",
+                "free": "Textblöcke ohne klare Aussagehierarchie",
+                "skilled": "Eine Hauptaussage je Abschnitt, konsistente Formate"
+              },
+              {
+                "criterion": "Quellenbezug",
+                "free": "Nur allgemeine Sammelquelle",
+                "skilled": "Kennzahlen mit SYN-Q1/Q2/Q3-Quellen-IDs"
+              },
+              {
+                "criterion": "Konsistenz",
+                "free": "Generische Titel und gemischte Aussagearten",
+                "skilled": "Aussagetitel und einheitliche Zahlen-/Entscheidungslogik"
+              },
+              {
+                "criterion": "Visuelle Qualität",
+                "free": "Lesbar, aber wenig priorisiert",
+                "skilled": "Klare Hierarchie und kompakte Kernaussagen"
+              }
+            ]
+          },
+          {
+            "id": "presentation-review",
+            "type": "data",
+            "title": "Prüfprotokoll",
+            "description": "Fachlicher Review des eingebauten Qualitätsmangels und der wirksamen Skill-Regeln.",
+            "value": {
+              "sharedBasis": {
+                "audience": "Geschäftsführung der fiktiven Beispiel GmbH",
+                "sources": ["SYN-Q1-2026", "SYN-Q2-2026", "SYN-Q3-2026"],
+                "facts": [
+                  "Umsatz 12,0 / 12,8 / 13,1 Mio. EUR",
+                  "Bruttomarge 38 / 39 / 39 Prozent",
+                  "operativer Cashflow 1,4 / 1,6 / 1,5 Mio. EUR"
+                ]
+              },
+              "qualityFinding": "Durchlauf A leitet aus den Fakten eine Kapazitätsfreigabe ab, obwohl dafür keine freigegebene Entscheidung oder ausreichende Begründung vorliegt. Der Satz ist als Fehler zu entfernen oder als offene, zu prüfende Entscheidung zu kennzeichnen.",
+              "inventionPolicy": "Nicht belegte Kennzahlen, Prognosen und Entscheidungen gelten als Fehler; überzeugende Darstellung ersetzt keinen Quellenbeleg.",
+              "effectiveSkillRules": [
+                "Fakten, Interpretation und Entscheidung sichtbar trennen",
+                "wesentliche Aussagen mit Quellen-ID verknüpfen",
+                "Folientitel als überprüfbare Kernaussage formulieren",
+                "eine Hauptaussage je Folie und konsistente Zahlenformate verwenden"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 8,
+  "points": 60,
+  "steps": [
+    {
+      "id": "inspect-free-presentation",
+      "title": "Freien Präsentationsentwurf prüfen",
+      "description": "Beide Durchläufe müssen auf derselben synthetischen Fakten-, Quellen- und Zielgruppenbasis beruhen.",
+      "instruction": "Wähle „Durchlauf A – freier Auftrag“ und prüfe, welche Aussagen Fakten sind und welche fachliche Freigabe bräuchten.",
+      "why": "Eine professionell wirkende Folie kann fachlich trotzdem einen unbelegten Entscheidungssatz enthalten.",
+      "helpLevels": [
+        "Nutze die Artefakt-Reiter.",
+        "Wähle den freien Durchlauf.",
+        "Achte besonders auf den Abschnitt „Nächster Schritt“."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "presentation-free",
+          "artifactType": "html"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector",
+      "highlightTooltip": "Prüfe zuerst den freien Durchlauf.",
+      "successMessage": "Der freie Präsentationsentwurf ist ausgewählt."
+    },
+    {
+      "id": "inspect-skilled-presentation",
+      "title": "Presentation-Skill anwenden und Wirkung erkennen",
+      "description": "management-presentation.v1 macht Storyline, Aussagetitel, Layout, Quellen und technische Qualität zu wiederverwendbaren Regeln.",
+      "instruction": "Wähle „Durchlauf B – mit Presentation-Skill“ und vergleiche Quellenbezug und Trennung von Fakten und Entscheidung.",
+      "why": "Wiederverwendbare Regeln machen Qualitätsanforderungen explizit, statt sie bei jedem Auftrag neu zu hoffen.",
+      "helpLevels": [
+        "Wechsle zum zweiten Präsentationsartefakt.",
+        "Prüfe die Quellen-IDs an den Kennzahlen.",
+        "Prüfe die ausdrücklich offene Managemententscheidung."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "presentation-skilled",
+          "artifactType": "html"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector",
+      "highlightTooltip": "Vergleiche denselben Auftrag mit dem wiederverwendbaren Skill.",
+      "successMessage": "Der Skill-basierte Präsentationsentwurf ist ausgewählt."
+    },
+    {
+      "id": "compare-presentations",
+      "title": "Qualität systematisch vergleichen",
+      "description": "Der Vergleich bewertet Nachvollziehbarkeit, Bearbeitbarkeit, Quellenbezug, Konsistenz und visuelle Qualität getrennt.",
+      "instruction": "Öffne den „Qualitätsvergleich A/B“.",
+      "why": "Ein expliziter Kriterienvergleich zeigt, welche Regeln tatsächlich helfen und wo ein Ergebnis nur besser aussieht.",
+      "helpLevels": [
+        "Suche das Tabellenartefakt.",
+        "Wähle „Qualitätsvergleich A/B“.",
+        "Vergleiche mindestens Nachvollziehbarkeit, Bearbeitbarkeit, Quellenbezug und visuelle Qualität."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "presentation-comparison",
+          "artifactType": "table"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector",
+      "highlightTooltip": "Öffne den Kriterienvergleich.",
+      "successMessage": "Die beiden Präsentationen sind anhand expliziter Kriterien vergleichbar."
+    },
+    {
+      "id": "review-quality-finding",
+      "title": "Eingebauten Qualitätsmangel erkennen",
+      "description": "Der freie Entwurf fordert eine Kapazitätsfreigabe, obwohl die synthetischen Quellen dafür weder Entscheidung noch ausreichenden Beleg liefern.",
+      "instruction": "Öffne das „Prüfprotokoll“ und kontrolliere den Qualitätsbefund sowie mindestens drei wirksame Skill-Regeln.",
+      "why": "Nicht belegte Zahlen, Prognosen oder Entscheidungen sind Fehler; ein Review muss sie auch bei überzeugender Darstellung erkennen.",
+      "helpLevels": [
+        "Wähle das strukturierte Prüfprotokoll.",
+        "Lies qualityFinding und inventionPolicy.",
+        "Prüfe anschließend mindestens drei Einträge unter effectiveSkillRules."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.selected",
+        "match": {
+          "artifactId": "presentation-review",
+          "artifactType": "data"
+        }
+      },
+      "highlightTarget": "artifact.preview.selector",
+      "highlightTooltip": "Öffne den fachlichen Review.",
+      "successMessage": "Qualitätsmangel, Erfindungsverbot und wirksame Skill-Regeln sind nachvollziehbar dokumentiert."
+    },
+    {
+      "id": "verify-review",
+      "title": "Fachliche Prüfung bewusst abschließen",
+      "description": "Die Präsentation bleibt ein prüfbarer Entwurf; Nutzerfreigabe und fachliche Verantwortung werden nicht an den Skill delegiert.",
+      "instruction": "Markiere das Prüfprotokoll als geprüft.",
+      "why": "Der Skill erhöht Konsistenz, ersetzt aber keine fachliche Freigabe.",
+      "helpLevels": [
+        "Bleibe im Prüfprotokoll.",
+        "Nutze die Prüfaktion.",
+        "Klicke auf „Ergebnis geprüft“."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "presentation-review",
+          "artifactType": "data"
+        }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "highlightTooltip": "Schließe die fachliche Prüfung bewusst ab.",
+      "successMessage": "Der Review ist als separate menschliche Prüfung abgeschlossen."
+    }
+  ]
+}

@@ -24,6 +24,7 @@ import artifactPreviewFoundationRaw from "../../../../content/scenarios/artifact
 import htmlPageWorkflowGuidedRaw from "../../../../content/scenarios/html-page-workflow.guided.json";
 import researchWorkflowGuidedRaw from "../../../../content/scenarios/research-workflow.guided.json";
 import tableDataWorkflowGuidedRaw from "../../../../content/scenarios/table-data-workflow.guided.json";
+import quarterlyPresentationWorkflowGuidedRaw from "../../../../content/scenarios/quarterly-presentation-workflow.guided.json";
 import browserAutomationExploreRaw from "../../../../content/scenarios/browser-automation-workflow.explore.json";
 import browserAutomationGuidedRaw from "../../../../content/scenarios/browser-automation-workflow.guided.json";
 import mcpServerExploreRaw from "../../../../content/scenarios/mcp-server-workflow.explore.json";
@@ -64,6 +65,9 @@ const tableDataWorkflowGuidedScenario = createTableDataWorkflowGuidedScenario(
 );
 const [tableDataWorkflowExploreScenario, tableDataWorkflowChallengeScenario] =
   createTableDataWorkflowVariants(tableDataWorkflowGuidedScenario);
+const quarterlyPresentationWorkflowGuidedScenario = parseScenario(
+  quarterlyPresentationWorkflowGuidedRaw,
+);
 const browserAutomationExploreScenario = parseScenario(browserAutomationExploreRaw);
 const browserAutomationGuidedScenario = parseScenario(browserAutomationGuidedRaw);
 const mcpServerExploreScenario = parseScenario(mcpServerExploreRaw);
@@ -103,6 +107,7 @@ const scenarios: Record<string, Scenario> = {
   [tableDataWorkflowExploreScenario.id]: tableDataWorkflowExploreScenario,
   [tableDataWorkflowGuidedScenario.id]: tableDataWorkflowGuidedScenario,
   [tableDataWorkflowChallengeScenario.id]: tableDataWorkflowChallengeScenario,
+  [quarterlyPresentationWorkflowGuidedScenario.id]: quarterlyPresentationWorkflowGuidedScenario,
   [browserAutomationExploreScenario.id]: browserAutomationExploreScenario,
   [browserAutomationGuidedScenario.id]: browserAutomationGuidedScenario,
   [mcpServerExploreScenario.id]: mcpServerExploreScenario,
