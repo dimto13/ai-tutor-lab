@@ -151,7 +151,7 @@
       "helpLevels": [
         "Wechsle zum zweiten Präsentationsartefakt.",
         "Prüfe die Quellen-IDs an den Kennzahlen.",
-        "Beachte die ausdrücklich offene Managemententscheidung."
+        "Prüfe die ausdrücklich offene Managemententscheidung."
       ],
       "validation": {
         "kind": "event",
