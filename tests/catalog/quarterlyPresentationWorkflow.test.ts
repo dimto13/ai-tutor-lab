@@ -6,7 +6,10 @@ const scenarioPath = new URL(
   "../../content/scenarios/quarterly-presentation-workflow.guided.json",
   import.meta.url,
 );
-const skillPath = new URL("../../content/skills/management-presentation.v1.json", import.meta.url);
+const skillPath = new URL(
+  "../../content/skills/management-presentation.v1.json",
+  import.meta.url,
+);
 
 type JsonRecord = Record<string, unknown>;
 type Artifact = {
@@ -41,7 +44,11 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
   const review = artifacts.find((artifact) => artifact.id === "presentation-review");
 
   assert.ok(free?.html && skilled?.html && review?.value, "A, B and review artifacts must exist");
-  assert.deepEqual(review.value.sharedBasis.sources, ["SYN-Q1-2026", "SYN-Q2-2026", "SYN-Q3-2026"]);
+  assert.deepEqual(review.value.sharedBasis.sources, [
+    "SYN-Q1-2026",
+    "SYN-Q2-2026",
+    "SYN-Q3-2026",
+  ]);
   assert.equal(review.value.sharedBasis.audience, "Geschäftsführung der fiktiven Beispiel GmbH");
   assert.match(free.html, /12,0/);
   assert.match(skilled.html, /12,0/);
@@ -81,7 +88,14 @@ test("management presentation skill is reusable and keeps invention guards expli
   assert.match(serialized, /technische/i);
   assert.match(serialized, /Prognosen/i);
   assert.match(seededSkill, /management-presentation\.v1/);
-  for (const contractTerm of ["Storyline", "Folientitel", "Layout", "Quellen", "Technische Qualität", "Keine Erfindungen"]) {
+  for (const contractTerm of [
+    "Storyline",
+    "Folientitel",
+    "Layout",
+    "Quellen",
+    "Technische Qualität",
+    "Keine Erfindungen",
+  ]) {
     assert.match(seededSkill, new RegExp(contractTerm, "i"), `seeded skill must preserve ${contractTerm}`);
   }
 });
