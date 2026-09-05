@@ -65,6 +65,18 @@ function scoreRetention(): string {
   return "Für gespeicherte Punkteereignisse und abgeschlossene Szenarioläufe ist derzeit keine separate automatische Löschfrist definiert. Dein Kompetenzprofil wird daraus berechnet und nicht zusätzlich als zweite Punktequelle gespeichert.";
 }
 
+function telemetryPseudonymizationDescription(
+  mode: DataTransparencyContext["telemetryPseudonymizationMode"],
+): string {
+  if (mode === "ANONYMOUS") {
+    return "Die Statistik wird ohne eine nutzerbezogene Kennung verarbeitet.";
+  }
+  if (mode === "SESSION") {
+    return "Kennungen werden je Trainingssitzung pseudonymisiert und nicht als direkte Nutzerkennung in der Statistik verwendet.";
+  }
+  return "Personenbeziehbare Kennungen werden vor der statistischen Verarbeitung pseudonymisiert.";
+}
+
 export function dataCategories(context: DataTransparencyContext): DataCategoryDescription[] {
   const cloud = context.storageMode === "cloud";
   return [
@@ -139,7 +151,7 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       stored:
         "Pseudonymisierte Ereignisse zu Trainingssitzungen, Schritten, Hinweisen und Versuchen sowie daraus erzeugte organisationsweite Zusammenfassungen.",
       storage: cloud
-        ? "Im zentralen Statistikbereich der Anwendung. Personenbeziehbare Kennungen werden dabei pseudonymisiert."
+        ? `Im zentralen Statistikbereich der Anwendung. ${telemetryPseudonymizationDescription(context.telemetryPseudonymizationMode)}`
         : "Im lokalen Entwicklungsmodus ist die zentrale Nutzungsstatistik nicht aktiv.",
       recipients: cloud
         ? "Trainer und Administratoren deiner Organisation erhalten ausschließlich die dafür vorgesehene Auswertung; bei weniger als 3 gestarteten Sitzungen werden Detailmetriken unterdrückt. Personenbeziehbare Einzelereignisse werden über diesen Auswertungspfad nicht ausgegeben."
