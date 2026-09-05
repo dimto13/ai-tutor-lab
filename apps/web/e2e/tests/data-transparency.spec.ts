@@ -29,10 +29,10 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
   for (const name of [
     "Kontoprofil und Anmeldung",
     "Lernpräferenzen und Barrierefreiheit",
-    "Trainingsfortschritt und Runtime-Zustand",
+    "Trainingsfortschritt und aktueller Übungszustand",
     "Punkte und Kompetenzprofil",
     "Kompetenznachweise",
-    "Nutzungs- und Lerntelemetrie",
+    "Nutzungs- und Lernstatistik",
     "Produktfeedback",
     "Nur vorübergehend verarbeitete Daten",
   ]) {
@@ -40,12 +40,18 @@ test("Datentransparenz ist direkt aus dem Account erreichbar und beschreibt die 
   }
 
   await expect(categories).toContainText("keine separate automatische Löschfrist");
-  await expect(categories).toContainText("Browser-Speicher im bestehenden Feedback-Pfad");
-  await expect(categories).toContainText("nicht serverseitig an dein Konto gebunden");
+  await expect(categories).toContainText("Browserprofil, das du gerade verwendest");
+  await expect(categories).toContainText("nicht fest mit deinem angemeldeten Konto verknüpft");
+  await expect(categories).not.toContainText(
+    /Cognito|Auth-Claims|UserProfile|AWS|Persistenzadapter/,
+  );
+  await expect(categories).not.toContainText(/serverautoritativ|subject-gescop|TTL|Tenant-Admin/);
   await accessibility.check("data transparency account route");
 });
 
-test("lokaler Eigendatenexport enthält nur subject-gescopte Browserdaten", async ({ page }) => {
+test("lokaler Eigendatenexport enthält nur die Browserdaten der angemeldeten Person", async ({
+  page,
+}) => {
   await page.goto("/datentransparenz");
   await expect(
     page.getByRole("heading", { name: "Diese Daten werden über mich gespeichert" }),
