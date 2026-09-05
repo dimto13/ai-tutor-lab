@@ -50,19 +50,31 @@ export async function loadMyDataTransparencyContext(): Promise<DataTransparencyC
 
 function scoreRecipients(context: DataTransparencyContext): string {
   if (context.storageMode === "browser-local") {
-    return "Im lokalen Entwicklungsmodus werden keine tenantweiten Punkte- oder Ranglistendaten an Trainer oder Admins ausgegeben.";
+    return "Im lokalen Entwicklungsmodus werden keine organisationsweiten Punkte oder Ranglisten an Trainer oder Administratoren ausgegeben.";
   }
   if (context.scoreVisibility === "private") {
-    return "Nur du siehst deine individuellen Punkte. Tenantweite Ranglisten und Auswertungen sind deaktiviert.";
+    return "Nur du siehst deine individuellen Punkte. Organisationsweite Ranglisten und Auswertungen sind deaktiviert.";
   }
   if (context.scoreVisibility === "aggregate") {
-    return "Trainer und Tenant-Admins können ausschließlich aggregierte Punktwerte sehen; Kohorten unter 5 Personen werden serverseitig vollständig unterdrückt.";
+    return "Trainer und Administratoren deiner Organisation können ausschließlich zusammengefasste Punktwerte sehen; Gruppen unter 5 Personen werden vollständig unterdrückt.";
   }
-  return "Eine namentliche Auswertung ist nur für Tenant-Admins möglich und nur, weil eine dokumentierte Freigabe serverseitig bestätigt wurde.";
+  return "Eine namentliche Auswertung ist nur für Administratoren deiner Organisation möglich und nur, wenn eine dokumentierte Freigabe bestätigt wurde.";
 }
 
 function scoreRetention(): string {
-  return "Für gespeicherte ScoreEvents und ScenarioRuns ist im aktuellen Produktvertrag keine separate automatische Löschfrist definiert. Das Kompetenzprofil wird daraus serverseitig berechnet und ist keine zweite authoritative Punkte-Persistenz.";
+  return "Für gespeicherte Punkteereignisse und abgeschlossene Szenarioläufe ist derzeit keine separate automatische Löschfrist definiert. Dein Kompetenzprofil wird daraus berechnet und nicht zusätzlich als zweite Punktequelle gespeichert.";
+}
+
+function telemetryPseudonymizationDescription(
+  mode: DataTransparencyContext["telemetryPseudonymizationMode"],
+): string {
+  if (mode === "ANONYMOUS") {
+    return "Die Statistik wird ohne eine nutzerbezogene Kennung verarbeitet.";
+  }
+  if (mode === "SESSION") {
+    return "Kennungen werden je Trainingssitzung pseudonymisiert und nicht als direkte Nutzerkennung in der Statistik verwendet.";
+  }
+  return "Personenbeziehbare Kennungen werden vor der statistischen Verarbeitung pseudonymisiert.";
 }
 
 export function dataCategories(context: DataTransparencyContext): DataCategoryDescription[] {
@@ -72,50 +84,50 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       id: "account",
       title: "Kontoprofil und Anmeldung",
       stored: cloud
-        ? "Cognito-Identität und aktuelle Auth-Claims wie Nutzer-ID, Tenant-Zuordnung, E-Mail, Anzeigename und Rollen sowie – sofern angelegt – das ergänzende UserProfile."
+        ? "Deine Anmelde- und Kontodaten wie Nutzer-ID, Organisationszuordnung, E-Mail-Adresse, Anzeigename und Rollen sowie – sofern angelegt – ergänzende Profildaten."
         : "Die lokale Testidentität aus der Entwicklungs-Konfiguration und – sofern gespeichert – das lokale Nutzerprofil.",
       storage: cloud
-        ? "AWS Cognito für die Anmeldung und Auth-Claims; ergänzende Profildaten im bestehenden UserProfile-Pfad."
-        : "Lokaler Auth-Adapter plus Browser-Speicher für das lokale Nutzerprofil; kein Cognito-Cloudkonto wird verwendet.",
+        ? "Im zentralen Anmelde- und Profilspeicher der Anwendung."
+        : "Im lokalen Anmeldemodus und im Browser für das lokale Nutzerprofil; es wird kein Cloudkonto verwendet.",
       recipients:
-        "Du selbst sowie Authentifizierungs- und Backend-Dienste, die Identität, Tenant und Rollen zur Autorisierung benötigen. Es gibt keinen Trainer-Read auf dein UserProfile.",
+        "Du selbst sowie die Anmelde- und Anwendungsdienste, die deine Identität, Organisationszuordnung und Rollen für die Zugriffsprüfung benötigen. Trainer können dein persönliches Profil nicht einsehen.",
       retention:
-        "Für Auth-Konto und UserProfile ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
+        "Für dein Anmeldekonto und ergänzende Profildaten ist derzeit keine separate automatische Löschfrist implementiert.",
     },
     {
       id: "preferences",
       title: "Lernpräferenzen und Barrierefreiheit",
       stored:
-        "Sprache, bevorzugter Trainingsmodus, Wochenziel, Accessibility-Einstellungen und deine KI-Selbsteinschätzung.",
+        "Sprache, bevorzugter Trainingsmodus, Wochenziel, Einstellungen zur Barrierefreiheit und deine KI-Selbsteinschätzung.",
       storage: cloud
-        ? "AWS-Cloud im bestehenden UserPreferences-Pfad."
+        ? "Im persönlichen Einstellungsspeicher der Anwendung."
         : "Nur im Browser des lokalen Entwicklungsmodus.",
       recipients:
-        "Du selbst und die Backend-Dienste für deine persönlichen Einstellungen. Diese Selbsteinschätzung ist kein Kompetenznachweis.",
+        "Du selbst und die Anwendungsdienste für deine persönlichen Einstellungen. Diese Selbsteinschätzung ist kein Kompetenznachweis.",
       retention:
-        "Für Präferenzen ist im aktuellen Produktvertrag keine separate automatische Löschfrist implementiert.",
+        "Für Präferenzen ist derzeit keine separate automatische Löschfrist implementiert.",
     },
     {
       id: "training",
-      title: "Trainingsfortschritt und Runtime-Zustand",
+      title: "Trainingsfortschritt und aktueller Übungszustand",
       stored:
-        "Trainingssessions mit dem aktuellen Lernfortschritt im Session-Payload sowie separate Runtime-Snapshots für den simulierten Produktzustand.",
+        "Dein aktueller Lernfortschritt in Trainingssitzungen sowie Zustandsdaten, die benötigt werden, um eine laufende Übung fortzusetzen.",
       storage: cloud
-        ? "AWS-Cloud über die bestehenden TrainingSession-/RuntimeSnapshot-Persistenzadapter; Offline-Fallback kann zusätzlich subject-gescopte Browserdaten halten."
-        : "Subject-gescopte Browser-Persistenz im lokalen Entwicklungsmodus.",
+        ? "Im persönlichen Trainingsspeicher der Anwendung; bei vorübergehend fehlender Verbindung können zusätzlich nur dir zugeordnete Daten im Browser zwischengespeichert werden."
+        : "Nur dir zugeordnete Trainingsdaten im Browser des lokalen Entwicklungsmodus.",
       recipients:
-        "Du selbst und die Trainings-Backendlogik. Trainer-/Admin-Analytics verwendet einen getrennten Telemetriepfad und gibt gespeicherte Session-/Runtime-Rohzustände nicht direkt aus.",
+        "Du selbst und die Anwendungslogik für deine Trainings. Trainer- und Administratorauswertungen verwenden einen getrennten, zusammengefassten Auswertungspfad und geben deine gespeicherten Trainingszustände nicht direkt aus.",
       retention:
-        "Für TrainingSessions ist keine separate automatische Löschfrist implementiert. Runtime-Snapshots können im bestehenden Runtime-Pfad ersetzt oder gelöscht werden; Browser-Fallback bleibt bis Überschreiben oder Löschen des Browser-Speichers bestehen.",
+        "Für Trainingssitzungen ist derzeit keine separate automatische Löschfrist implementiert. Zwischengespeicherte Übungszustände können ersetzt oder gelöscht werden; Daten im Browser bleiben bis zum Überschreiben oder Löschen der Browserdaten bestehen.",
     },
     {
       id: "scores",
       title: "Punkte und Kompetenzprofil",
       stored:
-        "Serverbestätigte ScenarioRuns und ScoreEvents werden gespeichert. Das Kompetenzprofil je Technologie wird daraus serverseitig berechnet.",
+        "Vom System bestätigte Ergebnisse abgeschlossener Szenarien und Punkteereignisse werden gespeichert. Daraus wird dein Kompetenzprofil je Technologie berechnet.",
       storage: cloud
-        ? "ScoreEvents und ScenarioRuns liegen in der serverautoritativen AWS-Persistenz; der Client ist nicht die Punktequelle und das Kompetenzprofil ist keine parallele authoritative Punkte-Persistenz."
-        : "Im lokalen Entwicklungsmodus entsteht keine tenantweite serverautoritative Rangliste.",
+        ? "Die bestätigten Ergebnisse werden zentral gespeichert. Änderungen nur im Browser können diese Punkte nicht verändern; dein Kompetenzprofil wird aus den bestätigten Ergebnissen berechnet."
+        : "Im lokalen Entwicklungsmodus entsteht keine organisationsweite Rangliste.",
       recipients: scoreRecipients(context),
       retention: scoreRetention(),
     },
@@ -123,54 +135,54 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       id: "attestations",
       title: "Kompetenznachweise",
       stored:
-        "Ausgestellte Nachweise mit Szenario-/Produktversion, Lernzielen, Evidenz, Gültigkeitszeitraum und Signaturmetadaten.",
+        "Ausgestellte Nachweise mit Szenario- und Produktversion, Lernzielen, Nachweisen deiner Leistung, Gültigkeitszeitraum und Angaben zur Echtheitsprüfung.",
       storage: cloud
-        ? "Serverautoritative AWS-Persistenz; vorhandene Nachweis-Exporte werden erst auf deine Anfrage erzeugt."
-        : "Im lokalen Entwicklungsmodus wird kein serverautoritatives Cloud-Attestation-Repository als persönliche Datenquelle verwendet.",
+        ? "Im zentralen Nachweisspeicher der Anwendung; Exportdateien werden erst auf deine Anfrage erzeugt."
+        : "Im lokalen Entwicklungsmodus wird kein zentraler Nachweisspeicher als persönliche Datenquelle verwendet.",
       recipients: cloud
-        ? "Du selbst. Ein PDF-/CSV-Nachweis verlässt den Self-Service-Pfad erst, wenn du ihn ausdrücklich exportierst und selbst weitergibst."
+        ? "Du selbst. Ein PDF- oder CSV-Nachweis verlässt den persönlichen Bereich erst, wenn du ihn ausdrücklich exportierst und selbst weitergibst."
         : "Keine Cloud-Empfänger im lokalen Entwicklungsmodus.",
       retention:
         "Die fachliche Nachweisgültigkeit beträgt 12 Monate. Das ist keine Löschfrist; für den gespeicherten Nachweis ist aktuell keine separate automatische Löschfrist definiert.",
     },
     {
       id: "telemetry",
-      title: "Nutzungs- und Lerntelemetrie",
+      title: "Nutzungs- und Lernstatistik",
       stored:
-        "Pseudonymisierte Rohereignisse zu Sessions, Schritten, Hinweisen und Versuchen sowie daraus erzeugte tenantweite Aggregate.",
+        "Pseudonymisierte Ereignisse zu Trainingssitzungen, Schritten, Hinweisen und Versuchen sowie daraus erzeugte organisationsweite Zusammenfassungen.",
       storage: cloud
-        ? `AWS-Cloud. Rohereignisse werden im Modus ${context.telemetryPseudonymizationMode ?? "SESSION"} pseudonymisiert.`
-        : "Im lokalen Entwicklungsmodus ist der Cloud-Telemetriepfad nicht aktiv.",
+        ? `Im zentralen Statistikbereich der Anwendung. ${telemetryPseudonymizationDescription(context.telemetryPseudonymizationMode)}`
+        : "Im lokalen Entwicklungsmodus ist die zentrale Nutzungsstatistik nicht aktiv.",
       recipients: cloud
-        ? "Trainer und Tenant-Admins erhalten ausschließlich die serverseitige Analytics-Ausgabe; bei weniger als 3 gestarteten Sessions werden Detailmetriken unterdrückt. Personenbezogene Rohereignisse werden über diesen Reporting-Pfad nicht ausgegeben."
-        : "Keine Cloud-Reporting-Empfänger im lokalen Entwicklungsmodus.",
+        ? "Trainer und Administratoren deiner Organisation erhalten ausschließlich die dafür vorgesehene Auswertung; bei weniger als 3 gestarteten Sitzungen werden Detailmetriken unterdrückt. Personenbeziehbare Einzelereignisse werden über diesen Auswertungspfad nicht ausgegeben."
+        : "Keine Empfänger einer zentralen Nutzungsstatistik im lokalen Entwicklungsmodus.",
       retention:
         cloud && context.rawTelemetryRetentionDays !== null
-          ? `Personenbeziehbare Rohtelemetrie hat eine serverseitige TTL von ${context.rawTelemetryRetentionDays} Tagen und kann zusätzlich über den bestehenden Eigendaten-Löschpfad gelöscht werden. Tenant-Aggregate enthalten keine Nutzer-ID und gehören nicht zum personenbezogenen Rohdatenbestand.`
-          : "Keine Cloud-Telemetrie-Retention im lokalen Entwicklungsmodus.",
+          ? `Personenbeziehbare Einzelereignisse werden nach ${context.rawTelemetryRetentionDays} Tagen automatisch aus diesem Statistikbereich entfernt und können zusätzlich über den bestehenden Löschweg für deine eigenen Daten gelöscht werden. Organisationsweite Zusammenfassungen enthalten keine Nutzer-ID und gehören nicht zu deinen personenbezogenen Einzelereignissen.`
+          : "Im lokalen Entwicklungsmodus werden keine Daten in der zentralen Nutzungsstatistik gespeichert.",
     },
     {
       id: "feedback",
       title: "Produktfeedback",
       stored:
-        "Explizit eingegebenes Feedback mit Szenario-, Schritt-, Modus- und technischem Kontext.",
+        "Von dir ausdrücklich eingegebenes Feedback mit Angaben zur Übung, zum Schritt, zum Trainingsmodus und dem für die Fehleranalyse nötigen technischen Kontext.",
       storage:
-        "Browser-Speicher im bestehenden Feedback-Pfad; aktuell kein automatischer Server-Upload.",
+        "Im Browserprofil, das du gerade verwendest; derzeit erfolgt kein automatischer Upload an einen Server.",
       recipients:
-        "Nur Personen mit Zugriff auf dieses Browserprofil, solange du das Feedback nicht selbst exportierst. Der aktuelle Feedback-Speicher ist nicht serverseitig an dein Konto gebunden.",
+        "Nur Personen mit Zugriff auf dieses Browserprofil, solange du das Feedback nicht selbst exportierst. Das gespeicherte Feedback ist nicht fest mit deinem angemeldeten Konto verknüpft.",
       retention:
-        "Bis du die Browserdaten löschst. Weil dieser Speicher nicht zuverlässig einer angemeldeten Person zugeordnet ist, wird er nicht automatisch in den kontogebundenen Eigendatenexport gemischt; der bestehende Feedback-Export bleibt separat verfügbar.",
+        "Bis du die Browserdaten löschst. Weil dieser Speicher nicht zuverlässig einer angemeldeten Person zugeordnet ist, wird er nicht automatisch in den Export deiner kontogebundenen Daten gemischt; der separate Feedback-Export bleibt verfügbar.",
     },
     {
       id: "transient",
       title: "Nur vorübergehend verarbeitete Daten",
       stored:
-        "Authentifizierungs- und Request-Kontext einschließlich kurzlebiger Zugangstokens, der benötigt wird, um deinen Nutzer und Tenant serverseitig zu autorisieren.",
+        "Kurzlebige Anmelde- und Verbindungsdaten, die benötigt werden, um dich zu erkennen und deine Berechtigungen innerhalb deiner Organisation zu prüfen.",
       storage:
-        "Nur transient im Auth-/Request-Pfad; keine zusätzliche Export-Persistenz wird angelegt.",
-      recipients: "Authentifizierungs- und Backend-Dienste während der Verarbeitung.",
+        "Nur während Anmeldung und Anfrageverarbeitung; dafür wird kein zusätzlicher dauerhafter Datensatz angelegt.",
+      recipients: "Anmelde- und Anwendungsdienste während der Verarbeitung.",
       retention:
-        "Nicht als eigener Produktdatensatz gespeichert. Zugangstokens werden ausdrücklich nicht in den Eigendatenexport aufgenommen.",
+        "Nicht als eigener Produktdatensatz gespeichert. Kurzlebige Zugangsdaten werden ausdrücklich nicht in den Export deiner eigenen Daten aufgenommen.",
     },
   ];
 }

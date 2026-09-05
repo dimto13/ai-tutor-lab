@@ -44,21 +44,25 @@ test("data transparency is a fixed account-accessible platform route", async () 
   assert.match(route, /Meine Daten als JSON exportieren/);
 });
 
-test("transparency catalog covers actual personal data classes and keeps policies distinct", async () => {
+test("transparency catalog covers actual personal data classes in plain language and keeps policies distinct", async () => {
   const catalog = await readFile(catalogUrl, "utf8");
 
   for (const dataClass of [
-    "UserProfile",
-    "UserPreferences",
-    "TrainingSession",
-    "RuntimeSnapshot",
-    "ScenarioRuns",
-    "ScoreEvents",
-    "Attestation",
-    "Rohereignisse",
+    "ergänzende Profildaten",
+    "Lernpräferenzen",
+    "Trainingssitzungen",
+    "Übungszustand",
+    "abgeschlossener Szenarien",
+    "Punkteereignisse",
+    "Kompetenznachweise",
+    "Pseudonymisierte Ereignisse",
   ]) {
     assert.match(catalog, new RegExp(dataClass));
   }
+  assert.doesNotMatch(
+    catalog,
+    /AWS-Cloud|Cognito-Identität|Auth-Claims|UserProfile-Pfad|Persistenzadapter|serverautoritativ|subject-gescop|Tenant-Admins|Telemetrie-Retention/,
+  );
   assert.match(catalog, /scoreVisibility/);
   assert.match(catalog, /rawTelemetryRetentionDays/);
 });
