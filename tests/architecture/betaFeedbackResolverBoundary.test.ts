@@ -34,6 +34,17 @@ test("feedback ingest is bounded, idempotent and excludes unreviewed runtime pay
   assert.match(code, /clientTimestamp/);
 });
 
+test("feedback ingest rejects likely secrets instead of persisting them", async () => {
+  const code = await source(ingestPath);
+
+  assert.match(code, /SECRET_PATTERNS/);
+  assert.match(code, /PRIVATE KEY/);
+  assert.match(code, /Bearer/);
+  assert.match(code, /AKIA/);
+  assert.match(code, /FeedbackSensitiveContentError/);
+  assert.match(code, /rejectLikelySecrets\(text\)/);
+});
+
 test("feedback inbox is admin-only and tenant scoped fail-closed", async () => {
   const code = await source(inboxPath);
 
