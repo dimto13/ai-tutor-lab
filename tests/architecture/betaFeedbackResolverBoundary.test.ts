@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const ingestPath = "amplify/data/save-beta-feedback.js";
+const admissionPath = "amplify/data/admit-beta-feedback.js";
 const inboxPath = "amplify/data/list-beta-feedback.js";
 
 async function source(path: string): Promise<string> {
@@ -43,6 +44,20 @@ test("feedback ingest rejects likely secrets instead of persisting them", async 
   assert.match(code, /AKIA/);
   assert.match(code, /FeedbackSensitiveContentError/);
   assert.match(code, /rejectLikelySecrets\(text\)/);
+});
+
+test("feedback admission is server-authoritative and bounded per user and tenant", async () => {
+  const code = await source(admissionPath);
+
+  assert.match(code, /ctx\.identity/);
+  assert.match(code, /identity\.sub/);
+  assert.match(code, /Multiple tenant memberships require explicit tenant selection/);
+  assert.match(code, /WINDOW_MS\s*=\s*60_000/);
+  assert.match(code, /MAX_ATTEMPTS_PER_WINDOW\s*=\s*6/);
+  assert.match(code, /attemptCount < :max/);
+  assert.match(code, /FeedbackRateLimitError/);
+  assert.match(code, /expiresAtEpochSeconds/);
+  assert.doesNotMatch(code, /ctx\.args\.(tenantId|userId)/);
 });
 
 test("feedback inbox is admin-only and tenant scoped fail-closed", async () => {
