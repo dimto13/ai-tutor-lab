@@ -2,6 +2,12 @@ import { util } from "@aws-appsync/utils";
 
 const MAX_TEXT_LENGTH = 4000;
 const MAX_CONTEXT_STRING = 256;
+const SECRET_PATTERNS = [
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i,
+  /\bBearer\s+[A-Za-z0-9._~+/=-]{16,}/i,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /\b(?:api[_-]?key|access[_-]?token|client[_-]?secret|password)\s*[:=]\s*["']?[^\s"']{8,}/i,
+];
 
 function caller(ctx) {
   const identity = ctx.identity;
@@ -38,6 +44,14 @@ function allowed(value, values, name) {
   return value;
 }
 
+function rejectLikelySecrets(text) {
+  for (const pattern of SECRET_PATTERNS) {
+    if (pattern.test(text)) {
+      util.error("Feedback appears to contain a secret or token and was not stored", "FeedbackSensitiveContentError");
+    }
+  }
+}
+
 export function request(ctx) {
   const subject = caller(ctx);
   const input = ctx.args.input;
@@ -49,6 +63,7 @@ export function request(ctx) {
   if (!text || text.length > MAX_TEXT_LENGTH) {
     util.error("Feedback text must contain 1..4000 characters", "FeedbackValidationError");
   }
+  rejectLikelySecrets(text);
   const context = input.context;
   if (!context || typeof context !== "object" || typeof context.length === "number") {
     util.error("Feedback context is required", "FeedbackValidationError");
