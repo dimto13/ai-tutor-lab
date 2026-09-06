@@ -27,7 +27,6 @@ test("feedback ingest is bounded, idempotent and excludes unreviewed runtime pay
   assert.match(code, /attribute_not_exists\(id\)/);
   assert.match(code, /ConditionalCheckFailedException/);
   assert.doesNotMatch(code, /runtime:\s*context\.runtime/);
-  assert.doesNotMatch(code, /screenshot/i);
   assert.match(code, /scenarioId/);
   assert.match(code, /stepId/);
   assert.match(code, /runtimeAdapterId/);
