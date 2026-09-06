@@ -44,8 +44,15 @@ test("quarterly presentation workflow keeps A/B evidence on one shared synthetic
   const review = artifacts.find((artifact) => artifact.id === "presentation-review");
 
   assert.ok(free?.html && skilled?.html && review?.value, "A, B and review artifacts must exist");
-  assert.deepEqual(review.value.sharedBasis.sources, ["SYN-Q1-2026", "SYN-Q2-2026", "SYN-Q3-2026"]);
-  assert.equal(review.value.sharedBasis.audience, "Geschäftsführung der fiktiven Beispiel GmbH");
+  assert.deepEqual(review.value.sharedBasis.sources, [
+    "SYN-Q1-2026",
+    "SYN-Q2-2026",
+    "SYN-Q3-2026",
+  ]);
+  assert.equal(
+    review.value.sharedBasis.audience,
+    "Geschäftsführung der fiktiven Beispiel GmbH",
+  );
   assert.match(free.html, /12,0/);
   assert.match(skilled.html, /12,0/);
   assert.match(review.value.inventionPolicy, /gelten als Fehler/);
