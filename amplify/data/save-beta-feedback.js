@@ -72,12 +72,11 @@ export function request(ctx) {
     appVersion: boundedString(context.appVersion, "appVersion"),
     commit: boundedString(context.commit, "commit"),
     clientTimestamp: boundedString(context.timestamp, "timestamp"),
-    runtime: context.runtime || null,
     receivedAt: now,
   };
 
-  // Screenshots/data URLs are intentionally not persisted by this server-side MVP resolver.
-  // This prevents accidental storage of unreviewed document/desktop content.
+  // Persist only the explicitly allowlisted structured context above. In particular,
+  // screenshots/data URLs and arbitrary runtime payloads are intentionally excluded.
   return {
     operation: "PutItem",
     key: util.dynamodb.toMapValues({ id: recordId }),
