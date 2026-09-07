@@ -21,7 +21,7 @@ export async function submitBetaFeedback(
       feedbackId: record.id,
       source: record.source,
       kind: record.kind,
-      message: record.message,
+      message: record.text,
       scenarioId: record.context.scenarioId,
       stepId: record.context.stepId ?? undefined,
       mode: record.context.mode,
