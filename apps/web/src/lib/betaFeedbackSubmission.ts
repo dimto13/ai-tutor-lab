@@ -3,8 +3,8 @@ import {
   saveFeedbackRecord,
   type FeedbackContextSnapshot,
   type FeedbackRecord,
-  type FeedbackSaveOptions,
   type FeedbackSource,
+  type SaveFeedbackOptions,
 } from "./feedbackStore";
 
 export type BetaFeedbackPersistResult =
@@ -21,7 +21,7 @@ export async function persistBetaFeedback(
   source: FeedbackSource,
   text: string,
   context: Omit<FeedbackContextSnapshot, "timestamp">,
-  options: FeedbackSaveOptions = {},
+  options: SaveFeedbackOptions = {},
 ): Promise<BetaFeedbackPersistResult> {
   let record: FeedbackRecord;
   try {
