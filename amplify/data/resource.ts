@@ -1,6 +1,7 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 import { telemetryDeletionWorker } from "../functions/telemetry-deletion-worker/resource.ts";
 import { userDataExport } from "../functions/user-data-export/resource.ts";
+import { betaFeedbackSchema } from "./beta-feedback-schema.ts";
 
 export const schema = a.schema({
   TrainingMode: a.enum(["explore", "guided", "challenge"]),
@@ -911,6 +912,8 @@ export const schema = a.schema({
         entry: "./list-score-events.js",
       }),
     ),
+
+  ...betaFeedbackSchema,
 });
 
 export type Schema = ClientSchema<typeof schema>;
