@@ -1,0 +1,39 @@
+{
+  "id": "management-presentation.v1",
+  "kind": "presentation-skill",
+  "version": 1,
+  "title": "Belastbare Management-Präsentation",
+  "purpose": "Wiederverwendbarer fachlicher Vertrag für entscheidungsorientierte Präsentationen aus freigegebenen Fakten.",
+  "rules": [
+    {
+      "id": "storyline",
+      "rule": "Baue die Storyline als Ausgangslage → belegte Entwicklung → offene Entscheidung auf; trenne Fakten, Interpretation und Entscheidungsvorschlag sichtbar."
+    },
+    {
+      "id": "slide-titles",
+      "rule": "Formuliere Folientitel als überprüfbare Kernaussage statt als generisches Thema."
+    },
+    {
+      "id": "layout",
+      "rule": "Nutze pro Folie eine klare Hauptaussage, konsistente Zahlenformate und eine editierbare, ruhige Informationshierarchie."
+    },
+    {
+      "id": "sources",
+      "rule": "Verknüpfe jede wesentliche Kennzahl und Aussage mit einer freigegebenen Quellen-ID; fehlende Belege bleiben als offen markiert."
+    },
+    {
+      "id": "technical-quality",
+      "rule": "Prüfe Lesbarkeit, Überläufe, konsistente Einheiten, bearbeitbare Texte und die vollständige Quellenzeile vor Freigabe."
+    },
+    {
+      "id": "no-invention",
+      "rule": "Erfinde keine Kennzahlen, Prognosen oder Entscheidungen. Nicht aus den Quellen ableitbare Aussagen sind Fehler und müssen entfernt oder ausdrücklich als Hypothese/offene Entscheidung markiert werden."
+    }
+  ],
+  "requiredReview": [
+    "Fakten gegen den freigegebenen Datensatz prüfen",
+    "Quellenbezug jeder wesentlichen Aussage prüfen",
+    "Fakten, Interpretation und Entscheidungsvorschlag auseinanderhalten",
+    "visuelle und technische Qualität prüfen"
+  ]
+}
