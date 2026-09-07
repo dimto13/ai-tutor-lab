@@ -6,15 +6,22 @@ async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
 }
 
+const preview = (page: Page, title: string) =>
+  page.frameLocator(`iframe[title="Vorschau: ${title}"]`);
+
 test("Quartalspräsentation: A/B-Vergleich führt bis zur fachlichen Prüfung", async ({ page }) => {
   await page.goto(scenarioUrl);
   await waitForTrainingReady(page);
 
   await page.getByRole("button", { name: /Durchlauf A – freier Auftrag/ }).click();
-  await expect(page.getByText(/zusätzliche Kapazität freigeben/)).toBeVisible();
+  await expect(
+    preview(page, "Durchlauf A – freier Auftrag").getByText(/zusätzliche Kapazität freigeben/),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: /Durchlauf B – mit Presentation-Skill/ }).click();
-  await expect(page.getByText(/keine Q4-Prognose/)).toBeVisible();
+  await expect(
+    preview(page, "Durchlauf B – mit Presentation-Skill").getByText(/keine Q4-Prognose/),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: /Qualitätsvergleich A\/B/ }).click();
   await expect(page.getByRole("cell", { name: "Nachvollziehbarkeit" })).toBeVisible();
