@@ -28,8 +28,6 @@ export function response(ctx) {
     "commit",
     "text",
   ];
-  const rows = items.map((item) =>
-    header.map((field) => csvCell(item?.[field])).join(","),
-  );
+  const rows = items.map((item) => header.map((field) => csvCell(item?.[field])).join(","));
   return [header.join(","), ...rows].join("\n");
 }

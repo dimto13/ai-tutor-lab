@@ -2,19 +2,26 @@ import { util } from "@aws-appsync/utils";
 
 function caller(ctx) {
   const identity = ctx.identity;
-  if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0) util.unauthorized();
+  if (!identity || typeof identity.sub !== "string" || identity.sub.length === 0)
+    util.unauthorized();
   const groups = identity.groups || [];
   const isAdmin = groups.includes("role:tenant_admin") || groups.includes("role:owner");
   if (!isAdmin) util.unauthorized();
   let tenantId = null;
   for (const group of groups) {
-    if (typeof group !== "string" || !group.startsWith("tenant:")) continue;
-    const candidate = group.slice("tenant:".length);
-    if (!candidate) util.error("Invalid tenant membership", "TenantMembershipError");
-    if (tenantId !== null && tenantId !== candidate) {
-      util.error("Multiple tenant memberships require explicit tenant selection", "TenantMembershipError");
+    if (typeof group === "string" && group.startsWith("tenant:")) {
+      const candidate = group.slice("tenant:".length);
+      if (candidate.length === 0) {
+        util.error("Invalid tenant membership", "TenantMembershipError");
+      }
+      if (tenantId !== null && tenantId !== candidate) {
+        util.error(
+          "Multiple tenant memberships require explicit tenant selection",
+          "TenantMembershipError",
+        );
+      }
+      tenantId = candidate;
     }
-    tenantId = candidate;
   }
   return { tenantId: tenantId || `personal:${identity.sub}` };
 }
@@ -29,7 +36,10 @@ export function request(ctx) {
   return {
     operation: "Query",
     index: "betaFeedbackByTenantTime",
-    query: { expression: "tenantId = :tenantId", expressionValues: util.dynamodb.toMapValues({ ":tenantId": subject.tenantId }) },
+    query: {
+      expression: "tenantId = :tenantId",
+      expressionValues: util.dynamodb.toMapValues({ ":tenantId": subject.tenantId }),
+    },
     limit,
     scanIndexForward: false,
   };

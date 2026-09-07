@@ -13,13 +13,19 @@ function caller(ctx) {
   const groups = identity.groups || [];
   let tenantId = null;
   for (const group of groups) {
-    if (typeof group !== "string" || !group.startsWith("tenant:")) continue;
-    const candidate = group.slice("tenant:".length);
-    if (!candidate) util.error("Invalid tenant membership", "TenantMembershipError");
-    if (tenantId !== null && tenantId !== candidate) {
-      util.error("Multiple tenant memberships require explicit tenant selection", "TenantMembershipError");
+    if (typeof group === "string" && group.startsWith("tenant:")) {
+      const candidate = group.slice("tenant:".length);
+      if (candidate.length === 0) {
+        util.error("Invalid tenant membership", "TenantMembershipError");
+      }
+      if (tenantId !== null && tenantId !== candidate) {
+        util.error(
+          "Multiple tenant memberships require explicit tenant selection",
+          "TenantMembershipError",
+        );
+      }
+      tenantId = candidate;
     }
-    tenantId = candidate;
   }
 
   return { userId: identity.sub, tenantId: tenantId || `personal:${identity.sub}` };
