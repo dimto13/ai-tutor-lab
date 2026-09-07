@@ -16,6 +16,7 @@ import {
 } from "./overlayPlacement";
 
 const HIGHLIGHT_TOOLTIP_FALLBACK_SIZE: OverlaySize = { width: 256, height: 72 };
+const GUIDED_PLATFORM_REGION_SELECTOR = '[data-platform-ui="guided-primary-action"]';
 
 function unionRects(rects: DOMRect[]): OverlayRect | null {
   if (rects.length === 0) return null;
@@ -43,6 +44,13 @@ function unionRects(rects: DOMRect[]): OverlayRect | null {
 
 function toOverlayRect(rect: DOMRect): OverlayRect {
   return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+}
+
+function resolveGuidedPlatformRegions(): OverlayRect[] {
+  return Array.from(document.querySelectorAll<HTMLElement>(GUIDED_PLATFORM_REGION_SELECTOR))
+    .map((element) => element.getBoundingClientRect())
+    .filter((region) => region.width > 0 && region.height > 0)
+    .map(toOverlayRect);
 }
 
 function sameRect(left: OverlayRect | null, right: OverlayRect | null): boolean {
@@ -92,6 +100,7 @@ export function HighlightOverlay({
   const { scenario, progress } = useTraining();
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [transientRegions, setTransientRegions] = useState<OverlayRect[]>([]);
+  const [platformRegions, setPlatformRegions] = useState<OverlayRect[]>([]);
   const [tooltipSize, setTooltipSize] = useState<OverlaySize>(HIGHLIGHT_TOOLTIP_FALLBACK_SIZE);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const conceptFocus = useSyncExternalStore(
@@ -140,6 +149,7 @@ export function HighlightOverlay({
     if (targetResolvers.length === 0 || !runtimeAdapterId) {
       setRect(null);
       setTransientRegions([]);
+      setPlatformRegions([]);
       return;
     }
 
@@ -160,6 +170,11 @@ export function HighlightOverlay({
       );
       setTransientRegions((currentRegions) =>
         sameRects(currentRegions, nextTransientRegions) ? currentRegions : nextTransientRegions,
+      );
+
+      const nextPlatformRegions = resolveGuidedPlatformRegions();
+      setPlatformRegions((currentRegions) =>
+        sameRects(currentRegions, nextPlatformRegions) ? currentRegions : nextPlatformRegions,
       );
 
       const measuredTooltip = tooltipRef.current?.getBoundingClientRect();
@@ -189,9 +204,9 @@ export function HighlightOverlay({
       anchor: rect,
       tooltip: tooltipSize,
       viewport: { width: window.innerWidth, height: window.innerHeight },
-      avoid: transientRegions,
+      avoid: [...transientRegions, ...platformRegions],
     });
-  }, [rect, tooltipSize, transientRegions]);
+  }, [rect, tooltipSize, transientRegions, platformRegions]);
 
   if (!rect) return null;
   const dim = strong ? "bg-black/60" : "bg-black/35";
