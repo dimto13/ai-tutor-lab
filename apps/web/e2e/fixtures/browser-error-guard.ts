@@ -36,7 +36,7 @@ const browserErrorAllowlist: readonly BrowserErrorAllowance[] = [
   {
     type: "console.error",
     pagePath:
-      /^\/training\/(?:artifact-preview-foundation\.guided|html-page-workflow\.(?:explore|guided|challenge))$/,
+      /^\/training\/(?:artifact-preview-foundation\.guided|html-page-workflow\.(?:explore|guided|challenge)|quarterly-presentation-workflow\.guided)$/,
     sourceUrl: /^about:srcdoc#?$/,
     allowMissingSourceUrl: true,
     text: /^Blocked script execution in 'about:srcdoc#?' because the document's frame is sandboxed and the 'allow-scripts' permission is not set\.$/,
