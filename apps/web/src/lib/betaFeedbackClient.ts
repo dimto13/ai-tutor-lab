@@ -5,8 +5,7 @@ import type { FeedbackRecord } from "./feedbackStore";
 const client = generateClient<Schema>();
 
 export type BetaFeedbackSubmissionResult =
-  | { ok: true; duplicate: boolean }
-  | { ok: false; error: string };
+  { ok: true; duplicate: boolean } | { ok: false; error: string };
 
 /**
  * Sends an already-normalized feedback record through the server-authoritative
@@ -38,7 +37,8 @@ export async function submitBetaFeedback(
     if (errors?.length || !data?.accepted) {
       return {
         ok: false,
-        error: errors?.map((entry) => entry.message).join("; ") || "Feedback wurde nicht bestätigt.",
+        error:
+          errors?.map((entry) => entry.message).join("; ") || "Feedback wurde nicht bestätigt.",
       };
     }
 
