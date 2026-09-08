@@ -33,7 +33,10 @@ test("post-confirmation withholds tenant membership before any Cognito group mut
   const groupMutation = source.indexOf("new AdminAddUserToGroupCommand(");
 
   assert.ok(allowlistGate >= 0, "server-side allowlist gate must exist");
-  assert.ok(groupMutation > allowlistGate, "tenant group mutation must occur only after allowlist gate");
+  assert.ok(
+    groupMutation > allowlistGate,
+    "tenant group mutation must occur only after allowlist gate",
+  );
   assert.match(source, /triggerSource !== "PostConfirmation_ConfirmSignUp"/);
   assert.doesNotMatch(source, /localStorage|clientParameter|queryString/i);
 });
