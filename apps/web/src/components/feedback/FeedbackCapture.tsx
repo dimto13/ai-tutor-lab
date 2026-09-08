@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Camera, Download, MessageSquareWarning, Trash2, X } from "lucide-react";
 import { captureTrainingSurfaceScreenshot } from "@/lib/feedbackScreenshot";
+import { persistBetaFeedback, retryBetaFeedback } from "@/lib/betaFeedbackSubmission";
 import {
   acknowledgeFeedbackNotice,
   downloadFeedbackExport,
   hasAcknowledgedFeedbackNotice,
   loadFeedbackRecords,
-  saveFeedbackRecord,
   type FeedbackKind,
+  type FeedbackRecord,
   type FeedbackScreenshotAttachment,
   type FeedbackSource,
   type FeedbackViewportClass,
@@ -51,6 +52,8 @@ export function FeedbackCapture({
   const [kind, setKind] = useState<FeedbackKind>(flow === "problem" ? "problem" : "general");
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [pendingRecord, setPendingRecord] = useState<FeedbackRecord | null>(null);
   const [recordCount, setRecordCount] = useState(0);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const [screenshotConsentVisible, setScreenshotConsentVisible] = useState(false);
@@ -95,6 +98,8 @@ export function FeedbackCapture({
     setKind(flow === "problem" ? "problem" : "general");
     setSaved(false);
     setSaveError(null);
+    setSubmitting(false);
+    setPendingRecord(null);
     setScreenshotConsentVisible(false);
     setScreenshot(null);
     setScreenshotBusy(false);
@@ -113,26 +118,41 @@ export function FeedbackCapture({
     resetTransientState();
   };
 
-  const submit = () => {
-    if (!text.trim()) return;
+  const submit = async () => {
+    const normalizedText = text.trim();
+    if (!normalizedText || submitting) return;
     setSaveError(null);
+    setSaved(false);
+    setSubmitting(true);
+
     try {
-      saveFeedbackRecord(
-        source,
-        text,
-        {
-          ...context,
-          runtime: { ...context.runtime, viewportClass: viewportClass() },
-        },
-        { kind, screenshot },
-      );
+      const result =
+        pendingRecord && pendingRecord.text === normalizedText && pendingRecord.kind === kind
+          ? await retryBetaFeedback(pendingRecord)
+          : await persistBetaFeedback(
+              source,
+              normalizedText,
+              {
+                ...context,
+                runtime: { ...context.runtime, viewportClass: viewportClass() },
+              },
+              { kind, screenshot },
+            );
+
+      setRecordCount(loadFeedbackRecords().length);
+      if (!result.ok) {
+        setPendingRecord(result.record);
+        setSaveError(result.error);
+        return;
+      }
+
       acknowledgeFeedbackNotice();
       setNoticeAcknowledged(true);
-      setRecordCount(loadFeedbackRecords().length);
+      setPendingRecord(null);
       setText("");
       setSaved(true);
-    } catch {
-      setSaveError("Feedback konnte nicht lokal gespeichert werden. Es wurde nichts versendet.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -206,9 +226,11 @@ export function FeedbackCapture({
 
           {!noticeAcknowledged ? (
             <div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-[12px] leading-relaxed text-foreground">
-              Dein Feedback wird zur Verbesserung des Produkts ausgewertet und vorerst nur lokal in
-              diesem Browser gespeichert. Gib bitte keine personenbezogenen, vertraulichen oder
-              geheimen Inhalte ein. Es findet noch kein automatischer Versand statt.
+              Dein Feedbacktext und der angezeigte strukturierte Kontext werden an die geschützte
+              Beta-Inbox gesendet. Nutzer- und Mandantenzuordnung erfolgen serverseitig. Gib bitte
+              keine personenbezogenen, vertraulichen oder geheimen Inhalte ein. Ein optionaler
+              Screenshot bleibt ausschließlich lokal in deinem Browser und wird nicht an die
+              Beta-Inbox übertragen.
             </div>
           ) : null}
 
@@ -226,7 +248,11 @@ export function FeedbackCapture({
                       name="feedback-kind"
                       value={option.value}
                       checked={kind === option.value}
-                      onChange={() => setKind(option.value)}
+                      onChange={() => {
+                        setKind(option.value);
+                        setPendingRecord(null);
+                        setSaved(false);
+                      }}
                       className="mt-0.5 accent-[var(--platform-accent)]"
                     />
                     <span>{option.label}</span>
@@ -244,6 +270,7 @@ export function FeedbackCapture({
               value={text}
               onChange={(event) => {
                 setText(event.target.value);
+                setPendingRecord(null);
                 setSaved(false);
               }}
               rows={4}
@@ -274,7 +301,8 @@ export function FeedbackCapture({
                 <p className="mt-0.5 max-w-md text-[11px] leading-relaxed text-muted-foreground">
                   Ohne deine ausdrückliche Aktion wird nichts aufgenommen. Erfasst wird nur die
                   sichtbare Trainingsfläche der Plattform mit Simulator und Guide — nie dein Desktop
-                  oder andere Fenster. Texteingaben werden in der Aufnahme ausgeblendet.
+                  oder andere Fenster. Texteingaben werden in der Aufnahme ausgeblendet. Der
+                  Screenshot bleibt lokal und wird nicht an die Beta-Inbox gesendet.
                 </p>
               </div>
               {!screenshot && !screenshotConsentVisible ? (
@@ -323,8 +351,8 @@ export function FeedbackCapture({
                 />
                 <figcaption className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
                   <span>
-                    Vorschau · {screenshot.width} × {screenshot.height}px · wird zusammen mit diesem
-                    Feedback lokal gespeichert
+                    Vorschau · {screenshot.width} × {screenshot.height}px · nur lokal im
+                    Feedback-Export, nicht in der Beta-Inbox
                   </span>
                   <button
                     type="button"
@@ -346,7 +374,7 @@ export function FeedbackCapture({
 
           {saved ? (
             <p role="status" className="mt-3 text-[12px] text-success">
-              Feedback lokal gespeichert. Dein Trainingsfortschritt bleibt unverändert.
+              Feedback an die Beta-Inbox gesendet. Dein Trainingsfortschritt bleibt unverändert.
             </p>
           ) : null}
           {saveError ? (
@@ -358,16 +386,21 @@ export function FeedbackCapture({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={submit}
-              disabled={!text.trim()}
+              onClick={() => void submit()}
+              disabled={!text.trim() || submitting}
               className="rounded-md bg-accent px-3 py-2 text-xs font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {problemFlow ? "Problemmeldung speichern" : "Feedback speichern"}
+              {submitting
+                ? "Wird gesendet …"
+                : problemFlow
+                  ? "Problemmeldung senden"
+                  : "Feedback senden"}
             </button>
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="rounded-md border border-border px-3 py-2 text-xs text-foreground hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                disabled={submitting}
+                className="rounded-md border border-border px-3 py-2 text-xs text-foreground hover:border-ring disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Abbrechen
               </button>

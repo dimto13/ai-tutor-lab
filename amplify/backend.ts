@@ -38,10 +38,24 @@ const projectionReceiptCfnTable = requiredResource(
   amplifyDynamoDbTables["TrainingTelemetryProjectionReceipt"],
   "TrainingTelemetryProjectionReceipt CfnTable",
 );
+const betaFeedbackCfnTable = requiredResource(
+  amplifyDynamoDbTables["BetaFeedback"],
+  "BetaFeedback CfnTable",
+);
+const betaFeedbackAdmissionCfnTable = requiredResource(
+  amplifyDynamoDbTables["BetaFeedbackAdmission"],
+  "BetaFeedbackAdmission CfnTable",
+);
 rawTelemetryCfnTable.streamSpecification = {
   streamViewType: StreamViewType.NEW_IMAGE,
 };
-for (const table of [rawTelemetryCfnTable, deletionPointerCfnTable, projectionReceiptCfnTable]) {
+for (const table of [
+  rawTelemetryCfnTable,
+  deletionPointerCfnTable,
+  projectionReceiptCfnTable,
+  betaFeedbackCfnTable,
+  betaFeedbackAdmissionCfnTable,
+]) {
   table.timeToLiveAttribute = {
     attributeName: "expiresAtEpochSeconds",
     enabled: true,

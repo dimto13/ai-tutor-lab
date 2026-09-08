@@ -17,6 +17,14 @@ async function waitForTrainingReady(page: Page): Promise<void> {
   );
 }
 
+async function expectDeliveryResult(dialog: ReturnType<Page["getByRole"]>): Promise<void> {
+  await expect(
+    dialog.locator('[role="status"], [role="alert"]').filter({
+      hasText: /Feedback (?:an die Beta-Inbox gesendet|ist lokal gesichert)/,
+    }),
+  ).toBeVisible();
+}
+
 test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kontext", async ({
   page,
   accessibility,
@@ -55,6 +63,7 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   await expect(dialog).toContainText("vscode-basics.guided");
   await expect(dialog).toContainText("guided");
   await expect(dialog).toContainText("vscode-simulator");
+  await expect(dialog).toContainText("Nutzer- und Mandantenzuordnung erfolgen serverseitig");
   await expect(
     dialog.getByRole("img", { name: "Vorschau des aufgenommenen Trainings-Screenshots" }),
   ).toHaveCount(0);
@@ -62,10 +71,8 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   await dialog
     .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
     .fill("Beim aktuellen Schritt ist nicht klar, warum der Workspace geöffnet werden soll.");
-  await dialog.getByRole("button", { name: "Problemmeldung speichern" }).click();
-  await expect(dialog.getByRole("status")).toContainText(
-    "Feedback lokal gespeichert. Dein Trainingsfortschritt bleibt unverändert.",
-  );
+  await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
+  await expectDeliveryResult(dialog);
 
   const records = (await readFeedbackRecords(page)) as Array<{
     source?: string;
@@ -128,7 +135,7 @@ test("Problemmeldung lässt sich abbrechen, ohne Feedback oder Training-State zu
   await expect(stepHeading).toHaveText(stepBeforeFeedback!);
 });
 
-test("Screenshot entsteht erst nach Consent, wird als Vorschau gezeigt und kann verworfen werden", async ({
+test("Screenshot entsteht erst nach Consent, bleibt lokal und kann verworfen werden", async ({
   page,
 }) => {
   await page.goto("/training/vscode-basics.guided");
@@ -152,10 +159,11 @@ test("Screenshot entsteht erst nach Consent, wird als Vorschau gezeigt und kann 
   await dialog.getByRole("button", { name: "Screenshot jetzt aufnehmen" }).click();
   await expect(preview).toBeVisible();
   await expect(preview).toHaveAttribute("src", /^data:image\/svg\+xml;base64,/);
+  await expect(dialog).toContainText("nicht in der Beta-Inbox");
 
   await dialog.getByRole("button", { name: "Screenshot verwerfen" }).click();
   await expect(preview).toHaveCount(0);
-  await dialog.getByRole("button", { name: "Problemmeldung speichern" }).click();
+  await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
 
   const records = (await readFeedbackRecords(page)) as Array<{ screenshot?: unknown }>;
   expect(records).toHaveLength(1);
@@ -200,7 +208,8 @@ test("Feedback bleibt lokal exportierbar und nutzt das bestehende Feedback-Forma
   await dialog
     .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
     .fill("Die Erklärung zum aktuellen Schritt könnte ein kurzes Beispiel enthalten.");
-  await dialog.getByRole("button", { name: "Problemmeldung speichern" }).click();
+  await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
+  await expectDeliveryResult(dialog);
 
   const downloadPromise = page.waitForEvent("download");
   await dialog.getByRole("button", { name: "JSON exportieren (1)" }).click();
@@ -259,7 +268,8 @@ test("Abschlussansicht bietet optionales Feedback ohne den Abschlusszustand zu v
   await dialog
     .getByPlaceholder("Was war unklar, hilfreich oder sollte verbessert werden?")
     .fill("Die Challenge war verständlich.");
-  await dialog.getByRole("button", { name: "Feedback speichern" }).click();
+  await dialog.getByRole("button", { name: "Feedback senden" }).click();
+  await expectDeliveryResult(dialog);
   await dialog.getByRole("button", { name: "Feedback schließen" }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
