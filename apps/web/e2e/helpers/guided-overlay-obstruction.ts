@@ -48,6 +48,10 @@ export function platformOverlayChrome(page: Page): readonly PlatformOverlayChrom
       locator: page.getByTestId("highlight-tooltip"),
     },
     {
+      name: "Guided-Instruktionsfläche",
+      locator: page.getByTestId("guided-orientation"),
+    },
+    {
       name: "Tutor-Attention-Tooltip",
       locator: page.getByTestId("tutor-attention-tooltip"),
     },
