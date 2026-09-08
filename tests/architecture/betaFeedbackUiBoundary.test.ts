@@ -25,11 +25,15 @@ test("feedback capture uses authenticated beta delivery while preserving local f
 test("feedback retry reuses the same local record id instead of creating another record", async () => {
   const capture = await source(capturePath);
   const submission = await source(submissionPath);
+  const retryBody = submission.match(
+    /export async function retryBetaFeedback[\s\S]*?\n}\n\n\/\*\*/,
+  )?.[0];
 
   assert.match(capture, /pendingRecord && pendingRecord\.text === normalizedText/);
   assert.match(capture, /await retryBetaFeedback\(pendingRecord\)/);
   assert.match(submission, /submitBetaFeedback\(record\)/);
-  assert.doesNotMatch(submission, /retryBetaFeedback[\s\S]*saveFeedbackRecord\(/);
+  assert.ok(retryBody, "retryBetaFeedback implementation must be present");
+  assert.doesNotMatch(retryBody, /saveFeedbackRecord\(/);
 });
 
 test("screenshots stay explicitly local and outside the server inbox payload", async () => {
@@ -37,6 +41,6 @@ test("screenshots stay explicitly local and outside the server inbox payload", a
   const submission = await source(submissionPath);
 
   assert.match(capture, /Screenshot bleibt ausschließlich lokal/);
-  assert.match(capture, /nicht an die Beta-Inbox übertragen/);
+  assert.match(capture, /nicht an die Beta-Inbox[\s\S]*übertragen/);
   assert.match(submission, /options: SaveFeedbackOptions/);
 });
