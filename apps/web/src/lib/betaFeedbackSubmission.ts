@@ -1,4 +1,4 @@
-import { submitBetaFeedback } from "./betaFeedbackClient";
+import { submitBetaFeedback } from "../adapters/betaFeedbackClient";
 import {
   saveFeedbackRecord,
   type FeedbackContextSnapshot,
