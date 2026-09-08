@@ -79,7 +79,10 @@ test("feedback retention reuses the server-side tenant privacy policy and Dynamo
   const schema = await source(schemaPath);
   const backend = await source(backendPath);
 
-  assert.match(schema, /dataSource: a\.ref\("TenantTelemetryPolicy"\)[\s\S]*telemetry-load-policy-for-write\.js/);
+  assert.match(
+    schema,
+    /dataSource: a\.ref\("TenantTelemetryPolicy"\)[\s\S]*telemetry-load-policy-for-write\.js/,
+  );
   assert.match(schema, /expiresAtEpochSeconds: a\.float\(\)\.required\(\)/);
   assert.match(ingest, /ctx\.stash\.telemetryRawEventRetentionDays/);
   assert.match(ingest, /FeedbackRetentionPolicyError/);
