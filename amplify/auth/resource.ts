@@ -1,5 +1,6 @@
 import { defineAuth, secret } from "@aws-amplify/backend";
 import { tenantPostConfirmation } from "./post-confirmation/resource";
+import { betaPreSignUp } from "./pre-sign-up/resource";
 
 interface OidcConfiguration {
   providerName: string;
@@ -46,11 +47,13 @@ const oidc = readOidcConfiguration();
  * consumes the cloud-neutral AuthService contract and reaches Cognito only via
  * the dedicated AWS auth adapter.
  *
- * Tenant membership is server-managed through `tenant:<tenantId>` Cognito
- * groups. `tenant:default` is the bootstrap tenant for self-service email
- * registrations and is assigned only by the backend post-confirmation trigger.
- * Application roles use the separate finite `role:<roleId>` group namespace and
- * are normalized to cloud-neutral role IDs at the auth boundary.
+ * During the closed beta every new Cognito identity is admitted by the backend
+ * pre-sign-up trigger before account creation. Tenant membership is then
+ * server-managed through `tenant:<tenantId>` Cognito groups. `tenant:default`
+ * is the bootstrap tenant for admitted email registrations and is assigned only
+ * by the backend post-confirmation trigger. Application roles use the separate
+ * finite `role:<roleId>` group namespace and are normalized to cloud-neutral
+ * role IDs at the auth boundary.
  */
 export const auth = defineAuth({
   loginWith: {
@@ -74,6 +77,7 @@ export const auth = defineAuth({
   },
   groups: ["tenant:default", "role:learner", "role:author", "role:trainer", "role:tenant_admin"],
   triggers: {
+    preSignUp: betaPreSignUp,
     postConfirmation: tenantPostConfirmation,
   },
   access: (allow) => [allow.resource(tenantPostConfirmation).to(["addUserToGroup"])],

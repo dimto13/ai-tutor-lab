@@ -6,5 +6,8 @@ export const tenantPostConfirmation = defineFunction({
   entry: "./handler.js",
   environment: {
     BOOTSTRAP_TENANT_GROUP: "tenant:default",
+    // Closed-beta owner process: maintain the comma-separated normalized tester emails in the
+    // deployment environment. Empty/missing configuration intentionally admits nobody new.
+    BETA_ALLOWED_EMAILS: process.env["BETA_ALLOWED_EMAILS"] ?? "",
   },
 });

@@ -1,14 +1,27 @@
+import { isBetaAllowed } from "../beta-access.js";
+
 const cognitoIdentityProviderModule = "@aws-sdk/client-cognito-identity-provider";
 
 export const handler = async (event) => {
-  // Nur die Erstbestaetigung einer Self-Service-Registrierung provisioniert den Bootstrap-Tenant.
-  // Cognito ruft denselben Trigger auch nach bestaetigtem Passwort-Reset auf; dort ist die
-  // Mitgliedschaft bereits entschieden und ein erneuter Gruppenaufruf waere wirkungslos.
+  // Only the first confirmation of a self-service registration may provision the bootstrap tenant.
+  // Existing confirmed accounts keep their current group membership; password-reset confirmations
+  // therefore remain migration-safe and do not re-evaluate beta eligibility.
   if (event.triggerSource !== "PostConfirmation_ConfirmSignUp") return event;
 
-  // Lambda's managed Node.js runtime includes AWS SDK v3. Keep this import
-  // runtime-resolved so Amplify can synthesize the function without requiring
-  // an undeclared root package dependency.
+  const email = event.request?.userAttributes?.email;
+  if (!isBetaAllowed(email, process.env.BETA_ALLOWED_EMAILS)) {
+    // The pre-sign-up trigger is the primary closed-beta gate. Re-check here as defense in depth in
+    // case the allowlist changes between account creation and confirmation. Never log the email or
+    // allowlist itself.
+    console.warn("beta access withheld for confirmed identity", {
+      userPoolId: event.userPoolId,
+      subject: event.request?.userAttributes?.sub ?? null,
+    });
+    return event;
+  }
+
+  // Lambda's managed Node.js runtime includes AWS SDK v3. Keep this import runtime-resolved so
+  // Amplify can synthesize the function without requiring an undeclared root package dependency.
   const { AdminAddUserToGroupCommand, CognitoIdentityProviderClient } = await import(
     cognitoIdentityProviderModule
   );
@@ -23,11 +36,8 @@ export const handler = async (event) => {
       }),
     );
   } catch (error) {
-    // Der Bestaetigungsschritt selbst wird nicht abgebrochen: der Nutzer ist in Cognito bereits
-    // bestaetigt, ein geworfener Trigger erzeugt nur einen undurchsichtigen Client-Fehler.
-    // Fail-closed bleibt erhalten, weil ohne Tenant-Gruppe jeder Eigendatenpfad serverseitig
-    // gesperrt bleibt und die UI den gemappten fachlichen Zustand zeigt. Fuer die Nachverfolgung
-    // wird ausschliesslich das pseudonyme Subject protokolliert, keine Mailadresse.
+    // Do not turn an already-completed Cognito confirmation into an opaque client failure.
+    // Without the tenant group every tenant data path still fails closed.
     console.error("tenant bootstrap provisioning failed", {
       userPoolId: event.userPoolId,
       subject: event.request?.userAttributes?.sub ?? null,
