@@ -23,6 +23,7 @@ export const betaFeedbackSchema = {
       commit: a.string().required(),
       clientTimestamp: a.string().required(),
       receivedAt: a.float().required(),
+      expiresAtEpochSeconds: a.float().required(),
     })
     .secondaryIndexes((index) => [
       index("tenantId").sortKeys(["receivedAt"]).name("betaFeedbackByTenantTime"),
@@ -70,6 +71,10 @@ export const betaFeedbackSchema = {
     .returns(a.ref("BetaFeedbackIngestResult"))
     .authorization((allow) => [allow.authenticated()])
     .handler([
+      a.handler.custom({
+        dataSource: a.ref("TenantTelemetryPolicy"),
+        entry: "./telemetry-load-policy-for-write.js",
+      }),
       a.handler.custom({
         dataSource: a.ref("BetaFeedbackAdmission"),
         entry: "./admit-beta-feedback.js",
