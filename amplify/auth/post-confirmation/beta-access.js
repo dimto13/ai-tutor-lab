@@ -3,12 +3,7 @@ export function normalizeBetaEmail(value) {
 }
 
 export function parseBetaAllowlist(value) {
-  return new Set(
-    (value ?? "")
-      .split(",")
-      .map(normalizeBetaEmail)
-      .filter(Boolean),
-  );
+  return new Set((value ?? "").split(",").map(normalizeBetaEmail).filter(Boolean));
 }
 
 export function isBetaAllowed(email, allowlistValue) {
