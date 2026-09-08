@@ -2,6 +2,7 @@ import { util } from "@aws-appsync/utils";
 
 const MAX_TEXT_LENGTH = 4000;
 const MAX_CONTEXT_STRING = 256;
+const SECONDS_PER_DAY = 86_400;
 
 // APPSYNC_JS resolvers cannot use regular expressions, so every secret marker below is
 // matched by bounded string scanning instead of a RegExp.
@@ -98,6 +99,14 @@ function boundedString(value, name, required = true) {
 function allowed(value, values, name) {
   if (!values.includes(value)) util.error(`Unsupported ${name}`, "FeedbackValidationError");
   return value;
+}
+
+function feedbackRetentionDays(ctx) {
+  const days = ctx.stash.telemetryRawEventRetentionDays;
+  if (typeof days !== "number" || days < 1 || days % 1 !== 0) {
+    util.error("Feedback retention policy is unavailable", "FeedbackRetentionPolicyError");
+  }
+  return days;
 }
 
 // APPSYNC_JS supports neither index-based `for` statements nor `while`, so bounded scans
@@ -220,6 +229,7 @@ export function request(ctx) {
     util.base64Encode(clientId),
   ].join(".");
   const now = util.time.nowEpochMilliSeconds();
+  const retentionDays = feedbackRetentionDays(ctx);
   const item = {
     id: recordId,
     clientId,
@@ -241,6 +251,7 @@ export function request(ctx) {
     commit: boundedString(context.commit, "commit"),
     clientTimestamp: boundedString(context.timestamp, "timestamp"),
     receivedAt: now,
+    expiresAtEpochSeconds: Math.floor(now / 1000) + retentionDays * SECONDS_PER_DAY,
   };
 
   // Persist only the explicitly allowlisted structured context above. In particular,
