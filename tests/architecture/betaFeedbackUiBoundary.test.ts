@@ -41,6 +41,6 @@ test("screenshots stay explicitly local and outside the server inbox payload", a
   const submission = await source(submissionPath);
 
   assert.match(capture, /Screenshot bleibt ausschließlich lokal/);
-  assert.match(capture, /nicht an die Beta-Inbox[\s\S]*übertragen/);
+  assert.match(capture, /nicht an die\s+Beta-Inbox[\s\S]*übertragen/);
   assert.match(submission, /options: SaveFeedbackOptions/);
 });
