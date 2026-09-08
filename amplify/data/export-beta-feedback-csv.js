@@ -1,9 +1,12 @@
 import { util } from "@aws-appsync/utils";
 
+const FORMULA_PREFIXES = ["=", "+", "-", "@", "\t"];
+
 function csvCell(value) {
   if (value === null || value === undefined) return "";
   const text = String(value).replaceAll("\r", " ").replaceAll("\n", " ");
-  return `"${text.replaceAll('"', '""')}"`;
+  const safeText = FORMULA_PREFIXES.includes(text.charAt(0)) ? `'${text}` : text;
+  return `"${safeText.replaceAll('"', '""')}"`;
 }
 
 export function request() {
