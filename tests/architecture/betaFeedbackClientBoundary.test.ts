@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const clientPath = "apps/web/src/lib/betaFeedbackClient.ts";
+const clientPath = "apps/web/src/adapters/betaFeedbackClient.ts";
 
 async function source(): Promise<string> {
   return readFile(clientPath, "utf8");
