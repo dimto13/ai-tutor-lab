@@ -5,6 +5,8 @@ import test from "node:test";
 const ingestPath = "amplify/data/save-beta-feedback.js";
 const admissionPath = "amplify/data/admit-beta-feedback.js";
 const inboxPath = "amplify/data/list-beta-feedback.js";
+const schemaPath = "amplify/data/beta-feedback-schema.ts";
+const backendPath = "amplify/backend.ts";
 
 async function source(path: string): Promise<string> {
   return readFile(path, "utf8");
@@ -70,4 +72,19 @@ test("feedback inbox is admin-only and tenant scoped fail-closed", async () => {
   assert.match(code, /tenantId = :tenantId/);
   assert.match(code, /item\.tenantId === tenantId/);
   assert.match(code, /limit < 1 \|\| limit > 250/);
+});
+
+test("feedback retention reuses the server-side tenant privacy policy and DynamoDB TTL", async () => {
+  const ingest = await source(ingestPath);
+  const schema = await source(schemaPath);
+  const backend = await source(backendPath);
+
+  assert.match(schema, /dataSource: a\.ref\("TenantTelemetryPolicy"\)[\s\S]*telemetry-load-policy-for-write\.js/);
+  assert.match(schema, /expiresAtEpochSeconds: a\.float\(\)\.required\(\)/);
+  assert.match(ingest, /ctx\.stash\.telemetryRawEventRetentionDays/);
+  assert.match(ingest, /FeedbackRetentionPolicyError/);
+  assert.match(ingest, /expiresAtEpochSeconds:/);
+  assert.match(backend, /amplifyDynamoDbTables\["BetaFeedback"\]/);
+  assert.match(backend, /amplifyDynamoDbTables\["BetaFeedbackAdmission"\]/);
+  assert.match(backend, /attributeName: "expiresAtEpochSeconds"/);
 });
