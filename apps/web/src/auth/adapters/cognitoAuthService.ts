@@ -6,6 +6,10 @@ import {
   type CognitoAuthClient,
 } from "./awsCognitoClient.ts";
 
+const BETA_ACCESS_DENIED_MARKER = "BETA_ACCESS_DENIED";
+const BETA_ACCESS_DENIED_MESSAGE =
+  "Diese geschlossene Beta ist aktuell nur für eingeladene Tester verfügbar.";
+
 function toAuthSession(
   snapshot: Awaited<ReturnType<CognitoAuthClient["getSession"]>>,
 ): AuthSession | null {
@@ -22,6 +26,11 @@ function toAuthSession(
     accessToken: snapshot.accessToken,
     expiresAt: snapshot.expiresAt,
   };
+}
+
+function betaAccessError(error: unknown): Error | null {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes(BETA_ACCESS_DENIED_MARKER) ? new Error(BETA_ACCESS_DENIED_MESSAGE) : null;
 }
 
 export function createCognitoAuthService(
@@ -65,7 +74,14 @@ export function createCognitoAuthService(
     },
 
     async signUp(request): Promise<SignUpResult> {
-      const outcome = await client.signUpWithPassword(request.email, request.password);
+      let outcome: Awaited<ReturnType<CognitoAuthClient["signUpWithPassword"]>>;
+      try {
+        outcome = await client.signUpWithPassword(request.email, request.password);
+      } catch (error) {
+        const mapped = betaAccessError(error);
+        if (mapped) throw mapped;
+        throw error;
+      }
 
       if (outcome.status === "requires_action") {
         throw new Error("Registration requires an additional verification step.");
