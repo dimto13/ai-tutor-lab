@@ -128,7 +128,6 @@ const scenario: Scenario = {
     },
   ],
 };
-
 const key: TrainingStateKey = {
   subject: { userId: "alice", tenantId: "tenant-a" },
   scenarioId: scenario.id,
@@ -142,22 +141,23 @@ function session(lastAction: string): TrainingSession {
   );
 }
 
+function completedSession(lastAction: string): TrainingSession {
+  return { ...session(lastAction), finishedAt: 200 };
+}
+
 function fixture() {
   const remoteStorage = new MemoryStorage();
   const remoteDelegate = new LocalStorageTrainingStateRepository(remoteStorage);
   const remote = new SwitchableTrainingStateRepository(remoteDelegate);
-  const offlineStorage = new MemoryStorage();
-  const offlineStore = new LocalStorageOfflineTrainingStateStore(offlineStorage);
+  const offlineStore = new LocalStorageOfflineTrainingStateStore(new MemoryStorage());
   const repository = new OfflineBufferedTrainingStateRepository(remote, offlineStore);
   return { remote, remoteDelegate, offlineStore, repository };
 }
 
 test("coalesces multiple offline session writes against one remote CAS revision", async () => {
   const { remote, remoteDelegate, offlineStore, repository } = fixture();
-
   const first = await repository.saveSession(key, session("online"), { expectedRevision: null });
   assert.equal(first.revision, 1);
-
   remote.failureMode = "unavailable";
   const offlineOne = await repository.saveSession(key, session("offline-one"), {
     expectedRevision: 1,
@@ -168,12 +168,10 @@ test("coalesces multiple offline session writes against one remote CAS revision"
   assert.equal(offlineOne.revision, 1);
   assert.equal(offlineTwo.revision, 1);
   assert.equal((await remoteDelegate.loadSession(key))?.value.lastAction, "online");
-
   const afterRestart = new OfflineBufferedTrainingStateRepository(remote, offlineStore);
   const restoredOffline = await afterRestart.loadSession(key);
   assert.equal(restoredOffline?.revision, 1);
   assert.equal(restoredOffline?.value.lastAction, "offline-two");
-
   remote.failureMode = "available";
   const synced = await afterRestart.synchronizePendingSession(key);
   assert.equal(synced.status, "synchronized");
@@ -183,12 +181,31 @@ test("coalesces multiple offline session writes against one remote CAS revision"
   assert.equal(remote.sessionSaveCalls, 2);
 });
 
+test("buffers an offline completed session but does not report it as persisted", async () => {
+  const { remote, remoteDelegate, offlineStore, repository } = fixture();
+  const first = await repository.saveSession(key, session("online"), { expectedRevision: null });
+  assert.equal(first.revision, 1);
+  remote.failureMode = "unavailable";
+  await assert.rejects(
+    repository.saveSession(key, completedSession("completed-offline"), { expectedRevision: 1 }),
+    TrainingStateUnavailableError,
+  );
+  const buffered = offlineStore.loadSession(key);
+  assert.equal(buffered?.pending, true);
+  assert.equal(buffered?.value.finishedAt, 200);
+  assert.equal((await remoteDelegate.loadSession(key))?.value.finishedAt, null);
+  remote.failureMode = "available";
+  const synced = await repository.synchronizePendingSession(key);
+  assert.equal(synced.status, "synchronized");
+  assert.equal(synced.record?.revision, 2);
+  assert.equal(synced.record?.value.finishedAt, 200);
+  assert.equal(remote.sessionSaveCalls, 2);
+});
+
 test("falls back to the last server-backed cache during a read-only outage", async () => {
   const { remote, repository } = fixture();
-
   await repository.saveSession(key, session("server-cache"), { expectedRevision: null });
   remote.failureMode = "unavailable";
-
   const cached = await repository.loadSession(key);
   assert.equal(cached?.revision, 1);
   assert.equal(cached?.value.lastAction, "server-cache");
@@ -196,19 +213,15 @@ test("falls back to the last server-backed cache during a read-only outage", asy
 
 test("reports a reconnect conflict and replaces stale offline session state with server authority", async () => {
   const { remote, remoteDelegate, repository } = fixture();
-
   await repository.saveSession(key, session("revision-one"), { expectedRevision: null });
   remote.failureMode = "unavailable";
   await repository.saveSession(key, session("offline-candidate"), { expectedRevision: 1 });
-
   remote.failureMode = "available";
   await remoteDelegate.saveSession(key, session("other-device"), { expectedRevision: 1 });
-
   const result = await repository.synchronizePendingSession(key);
   assert.equal(result.status, "conflict");
   assert.equal(result.record?.revision, 2);
   assert.equal(result.record?.value.lastAction, "other-device");
-
   const authoritative = await repository.loadSession(key);
   assert.equal(authoritative?.revision, 2);
   assert.equal(authoritative?.value.lastAction, "other-device");
@@ -216,14 +229,11 @@ test("reports a reconnect conflict and replaces stale offline session state with
 
 test("still rejects a stale direct write after another device advanced the server revision", async () => {
   const { remote, remoteDelegate, repository } = fixture();
-
   await repository.saveSession(key, session("revision-one"), { expectedRevision: null });
   remote.failureMode = "unavailable";
   await repository.saveSession(key, session("offline-candidate"), { expectedRevision: 1 });
-
   remote.failureMode = "available";
   await remoteDelegate.saveSession(key, session("other-device"), { expectedRevision: 1 });
-
   await assert.rejects(
     repository.saveSession(key, session("offline-newest"), { expectedRevision: 1 }),
     (error: unknown) => {
@@ -238,7 +248,6 @@ test("still rejects a stale direct write after another device advanced the serve
 test("buffers and explicitly synchronizes an offline runtime deletion", async () => {
   const { remote, remoteDelegate, offlineStore, repository } = fixture();
   const runtimeId = "vscode-sim";
-
   const first = await repository.saveRuntimeSnapshot(
     key,
     runtimeId,
@@ -246,14 +255,12 @@ test("buffers and explicitly synchronizes an offline runtime deletion", async ()
     { expectedRevision: null },
   );
   assert.equal(first.revision, 1);
-
   remote.failureMode = "unavailable";
   await repository.deleteRuntimeSnapshot(key, runtimeId, { expectedRevision: 1 });
   assert.equal(await repository.loadRuntimeSnapshot(key, runtimeId), null);
   assert.deepEqual((await remoteDelegate.loadRuntimeSnapshot(key, runtimeId))?.value, {
     branch: "feature/online",
   });
-
   const afterRestart = new OfflineBufferedTrainingStateRepository(remote, offlineStore);
   remote.failureMode = "available";
   const synced = await afterRestart.synchronizePendingRuntimeSnapshot(key, runtimeId);
@@ -266,7 +273,6 @@ test("buffers and explicitly synchronizes an offline runtime deletion", async ()
 test("does not hide authorization or other non-transport failures behind the offline buffer", async () => {
   const { remote, offlineStore, repository } = fixture();
   remote.failureMode = "generic";
-
   await assert.rejects(
     repository.saveSession(key, session("must-not-buffer"), { expectedRevision: null }),
     /Not authorized/,
@@ -281,11 +287,9 @@ test("does not turn a successful remote write into a failure when only the cache
     remote,
     new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()),
   );
-
   const saved = await repository.saveSession(key, session("remote-success"), {
     expectedRevision: null,
   });
-
   assert.equal(saved.revision, 1);
   assert.equal(saved.value.lastAction, "remote-success");
   assert.equal((await remoteDelegate.loadSession(key))?.value.lastAction, "remote-success");
@@ -299,7 +303,6 @@ test("fails loudly when browser quota prevents durable offline buffering", async
     remote,
     new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()),
   );
-
   await assert.rejects(
     repository.saveSession(key, session("cannot-buffer"), { expectedRevision: null }),
     (error: unknown) => {

@@ -274,6 +274,7 @@ export class OfflineBufferedTrainingStateRepository
       if (error instanceof TrainingStateUnavailableError) {
         const buffered = pendingSession(key, session, remoteRevision, options);
         this.store.saveSession(buffered);
+        if (session.finishedAt !== null) throw error;
         return sessionRecord(buffered);
       }
       if (error instanceof TrainingStateConflictError) {
