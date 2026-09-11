@@ -13,8 +13,7 @@ const repoRoot = resolve(__dirname, "..");
 const CLOUDTRAIL_EVENT_HISTORY_DAYS = 90;
 const DYNAMODB_SCAN_NOTICE =
   "DynamoDB-Daten werden per vollständigem Scan gelesen. Das ist ausschließlich eine manuelle Owner/Admin-Operation für den kleinen Beta-Bestand, verbraucht Read Capacity und skaliert mit der Tabellengröße. Nicht automatisch schedulen und nicht aus einem Produkt-Request-Pfad aufrufen.";
-const CLOUDTRAIL_NOTICE =
-  `CloudTrail lookup-events liefert nur die Event-History innerhalb des AWS-Zeitfensters (typischerweise bis zu ${CLOUDTRAIL_EVENT_HISTORY_DAYS} Tage) und unterliegt API-Rate-Limits. Die Login-Liste ist deshalb keine unbegrenzte oder garantiert vollständige Historie.`;
+const CLOUDTRAIL_NOTICE = `CloudTrail lookup-events liefert nur die Event-History innerhalb des AWS-Zeitfensters (typischerweise bis zu ${CLOUDTRAIL_EVENT_HISTORY_DAYS} Tage) und unterliegt API-Rate-Limits. Die Login-Liste ist deshalb keine unbegrenzte oder garantiert vollständige Historie.`;
 
 const options = {
   output: { type: "string", short: "o", default: "platform-monitoring.json" },
@@ -189,7 +188,9 @@ function unmarshall(value) {
   if ("BOOL" in value) return value.BOOL;
   if ("NULL" in value) return null;
   if ("M" in value) {
-    return Object.fromEntries(Object.entries(value.M).map(([key, item]) => [key, unmarshall(item)]));
+    return Object.fromEntries(
+      Object.entries(value.M).map(([key, item]) => [key, unmarshall(item)]),
+    );
   }
   if ("L" in value) return value.L.map(unmarshall);
   if ("SS" in value) return value.SS;
@@ -277,7 +278,9 @@ function fetchCloudTrailLogins(clientIds, knownSubs) {
   let completeWithinLookupWindow = true;
   let errorMessage = null;
 
-  debugLog(`Ermittle Login-Evidence aus CloudTrail lookup-events (max. ${CLOUDTRAIL_EVENT_HISTORY_DAYS} Tage Event-History)...`);
+  debugLog(
+    `Ermittle Login-Evidence aus CloudTrail lookup-events (max. ${CLOUDTRAIL_EVENT_HISTORY_DAYS} Tage Event-History)...`,
+  );
 
   try {
     let nextToken = null;
@@ -407,10 +410,7 @@ function padCell(value, length, align = "left") {
 
 function renderTable(headers, rows, alignments = []) {
   const widths = headers.map((header, index) => {
-    return Math.max(
-      header.length,
-      ...rows.map((row) => String(row[index] ?? "").length),
-    );
+    return Math.max(header.length, ...rows.map((row) => String(row[index] ?? "").length));
   });
   const border = (left, middle, right) =>
     left + widths.map((width) => "─".repeat(width + 2)).join(middle) + right;
@@ -602,7 +602,9 @@ function discoverResources(appId, explicitApiId, explicitUserPoolId) {
 }
 
 function splitCohorts(users, profiles, preferences) {
-  const profileByUserId = new Map(profiles.filter((item) => item.userId).map((item) => [item.userId, item]));
+  const profileByUserId = new Map(
+    profiles.filter((item) => item.userId).map((item) => [item.userId, item]),
+  );
   const preferenceByUserId = new Map(
     preferences.filter((item) => item.userId).map((item) => [item.userId, item]),
   );
@@ -818,7 +820,11 @@ async function main() {
   writeFileSync(outputPath, `${JSON.stringify(monitoringData, null, 2)}\n`, "utf8");
 
   const usersForView =
-    viewMode === "customers" ? customerUsers : viewMode === "tests" ? testUsers : chronologicalUsers;
+    viewMode === "customers"
+      ? customerUsers
+      : viewMode === "tests"
+        ? testUsers
+        : chronologicalUsers;
 
   if (values["list-emails"]) {
     for (const user of usersForView) {
@@ -831,10 +837,16 @@ async function main() {
   if (quiet) return;
 
   console.log("");
-  console.log("====================================================================================================");
+  console.log(
+    "====================================================================================================",
+  );
   console.log(" AI TUTOR LAB — PLATTFORM- & NUTZER-MONITORING");
-  console.log(` Stand: ${formatGermanDateTime(monitoringData.metadata.generatedAt)} | Region: ${region} | Branch: ${targetBranch}`);
-  console.log("====================================================================================================");
+  console.log(
+    ` Stand: ${formatGermanDateTime(monitoringData.metadata.generatedAt)} | Region: ${region} | Branch: ${targetBranch}`,
+  );
+  console.log(
+    "====================================================================================================",
+  );
   printSourceLimitNotice();
 
   const customerSummary = customersReport.summary;
@@ -847,13 +859,38 @@ async function main() {
       renderTable(
         ["Kennzahl", "Kunden", "Tests", "Gesamt"],
         [
-          ["Registrierte Benutzer", customerSummary.totalUsers, testSummary.totalUsers, allSummary.totalUsers],
-          ["Aktive Benutzer", customerSummary.activeUsers, testSummary.activeUsers, allSummary.activeUsers],
-          ["Trainings-Sessions", customerSummary.totalSessions, testSummary.totalSessions, allSummary.totalSessions],
+          [
+            "Registrierte Benutzer",
+            customerSummary.totalUsers,
+            testSummary.totalUsers,
+            allSummary.totalUsers,
+          ],
+          [
+            "Aktive Benutzer",
+            customerSummary.activeUsers,
+            testSummary.activeUsers,
+            allSummary.activeUsers,
+          ],
+          [
+            "Trainings-Sessions",
+            customerSummary.totalSessions,
+            testSummary.totalSessions,
+            allSummary.totalSessions,
+          ],
           ["Scenario-Runs", customerSummary.totalRuns, testSummary.totalRuns, allSummary.totalRuns],
-          ["Score-Events", customerSummary.totalScoreEvents, testSummary.totalScoreEvents, allSummary.totalScoreEvents],
+          [
+            "Score-Events",
+            customerSummary.totalScoreEvents,
+            testSummary.totalScoreEvents,
+            allSummary.totalScoreEvents,
+          ],
           ["Punkte", customerSummary.totalPoints, testSummary.totalPoints, allSummary.totalPoints],
-          ["Attestations", customerSummary.totalAttestations, testSummary.totalAttestations, allSummary.totalAttestations],
+          [
+            "Attestations",
+            customerSummary.totalAttestations,
+            testSummary.totalAttestations,
+            allSummary.totalAttestations,
+          ],
         ],
         ["left", "right", "right", "right"],
       ),
@@ -883,8 +920,7 @@ async function main() {
     if (viewMode === "tests" && registration.category !== "test") return false;
     if (!filterUser) return true;
     return (
-      registration.userId === filterUser ||
-      registration.email?.toLowerCase().includes(filterUser)
+      registration.userId === filterUser || registration.email?.toLowerCase().includes(filterUser)
     );
   });
 
@@ -909,7 +945,9 @@ async function main() {
   }
 
   if (showLogins) {
-    console.log(`\nLOGIN-EVIDENCE AUS CLOUDTRAIL (best effort, typischerweise max. ${CLOUDTRAIL_EVENT_HISTORY_DAYS} Tage):`);
+    console.log(
+      `\nLOGIN-EVIDENCE AUS CLOUDTRAIL (best effort, typischerweise max. ${CLOUDTRAIL_EVENT_HISTORY_DAYS} Tage):`,
+    );
     const filteredLogins = logins.filter((login) => {
       if (viewMode === "customers" && login.category !== "customer") return false;
       if (viewMode === "tests" && login.category !== "test") return false;
@@ -917,7 +955,9 @@ async function main() {
       return login.userId === filterUser || login.email?.toLowerCase().includes(filterUser);
     });
     if (!filteredLogins.length) {
-      console.log("  (Keine passenden CloudTrail-Login-Events gefunden; das beweist keine historische Abwesenheit.)");
+      console.log(
+        "  (Keine passenden CloudTrail-Login-Events gefunden; das beweist keine historische Abwesenheit.)",
+      );
     } else {
       console.log(
         renderTable(
@@ -936,8 +976,12 @@ async function main() {
 
   if (!showTimeline && !showLogins) {
     const scenarios = [
-      ...(viewMode === "tests" ? [] : customersReport.byScenario.map((item) => ({ ...item, cohort: "Kunde" }))),
-      ...(viewMode === "customers" ? [] : testsReport.byScenario.map((item) => ({ ...item, cohort: "Test" }))),
+      ...(viewMode === "tests"
+        ? []
+        : customersReport.byScenario.map((item) => ({ ...item, cohort: "Kunde" }))),
+      ...(viewMode === "customers"
+        ? []
+        : testsReport.byScenario.map((item) => ({ ...item, cohort: "Test" }))),
     ]
       .sort((a, b) => b.totalRuns + b.totalSessions - (a.totalRuns + a.totalSessions))
       .slice(0, 8);
@@ -961,12 +1005,18 @@ async function main() {
   }
 
   const fileSizeKb = Math.round(statSync(outputPath).size / 1024);
-  console.log("\n----------------------------------------------------------------------------------------------------");
+  console.log(
+    "\n----------------------------------------------------------------------------------------------------",
+  );
   console.log(`✓ JSON-Export bereitgestellt: ${outputPath} (${fileSizeKb} KB)`);
   if (!customerUsers.length) {
-    console.log("ℹ In dieser Abfrage wurden keine Produktiv-Kunden erkannt; Testkonten werden weiterhin separat ausgewiesen.");
+    console.log(
+      "ℹ In dieser Abfrage wurden keine Produktiv-Kunden erkannt; Testkonten werden weiterhin separat ausgewiesen.",
+    );
   }
-  console.log("----------------------------------------------------------------------------------------------------\n");
+  console.log(
+    "----------------------------------------------------------------------------------------------------\n",
+  );
 }
 
 main().catch((error) => {
