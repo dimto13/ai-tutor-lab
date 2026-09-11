@@ -23,18 +23,31 @@ import { OfflineTrainingStateStorageError } from "../src/persistence/offlineTrai
 
 class MemoryStorage implements StorageLike {
   readonly values = new Map<string, string>();
-  getItem(key: string): string | null { return this.values.get(key) ?? null; }
-  setItem(key: string, value: string): void { this.values.set(key, value); }
-  removeItem(key: string): void { this.values.delete(key); }
+
+  getItem(key: string): string | null {
+    return this.values.get(key) ?? null;
+  }
+
+  setItem(key: string, value: string): void {
+    this.values.set(key, value);
+  }
+
+  removeItem(key: string): void {
+    this.values.delete(key);
+  }
 }
 
 class QuotaExceededStorage implements StorageLike {
-  getItem(): string | null { return null; }
+  getItem(): string | null {
+    return null;
+  }
+
   setItem(): void {
     const error = new Error("Storage quota exceeded");
     error.name = "QuotaExceededError";
     throw error;
   }
+
   removeItem(): void {}
 }
 
@@ -47,26 +60,51 @@ class SwitchableTrainingStateRepository implements TrainingStateRepository {
   runtimeSaveCalls = 0;
   runtimeDeleteCalls = 0;
 
-  constructor(delegate: TrainingStateRepository) { this.delegate = delegate; }
+  constructor(delegate: TrainingStateRepository) {
+    this.delegate = delegate;
+  }
+
   checkAvailability(): void {
     if (this.failureMode === "unavailable") throw new TrainingStateUnavailableError();
     if (this.failureMode === "generic") throw new Error("Not authorized to access training state");
   }
-  async loadSession(key: TrainingStateKey) { this.checkAvailability(); return this.delegate.loadSession(key); }
-  async saveSession(key: TrainingStateKey, session: TrainingSession, options: TrainingStateWriteOptions) {
+
+  async loadSession(key: TrainingStateKey) {
+    this.checkAvailability();
+    return this.delegate.loadSession(key);
+  }
+
+  async saveSession(
+    key: TrainingStateKey,
+    session: TrainingSession,
+    options: TrainingStateWriteOptions,
+  ) {
     this.checkAvailability();
     this.sessionSaveCalls += 1;
     return this.delegate.saveSession(key, session, options);
   }
+
   async loadRuntimeSnapshot(key: TrainingStateKey, runtimeId: string) {
-    this.checkAvailability(); return this.delegate.loadRuntimeSnapshot(key, runtimeId);
+    this.checkAvailability();
+    return this.delegate.loadRuntimeSnapshot(key, runtimeId);
   }
-  async saveRuntimeSnapshot(key: TrainingStateKey, runtimeId: string, snapshot: unknown, options: TrainingStateWriteOptions) {
+
+  async saveRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+    snapshot: unknown,
+    options: TrainingStateWriteOptions,
+  ) {
     this.checkAvailability();
     this.runtimeSaveCalls += 1;
     return this.delegate.saveRuntimeSnapshot(key, runtimeId, snapshot, options);
   }
-  async deleteRuntimeSnapshot(key: TrainingStateKey, runtimeId: string, options: TrainingStateWriteOptions) {
+
+  async deleteRuntimeSnapshot(
+    key: TrainingStateKey,
+    runtimeId: string,
+    options: TrainingStateWriteOptions,
+  ) {
     this.checkAvailability();
     this.runtimeDeleteCalls += 1;
     return this.delegate.deleteRuntimeSnapshot(key, runtimeId, options);
@@ -74,13 +112,33 @@ class SwitchableTrainingStateRepository implements TrainingStateRepository {
 }
 
 const scenario: Scenario = {
-  id: "offline-sync.guided", mode: "guided", title: "Offline sync", description: "Offline sync fixture",
-  steps: [{ id: "one", stepType: "explanation", title: "One", description: "One", instruction: "One", helpLevels: ["a", "b", "c"], successMessage: "done" }],
+  id: "offline-sync.guided",
+  mode: "guided",
+  title: "Offline sync",
+  description: "Offline sync fixture",
+  steps: [
+    {
+      id: "one",
+      stepType: "explanation",
+      title: "One",
+      description: "One",
+      instruction: "One",
+      helpLevels: ["a", "b", "c"],
+      successMessage: "done",
+    },
+  ],
 };
-const key: TrainingStateKey = { subject: { userId: "alice", tenantId: "tenant-a" }, scenarioId: scenario.id, mode: "guided" };
+const key: TrainingStateKey = {
+  subject: { userId: "alice", tenantId: "tenant-a" },
+  scenarioId: scenario.id,
+  mode: "guided",
+};
 
 function session(lastAction: string): TrainingSession {
-  return recordLastAction(createTrainingSession(scenario, scenario.id, 100, key.subject), lastAction);
+  return recordLastAction(
+    createTrainingSession(scenario, scenario.id, 100, key.subject),
+    lastAction,
+  );
 }
 
 function completedSession(lastAction: string): TrainingSession {
@@ -101,8 +159,12 @@ test("coalesces multiple offline session writes against one remote CAS revision"
   const first = await repository.saveSession(key, session("online"), { expectedRevision: null });
   assert.equal(first.revision, 1);
   remote.failureMode = "unavailable";
-  const offlineOne = await repository.saveSession(key, session("offline-one"), { expectedRevision: 1 });
-  const offlineTwo = await repository.saveSession(key, session("offline-two"), { expectedRevision: 1 });
+  const offlineOne = await repository.saveSession(key, session("offline-one"), {
+    expectedRevision: 1,
+  });
+  const offlineTwo = await repository.saveSession(key, session("offline-two"), {
+    expectedRevision: 1,
+  });
   assert.equal(offlineOne.revision, 1);
   assert.equal(offlineTwo.revision, 1);
   assert.equal((await remoteDelegate.loadSession(key))?.value.lastAction, "online");
@@ -172,23 +234,33 @@ test("still rejects a stale direct write after another device advanced the serve
   await repository.saveSession(key, session("offline-candidate"), { expectedRevision: 1 });
   remote.failureMode = "available";
   await remoteDelegate.saveSession(key, session("other-device"), { expectedRevision: 1 });
-  await assert.rejects(repository.saveSession(key, session("offline-newest"), { expectedRevision: 1 }), (error: unknown) => {
-    assert.ok(error instanceof TrainingStateConflictError);
-    assert.equal(error.expectedRevision, 1);
-    assert.equal(error.actualRevision, 2);
-    return true;
-  });
+  await assert.rejects(
+    repository.saveSession(key, session("offline-newest"), { expectedRevision: 1 }),
+    (error: unknown) => {
+      assert.ok(error instanceof TrainingStateConflictError);
+      assert.equal(error.expectedRevision, 1);
+      assert.equal(error.actualRevision, 2);
+      return true;
+    },
+  );
 });
 
 test("buffers and explicitly synchronizes an offline runtime deletion", async () => {
   const { remote, remoteDelegate, offlineStore, repository } = fixture();
   const runtimeId = "vscode-sim";
-  const first = await repository.saveRuntimeSnapshot(key, runtimeId, { branch: "feature/online" }, { expectedRevision: null });
+  const first = await repository.saveRuntimeSnapshot(
+    key,
+    runtimeId,
+    { branch: "feature/online" },
+    { expectedRevision: null },
+  );
   assert.equal(first.revision, 1);
   remote.failureMode = "unavailable";
   await repository.deleteRuntimeSnapshot(key, runtimeId, { expectedRevision: 1 });
   assert.equal(await repository.loadRuntimeSnapshot(key, runtimeId), null);
-  assert.deepEqual((await remoteDelegate.loadRuntimeSnapshot(key, runtimeId))?.value, { branch: "feature/online" });
+  assert.deepEqual((await remoteDelegate.loadRuntimeSnapshot(key, runtimeId))?.value, {
+    branch: "feature/online",
+  });
   const afterRestart = new OfflineBufferedTrainingStateRepository(remote, offlineStore);
   remote.failureMode = "available";
   const synced = await afterRestart.synchronizePendingRuntimeSnapshot(key, runtimeId);
@@ -201,15 +273,23 @@ test("buffers and explicitly synchronizes an offline runtime deletion", async ()
 test("does not hide authorization or other non-transport failures behind the offline buffer", async () => {
   const { remote, offlineStore, repository } = fixture();
   remote.failureMode = "generic";
-  await assert.rejects(repository.saveSession(key, session("must-not-buffer"), { expectedRevision: null }), /Not authorized/);
+  await assert.rejects(
+    repository.saveSession(key, session("must-not-buffer"), { expectedRevision: null }),
+    /Not authorized/,
+  );
   assert.equal(offlineStore.loadSession(key), null);
 });
 
 test("does not turn a successful remote write into a failure when only the cache is full", async () => {
   const remoteDelegate = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const remote = new SwitchableTrainingStateRepository(remoteDelegate);
-  const repository = new OfflineBufferedTrainingStateRepository(remote, new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()));
-  const saved = await repository.saveSession(key, session("remote-success"), { expectedRevision: null });
+  const repository = new OfflineBufferedTrainingStateRepository(
+    remote,
+    new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()),
+  );
+  const saved = await repository.saveSession(key, session("remote-success"), {
+    expectedRevision: null,
+  });
   assert.equal(saved.revision, 1);
   assert.equal(saved.value.lastAction, "remote-success");
   assert.equal((await remoteDelegate.loadSession(key))?.value.lastAction, "remote-success");
@@ -219,12 +299,18 @@ test("fails loudly when browser quota prevents durable offline buffering", async
   const remoteDelegate = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const remote = new SwitchableTrainingStateRepository(remoteDelegate);
   remote.failureMode = "unavailable";
-  const repository = new OfflineBufferedTrainingStateRepository(remote, new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()));
-  await assert.rejects(repository.saveSession(key, session("cannot-buffer"), { expectedRevision: null }), (error: unknown) => {
-    assert.ok(error instanceof OfflineTrainingStateStorageError);
-    assert.equal(error.operation, "save-session");
-    assert.ok(error.originalError instanceof Error);
-    assert.equal(error.originalError.name, "QuotaExceededError");
-    return true;
-  });
+  const repository = new OfflineBufferedTrainingStateRepository(
+    remote,
+    new LocalStorageOfflineTrainingStateStore(new QuotaExceededStorage()),
+  );
+  await assert.rejects(
+    repository.saveSession(key, session("cannot-buffer"), { expectedRevision: null }),
+    (error: unknown) => {
+      assert.ok(error instanceof OfflineTrainingStateStorageError);
+      assert.equal(error.operation, "save-session");
+      assert.ok(error.originalError instanceof Error);
+      assert.equal(error.originalError.name, "QuotaExceededError");
+      return true;
+    },
+  );
 });
