@@ -88,19 +88,24 @@ const catalogRefs = new Set(
 const endpoint = new URL(baseConfig.baseUrl);
 // A proxy in front of Ollama may forward to a cloud upstream; these headers show where it routed.
 const ROUTE_HEADERS = ["server", "via", "x-ollama-account", "x-ollama-route"];
-let lastRouteHeaders: string[] = [];
-const fetchWithTimeout: typeof fetch = async (input, init) => {
-  const response = await fetch(input, { ...init, signal: AbortSignal.timeout(timeoutMs) });
-  lastRouteHeaders = ROUTE_HEADERS.flatMap((name) => {
-    const value = response.headers.get(name);
-    return value ? [`${name}: ${value}`] : [];
-  });
-  return response;
-};
+
+function fetchRecordingRoute(routeHeaders: string[]): typeof fetch {
+  return async (input, init) => {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+    const response = await fetch(input, { ...init, signal });
+    for (const name of ROUTE_HEADERS) {
+      const value = response.headers.get(name);
+      if (value) routeHeaders.push(`${name}: ${value}`);
+    }
+    return response;
+  };
+}
 
 async function verifyModel(model: string): Promise<boolean> {
+  const routeHeaders: string[] = [];
   const provider = new RecordingProvider(
-    new OllamaProvider({ ...baseConfig, model }, fetchWithTimeout),
+    new OllamaProvider({ ...baseConfig, model }, fetchRecordingRoute(routeHeaders)),
   );
   const service = new TutorLlmService({
     provider,
@@ -147,7 +152,7 @@ async function verifyModel(model: string): Promise<boolean> {
   console.log(
     `- Dauer: ${seconds} s · Tokens ein/aus: ${raw?.usage.inputTokens ?? "–"}/${raw?.usage.outputTokens ?? "–"}`,
   );
-  console.log(`- Antwort-Header: ${lastRouteHeaders.join(" · ") || "–"}`);
+  console.log(`- Antwort-Header: ${routeHeaders.join(" · ") || "–"}`);
   console.log(`- UiTargetRefs laut Modell: ${modelRefs.join(", ") || "–"}`);
   for (const [label, passed] of checks) console.log(`- [${passed ? "x" : " "}] ${label}`);
   if (raw) console.log(`\n\`\`\`json\n${raw.text.trim()}\n\`\`\``);

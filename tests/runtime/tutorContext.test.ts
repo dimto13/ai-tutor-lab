@@ -21,6 +21,19 @@ test("guided tutor context allows only the targets of the current step", async (
   ]);
 });
 
+test("explore tutor context adds the explore targets and falls back to the step's why", async () => {
+  const scenario = await loadScenario("browser-automation-workflow.explore");
+  const step = scenario.steps.find((candidate) => candidate.id === "explore-browser-agent");
+  assert.ok(step?.why && !step.rationale);
+
+  const context = buildTutorContext(scenario, "explore", step.id);
+  for (const target of scenario.exploreTargets ?? []) {
+    assert.ok(context.allowedUiTargetRefs.includes(target), target);
+  }
+  assert.equal(context.step?.rationale, step.why);
+  assert.deepEqual(buildTutorContext(scenario, "guided", null).allowedUiTargetRefs, []);
+});
+
 test("tutor context rejects a step that is not part of the scenario", async () => {
   const scenario = await loadScenario("vscode-basics.guided");
   assert.throws(() => buildTutorContext(scenario, "guided", "missing_step"), /Unknown tutor step/);
