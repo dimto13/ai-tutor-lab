@@ -15,11 +15,12 @@ import {
 } from "../apps/web/src/tutor/llm/tutorGuardrails.ts";
 
 // Live acceptance for the tutor LLM path (B1/#97). Sends one real tutor question through the
-// production context builder, TutorLlmService guardrails and OllamaProvider, then checks that the
-// model answered with a JSON object whose UiTargetRefs exist in the runtime catalog. It needs a
-// reachable Ollama endpoint, so it is run by hand and is not part of `npm run check`.
+// production context builder, TutorLlmService guardrails and OllamaProvider, then checks that no
+// proxy forwarded it to an external upstream and that the model answered with a JSON object whose
+// UiTargetRefs exist in the runtime catalog. It needs a reachable Ollama endpoint, so it is run by
+// hand and is not part of `npm run check`. Procedure: docs/11-local-llm-provider.md.
 //
-//   LLM_BASE_URL=http://<host>:<port>/v1 npm run verify:llm-live -- gemma4:31b gemma4:e4b
+//   LLM_BASE_URL=http://192.168.178.81:11435/v1 npm run verify:llm-live -- gemma4:31b@local gemma4:e4b@local
 
 const TRAINING_MODES = new Set(["explore", "guided", "challenge"]);
 
@@ -89,21 +90,34 @@ const endpoint = new URL(baseConfig.baseUrl);
 // A proxy in front of Ollama may forward to a cloud upstream; these headers show where it routed.
 const ROUTE_HEADERS = ["server", "via", "x-ollama-account", "x-ollama-route"];
 
-function fetchRecordingRoute(routeHeaders: string[]): typeof fetch {
+function fetchRecordingRoute(routeHeaders: Map<string, string>): typeof fetch {
   return async (input, init) => {
     const timeout = AbortSignal.timeout(timeoutMs);
     const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
     const response = await fetch(input, { ...init, signal });
     for (const name of ROUTE_HEADERS) {
       const value = response.headers.get(name);
-      if (value) routeHeaders.push(`${name}: ${value}`);
+      if (value) routeHeaders.set(name, value);
     }
     return response;
   };
 }
 
+// Plain Ollama sends none of these headers. The NAS rotator marks local execution with
+// `x-ollama-account: local` and `x-ollama-route: local:…`; a cloud upstream adds `via` and its
+// own account.
+function servedWithoutForwarding(routeHeaders: Map<string, string>): boolean {
+  const account = routeHeaders.get("x-ollama-account");
+  const route = routeHeaders.get("x-ollama-route");
+  return (
+    !routeHeaders.has("via") &&
+    (account === undefined || account === "local") &&
+    (route === undefined || route.startsWith("local:"))
+  );
+}
+
 async function verifyModel(model: string): Promise<boolean> {
-  const routeHeaders: string[] = [];
+  const routeHeaders = new Map<string, string>();
   const provider = new RecordingProvider(
     new OllamaProvider({ ...baseConfig, model }, fetchRecordingRoute(routeHeaders)),
   );
@@ -139,6 +153,10 @@ async function verifyModel(model: string): Promise<boolean> {
     ? sentRefs.filter((ref): ref is string => typeof ref === "string")
     : [];
   const checks: Array<[string, boolean]> = [
+    [
+      "keine Weiterleitung an einen externen Upstream (Antwort-Header)",
+      servedWithoutForwarding(routeHeaders),
+    ],
     ["Antwort ist ein JSON-Objekt", json !== null],
     ["Guardrails nehmen die Antwort an (Status `ok`)", answer.status === "ok"],
     ["mindestens eine UiTargetRef", modelRefs.length > 0],
@@ -148,11 +166,12 @@ async function verifyModel(model: string): Promise<boolean> {
     ],
   ];
 
+  const headerLine = [...routeHeaders].map(([name, value]) => `${name}: ${value}`).join(" · ");
   console.log(`- Modell laut Antwort: ${raw?.model ?? "–"}`);
   console.log(
     `- Dauer: ${seconds} s · Tokens ein/aus: ${raw?.usage.inputTokens ?? "–"}/${raw?.usage.outputTokens ?? "–"}`,
   );
-  console.log(`- Antwort-Header: ${routeHeaders.join(" · ") || "–"}`);
+  console.log(`- Antwort-Header: ${headerLine || "–"}`);
   console.log(`- UiTargetRefs laut Modell: ${modelRefs.join(", ") || "–"}`);
   for (const [label, passed] of checks) console.log(`- [${passed ? "x" : " "}] ${label}`);
   if (raw) console.log(`\n\`\`\`json\n${raw.text.trim()}\n\`\`\``);
