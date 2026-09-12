@@ -67,14 +67,24 @@ nvidia-smi
 
 ## Reale Abnahme im lokalen Netz (B1)
 
-Die verbindliche Topologie steht in #97: AWS Systems Manager → RMI-PC (SSM Managed Node) → internes LAN → NAS mit dem Docker-Container `ollama-local`. Ollama ist nur intern erreichbar; die Abnahme braucht keinen öffentlichen Zugang.
+Die verbindliche Topologie steht in #97: AWS Systems Manager → RMI-PC (`192.168.178.170`, SSM Managed Node) → LAN → NAS (`192.168.178.81`) mit dem Docker-Container `ollama-local`. Ollama selbst (`11434`) ist nicht als NAS-Hostport veröffentlicht; im LAN erreichbar ist nur der `ollama-rotator` auf `192.168.178.81:11435`. Die Abnahme braucht keinen öffentlichen Zugang.
+
+**Achtung, Cloud-Weiterleitung:** Der Rotator reicht nicht nur an `ollama-local` weiter, sondern auch an Ollama Cloud. Lokal ausgeführt werden nur Modelle mit dem Suffix `@local`; derselbe Name ohne Suffix (etwa `gemma4:31b`) geht an die Cloud. Für B1 deshalb ausschließlich die `@local`-Namen verwenden. Die Antwort-Header im Evidence-Block zeigen den tatsächlichen Weg: `x-ollama-route: local:…` belegt die lokale Ausführung, `via: 1.1 google` eine Cloud-Weiterleitung.
 
 Die Tutor-Anfrage läuft über `scripts/verify-llm-provider-live.ts`. Das Skript nutzt dieselbe Kette wie der Server — Kontextaufbau aus dem Szenario, `TutorLlmService` mit Guardrails, `OllamaProvider` — und prüft je Modell, dass die Antwort ein JSON-Objekt ist, die Guardrails sie annehmen und jede UiTargetRef im Runtime-Katalog existiert. Es läuft nicht in der CI, weil es einen erreichbaren Ollama-Endpunkt braucht. Die Modelle laufen nacheinander, nie gleichzeitig.
 
 ```bash
-# vom Entwicklungsrechner über den RMI-PC ins interne Netz tunneln
-ssh -N -L 11435:<nas-intern>:11435 rmi &
-LLM_BASE_URL=http://localhost:11435/v1 npm run verify:llm-live -- gemma4:31b gemma4:e4b
+# auf dem RMI-PC
+LLM_BASE_URL=http://192.168.178.81:11435/v1 npm run verify:llm-live -- gemma4:31b@local gemma4:e4b@local
+```
+
+Von außerhalb des LANs führt der Weg über SSM-Port-Forwarding durch den RMI-PC zum NAS. Voraussetzungen: das lokale `session-manager-plugin`, `ssm:StartSession` auf dem RMI-PC und dem Dokument, und die Advanced-Instances-Stufe, weil Session Manager hybrid aktivierte Nodes nur in dieser Stufe bedient.
+
+```bash
+aws ssm start-session --target <Node-ID des RMI-PC> \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters '{"host":["192.168.178.81"],"portNumber":["11435"],"localPortNumber":["11435"]}'
+LLM_BASE_URL=http://localhost:11435/v1 npm run verify:llm-live -- gemma4:31b@local gemma4:e4b@local
 ```
 
 Optionen: `--scenario`, `--step`, `--mode`, `--question`, `--timeout-seconds` (Standard 600, damit das Laden des 31B-Modells nicht abbricht). Die Ausgabe ist ein Markdown-Block für den Nachweis im Issue; der Exit-Code ist ungleich 0, sobald ein Modell eine Prüfung verfehlt.

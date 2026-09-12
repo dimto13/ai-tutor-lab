@@ -86,8 +86,17 @@ const catalogRefs = new Set(
   RUNTIME_REFERENCE_CATALOG.flatMap((runtime) => runtime.surface.map((entry) => entry.ref)),
 );
 const endpoint = new URL(baseConfig.baseUrl);
-const fetchWithTimeout: typeof fetch = (input, init) =>
-  fetch(input, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+// A proxy in front of Ollama may forward to a cloud upstream; these headers show where it routed.
+const ROUTE_HEADERS = ["server", "via", "x-ollama-account", "x-ollama-route"];
+let lastRouteHeaders: string[] = [];
+const fetchWithTimeout: typeof fetch = async (input, init) => {
+  const response = await fetch(input, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  lastRouteHeaders = ROUTE_HEADERS.flatMap((name) => {
+    const value = response.headers.get(name);
+    return value ? [`${name}: ${value}`] : [];
+  });
+  return response;
+};
 
 async function verifyModel(model: string): Promise<boolean> {
   const provider = new RecordingProvider(
@@ -138,6 +147,7 @@ async function verifyModel(model: string): Promise<boolean> {
   console.log(
     `- Dauer: ${seconds} s · Tokens ein/aus: ${raw?.usage.inputTokens ?? "–"}/${raw?.usage.outputTokens ?? "–"}`,
   );
+  console.log(`- Antwort-Header: ${lastRouteHeaders.join(" · ") || "–"}`);
   console.log(`- UiTargetRefs laut Modell: ${modelRefs.join(", ") || "–"}`);
   for (const [label, passed] of checks) console.log(`- [${passed ? "x" : " "}] ${label}`);
   if (raw) console.log(`\n\`\`\`json\n${raw.text.trim()}\n\`\`\``);
