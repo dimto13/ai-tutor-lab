@@ -76,14 +76,7 @@ Die Tutor-Anfrage läuft über `scripts/verify-llm-provider-live.ts`. Das Skript
 npm run verify:llm-live -- gemma4:31b gemma4:e4b
 ```
 
-Von außerhalb des LANs führt der Weg über SSM-Port-Forwarding auf den RMI-PC. Voraussetzungen: das lokale `session-manager-plugin`, `ssm:StartSession` auf dem RMI-PC und dem Dokument, und die Advanced-Instances-Stufe, weil Session Manager hybrid aktivierte Nodes nur in dieser Stufe bedient.
-
-```bash
-aws ssm start-session --target <Node-ID des RMI-PC> \
-  --document-name AWS-StartPortForwardingSession \
-  --parameters '{"portNumber":["11434"],"localPortNumber":["11434"]}'
-npm run verify:llm-live -- gemma4:31b gemma4:e4b
-```
+Aus AWS erreicht man den RMI-PC über SSM Run Command, so wie es die `languageModelApi` im Amplify-Projekt `amplify-vite-react-template` bereits nutzt: Eine Lambda-Rolle erhält `ssm:SendCommand` auf die Managed Instance `mi-0c4f95e235b575da9` (us-east-1) und das Dokument `AWS-RunShellScript`; das Kommando ruft auf dem RMI-PC `localhost:11434` auf. Diesen Weg baut B2/#99 für den Tutor; die B1-Abnahme braucht ihn nicht.
 
 Optionen: `--scenario`, `--step`, `--mode`, `--question`, `--timeout-seconds` (Standard 600, damit das Laden des 31B-Modells nicht abbricht). Die Ausgabe ist ein Markdown-Block für den Nachweis im Issue; der Exit-Code ist ungleich 0, sobald ein Modell eine Prüfung verfehlt.
 
@@ -98,10 +91,11 @@ nvidia-smi
 
 **Nicht über den NAS-Rotator abnehmen.** Auf dem NAS laufen Ollama und der `ollama-rotator` (`192.168.178.81:11435`) nur mit Cloud-Modellen. Der Rotator reicht Namen mit dem Suffix `@local` an den RMI-PC zurück und alle anderen Namen an Ollama Cloud — `gemma4:31b` ginge dort also an einen externen Provider. Der Runner erkennt das an den Antwort-Headern: Ein `via`-Header, ein anderes `x-ollama-account` als `local` oder eine nicht-lokale `x-ollama-route` lassen die Abnahme fehlschlagen.
 
-Den SSM-Nachweis für den RMI-PC liefert ein AWS-Principal mit `ssm:DescribeInstanceInformation` in der Region der Hybrid-Aktivierung:
+Den SSM-Nachweis für den RMI-PC liefert ein AWS-Principal mit `ssm:DescribeInstanceInformation` im Konto der Hybrid-Aktivierung:
 
 ```bash
-aws ssm describe-instance-information \
+aws ssm describe-instance-information --region us-east-1 \
+  --filters Key=InstanceIds,Values=mi-0c4f95e235b575da9 \
   --query 'InstanceInformationList[].[InstanceId,PingStatus,AgentVersion,ComputerName,LastPingDateTime]'
 ```
 
