@@ -20,7 +20,7 @@ import {
 // UiTargetRefs exist in the runtime catalog. It needs a reachable Ollama endpoint, so it is run by
 // hand and is not part of `npm run check`. Procedure: docs/11-local-llm-provider.md.
 //
-//   LLM_BASE_URL=http://192.168.178.81:11435/v1 npm run verify:llm-live -- gemma4:31b@local gemma4:e4b@local
+//   npm run verify:llm-live -- gemma4:31b gemma4:e4b    # on the RMI-PC, default http://localhost:11434/v1
 
 const TRAINING_MODES = new Set(["explore", "guided", "challenge"]);
 
