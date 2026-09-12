@@ -65,6 +65,37 @@ nvidia-smi
 
 `ollama ps` muss für das geladene Modell GPU-Nutzung ausweisen; parallel muss der Ollama-Prozess in `nvidia-smi` mit belegtem VRAM sichtbar sein. Das Ergebnis der lokalen Abnahme ist im PR zu dokumentieren.
 
+## Reale Abnahme im lokalen Netz (B1)
+
+Die verbindliche Topologie steht in #97: AWS Systems Manager → RMI-PC (SSM Managed Node) → internes LAN → NAS mit dem Docker-Container `ollama-local`. Ollama ist nur intern erreichbar; die Abnahme braucht keinen öffentlichen Zugang.
+
+Die Tutor-Anfrage läuft über `scripts/verify-llm-provider-live.ts`. Das Skript nutzt dieselbe Kette wie der Server — Kontextaufbau aus dem Szenario, `TutorLlmService` mit Guardrails, `OllamaProvider` — und prüft je Modell, dass die Antwort ein JSON-Objekt ist, die Guardrails sie annehmen und jede UiTargetRef im Runtime-Katalog existiert. Es läuft nicht in der CI, weil es einen erreichbaren Ollama-Endpunkt braucht. Die Modelle laufen nacheinander, nie gleichzeitig.
+
+```bash
+# vom Entwicklungsrechner über den RMI-PC ins interne Netz tunneln
+ssh -N -L 11435:<nas-intern>:11435 rmi &
+LLM_BASE_URL=http://localhost:11435/v1 npm run verify:llm-live -- gemma4:31b gemma4:e4b
+```
+
+Optionen: `--scenario`, `--step`, `--mode`, `--question`, `--timeout-seconds` (Standard 600, damit das Laden des 31B-Modells nicht abbricht). Die Ausgabe ist ein Markdown-Block für den Nachweis im Issue; der Exit-Code ist ungleich 0, sobald ein Modell eine Prüfung verfehlt.
+
+Parallel auf dem NAS, während die 31B-Anfrage läuft:
+
+```bash
+docker exec ollama-local ollama list
+docker exec ollama-local ollama --version
+docker exec ollama-local ollama ps
+docker port ollama-local   # leer = kein Hostport veröffentlicht
+nvidia-smi                 # nur bei NVIDIA-GPU
+```
+
+Den SSM-Nachweis für den RMI-PC liefert ein AWS-Principal mit `ssm:DescribeInstanceInformation` in der Region der Hybrid-Aktivierung:
+
+```bash
+aws ssm describe-instance-information \
+  --query 'InstanceInformationList[].[InstanceId,PingStatus,AgentVersion,ComputerName,LastPingDateTime]'
+```
+
 ## Architekturgrenze
 
 Alle providerabhängigen Details liegen ausschließlich unter `src/tutor/llm/`:

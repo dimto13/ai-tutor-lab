@@ -2,6 +2,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { getScenario } from "@/scenarios";
 import type { TrainingMode } from "@ai-train-lab/training-engine";
 import { createLlmProvider } from "./index";
+import { buildTutorContext } from "./tutorContext";
 import {
   InMemoryTutorSessionBudgetStore,
   TutorLlmService,
@@ -269,29 +270,7 @@ function tutorContextFor(
 ): TutorLlmContext {
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error("Unknown tutor scenario");
-  const step = currentStepId
-    ? (scenario.steps.find((candidate) => candidate.id === currentStepId) ?? null)
-    : null;
-  if (currentStepId && !step) throw new Error("Unknown tutor step");
-  const allowedUiTargetRefs = new Set<string>();
-  if (step?.highlightTarget) allowedUiTargetRefs.add(step.highlightTarget);
-  if (step?.onFailure?.markTarget) allowedUiTargetRefs.add(step.onFailure.markTarget);
-  if (mode === "explore") {
-    for (const target of scenario.exploreTargets ?? []) allowedUiTargetRefs.add(target);
-  }
-  return {
-    scenarioTitle: scenario.title,
-    mode,
-    step: step
-      ? {
-          id: step.id,
-          title: step.title,
-          instruction: step.instruction,
-          rationale: step.rationale ?? step.why ?? null,
-        }
-      : null,
-    allowedUiTargetRefs: [...allowedUiTargetRefs],
-  };
+  return buildTutorContext(scenario, mode, currentStepId);
 }
 
 export async function answerTutorQuestionOnServer(
