@@ -67,7 +67,7 @@ nvidia-smi
 
 ## Reale Abnahme auf dem RMI-PC (B1)
 
-Tatsächliche Topologie laut Owner-Präzisierung vom 2026-09-12 in #97: AWS Systems Manager → RMI-PC (`192.168.178.170`). Der RMI-PC ist SSM Managed Node **und** LLM-Knoten: Ollama läuft dort als systemd-Dienst auf Port `11434`, mit NVIDIA-GPU. Der NAS (`192.168.178.81`) gehört nicht zum B1-Pfad. Die Abnahme braucht keinen öffentlichen Zugang.
+Tatsächliche Topologie laut Owner-Präzisierung vom 2026-09-12 in #97: AWS Systems Manager → RMI-PC (`192.168.178.170`). Der RMI-PC ist SSM Managed Node **und** LLM-Knoten: Ollama läuft dort als systemd-Dienst auf Port `11434`, mit NVIDIA-GPU. Die B1-Abnahme prüft diesen lokalen Pfad. Im produktiven Tutor-Pfad ist er der Fallback hinter dem Rotator auf dem NAS (`192.168.178.81`), siehe „Produktiver Tutor-Pfad (B2)“. Die Abnahme braucht keinen öffentlichen Zugang.
 
 Die Tutor-Anfrage läuft über `scripts/verify-llm-provider-live.ts`. Das Skript nutzt dieselbe Kette wie der Server — Kontextaufbau aus dem Szenario, `TutorLlmService` mit Guardrails, `OllamaProvider` — und prüft je Modell, dass keine Weiterleitung an einen externen Upstream stattfand, die Antwort ein JSON-Objekt ist, die Guardrails sie annehmen und jede UiTargetRef im Runtime-Katalog existiert. Es läuft nicht in der CI, weil es einen erreichbaren Ollama-Endpunkt braucht. Die Modelle laufen nacheinander, nie gleichzeitig.
 
@@ -76,7 +76,7 @@ Die Tutor-Anfrage läuft über `scripts/verify-llm-provider-live.ts`. Das Skript
 npm run verify:llm-live -- gemma4:31b gemma4:e4b
 ```
 
-Aus AWS erreicht man den RMI-PC über SSM Run Command, so wie es die `languageModelApi` im Amplify-Projekt `amplify-vite-react-template` bereits nutzt: Eine Lambda-Rolle erhält `ssm:SendCommand` auf die Managed Instance `mi-0c4f95e235b575da9` (us-east-1) und das Dokument `AWS-RunShellScript`; das Kommando ruft auf dem RMI-PC `localhost:11434` auf. Diesen Weg baut B2/#99 für den Tutor; die B1-Abnahme braucht ihn nicht.
+Den Weg aus AWS über SSM beschreibt der Abschnitt „Produktiver Tutor-Pfad (B2)“; die B1-Abnahme braucht ihn nicht.
 
 Optionen: `--scenario`, `--step`, `--mode`, `--question`, `--timeout-seconds` (Standard 600, damit das Laden des 31B-Modells nicht abbricht). Die Ausgabe ist ein Markdown-Block für den Nachweis im Issue; der Exit-Code ist ungleich 0, sobald ein Modell eine Prüfung verfehlt.
 
@@ -89,7 +89,7 @@ ollama ps      # Spalte PROCESSOR: Anteil CPU/GPU
 nvidia-smi
 ```
 
-**Nicht über den NAS-Rotator abnehmen.** Auf dem NAS laufen Ollama und der `ollama-rotator` (`192.168.178.81:11435`) nur mit Cloud-Modellen. Der Rotator reicht Namen mit dem Suffix `@local` an den RMI-PC zurück und alle anderen Namen an Ollama Cloud — `gemma4:31b` ginge dort also an einen externen Provider. Der Runner erkennt das an den Antwort-Headern: Ein `via`-Header, ein anderes `x-ollama-account` als `local` oder eine nicht-lokale `x-ollama-route` lassen die Abnahme fehlschlagen.
+**B1 nimmt den lokalen Pfad ab, nicht die Cloud-Route des Rotators.** Auf dem NAS laufen Ollama und der `ollama-rotator` (`192.168.178.81:11435`) mit Cloud-Modellen. Der Rotator reicht Namen mit dem Suffix `@local` an den RMI-PC zurück und alle anderen Namen an Ollama Cloud — `gemma4:31b` ginge dort also an einen externen Provider. Über den Rotator deshalb nur mit `gemma4:31b@local` und `gemma4:e4b@local` abnehmen; auch `…:cloud@local` läuft in der Cloud, weil das Ollama auf dem RMI-PC selbst Cloud-Modelle wie `glm-5.2:cloud` führt. Der Runner lässt die Abnahme fehlschlagen, wenn die Antwort-Header eine Cloud-Route zeigen: ein `via`-Header, ein anderes `x-ollama-account` als `local` oder eine nicht-lokale `x-ollama-route`.
 
 Den SSM-Nachweis für den RMI-PC liefert ein AWS-Principal mit `ssm:DescribeInstanceInformation` im Konto der Hybrid-Aktivierung:
 
@@ -98,6 +98,29 @@ aws ssm describe-instance-information --region us-east-1 \
   --filters Key=InstanceIds,Values=mi-0c4f95e235b575da9 \
   --query 'InstanceInformationList[].[InstanceId,PingStatus,AgentVersion,ComputerName,LastPingDateTime]'
 ```
+
+## Produktiver Tutor-Pfad (B2)
+
+Owner-Entscheidung vom 2026-09-13 in #99: Der produktive Tutor erreicht die Modelle über den `ollama-rotator` auf dem NAS.
+
+```text
+Browser
+  → TrainLabs Server Function (Amplify)
+  → Lambda im Amplify-Backend
+  → AWS Systems Manager: SendCommand (AWS-RunShellScript) nur auf mi-0c4f95e235b575da9, us-east-1
+  → RMI-PC 192.168.178.170 (SSM Managed Node)
+  → NAS 192.168.178.81:11435, ollama-rotator
+       primär:   Ollama Cloud
+       Fallback: …@local → RMI-PC :11434, lokales Ollama mit GPU
+  → fallen beide aus: deterministischer Tutor (#28)
+```
+
+- Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation` zum Abholen des Ergebnisses. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
+- Der Rotator nutzt primär Cloud-Modelle und fällt nur bei Ausfall auf die lokalen Modelle des RMI-PC zurück. Seine Konfiguration liegt auf dem NAS, nicht in diesem Repository. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback.
+- Mit Cloud primär gehen Tutor-Prompts an Ollama Cloud als externen Empfänger. Die Datenschutzhinweise (#449, #451) müssen das abdecken.
+- Welche Route geantwortet hat, zeigen die Antwort-Header `x-ollama-route`, `x-ollama-account` und `via`.
+- RMI-PC `11434` und NAS `11435` sind nur im LAN erreichbar; der Pfad braucht keinen öffentlichen Inbound.
+- SSM speichert Kommando-Parameter in der Command-History. Prompts gehören deshalb nicht im Klartext in die Parameter; den Transport klärt #99.
 
 ## Architekturgrenze
 
