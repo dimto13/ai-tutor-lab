@@ -118,7 +118,7 @@ Browser
 ```
 
 - Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation` zum Abholen des Ergebnisses. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
-- Das SSM-Kommando läuft auf dem RMI-PC als root und geht per SSH auf den NAS; dort spricht es den Rotator-Container an. Der dafür verwendete SSH-Schlüssel sollte in der `authorized_keys` des NAS auf genau diesen Aufruf beschränkt sein (`command=…`, `no-port-forwarding`, `no-pty`), damit die Kette keine allgemeine Remote-Shell wird.
+- Das SSM-Kommando ist ein fester Befehl über `AWS-RunShellScript`. Es geht mit dem vorhandenen NAS-Zugang auf dem RMI-PC per SSH auf den NAS (`runuser -u <benutzer> -- ssh nas …`) und spricht dort den Rotator-Container an. Die Frage des Nutzers wird nie in den Shell-Befehl eingesetzt.
 - Der Rotator nutzt primär Cloud-Modelle und fällt nur bei Ausfall auf die lokalen Modelle des RMI-PC zurück; dafür muss er `11434` auf dem RMI-PC im LAN erreichen. Seine Konfiguration liegt auf dem NAS, nicht in diesem Repository. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback.
 - Mit Cloud primär gehen Tutor-Prompts an Ollama Cloud als externen Empfänger. Die Datenschutzhinweise (#449, #451) müssen das abdecken.
 - Welche Route geantwortet hat, zeigen die Antwort-Header `x-ollama-route`, `x-ollama-account` und `via`.
