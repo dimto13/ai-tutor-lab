@@ -3,6 +3,16 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+declare const __TRAINLABS_SERVER_ENV__: Record<string, string> | undefined;
+
+// Amplify Hosting passes no environment variables to the SSR runtime. The production build bakes
+// the server configuration in (see vite.config.ts); values set in the runtime itself win.
+const bakedServerEnv =
+  typeof __TRAINLABS_SERVER_ENV__ === "undefined" ? {} : __TRAINLABS_SERVER_ENV__;
+for (const [name, value] of Object.entries(bakedServerEnv)) {
+  process.env[name] ??= value;
+}
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };

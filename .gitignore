@@ -29,6 +29,8 @@ apps/web/e2e/playwright-report
 apps/web/.amplify-hosting/
 amplify_outputs*
 amplifyconfiguration*
+# Server runtime configuration baked into the SSR build; contains the tutor relay bearer.
+apps/web/.runtime-env.json
 .npm/
 
 # Generated AppSync scenario authority mirrors

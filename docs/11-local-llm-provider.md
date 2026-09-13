@@ -117,13 +117,42 @@ Browser
   → fallen beide aus: deterministischer Tutor (#28)
 ```
 
-- Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation` zum Abholen des Ergebnisses. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
-- Das SSM-Kommando ist ein fester Befehl über `AWS-RunShellScript`. Es geht mit dem vorhandenen NAS-Zugang auf dem RMI-PC per SSH auf den NAS (`runuser -u <benutzer> -- ssh nas …`) und spricht dort den Rotator-Container an. Die Frage des Nutzers wird nie in den Shell-Befehl eingesetzt.
-- Der Rotator nutzt primär Cloud-Modelle und fällt nur bei Ausfall auf die lokalen Modelle des RMI-PC zurück; dafür muss er `11434` auf dem RMI-PC im LAN erreichen. Seine Konfiguration liegt auf dem NAS, nicht in diesem Repository. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback.
+- **Transport:** Die Lambda `tutor-relay` (`amplify/functions/tutor-relay/`) nimmt über ihre Function URL eine OpenAI-kompatible Chat-Anfrage an. Die Server Function spricht sie mit dem vorhandenen `OllamaProvider` an: `LLM_BASE_URL` ist die Function URL plus `/v1`, `LLM_API_KEY` ein aus dem Secret `TUTOR_RELAY_KEY` abgeleitetes Bearer-Token. Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation` und `ssm:CancelCommand`. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
+- **Befehl auf dem RMI-PC:** ein fester Befehl über `AWS-RunShellScript`. Die Anfrage steht darin nur verschlüsselt (AES-256-GCM, Schlüssel ebenfalls aus `TUTOR_RELAY_KEY` abgeleitet), in der SSM-Command-History also nur Chiffretext. Das Relay-Programm entschlüsselt sie, geht mit dem vorhandenen NAS-Zugang auf dem RMI-PC per SSH auf den NAS (`runuser -u <benutzer> -- ssh nas …`) und gibt die Anfrage per `stdin` an den Rotator-Container. Die Frage des Nutzers wird nie in einen Shell-Befehl eingesetzt. `<benutzer>` ist der Besitzer von `~/.config/trainlabs-tutor-relay/payload.key`.
+- **Modelle:** Das Relay fragt zuerst das Cloud-Modell (`gemma4:31b`) und bei jedem Fehler einmal `gemma4:e4b@local`; der Rotator reicht `@local` an `11434` auf dem RMI-PC durch. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback. Die Cloud verpackt JSON trotz `response_format` in einen Markdown-Codeblock; das Relay entfernt ihn, wenn JSON angefordert war. `reasoning_effort` bleibt ungesetzt, denn ohne Denkschritt fehlen bei `gemma4:e4b` `kind` und `uiTargetRefs`.
+- **Zeit:** Amplify beendet SSR-Anfragen nach 30 s. Das Relay gibt nach 22 s auf (Cloud-Versuch 10 s, Fallback 9 s); dann antwortet der deterministische Tutor.
 - Mit Cloud primär gehen Tutor-Prompts an Ollama Cloud als externen Empfänger. Die Datenschutzhinweise (#449, #451) müssen das abdecken.
-- Welche Route geantwortet hat, zeigen die Antwort-Header `x-ollama-route`, `x-ollama-account` und `via`.
+- Welche Route geantwortet hat, zeigen die Antwort-Header `x-tutor-relay-attempt`, `x-ollama-route`, `x-ollama-account` und `via`; die Lambda protokolliert sie ohne Prompt-Inhalt.
 - Der Weg läuft über SSM, das der Agent auf dem RMI-PC ausgehend aufbaut, und über SSH im LAN. Weder der RMI-PC noch der NAS braucht einen Zugang aus dem Internet.
-- SSM speichert Kommando-Parameter in der Command-History. Prompts gehören deshalb nicht im Klartext in die Parameter; den Transport klärt #99.
+
+### Einrichtung
+
+1. **Secret:** In der Amplify-Konsole das Secret `TUTOR_RELAY_KEY` setzen: 32 zufällige Bytes, base64 (`openssl rand -base64 32`). Die Lambda liest es zur Laufzeit. `scripts/write-runtime-env.mjs` liest es beim Frontend-Build und backt Relay-URL, Bearer und die Cognito-IDs in die Server-Laufzeit ein, weil Amplify Hosting der SSR-Laufzeit keine Umgebungsvariablen weiterreicht. Fehlt das Secret, entsteht der Build mit `LLM_ENABLED=false`, und der Tutor antwortet deterministisch. Die Amplify-Umgebungsvariable `LLM_ENABLED=false` schaltet den Pfad bewusst ab.
+2. **RMI-PC:** Der abgeleitete Payload-Schlüssel liegt in `~/.config/trainlabs-tutor-relay/payload.key` des Accounts mit NAS-Zugang, Modus `0600`. SSH zum NAS muss für diesen Account ohne Agent und ohne Passwortabfrage gehen.
+
+   ```bash
+   install -d -m 700 ~/.config/trainlabs-tutor-relay
+   TUTOR_RELAY_KEY=<Secret> node --input-type=module -e 'import { deriveRelayKeys } from "./amplify/functions/tutor-relay/keys.js"; process.stdout.write(deriveRelayKeys(process.env.TUTOR_RELAY_KEY).payloadKey.toString("base64") + "\n")' > ~/.config/trainlabs-tutor-relay/payload.key
+   chmod 600 ~/.config/trainlabs-tutor-relay/payload.key
+   ```
+
+3. **Optional**, als Umgebungsvariablen der Lambda: `TUTOR_RELAY_PRIMARY_MODEL`, `TUTOR_RELAY_FALLBACK_MODEL` (leer = kein Fallback), `TUTOR_RELAY_PRIMARY_TIMEOUT_SECONDS`, `TUTOR_RELAY_FALLBACK_TIMEOUT_SECONDS`, `TUTOR_RELAY_DEADLINE_MS`, `TUTOR_RELAY_REASONING_EFFORT`, `TUTOR_RELAY_SSH_HOST`, `TUTOR_RELAY_ROTATOR_URL`.
+
+### Prüfen auf dem RMI-PC
+
+`scripts/verify-tutor-relay-node.mjs` führt den Relay-Befehl aus wie SSM, aber als aktueller Benutzer und ohne AWS:
+
+```bash
+node scripts/verify-tutor-relay-node.mjs --scenario default    # Cloud-Modell
+node scripts/verify-tutor-relay-node.mjs --scenario fallback   # unbekanntes Cloud-Modell → lokal
+node scripts/verify-tutor-relay-node.mjs --scenario local      # nur lokal
+
+# komplette Tutor-Kette gegen das lokal laufende Relay
+node scripts/verify-tutor-relay-node.mjs --serve 8787 &
+LLM_BASE_URL=http://127.0.0.1:8787/v1 LLM_API_KEY=<ausgegebener Bearer> npm run verify:llm-live -- gemma4:31b
+```
+
+Messung vom 2026-09-13 ohne SSM-Anteil: Cloud 1,5–2,0 s, lokal 4,0 s, Fallback 4,4 s; in allen Fällen JSON, Guardrails `ok` und gültige `UiTargetRef`. Beim Cloud-Modell meldet `verify:llm-live` die Weiterleitung an einen externen Upstream; das ist hier gewollt.
 
 ## Architekturgrenze
 
