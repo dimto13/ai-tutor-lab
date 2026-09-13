@@ -109,17 +109,20 @@ Browser
   → Lambda im Amplify-Backend
   → AWS Systems Manager: SendCommand (AWS-RunShellScript) nur auf mi-0c4f95e235b575da9, us-east-1
   → RMI-PC 192.168.178.170 (SSM Managed Node)
-  → NAS 192.168.178.81:11435, ollama-rotator
+  → SSH im LAN auf den NAS 192.168.178.81
+  → Container ollama-rotator auf dem NAS
        primär:   Ollama Cloud
        Fallback: …@local → RMI-PC :11434, lokales Ollama mit GPU
+  → Antwort zurück: Rotator → SSH → RMI-PC → SSM → Lambda → TrainLabs
   → fallen beide aus: deterministischer Tutor (#28)
 ```
 
 - Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation` zum Abholen des Ergebnisses. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
-- Der Rotator nutzt primär Cloud-Modelle und fällt nur bei Ausfall auf die lokalen Modelle des RMI-PC zurück. Seine Konfiguration liegt auf dem NAS, nicht in diesem Repository. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback.
+- Das SSM-Kommando läuft auf dem RMI-PC als root und geht per SSH auf den NAS; dort spricht es den Rotator-Container an. Der dafür verwendete SSH-Schlüssel sollte in der `authorized_keys` des NAS auf genau diesen Aufruf beschränkt sein (`command=…`, `no-port-forwarding`, `no-pty`), damit die Kette keine allgemeine Remote-Shell wird.
+- Der Rotator nutzt primär Cloud-Modelle und fällt nur bei Ausfall auf die lokalen Modelle des RMI-PC zurück; dafür muss er `11434` auf dem RMI-PC im LAN erreichen. Seine Konfiguration liegt auf dem NAS, nicht in diesem Repository. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback.
 - Mit Cloud primär gehen Tutor-Prompts an Ollama Cloud als externen Empfänger. Die Datenschutzhinweise (#449, #451) müssen das abdecken.
 - Welche Route geantwortet hat, zeigen die Antwort-Header `x-ollama-route`, `x-ollama-account` und `via`.
-- RMI-PC `11434` und NAS `11435` sind nur im LAN erreichbar; der Pfad braucht keinen öffentlichen Inbound.
+- Der Weg läuft über SSM, das der Agent auf dem RMI-PC ausgehend aufbaut, und über SSH im LAN. Weder der RMI-PC noch der NAS braucht einen Zugang aus dem Internet.
 - SSM speichert Kommando-Parameter in der Command-History. Prompts gehören deshalb nicht im Klartext in die Parameter; den Transport klärt #99.
 
 ## Architekturgrenze
