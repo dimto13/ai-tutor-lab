@@ -84,7 +84,15 @@ def attempt(item):
         timeout,
         request["url"],
     )
-    command = ["/usr/bin/ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", request["host"], remote]
+    command = [
+        "/usr/bin/ssh",
+        "-o", "BatchMode=yes",
+        "-o", "ConnectTimeout=5",
+        "-o", "ServerAliveInterval=3",
+        "-o", "ServerAliveCountMax=2",
+        request["host"],
+        remote,
+    ]
     if os.geteuid() == 0:
         command = ["/usr/sbin/runuser", "-u", user, "--"] + command
     try:

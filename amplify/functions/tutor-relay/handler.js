@@ -214,7 +214,10 @@ export function createTutorRelayHandler({
           new GetCommandInvocationCommand({ CommandId: commandId, InstanceId: config.instanceId }),
         );
       } catch (error) {
-        if (error?.name === "InvocationDoesNotExist") continue;
+        // Not visible on the node yet, or SSM throttles the status call: keep polling.
+        if (error?.name === "InvocationDoesNotExist" || error?.name === "ThrottlingException") {
+          continue;
+        }
         log({ id, commandId, outcome: "status_failed", error: error?.name ?? "unknown" });
         return errorResponse(502, "relay status unavailable");
       }

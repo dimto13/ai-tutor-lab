@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 import {
   CancelCommandCommand,
@@ -234,6 +236,28 @@ test("the relay seals the prompt and runs AWS-RunShellScript only on the RMI-PC"
   assert.deepEqual(primary.body.response_format, { type: "json_object" });
   assert.equal(primary.body.max_tokens, 500);
   assert.equal("tools" in primary.body, false, "unsupported fields are dropped");
+});
+
+test("a throttled status call keeps the relay polling", async () => {
+  const node = fakeNode(
+    () => ({ status: 200, attempt: 0, headers: {}, body: completion }),
+    [namedError("ThrottlingException"), "InProgress"],
+  );
+  const relay = createTutorRelayHandler({ send: node.send, config: relayConfig(), ...fakeClock() });
+  assert.equal((await relay(relayEvent())).statusCode, 200);
+});
+
+test("only the server entry reads the baked server environment", async () => {
+  const sourceRoot = path.resolve("apps/web/src");
+  const serverEntry = path.join(sourceRoot, "server.ts");
+  const readers: string[] = [];
+  for (const entry of await readdir(sourceRoot, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile() || !/\.(tsx?|jsx?|mjs)$/.test(entry.name)) continue;
+    const file = path.join(entry.parentPath, entry.name);
+    if ((await readFile(file, "utf8")).includes("__TRAINLABS_SERVER_ENV__")) readers.push(file);
+  }
+  // The build substitutes the constant wherever it appears; any client module would ship the bearer.
+  assert.deepEqual(readers, [serverEntry]);
 });
 
 test("the relay reports an answer from the fallback attempt", async () => {
