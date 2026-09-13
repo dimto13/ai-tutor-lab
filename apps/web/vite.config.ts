@@ -2,7 +2,18 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
+import { existsSync, readFileSync } from "node:fs";
 import { defineConfig } from "vite";
+
+/**
+ * Amplify Hosting passes no environment variables to the SSR runtime. In the Amplify build,
+ * scripts/write-runtime-env.mjs writes the server configuration to .runtime-env.json; the build
+ * bakes it into the server entry, which is the only module referencing the constant.
+ */
+function bakedServerEnv(): Record<string, string> {
+  const file = new URL("./.runtime-env.json", import.meta.url);
+  return existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as Record<string, string>) : {};
+}
 
 /**
  * Native TanStack Start/Vite setup without tooling from the original POC environment.
@@ -53,6 +64,7 @@ export default defineConfig(({ command, mode }) => ({
   resolve: {
     tsconfigPaths: true,
   },
+  define: command === "build" ? { __TRAINLABS_SERVER_ENV__: JSON.stringify(bakedServerEnv()) } : {},
   plugins: [
     tailwindcss(),
     tanstackStart(),

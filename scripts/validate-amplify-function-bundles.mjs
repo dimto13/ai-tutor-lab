@@ -2,13 +2,12 @@ import { build } from "esbuild";
 import { resolve } from "node:path";
 
 const entryPoints = [
-  "amplify/functions/telemetry-deletion-worker/handler.js",
-  "amplify/functions/telemetry-aggregate-projector/handler.js",
+  ["amplify/functions/telemetry-deletion-worker/handler.js", "@aws-sdk/client-dynamodb"],
+  ["amplify/functions/telemetry-aggregate-projector/handler.js", "@aws-sdk/client-dynamodb"],
+  ["amplify/functions/tutor-relay/handler.js", "@aws-sdk/client-ssm"],
 ];
 
-const dependency = "@aws-sdk/client-dynamodb";
-
-for (const entryPoint of entryPoints) {
+for (const [entryPoint, dependency] of entryPoints) {
   const absoluteEntryPoint = resolve(entryPoint);
   const result = await build({
     entryPoints: [absoluteEntryPoint],

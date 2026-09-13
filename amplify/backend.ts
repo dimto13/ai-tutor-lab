@@ -1,11 +1,14 @@
 import { defineBackend } from "@aws-amplify/backend";
+import { Stack } from "aws-cdk-lib";
 import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { EventSourceMapping, FunctionUrlAuthType, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { runtimeIncidentReporter } from "./functions/runtime-incident-reporter/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
 import { telemetryDeletionWorker } from "./functions/telemetry-deletion-worker/resource";
+import { tutorRelay } from "./functions/tutor-relay/resource";
 import { userDataExport } from "./functions/user-data-export/resource";
 
 function requiredResource<T>(resource: T | undefined, name: string): T {
@@ -19,6 +22,7 @@ export const backend = defineBackend({
   runtimeIncidentReporter,
   telemetryAggregateProjector,
   telemetryDeletionWorker,
+  tutorRelay,
   userDataExport,
 });
 
@@ -160,3 +164,31 @@ new EventSourceMapping(backend.data.stack, "TelemetryAggregateProjectionStream",
   startingPosition: StartingPosition.TRIM_HORIZON,
   reportBatchItemFailures: true,
 });
+
+// Tutor relay (#99): the SSR server function calls the relay's function URL with a bearer derived
+// from the TUTOR_RELAY_KEY secret. The relay may run AWS-RunShellScript only on the RMI-PC, which
+// reaches the ollama-rotator on the NAS over SSH, like the Run Command calls of the platform project.
+const TUTOR_RELAY_MANAGED_INSTANCE_ID = "mi-0c4f95e235b575da9";
+const tutorRelayLambda = backend.tutorRelay.resources.lambda;
+const tutorRelayStack = Stack.of(tutorRelayLambda);
+tutorRelayLambda.addToRolePolicy(
+  new PolicyStatement({
+    actions: ["ssm:SendCommand"],
+    resources: [
+      `arn:aws:ssm:${tutorRelayStack.region}:${tutorRelayStack.account}:managed-instance/${TUTOR_RELAY_MANAGED_INSTANCE_ID}`,
+      `arn:aws:ssm:${tutorRelayStack.region}::document/AWS-RunShellScript`,
+    ],
+  }),
+);
+tutorRelayLambda.addToRolePolicy(
+  new PolicyStatement({
+    actions: ["ssm:GetCommandInvocation", "ssm:CancelCommand"],
+    resources: ["*"],
+  }),
+);
+backend.tutorRelay.addEnvironment(
+  "TUTOR_RELAY_MANAGED_INSTANCE_ID",
+  TUTOR_RELAY_MANAGED_INSTANCE_ID,
+);
+const tutorRelayUrl = tutorRelayLambda.addFunctionUrl({ authType: FunctionUrlAuthType.NONE });
+backend.addOutput({ custom: { tutorRelayUrl: tutorRelayUrl.url } });
