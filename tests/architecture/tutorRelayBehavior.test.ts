@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import {
   CancelCommandCommand,
+  DescribeInstanceInformationCommand,
   GetCommandInvocationCommand,
   SendCommandCommand,
 } from "@aws-sdk/client-ssm";
@@ -21,7 +22,9 @@ import {
   sealPayload,
 } from "../../amplify/functions/tutor-relay/keys.js";
 import {
+  HEALTH_PROGRAM,
   RELAY_PROGRAM,
+  buildHealthCommand,
   buildRelayCommand,
 } from "../../amplify/functions/tutor-relay/relayProgram.js";
 
@@ -29,6 +32,7 @@ const MASTER_KEY = Buffer.alloc(32, 7).toString("base64");
 const INSTANCE_ID = "mi-0c4f95e235b575da9";
 const MARKER_WORD = "Zitronenfalter";
 const QUESTION = `Wo finde ich den Explorer? ${MARKER_WORD}`;
+const ONLINE = { InstanceInformationList: [{ PingStatus: "Online", AgentVersion: "3.3.2" }] };
 
 interface RelayAttempt {
   timeout: number;
@@ -47,6 +51,9 @@ interface RelayRequest {
   host: string;
   url: string;
   attempts: RelayAttempt[];
+  mode?: string;
+  ollama?: string;
+  models?: { primary: string; fallback: string };
 }
 
 interface SendInput {
@@ -54,6 +61,18 @@ interface SendInput {
   InstanceIds: string[];
   Parameters: { commands: string[]; executionTimeout: string[] };
   Comment: string;
+}
+
+interface HealthCheck {
+  status: string;
+  [field: string]: unknown;
+}
+
+interface HealthReport {
+  status: string;
+  checks: Record<"ssm" | "sshNas" | "rotator" | "cloudRoute" | "ollama", HealthCheck> & {
+    models: { primary?: HealthCheck; fallback?: HealthCheck };
+  };
 }
 
 type NodeAnswer = Record<string, unknown> | string;
@@ -64,6 +83,14 @@ const completion = JSON.stringify({
   model: "gemma4:31b",
   choices: [{ message: { content: '{"answer":"Explorer"}' } }],
 });
+
+const HEALTHY_NODE = {
+  sshNas: { status: "ok" },
+  rotator: { status: "ok", cloudAccounts: 3, cloudAccountsFree: 3 },
+  cloudRoute: { status: "ok" },
+  ollama: { status: "ok", version: "0.32.13" },
+  models: { primary: { status: "ok" }, fallback: { status: "ok", loaded: true } },
+};
 
 function relayConfig(env: Record<string, string> = {}) {
   return loadRelayConfig({
@@ -94,6 +121,20 @@ function relayEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function healthEvent(overrides: Record<string, unknown> = {}) {
+  return {
+    rawPath: "/v1/health",
+    requestContext: { http: { method: "GET" } },
+    headers: { authorization: `Bearer ${keys.bearer}` },
+    isBase64Encoded: false,
+    ...overrides,
+  };
+}
+
+function healthReport(response: { body: string }): HealthReport {
+  return JSON.parse(response.body) as HealthReport;
+}
+
 function fakeClock() {
   let current = 0;
   return {
@@ -118,12 +159,19 @@ function sealedAnswer(request: RelayRequest, result: Record<string, unknown>): s
 function fakeNode(
   answer: (request: RelayRequest) => NodeAnswer,
   statuses: Array<string | Error> = [],
+  information: Record<string, unknown> | Error = ONLINE,
 ) {
   const sent: SendInput[] = [];
   const cancelled: unknown[] = [];
+  let described = 0;
   let stdout = "";
 
   async function send(command: unknown) {
+    if (command instanceof DescribeInstanceInformationCommand) {
+      described += 1;
+      if (information instanceof Error) throw information;
+      return information;
+    }
     if (command instanceof SendCommandCommand) {
       const input = command.input as unknown as SendInput;
       sent.push(input);
@@ -145,13 +193,26 @@ function fakeNode(
     throw new Error("unexpected SSM command");
   }
 
-  return { send, sent, cancelled };
+  return { send, sent, cancelled, described: () => described };
 }
 
 function namedError(name: string): Error {
   const error = new Error(name);
   error.name = name;
   return error;
+}
+
+async function capturedLogs<T>(run: () => Promise<T>): Promise<{ value: T; logs: string[] }> {
+  const logs: string[] = [];
+  const original = console.log;
+  console.log = (...args: unknown[]) => {
+    logs.push(args.map(String).join(" "));
+  };
+  try {
+    return { value: await run(), logs };
+  } finally {
+    console.log = original;
+  }
 }
 
 test("one relay secret yields a distinct bearer and payload key", () => {
@@ -346,9 +407,202 @@ test("the relay cancels the command and answers 504 at its deadline", async () =
   assert.ok(clock.now() < 22_000, "the relay stays inside its deadline");
 });
 
-test("the relay command only accepts a base64 token", () => {
+test("the health call checks method and bearer before asking SSM", async () => {
+  const node = fakeNode(() => ({ health: HEALTHY_NODE }));
+  const relay = createTutorRelayHandler({ send: node.send, config: relayConfig() });
+  assert.equal((await relay(healthEvent({ headers: {} }))).statusCode, 401);
+  assert.equal(
+    (await relay(healthEvent({ headers: { authorization: "Bearer falsch" } }))).statusCode,
+    401,
+  );
+  assert.equal(
+    (await relay(healthEvent({ requestContext: { http: { method: "POST" } } }))).statusCode,
+    405,
+  );
+  assert.equal(node.described(), 0);
+  assert.equal(node.sent.length, 0);
+});
+
+test("an offline managed node is reported without a run command", async () => {
+  const cases: Array<[Record<string, unknown>, string]> = [
+    [
+      { InstanceInformationList: [{ PingStatus: "ConnectionLost", AgentVersion: "3.3.2" }] },
+      "ConnectionLost",
+    ],
+    [{ InstanceInformationList: [] }, "NotRegistered"],
+  ];
+  for (const [information, pingStatus] of cases) {
+    const node = fakeNode(() => ({ health: HEALTHY_NODE }), [], information);
+    const clock = fakeClock();
+    const relay = createTutorRelayHandler({ send: node.send, config: relayConfig(), ...clock });
+    const response = await relay(healthEvent());
+    assert.equal(response.statusCode, 503);
+    const report = healthReport(response);
+    assert.equal(report.status, "down");
+    assert.equal(report.checks.ssm.status, "down");
+    assert.equal(report.checks.ssm.pingStatus, pingStatus);
+    assert.equal(report.checks.sshNas.status, "unknown");
+    assert.equal(node.sent.length, 0);
+    assert.equal(clock.now(), 0, "the answer does not wait for a command");
+  }
+});
+
+test("the health call runs the sealed health program on the RMI-PC", async () => {
+  const node = fakeNode(
+    () => ({ health: HEALTHY_NODE }),
+    [namedError("InvocationDoesNotExist"), "InProgress"],
+  );
+  const relay = createTutorRelayHandler({
+    send: node.send,
+    config: relayConfig(),
+    ...fakeClock(),
+    newId: () => "health-1",
+  });
+
+  const response = await relay(healthEvent());
+
+  assert.equal(response.statusCode, 200);
+  const report = healthReport(response);
+  assert.equal(report.status, "ok");
+  assert.deepEqual(report.checks.ssm, {
+    status: "ok",
+    pingStatus: "Online",
+    agentVersion: "3.3.2",
+  });
+  assert.deepEqual(report.checks.rotator, { status: "ok", cloudAccounts: 3, cloudAccountsFree: 3 });
+  assert.deepEqual(report.checks.models.primary, {
+    name: "gemma4:31b",
+    route: "cloud",
+    status: "ok",
+  });
+  assert.deepEqual(report.checks.models.fallback, {
+    name: "gemma4:e4b@local",
+    route: "local",
+    status: "ok",
+    loaded: true,
+  });
+
+  const [input] = node.sent;
+  assert.ok(input);
+  assert.deepEqual(input.InstanceIds, [INSTANCE_ID]);
+  assert.equal(input.Comment, "tutor-relay health health-1");
+  const command = input.Parameters.commands[0] ?? "";
+  assert.ok(command.includes(HEALTH_PROGRAM), "the fixed health program runs");
+  const request = sealedRequestOf(command);
+  assert.equal(request.mode, "health");
+  assert.equal(request.host, "nas");
+  assert.equal(request.url, "http://localhost:11435/v1/chat/completions");
+  assert.equal(request.ollama, "http://localhost:11434");
+  assert.deepEqual(request.models, { primary: "gemma4:31b", fallback: "gemma4:e4b@local" });
+});
+
+test("health degrades while one model route works and is down without one", async () => {
+  const cases: Array<[Record<string, unknown>, string, number]> = [
+    [{ cloudRoute: { status: "degraded", error: "accounts-limited" } }, "degraded", 200],
+    [
+      {
+        ollama: { status: "down" },
+        models: { primary: { status: "ok" }, fallback: { status: "unknown" } },
+      },
+      "degraded",
+      200,
+    ],
+    [
+      {
+        sshNas: { status: "down", error: "transport-exit-255" },
+        rotator: { status: "unknown" },
+        cloudRoute: { status: "unknown" },
+      },
+      "down",
+      503,
+    ],
+    [
+      {
+        models: { primary: { status: "missing" }, fallback: { status: "missing", loaded: false } },
+      },
+      "down",
+      503,
+    ],
+  ];
+  for (const [change, status, statusCode] of cases) {
+    const node = fakeNode(() => ({ health: { ...HEALTHY_NODE, ...change } }));
+    const relay = createTutorRelayHandler({
+      send: node.send,
+      config: relayConfig(),
+      ...fakeClock(),
+    });
+    const response = await relay(healthEvent());
+    assert.equal(response.statusCode, statusCode, JSON.stringify(change));
+    assert.equal(healthReport(response).status, status, JSON.stringify(change));
+  }
+});
+
+test("only known health fields reach the answer and the log", async () => {
+  const leak = "OLLAMA_KONTO_GEHEIM";
+  const node = fakeNode(() => ({
+    health: {
+      ...HEALTHY_NODE,
+      rotator: {
+        status: "ok",
+        cloudAccounts: 3,
+        cloudAccountsFree: 2,
+        konten: [{ name: leak, key_ende: "Xy12" }],
+      },
+      ollama: { status: "ok", version: `0.32.13 ${leak}` },
+      models: {
+        primary: { status: "ok", name: leak },
+        fallback: { status: "fine", loaded: "yes" },
+      },
+      extra: leak,
+    },
+  }));
+  const relay = createTutorRelayHandler({ send: node.send, config: relayConfig(), ...fakeClock() });
+
+  const { value: response, logs } = await capturedLogs(() => relay(healthEvent()));
+
+  for (const text of [response.body, ...logs]) {
+    assert.equal(text.includes(leak), false);
+    assert.equal(text.includes("Xy12"), false);
+  }
+  const report = healthReport(response);
+  assert.deepEqual(report.checks.rotator, { status: "ok", cloudAccounts: 3, cloudAccountsFree: 2 });
+  assert.deepEqual(report.checks.ollama, { status: "ok" });
+  assert.deepEqual(report.checks.models.fallback, {
+    name: "gemma4:e4b@local",
+    route: "local",
+    status: "unknown",
+  });
+});
+
+test("a failed health run marks the SSM hop down, a missing status call does not", async () => {
+  const failed = fakeNode(() => "TRELAYERR:key-not-unique\n");
+  let relay = createTutorRelayHandler({ send: failed.send, config: relayConfig(), ...fakeClock() });
+  let response = await relay(healthEvent());
+  assert.equal(response.statusCode, 503);
+  assert.deepEqual(healthReport(response).checks.ssm, {
+    status: "down",
+    pingStatus: "Online",
+    agentVersion: "3.3.2",
+    error: "output-unusable",
+  });
+
+  const denied = fakeNode(
+    () => ({ health: HEALTHY_NODE }),
+    [],
+    namedError("AccessDeniedException"),
+  );
+  relay = createTutorRelayHandler({ send: denied.send, config: relayConfig(), ...fakeClock() });
+  response = await relay(healthEvent());
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(healthReport(response).checks.ssm, { status: "ok" });
+});
+
+test("the node commands only accept a base64 token", () => {
   assert.throws(() => buildRelayCommand("abc'; rm -rf /; echo '"));
-  assert.equal(RELAY_PROGRAM.split("\n").includes("TRELAY_PY"), false);
+  assert.throws(() => buildHealthCommand("abc'; rm -rf /; echo '"));
+  for (const program of [RELAY_PROGRAM, HEALTH_PROGRAM]) {
+    assert.equal(program.split("\n").includes("TRELAY_PY"), false);
+  }
 });
 
 test("a fenced JSON answer is unwrapped only when JSON was requested", () => {

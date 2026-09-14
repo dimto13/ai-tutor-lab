@@ -117,7 +117,7 @@ Browser
   → fallen beide aus: deterministischer Tutor (#28)
 ```
 
-- **Transport:** Die Lambda `tutor-relay` (`amplify/functions/tutor-relay/`) nimmt über ihre Function URL eine OpenAI-kompatible Chat-Anfrage an. Die Server Function spricht sie mit dem vorhandenen `OllamaProvider` an: `LLM_BASE_URL` ist die Function URL plus `/v1`, `LLM_API_KEY` ein aus dem Secret `TUTOR_RELAY_KEY` abgeleitetes Bearer-Token. Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation` und `ssm:CancelCommand`. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
+- **Transport:** Die Lambda `tutor-relay` (`amplify/functions/tutor-relay/`) nimmt über ihre Function URL eine OpenAI-kompatible Chat-Anfrage an. Die Server Function spricht sie mit dem vorhandenen `OllamaProvider` an: `LLM_BASE_URL` ist die Function URL plus `/v1`, `LLM_API_KEY` ein aus dem Secret `TUTOR_RELAY_KEY` abgeleitetes Bearer-Token. Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation`, `ssm:CancelCommand` und für den Health-Aufruf `ssm:DescribeInstanceInformation`. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
 - **Befehl auf dem RMI-PC:** ein fester Befehl über `AWS-RunShellScript`. Die Anfrage steht darin nur verschlüsselt (AES-256-GCM, Schlüssel ebenfalls aus `TUTOR_RELAY_KEY` abgeleitet), in der SSM-Command-History also nur Chiffretext. Das Relay-Programm entschlüsselt sie, geht mit dem vorhandenen NAS-Zugang auf dem RMI-PC per SSH auf den NAS (`runuser -u <benutzer> -- ssh nas …`) und gibt die Anfrage per `stdin` an den Rotator-Container. Die Frage des Nutzers wird nie in einen Shell-Befehl eingesetzt. `<benutzer>` ist der Besitzer von `~/.config/trainlabs-tutor-relay/payload.key`.
 - **Modelle:** Das Relay fragt zuerst das Cloud-Modell (`gemma4:31b`) und bei jedem Fehler einmal `gemma4:e4b@local`; der Rotator reicht `@local` an `11434` auf dem RMI-PC durch. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback. Die Cloud verpackt JSON trotz `response_format` in einen Markdown-Codeblock; das Relay entfernt ihn, wenn JSON angefordert war. `reasoning_effort` bleibt ungesetzt, denn ohne Denkschritt fehlen bei `gemma4:e4b` `kind` und `uiTargetRefs`.
 - **Zeit:** Amplify beendet SSR-Anfragen nach 30 s. Das Relay gibt nach 22 s auf (Cloud-Versuch 10 s, Fallback 9 s); dann antwortet der deterministische Tutor.
@@ -136,7 +136,7 @@ Browser
    chmod 600 ~/.config/trainlabs-tutor-relay/payload.key
    ```
 
-3. **Optional**, als Umgebungsvariablen der Lambda: `TUTOR_RELAY_PRIMARY_MODEL`, `TUTOR_RELAY_FALLBACK_MODEL` (leer = kein Fallback), `TUTOR_RELAY_PRIMARY_TIMEOUT_SECONDS`, `TUTOR_RELAY_FALLBACK_TIMEOUT_SECONDS`, `TUTOR_RELAY_DEADLINE_MS`, `TUTOR_RELAY_REASONING_EFFORT`, `TUTOR_RELAY_SSH_HOST`, `TUTOR_RELAY_ROTATOR_URL`.
+3. **Optional**, als Umgebungsvariablen der Lambda: `TUTOR_RELAY_PRIMARY_MODEL`, `TUTOR_RELAY_FALLBACK_MODEL` (leer = kein Fallback), `TUTOR_RELAY_PRIMARY_TIMEOUT_SECONDS`, `TUTOR_RELAY_FALLBACK_TIMEOUT_SECONDS`, `TUTOR_RELAY_DEADLINE_MS`, `TUTOR_RELAY_REASONING_EFFORT`, `TUTOR_RELAY_SSH_HOST`, `TUTOR_RELAY_ROTATOR_URL`, `TUTOR_RELAY_OLLAMA_URL` (Ollama auf dem RMI-PC, nur für den Health-Aufruf; Standard `http://localhost:11434`).
 
 ### Prüfen auf dem RMI-PC
 
@@ -146,6 +146,7 @@ Browser
 node scripts/verify-tutor-relay-node.mjs --scenario default    # Cloud-Modell
 node scripts/verify-tutor-relay-node.mjs --scenario fallback   # unbekanntes Cloud-Modell → lokal
 node scripts/verify-tutor-relay-node.mjs --scenario local      # nur lokal
+node scripts/verify-tutor-relay-node.mjs --health              # Health, ohne SSM-Status
 
 # komplette Tutor-Kette gegen das lokal laufende Relay
 node scripts/verify-tutor-relay-node.mjs --serve 8787 &
@@ -153,6 +154,25 @@ LLM_BASE_URL=http://127.0.0.1:8787/v1 LLM_API_KEY=<ausgegebener Bearer> npm run 
 ```
 
 Messung vom 2026-09-13 ohne SSM-Anteil: Cloud 1,5–2,0 s, lokal 4,0 s, Fallback 4,4 s; in allen Fällen JSON, Guardrails `ok` und gültige `UiTargetRef`. Beim Cloud-Modell meldet `verify:llm-live` die Weiterleitung an einen externen Upstream; das ist hier gewollt.
+
+### Health
+
+`GET <Function URL>/health` mit demselben Bearer wie der Chat-Pfad prüft jede Station einzeln (#480). Jede Prüfung meldet `ok`, `degraded`, `down`, `missing` oder `unknown`; der Gesamtstatus ist `ok`, `degraded` (mindestens eine Modellroute nutzbar) oder `down` (keine Route nutzbar, HTTP 503; der Tutor antwortet dann deterministisch).
+
+| Prüfung      | Quelle                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ssm`        | SSM-Status des Managed Nodes (`PingStatus`, Agent-Version). Ist er nicht `Online`, antwortet die Lambda sofort und ohne Run Command. |
+| `sshNas`     | SSH vom RMI-PC zum NAS                                                                                                               |
+| `rotator`    | `/healthz` des Rotators; übernommen wird nur die Zahl der (freien) Cloud-Konten, keine Kontonamen oder Key-Enden                     |
+| `cloudRoute` | `/api/version` über den Rotator, also die Cloud ohne Modellaufruf; `degraded`, wenn kein Cloud-Konto frei ist                        |
+| `ollama`     | Ollama auf dem RMI-PC (`/api/version`)                                                                                               |
+| `models`     | primäres Modell unter den erlaubten Cloud-Modellen des Rotators; Fallback-Modell lokal installiert und ob es geladen ist             |
+
+Der Health-Teil läuft wie der Chat als fester Befehl über `AWS-RunShellScript` mit versiegelter Anfrage und Antwort; SSH zum NAS und die lokalen Prüfungen laufen parallel. Aus der Antwort des RMI-PC übernimmt die Lambda nur bekannte Felder.
+
+```bash
+npm run verify:tutor-health -- --app https://<App-Domain>   # Relay-URL aus amplify_outputs.json
+```
 
 ## Architekturgrenze
 

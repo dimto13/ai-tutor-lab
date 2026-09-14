@@ -180,9 +180,11 @@ tutorRelayLambda.addToRolePolicy(
     ],
   }),
 );
+// These SSM actions take no resource-level restriction; DescribeInstanceInformation feeds the
+// relay's health check with the node's ping status.
 tutorRelayLambda.addToRolePolicy(
   new PolicyStatement({
-    actions: ["ssm:GetCommandInvocation", "ssm:CancelCommand"],
+    actions: ["ssm:GetCommandInvocation", "ssm:CancelCommand", "ssm:DescribeInstanceInformation"],
     resources: ["*"],
   }),
 );
