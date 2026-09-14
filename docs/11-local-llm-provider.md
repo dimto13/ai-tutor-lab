@@ -204,6 +204,19 @@ node scripts/verify-tutor-relay-node.mjs --scenario node-offline      # SSM lehn
 
 `busy`, `cloud_unavailable` und `local_unavailable` decken Unit-Tests ab; live ließen sie sich nur erzeugen, indem man Dienste anhält oder Cloud-Konten erschöpft.
 
+### Korrelation
+
+Jede Tutor-Anfrage bekommt in der Server Function eine Request-ID und eine pseudonyme Tenant-Referenz (#482): einen mit dem Relay-Bearer gebildeten HMAC über die Tenant-ID, 16 Hex-Zeichen, stabil je Tenant. Beide gehen als `x-trainlabs-request-id` und `x-trainlabs-tenant-ref` an das Relay, das sie nur in genau dieser Form übernimmt. Die Request-ID ist die `id` im Relay-Log und steht im SSM-Kommentar `tutor-relay <Request-ID>`; das Audit der Server Function (`[tutor-llm]`) enthält dieselben beiden Felder.
+
+```bash
+npm run trace:tutor-request                  # letzte Tutor-Anfrage der letzten 24 Stunden
+npm run trace:tutor-request -- <Request-ID>
+```
+
+Wechselt der Relay-Schlüssel, ändern sich auch die Tenant-Referenzen; über einen Schlüsselwechsel hinweg lassen sie sich nicht vergleichen.
+
+Der Befehl zeigt Audit, Relay-Log und SSM-Befehl zur selben Request-ID. Den SSM-Befehl liest er aus CloudTrail, das ihn nach einigen Minuten zeigt; das Nutzerkennzeichen des Audits (`sessionKey`) gibt er nicht aus.
+
 ## Architekturgrenze
 
 Alle providerabhängigen Details liegen ausschließlich unter `src/tutor/llm/`:

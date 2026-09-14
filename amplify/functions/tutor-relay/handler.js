@@ -383,13 +383,21 @@ export function createTutorRelayHandler({
       });
     }
 
-    const id = newId();
+    // Correlation from the server function (#482), taken over only in its expected shape: a header
+    // can neither inject log lines nor carry an identity.
+    const requestId = String(event.headers?.["x-trainlabs-request-id"] ?? "");
+    const tenantRef = String(event.headers?.["x-trainlabs-tenant-ref"] ?? "");
+    const trace = {
+      id: /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(requestId) ? requestId : newId(),
+      tenantRef: /^[0-9a-f]{16}$/.test(tenantRef) ? tenantRef : undefined,
+    };
+    const { id } = trace;
     const sealed = sealPayload(
       config.payloadKey,
       JSON.stringify({ v: 1, id, host: config.sshHost, url: config.rotatorUrl, attempts }),
       REQUEST_AAD,
     );
-    const run = await runOnNode(buildRelayCommand(sealed), `tutor-relay ${id}`, { id }, startedAt);
+    const run = await runOnNode(buildRelayCommand(sealed), `tutor-relay ${id}`, trace, startedAt);
     if (run.failure) return errorResponse(...CHAT_FAILURES[run.failure]);
 
     const { result, commandId, durationMs } = run;
@@ -402,7 +410,7 @@ export function createTutorRelayHandler({
     );
     const tried = Array.isArray(result.tried) ? result.tried : [result];
     log({
-      id,
+      ...trace,
       commandId,
       outcome: result.status === 200 ? "completed" : "upstream_failed",
       attempt,

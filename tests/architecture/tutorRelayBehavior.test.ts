@@ -860,3 +860,46 @@ test("SSM and node failures are named in the relay log", async () => {
     assert.equal(relayLog(logs)["failure"], failure, name);
   }
 });
+
+test("the relay keeps the caller's request ID and tenant reference only in their shape", async () => {
+  const requestId = "0f8fad5b-d9cb-469f-a165-70867728950e";
+  const cases: Array<[Record<string, string>, string, string | undefined]> = [
+    [
+      { "x-trainlabs-request-id": requestId, "x-trainlabs-tenant-ref": "0123456789abcdef" },
+      requestId,
+      "0123456789abcdef",
+    ],
+    [
+      {
+        "x-trainlabs-request-id": `${requestId}\n{"component":"tutor-relay","outcome":"forged"}`,
+        "x-trainlabs-tenant-ref": "personal:7a1f2c3d-subject",
+      },
+      "relay-own-id",
+      undefined,
+    ],
+  ];
+  for (const [headers, id, tenantRef] of cases) {
+    const node = fakeNode(() => ({
+      status: 200,
+      attempt: 0,
+      model: "gemma4:31b",
+      headers: {},
+      body: completion,
+    }));
+    const relay = createTutorRelayHandler({
+      send: node.send,
+      config: relayConfig(),
+      ...fakeClock(),
+      newId: () => "relay-own-id",
+    });
+    const { logs } = await capturedLogs(() =>
+      relay(relayEvent({ headers: { authorization: `Bearer ${keys.bearer}`, ...headers } })),
+    );
+    assert.equal(logs.length, 1, "no forged log line");
+    const entry = relayLog(logs);
+    assert.equal(entry["id"], id);
+    assert.equal(entry["tenantRef"], tenantRef);
+    assert.equal(node.sent[0]?.Comment, `tutor-relay ${id}`);
+    assert.equal(logs[0]?.includes("personal:"), false);
+  }
+});

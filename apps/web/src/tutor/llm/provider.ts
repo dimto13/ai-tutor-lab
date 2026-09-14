@@ -10,6 +10,13 @@ export interface LlmRequest {
   temperature?: number;
   structuredOutput?: boolean;
   maxOutputTokens?: number;
+  correlation?: LlmCorrelation;
+}
+
+/** Ties one request together across server and provider logs; carries no user content (#482). */
+export interface LlmCorrelation {
+  requestId: string;
+  tenantRef: string;
 }
 
 export interface LlmUsage {

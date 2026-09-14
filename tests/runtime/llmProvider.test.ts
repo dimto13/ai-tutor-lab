@@ -80,6 +80,29 @@ test("Ollama provider uses the OpenAI-compatible chat completions API", async ()
   assert.ok(getVscodeSurfaceTarget(parsed.uiTargetRef));
 });
 
+test("the provider passes the request correlation on as headers (#482)", async () => {
+  const sent: Array<Headers> = [];
+  const mockFetch: typeof fetch = async (_input, init) => {
+    sent.push(new Headers(init?.headers));
+    return new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }] }), {
+      status: 200,
+    });
+  };
+  const provider = new OllamaProvider(loadLlmProviderConfig({}), mockFetch);
+  await provider.complete({ messages: [{ role: "user", content: "Hallo" }] });
+  await provider.complete({
+    messages: [{ role: "user", content: "Hallo" }],
+    correlation: {
+      requestId: "0f8fad5b-d9cb-469f-a165-70867728950e",
+      tenantRef: "0123456789abcdef",
+    },
+  });
+
+  assert.equal(sent[0]?.has("x-trainlabs-request-id"), false);
+  assert.equal(sent[1]?.get("x-trainlabs-request-id"), "0f8fad5b-d9cb-469f-a165-70867728950e");
+  assert.equal(sent[1]?.get("x-trainlabs-tenant-ref"), "0123456789abcdef");
+});
+
 test("provider-specific configuration does not leak outside the provider layer", async () => {
   const sourceRoots = [path.resolve("apps/web/src"), path.resolve("packages")];
   const allowedRoot = path.resolve("apps/web/src/tutor/llm");
