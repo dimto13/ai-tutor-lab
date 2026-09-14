@@ -2,11 +2,13 @@ import { util } from "@aws-appsync/utils";
 
 const FORMULA_PREFIXES = ["=", "+", "-", "@", "\t"];
 
+// APPSYNC_JS has no global String(...) conversion and reads replaceAll() patterns as Java regular
+// expressions, so the cell is converted by a template literal and escaped with split/join.
 function csvCell(value) {
   if (value === null || value === undefined) return "";
-  const text = String(value).replaceAll("\r", " ").replaceAll("\n", " ");
+  const text = `${value}`.split("\r").join(" ").split("\n").join(" ");
   const safeText = FORMULA_PREFIXES.includes(text.charAt(0)) ? `'${text}` : text;
-  return `"${safeText.replaceAll('"', '""')}"`;
+  return `"${safeText.split('"').join('""')}"`;
 }
 
 export function request() {
@@ -15,7 +17,9 @@ export function request() {
 
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
-  const items = Array.isArray(ctx.prev?.result) ? ctx.prev.result : [];
+  const previous = ctx.prev ? ctx.prev.result : null;
+  const items =
+    previous && typeof previous === "object" && typeof previous.length === "number" ? previous : [];
   const header = [
     "receivedAt",
     "clientTimestamp",

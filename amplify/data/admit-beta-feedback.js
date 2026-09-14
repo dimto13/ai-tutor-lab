@@ -39,7 +39,8 @@ export function request(ctx) {
     "feedback-admission:v1",
     util.base64Encode(subject.tenantId),
     util.base64Encode(subject.userId),
-    String(window),
+    // APPSYNC_JS has no global String(...) conversion; the template literal converts instead.
+    `${window}`,
   ].join(".");
 
   ctx.stash.feedbackAdmissionId = id;
