@@ -10,15 +10,16 @@ async function loadScenario(id: string) {
   return parseScenario(JSON.parse(raw));
 }
 
-test("guided tutor context allows only the targets of the current step", async () => {
+test("guided tutor context prefers the step targets and knows the runtime catalog", async () => {
   const scenario = await loadScenario("vscode-basics.guided");
   const context = buildTutorContext(scenario, "guided", "create_file");
 
   assert.equal(context.step?.id, "create_file");
-  assert.deepEqual(context.allowedUiTargetRefs, [
-    "vscode.explorer.newFile",
-    "vscode.explorer.tree",
-  ]);
+  assert.deepEqual(context.stepUiTargetRefs, ["vscode.explorer.newFile", "vscode.explorer.tree"]);
+  assert.deepEqual(context.allowedUiTargetRefs.slice(0, 2), context.stepUiTargetRefs);
+  // #476: a question about the terminal outside the current step can still point at it.
+  assert.ok(context.allowedUiTargetRefs.includes("vscode.panel.terminal"));
+  assert.equal(context.uiTargetLabels?.["vscode.panel.terminal"], "Terminal");
 });
 
 test("explore tutor context adds the explore targets and falls back to the step's why", async () => {
@@ -31,7 +32,7 @@ test("explore tutor context adds the explore targets and falls back to the step'
     assert.ok(context.allowedUiTargetRefs.includes(target), target);
   }
   assert.equal(context.step?.rationale, step.why);
-  assert.deepEqual(buildTutorContext(scenario, "guided", null).allowedUiTargetRefs, []);
+  assert.deepEqual(buildTutorContext(scenario, "guided", null).stepUiTargetRefs, []);
 });
 
 test("tutor context rejects a step that is not part of the scenario", async () => {

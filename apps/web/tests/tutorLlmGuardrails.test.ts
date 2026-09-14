@@ -78,7 +78,48 @@ test("accepts an action only when every referenced UI target exists in the curre
 
   assert.equal(result.status, "ok");
   assert.deepEqual(result.uiTargetRefs, ["vscode.activityBar.explorer"]);
-  assert.match(provider.requests[0]?.messages[0]?.content ?? "", /Erlaubte UiTargetRefs/);
+  assert.match(
+    provider.requests[0]?.messages[0]?.content ?? "",
+    /UI-Elemente des aktuellen Schritts \(bevorzugt\):\n- vscode\.activityBar\.explorer/,
+  );
+});
+
+test("answers a tool question beyond the current step with a catalog target (#476)", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({
+      answer:
+        "Das Terminal findest du unten im Panel. Für diesen Schritt brauchst du es noch nicht.",
+      kind: "explanation",
+      uiTargetRefs: ["vscode.panel.terminal"],
+    }),
+  );
+  const catalogContext: TutorLlmContext = {
+    ...context,
+    stepUiTargetRefs: ["vscode.activityBar.explorer"],
+    allowedUiTargetRefs: ["vscode.activityBar.explorer", "vscode.panel.terminal"],
+    uiTargetLabels: {
+      "vscode.activityBar.explorer": "Explorer",
+      "vscode.panel.terminal": "Terminal",
+    },
+  };
+
+  const result = await service(provider).answer({
+    sessionKey: "session-tool-question",
+    context: catalogContext,
+    question: { question: "Wo finde ich das Terminal?" },
+    includeUserCode: false,
+  });
+
+  assert.equal(result.status, "ok");
+  assert.deepEqual(result.uiTargetRefs, ["vscode.panel.terminal"]);
+  const systemMessage = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(
+    systemMessage,
+    /Weitere UI-Elemente des Werkzeugs:\n- vscode\.panel\.terminal \(Terminal\)/,
+  );
+  assert.match(systemMessage, /Vertröste nicht auf den Trainingskontext/);
+  assert.doesNotMatch(systemMessage, /ausschließlich auf Basis des angegebenen Trainingskontexts/);
 });
 
 test("fails closed when a provider invents an unknown UI target", async () => {

@@ -3,6 +3,8 @@ import { Bot, ChevronDown, MessageCircle, Send, User } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { findGlossaryConcept } from "@/lib/glossary";
+import { getRuntimeTargetLabel } from "@/runtime/referenceCatalog";
+import { requestTutorAttention } from "@/components/overlay/tutorAttention";
 import { answerDeterministically } from "@/tutor/deterministicTutor";
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
 import { useTutorContext } from "@/tutor/tutorContext";
@@ -74,7 +76,16 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
               accessToken,
             },
           });
-          if (response.status !== "unavailable") answer = response.answer;
+          if (response.status !== "unavailable") {
+            answer = response.answer;
+            // Point at the elements the tutor refers to, as "Ziel zeigen" does for the step (#476).
+            if (response.status === "ok" && response.uiTargetRefs.length > 0) {
+              requestTutorAttention(
+                response.uiTargetRefs,
+                response.uiTargetRefs.map((ref) => getRuntimeTargetLabel(ref) ?? ref).join(", "),
+              );
+            }
+          }
         } catch {
           // The deterministic tutor remains the safe fallback if the optional server LLM is unavailable.
         }
