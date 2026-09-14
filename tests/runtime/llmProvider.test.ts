@@ -27,6 +27,29 @@ test("model and endpoint can be changed without code changes", () => {
   assert.equal(config.apiKey, "local-test");
 });
 
+test("the provider gives up before the SSR time limit", async () => {
+  assert.equal(loadLlmProviderConfig({}).timeoutMs, 25_000);
+  assert.equal(loadLlmProviderConfig({ LLM_TIMEOUT_MS: "8000" }).timeoutMs, 8_000);
+  assert.equal(loadLlmProviderConfig({ LLM_TIMEOUT_MS: "nie" }).timeoutMs, 25_000);
+
+  const hangingFetch: typeof fetch = (_input, init) =>
+    new Promise((_resolve, reject) => {
+      // Stands in for the open connection that keeps the event loop alive during a real request.
+      const connection = setTimeout(() => reject(new Error("the time limit did not fire")), 5_000);
+      init?.signal?.addEventListener("abort", () => {
+        clearTimeout(connection);
+        reject(init.signal?.reason);
+      });
+    });
+  const provider = new OllamaProvider(
+    loadLlmProviderConfig({ LLM_TIMEOUT_MS: "20" }),
+    hangingFetch,
+  );
+  await assert.rejects(provider.complete({ messages: [{ role: "user", content: "Hallo" }] }), {
+    name: "TimeoutError",
+  });
+});
+
 test("Ollama provider uses the OpenAI-compatible chat completions API", async () => {
   const captured: { url: string; body: Record<string, unknown> | null } = {
     url: "",

@@ -148,6 +148,33 @@ function relayResult(stdout, config, id) {
   return { result };
 }
 
+// curl could not connect to the rotator, or it closed the connection without an answer.
+const ROTATOR_EXITS = new Set(["transport-exit-7", "transport-exit-52", "transport-exit-56"]);
+
+/**
+ * Names the station behind a failed attempt (#481) from the signals of the relay program: SSH exit
+ * 255 is the NAS, curl's connection errors the rotator, 429 a busy upstream and 5xx the route that
+ * was asked. Nothing here reads prompt or answer.
+ */
+export function attemptFailure(attempt) {
+  if (attempt?.status === 200) return undefined;
+  const error = typeof attempt?.error === "string" ? attempt.error : "";
+  if (error === "transport-exit-255") return "nas_unreachable";
+  if (ROTATOR_EXITS.has(error)) return "rotator_offline";
+  if (error === "timeout" || error === "transport-exit-28") return "timeout";
+  if (error) return "transport_error";
+  const status = Number.isSafeInteger(attempt?.status) ? attempt.status : 0;
+  if (status === 429) return "busy";
+  if (status >= 500) {
+    return String(attempt?.model ?? "").endsWith("@local")
+      ? "local_unavailable"
+      : "cloud_unavailable";
+  }
+  // Without a status there was no answer at all, so no provider can have rejected the request.
+  if (status === 0) return "transport_error";
+  return "provider_error";
+}
+
 function healthState(value) {
   return HEALTH_STATES.has(value) ? value : "unknown";
 }
@@ -257,15 +284,18 @@ export function createTutorRelayHandler({
       );
       commandId = sent?.Command?.CommandId;
     } catch (error) {
-      log({ ...fields, outcome: "send_failed", error: error?.name ?? "unknown" });
+      // SSM refuses commands for a managed node that is not registered or not online.
+      const failure = error?.name === "InvalidInstanceId" ? "node_offline" : "ssm_error";
+      log({ ...fields, outcome: "send_failed", failure, error: error?.name ?? "unknown" });
       return { failure: "send_failed" };
     }
     if (!commandId) {
-      log({ ...fields, outcome: "send_failed", error: "no_command_id" });
+      log({ ...fields, outcome: "send_failed", failure: "ssm_error", error: "no_command_id" });
       return { failure: "send_failed" };
     }
 
     let delay = 400;
+    let lastStatus;
     while (now() + delay < deadline) {
       await sleep(delay);
       delay = Math.min(delay + 300, 1000);
@@ -279,18 +309,31 @@ export function createTutorRelayHandler({
         if (error?.name === "InvocationDoesNotExist" || error?.name === "ThrottlingException") {
           continue;
         }
-        log({ ...fields, commandId, outcome: "status_failed", error: error?.name ?? "unknown" });
+        log({
+          ...fields,
+          commandId,
+          outcome: "status_failed",
+          failure: "ssm_error",
+          error: error?.name ?? "unknown",
+        });
         return { failure: "status_failed" };
       }
+      lastStatus = invocation?.Status;
       if (PENDING_STATUSES.has(invocation?.Status)) continue;
 
       const durationMs = now() - startedAt;
       if (invocation?.Status !== "Success") {
+        const details = invocation?.StatusDetails;
+        let failure = "relay_node_error";
+        if (details === "Undeliverable" || details === "DeliveryTimedOut") failure = "node_offline";
+        if (details === "ExecutionTimedOut") failure = "timeout";
         log({
           ...fields,
           commandId,
           outcome: "command_failed",
+          failure,
           status: invocation?.Status,
+          statusDetails: details,
           durationMs,
         });
         return { failure: "command_failed" };
@@ -301,7 +344,7 @@ export function createTutorRelayHandler({
         fields.id,
       );
       if (error) {
-        log({ ...fields, commandId, outcome: error, durationMs });
+        log({ ...fields, commandId, outcome: error, failure: "relay_node_error", durationMs });
         return { failure: "output_unusable" };
       }
       return { result, commandId, durationMs };
@@ -314,7 +357,9 @@ export function createTutorRelayHandler({
     } catch {
       // The command times out on the node on its own; cancelling is best effort.
     }
-    log({ ...fields, commandId, outcome: "deadline", durationMs: now() - startedAt });
+    // A command that never started points at the node, a running one at a slow upstream.
+    const failure = lastStatus === "InProgress" ? "timeout" : "node_offline";
+    log({ ...fields, commandId, outcome: "deadline", failure, durationMs: now() - startedAt });
     return { failure: "deadline" };
   }
 
@@ -355,6 +400,7 @@ export function createTutorRelayHandler({
         result.headers[name],
       ]),
     );
+    const tried = Array.isArray(result.tried) ? result.tried : [result];
     log({
       id,
       commandId,
@@ -363,6 +409,17 @@ export function createTutorRelayHandler({
       model: result.model,
       upstreamStatus: result.status,
       upstreamError: result.error,
+      failure: attemptFailure(result),
+      // Every attempt with the station that failed, never with prompt or answer (#481).
+      attempts: tried.map((entry) => ({
+        model: String(entry?.model ?? ""),
+        status: Number.isSafeInteger(entry?.status) ? entry.status : 0,
+        type:
+          typeof entry?.type === "string" && /^[a-z_-]{1,40}$/.test(entry.type)
+            ? entry.type
+            : undefined,
+        failure: attemptFailure(entry),
+      })),
       route: route["x-ollama-route"],
       durationMs,
     });
