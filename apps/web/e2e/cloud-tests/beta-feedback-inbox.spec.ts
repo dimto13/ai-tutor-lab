@@ -149,6 +149,7 @@ test("feedback containing a likely secret is rejected before persistence", async
     ),
   });
 
-  expect(result.data?.submitBetaFeedback).toBeUndefined();
+  // A resolver error leaves the nullable field `null` next to the error list, as GraphQL prescribes.
+  expect(result.data?.submitBetaFeedback).toBeNull();
   expect(result.errors?.some((error) => error.message.includes("secret or token"))).toBe(true);
 });
