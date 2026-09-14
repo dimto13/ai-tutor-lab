@@ -147,8 +147,11 @@ if request.get("mode") != "health" or not re.match(
 ):
     fail("request-invalid")
 
+# URL_RE in the prelude admits only http://localhost:<port>/… and http://127.0.0.1:<port>/….
 ROTATOR = re.match(r"^http://[^/]+", request["url"]).group(0)
 NEXT = "TRELAY-HEALTH-NEXT"
+# Only a remote shell that ran prints the separator; without it SSH or runuser failed.
+MARKER = ("\n%s\n" % NEXT).encode("ascii")
 
 # The rotator's own status and a probe of its cloud route in one SSH round trip, running while the
 # local checks below take place.
@@ -178,18 +181,21 @@ def model_names(listing):
 
 
 version = local_json("/api/version")
-installed = model_names(local_json("/api/tags"))
-loaded = model_names(local_json("/api/ps"))
 if isinstance(version, dict) and isinstance(version.get("version"), str):
     ollama = {"status": "ok", "version": version["version"]}
+    installed = model_names(local_json("/api/tags"))
+    loaded = model_names(local_json("/api/ps"))
 else:
+    # Without an answer from Ollama the model lists would only wait for the same timeout.
     ollama = {"status": "down"}
+    installed, loaded = set(), set()
 
 try:
     out, _ = nas.communicate(timeout=15)
-    ssh_error = "transport-exit-255" if nas.returncode == 255 else None
+    ssh_error = None if MARKER in out else "transport-exit-%d" % nas.returncode
 except subprocess.TimeoutExpired:
     nas.kill()
+    nas.communicate()
     out, ssh_error = b"", "timeout"
 
 allowed = None
@@ -199,7 +205,7 @@ if ssh_error:
     cloud = {"status": "unknown"}
 else:
     ssh = {"status": "ok"}
-    first, _, second = out.partition(("\n%s\n" % NEXT).encode("ascii"))
+    first, _, second = out.partition(MARKER)
     status, _, body = parse_http(first)
     try:
         state = json.loads(body) if status == 200 else None

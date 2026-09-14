@@ -38,7 +38,9 @@ const masterKey =
 const { bearer } = deriveRelayKeys(masterKey);
 
 const startedAt = Date.now();
-const response = await fetch(new URL("health", await relayUrl()), {
+const base = await relayUrl();
+// Without a trailing slash, "health" would replace the last path segment of the base.
+const response = await fetch(new URL("health", base.endsWith("/") ? base : `${base}/`), {
   headers: { authorization: `Bearer ${bearer}` },
   signal: AbortSignal.timeout(40_000),
 });
