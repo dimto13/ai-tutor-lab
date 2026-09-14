@@ -64,6 +64,9 @@ export interface TutorLlmAuditEvent {
   inputTokens: number | null;
   outputTokens: number | null;
   costMicros: number;
+  /** Same request ID and tenant reference as in the relay and node logs (#482). */
+  requestId?: string;
+  tenantRef?: string;
 }
 
 export type TutorLlmAuditLogger = (event: TutorLlmAuditEvent) => void;
@@ -262,6 +265,7 @@ export class TutorLlmService {
     context: TutorLlmContext;
     question: TutorLlmQuestion;
     includeUserCode: boolean;
+    correlation?: LlmRequest["correlation"];
   }): Promise<TutorLlmAnswer> {
     const messages: LlmMessage[] = [
       { role: "system", content: buildSystemMessage(input.context) },
@@ -272,11 +276,16 @@ export class TutorLlmService {
       temperature: 0,
       structuredOutput: true,
       maxOutputTokens: this.policy.maxOutputTokens,
+      ...(input.correlation ? { correlation: input.correlation } : {}),
     };
+    const trace = input.correlation
+      ? { requestId: input.correlation.requestId, tenantRef: input.correlation.tenantRef }
+      : {};
+    const audit = (event: TutorLlmAuditEvent): void => this.auditLogger({ ...event, ...trace });
     const maximumCostMicros = this.provider.estimateMaximumCostMicros(request);
     const reservation = this.budgetStore.reserve(input.sessionKey, maximumCostMicros, this.policy);
     if (!reservation) {
-      this.auditLogger({
+      audit({
         status: "budget_exhausted",
         sessionKey: input.sessionKey,
         providerId: this.provider.id,
@@ -299,7 +308,7 @@ export class TutorLlmService {
       response = await this.provider.complete(request);
     } catch (error) {
       this.budgetStore.settle(reservation, 0);
-      this.auditLogger({
+      audit({
         status: "provider_error",
         sessionKey: input.sessionKey,
         providerId: this.provider.id,
@@ -314,7 +323,7 @@ export class TutorLlmService {
     this.budgetStore.settle(reservation, response.usage.costMicros);
     const structured = parseStructuredResponse(response, input.context.allowedUiTargetRefs);
     if (!structured) {
-      this.auditLogger({
+      audit({
         status: "guardrail",
         sessionKey: input.sessionKey,
         providerId: this.provider.id,
@@ -331,7 +340,7 @@ export class TutorLlmService {
       };
     }
 
-    this.auditLogger({
+    audit({
       status: "completed",
       sessionKey: input.sessionKey,
       providerId: this.provider.id,

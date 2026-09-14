@@ -1,6 +1,8 @@
 import { getRequest } from "@tanstack/react-start/server";
 import { getScenario } from "@/scenarios";
 import type { TrainingMode } from "@ai-train-lab/training-engine";
+import { loadLlmProviderConfig } from "./config";
+import { createTutorCorrelation } from "./correlation";
 import { createLlmProvider } from "./index";
 import { buildTutorContext } from "./tutorContext";
 import {
@@ -292,7 +294,13 @@ export async function answerTutorQuestionOnServer(
     budgetStore,
     policy: budgetPolicy(env),
   });
+  // The relay bearer keys the tenant reference, so it cannot be derived outside the server (#482).
+  const correlation = await createTutorCorrelation(
+    identity.tenantId,
+    loadLlmProviderConfig(env).apiKey,
+  );
   return service.answer({
+    correlation,
     sessionKey: budgetSessionKey(identity),
     context: tutorContextFor(input.scenarioId, input.mode, input.currentStepId),
     question: {

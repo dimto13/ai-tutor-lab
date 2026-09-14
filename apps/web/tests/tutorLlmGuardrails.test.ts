@@ -84,6 +84,34 @@ test("accepts an action only when every referenced UI target exists in the curre
   );
 });
 
+test("the request ID and tenant reference reach the provider and the audit (#482)", async () => {
+  const correlation = {
+    requestId: "0f8fad5b-d9cb-469f-a165-70867728950e",
+    tenantRef: "0123456789abcdef",
+  };
+  const provider = new FakeProvider(
+    "provider-a",
+    response({
+      answer: "Klicke links auf den Explorer.",
+      kind: "ui_action",
+      uiTargetRefs: ["vscode.activityBar.explorer"],
+    }),
+  );
+  const audit: TutorLlmAuditEvent[] = [];
+
+  await service(provider, audit).answer({
+    sessionKey: "session-correlation",
+    context,
+    question: { question: "Wo muss ich klicken?" },
+    includeUserCode: false,
+    correlation,
+  });
+
+  assert.deepEqual(provider.requests[0]?.correlation, correlation);
+  assert.equal(audit[0]?.requestId, correlation.requestId);
+  assert.equal(audit[0]?.tenantRef, correlation.tenantRef);
+});
+
 test("answers a tool question beyond the current step with a catalog target (#476)", async () => {
   const provider = new FakeProvider(
     "provider-a",

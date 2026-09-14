@@ -41,6 +41,12 @@ export class OllamaProvider implements LlmProvider {
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${this.config.apiKey}`,
+        ...(request.correlation
+          ? {
+              "x-trainlabs-request-id": request.correlation.requestId,
+              "x-trainlabs-tenant-ref": request.correlation.tenantRef,
+            }
+          : {}),
       },
       body: JSON.stringify({
         model: this.config.model,

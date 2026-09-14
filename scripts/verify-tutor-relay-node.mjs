@@ -94,11 +94,11 @@ async function localSsm(command) {
 
 const relay = createTutorRelayHandler({ send: localSsm, config });
 
-function relayEvent(method, path, authorization, body) {
+function relayEvent(method, path, authorization, body, headers = {}) {
   return {
     rawPath: path,
     requestContext: { http: { method } },
-    headers: { authorization },
+    headers: { ...headers, authorization },
     body,
     isBase64Encoded: false,
   };
@@ -109,12 +109,14 @@ if (values.serve) {
   createServer(async (request, response) => {
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
+    // Node lowercases header names like the function URL does, so the correlation headers pass.
     const answer = await relay(
       relayEvent(
         request.method,
         request.url ?? "",
         request.headers.authorization ?? "",
         Buffer.concat(chunks).toString("utf8"),
+        request.headers,
       ),
     );
     response.writeHead(answer.statusCode, answer.headers);
