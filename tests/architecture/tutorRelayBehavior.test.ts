@@ -597,6 +597,33 @@ test("a failed health run marks the SSM hop down, a missing status call does not
   assert.deepEqual(healthReport(response).checks.ssm, { status: "ok" });
 });
 
+test("health only counts the stations the configured models use", async () => {
+  const cases: Array<[Record<string, string>, Record<string, unknown>]> = [
+    [
+      { TUTOR_RELAY_FALLBACK_MODEL: "" },
+      { ollama: { status: "down" }, models: { primary: { status: "ok" } } },
+    ],
+    [
+      { TUTOR_RELAY_PRIMARY_MODEL: "gemma4:e4b@local", TUTOR_RELAY_FALLBACK_MODEL: "" },
+      {
+        cloudRoute: { status: "down", httpStatus: 0 },
+        models: { primary: { status: "ok", loaded: true } },
+      },
+    ],
+  ];
+  for (const [env, change] of cases) {
+    const node = fakeNode(() => ({ health: { ...HEALTHY_NODE, ...change } }));
+    const relay = createTutorRelayHandler({
+      send: node.send,
+      config: relayConfig(env),
+      ...fakeClock(),
+    });
+    const response = await relay(healthEvent());
+    assert.equal(response.statusCode, 200, JSON.stringify(env));
+    assert.equal(healthReport(response).status, "ok", JSON.stringify(env));
+  }
+});
+
 test("the node commands only accept a base64 token", () => {
   assert.throws(() => buildRelayCommand("abc'; rm -rf /; echo '"));
   assert.throws(() => buildHealthCommand("abc'; rm -rf /; echo '"));

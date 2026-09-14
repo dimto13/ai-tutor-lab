@@ -235,8 +235,11 @@ function modelUsable(checks, model) {
 function overallHealth(checks) {
   const models = Object.values(checks.models).filter(Boolean);
   if (!models.some((model) => modelUsable(checks, model))) return "down";
+  // Only the stations the configured models use decide between `ok` and `degraded`.
+  const stations = new Set(PATH_CHECKS);
+  for (const model of models) stations.add(model.route === "local" ? "ollama" : "cloudRoute");
   const healthy =
-    STATION_CHECKS.every((name) => checks[name].status === "ok") &&
+    [...stations].every((name) => checks[name].status === "ok") &&
     models.every((model) => modelUsable(checks, model));
   return healthy ? "ok" : "degraded";
 }
