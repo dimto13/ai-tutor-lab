@@ -85,9 +85,10 @@ function caller(ctx) {
   return { userId: identity.sub, tenantId: tenantId || `personal:${identity.sub}` };
 }
 
-function boundedString(value, name, required = true) {
+// APPSYNC_JS does not document default parameter values; an omitted flag means required.
+function boundedString(value, name, required) {
   if (value === null || value === undefined) {
-    if (required) util.error(`${name} is required`, "FeedbackValidationError");
+    if (required !== false) util.error(`${name} is required`, "FeedbackValidationError");
     return null;
   }
   if (typeof value !== "string" || value.length === 0 || value.length > MAX_CONTEXT_STRING) {

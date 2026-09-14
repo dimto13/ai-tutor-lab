@@ -48,7 +48,8 @@ export function request(ctx) {
 export function response(ctx) {
   if (ctx.error) util.error(ctx.error.message, ctx.error.type, ctx.result);
   const tenantId = ctx.stash.feedbackTenantId;
-  const items = Array.isArray(ctx.result?.items) ? ctx.result.items : [];
+  const rows = ctx.result ? ctx.result.items : null;
+  const items = rows && typeof rows === "object" && typeof rows.length === "number" ? rows : [];
   // Defense in depth: never return a row whose tenant does not match the server-derived tenant.
   return items.filter((item) => item && item.tenantId === tenantId);
 }
