@@ -398,6 +398,7 @@ export function createTutorRelayHandler({
         result.headers[name],
       ]),
     );
+    const tried = Array.isArray(result.tried) ? result.tried : [result];
     log({
       id,
       commandId,
@@ -406,6 +407,17 @@ export function createTutorRelayHandler({
       model: result.model,
       upstreamStatus: result.status,
       upstreamError: result.error,
+      failure: attemptFailure(result),
+      // Every attempt with the station that failed, never with prompt or answer (#481).
+      attempts: tried.map((entry) => ({
+        model: String(entry?.model ?? ""),
+        status: Number.isSafeInteger(entry?.status) ? entry.status : 0,
+        type:
+          typeof entry?.type === "string" && /^[a-z_]{1,40}$/.test(entry.type)
+            ? entry.type
+            : undefined,
+        failure: attemptFailure(entry),
+      })),
       route: route["x-ollama-route"],
       durationMs,
     });

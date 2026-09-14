@@ -119,7 +119,8 @@ function servedWithoutForwarding(routeHeaders: Map<string, string>): boolean {
 async function verifyModel(model: string): Promise<boolean> {
   const routeHeaders = new Map<string, string>();
   const provider = new RecordingProvider(
-    new OllamaProvider({ ...baseConfig, model }, fetchRecordingRoute(routeHeaders)),
+    // The provider's own time limit guards the SSR path; loading the 31B model may take longer.
+    new OllamaProvider({ ...baseConfig, model, timeoutMs }, fetchRecordingRoute(routeHeaders)),
   );
   const service = new TutorLlmService({
     provider,

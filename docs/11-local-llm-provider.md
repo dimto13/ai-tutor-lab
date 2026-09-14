@@ -120,7 +120,7 @@ Browser
 - **Transport:** Die Lambda `tutor-relay` (`amplify/functions/tutor-relay/`) nimmt über ihre Function URL eine OpenAI-kompatible Chat-Anfrage an. Die Server Function spricht sie mit dem vorhandenen `OllamaProvider` an: `LLM_BASE_URL` ist die Function URL plus `/v1`, `LLM_API_KEY` ein aus dem Secret `TUTOR_RELAY_KEY` abgeleitetes Bearer-Token. Die Lambda-Rolle erhält `ssm:SendCommand` nur für diese Managed Instance und das Dokument `AWS-RunShellScript`, dazu `ssm:GetCommandInvocation`, `ssm:CancelCommand` und für den Health-Aufruf `ssm:DescribeInstanceInformation`. Das Muster stammt aus dem Amplify-Projekt `amplify-vite-react-template`.
 - **Befehl auf dem RMI-PC:** ein fester Befehl über `AWS-RunShellScript`. Die Anfrage steht darin nur verschlüsselt (AES-256-GCM, Schlüssel ebenfalls aus `TUTOR_RELAY_KEY` abgeleitet), in der SSM-Command-History also nur Chiffretext. Das Relay-Programm entschlüsselt sie, geht mit dem vorhandenen NAS-Zugang auf dem RMI-PC per SSH auf den NAS (`runuser -u <benutzer> -- ssh nas …`) und gibt die Anfrage per `stdin` an den Rotator-Container. Die Frage des Nutzers wird nie in einen Shell-Befehl eingesetzt. `<benutzer>` ist der Besitzer von `~/.config/trainlabs-tutor-relay/payload.key`.
 - **Modelle:** Das Relay fragt zuerst das Cloud-Modell (`gemma4:31b`) und bei jedem Fehler einmal `gemma4:e4b@local`; der Rotator reicht `@local` an `11434` auf dem RMI-PC durch. Die Provider-Schicht in TrainLabs bleibt ohne eigenen Modell-Fallback. Die Cloud verpackt JSON trotz `response_format` in einen Markdown-Codeblock; das Relay entfernt ihn, wenn JSON angefordert war. `reasoning_effort` bleibt ungesetzt, denn ohne Denkschritt fehlen bei `gemma4:e4b` `kind` und `uiTargetRefs`.
-- **Zeit:** Amplify beendet SSR-Anfragen nach 30 s. Das Relay gibt nach 22 s auf (Cloud-Versuch 10 s, Fallback 9 s); dann antwortet der deterministische Tutor.
+- **Zeit:** Amplify beendet SSR-Anfragen nach 30 s. Das Relay gibt nach 22 s auf (Cloud-Versuch 10 s, Fallback 9 s), die Server Function nach `LLM_TIMEOUT_MS` (Standard 25 s); dann antwortet der deterministische Tutor.
 - Mit Cloud primär gehen Tutor-Prompts an Ollama Cloud als externen Empfänger. Die Datenschutzhinweise (#449, #451) müssen das abdecken.
 - Welche Route geantwortet hat, zeigen die Antwort-Header `x-tutor-relay-attempt`, `x-ollama-route`, `x-ollama-account` und `via`; die Lambda protokolliert sie ohne Prompt-Inhalt.
 - Der Weg läuft über SSM, das der Agent auf dem RMI-PC ausgehend aufbaut, und über SSH im LAN. Weder der RMI-PC noch der NAS braucht einen Zugang aus dem Internet.
@@ -173,6 +173,36 @@ Der Health-Teil läuft wie der Chat als fester Befehl über `AWS-RunShellScript`
 ```bash
 npm run verify:tutor-health -- --app https://<App-Domain>   # Relay-URL aus amplify_outputs.json
 ```
+
+### Störungen
+
+Das Relay benennt jede Störung ohne Prompt-Inhalt nach der Station, an der sie auftrat (#481): je Versuch in `attempts[].failure`, für die Anfrage insgesamt in `failure`.
+
+| Klasse                                   | Signal                                                                                                                                     | Station                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `node_offline`                           | SSM lehnt den Befehl ab (`InvalidInstanceId`), meldet `Undeliverable` oder `DeliveryTimedOut`, oder der Befehl startet bis zur Frist nicht | RMI-PC bzw. SSM-Agent                  |
+| `ssm_error`                              | anderer Fehler beim Senden oder Abfragen des Befehls                                                                                       | SSM                                    |
+| `relay_node_error`                       | das Relay-Programm meldet `TRELAYERR` oder scheitert                                                                                       | RMI-PC                                 |
+| `nas_unreachable`                        | SSH-Exit 255                                                                                                                               | SSH zum NAS                            |
+| `rotator_offline`                        | curl-Exit 7, 52 oder 56                                                                                                                    | Rotator                                |
+| `timeout`                                | curl-Exit 28, Zeitlimit des Versuchs, `ExecutionTimedOut` oder Relay-Frist bei laufendem Befehl                                            | Modell bzw. Upstream                   |
+| `busy`                                   | HTTP 429                                                                                                                                   | Cloud-Konten oder Ollama ausgelastet   |
+| `cloud_unavailable`, `local_unavailable` | HTTP 5xx auf dem Cloud- bzw. `@local`-Versuch                                                                                              | Cloud-Route bzw. Ollama auf dem RMI-PC |
+| `provider_error`                         | andere 4xx, z. B. `model_not_allowed` (400) oder `not_found_error` (404)                                                                   | Rotator bzw. Ollama                    |
+
+In jedem dieser Fälle antwortet der Tutor in der App deterministisch (#28): `preferServerTutor` behält die deterministische Antwort, sobald der Server-Tutor scheitert, und der Provider gibt nach `LLM_TIMEOUT_MS` (Standard 25 s) auf, also vor der 30-s-Grenze von Amplify.
+
+Die Szenarien lösen die Störungen allein über die Konfiguration aus, ohne Dienste auf NAS oder RMI-PC anzuhalten:
+
+```bash
+node scripts/verify-tutor-relay-node.mjs --scenario timeout           # lokaler Versuch länger als 1 s, die Cloud antwortet
+node scripts/verify-tutor-relay-node.mjs --scenario provider-error    # 400 von der Cloud-Route, 404 lokal
+node scripts/verify-tutor-relay-node.mjs --scenario rotator-offline   # falscher Rotator-Port
+node scripts/verify-tutor-relay-node.mjs --scenario nas-unreachable   # unbekannter SSH-Host
+node scripts/verify-tutor-relay-node.mjs --scenario node-offline      # SSM lehnt ab wie bei einem nicht registrierten Node
+```
+
+`busy`, `cloud_unavailable` und `local_unavailable` decken Unit-Tests ab; live ließen sie sich nur erzeugen, indem man Dienste anhält oder Cloud-Konten erschöpft.
 
 ## Architekturgrenze
 

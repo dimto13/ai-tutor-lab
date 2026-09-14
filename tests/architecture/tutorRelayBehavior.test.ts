@@ -9,6 +9,7 @@ import {
   SendCommandCommand,
 } from "@aws-sdk/client-ssm";
 import {
+  attemptFailure,
   createTutorRelayHandler,
   loadRelayConfig,
   unwrapJsonFence,

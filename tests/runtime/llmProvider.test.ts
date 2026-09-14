@@ -34,7 +34,12 @@ test("the provider gives up before the SSR time limit", async () => {
 
   const hangingFetch: typeof fetch = (_input, init) =>
     new Promise((_resolve, reject) => {
-      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+      // Stands in for the open connection that keeps the event loop alive during a real request.
+      const connection = setTimeout(() => reject(new Error("the time limit did not fire")), 5_000);
+      init?.signal?.addEventListener("abort", () => {
+        clearTimeout(connection);
+        reject(init.signal?.reason);
+      });
     });
   const provider = new OllamaProvider(
     loadLlmProviderConfig({ LLM_TIMEOUT_MS: "20" }),

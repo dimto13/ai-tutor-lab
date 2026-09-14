@@ -7,6 +7,7 @@ import { getRuntimeTargetLabel } from "@/runtime/referenceCatalog";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
 import { answerDeterministically } from "@/tutor/deterministicTutor";
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
+import { preferServerTutor } from "@/tutor/serverTutorAnswer";
 import { useTutorContext } from "@/tutor/tutorContext";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
 
