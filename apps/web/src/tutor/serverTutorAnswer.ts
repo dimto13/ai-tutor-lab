@@ -15,7 +15,9 @@ export async function preferServerTutor(
 ): Promise<ServerTutorOutcome> {
   try {
     const response = await ask();
-    if (response.status === "unavailable") return { answer: deterministicAnswer, uiTargetRefs: [] };
+    if (response.status === "unavailable" || !response.answer.trim()) {
+      return { answer: deterministicAnswer, uiTargetRefs: [] };
+    }
     return {
       answer: response.answer,
       uiTargetRefs: response.status === "ok" ? response.uiTargetRefs : [],
