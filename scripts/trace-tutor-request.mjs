@@ -118,7 +118,7 @@ const commands = (trail.Events ?? [])
   .filter(({ command }) => command?.comment === `tutor-relay ${requestId}`);
 for (const { event, command } of commands) {
   console.log(
-    `  SSM    ${time(event.EventTime * 1000)}  commandId=${command.commandId} comment="${command.comment}"`,
+    `  SSM    ${time(typeof event.EventTime === "number" ? event.EventTime * 1000 : Date.parse(event.EventTime))}  commandId=${command.commandId} comment="${command.comment}"`,
   );
 }
 if (commands.length === 0)

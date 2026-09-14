@@ -213,6 +213,8 @@ npm run trace:tutor-request                  # letzte Tutor-Anfrage der letzten 
 npm run trace:tutor-request -- <Request-ID>
 ```
 
+Wechselt der Relay-Schlüssel, ändern sich auch die Tenant-Referenzen; über einen Schlüsselwechsel hinweg lassen sie sich nicht vergleichen.
+
 Der Befehl zeigt Audit, Relay-Log und SSM-Befehl zur selben Request-ID. Den SSM-Befehl liest er aus CloudTrail, das ihn nach einigen Minuten zeigt; das Nutzerkennzeichen des Audits (`sessionKey`) gibt er nicht aus.
 
 ## Architekturgrenze
