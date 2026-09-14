@@ -3,10 +3,11 @@
 // Runs the relay handler with a stand-in for SSM that executes the command locally as the current
 // user: sealed request → relay program → SSH to the NAS → ollama-rotator → sealed answer.
 //
-//   node scripts/verify-tutor-relay-node.mjs [--scenario default|fallback|local] [--serve 8787]
+//   node scripts/verify-tutor-relay-node.mjs [--scenario default|fallback|local] [--health] [--serve 8787]
 //
-// With --serve the relay listens on 127.0.0.1, so `npm run verify:llm-live` can drive the tutor
-// chain against it with the LLM_BASE_URL and LLM_API_KEY printed on start.
+// --health runs the health check (#480) instead of a chat request. With --serve the relay listens
+// on 127.0.0.1, so `npm run verify:llm-live` can drive the tutor chain against it with the
+// LLM_BASE_URL and LLM_API_KEY printed on start.
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -22,6 +23,7 @@ import { deriveRelayKeys } from "../amplify/functions/tutor-relay/keys.js";
 const { values } = parseArgs({
   options: {
     scenario: { type: "string", default: "default" },
+    health: { type: "boolean", default: false },
     serve: { type: "string" },
   },
 });
@@ -58,6 +60,9 @@ function runLocally(script) {
 let stdout = "";
 async function localSsm(command) {
   switch (command.constructor.name) {
+    case "DescribeInstanceInformationCommand":
+      // No ping status without AWS; the local run of the health program shows whether it answers.
+      throw Object.assign(new Error("SSM is not available locally"), { name: "LocalStandIn" });
     case "SendCommandCommand":
       stdout = await runLocally(command.input.Parameters.commands[0]);
       return { Command: { CommandId: "local" } };
@@ -99,6 +104,14 @@ if (values.serve) {
     console.log(`Relay (${values.scenario}) auf http://127.0.0.1:${port}/v1`);
     console.log(`LLM_BASE_URL=http://127.0.0.1:${port}/v1 LLM_API_KEY=${bearer}`);
   });
+} else if (values.health) {
+  const startedAt = Date.now();
+  const answer = await relay(relayEvent("GET", "/v1/health", `Bearer ${bearer}`, ""));
+  console.log(
+    `Health (${values.scenario}): HTTP ${answer.statusCode} in ${Date.now() - startedAt} ms`,
+  );
+  console.log(JSON.stringify(JSON.parse(answer.body), null, 2));
+  process.exitCode = answer.statusCode === 200 ? 0 : 1;
 } else {
   const startedAt = Date.now();
   const answer = await relay(

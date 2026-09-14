@@ -1,12 +1,13 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import {
   CancelCommandCommand,
+  DescribeInstanceInformationCommand,
   GetCommandInvocationCommand,
   SendCommandCommand,
   SSMClient,
 } from "@aws-sdk/client-ssm";
 import { REQUEST_AAD, RESPONSE_AAD, deriveRelayKeys, openPayload, sealPayload } from "./keys.js";
-import { buildRelayCommand } from "./relayProgram.js";
+import { buildHealthCommand, buildRelayCommand } from "./relayProgram.js";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_MESSAGES = 50;
@@ -14,6 +15,19 @@ const MAX_OUTPUT_TOKENS = 4096;
 const ROLES = new Set(["system", "user", "assistant"]);
 const PENDING_STATUSES = new Set(["Pending", "InProgress", "Delayed"]);
 const ROUTE_HEADERS = ["x-ollama-route", "x-ollama-account", "via"];
+const CHAT_FAILURES = {
+  send_failed: [503, "relay node unavailable"],
+  status_failed: [502, "relay status unavailable"],
+  command_failed: [502, "relay command failed"],
+  output_unusable: [502, "relay output unusable"],
+  deadline: [504, "relay deadline exceeded"],
+};
+const HEALTH_STATES = new Set(["ok", "degraded", "down", "unknown", "missing"]);
+// Every model route needs these; the cloud route or Ollama on the RMI-PC comes on top.
+const PATH_CHECKS = ["ssm", "sshNas", "rotator"];
+const STATION_CHECKS = [...PATH_CHECKS, "cloudRoute", "ollama"];
+const HEALTH_CODE = /^[a-z0-9-]{1,40}$/;
+const OLLAMA_VERSION = /^[0-9A-Za-z.+-]{1,32}$/;
 
 function positiveInteger(value, fallback) {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -32,6 +46,8 @@ export function loadRelayConfig(env = process.env) {
     payloadKey,
     sshHost: env["TUTOR_RELAY_SSH_HOST"] || "nas",
     rotatorUrl: env["TUTOR_RELAY_ROTATOR_URL"] || "http://localhost:11435/v1/chat/completions",
+    // Ollama on the RMI-PC itself, the target of the rotator's `@local` route; read by the health check.
+    ollamaUrl: (env["TUTOR_RELAY_OLLAMA_URL"] || "http://localhost:11434").replace(/\/+$/, ""),
     primaryModel: env["TUTOR_RELAY_PRIMARY_MODEL"] || "gemma4:31b",
     // An empty value disables the fallback attempt.
     fallbackModel: env["TUTOR_RELAY_FALLBACK_MODEL"] ?? "gemma4:e4b@local",
@@ -132,6 +148,85 @@ function relayResult(stdout, config, id) {
   return { result };
 }
 
+function healthState(value) {
+  return HEALTH_STATES.has(value) ? value : "unknown";
+}
+
+function healthCode(value) {
+  return typeof value === "string" && HEALTH_CODE.test(value) ? value : undefined;
+}
+
+function healthCount(value) {
+  return Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
+function modelCheck(name, reported) {
+  if (!name) return undefined;
+  return {
+    name,
+    route: name.endsWith("@local") ? "local" : "cloud",
+    status: healthState(reported?.status),
+    loaded: typeof reported?.loaded === "boolean" ? reported.loaded : undefined,
+  };
+}
+
+/** Takes over known fields only: whatever else the node reports stays out of answer and log. */
+function reportedChecks(health, config) {
+  const version = health?.ollama?.version;
+  return {
+    sshNas: {
+      status: healthState(health?.sshNas?.status),
+      error: healthCode(health?.sshNas?.error),
+    },
+    rotator: {
+      status: healthState(health?.rotator?.status),
+      cloudAccounts: healthCount(health?.rotator?.cloudAccounts),
+      cloudAccountsFree: healthCount(health?.rotator?.cloudAccountsFree),
+      httpStatus: healthCount(health?.rotator?.httpStatus),
+    },
+    cloudRoute: {
+      status: healthState(health?.cloudRoute?.status),
+      error: healthCode(health?.cloudRoute?.error),
+      httpStatus: healthCount(health?.cloudRoute?.httpStatus),
+    },
+    ollama: {
+      status: healthState(health?.ollama?.status),
+      version: typeof version === "string" && OLLAMA_VERSION.test(version) ? version : undefined,
+    },
+    models: {
+      primary: modelCheck(config.primaryModel, health?.models?.primary),
+      fallback: modelCheck(config.fallbackModel, health?.models?.fallback),
+    },
+  };
+}
+
+function modelUsable(checks, model) {
+  if (model?.status !== "ok") return false;
+  const via = model.route === "local" ? "ollama" : "cloudRoute";
+  return [...PATH_CHECKS, via].every((name) => checks[name]?.status === "ok");
+}
+
+/** `degraded` still answers over at least one model route; `down` leaves only the fallback #28. */
+function overallHealth(checks) {
+  const models = Object.values(checks.models).filter(Boolean);
+  if (!models.some((model) => modelUsable(checks, model))) return "down";
+  // Only the stations the configured models use decide between `ok` and `degraded`.
+  const stations = new Set(PATH_CHECKS);
+  for (const model of models) stations.add(model.route === "local" ? "ollama" : "cloudRoute");
+  const healthy =
+    [...stations].every((name) => checks[name].status === "ok") &&
+    models.every((model) => modelUsable(checks, model));
+  return healthy ? "ok" : "degraded";
+}
+
+function healthSummary(checks) {
+  const summary = Object.fromEntries(STATION_CHECKS.map((name) => [name, checks[name].status]));
+  for (const [role, model] of Object.entries(checks.models)) {
+    if (model) summary[role] = model.status;
+  }
+  return summary;
+}
+
 function defaultSleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -143,16 +238,87 @@ export function createTutorRelayHandler({
   sleep = defaultSleep,
   newId = randomUUID,
 }) {
-  return async function tutorRelay(event) {
-    const startedAt = now();
-    if (event?.requestContext?.http?.method !== "POST") {
-      return errorResponse(405, "method not allowed");
+  /** Runs one fixed program on the RMI-PC and returns its sealed answer, or why there is none. */
+  async function runOnNode(command, comment, fields, startedAt) {
+    const deadline = startedAt + config.deadlineMs;
+    let commandId;
+    try {
+      const sent = await send(
+        new SendCommandCommand({
+          DocumentName: "AWS-RunShellScript",
+          InstanceIds: [config.instanceId],
+          Parameters: {
+            commands: [command],
+            executionTimeout: [String(Math.ceil(config.deadlineMs / 1000))],
+          },
+          TimeoutSeconds: 30,
+          Comment: comment,
+        }),
+      );
+      commandId = sent?.Command?.CommandId;
+    } catch (error) {
+      log({ ...fields, outcome: "send_failed", error: error?.name ?? "unknown" });
+      return { failure: "send_failed" };
     }
-    if (!String(event.rawPath ?? "").endsWith("/chat/completions")) {
-      return errorResponse(404, "not found");
+    if (!commandId) {
+      log({ ...fields, outcome: "send_failed", error: "no_command_id" });
+      return { failure: "send_failed" };
     }
-    if (!authorized(event, config.bearer)) return errorResponse(401, "unauthorized");
 
+    let delay = 400;
+    while (now() + delay < deadline) {
+      await sleep(delay);
+      delay = Math.min(delay + 300, 1000);
+      let invocation;
+      try {
+        invocation = await send(
+          new GetCommandInvocationCommand({ CommandId: commandId, InstanceId: config.instanceId }),
+        );
+      } catch (error) {
+        // Not visible on the node yet, or SSM throttles the status call: keep polling.
+        if (error?.name === "InvocationDoesNotExist" || error?.name === "ThrottlingException") {
+          continue;
+        }
+        log({ ...fields, commandId, outcome: "status_failed", error: error?.name ?? "unknown" });
+        return { failure: "status_failed" };
+      }
+      if (PENDING_STATUSES.has(invocation?.Status)) continue;
+
+      const durationMs = now() - startedAt;
+      if (invocation?.Status !== "Success") {
+        log({
+          ...fields,
+          commandId,
+          outcome: "command_failed",
+          status: invocation?.Status,
+          durationMs,
+        });
+        return { failure: "command_failed" };
+      }
+      const { result, error } = relayResult(
+        invocation.StandardOutputContent ?? "",
+        config,
+        fields.id,
+      );
+      if (error) {
+        log({ ...fields, commandId, outcome: error, durationMs });
+        return { failure: "output_unusable" };
+      }
+      return { result, commandId, durationMs };
+    }
+
+    try {
+      await send(
+        new CancelCommandCommand({ CommandId: commandId, InstanceIds: [config.instanceId] }),
+      );
+    } catch {
+      // The command times out on the node on its own; cancelling is best effort.
+    }
+    log({ ...fields, commandId, outcome: "deadline", durationMs: now() - startedAt });
+    return { failure: "deadline" };
+  }
+
+  async function chat(event, startedAt) {
     const raw = requestBody(event);
     if (Buffer.byteLength(raw) > MAX_BODY_BYTES) return errorResponse(413, "request too large");
     let request;
@@ -178,103 +344,128 @@ export function createTutorRelayHandler({
       JSON.stringify({ v: 1, id, host: config.sshHost, url: config.rotatorUrl, attempts }),
       REQUEST_AAD,
     );
-    const deadline = startedAt + config.deadlineMs;
+    const run = await runOnNode(buildRelayCommand(sealed), `tutor-relay ${id}`, { id }, startedAt);
+    if (run.failure) return errorResponse(...CHAT_FAILURES[run.failure]);
 
-    let commandId;
+    const { result, commandId, durationMs } = run;
+    const attempt = result.attempt === 0 ? "primary" : "fallback";
+    const route = Object.fromEntries(
+      ROUTE_HEADERS.filter((name) => typeof result.headers?.[name] === "string").map((name) => [
+        name,
+        result.headers[name],
+      ]),
+    );
+    log({
+      id,
+      commandId,
+      outcome: result.status === 200 ? "completed" : "upstream_failed",
+      attempt,
+      model: result.model,
+      upstreamStatus: result.status,
+      upstreamError: result.error,
+      route: route["x-ollama-route"],
+      durationMs,
+    });
+    if (result.status !== 200 || typeof result.body !== "string") {
+      return errorResponse(502, "model unavailable");
+    }
+    return {
+      statusCode: 200,
+      headers: {
+        "content-type": "application/json",
+        "x-tutor-relay-attempt": attempt,
+        "x-tutor-relay-model": String(result.model ?? ""),
+        ...route,
+      },
+      body: unwrapJsonFence(result.body, primary.response_format !== undefined),
+    };
+  }
+
+  function healthResponse(id, startedAt, checks) {
+    const status = overallHealth(checks);
+    const durationMs = now() - startedAt;
+    log({
+      id,
+      kind: "health",
+      outcome: "health",
+      status,
+      durationMs,
+      checks: healthSummary(checks),
+    });
+    return {
+      statusCode: status === "down" ? 503 : 200,
+      headers: { "content-type": "application/json", "cache-control": "no-store" },
+      body: JSON.stringify({ status, durationMs, checks }),
+    };
+  }
+
+  async function health(startedAt) {
+    const id = newId();
+    const checks = { ssm: { status: "unknown" }, ...reportedChecks(undefined, config) };
+    let node;
     try {
-      const sent = await send(
-        new SendCommandCommand({
-          DocumentName: "AWS-RunShellScript",
-          InstanceIds: [config.instanceId],
-          Parameters: {
-            commands: [buildRelayCommand(sealed)],
-            executionTimeout: [String(Math.ceil(config.deadlineMs / 1000))],
-          },
-          TimeoutSeconds: 30,
-          Comment: `tutor-relay ${id}`,
+      const information = await send(
+        new DescribeInstanceInformationCommand({
+          Filters: [{ Key: "InstanceIds", Values: [config.instanceId] }],
         }),
       );
-      commandId = sent?.Command?.CommandId;
-    } catch (error) {
-      log({ id, outcome: "send_failed", error: error?.name ?? "unknown" });
-      return errorResponse(503, "relay node unavailable");
-    }
-    if (!commandId) {
-      log({ id, outcome: "send_failed", error: "no_command_id" });
-      return errorResponse(503, "relay node unavailable");
-    }
-
-    let delay = 400;
-    while (now() + delay < deadline) {
-      await sleep(delay);
-      delay = Math.min(delay + 300, 1000);
-      let invocation;
-      try {
-        invocation = await send(
-          new GetCommandInvocationCommand({ CommandId: commandId, InstanceId: config.instanceId }),
-        );
-      } catch (error) {
-        // Not visible on the node yet, or SSM throttles the status call: keep polling.
-        if (error?.name === "InvocationDoesNotExist" || error?.name === "ThrottlingException") {
-          continue;
-        }
-        log({ id, commandId, outcome: "status_failed", error: error?.name ?? "unknown" });
-        return errorResponse(502, "relay status unavailable");
-      }
-      if (PENDING_STATUSES.has(invocation?.Status)) continue;
-
-      const durationMs = now() - startedAt;
-      if (invocation?.Status !== "Success") {
-        log({ id, commandId, outcome: "command_failed", status: invocation?.Status, durationMs });
-        return errorResponse(502, "relay command failed");
-      }
-      const { result, error } = relayResult(invocation.StandardOutputContent ?? "", config, id);
-      if (error) {
-        log({ id, commandId, outcome: error, durationMs });
-        return errorResponse(502, "relay output unusable");
-      }
-      const attempt = result.attempt === 0 ? "primary" : "fallback";
-      const route = Object.fromEntries(
-        ROUTE_HEADERS.filter((name) => typeof result.headers?.[name] === "string").map((name) => [
-          name,
-          result.headers[name],
-        ]),
-      );
-      log({
-        id,
-        commandId,
-        outcome: result.status === 200 ? "completed" : "upstream_failed",
-        attempt,
-        model: result.model,
-        upstreamStatus: result.status,
-        upstreamError: result.error,
-        route: route["x-ollama-route"],
-        durationMs,
-      });
-      if (result.status !== 200 || typeof result.body !== "string") {
-        return errorResponse(502, "model unavailable");
-      }
-      return {
-        statusCode: 200,
-        headers: {
-          "content-type": "application/json",
-          "x-tutor-relay-attempt": attempt,
-          "x-tutor-relay-model": String(result.model ?? ""),
-          ...route,
-        },
-        body: unwrapJsonFence(result.body, primary.response_format !== undefined),
-      };
-    }
-
-    try {
-      await send(
-        new CancelCommandCommand({ CommandId: commandId, InstanceIds: [config.instanceId] }),
-      );
+      node = information?.InstanceInformationList?.[0] ?? null;
     } catch {
-      // The command times out on the node on its own; cancelling is best effort.
+      // Without the status call, the run command below still shows whether the node answers.
     }
-    log({ id, commandId, outcome: "deadline", durationMs: now() - startedAt });
-    return errorResponse(504, "relay deadline exceeded");
+    if (node !== undefined) {
+      checks.ssm = {
+        status: node?.PingStatus === "Online" ? "ok" : "down",
+        pingStatus: node?.PingStatus ?? "NotRegistered",
+        agentVersion: node?.AgentVersion,
+        lastPingAt:
+          node?.LastPingDateTime instanceof Date ? node.LastPingDateTime.toISOString() : undefined,
+      };
+      if (checks.ssm.status === "down") return healthResponse(id, startedAt, checks);
+    }
+
+    const sealed = sealPayload(
+      config.payloadKey,
+      JSON.stringify({
+        v: 1,
+        id,
+        mode: "health",
+        host: config.sshHost,
+        url: config.rotatorUrl,
+        ollama: config.ollamaUrl,
+        models: { primary: config.primaryModel, fallback: config.fallbackModel },
+      }),
+      REQUEST_AAD,
+    );
+    const run = await runOnNode(
+      buildHealthCommand(sealed),
+      `tutor-relay health ${id}`,
+      { id, kind: "health" },
+      startedAt,
+    );
+    if (run.failure) {
+      checks.ssm = { ...checks.ssm, status: "down", error: run.failure.replaceAll("_", "-") };
+      return healthResponse(id, startedAt, checks);
+    }
+    return healthResponse(id, startedAt, {
+      ssm: { ...checks.ssm, status: "ok" },
+      ...reportedChecks(run.result.health, config),
+    });
+  }
+
+  return async function tutorRelay(event) {
+    const startedAt = now();
+    const method = event?.requestContext?.http?.method;
+    const path = String(event?.rawPath ?? "");
+    if (path.endsWith("/health")) {
+      if (method !== "GET") return errorResponse(405, "method not allowed");
+      if (!authorized(event, config.bearer)) return errorResponse(401, "unauthorized");
+      return health(startedAt);
+    }
+    if (method !== "POST") return errorResponse(405, "method not allowed");
+    if (!path.endsWith("/chat/completions")) return errorResponse(404, "not found");
+    if (!authorized(event, config.bearer)) return errorResponse(401, "unauthorized");
+    return chat(event, startedAt);
   };
 }
 

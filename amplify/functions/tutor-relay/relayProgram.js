@@ -1,13 +1,16 @@
 /**
- * Runs on the RMI-PC through AWS-RunShellScript, i.e. as root, like the Run Command calls of the
- * platform project. It only receives a sealed request: host alias, rotator URL, timeouts and the
- * prompt travel encrypted, and the prompt reaches the rotator on stdin, never in a shell string.
+ * Programs for the RMI-PC. They run through AWS-RunShellScript, i.e. as root, like the Run Command
+ * calls of the platform project, and only receive a sealed request: host alias, rotator URL,
+ * timeouts and the prompt travel encrypted, and the prompt reaches the rotator on stdin, never in
+ * a shell string.
  *
  * The payload key lives at ~/.config/trainlabs-tutor-relay/payload.key of the account that owns
  * the NAS access; SSH runs as that account. Started by that account itself (local checks), the
- * program uses its own key and SSH directly.
+ * programs use its own key and SSH directly.
  */
-export const RELAY_PROGRAM = String.raw`import base64, glob, json, os, pwd, re, subprocess, sys
+
+// Shared by both programs: key lookup, the sealed request, SSH as the key owner, the sealed answer.
+const PRELUDE = String.raw`import base64, glob, json, os, pwd, re, subprocess, sys
 
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -76,14 +79,7 @@ def parse_http(raw):
     return status, headers, rest
 
 
-def attempt(item):
-    timeout = int(item.get("timeout", 0))
-    if timeout < 1 or timeout > 60:
-        return {"status": 0, "error": "timeout-invalid"}
-    remote = "curl -sS -m %d -D - -H 'Content-Type: application/json' --data-binary @- %s" % (
-        timeout,
-        request["url"],
-    )
+def over_ssh(remote):
     command = [
         "/usr/bin/ssh",
         "-o", "BatchMode=yes",
@@ -95,9 +91,28 @@ def attempt(item):
     ]
     if os.geteuid() == 0:
         command = ["/usr/sbin/runuser", "-u", user, "--"] + command
+    return command
+
+
+def answer(result):
+    payload = json.dumps(dict(result, v=1, id=request.get("id"))).encode("utf-8")
+    nonce = os.urandom(12)
+    print("TRELAY1:" + base64.b64encode(nonce + aead.encrypt(nonce, payload, RESPONSE_AAD)).decode("ascii"))
+`;
+
+const CHAT = String.raw`
+
+def attempt(item):
+    timeout = int(item.get("timeout", 0))
+    if timeout < 1 or timeout > 60:
+        return {"status": 0, "error": "timeout-invalid"}
+    remote = "curl -sS -m %d -D - -H 'Content-Type: application/json' --data-binary @- %s" % (
+        timeout,
+        request["url"],
+    )
     try:
         done = subprocess.run(
-            command,
+            over_ssh(remote),
             input=json.dumps(item.get("body", {})).encode("utf-8"),
             capture_output=True,
             timeout=timeout + 10,
@@ -120,21 +135,158 @@ for index, item in enumerate(request.get("attempts", [])[:2]):
     if result["status"] == 200:
         break
 
-payload = json.dumps(dict(result, v=1, id=request.get("id"))).encode("utf-8")
-nonce = os.urandom(12)
-print("TRELAY1:" + base64.b64encode(nonce + aead.encrypt(nonce, payload, RESPONSE_AAD)).decode("ascii"))
+answer(result)
 `;
+
+// Health (#480): reports every station of the tutor path without calling a model.
+const HEALTH = String.raw`
+import urllib.request
+
+if request.get("mode") != "health" or not re.match(
+    r"^http://(localhost|127\.0\.0\.1):[0-9]{2,5}$", str(request.get("ollama", ""))
+):
+    fail("request-invalid")
+
+# URL_RE in the prelude admits only http://localhost:<port>/… and http://127.0.0.1:<port>/….
+ROTATOR = re.match(r"^http://[^/]+", request["url"]).group(0)
+NEXT = "TRELAY-HEALTH-NEXT"
+# Only a remote shell that ran prints the separator; without it SSH or runuser failed.
+MARKER = ("\n%s\n" % NEXT).encode("ascii")
+
+# The rotator's own status and a probe of its cloud route in one SSH round trip, running while the
+# local checks below take place.
+remote = "curl -sS -m 4 -D - %s/healthz; echo; echo %s; curl -sS -m 4 -D - %s/api/version" % (
+    ROTATOR,
+    NEXT,
+    ROTATOR,
+)
+nas = subprocess.Popen(
+    over_ssh(remote), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+)
+
+local = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+
+def local_json(path):
+    try:
+        with local.open(request["ollama"] + path, timeout=2) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except Exception:
+        return None
+
+
+def model_names(listing):
+    models = listing.get("models") if isinstance(listing, dict) else None
+    return {m["name"] for m in models or [] if isinstance(m, dict) and isinstance(m.get("name"), str)}
+
+
+version = local_json("/api/version")
+if isinstance(version, dict) and isinstance(version.get("version"), str):
+    ollama = {"status": "ok", "version": version["version"]}
+    installed = model_names(local_json("/api/tags"))
+    loaded = model_names(local_json("/api/ps"))
+else:
+    # Without an answer from Ollama the model lists would only wait for the same timeout.
+    ollama = {"status": "down"}
+    installed, loaded = set(), set()
+
+try:
+    out, _ = nas.communicate(timeout=15)
+    ssh_error = None if MARKER in out else "transport-exit-%d" % nas.returncode
+except subprocess.TimeoutExpired:
+    nas.kill()
+    nas.communicate()
+    out, ssh_error = b"", "timeout"
+
+allowed = None
+if ssh_error:
+    ssh = {"status": "down", "error": ssh_error}
+    rotator = {"status": "unknown"}
+    cloud = {"status": "unknown"}
+else:
+    ssh = {"status": "ok"}
+    first, _, second = out.partition(MARKER)
+    status, _, body = parse_http(first)
+    try:
+        state = json.loads(body) if status == 200 else None
+    except ValueError:
+        state = None
+    if isinstance(state, dict) and state.get("status") == "ok":
+        konten = state.get("konten")
+        accounts = [a for a in konten if isinstance(a, dict)] if isinstance(konten, list) else None
+        free = sum(1 for a in accounts or [] if a.get("frei") is True and not a.get("gesperrt_noch_s"))
+        if isinstance(state.get("erlaubte_modelle"), list):
+            allowed = {str(m) for m in state["erlaubte_modelle"]}
+        # Counts only: account names and key endings stay on the NAS.
+        rotator = {"status": "ok"}
+        if accounts is not None:
+            rotator.update(cloudAccounts=len(accounts), cloudAccountsFree=free)
+        cloud_status = parse_http(second)[0]
+        if cloud_status != 200:
+            cloud = {"status": "down", "httpStatus": cloud_status}
+        elif accounts == []:
+            # Without a single account the rotator cannot serve any cloud model.
+            cloud = {"status": "down", "error": "no-accounts"}
+        elif accounts and not free:
+            cloud = {"status": "degraded", "error": "accounts-limited"}
+        else:
+            cloud = {"status": "ok"}
+    else:
+        rotator = {"status": "down", "httpStatus": status}
+        cloud = {"status": "unknown"}
+
+
+def model(name):
+    if not name:
+        return None
+    if name.endswith("@local"):
+        if ollama["status"] != "ok":
+            return {"status": "unknown"}
+        base = name[: -len("@local")]
+        return {"status": "ok" if base in installed else "missing", "loaded": base in loaded}
+    if allowed is None:
+        return {"status": "unknown"}
+    return {"status": "ok" if name in allowed else "missing"}
+
+
+models = request.get("models") if isinstance(request.get("models"), dict) else {}
+answer(
+    {
+        "health": {
+            "sshNas": ssh,
+            "rotator": rotator,
+            "cloudRoute": cloud,
+            "ollama": ollama,
+            "models": {
+                "primary": model(str(models.get("primary") or "")),
+                "fallback": model(str(models.get("fallback") or "")),
+            },
+        }
+    }
+)
+`;
+
+export const RELAY_PROGRAM = PRELUDE + CHAT;
+export const HEALTH_PROGRAM = PRELUDE + HEALTH;
 
 const SEALED_TOKEN = /^[A-Za-z0-9+/]+={0,2}$/;
 
 /** The only variable part of the command is the base64 token, which cannot break the quoting. */
-export function buildRelayCommand(sealedRequest) {
+function nodeCommand(program, sealedRequest) {
   if (!SEALED_TOKEN.test(sealedRequest)) throw new Error("Sealed request must be base64");
   return [
     "set -eu",
     `export TRELAY_REQUEST='${sealedRequest}'`,
     "exec /usr/bin/python3 - <<'TRELAY_PY'",
-    RELAY_PROGRAM,
+    program,
     "TRELAY_PY",
   ].join("\n");
+}
+
+export function buildRelayCommand(sealedRequest) {
+  return nodeCommand(RELAY_PROGRAM, sealedRequest);
+}
+
+export function buildHealthCommand(sealedRequest) {
+  return nodeCommand(HEALTH_PROGRAM, sealedRequest);
 }
