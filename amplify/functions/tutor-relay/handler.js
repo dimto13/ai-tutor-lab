@@ -47,7 +47,7 @@ export function loadRelayConfig(env = process.env) {
     sshHost: env["TUTOR_RELAY_SSH_HOST"] || "nas",
     rotatorUrl: env["TUTOR_RELAY_ROTATOR_URL"] || "http://localhost:11435/v1/chat/completions",
     // Ollama on the RMI-PC itself, the target of the rotator's `@local` route; read by the health check.
-    ollamaUrl: env["TUTOR_RELAY_OLLAMA_URL"] || "http://localhost:11434",
+    ollamaUrl: (env["TUTOR_RELAY_OLLAMA_URL"] || "http://localhost:11434").replace(/\/+$/, ""),
     primaryModel: env["TUTOR_RELAY_PRIMARY_MODEL"] || "gemma4:31b",
     // An empty value disables the fallback attempt.
     fallbackModel: env["TUTOR_RELAY_FALLBACK_MODEL"] ?? "gemma4:e4b@local",
