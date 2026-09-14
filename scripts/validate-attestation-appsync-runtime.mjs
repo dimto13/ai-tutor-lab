@@ -1,5 +1,6 @@
 import { ESLint } from "eslint";
 import { readdir, readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 // Every resolver in amplify/data runs in the restricted APPSYNC_JS runtime. The AWS ESLint rules
@@ -7,15 +8,20 @@ import ts from "typescript";
 // resolvers failed on global String(...) calls, which this check had only covered for the
 // attestation resolvers. Array.isArray and default parameter values are neither documented for
 // APPSYNC_JS nor used by any resolver that has been deployed, so they are rejected as well.
-const resolverFiles = (await readdir("amplify/data"))
-  .filter((name) => name.endsWith(".js"))
-  .sort()
-  .map((name) => `amplify/data/${name}`);
+const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
+const resolverDirectory = `${repositoryRoot}amplify/data/`;
+const resolverFiles = (await readdir(resolverDirectory, { withFileTypes: true }))
+  .filter(
+    (entry) => entry.isFile() && entry.name.endsWith(".js") && !entry.name.endsWith(".test.js"),
+  )
+  .map((entry) => `${resolverDirectory}${entry.name}`)
+  .sort();
 
 const unsupportedGlobalConversions = new Set(["Number", "String"]);
 const diagnostics = [];
 
-const eslint = new ESLint();
+// ESLint resolves its flat config from its working directory, so it is pinned to the repository.
+const eslint = new ESLint({ cwd: repositoryRoot });
 const lintResults = await eslint.lintFiles(resolverFiles);
 for (const result of lintResults) {
   for (const message of result.messages) {

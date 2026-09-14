@@ -6,7 +6,7 @@ const FORMULA_PREFIXES = ["=", "+", "-", "@", "\t"];
 // expressions, so the cell is converted by a template literal and escaped with split/join.
 function csvCell(value) {
   if (value === null || value === undefined) return "";
-  const text = `${value}`.split("\r").join(" ").split("\n").join(" ");
+  const text = `${value}`.split("\r\n").join(" ").split("\r").join(" ").split("\n").join(" ");
   const safeText = FORMULA_PREFIXES.includes(text.charAt(0)) ? `'${text}` : text;
   return `"${safeText.split('"').join('""')}"`;
 }
