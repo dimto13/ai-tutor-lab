@@ -28,11 +28,27 @@ const { values } = parseArgs({
   },
 });
 
+// The failure scenarios (#481) provoke each failure through configuration only; nothing on the NAS
+// or the RMI-PC is stopped.
 const scenarios = {
   default: {},
   // The rotator rejects an unknown cloud model, so the relay has to fall back to the RMI-PC.
   fallback: { TUTOR_RELAY_PRIMARY_MODEL: "trainlabs-unknown-cloud-model" },
   local: { TUTOR_RELAY_PRIMARY_MODEL: "gemma4:e4b@local", TUTOR_RELAY_FALLBACK_MODEL: "" },
+  // The local model needs longer than one second; the cloud model then answers.
+  timeout: {
+    TUTOR_RELAY_PRIMARY_MODEL: "gemma4:e4b@local",
+    TUTOR_RELAY_PRIMARY_TIMEOUT_SECONDS: "1",
+    TUTOR_RELAY_FALLBACK_MODEL: "gemma4:31b",
+  },
+  "provider-error": {
+    TUTOR_RELAY_PRIMARY_MODEL: "trainlabs-unknown-cloud-model",
+    TUTOR_RELAY_FALLBACK_MODEL: "trainlabs-missing-model@local",
+  },
+  "rotator-offline": { TUTOR_RELAY_ROTATOR_URL: "http://localhost:11499/v1/chat/completions" },
+  "nas-unreachable": { TUTOR_RELAY_SSH_HOST: "trainlabs-no-such-host" },
+  // The SSM stand-in refuses the command like SSM does for a managed node that is not registered.
+  "node-offline": {},
 };
 const scenarioEnv = scenarios[values.scenario];
 if (!scenarioEnv) throw new Error(`Unknown scenario: ${values.scenario}`);
@@ -64,6 +80,9 @@ async function localSsm(command) {
       // No ping status without AWS; the local run of the health program shows whether it answers.
       throw Object.assign(new Error("SSM is not available locally"), { name: "LocalStandIn" });
     case "SendCommandCommand":
+      if (values.scenario === "node-offline") {
+        throw Object.assign(new Error("Instances not registered"), { name: "InvalidInstanceId" });
+      }
       stdout = await runLocally(command.input.Parameters.commands[0]);
       return { Command: { CommandId: "local" } };
     case "GetCommandInvocationCommand":

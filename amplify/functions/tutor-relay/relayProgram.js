@@ -123,18 +123,31 @@ def attempt(item):
         return {"status": 0, "error": "transport-exit-%d" % done.returncode}
     status, headers, body = parse_http(done.stdout)
     route = {name: headers[name] for name in ("x-ollama-route", "x-ollama-account", "via") if name in headers}
-    return {"status": status, "headers": route, "body": body.decode("utf-8", "replace")}
+    result = {"status": status, "headers": route, "body": body.decode("utf-8", "replace")}
+    if status != 200:
+        # Rotator and Ollama name the failure in error.type, e.g. model_not_allowed or not_found_error.
+        try:
+            kind = json.loads(body)["error"]["type"]
+        except Exception:
+            kind = None
+        if isinstance(kind, str) and re.match(r"^[a-z_]{1,40}$", kind):
+            result["type"] = kind
+    return result
 
 
 result = {"status": 0, "error": "no-attempt"}
+tried = []
 for index, item in enumerate(request.get("attempts", [])[:2]):
     result = attempt(item)
     result["attempt"] = index
     result["model"] = str(item.get("body", {}).get("model", ""))
+    # Model, status and failure signal of every attempt, never prompt or answer.
+    tried.append({key: result[key] for key in ("model", "status", "error", "type") if key in result})
     # The rotator answers an unknown cloud model with 400, so every failure falls back.
     if result["status"] == 200:
         break
 
+result["tried"] = tried
 answer(result)
 `;
 

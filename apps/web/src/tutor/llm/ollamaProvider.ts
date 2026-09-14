@@ -49,6 +49,7 @@ export class OllamaProvider implements LlmProvider {
         ...(request.maxOutputTokens === undefined ? {} : { max_tokens: request.maxOutputTokens }),
         ...(request.structuredOutput ? { response_format: { type: "json_object" } } : {}),
       }),
+      signal: AbortSignal.timeout(this.config.timeoutMs),
     });
 
     if (!response.ok) {

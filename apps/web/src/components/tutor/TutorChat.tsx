@@ -66,8 +66,8 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       let answer = answerDeterministically(question, tutorContext, findGlossaryConcept);
       const accessToken = auth.session?.accessToken ?? null;
       if (accessToken) {
-        try {
-          const response = await askTutorLlm({
+        const serverAnswer = await preferServerTutor(answer, () =>
+          askTutorLlm({
             data: {
               scenarioId: tutorContext.scenario.id,
               mode: tutorContext.mode,
@@ -75,19 +75,15 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
               question,
               accessToken,
             },
-          });
-          if (response.status !== "unavailable") {
-            answer = response.answer;
-            // Point at the elements the tutor refers to, as "Ziel zeigen" does for the step (#476).
-            if (response.status === "ok" && response.uiTargetRefs.length > 0) {
-              requestTutorAttention(
-                response.uiTargetRefs,
-                response.uiTargetRefs.map((ref) => getRuntimeTargetLabel(ref) ?? ref).join(", "),
-              );
-            }
-          }
-        } catch {
-          // The deterministic tutor remains the safe fallback if the optional server LLM is unavailable.
+          }),
+        );
+        answer = serverAnswer.answer;
+        // Point at the elements the tutor refers to, as "Ziel zeigen" does for the step (#476).
+        if (serverAnswer.uiTargetRefs.length > 0) {
+          requestTutorAttention(
+            serverAnswer.uiTargetRefs,
+            serverAnswer.uiTargetRefs.map((ref) => getRuntimeTargetLabel(ref) ?? ref).join(", "),
+          );
         }
       }
 

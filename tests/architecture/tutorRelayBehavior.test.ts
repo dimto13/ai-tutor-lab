@@ -626,3 +626,201 @@ test("only supported chat fields reach the rotator", () => {
     { model: "m", messages: [{ role: "user", content: "hi" }], stream: false },
   );
 });
+
+function relayLog(logs: string[]): Record<string, unknown> {
+  const entry = logs
+    .map((line) => JSON.parse(line) as Record<string, unknown>)
+    .reverse()
+    .find((line) => line["component"] === "tutor-relay");
+  assert.ok(entry, "the relay logs the request");
+  return entry;
+}
+
+test("every failed attempt is named by the station that failed", () => {
+  const cases: Array<[Record<string, unknown>, string | undefined]> = [
+    [{ status: 200, model: "gemma4:31b" }, undefined],
+    [{ status: 0, error: "transport-exit-255" }, "nas_unreachable"],
+    [{ status: 0, error: "transport-exit-7" }, "rotator_offline"],
+    [{ status: 0, error: "transport-exit-52" }, "rotator_offline"],
+    [{ status: 0, error: "timeout" }, "timeout"],
+    [{ status: 0, error: "transport-exit-28" }, "timeout"],
+    [{ status: 0, error: "transport-exit-6" }, "transport_error"],
+    [{ status: 429, model: "gemma4:31b" }, "busy"],
+    [{ status: 503, model: "gemma4:31b" }, "cloud_unavailable"],
+    [{ status: 502, model: "gemma4:e4b@local" }, "local_unavailable"],
+    [{ status: 400, model: "gemma4:31b", type: "model_not_allowed" }, "provider_error"],
+    [{ status: 404, model: "missing@local", type: "not_found_error" }, "provider_error"],
+  ];
+  for (const [attempt, failure] of cases) {
+    assert.equal(attemptFailure(attempt), failure, JSON.stringify(attempt));
+  }
+});
+
+test("the relay log names the failure of every attempt without prompt content", async () => {
+  const both = (first: Record<string, unknown>, second: Record<string, unknown>) => [
+    { model: "gemma4:31b", ...first },
+    { model: "gemma4:e4b@local", ...second },
+  ];
+  const cases: Array<
+    [string, Record<string, unknown>, number, string | undefined, Array<string | undefined>]
+  > = [
+    [
+      "cloud busy, local answers",
+      {
+        status: 200,
+        attempt: 1,
+        model: "gemma4:e4b@local",
+        headers: {},
+        body: completion,
+        tried: both({ status: 429 }, { status: 200 }),
+      },
+      200,
+      undefined,
+      ["busy", undefined],
+    ],
+    [
+      "cloud and local unavailable",
+      {
+        status: 502,
+        attempt: 1,
+        model: "gemma4:e4b@local",
+        headers: {},
+        body: "{}",
+        tried: both({ status: 503 }, { status: 502 }),
+      },
+      502,
+      "local_unavailable",
+      ["cloud_unavailable", "local_unavailable"],
+    ],
+    [
+      "NAS unreachable",
+      {
+        status: 0,
+        attempt: 1,
+        model: "gemma4:e4b@local",
+        error: "transport-exit-255",
+        tried: both(
+          { status: 0, error: "transport-exit-255" },
+          { status: 0, error: "transport-exit-255" },
+        ),
+      },
+      502,
+      "nas_unreachable",
+      ["nas_unreachable", "nas_unreachable"],
+    ],
+    [
+      "rotator offline",
+      {
+        status: 0,
+        attempt: 1,
+        model: "gemma4:e4b@local",
+        error: "transport-exit-7",
+        tried: both(
+          { status: 0, error: "transport-exit-7" },
+          { status: 0, error: "transport-exit-7" },
+        ),
+      },
+      502,
+      "rotator_offline",
+      ["rotator_offline", "rotator_offline"],
+    ],
+    [
+      "timeouts",
+      {
+        status: 0,
+        attempt: 1,
+        model: "gemma4:e4b@local",
+        error: "transport-exit-28",
+        tried: both({ status: 0, error: "timeout" }, { status: 0, error: "transport-exit-28" }),
+      },
+      502,
+      "timeout",
+      ["timeout", "timeout"],
+    ],
+    [
+      "provider errors",
+      {
+        status: 404,
+        attempt: 1,
+        model: "gemma4:e4b@local",
+        headers: {},
+        body: "{}",
+        type: "not_found_error",
+        tried: both(
+          { status: 400, type: "model_not_allowed" },
+          { status: 404, type: "not_found_error" },
+        ),
+      },
+      502,
+      "provider_error",
+      ["provider_error", "provider_error"],
+    ],
+  ];
+  for (const [name, result, statusCode, failure, attemptFailures] of cases) {
+    const node = fakeNode(() => result);
+    const relay = createTutorRelayHandler({
+      send: node.send,
+      config: relayConfig(),
+      ...fakeClock(),
+    });
+    const { value: response, logs } = await capturedLogs(() => relay(relayEvent()));
+    assert.equal(response.statusCode, statusCode, name);
+    const entry = relayLog(logs);
+    assert.equal(entry["failure"], failure, name);
+    assert.deepEqual(
+      (entry["attempts"] as Array<{ failure?: string }>).map((attempt) => attempt.failure),
+      attemptFailures,
+      name,
+    );
+    assert.equal(logs.join("\n").includes(MARKER_WORD), false, name);
+  }
+});
+
+test("SSM and node failures are named in the relay log", async () => {
+  const invocationOf =
+    (invocation: Record<string, unknown>) =>
+    async (command: unknown): Promise<unknown> => {
+      if (command instanceof SendCommandCommand) return { Command: { CommandId: "command-1" } };
+      if (command instanceof GetCommandInvocationCommand) return invocation;
+      return {};
+    };
+  const refusing = (name: string) => async (): Promise<unknown> => {
+    throw namedError(name);
+  };
+  const cases: Array<[string, (command: unknown) => Promise<unknown>, number, string]> = [
+    ["node not registered", refusing("InvalidInstanceId"), 503, "node_offline"],
+    ["SSM refuses", refusing("AccessDeniedException"), 503, "ssm_error"],
+    [
+      "undeliverable",
+      invocationOf({ Status: "Failed", StatusDetails: "Undeliverable" }),
+      502,
+      "node_offline",
+    ],
+    [
+      "execution timed out",
+      invocationOf({ Status: "TimedOut", StatusDetails: "ExecutionTimedOut" }),
+      502,
+      "timeout",
+    ],
+    [
+      "program failed",
+      invocationOf({ Status: "Failed", StatusDetails: "Failed" }),
+      502,
+      "relay_node_error",
+    ],
+    ["never started", invocationOf({ Status: "Pending" }), 504, "node_offline"],
+    ["still running", invocationOf({ Status: "InProgress" }), 504, "timeout"],
+    [
+      "node program error",
+      fakeNode(() => "TRELAYERR:key-permissions\n").send,
+      502,
+      "relay_node_error",
+    ],
+  ];
+  for (const [name, send, statusCode, failure] of cases) {
+    const relay = createTutorRelayHandler({ send, config: relayConfig(), ...fakeClock() });
+    const { value: response, logs } = await capturedLogs(() => relay(relayEvent()));
+    assert.equal(response.statusCode, statusCode, name);
+    assert.equal(relayLog(logs)["failure"], failure, name);
+  }
+});
