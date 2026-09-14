@@ -14,6 +14,13 @@ test("the deterministic answer stays whenever the server tutor fails (#28, #481)
         }),
       ),
     () => Promise.resolve({ status: "unavailable" as const }),
+    () =>
+      Promise.resolve({
+        status: "ok" as const,
+        answer: "  ",
+        uiTargetRefs: ["vscode.panel.terminal"],
+        model: "gemma4:31b",
+      }),
   ];
   for (const ask of failures) {
     assert.deepEqual(await preferServerTutor(DETERMINISTIC, ask), {

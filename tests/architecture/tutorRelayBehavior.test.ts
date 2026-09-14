@@ -680,6 +680,7 @@ test("every failed attempt is named by the station that failed", () => {
     [{ status: 0, error: "timeout" }, "timeout"],
     [{ status: 0, error: "transport-exit-28" }, "timeout"],
     [{ status: 0, error: "transport-exit-6" }, "transport_error"],
+    [{ status: 0 }, "transport_error"],
     [{ status: 429, model: "gemma4:31b" }, "busy"],
     [{ status: 503, model: "gemma4:31b" }, "cloud_unavailable"],
     [{ status: 502, model: "gemma4:e4b@local" }, "local_unavailable"],

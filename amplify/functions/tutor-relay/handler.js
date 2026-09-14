@@ -170,6 +170,8 @@ export function attemptFailure(attempt) {
       ? "local_unavailable"
       : "cloud_unavailable";
   }
+  // Without a status there was no answer at all, so no provider can have rejected the request.
+  if (status === 0) return "transport_error";
   return "provider_error";
 }
 
@@ -413,7 +415,7 @@ export function createTutorRelayHandler({
         model: String(entry?.model ?? ""),
         status: Number.isSafeInteger(entry?.status) ? entry.status : 0,
         type:
-          typeof entry?.type === "string" && /^[a-z_]{1,40}$/.test(entry.type)
+          typeof entry?.type === "string" && /^[a-z_-]{1,40}$/.test(entry.type)
             ? entry.type
             : undefined,
         failure: attemptFailure(entry),

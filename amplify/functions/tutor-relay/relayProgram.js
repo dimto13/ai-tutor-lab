@@ -130,7 +130,7 @@ def attempt(item):
             kind = json.loads(body)["error"]["type"]
         except Exception:
             kind = None
-        if isinstance(kind, str) and re.match(r"^[a-z_]{1,40}$", kind):
+        if isinstance(kind, str) and re.match(r"^[a-z_-]{1,40}$", kind):
             result["type"] = kind
     return result
 
