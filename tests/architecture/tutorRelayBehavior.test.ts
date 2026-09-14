@@ -624,6 +624,13 @@ test("health only counts the stations the configured models use", async () => {
   }
 });
 
+test("the Ollama URL of the health check tolerates a trailing slash", () => {
+  assert.equal(
+    relayConfig({ TUTOR_RELAY_OLLAMA_URL: "http://localhost:11434/" }).ollamaUrl,
+    "http://localhost:11434",
+  );
+});
+
 test("the node commands only accept a base64 token", () => {
   assert.throws(() => buildRelayCommand("abc'; rm -rf /; echo '"));
   assert.throws(() => buildHealthCommand("abc'; rm -rf /; echo '"));

@@ -32,10 +32,17 @@ async function relayUrl() {
   return url;
 }
 
-const masterKey =
-  process.env.TUTOR_RELAY_KEY ??
-  (await readFile(join(homedir(), ".config/trainlabs-tutor-relay/master.key"), "utf8")).trim();
-const { bearer } = deriveRelayKeys(masterKey);
+async function masterKey() {
+  if (process.env.TUTOR_RELAY_KEY) return process.env.TUTOR_RELAY_KEY;
+  const path = join(homedir(), ".config/trainlabs-tutor-relay/master.key");
+  try {
+    return (await readFile(path, "utf8")).trim();
+  } catch {
+    throw new Error(`Relay-Schlüssel fehlt: TUTOR_RELAY_KEY setzen oder ${path} anlegen`);
+  }
+}
+
+const { bearer } = deriveRelayKeys(await masterKey());
 
 const startedAt = Date.now();
 const base = await relayUrl();
@@ -56,32 +63,34 @@ if (!report?.checks) {
   process.exit(1);
 }
 
+// An older or foreign relay may leave fields out; they show as "unknown" instead of failing here.
 const { checks } = report;
-const httpStatus = (check) => check.httpStatus !== undefined && `HTTP ${check.httpStatus}`;
+const httpStatus = (check) => check?.httpStatus !== undefined && `HTTP ${check.httpStatus}`;
 const lines = [
   [
     "SSM → RMI-PC",
     checks.ssm,
     [
-      checks.ssm.pingStatus,
-      checks.ssm.agentVersion && `Agent ${checks.ssm.agentVersion}`,
-      checks.ssm.error,
+      checks.ssm?.pingStatus,
+      checks.ssm?.agentVersion && `Agent ${checks.ssm.agentVersion}`,
+      checks.ssm?.error,
     ],
   ],
-  ["SSH → NAS", checks.sshNas, [checks.sshNas.error]],
+  ["SSH → NAS", checks.sshNas, [checks.sshNas?.error]],
   [
     "Rotator",
     checks.rotator,
     [
-      checks.rotator.cloudAccounts !== undefined &&
+      checks.rotator?.cloudAccounts !== undefined &&
         `Cloud-Konten frei ${checks.rotator.cloudAccountsFree}/${checks.rotator.cloudAccounts}`,
       httpStatus(checks.rotator),
     ],
   ],
-  ["Cloud-Route", checks.cloudRoute, [checks.cloudRoute.error, httpStatus(checks.cloudRoute)]],
-  ["Ollama RMI-PC", checks.ollama, [checks.ollama.version]],
+  ["Cloud-Route", checks.cloudRoute, [checks.cloudRoute?.error, httpStatus(checks.cloudRoute)]],
+  ["Ollama RMI-PC", checks.ollama, [checks.ollama?.version]],
 ];
 for (const [role, model] of Object.entries(checks.models ?? {})) {
+  if (!model) continue;
   lines.push([
     role === "primary" ? "Modell primär" : "Modell Fallback",
     model,
@@ -96,8 +105,7 @@ for (const [role, model] of Object.entries(checks.models ?? {})) {
 const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 console.log(`Tutor-Health: ${report.status} · HTTP ${response.status} · ${seconds} s`);
 for (const [label, check, details] of lines) {
-  console.log(
-    `  ${label.padEnd(16)} ${String(check.status).padEnd(9)} ${details.filter(Boolean).join(" · ")}`,
-  );
+  const status = String(check?.status ?? "unknown").padEnd(9);
+  console.log(`  ${label.padEnd(16)} ${status} ${details.filter(Boolean).join(" · ")}`);
 }
 process.exitCode = report.status === "ok" ? 0 : 1;

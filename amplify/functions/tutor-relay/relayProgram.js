@@ -212,15 +212,21 @@ else:
     except ValueError:
         state = None
     if isinstance(state, dict) and state.get("status") == "ok":
-        accounts = [a for a in state.get("konten") or [] if isinstance(a, dict)]
-        free = sum(1 for a in accounts if a.get("frei") is True and not a.get("gesperrt_noch_s"))
+        konten = state.get("konten")
+        accounts = [a for a in konten if isinstance(a, dict)] if isinstance(konten, list) else None
+        free = sum(1 for a in accounts or [] if a.get("frei") is True and not a.get("gesperrt_noch_s"))
         if isinstance(state.get("erlaubte_modelle"), list):
             allowed = {str(m) for m in state["erlaubte_modelle"]}
         # Counts only: account names and key endings stay on the NAS.
-        rotator = {"status": "ok", "cloudAccounts": len(accounts), "cloudAccountsFree": free}
+        rotator = {"status": "ok"}
+        if accounts is not None:
+            rotator.update(cloudAccounts=len(accounts), cloudAccountsFree=free)
         cloud_status = parse_http(second)[0]
         if cloud_status != 200:
             cloud = {"status": "down", "httpStatus": cloud_status}
+        elif accounts == []:
+            # Without a single account the rotator cannot serve any cloud model.
+            cloud = {"status": "down", "error": "no-accounts"}
         elif accounts and not free:
             cloud = {"status": "degraded", "error": "accounts-limited"}
         else:
