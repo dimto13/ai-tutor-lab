@@ -21,3 +21,12 @@ export function getRuntimeReferenceDefinition(
 ): RuntimeReferenceDefinition | null {
   return RUNTIME_REFERENCE_CATALOG.find((runtime) => runtime.id === runtimeAdapterId) ?? null;
 }
+
+/** Human-readable label of a UI target from any runtime, e.g. "Terminal" for vscode.panel.terminal. */
+export function getRuntimeTargetLabel(ref: string): string | null {
+  for (const runtime of RUNTIME_REFERENCE_CATALOG) {
+    const target = runtime.surface.find((entry) => entry.ref === ref);
+    if (target) return target.label;
+  }
+  return null;
+}
