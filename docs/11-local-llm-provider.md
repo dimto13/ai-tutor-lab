@@ -160,14 +160,14 @@ Historische Messung vom 2026-09-13 ohne SSM-Anteil: lokal `gemma4:e4b@local` ca.
 
 `GET <Function URL>/health` mit demselben Bearer wie der Chat-Pfad prüft jede Station einzeln (#480). Jede Prüfung meldet `ok`, `degraded`, `down`, `missing` oder `unknown`; der Gesamtstatus ist `ok`, `degraded` (mindestens eine konfigurierte Modellroute nutzbar) oder `down` (keine konfigurierte Route nutzbar, HTTP 503; der Tutor antwortet dann deterministisch).
 
-| Prüfung      | Quelle / Bedeutung in der geschlossenen Beta                                                                                           |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `ssm`        | SSM-Status des Managed Nodes (`PingStatus`, Agent-Version). Ist er nicht `Online`, antwortet die Lambda sofort und ohne Run Command.   |
-| `sshNas`     | SSH vom RMI-PC zum NAS; Teil des produktiven Transportpfads.                                                                           |
-| `rotator`    | `/healthz` des Rotators; nur bekannte technische Felder werden übernommen.                                                             |
-| `cloudRoute` | optionale Diagnose ohne Tutor-Prompt/Modellinferenz; bei local-only nicht Teil der Gesamtstatusentscheidung.                           |
-| `ollama`     | Ollama auf dem RMI-PC (`/api/version`); für die Beta erforderlich.                                                                     |
-| `models`     | primäres Modell `gemma4:e4b@local` lokal installiert/geladen; kein konfiguriertes Fallback-Modell.                                     |
+| Prüfung      | Quelle / Bedeutung in der geschlossenen Beta                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ssm`        | SSM-Status des Managed Nodes (`PingStatus`, Agent-Version). Ist er nicht `Online`, antwortet die Lambda sofort und ohne Run Command. |
+| `sshNas`     | SSH vom RMI-PC zum NAS; Teil des produktiven Transportpfads.                                                                         |
+| `rotator`    | `/healthz` des Rotators; nur bekannte technische Felder werden übernommen.                                                           |
+| `cloudRoute` | optionale Diagnose ohne Tutor-Prompt/Modellinferenz; bei local-only nicht Teil der Gesamtstatusentscheidung.                         |
+| `ollama`     | Ollama auf dem RMI-PC (`/api/version`); für die Beta erforderlich.                                                                   |
+| `models`     | primäres Modell `gemma4:e4b@local` lokal installiert/geladen; kein konfiguriertes Fallback-Modell.                                   |
 
 Der Health-Teil läuft wie der Chat als fester Befehl über `AWS-RunShellScript` mit versiegelter Anfrage und Antwort; SSH zum NAS und die lokalen Prüfungen laufen parallel. Aus der Antwort des RMI-PC übernimmt die Lambda nur bekannte Felder. `overallHealth` zählt nur Stationen, die von den konfigurierten Modellen tatsächlich genutzt werden; eine nicht verfügbare Cloud-Route macht den local-only-Beta-Health daher nicht `degraded` oder `down`.
 
