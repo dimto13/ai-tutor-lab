@@ -2,6 +2,24 @@
 @source "../src";
 @import "tw-animate-css";
 
+/*
+ * #487: Inter and JetBrains Mono ship with the application. The weights match the
+ * previously requested ones; latin and latin-ext cover the German user interface.
+ * Adding a weight here means adding it to the font delivery architecture test.
+ */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-ext-700.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-ext-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";
+@import "@fontsource/jetbrains-mono/latin-ext-500.css";
+
 @custom-variant dark (&:is(.dark *));
 
 /*

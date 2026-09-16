@@ -27,14 +27,6 @@ type BrowserErrorAllowance = {
 const browserErrorAllowlist: readonly BrowserErrorAllowance[] = [
   {
     type: "console.error",
-    sourceUrl:
-      /^https:\/\/fonts\.gstatic\.com\/s\/jetbrainsmono\/v24\/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYaTNPxDcwg\.woff2$/,
-    text: /^Failed to load resource: the server responded with a status of 404 \(\)$/,
-    reason:
-      "The isolated CI environment reproducibly receives a 404 for this exact external JetBrains Mono font asset. No application, React, router, resolver or runtime errors are covered.",
-  },
-  {
-    type: "console.error",
     pagePath:
       /^\/training\/(?:artifact-preview-foundation\.guided|html-page-workflow\.(?:explore|guided|challenge)|quarterly-presentation-workflow\.guided)$/,
     sourceUrl: /^about:srcdoc#?$/,
