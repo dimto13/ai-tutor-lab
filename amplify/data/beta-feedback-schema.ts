@@ -1,4 +1,5 @@
 import { a } from "@aws-amplify/backend";
+import { accountDeletion } from "../functions/account-deletion/resource.ts";
 
 /**
  * Beta feedback persistence is intentionally exposed only through the custom
@@ -111,4 +112,10 @@ export const betaFeedbackSchema = {
         entry: "./export-beta-feedback-csv.js",
       }),
     ]),
+
+  deleteMyAccount: a
+    .mutation()
+    .returns(a.boolean())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(accountDeletion)),
 } as const;
