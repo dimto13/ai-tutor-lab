@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
 import { createAccountDeletionHandler } from "../../amplify/functions/account-deletion/handler.js";
 
@@ -38,6 +39,17 @@ afterEach(() => {
 });
 
 describe("account deletion authority boundary", () => {
+  it("exposes a no-argument authenticated deleteMyAccount mutation through the account-deletion function", () => {
+    const schema = readFileSync("amplify/data/resource.ts", "utf8");
+    expect(schema).toContain(
+      'import { accountDeletion } from "../functions/account-deletion/resource.ts";',
+    );
+    expect(schema).toMatch(
+      /deleteMyAccount:\s*a\s*\.mutation\(\)\s*\.returns\(a\.boolean\(\)\)\s*\.authorization\(\(allow\) => \[allow\.authenticated\(\)\]\)\s*\.handler\(a\.handler\.function\(accountDeletion\)\)/s,
+    );
+    expect(schema).not.toMatch(/deleteMyAccount:[\s\S]*?\.arguments\(/);
+  });
+
   it("rejects a client supplied subject before touching persistence", async () => {
     configureEnvironment();
     const calls: unknown[] = [];
