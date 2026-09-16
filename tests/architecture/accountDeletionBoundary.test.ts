@@ -40,14 +40,16 @@ afterEach(() => {
 
 describe("account deletion authority boundary", () => {
   it("exposes a no-argument authenticated deleteMyAccount mutation through the account-deletion function", () => {
-    const schema = readFileSync("amplify/data/resource.ts", "utf8");
-    expect(schema).toContain(
+    const rootSchema = readFileSync("amplify/data/resource.ts", "utf8");
+    const extensionSchema = readFileSync("amplify/data/beta-feedback-schema.ts", "utf8");
+    expect(rootSchema).toContain("...betaFeedbackSchema");
+    expect(extensionSchema).toContain(
       'import { accountDeletion } from "../functions/account-deletion/resource.ts";',
     );
-    expect(schema).toMatch(
+    expect(extensionSchema).toMatch(
       /deleteMyAccount:\s*a\s*\.mutation\(\)\s*\.returns\(a\.boolean\(\)\)\s*\.authorization\(\(allow\) => \[allow\.authenticated\(\)\]\)\s*\.handler\(a\.handler\.function\(accountDeletion\)\)/s,
     );
-    expect(schema).not.toMatch(/deleteMyAccount:[\s\S]*?\.arguments\(/);
+    expect(extensionSchema).not.toMatch(/deleteMyAccount:[\s\S]*?\.arguments\(/);
   });
 
   it("rejects a client supplied subject before touching persistence", async () => {
