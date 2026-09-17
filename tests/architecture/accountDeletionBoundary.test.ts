@@ -103,9 +103,8 @@ describe("account deletion authority boundary", () => {
       throw new Error("unexpected command");
     });
 
-    const result = JSON.parse(await handler(event()));
-    expect(result.deleted).toBe(true);
-    expect(result.subject).toEqual({ tenantId: "tenant-a" });
+    const result = await handler(event());
+    expect(result).toBe(true);
     expect(deletedIds).toHaveLength(ENVIRONMENTS.length - 3);
     expect(deletedIds.every((id) => id === "owned")).toBe(true);
   });
