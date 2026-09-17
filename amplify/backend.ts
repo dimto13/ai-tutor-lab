@@ -189,7 +189,7 @@ backend.accountDeletion.addEnvironment(
 );
 accountDeletionLambda.addToRolePolicy(
   new PolicyStatement({
-    actions: ["cognito-idp:AdminDeleteUser"],
+    actions: ["cognito-idp:ListUsers", "cognito-idp:AdminDeleteUser"],
     resources: [cfnUserPool.attrArn],
   }),
 );
