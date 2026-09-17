@@ -1,5 +1,6 @@
+import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, it } from "node:test";
 import { createAccountDeletionHandler } from "../../amplify/functions/account-deletion/handler.js";
 
 const ENVIRONMENTS = [
@@ -42,14 +43,16 @@ describe("account deletion authority boundary", () => {
   it("exposes a no-argument authenticated deleteMyAccount mutation through the account-deletion function", () => {
     const rootSchema = readFileSync("amplify/data/resource.ts", "utf8");
     const extensionSchema = readFileSync("amplify/data/beta-feedback-schema.ts", "utf8");
-    expect(rootSchema).toContain("...betaFeedbackSchema");
-    expect(extensionSchema).toContain(
-      'import { accountDeletion } from "../functions/account-deletion/resource.ts";',
+    assert.match(rootSchema, /\.\.\.betaFeedbackSchema/);
+    assert.match(
+      extensionSchema,
+      /import \{ accountDeletion \} from "\.\.\/functions\/account-deletion\/resource\.ts";/,
     );
-    expect(extensionSchema).toMatch(
+    assert.match(
+      extensionSchema,
       /deleteMyAccount:\s*a\s*\.mutation\(\)\s*\.returns\(a\.boolean\(\)\)\s*\.authorization\(\(allow\) => \[allow\.authenticated\(\)\]\)\s*\.handler\(a\.handler\.function\(accountDeletion\)\)/s,
     );
-    expect(extensionSchema).not.toMatch(/deleteMyAccount:[\s\S]*?\.arguments\(/);
+    assert.doesNotMatch(extensionSchema, /deleteMyAccount:[\s\S]*?\.arguments\(/);
   });
 
   it("rejects a client supplied subject before touching persistence", async () => {
@@ -60,10 +63,10 @@ describe("account deletion authority boundary", () => {
       return {};
     });
 
-    await expect(handler(event({ userId: "user-b" }))).rejects.toThrow(
-      "does not accept client-authoritative subject arguments",
-    );
-    expect(calls).toEqual([]);
+    await assert.rejects(handler(event({ userId: "user-b" })), {
+      message: /does not accept client-authoritative subject arguments/,
+    });
+    assert.deepEqual(calls, []);
   });
 
   it("rejects missing tenant membership before touching persistence", async () => {
@@ -74,13 +77,14 @@ describe("account deletion authority boundary", () => {
       return {};
     });
 
-    await expect(
+    await assert.rejects(
       handler({
         arguments: {},
         identity: { sub: "user-a", groups: [], claims: { sub: "user-a" } },
       }),
-    ).rejects.toThrow("Tenant membership is required");
-    expect(calls).toEqual([]);
+      { message: /Tenant membership is required/ },
+    );
+    assert.deepEqual(calls, []);
   });
 
   it("deletes only rows that match the authenticated tenant and subject", async () => {
@@ -105,7 +109,7 @@ describe("account deletion authority boundary", () => {
         return {};
       }
       if (descriptor.service === "cognito" && descriptor.type === "listUsers") {
-        expect(descriptor.input.Filter).toBe('sub = "user-a"');
+        assert.equal(descriptor.input.Filter, 'sub = "user-a"');
         return { Users: [{ Username: "cognito-user-a" }] };
       }
       if (descriptor.service === "cognito" && descriptor.type === "adminDeleteUser") return {};
@@ -113,9 +117,9 @@ describe("account deletion authority boundary", () => {
     });
 
     const result = await handler(event());
-    expect(result).toBe(true);
-    expect(deletedIds).toHaveLength(ENVIRONMENTS.length - 3);
-    expect(deletedIds.every((id) => id === "owned")).toBe(true);
+    assert.equal(result, true);
+    assert.equal(deletedIds.length, ENVIRONMENTS.length - 3);
+    assert.ok(deletedIds.every((id) => id === "owned"));
   });
 
   it("fails closed if a scan returns a foreign row", async () => {
@@ -137,7 +141,7 @@ describe("account deletion authority boundary", () => {
       return { Items: [] };
     });
 
-    await expect(handler(event())).rejects.toThrow("escaped authenticated subject scope");
-    expect(cognitoTouched).toBe(false);
+    await assert.rejects(handler(event()), { message: /escaped authenticated subject scope/ });
+    assert.equal(cognitoTouched, false);
   });
 });
