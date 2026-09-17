@@ -60,7 +60,9 @@ function encoded(value) {
 }
 
 function telemetryOwnerKey(subject) {
-  return ["telemetry-deletion-owner:v1", encoded(subject.tenantId), encoded(subject.userId)].join(".");
+  return ["telemetry-deletion-owner:v1", encoded(subject.tenantId), encoded(subject.userId)].join(
+    ".",
+  );
 }
 
 function scanDescriptor(input) {
@@ -94,7 +96,11 @@ async function deletePersonalTable(tableName, subject, send) {
       }),
     );
     for (const item of result.Items || []) {
-      if (item.tenantId?.S !== subject.tenantId || item.userId?.S !== subject.userId || !item.id?.S) {
+      if (
+        item.tenantId?.S !== subject.tenantId ||
+        item.userId?.S !== subject.userId ||
+        !item.id?.S
+      ) {
         throw new Error("Account deletion scan escaped authenticated subject scope");
       }
       await send(deleteDescriptor({ TableName: tableName, Key: { id: item.id } }));
@@ -123,7 +129,11 @@ async function deleteTelemetry(subject, send) {
       }),
     );
     for (const item of result.Items || []) {
-      if (item.tenantId?.S !== subject.tenantId || item.ownerKey?.S !== ownerKey || !item.rawEventId?.S) {
+      if (
+        item.tenantId?.S !== subject.tenantId ||
+        item.ownerKey?.S !== ownerKey ||
+        !item.rawEventId?.S
+      ) {
         throw new Error("Telemetry deletion query escaped authenticated subject scope");
       }
       await send(deleteDescriptor({ TableName: rawTable, Key: { id: item.rawEventId } }));
@@ -149,7 +159,9 @@ async function deleteCognitoUser(subject, send) {
   });
   const users = listed.Users || [];
   if (users.length !== 1 || !users[0]?.Username) {
-    throw new Error(`Account deletion expected exactly one Cognito user for authenticated subject; found ${users.length}`);
+    throw new Error(
+      `Account deletion expected exactly one Cognito user for authenticated subject; found ${users.length}`,
+    );
   }
   await send({
     service: "cognito",
