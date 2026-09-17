@@ -326,9 +326,7 @@ async function loadRawTelemetry(subject, send) {
       throw new Error("Telemetry export read escaped authenticated subject scope");
     }
   }
-  return rows
-    .map(cleanRow)
-    .sort((left, right) => (left.occurredAt || 0) - (right.occurredAt || 0));
+  return rows.map(cleanRow).sort((left, right) => (left.occurredAt || 0) - (right.occurredAt || 0));
 }
 
 async function loadCloudData(subject, send) {
