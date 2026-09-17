@@ -3,6 +3,7 @@ import { ArrowLeft, Database, Download, GraduationCap, ShieldCheck } from "lucid
 import { useEffect, useMemo, useState } from "react";
 import { AccountMenu } from "@/auth/AccountMenu";
 import { useAuth } from "@/auth/AuthContext";
+import { AccountDeletionPanel } from "@/data-transparency/AccountDeletionPanel";
 import {
   dataCategories,
   downloadOwnDataExport,
@@ -295,6 +296,8 @@ function DataTransparencyPage() {
             ))}
           </div>
         ) : null}
+
+        <AccountDeletionPanel />
       </main>
     </div>
   );

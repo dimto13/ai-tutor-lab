@@ -75,3 +75,12 @@ export async function exportAmplifyOwnData(): Promise<unknown> {
     throw userFacingError(new Error("Amplify Data returned invalid JSON for the own-data export"));
   }
 }
+
+export async function deleteAmplifyOwnAccount(): Promise<void> {
+  const client = generateClient<Schema>();
+  const result = await client.mutations.deleteMyAccount();
+  if (result.errors?.length) throw providerBoundaryError(result.errors);
+  if (result.data !== true) {
+    throw userFacingError(new Error("Amplify Data did not confirm account deletion"));
+  }
+}

@@ -5,6 +5,7 @@ import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { EventSourceMapping, FunctionUrlAuthType, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
+import { accountDeletion } from "./functions/account-deletion/resource";
 import { runtimeIncidentReporter } from "./functions/runtime-incident-reporter/resource";
 import { telemetryAggregateProjector } from "./functions/telemetry-aggregate-projector/resource";
 import { telemetryDeletionWorker } from "./functions/telemetry-deletion-worker/resource";
@@ -19,6 +20,7 @@ function requiredResource<T>(resource: T | undefined, name: string): T {
 export const backend = defineBackend({
   auth,
   data,
+  accountDeletion,
   runtimeIncidentReporter,
   telemetryAggregateProjector,
   telemetryDeletionWorker,
@@ -26,7 +28,7 @@ export const backend = defineBackend({
   userDataExport,
 });
 
-const { cfnIdentityPool } = backend.auth.resources.cfnResources;
+const { cfnIdentityPool, cfnUserPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
 
 const { amplifyDynamoDbTables } = backend.data.resources.cfnResources;
@@ -89,6 +91,7 @@ const rawTelemetryStreamArn = requiredResource(
 const projectorLambda = backend.telemetryAggregateProjector.resources.lambda;
 const deletionLambda = backend.telemetryDeletionWorker.resources.lambda;
 const userDataExportLambda = backend.userDataExport.resources.lambda;
+const accountDeletionLambda = backend.accountDeletion.resources.lambda;
 const incidentLambda = backend.runtimeIncidentReporter.resources.lambda;
 
 const runtimeIncidentTable = new Table(backend.data.stack, "RuntimeIncidentAggregate", {
@@ -130,23 +133,39 @@ backend.telemetryDeletionWorker.addEnvironment(
   deletionPointerTable.tableName,
 );
 
-const exportTables = [
+const personalTables = [
   ["USER_PROFILE_TABLE_NAME", "UserProfile"],
   ["USER_PREFERENCES_TABLE_NAME", "UserPreferences"],
   ["TRAINING_SESSION_TABLE_NAME", "TrainingSession"],
+  ["STEP_STATE_TABLE_NAME", "StepState"],
   ["RUNTIME_SNAPSHOT_TABLE_NAME", "RuntimeSnapshot"],
+  ["HINT_USAGE_TABLE_NAME", "HintUsage"],
+  ["ATTEMPT_TABLE_NAME", "Attempt"],
   ["SCENARIO_RUN_TABLE_NAME", "ScenarioRun"],
   ["SCORE_EVENT_TABLE_NAME", "ScoreEvent"],
+  ["SKILL_PROFILE_TABLE_NAME", "SkillProfile"],
   ["ATTESTATION_TABLE_NAME", "Attestation"],
+] as const;
+
+for (const [environmentName, modelName] of personalTables) {
+  const table = requiredResource(backend.data.resources.tables[modelName], `${modelName} table`);
+  table.grantReadData(userDataExportLambda);
+  backend.userDataExport.addEnvironment(environmentName, table.tableName);
+  table.grantReadWriteData(accountDeletionLambda);
+  backend.accountDeletion.addEnvironment(environmentName, table.tableName);
+}
+
+const exportPolicyTables = [
   ["TENANT_SCORE_VISIBILITY_POLICY_TABLE_NAME", "TenantScoreVisibilityPolicy"],
   ["TENANT_TELEMETRY_POLICY_TABLE_NAME", "TenantTelemetryPolicy"],
 ] as const;
 
-for (const [environmentName, modelName] of exportTables) {
+for (const [environmentName, modelName] of exportPolicyTables) {
   const table = requiredResource(backend.data.resources.tables[modelName], `${modelName} table`);
   table.grantReadData(userDataExportLambda);
   backend.userDataExport.addEnvironment(environmentName, table.tableName);
 }
+
 rawTelemetryTable.grantReadData(userDataExportLambda);
 deletionPointerTable.grantReadData(userDataExportLambda);
 backend.userDataExport.addEnvironment(
@@ -157,6 +176,24 @@ backend.userDataExport.addEnvironment(
   "TELEMETRY_DELETION_POINTER_TABLE_NAME",
   deletionPointerTable.tableName,
 );
+
+rawTelemetryTable.grantReadWriteData(accountDeletionLambda);
+deletionPointerTable.grantReadWriteData(accountDeletionLambda);
+backend.accountDeletion.addEnvironment(
+  "TELEMETRY_RAW_EVENT_TABLE_NAME",
+  rawTelemetryTable.tableName,
+);
+backend.accountDeletion.addEnvironment(
+  "TELEMETRY_DELETION_POINTER_TABLE_NAME",
+  deletionPointerTable.tableName,
+);
+accountDeletionLambda.addToRolePolicy(
+  new PolicyStatement({
+    actions: ["cognito-idp:ListUsers", "cognito-idp:AdminDeleteUser"],
+    resources: [cfnUserPool.attrArn],
+  }),
+);
+backend.accountDeletion.addEnvironment("USER_POOL_ID", cfnUserPool.ref);
 
 new EventSourceMapping(backend.data.stack, "TelemetryAggregateProjectionStream", {
   target: projectorLambda,
