@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+
 import { useAuth } from "@/auth/AuthContext";
 import { deleteAmplifyOwnAccount } from "@/persistence/adapters/amplifyDataTransparency";
 
@@ -32,9 +33,15 @@ export function AccountDeletionPanel() {
       className="mt-8 rounded-xl border border-destructive/40 bg-panel p-5"
     >
       <div className="flex items-start gap-3">
-        <Trash2 className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
+        <Trash2
+          className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+          aria-hidden="true"
+        />
         <div>
-          <h2 id="account-deletion-title" className="text-base font-semibold text-foreground">
+          <h2
+            id="account-deletion-title"
+            className="text-base font-semibold text-foreground"
+          >
             Konto löschen
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
