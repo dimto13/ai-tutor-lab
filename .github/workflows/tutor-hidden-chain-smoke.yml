@@ -1,0 +1,166 @@
+name: Tutor Hidden Chain Smoke
+
+# Passive, zero-token diagnostics for the production tutor path. This workflow never deploys,
+# invokes Lambda, sends SSM commands, or calls a model. The optional micro smoke is deliberately
+# not enabled until its single-request client is implemented and reviewed.
+on:
+  workflow_dispatch:
+    inputs:
+      include_tutor_micro_smoke:
+        description: "Run exactly one real tutor request (opt-in; unavailable until client lands)"
+        required: false
+        type: boolean
+        default: false
+      evidence_window_hours:
+        description: "Look-back window for existing tutor evidence"
+        required: false
+        default: "24"
+
+concurrency:
+  group: tutor-hidden-chain-smoke
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  passive-zero-token:
+    name: Passive tutor path (0 token)
+    runs-on: ubuntu-latest
+    environment: cloud-acceptance
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: AWS account in logs maskieren
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          account=$(printf '%s' "${ROLE_ARN}" | cut -d: -f5)
+          case "${account}" in
+            "" | *[!0-9]*) echo "::error::AWS_ROLE_ARN has an unexpected format."; exit 1 ;;
+          esac
+          echo "::add-mask::${account}"
+
+      - name: AWS-Anmeldung per OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: ai-tutor-hidden-chain-smoke
+
+      - name: Exact artifact and Amplify state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+          AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
+        run: |
+          set -euo pipefail
+          main_sha=$(gh api repos/${GITHUB_REPOSITORY}/git/ref/heads/main --jq '.object.sha')
+          deploy_sha=$(gh api repos/${GITHUB_REPOSITORY}/git/ref/heads/deploy --jq '.object.sha')
+          job=$(aws amplify list-jobs --app-id "${AMPLIFY_APP_ID}" --branch-name "${AMPLIFY_BRANCH}" --max-results 1 --output json)
+          job_id=$(jq -er '.jobSummaries[0].jobId' <<<"${job}")
+          job_status=$(jq -er '.jobSummaries[0].status' <<<"${job}")
+          job_commit=$(jq -er '.jobSummaries[0].commitId' <<<"${job}")
+          {
+            echo "### Exact artifact"
+            echo "- main: \`${main_sha}\`"
+            echo "- deploy: \`${deploy_sha}\`"
+            echo "- Amplify job: \`${job_id}\` / \`${job_status}\` / commit \`${job_commit}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: SSM managed node is online
+        run: |
+          set -euo pipefail
+          node='mi-0c4f95e235b575da9'
+          info=$(aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=${node}" --output json)
+          count=$(jq '.InstanceInformationList | length' <<<"${info}")
+          if [ "${count}" -ne 1 ]; then
+            echo "::error::Expected managed node is not registered."
+            exit 1
+          fi
+          ping=$(jq -r '.InstanceInformationList[0].PingStatus' <<<"${info}")
+          agent=$(jq -r '.InstanceInformationList[0].AgentVersion' <<<"${info}")
+          if [ "${ping}" != "Online" ]; then
+            echo "::error::Expected managed node is ${ping}, not Online."
+            exit 1
+          fi
+          {
+            echo "### SSM relay host"
+            echo "- managed node: \`${node}\`"
+            echo "- status: \`Online\`"
+            echo "- SSM agent: \`${agent}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Existing SendCommand evidence (read-only)
+        env:
+          WINDOW_HOURS: ${{ inputs.evidence_window_hours }}
+        run: |
+          set -euo pipefail
+          case "${WINDOW_HOURS}" in
+            '' | *[!0-9]*) echo "::error::evidence_window_hours must be an integer."; exit 1 ;;
+          esac
+          start=$(date -u -d "${WINDOW_HOURS} hours ago" +%FT%TZ)
+          events=$(aws cloudtrail lookup-events \
+            --lookup-attributes AttributeKey=EventName,AttributeValue=SendCommand \
+            --start-time "${start}" --max-results 50 --output json)
+          node='mi-0c4f95e235b575da9'
+          matches=$(jq --arg node "${node}" '[.Events[] | select(.CloudTrailEvent | contains($node))] | length' <<<"${events}")
+          if [ "${matches}" -eq 0 ]; then
+            echo "::notice::No recent SendCommand evidence for the tutor managed node. Infrastructure checks remain independent of traffic recency."
+            echo "- recent tutor SendCommand evidence: \`none in window\`" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "- recent tutor SendCommand evidence: \`present (${matches})\`" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Tutor/relay and SSR log metadata is readable
+        env:
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+        run: |
+          set -euo pipefail
+          ssr="/aws/amplify/${AMPLIFY_APP_ID}"
+          ssr_count=$(aws logs describe-log-groups --log-group-name-prefix "${ssr}" \
+            --query "length(logGroups[?logGroupName=='${ssr}'])" --output text)
+          if [ "${ssr_count}" -ne 1 ]; then
+            echo "::error::SSR log group is not readable/present."
+            exit 1
+          fi
+          relay_groups=$(aws logs describe-log-groups --output json | jq '[.logGroups[].logGroupName | select(test("tutor|relay"; "i"))] | length')
+          {
+            echo "### Log metadata"
+            echo "- SSR log group: \`readable\`"
+            echo "- tutor/relay-named log groups visible: \`${relay_groups}\`"
+            echo "- message bodies: \`not emitted\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Local-only beta invariant
+        run: |
+          set -euo pipefail
+          # The passive workflow must not turn a cloud route into a health dependency. The
+          # production evidence for #486 remains the authority; this guard prevents this workflow
+          # itself from acquiring write/invoke/model behavior.
+          if grep -Eiq 'aws[[:space:]]+(ssm[[:space:]]+send-command|lambda[[:space:]]+invoke)' "${GITHUB_WORKSPACE}/.github/workflows/tutor-hidden-chain-smoke.yml"; then
+            echo "::error::Passive smoke contains a forbidden AWS write/invoke command."
+            exit 1
+          fi
+          echo "- beta route requirement: \`local-only; cloud route is not a health dependency\`" >> "${GITHUB_STEP_SUMMARY}"
+
+  tutor-micro-smoke:
+    name: Tutor micro smoke (explicit opt-in)
+    if: ${{ inputs.include_tutor_micro_smoke }}
+    runs-on: ubuntu-latest
+    environment: cloud-acceptance
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Guard until single-request client is implemented
+        run: |
+          echo "::error::Opt-in micro smoke is intentionally unavailable in this partial implementation; no tutor request was sent."
+          exit 1
