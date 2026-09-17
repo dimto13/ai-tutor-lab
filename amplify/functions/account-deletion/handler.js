@@ -224,18 +224,16 @@ async function sendCognito(target, input) {
   const signedHeaderNames = Object.keys(headers).sort();
   const canonicalHeaders = signedHeaderNames.map((name) => `${name}:${headers[name]}\n`).join("");
   const signedHeaders = signedHeaderNames.join(";");
-  const canonicalRequest = [
-    "POST",
-    "/",
-    "",
-    canonicalHeaders,
-    signedHeaders,
-    sha256(body),
-  ].join("\n");
-  const credentialScope = `${dateStamp}/${region}/cognito-idp/aws4_request`;
-  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, sha256(canonicalRequest)].join(
+  const canonicalRequest = ["POST", "/", "", canonicalHeaders, signedHeaders, sha256(body)].join(
     "\n",
   );
+  const credentialScope = `${dateStamp}/${region}/cognito-idp/aws4_request`;
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    sha256(canonicalRequest),
+  ].join("\n");
   const dateKey = hmac(`AWS4${secretAccessKey}`, dateStamp);
   const regionKey = hmac(dateKey, region);
   const serviceKey = hmac(regionKey, "cognito-idp");
