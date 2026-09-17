@@ -75,7 +75,10 @@ describe("account deletion authority boundary", () => {
     });
 
     await expect(
-      handler({ arguments: {}, identity: { sub: "user-a", groups: [], claims: { sub: "user-a" } } }),
+      handler({
+        arguments: {},
+        identity: { sub: "user-a", groups: [], claims: { sub: "user-a" } },
+      }),
     ).rejects.toThrow("Tenant membership is required");
     expect(calls).toEqual([]);
   });
@@ -86,7 +89,13 @@ describe("account deletion authority boundary", () => {
     const handler = createAccountDeletionHandler(async (descriptor: any) => {
       if (descriptor.service === "dynamodb" && descriptor.type === "scan") {
         return {
-          Items: [{ id: { S: "owned" }, tenantId: { S: "tenant-a" }, userId: { S: "user-a" } }],
+          Items: [
+            {
+              id: { S: "owned" },
+              tenantId: { S: "tenant-a" },
+              userId: { S: "user-a" },
+            },
+          ],
         };
       }
       if (descriptor.service === "dynamodb" && descriptor.type === "query") return { Items: [] };
@@ -115,7 +124,13 @@ describe("account deletion authority boundary", () => {
     const handler = createAccountDeletionHandler(async (descriptor: any) => {
       if (descriptor.service === "dynamodb" && descriptor.type === "scan") {
         return {
-          Items: [{ id: { S: "foreign" }, tenantId: { S: "tenant-a" }, userId: { S: "user-b" } }],
+          Items: [
+            {
+              id: { S: "foreign" },
+              tenantId: { S: "tenant-a" },
+              userId: { S: "user-b" },
+            },
+          ],
         };
       }
       if (descriptor.service === "cognito") cognitoTouched = true;
