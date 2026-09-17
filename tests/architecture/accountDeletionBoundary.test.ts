@@ -86,7 +86,7 @@ describe("account deletion authority boundary", () => {
   it("deletes only rows that match the authenticated tenant and subject", async () => {
     configureEnvironment();
     const deletedIds: string[] = [];
-    const handler = createAccountDeletionHandler(async (descriptor: any) => {
+    const handler = createAccountDeletionHandler(async (descriptor) => {
       if (descriptor.service === "dynamodb" && descriptor.type === "scan") {
         return {
           Items: [
@@ -121,7 +121,7 @@ describe("account deletion authority boundary", () => {
   it("fails closed if a scan returns a foreign row", async () => {
     configureEnvironment();
     let cognitoTouched = false;
-    const handler = createAccountDeletionHandler(async (descriptor: any) => {
+    const handler = createAccountDeletionHandler(async (descriptor) => {
       if (descriptor.service === "dynamodb" && descriptor.type === "scan") {
         return {
           Items: [
