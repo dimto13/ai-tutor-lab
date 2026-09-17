@@ -50,6 +50,12 @@
         "cloudformation:ListStackResources"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "TutorHiddenChainDiagnostics",
+      "Effect": "Allow",
+      "Action": ["ssm:DescribeInstanceInformation", "cloudtrail:LookupEvents"],
+      "Resource": "*"
     }
   ]
 }
