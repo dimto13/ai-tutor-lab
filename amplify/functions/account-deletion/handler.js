@@ -1,3 +1,5 @@
+import { createHash, createHmac } from "node:crypto";
+
 const PERSONAL_TABLE_ENVIRONMENTS = [
   "USER_PROFILE_TABLE_NAME",
   "USER_PREFERENCES_TABLE_NAME",
@@ -194,15 +196,71 @@ export function createAccountDeletionHandler(send) {
   };
 }
 
+function sha256(value) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+function hmac(key, value, encoding) {
+  return createHmac("sha256", key).update(value, "utf8").digest(encoding);
+}
+
+async function sendCognito(target, input) {
+  const region = requiredEnvironment("AWS_REGION");
+  const accessKeyId = requiredEnvironment("AWS_ACCESS_KEY_ID");
+  const secretAccessKey = requiredEnvironment("AWS_SECRET_ACCESS_KEY");
+  const sessionToken = process.env.AWS_SESSION_TOKEN;
+  const host = `cognito-idp.${region}.amazonaws.com`;
+  const body = JSON.stringify(input);
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+  const dateStamp = amzDate.slice(0, 8);
+  const headers = {
+    "content-type": "application/x-amz-json-1.1",
+    host,
+    "x-amz-date": amzDate,
+    "x-amz-target": `AWSCognitoIdentityProviderService.${target}`,
+  };
+  if (sessionToken) headers["x-amz-security-token"] = sessionToken;
+  const signedHeaderNames = Object.keys(headers).sort();
+  const canonicalHeaders = signedHeaderNames.map((name) => `${name}:${headers[name]}\n`).join("");
+  const signedHeaders = signedHeaderNames.join(";");
+  const canonicalRequest = [
+    "POST",
+    "/",
+    "",
+    canonicalHeaders,
+    signedHeaders,
+    sha256(body),
+  ].join("\n");
+  const credentialScope = `${dateStamp}/${region}/cognito-idp/aws4_request`;
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, sha256(canonicalRequest)].join(
+    "\n",
+  );
+  const dateKey = hmac(`AWS4${secretAccessKey}`, dateStamp);
+  const regionKey = hmac(dateKey, region);
+  const serviceKey = hmac(regionKey, "cognito-idp");
+  const signingKey = hmac(serviceKey, "aws4_request");
+  const signature = hmac(signingKey, stringToSign, "hex");
+  const authorization =
+    `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  const response = await fetch(`https://${host}/`, {
+    method: "POST",
+    headers: { ...headers, authorization },
+    body,
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Cognito ${target} failed with HTTP ${response.status}: ${text}`);
+  }
+  return text ? JSON.parse(text) : {};
+}
+
 let senderPromise;
 async function awsSender() {
   if (!senderPromise) {
-    senderPromise = Promise.all([
-      import("@aws-sdk/client-dynamodb"),
-      import("@aws-sdk/client-cognito-identity-provider"),
-    ]).then(([dynamo, cognito]) => {
+    senderPromise = import("@aws-sdk/client-dynamodb").then((dynamo) => {
       const dynamoClient = new dynamo.DynamoDBClient({});
-      const cognitoClient = new cognito.CognitoIdentityProviderClient({});
       return (descriptor) => {
         if (descriptor.service === "dynamodb" && descriptor.type === "scan") {
           return dynamoClient.send(new dynamo.ScanCommand(descriptor.input));
@@ -214,10 +272,10 @@ async function awsSender() {
           return dynamoClient.send(new dynamo.DeleteItemCommand(descriptor.input));
         }
         if (descriptor.service === "cognito" && descriptor.type === "listUsers") {
-          return cognitoClient.send(new cognito.ListUsersCommand(descriptor.input));
+          return sendCognito("ListUsers", descriptor.input);
         }
         if (descriptor.service === "cognito" && descriptor.type === "adminDeleteUser") {
-          return cognitoClient.send(new cognito.AdminDeleteUserCommand(descriptor.input));
+          return sendCognito("AdminDeleteUser", descriptor.input);
         }
         throw new Error("Unsupported account deletion command");
       };
