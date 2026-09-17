@@ -161,16 +161,11 @@ async function deleteCognitoUser(subject, send) {
 export function createAccountDeletionHandler(send) {
   return async (event) => {
     const subject = caller(event);
-    const deletedByTable = {};
     try {
       for (const environmentName of PERSONAL_TABLE_ENVIRONMENTS) {
-        deletedByTable[environmentName] = await deletePersonalTable(
-          requiredEnvironment(environmentName),
-          subject,
-          send,
-        );
+        await deletePersonalTable(requiredEnvironment(environmentName), subject, send);
       }
-      deletedByTable.telemetry = await deleteTelemetry(subject, send);
+      await deleteTelemetry(subject, send);
     } catch (error) {
       throw new Error(`Account deletion stopped during personal-data deletion: ${error.message}`);
     }
@@ -183,7 +178,7 @@ export function createAccountDeletionHandler(send) {
       );
     }
 
-    return JSON.stringify({ deleted: true, subject: { tenantId: subject.tenantId }, deletedByTable });
+    return true;
   };
 }
 
