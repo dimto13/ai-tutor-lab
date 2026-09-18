@@ -18,9 +18,7 @@ export function ArtifactPreviewSurface({
   inspect(ref: string): void;
 }) {
   if (artifact.type === "html") {
-    return (
-      <HtmlSurface artifact={artifact} viewMode={viewMode} inspect={inspect} />
-    );
+    return <HtmlSurface artifact={artifact} viewMode={viewMode} inspect={inspect} />;
   }
   if (artifact.type === "table") {
     return <TableSurface artifact={artifact} inspect={inspect} />;
@@ -37,10 +35,7 @@ function HtmlSurface({
   viewMode: ArtifactPreviewState["viewMode"];
   inspect(ref: string): void;
 }) {
-  const document = useMemo(
-    () => buildSandboxedArtifactDocument(artifact.html),
-    [artifact.html],
-  );
+  const document = useMemo(() => buildSandboxedArtifactDocument(artifact.html), [artifact.html]);
   if (viewMode === "source") {
     return (
       <pre
@@ -82,10 +77,7 @@ function TableSurface({
         <thead className="bg-white/5 text-muted-foreground">
           <tr>
             {artifact.columns.map((column) => (
-              <th
-                key={column.key}
-                className="border-b border-border px-3 py-2 font-medium"
-              >
+              <th key={column.key} className="border-b border-border px-3 py-2 font-medium">
                 {column.label}
               </th>
             ))}
