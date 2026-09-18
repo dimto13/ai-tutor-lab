@@ -15,6 +15,11 @@ on:
         description: "Zeitfenster der CloudWatch-Diagnose, z. B. 1h, 30m, 2d"
         required: false
         default: "1h"
+      include_tutor_micro_smoke:
+        description: "Genau eine reale Tutor-Anfrage mit lokaler Route pruefen (explizites Opt-in)"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: cloud-acceptance
@@ -298,3 +303,78 @@ jobs:
             echo "::error::Die deployte Anwendung antwortet mit HTTP ${code} statt 200."
             exit 1
           fi
+
+  tutor-micro-smoke:
+    name: Tutor micro smoke (explicit opt-in)
+    if: ${{ inputs.include_tutor_micro_smoke }}
+    runs-on: ubuntu-latest
+    environment: cloud-acceptance
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Opt-in-Konfiguration pruefen
+        env:
+          CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+          CLOUD_TEST_EMAIL: ${{ secrets.CLOUD_TEST_EMAIL }}
+          CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+        run: |
+          set -euo pipefail
+          for name in CLOUD_BASE_URL CLOUD_TEST_EMAIL CLOUD_TEST_PASSWORD AMPLIFY_APP_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Required cloud-acceptance value ${name} is missing."
+              exit 1
+            fi
+          done
+
+      - name: AWS account in logs maskieren
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          account=$(printf '%s' "${ROLE_ARN}" | cut -d: -f5)
+          if [[ ! "${account}" =~ ^[0-9]{12}$ ]]; then
+            echo "::error::AWS_ROLE_ARN has an unexpected account component."
+            exit 1
+          fi
+          echo "::add-mask::${account}"
+
+      - name: AWS-Anmeldung per OIDC (read-only evidence)
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: ai-tutor-micro-smoke
+
+      - name: Playwright installieren
+        run: npm install --prefix apps/web/e2e --package-lock=false --ignore-scripts --no-audit --no-fund
+
+      - name: Chromium installieren
+        run: ./apps/web/e2e/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Genau eine reale Tutor-Anfrage ausfuehren
+        env:
+          CLOUD_BASE_URL: ${{ vars.AMPLIFY_BASE_URL }}
+          CLOUD_TEST_EMAIL: ${{ secrets.CLOUD_TEST_EMAIL }}
+          CLOUD_TEST_PASSWORD: ${{ secrets.CLOUD_TEST_PASSWORD }}
+          TUTOR_SMOKE_CONTEXT_FILE: ${{ runner.temp }}/tutor-micro-smoke-context.json
+        run: |
+          set -euo pipefail
+          ./apps/web/e2e/node_modules/.bin/playwright test \
+            --config apps/web/e2e/tutor-micro-smoke.playwright.config.ts
+
+      - name: SSR -> Relay -> SSM fuer dieselbe Request-ID belegen
+        env:
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+          TUTOR_SMOKE_CONTEXT_FILE: ${{ runner.temp }}/tutor-micro-smoke-context.json
+        run: node scripts/verify-tutor-micro-smoke-evidence.mjs

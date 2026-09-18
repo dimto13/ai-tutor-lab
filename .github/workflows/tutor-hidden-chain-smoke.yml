@@ -1,16 +1,11 @@
 name: Tutor Hidden Chain Smoke
 
 # Passive, zero-token diagnostics for the production tutor path. This workflow never deploys,
-# invokes Lambda, sends SSM commands, or calls a model. The optional micro smoke is deliberately
-# not enabled until its single-request client is implemented and reviewed.
+# invokes Lambda, sends SSM commands, or calls a model. The explicit real-request micro smoke lives
+# in the already-established Cloud Acceptance workflow and remains default-OFF there.
 on:
   workflow_dispatch:
     inputs:
-      include_tutor_micro_smoke:
-        description: "Run exactly one real tutor request (opt-in; unavailable until client lands)"
-        required: false
-        type: boolean
-        default: false
       evidence_window_hours:
         description: "Look-back window for existing tutor evidence"
         required: false
@@ -153,16 +148,3 @@ jobs:
           fi
           echo "- beta route requirement: \`local-only; cloud route is not a health dependency\`" >> "${GITHUB_STEP_SUMMARY}"
 
-  tutor-micro-smoke:
-    name: Tutor micro smoke (explicit opt-in)
-    if: ${{ inputs.include_tutor_micro_smoke }}
-    runs-on: ubuntu-latest
-    environment: cloud-acceptance
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - name: Guard until single-request client is implemented
-        run: |
-          echo "::error::Opt-in micro smoke is intentionally unavailable in this partial implementation; no tutor request was sent."
-          exit 1
