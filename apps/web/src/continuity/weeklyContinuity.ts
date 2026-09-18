@@ -1,4 +1,7 @@
 export interface WeeklyContinuityRun {
+  scenarioId: string;
+  mode: string;
+  sessionId: string;
   finishedAt: number;
   durationMs: number;
 }
@@ -34,15 +37,19 @@ export function buildWeeklyContinuity(
   const currentWeekStart = startOfUtcWeek(now);
   const firstWeekStart = currentWeekStart - (WEEK_COUNT - 1) * WEEK_MS;
   const totals = new Map<number, number>();
+  const countedSessions = new Set<string>();
 
   for (const run of runs) {
     if (
+      !run.sessionId ||
+      countedSessions.has(run.sessionId) ||
       !Number.isFinite(run.finishedAt) ||
       !Number.isFinite(run.durationMs) ||
       run.durationMs < 0
     ) {
       continue;
     }
+    countedSessions.add(run.sessionId);
     const weekStart = startOfUtcWeek(run.finishedAt);
     if (weekStart < firstWeekStart || weekStart > currentWeekStart) continue;
     totals.set(weekStart, (totals.get(weekStart) ?? 0) + run.durationMs);
