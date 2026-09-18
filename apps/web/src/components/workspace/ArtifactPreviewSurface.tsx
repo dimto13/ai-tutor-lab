@@ -35,10 +35,7 @@ function HtmlSurface({
   viewMode: ArtifactPreviewState["viewMode"];
   inspect(ref: string): void;
 }) {
-  const document = useMemo(
-    () => buildSandboxedArtifactDocument(artifact.html),
-    [artifact.html],
-  );
+  const document = useMemo(() => buildSandboxedArtifactDocument(artifact.html), [artifact.html]);
   if (viewMode === "source") {
     return (
       <pre
