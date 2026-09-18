@@ -19,7 +19,20 @@ export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuit
   for (const run of result.data ?? []) {
     if (!run) continue;
     if (typeof run.finishedAt !== "number" || typeof run.durationMs !== "number") continue;
-    runs.push({ finishedAt: run.finishedAt, durationMs: run.durationMs });
+    if (
+      typeof run.scenarioId !== "string" ||
+      typeof run.mode !== "string" ||
+      typeof run.sessionId !== "string"
+    ) {
+      continue;
+    }
+    runs.push({
+      scenarioId: run.scenarioId,
+      mode: run.mode,
+      sessionId: run.sessionId,
+      finishedAt: run.finishedAt,
+      durationMs: run.durationMs,
+    });
   }
   return runs;
 }
