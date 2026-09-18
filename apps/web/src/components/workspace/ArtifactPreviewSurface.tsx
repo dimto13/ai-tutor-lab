@@ -18,7 +18,9 @@ export function ArtifactPreviewSurface({
   inspect(ref: string): void;
 }) {
   if (artifact.type === "html") {
-    return <HtmlSurface artifact={artifact} viewMode={viewMode} inspect={inspect} />;
+    return (
+      <HtmlSurface artifact={artifact} viewMode={viewMode} inspect={inspect} />
+    );
   }
   if (artifact.type === "table") {
     return <TableSurface artifact={artifact} inspect={inspect} />;
