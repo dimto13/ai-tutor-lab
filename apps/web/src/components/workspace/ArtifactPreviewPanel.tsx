@@ -9,7 +9,10 @@ import {
   ShieldCheck,
   Table2,
 } from "lucide-react";
-import { artifactPreviewRuntime, type ArtifactPreviewState } from "@/runtime/artifactPreviewRuntime";
+import {
+  artifactPreviewRuntime,
+  type ArtifactPreviewState,
+} from "@/runtime/artifactPreviewRuntime";
 import type { PreviewArtifact } from "@/runtime/artifactPreviewContent";
 import { useTraining } from "@/state/trainingStore";
 import { ArtifactRevisionHistory } from "./ArtifactRevisionHistory";
@@ -30,9 +33,12 @@ const TYPE_LABELS: Record<PreviewArtifact["type"], string> = {
 };
 
 export function ArtifactPreviewPanel() {
-  const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
+  const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } =
+    useTraining();
   const [state, setState] = useState<ArtifactPreviewState>(EMPTY_STATE);
-  const [selectedRevisionId, setSelectedRevisionId] = useState<string | null>(null);
+  const [selectedRevisionId, setSelectedRevisionId] = useState<string | null>(
+    null,
+  );
   const rootRef = useRef<HTMLDivElement>(null);
   const activeArtifact =
     state.artifacts.find((artifact) => artifact.id === state.activeArtifactId) ?? null;
@@ -55,10 +61,14 @@ export function ArtifactPreviewPanel() {
     const container = rootRef.current;
     if (!container) return;
     let disposed = false;
-    const unsubscribe = artifactPreviewRuntime.subscribeState((nextState, reason) => {
-      setState(nextState);
-      if (reason === "mutation") persistRuntimeSnapshot(artifactPreviewRuntime.id, nextState);
-    });
+    const unsubscribe = artifactPreviewRuntime.subscribeState(
+      (nextState, reason) => {
+        setState(nextState);
+        if (reason === "mutation") {
+          persistRuntimeSnapshot(artifactPreviewRuntime.id, nextState);
+        }
+      },
+    );
     void (async () => {
       await artifactPreviewRuntime.mount(container, scenario.environment?.seed);
       if (!disposed) await restoreRuntimeSnapshot(artifactPreviewRuntime.id);
@@ -102,7 +112,11 @@ export function ArtifactPreviewPanel() {
       >
         {state.artifacts.map((artifact) => {
           const Icon =
-            artifact.type === "html" ? FileCode2 : artifact.type === "table" ? Table2 : Braces;
+            artifact.type === "html"
+              ? FileCode2
+              : artifact.type === "table"
+                ? Table2
+                : Braces;
           return (
             <button
               key={artifact.id}
@@ -208,7 +222,9 @@ export function ArtifactPreviewPanel() {
               ) : (
                 <ShieldCheck className="h-3.5 w-3.5" />
               )}
-              {state.verifiedIds.includes(activeArtifact.id) ? "Geprüft" : "Ergebnis geprüft"}
+              {state.verifiedIds.includes(activeArtifact.id)
+                ? "Geprüft"
+                : "Ergebnis geprüft"}
             </button>
           </div>
         </>
