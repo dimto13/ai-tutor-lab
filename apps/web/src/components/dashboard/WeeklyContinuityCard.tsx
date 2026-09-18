@@ -4,11 +4,22 @@ import { loadMyWeeklyContinuityRuns } from "@/continuity/applicationWeeklyContin
 import {
   buildWeeklyContinuity,
   formatWeekLabel,
+  recentLearningActivities,
   type WeeklyContinuityRun,
 } from "@/continuity/weeklyContinuity";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
 
 const DEFAULT_GOAL_MINUTES = 60;
+const modeLabels: Record<string, string> = {
+  explore: "Explore",
+  guided: "Guided",
+  challenge: "Challenge",
+};
+
+function formatDuration(durationMs: number): string {
+  const minutes = Math.max(1, Math.round(durationMs / 60_000));
+  return `${minutes} Min.`;
+}
 
 export function WeeklyContinuityCard() {
   const preferences = useUserPreferences();
@@ -44,6 +55,7 @@ export function WeeklyContinuityCard() {
   }, []);
 
   const summary = useMemo(() => buildWeeklyContinuity(runs, persistedGoal), [runs, persistedGoal]);
+  const recentActivities = useMemo(() => recentLearningActivities(runs), [runs]);
   const maxMinutes = Math.max(persistedGoal ?? 0, ...summary.weeks.map((week) => week.minutes), 1);
 
   async function saveGoal(event: FormEvent<HTMLFormElement>) {
@@ -125,6 +137,27 @@ export function WeeklyContinuityCard() {
               : "Die letzten acht Kalenderwochen werden ohne Streak- oder Verlustwertung dargestellt."}
         </p>
       </div>
+
+      {historyStatus === "ready" && recentActivities.length > 0 ? (
+        <div className="mt-5 border-t border-border pt-4" data-testid="learning-activities">
+          <h3 className="text-sm font-semibold text-foreground">Letzte Lernaktivitäten</h3>
+          <ul className="mt-2 divide-y divide-border">
+            {recentActivities.map((run) => (
+              <li
+                key={run.sessionId}
+                className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs"
+                data-session-id={run.sessionId}
+              >
+                <span className="min-w-0 font-medium text-foreground">{run.scenarioId}</span>
+                <span className="flex gap-3 text-muted-foreground">
+                  <span>{modeLabels[run.mode.toLowerCase()] ?? run.mode}</span>
+                  <span>{formatDuration(run.durationMs)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <form
         className="mt-5 flex flex-wrap items-end gap-3 border-t border-border pt-4"
