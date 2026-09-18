@@ -34,40 +34,41 @@ export function ArtifactRevisionHistory({
         </span>
         <span className="text-[9px] text-muted-foreground">Nur Ansicht</span>
       </div>
-      <div className="flex gap-1 overflow-x-auto" role="list" aria-label="Artefaktstände">
+      <ul className="flex gap-1 overflow-x-auto" aria-label="Artefaktstände">
         {applied.map((revision) => {
           const selected = selectedRevisionId === revision.id;
           return (
-            <button
-              key={revision.id}
-              type="button"
-              role="listitem"
-              aria-pressed={selected}
-              onClick={() => onSelectRevision(revision.id)}
-              className={`min-w-fit rounded-md border px-2 py-1 text-[10px] ${
-                selected
-                  ? "border-accent/60 bg-accent/10 text-foreground"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {revision.label}
-            </button>
+            <li key={revision.id}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onSelectRevision(revision.id)}
+                className={`min-w-fit rounded-md border px-2 py-1 text-[10px] ${
+                  selected
+                    ? "border-accent/60 bg-accent/10 text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {revision.label}
+              </button>
+            </li>
           );
         })}
-        <button
-          type="button"
-          role="listitem"
-          aria-pressed={selectedRevisionId === null}
-          onClick={() => onSelectRevision(null)}
-          className={`min-w-fit rounded-md border px-2 py-1 text-[10px] font-medium ${
-            selectedRevisionId === null
-              ? "border-success/50 bg-success/10 text-success"
-              : "border-border text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Aktueller Stand
-        </button>
-      </div>
+        <li>
+          <button
+            type="button"
+            aria-pressed={selectedRevisionId === null}
+            onClick={() => onSelectRevision(null)}
+            className={`min-w-fit rounded-md border px-2 py-1 text-[10px] font-medium ${
+              selectedRevisionId === null
+                ? "border-success/50 bg-success/10 text-success"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Aktueller Stand
+          </button>
+        </li>
+      </ul>
     </div>
   );
 }
