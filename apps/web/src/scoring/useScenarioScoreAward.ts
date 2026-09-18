@@ -16,11 +16,22 @@ interface RememberedScoreAward {
   award: AppendScoreEventResult;
 }
 
+const MAX_REMEMBERED_AWARDS = 64;
 const rememberedAwards = new Map<string, RememberedScoreAward>();
 const pendingAwards = new Map<string, Promise<AppendScoreEventResult>>();
 
 function completionKey(scenarioId: string, mode: TrainingMode, finishedAt: number): string {
   return `${scenarioId}\u0000${mode}\u0000${finishedAt}`;
+}
+
+function rememberAward(key: string, award: AppendScoreEventResult): void {
+  rememberedAwards.delete(key);
+  rememberedAwards.set(key, { award });
+  while (rememberedAwards.size > MAX_REMEMBERED_AWARDS) {
+    const oldestKey = rememberedAwards.keys().next().value;
+    if (oldestKey === undefined) break;
+    rememberedAwards.delete(oldestKey);
+  }
 }
 
 export function useScenarioScoreAward(
@@ -70,25 +81,24 @@ export function useScenarioScoreAward(
     setResult(null);
     setError(null);
 
-    let awardPromise = pendingAwards.get(activeCompletionKey);
-    if (!awardPromise) {
-      awardPromise = activeService.awardScenario({ scenarioId, mode });
-      pendingAwards.set(activeCompletionKey, awardPromise);
-      void awardPromise.finally(() => {
-        if (pendingAwards.get(activeCompletionKey) === awardPromise) {
+    let completionPromise = pendingAwards.get(activeCompletionKey);
+    if (!completionPromise) {
+      completionPromise = activeService.awardScenario({ scenarioId, mode }).then(async (award) => {
+        if (mode === "challenge" && activeAttestationService) {
+          await activeAttestationService.issueChallenge({ scenarioId });
+        }
+        rememberAward(activeCompletionKey, award);
+        return award;
+      });
+      pendingAwards.set(activeCompletionKey, completionPromise);
+      void completionPromise.finally(() => {
+        if (pendingAwards.get(activeCompletionKey) === completionPromise) {
           pendingAwards.delete(activeCompletionKey);
         }
       });
     }
 
-    void awardPromise
-      .then(async (award) => {
-        rememberedAwards.set(activeCompletionKey, { award });
-        if (mode === "challenge" && activeAttestationService) {
-          await activeAttestationService.issueChallenge({ scenarioId });
-        }
-        return award;
-      })
+    void completionPromise
       .then((award) => {
         if (cancelled) return;
         setResult(award);
