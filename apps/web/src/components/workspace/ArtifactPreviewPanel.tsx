@@ -105,7 +105,8 @@ export function ArtifactPreviewPanel() {
         className="flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-panel p-2"
       >
         {state.artifacts.map((artifact) => {
-          const Icon = artifact.type === "html" ? FileCode2 : artifact.type === "table" ? Table2 : Braces;
+          const Icon =
+            artifact.type === "html" ? FileCode2 : artifact.type === "table" ? Table2 : Braces;
           return (
             <button
               key={artifact.id}
