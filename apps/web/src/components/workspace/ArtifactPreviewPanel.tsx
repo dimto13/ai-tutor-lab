@@ -50,22 +50,19 @@ export function ArtifactPreviewPanel() {
   const displayedArtifact = selectedRevision?.next ?? activeArtifact;
   const nextRevision = state.revisions.find(
     (revision) =>
-      revision.artifactId === activeArtifact?.id &&
-      !state.appliedRevisionIds.includes(revision.id),
+      revision.artifactId === activeArtifact?.id && !state.appliedRevisionIds.includes(revision.id),
   );
 
   useEffect(() => {
     const container = rootRef.current;
     if (!container) return;
     let disposed = false;
-    const unsubscribe = artifactPreviewRuntime.subscribeState(
-      (nextState, reason) => {
-        setState(nextState);
-        if (reason === "mutation") {
-          persistRuntimeSnapshot(artifactPreviewRuntime.id, nextState);
-        }
-      },
-    );
+    const unsubscribe = artifactPreviewRuntime.subscribeState((nextState, reason) => {
+      setState(nextState);
+      if (reason === "mutation") {
+        persistRuntimeSnapshot(artifactPreviewRuntime.id, nextState);
+      }
+    });
     void (async () => {
       await artifactPreviewRuntime.mount(container, scenario.environment?.seed);
       if (!disposed) await restoreRuntimeSnapshot(artifactPreviewRuntime.id);
@@ -108,12 +105,7 @@ export function ArtifactPreviewPanel() {
         className="flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-panel p-2"
       >
         {state.artifacts.map((artifact) => {
-          const Icon =
-            artifact.type === "html"
-              ? FileCode2
-              : artifact.type === "table"
-                ? Table2
-                : Braces;
+          const Icon = artifact.type === "html" ? FileCode2 : artifact.type === "table" ? Table2 : Braces;
           return (
             <button
               key={artifact.id}
@@ -219,9 +211,7 @@ export function ArtifactPreviewPanel() {
               ) : (
                 <ShieldCheck className="h-3.5 w-3.5" />
               )}
-              {state.verifiedIds.includes(activeArtifact.id)
-                ? "Geprüft"
-                : "Ergebnis geprüft"}
+              {state.verifiedIds.includes(activeArtifact.id) ? "Geprüft" : "Ergebnis geprüft"}
             </button>
           </div>
         </>
