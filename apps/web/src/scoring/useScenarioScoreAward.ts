@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppendScoreEventResult, TrainingMode } from "@ai-train-lab/training-engine";
 import { createApplicationAttestationService } from "../attestations/applicationAttestationService";
 import { createApplicationScenarioScoreService } from "./applicationScenarioScoreService";
@@ -13,15 +13,11 @@ export interface ScenarioScoreAwardState {
 }
 
 interface RememberedScoreAward {
-  completionKey: string;
   award: AppendScoreEventResult;
 }
 
-const MAX_AUTOMATIC_ATTEMPTS = 5;
-
-function online(): boolean {
-  return typeof navigator === "undefined" || navigator.onLine;
-}
+const rememberedAwards = new Map<string, RememberedScoreAward>();
+const pendingAwards = new Map<string, Promise<AppendScoreEventResult>>();
 
 function completionKey(scenarioId: string, mode: TrainingMode, finishedAt: number): string {
   return `${scenarioId}\u0000${mode}\u0000${finishedAt}`;
@@ -34,7 +30,6 @@ export function useScenarioScoreAward(
 ): ScenarioScoreAwardState {
   const service = useMemo(() => createApplicationScenarioScoreService(), []);
   const attestationService = useMemo(() => createApplicationAttestationService(), []);
-  const rememberedAward = useRef<RememberedScoreAward | null>(null);
   const [retryToken, setRetryToken] = useState(0);
   const [status, setStatus] = useState<ScenarioScoreAwardStatus>(service ? "idle" : "unavailable");
   const [result, setResult] = useState<AppendScoreEventResult | null>(null);
@@ -46,98 +41,70 @@ export function useScenarioScoreAward(
 
   useEffect(() => {
     if (!service) {
-      rememberedAward.current = null;
       setStatus("unavailable");
       setResult(null);
       setError(null);
       return;
     }
-    const activeService = service;
-    const activeAttestationService = attestationService;
     if (finishedAt === null) {
-      rememberedAward.current = null;
       setStatus("idle");
       setResult(null);
       setError(null);
       return;
     }
 
+    const activeService = service;
+    const activeAttestationService = attestationService;
     const activeCompletionKey = completionKey(scenarioId, mode, finishedAt);
-    if (rememberedAward.current?.completionKey !== activeCompletionKey) {
-      rememberedAward.current = null;
-    }
-
+    const remembered = rememberedAwards.get(activeCompletionKey);
     let cancelled = false;
-    let timer: number | null = null;
-    let attempts = 0;
 
-    function clearTimer(): void {
-      if (timer !== null && typeof window !== "undefined") window.clearTimeout(timer);
-      timer = null;
-    }
-
-    function scheduleRetry(run: () => void): void {
-      if (attempts >= MAX_AUTOMATIC_ATTEMPTS || !online() || typeof window === "undefined") {
-        return;
-      }
-      const delay = Math.min(400 * attempts, 1600);
-      timer = window.setTimeout(run, delay);
-    }
-
-    async function awardOnce(): Promise<AppendScoreEventResult> {
-      const remembered = rememberedAward.current;
-      if (remembered?.completionKey === activeCompletionKey) return remembered.award;
-
-      const award = await activeService.awardScenario({ scenarioId, mode });
-      rememberedAward.current = { completionKey: activeCompletionKey, award };
-      if (!cancelled) setResult(award);
-      return award;
-    }
-
-    function run(): void {
-      if (cancelled) return;
-      clearTimer();
-      attempts += 1;
-      setStatus("pending");
+    if (remembered) {
+      setResult(remembered.award);
+      setStatus("ready");
       setError(null);
-
-      void awardOnce()
-        .then(async (award) => {
-          if (mode === "challenge" && activeAttestationService) {
-            await activeAttestationService.issueChallenge({ scenarioId });
-          }
-          return award;
-        })
-        .then((award) => {
-          if (cancelled) return;
-          setResult(award);
-          setStatus("ready");
-          setError(null);
-        })
-        .catch((reason: unknown) => {
-          if (cancelled) return;
-          const message =
-            reason instanceof Error ? reason.message : "Score konnte nicht geladen werden";
-          setError(message);
-          setStatus("error");
-          scheduleRetry(run);
-        });
+      return;
     }
 
-    function handleOnline(): void {
-      attempts = 0;
-      run();
+    setStatus("pending");
+    setResult(null);
+    setError(null);
+
+    let awardPromise = pendingAwards.get(activeCompletionKey);
+    if (!awardPromise) {
+      awardPromise = activeService.awardScenario({ scenarioId, mode });
+      pendingAwards.set(activeCompletionKey, awardPromise);
+      void awardPromise.finally(() => {
+        if (pendingAwards.get(activeCompletionKey) === awardPromise) {
+          pendingAwards.delete(activeCompletionKey);
+        }
+      });
     }
 
-    const remembered = rememberedAward.current;
-    setResult(remembered?.completionKey === activeCompletionKey ? remembered.award : null);
-    run();
-    if (typeof window !== "undefined") window.addEventListener("online", handleOnline);
+    void awardPromise
+      .then(async (award) => {
+        rememberedAwards.set(activeCompletionKey, { award });
+        if (mode === "challenge" && activeAttestationService) {
+          await activeAttestationService.issueChallenge({ scenarioId });
+        }
+        return award;
+      })
+      .then((award) => {
+        if (cancelled) return;
+        setResult(award);
+        setStatus("ready");
+        setError(null);
+      })
+      .catch((reason: unknown) => {
+        if (cancelled) return;
+        const message = reason instanceof Error ? reason.message : "Score konnte nicht gespeichert werden";
+        setResult(null);
+        setError(message);
+        setStatus("error");
+      });
 
     return () => {
       cancelled = true;
-      clearTimer();
-      if (typeof window !== "undefined") window.removeEventListener("online", handleOnline);
     };
   }, [attestationService, finishedAt, mode, retryToken, scenarioId, service]);
 
