@@ -33,12 +33,9 @@ const TYPE_LABELS: Record<PreviewArtifact["type"], string> = {
 };
 
 export function ArtifactPreviewPanel() {
-  const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } =
-    useTraining();
+  const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
   const [state, setState] = useState<ArtifactPreviewState>(EMPTY_STATE);
-  const [selectedRevisionId, setSelectedRevisionId] = useState<string | null>(
-    null,
-  );
+  const [selectedRevisionId, setSelectedRevisionId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const activeArtifact =
     state.artifacts.find((artifact) => artifact.id === state.activeArtifactId) ?? null;
