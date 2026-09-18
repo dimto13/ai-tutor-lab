@@ -1,10 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 
-type RequiredEnvironment =
-  | "CLOUD_TEST_EMAIL"
-  | "CLOUD_TEST_PASSWORD"
-  | "TUTOR_SMOKE_CONTEXT_FILE";
+type RequiredEnvironment = "CLOUD_TEST_EMAIL" | "CLOUD_TEST_PASSWORD" | "TUTOR_SMOKE_CONTEXT_FILE";
 
 function required(name: RequiredEnvironment): string {
   const value = process.env[name];
@@ -57,9 +54,10 @@ test("explicit opt-in sends exactly one authenticated tutor request", async ({ p
   await signIn(page, email, password);
 
   const subject = await cognitoSubject(page);
-  expect(subject, "The authenticated Cognito access-token subject must be discoverable locally.").toMatch(
-    /^[0-9a-f-]{36}$/i,
-  );
+  expect(
+    subject,
+    "The authenticated Cognito access-token subject must be discoverable locally.",
+  ).toMatch(/^[0-9a-f-]{36}$/i);
 
   await page.goto("/training/vscode-shortcuts.challenge");
 
@@ -74,11 +72,10 @@ test("explicit opt-in sends exactly one authenticated tutor request", async ({ p
   await expect(input).toBeVisible();
   await input.fill("Was ist ein Workspace?");
 
-  await writeFile(
-    contextFile,
-    JSON.stringify({ sub: subject, startedAtMs: Date.now() }),
-    { encoding: "utf8", mode: 0o600 },
-  );
+  await writeFile(contextFile, JSON.stringify({ sub: subject, startedAtMs: Date.now() }), {
+    encoding: "utf8",
+    mode: 0o600,
+  });
 
   // Exactly one UI submit. Playwright retries are disabled in the dedicated config.
   await page.getByRole("button", { name: "Senden", exact: true }).click();

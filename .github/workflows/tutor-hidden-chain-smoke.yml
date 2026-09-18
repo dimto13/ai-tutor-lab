@@ -18,6 +18,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  TUTOR_MANAGED_NODE_ID: mi-0c4f95e235b575da9
+
 jobs:
   passive-zero-token:
     name: Passive tutor path (0 token)
@@ -30,6 +33,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Passive write/invoke guard
+        run: |
+          set -euo pipefail
+          # Run this static guard before any AWS step. The IAM role is read-only as the primary
+          # enforcement; this catches accidental write/invoke commands in the workflow itself.
+          if grep -Eiq 'aws[[:space:]]+(ssm[[:space:]]+send-command|lambda[[:space:]]+invoke)' "${GITHUB_WORKSPACE}/.github/workflows/tutor-hidden-chain-smoke.yml"; then
+            echo "::error::Passive smoke contains a forbidden AWS write/invoke command."
+            exit 1
+          fi
 
       - name: AWS account in logs maskieren
         env:
@@ -37,9 +49,10 @@ jobs:
         run: |
           set -euo pipefail
           account=$(printf '%s' "${ROLE_ARN}" | cut -d: -f5)
-          case "${account}" in
-            "" | *[!0-9]*) echo "::error::AWS_ROLE_ARN has an unexpected format."; exit 1 ;;
-          esac
+          if [[ ! "${account}" =~ ^[0-9]{12}$ ]]; then
+            echo "::error::AWS_ROLE_ARN has an unexpected account component."
+            exit 1
+          fi
           echo "::add-mask::${account}"
 
       - name: AWS-Anmeldung per OIDC
@@ -72,7 +85,7 @@ jobs:
       - name: SSM managed node is online
         run: |
           set -euo pipefail
-          node='mi-0c4f95e235b575da9'
+          node="${TUTOR_MANAGED_NODE_ID}"
           info=$(aws ssm describe-instance-information \
             --filters "Key=InstanceIds,Values=${node}" --output json)
           count=$(jq '.InstanceInformationList | length' <<<"${info}")
@@ -105,7 +118,7 @@ jobs:
           events=$(aws cloudtrail lookup-events \
             --lookup-attributes AttributeKey=EventName,AttributeValue=SendCommand \
             --start-time "${start}" --max-items 500 --output json)
-          node='mi-0c4f95e235b575da9'
+          node="${TUTOR_MANAGED_NODE_ID}"
           matches=$(jq --arg node "${node}" '[.Events[] | select(.CloudTrailEvent | contains($node))] | length' <<<"${events}")
           if [ "${matches}" -eq 0 ]; then
             echo "::notice::No recent SendCommand evidence for the tutor managed node. Infrastructure checks remain independent of traffic recency."
@@ -135,16 +148,3 @@ jobs:
             echo "- tutor relay log groups visible: \`${relay_groups}\`"
             echo "- message bodies: \`not emitted\`"
           } >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Local-only beta invariant
-        run: |
-          set -euo pipefail
-          # The passive workflow must not turn a cloud route into a health dependency. The
-          # production evidence for #486 remains the authority; this guard prevents this workflow
-          # itself from acquiring write/invoke/model behavior.
-          if grep -Eiq 'aws[[:space:]]+(ssm[[:space:]]+send-command|lambda[[:space:]]+invoke)' "${GITHUB_WORKSPACE}/.github/workflows/tutor-hidden-chain-smoke.yml"; then
-            echo "::error::Passive smoke contains a forbidden AWS write/invoke command."
-            exit 1
-          fi
-          echo "- beta route requirement: \`local-only; cloud route is not a health dependency\`" >> "${GITHUB_STEP_SUMMARY}"
-

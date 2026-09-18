@@ -68,7 +68,7 @@ function logEvents(logGroup, pattern) {
 
 const ssrGroup = "/aws/amplify/" + APP_ID;
 function matchingAudits() {
-  return logEvents(ssrGroup, "\"[tutor-llm]\"")
+  return logEvents(ssrGroup, '"[tutor-llm]"')
     .map((event) => ({ event, entry: payload(event.message) }))
     .filter(({ entry }) => {
       const key = typeof entry?.sessionKey === "string" ? entry.sessionKey : "";
@@ -81,11 +81,15 @@ const audits = await waitFor("SSR tutor audit", 90_000, () => {
   return found.length > 0 ? found : null;
 });
 if (audits.length !== 1) {
-  throw new Error("Expected exactly one SSR tutor audit for the smoke identity, found " + audits.length);
+  throw new Error(
+    "Expected exactly one SSR tutor audit for the smoke identity, found " + audits.length,
+  );
 }
 const audit = audits[0].entry;
 if (audit.status !== "completed") {
-  throw new Error("Tutor smoke did not produce a completed server LLM answer; deterministic fallback is not accepted");
+  throw new Error(
+    "Tutor smoke did not produce a completed server LLM answer; deterministic fallback is not accepted",
+  );
 }
 if (!REQUEST_ID.test(audit.requestId ?? "")) {
   throw new Error("Completed SSR tutor audit has no valid request ID");
@@ -108,7 +112,7 @@ if (!Array.isArray(relayGroups) || relayGroups.length === 0) {
 
 function matchingRelayEvents() {
   return relayGroups.flatMap((group) =>
-    logEvents(group, "\"" + requestId + "\"")
+    logEvents(group, '"' + requestId + '"')
       .map((event) => ({ event, entry: payload(event.message) }))
       .filter(({ entry }) => entry?.component === "tutor-relay" && entry.id === requestId),
   );
@@ -119,7 +123,9 @@ const relays = await waitFor("Tutor relay evidence", 90_000, () => {
   return found.length > 0 ? found : null;
 });
 if (relays.length !== 1) {
-  throw new Error("Expected exactly one relay result for the smoke request, found " + relays.length);
+  throw new Error(
+    "Expected exactly one relay result for the smoke request, found " + relays.length,
+  );
 }
 const relay = relays[0].entry;
 const attempts = Array.isArray(relay.attempts) ? relay.attempts : [];
@@ -164,7 +170,9 @@ const commands = await waitFor("SSM SendCommand audit evidence", 600_000, () => 
   return found.length > 0 ? found : null;
 });
 if (commands.length !== 1) {
-  throw new Error("Expected exactly one SSM command for the smoke request, found " + commands.length);
+  throw new Error(
+    "Expected exactly one SSM command for the smoke request, found " + commands.length,
+  );
 }
 const command = commands[0];
 if (command.commandId !== relay.commandId) {
