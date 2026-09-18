@@ -2,7 +2,16 @@
   "language": "de",
   "technologyConcepts": {
     "ide": ["vscode.product"],
-    "ai_coding_assistant": ["vscode.product", "ai.agent", "research.source_evidence"]
+    "ai_coding_assistant": [
+      "vscode.product",
+      "ai.agent",
+      "research.source_evidence",
+      "m365.chat",
+      "m365.search",
+      "m365.library",
+      "m365.create",
+      "m365.agents"
+    ]
   },
   "concepts": [
     {
@@ -28,6 +37,46 @@
       "simple": "Eine Quelle oder ein Beleg zeigt, woher eine Aussage stammt. Sie muss aktuell sein und die konkrete Aussage tatsächlich stützen.",
       "advanced": "Eine Quellenangabe erhöht Nachvollziehbarkeit, beweist aber nicht automatisch Richtigkeit. Prüfe Autorität, Aktualität, Kontext und ob der zitierte Inhalt die abgeleitete Behauptung trägt.",
       "uiTargets": []
+    },
+    {
+      "key": "m365.chat",
+      "term": "Neue Unterhaltung",
+      "aliases": ["New chat", "Neuer Chat"],
+      "simple": "Mit New chat beginnst du eine neue Unterhaltung mit Copilot. Das ist sinnvoll, wenn du mit einer neuen Aufgabe oder einem neuen Thema ohne den bisherigen Gesprächsverlauf starten möchtest.",
+      "advanced": "Die simulierte Aktion startet einen neuen Chat-Verlauf. Sie führt keine zusätzliche Variante wie einen temporären Chat ein, solange das aktive Produktprofil diese Funktion nicht bereitstellt.",
+      "uiTargets": ["m365.nav.newChat"]
+    },
+    {
+      "key": "m365.search",
+      "term": "Suche",
+      "aliases": ["Search"],
+      "simple": "Mit Search suchst du nach verfügbaren Inhalten, statt eine neue Copilot-Unterhaltung zu beginnen.",
+      "advanced": "Die Suche ist ein eigener Navigationsbereich der simulierten Produktoberfläche. Sie ist von der Eingabe einer Frage im aktuellen Chat getrennt.",
+      "uiTargets": ["m365.nav.search"]
+    },
+    {
+      "key": "m365.library",
+      "term": "Bibliothek",
+      "aliases": ["Library"],
+      "simple": "Die Library ist der Bereich für bereits verfügbare Inhalte und Ergebnisse. Du nutzt sie, wenn du vorhandenes Material wiederfinden möchtest.",
+      "advanced": "Die Bibliothek ist in der Simulation ein eigener Navigationsbereich und startet nicht automatisch eine neue Unterhaltung.",
+      "uiTargets": ["m365.nav.library"]
+    },
+    {
+      "key": "m365.create",
+      "term": "Erstellen",
+      "aliases": ["Create"],
+      "simple": "Create führt in den Bereich zum Erstellen neuer Inhalte. Du nutzt ihn, wenn dein Ziel ein neues Arbeitsergebnis statt nur eine Chat-Antwort ist.",
+      "advanced": "Der Create-Bereich ist in der Simulation als eigene Navigation modelliert. Welche konkreten Erstellfunktionen verfügbar sind, bestimmt das aktive Produktprofil.",
+      "uiTargets": ["m365.nav.create"]
+    },
+    {
+      "key": "m365.agents",
+      "term": "Agents",
+      "aliases": ["Agenten"],
+      "simple": "Agents führt zu spezialisierten KI-Helfern für bestimmte Aufgaben. Du nutzt diesen Bereich, wenn ein passender Agent statt des allgemeinen Chats vorgesehen ist.",
+      "advanced": "Welche Agenten und Fähigkeiten tatsächlich verfügbar sind, hängt vom aktiven Produktprofil ab; die Explore-Erklärung erfindet keine zusätzlichen Agenten.",
+      "uiTargets": ["m365.nav.agents"]
     }
   ]
 }
