@@ -16,8 +16,7 @@ export function ArtifactRevisionHistory({
 }: ArtifactRevisionHistoryProps) {
   const applied = state.revisions.filter(
     (revision) =>
-      revision.artifactId === activeArtifact.id &&
-      state.appliedRevisionIds.includes(revision.id),
+      revision.artifactId === activeArtifact.id && state.appliedRevisionIds.includes(revision.id),
   );
 
   if (applied.length === 0) return null;
