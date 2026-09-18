@@ -97,7 +97,8 @@ export function useScenarioScoreAward(
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
-        const message = reason instanceof Error ? reason.message : "Score konnte nicht gespeichert werden";
+        const message =
+          reason instanceof Error ? reason.message : "Score konnte nicht gespeichert werden";
         setResult(null);
         setError(message);
         setStatus("error");
