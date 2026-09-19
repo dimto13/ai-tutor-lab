@@ -22,13 +22,14 @@ export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuit
       continue;
     }
 
-    runs.push({
-      scenarioId: typeof run.scenarioId === "string" ? run.scenarioId : undefined,
-      mode: typeof run.mode === "string" ? run.mode : undefined,
-      sessionId: typeof run.sessionId === "string" ? run.sessionId : undefined,
+    const continuityRun: WeeklyContinuityRun = {
       finishedAt: run.finishedAt,
       durationMs: run.durationMs,
-    });
+    };
+    if (typeof run.scenarioId === "string") continuityRun.scenarioId = run.scenarioId;
+    if (typeof run.mode === "string") continuityRun.mode = run.mode;
+    if (typeof run.sessionId === "string") continuityRun.sessionId = run.sessionId;
+    runs.push(continuityRun);
   }
   return runs;
 }
