@@ -38,7 +38,10 @@ test("deduplicates retry evidence by session id and keeps the latest state", () 
 });
 
 test("preserves historical weekly minutes without activity metadata", () => {
-  const legacy = run({ scenarioId: undefined, mode: undefined, sessionId: undefined });
+  const legacy: WeeklyContinuityRun = {
+    finishedAt: NOW - 60_000,
+    durationMs: 12 * 60_000,
+  };
 
   assert.deepEqual(recentLearningActivities([legacy]), []);
   assert.equal(buildWeeklyContinuity([legacy], null, NOW).currentWeekMinutes, 12);
