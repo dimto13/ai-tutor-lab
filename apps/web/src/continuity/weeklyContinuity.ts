@@ -29,16 +29,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
 function hasValidTiming(run: WeeklyContinuityRun): boolean {
-  return (
-    Number.isFinite(run.finishedAt) &&
-    Number.isFinite(run.durationMs) &&
-    run.durationMs >= 0
-  );
+  return Number.isFinite(run.finishedAt) && Number.isFinite(run.durationMs) && run.durationMs >= 0;
 }
 
-function validUniqueActivities(
-  runs: readonly WeeklyContinuityRun[],
-): LearningActivityRun[] {
+function validUniqueActivities(runs: readonly WeeklyContinuityRun[]): LearningActivityRun[] {
   const latestBySession = new Map<string, LearningActivityRun>();
 
   for (const run of runs) {
@@ -69,11 +63,7 @@ export function startOfUtcWeek(timestamp: number): number {
   const date = new Date(timestamp);
   const day = date.getUTCDay();
   const daysSinceMonday = (day + 6) % 7;
-  return Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate() - daysSinceMonday,
-  );
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - daysSinceMonday);
 }
 
 export function buildWeeklyContinuity(
@@ -100,8 +90,7 @@ export function buildWeeklyContinuity(
     };
   });
   const currentWeekMinutes = weeks.at(-1)?.minutes ?? 0;
-  const validGoal =
-    goalMinutes !== null && Number.isFinite(goalMinutes) && goalMinutes > 0;
+  const validGoal = goalMinutes !== null && Number.isFinite(goalMinutes) && goalMinutes > 0;
 
   return {
     weeks,
