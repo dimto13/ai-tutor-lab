@@ -4,7 +4,9 @@ import type { WeeklyContinuityRun } from "../../continuity/weeklyContinuity";
 
 const RUN_LIMIT = 100;
 
-export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuityRun[]> {
+export async function loadAmplifyWeeklyContinuityRuns(): Promise<
+  WeeklyContinuityRun[]
+> {
   const client = generateClient<Schema>();
   const result = await client.queries.listMyScenarioRuns({ limit: RUN_LIMIT });
   if (result.errors?.length) {
@@ -18,18 +20,14 @@ export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuit
   const runs: WeeklyContinuityRun[] = [];
   for (const run of result.data ?? []) {
     if (!run) continue;
-    if (typeof run.finishedAt !== "number" || typeof run.durationMs !== "number") continue;
-    if (
-      typeof run.scenarioId !== "string" ||
-      typeof run.mode !== "string" ||
-      typeof run.sessionId !== "string"
-    ) {
+    if (typeof run.finishedAt !== "number" || typeof run.durationMs !== "number") {
       continue;
     }
+
     runs.push({
-      scenarioId: run.scenarioId,
-      mode: run.mode,
-      sessionId: run.sessionId,
+      scenarioId: typeof run.scenarioId === "string" ? run.scenarioId : undefined,
+      mode: typeof run.mode === "string" ? run.mode : undefined,
+      sessionId: typeof run.sessionId === "string" ? run.sessionId : undefined,
       finishedAt: run.finishedAt,
       durationMs: run.durationMs,
     });
