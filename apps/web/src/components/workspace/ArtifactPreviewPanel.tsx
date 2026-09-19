@@ -168,7 +168,7 @@ export function ArtifactPreviewPanel() {
           <ArtifactRevisionHistory
             state={state}
             activeArtifact={activeArtifact}
-            selectedRevisionId={selectedRevisionId}
+            selectedRevisionId={selectedRevision?.id ?? null}
             onSelectRevision={setSelectedRevisionId}
           />
 
@@ -199,13 +199,11 @@ export function ArtifactPreviewPanel() {
               type="button"
               data-highlight="artifact.preview.verify"
               onClick={() => artifactPreviewRuntime.verifyActiveArtifact()}
-              disabled={selectedRevisionId !== null}
+              disabled={selectedRevision !== null}
               title={
-                selectedRevisionId !== null
-                  ? "Prüfen ist nur im aktuellen Stand möglich."
-                  : undefined
+                selectedRevision !== null ? "Prüfen ist nur im aktuellen Stand möglich." : undefined
               }
-              className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium ${selectedRevisionId !== null ? "cursor-not-allowed border-border text-muted-foreground opacity-60" : state.verifiedIds.includes(activeArtifact.id) ? "border-success/40 bg-success/10 text-success" : "border-border text-foreground hover:border-ring"}`}
+              className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium ${selectedRevision !== null ? "cursor-not-allowed border-border text-muted-foreground opacity-60" : state.verifiedIds.includes(activeArtifact.id) ? "border-success/40 bg-success/10 text-success" : "border-border text-foreground hover:border-ring"}`}
             >
               {state.verifiedIds.includes(activeArtifact.id) ? (
                 <CheckCircle2 className="h-3.5 w-3.5" />
