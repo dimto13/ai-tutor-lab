@@ -7,7 +7,9 @@ interface TestCredentials {
 
 function requireEnvironmentValue(name: string): string {
   const value = process.env[name];
-  if (!value) throw new Error(`${name} is required for authenticated cloud acceptance.`);
+  if (!value) {
+    throw new Error(`${name} is required for authenticated cloud acceptance.`);
+  }
   return name.endsWith("_PASSWORD") ? value : value.trim();
 }
 
@@ -31,25 +33,31 @@ async function signIn(page: Page, account: TestCredentials): Promise<void> {
 
 async function completeGuidedTraining(page: Page): Promise<void> {
   await page.goto("/training/artifact-preview-foundation.guided");
-  await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toHaveText(
-    "Training bereit",
-  );
+  await expect(
+    page.getByRole("status").filter({ hasText: "Training bereit" }),
+  ).toHaveText("Training bereit");
   await page.getByRole("button", { name: /Team-Übersicht/ }).click();
   await page.getByRole("button", { name: "Quelltext", exact: true }).click();
   await page.getByRole("button", { name: /Freigabestatus ergänzen/ }).click();
   await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Training abgeschlossen" }),
+  ).toBeVisible();
   await expect(page.getByText("Punkte", { exact: true })).toBeVisible();
 }
 
-async function expectPersistedActivity(page: Page): Promise<void> {
+async function latestPersistedActivity(page: Page) {
   const activity = page
     .getByTestId("learning-activities")
     .locator('li[data-session-id]')
-    .filter({ hasText: "artifact-preview-foundation" });
-  await expect(activity).toHaveCount(1);
+    .filter({ hasText: "artifact-preview-foundation" })
+    .first();
+  await expect(activity).toBeVisible();
   await expect(activity).toContainText("Guided");
   await expect(activity).toContainText(/\d+ Min\./);
+  const sessionId = await activity.getAttribute("data-session-id");
+  expect(sessionId).toBeTruthy();
+  return sessionId as string;
 }
 
 test("completed Guided training appears once in learning activity and survives a full reload", async ({
@@ -60,17 +68,20 @@ test("completed Guided training appears once in learning activity and survives a
   await signIn(page, credentials("CLOUD_TEST"));
   await completeGuidedTraining(page);
 
-  // Navigate through the authenticated application after the authoritative completion write.
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Meine Trainings" }),
   ).toBeVisible();
-  await expectPersistedActivity(page);
+  const sessionId = await latestPersistedActivity(page);
 
-  // A hard reload must project the same persisted ScenarioRun rather than transient UI state.
   await page.reload({ waitUntil: "networkidle" });
   await expect(
     page.getByRole("heading", { name: "Meine Trainings" }),
   ).toBeVisible();
-  await expectPersistedActivity(page);
+  const persistedSession = page
+    .getByTestId("learning-activities")
+    .locator(`li[data-session-id="${sessionId}"]`);
+  await expect(persistedSession).toHaveCount(1);
+  await expect(persistedSession).toContainText("Guided");
+  await expect(persistedSession).toContainText(/\d+ Min\./);
 });
