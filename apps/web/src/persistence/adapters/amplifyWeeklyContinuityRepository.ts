@@ -18,8 +18,18 @@ export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuit
   const runs: WeeklyContinuityRun[] = [];
   for (const run of result.data ?? []) {
     if (!run) continue;
-    if (typeof run.finishedAt !== "number" || typeof run.durationMs !== "number") continue;
-    runs.push({ finishedAt: run.finishedAt, durationMs: run.durationMs });
+    if (typeof run.finishedAt !== "number" || typeof run.durationMs !== "number") {
+      continue;
+    }
+
+    const continuityRun: WeeklyContinuityRun = {
+      finishedAt: run.finishedAt,
+      durationMs: run.durationMs,
+    };
+    if (typeof run.scenarioId === "string") continuityRun.scenarioId = run.scenarioId;
+    if (typeof run.mode === "string") continuityRun.mode = run.mode;
+    if (typeof run.sessionId === "string") continuityRun.sessionId = run.sessionId;
+    runs.push(continuityRun);
   }
   return runs;
 }
