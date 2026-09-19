@@ -4,9 +4,7 @@ import type { WeeklyContinuityRun } from "../../continuity/weeklyContinuity";
 
 const RUN_LIMIT = 100;
 
-export async function loadAmplifyWeeklyContinuityRuns(): Promise<
-  WeeklyContinuityRun[]
-> {
+export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuityRun[]> {
   const client = generateClient<Schema>();
   const result = await client.queries.listMyScenarioRuns({ limit: RUN_LIMIT });
   if (result.errors?.length) {
