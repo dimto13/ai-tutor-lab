@@ -52,6 +52,7 @@ export function ArtifactPreviewPanel() {
     (revision) =>
       revision.artifactId === activeArtifact?.id && !state.appliedRevisionIds.includes(revision.id),
   );
+  const appliedRevisionKey = state.appliedRevisionIds.join("|");
 
   useEffect(() => {
     const container = rootRef.current;
@@ -76,7 +77,7 @@ export function ArtifactPreviewPanel() {
 
   useEffect(() => {
     setSelectedRevisionId(null);
-  }, [state.activeArtifactId, state.appliedRevisionIds]);
+  }, [state.activeArtifactId, appliedRevisionKey]);
 
   const inspect = (ref: string) => {
     if (mode === "explore") artifactPreviewRuntime.inspect(ref);
