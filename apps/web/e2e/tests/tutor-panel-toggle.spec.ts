@@ -26,7 +26,10 @@ test("Tutor panel closes, restores focus and preserves its conversation", async 
   await page.getByRole("button", { name: "Was ist ein Workspace?" }).click();
   await expect(history).toContainText("Was ist ein Workspace?");
 
-  const stepBefore = await page.locator('[data-testid="guided-current-step"]').textContent().catch(() => null);
+  const stepBefore = await page
+    .locator('[data-testid="guided-current-step"]')
+    .textContent()
+    .catch(() => null);
   const close = page.getByTestId("tutor-chat-close");
   await close.focus();
   await close.press("Enter");
