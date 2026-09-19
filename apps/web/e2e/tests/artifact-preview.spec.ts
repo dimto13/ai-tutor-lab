@@ -79,7 +79,9 @@ test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten und Historie verä
   await waitForTrainingReady(page);
   await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");
   await expect(page.getByText("Freigabe bereit", { exact: false })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Freigabestatus ergänzen/ })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Freigabestatus ergänzen", exact: true }),
+  ).toHaveCount(0);
 
   await page
     .getByRole("button", { name: "Revision Freigabestatus ergänzen ansehen", exact: true })
