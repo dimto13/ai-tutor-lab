@@ -1,7 +1,7 @@
 export interface WeeklyContinuityRun {
-  scenarioId: string;
-  mode: string;
-  sessionId: string;
+  scenarioId?: string;
+  mode?: string;
+  sessionId?: string;
   finishedAt: number;
   durationMs: number;
 }
@@ -18,38 +18,49 @@ export interface WeeklyContinuitySummary {
   goalProgressPercent: number | null;
 }
 
+export interface LearningActivityRun extends WeeklyContinuityRun {
+  scenarioId: string;
+  mode: string;
+  sessionId: string;
+}
+
 const WEEK_COUNT = 8;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
-function validUniqueRuns(runs: readonly WeeklyContinuityRun[]): WeeklyContinuityRun[] {
-  const seenSessions = new Set<string>();
-  const unique: WeeklyContinuityRun[] = [];
+function hasValidTiming(run: WeeklyContinuityRun): boolean {
+  return (
+    Number.isFinite(run.finishedAt) &&
+    Number.isFinite(run.durationMs) &&
+    run.durationMs >= 0
+  );
+}
+
+function validUniqueActivities(
+  runs: readonly WeeklyContinuityRun[],
+): LearningActivityRun[] {
+  const latestBySession = new Map<string, LearningActivityRun>();
 
   for (const run of runs) {
-    if (
-      !run.sessionId ||
-      seenSessions.has(run.sessionId) ||
-      !run.scenarioId ||
-      !run.mode ||
-      !Number.isFinite(run.finishedAt) ||
-      !Number.isFinite(run.durationMs) ||
-      run.durationMs < 0
-    ) {
+    if (!hasValidTiming(run) || !run.sessionId || !run.scenarioId || !run.mode) {
       continue;
     }
-    seenSessions.add(run.sessionId);
-    unique.push(run);
+
+    const activity = run as LearningActivityRun;
+    const current = latestBySession.get(activity.sessionId);
+    if (!current || activity.finishedAt > current.finishedAt) {
+      latestBySession.set(activity.sessionId, activity);
+    }
   }
 
-  return unique;
+  return [...latestBySession.values()];
 }
 
 export function recentLearningActivities(
   runs: readonly WeeklyContinuityRun[],
   limit = 5,
-): WeeklyContinuityRun[] {
-  return validUniqueRuns(runs)
+): LearningActivityRun[] {
+  return validUniqueActivities(runs)
     .sort((left, right) => right.finishedAt - left.finishedAt)
     .slice(0, Math.max(0, limit));
 }
@@ -58,7 +69,11 @@ export function startOfUtcWeek(timestamp: number): number {
   const date = new Date(timestamp);
   const day = date.getUTCDay();
   const daysSinceMonday = (day + 6) % 7;
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - daysSinceMonday);
+  return Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate() - daysSinceMonday,
+  );
 }
 
 export function buildWeeklyContinuity(
@@ -70,7 +85,8 @@ export function buildWeeklyContinuity(
   const firstWeekStart = currentWeekStart - (WEEK_COUNT - 1) * WEEK_MS;
   const totals = new Map<number, number>();
 
-  for (const run of validUniqueRuns(runs)) {
+  for (const run of runs) {
+    if (!hasValidTiming(run)) continue;
     const weekStart = startOfUtcWeek(run.finishedAt);
     if (weekStart < firstWeekStart || weekStart > currentWeekStart) continue;
     totals.set(weekStart, (totals.get(weekStart) ?? 0) + run.durationMs);
@@ -84,7 +100,8 @@ export function buildWeeklyContinuity(
     };
   });
   const currentWeekMinutes = weeks.at(-1)?.minutes ?? 0;
-  const validGoal = goalMinutes !== null && Number.isFinite(goalMinutes) && goalMinutes > 0;
+  const validGoal =
+    goalMinutes !== null && Number.isFinite(goalMinutes) && goalMinutes > 0;
 
   return {
     weeks,
