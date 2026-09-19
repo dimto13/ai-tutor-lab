@@ -40,6 +40,7 @@ export function ArtifactRevisionHistory({
             <li key={revision.id}>
               <button
                 type="button"
+                aria-label={`Revision ${revision.label} ansehen`}
                 aria-pressed={selected}
                 onClick={() => onSelectRevision(revision.id)}
                 className={`min-w-fit rounded-md border px-2 py-1 text-[10px] ${
