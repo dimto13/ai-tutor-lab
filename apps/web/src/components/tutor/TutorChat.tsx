@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bot, ChevronDown, MessageCircle, Send, User } from "lucide-react";
+import { Bot, ChevronDown, MessageCircle, Send, User, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { findGlossaryConcept } from "@/lib/glossary";
@@ -42,10 +42,20 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const collapsedToggleRef = useRef<HTMLButtonElement>(null);
+  const restoreToggleFocusRef = useRef(false);
 
   useEffect(() => {
     setOpen(mode !== "guided");
+    restoreToggleFocusRef.current = false;
   }, [mode, tutorContext.scenario.id]);
+
+  useEffect(() => {
+    if (!open && restoreToggleFocusRef.current) {
+      restoreToggleFocusRef.current = false;
+      collapsedToggleRef.current?.focus();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -55,6 +65,11 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       behavior: reducedMotion ? "auto" : "smooth",
     });
   }, [messages, open]);
+
+  const closePanel = () => {
+    restoreToggleFocusRef.current = true;
+    setOpen(false);
+  };
 
   const send = async (text: string) => {
     const question = text.trim();
@@ -79,7 +94,6 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           }),
         );
         answer = serverAnswer.answer;
-        // Point at the elements the tutor refers to, as "Ziel zeigen" does for the step (#476).
         if (serverAnswer.uiTargetRefs.length > 0) {
           requestTutorAttention(
             serverAnswer.uiTargetRefs,
@@ -110,6 +124,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       >
         <div className="flex min-w-0 items-center gap-2">
           <button
+            ref={collapsedToggleRef}
             type="button"
             data-testid="tutor-chat-toggle"
             aria-label="Tutor fragen"
@@ -160,18 +175,17 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
             <span className="normal-case font-normal tracking-normal">nur auf Anfrage</span>
           ) : null}
           {problemShortcut}
-          {mode === "guided" ? (
-            <button
-              type="button"
-              aria-label="Tutor schließen"
-              aria-expanded="true"
-              aria-controls="tutor-chat-panel"
-              onClick={() => setOpen(false)}
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[11px] font-medium normal-case tracking-normal text-foreground transition-colors hover:border-ring hover:bg-muted motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Einklappen
-            </button>
-          ) : null}
+          <button
+            type="button"
+            data-testid="tutor-chat-close"
+            aria-label="Tutor schließen"
+            aria-expanded="true"
+            aria-controls="tutor-chat-panel"
+            onClick={closePanel}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:border-ring hover:bg-muted motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
       </div>
       <div
