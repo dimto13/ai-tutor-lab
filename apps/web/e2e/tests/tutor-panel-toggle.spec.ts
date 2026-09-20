@@ -23,10 +23,10 @@ test("Tutor panel closes, restores focus and preserves its conversation", async 
     "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.";
   await expect(history).toContainText(initialMessage);
 
-  const stepBefore = await page
-    .locator('[data-testid="guided-current-step"]')
-    .textContent()
-    .catch(() => null);
+  const activeStep = page.locator('[aria-current="step"]');
+  const activeStepTestId = await activeStep.getAttribute("data-testid");
+  expect(activeStepTestId).not.toBeNull();
+
   const close = page.getByTestId("tutor-chat-close");
   await close.focus();
   await close.press("Enter");
@@ -34,15 +34,17 @@ test("Tutor panel closes, restores focus and preserves its conversation", async 
   const toggle = page.getByTestId("tutor-chat-toggle");
   await expect(page.getByTestId("tutor-chat-collapsed")).toBeVisible();
   await expect(toggle).toBeFocused();
+  expect(await page.locator('[aria-current="step"]').getAttribute("data-testid")).toBe(
+    activeStepTestId,
+  );
   await toggle.press("Enter");
 
   await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
   await expect(page.getByPlaceholder("Frage an den Tutor…")).not.toBeFocused();
   await expect(history).toContainText(initialMessage);
-
-  if (stepBefore !== null) {
-    await expect(page.locator('[data-testid="guided-current-step"]')).toHaveText(stepBefore);
-  }
+  expect(await page.locator('[aria-current="step"]').getAttribute("data-testid")).toBe(
+    activeStepTestId,
+  );
 });
 
 test("Tutor panel can be dismissed in explore and challenge modes", async ({ page }) => {
