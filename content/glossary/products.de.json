@@ -2,7 +2,11 @@
   "language": "de",
   "technologyConcepts": {
     "ide": ["vscode.product"],
-    "ai_coding_assistant": ["vscode.product", "ai.agent", "research.source_evidence"],
+    "ai_coding_assistant": [
+      "vscode.product",
+      "ai.agent",
+      "research.source_evidence"
+    ],
     "office_assistant": [
       "m365.chat",
       "m365.search",
