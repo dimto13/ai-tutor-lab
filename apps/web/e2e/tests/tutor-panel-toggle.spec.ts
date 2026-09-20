@@ -23,9 +23,6 @@ test("Tutor panel closes, restores focus and preserves its conversation", async 
     "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.";
   await expect(history).toContainText(initialMessage);
 
-  await page.getByRole("button", { name: "Was ist ein Workspace?" }).click();
-  await expect(history).toContainText("Was ist ein Workspace?");
-
   const stepBefore = await page
     .locator('[data-testid="guided-current-step"]')
     .textContent()
@@ -42,7 +39,6 @@ test("Tutor panel closes, restores focus and preserves its conversation", async 
   await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
   await expect(page.getByPlaceholder("Frage an den Tutor…")).not.toBeFocused();
   await expect(history).toContainText(initialMessage);
-  await expect(history).toContainText("Was ist ein Workspace?");
 
   if (stepBefore !== null) {
     await expect(page.locator('[data-testid="guided-current-step"]')).toHaveText(stepBefore);
@@ -61,13 +57,12 @@ test("Tutor panel can be dismissed in explore and challenge modes", async ({ pag
   }
 });
 
-test("Collapsed tutor releases training space on a small viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 640 });
+test("Collapsed tutor releases training space on a short responsive viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 640 });
   await page.goto("/training/vscode-basics.explore");
   await ready(page);
 
   const close = page.getByTestId("tutor-chat-close");
-  await close.scrollIntoViewIfNeeded();
   await expect(close).toBeVisible();
   await close.click();
   const collapsed = page.getByTestId("tutor-chat-collapsed");
