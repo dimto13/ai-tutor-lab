@@ -18,7 +18,7 @@ async function openGuidedTutor(page: Page): Promise<void> {
 test("Tutor panel closes, restores focus and preserves its conversation", async ({ page }) => {
   await openGuidedTutor(page);
 
-  const history = page.getByRole("region", { name: /Tutor/ });
+  const history = page.getByRole("region", { name: "Tutor-Verlauf" });
   const initialMessage =
     "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.";
   await expect(history).toContainText(initialMessage);
@@ -66,7 +66,10 @@ test("Collapsed tutor releases training space on a small viewport", async ({ pag
   await page.goto("/training/vscode-basics.explore");
   await ready(page);
 
-  await page.getByTestId("tutor-chat-close").click();
+  const close = page.getByTestId("tutor-chat-close");
+  await close.scrollIntoViewIfNeeded();
+  await expect(close).toBeVisible();
+  await close.click();
   const collapsed = page.getByTestId("tutor-chat-collapsed");
   await expect(collapsed).toBeVisible();
   const box = await collapsed.boundingBox();
