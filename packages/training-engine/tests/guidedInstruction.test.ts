@@ -25,8 +25,8 @@ test("declared literal input is preserved verbatim", () => {
 });
 
 test("file path comparison follows only the declared runtime policy", () => {
-  assert.equal(filePathEquals("Index.HTML", "index.html", "case-insensitive"), true);
-  assert.equal(filePathEquals("Index.HTML", "index.html", "case-sensitive"), false);
+  assert.equal(filePathEquals("Index.HTML", "index.html", "insensitive"), true);
+  assert.equal(filePathEquals("Index.HTML", "index.html", "sensitive"), false);
 });
 
 test("shortcut primary platform is explicit and falls back deterministically", () => {
