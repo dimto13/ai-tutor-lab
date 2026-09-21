@@ -3,7 +3,7 @@ import { tutorDataCategory } from "../src/data-transparency/tutorDataCategory";
 import { dataCategories } from "../src/data-transparency/userDataTransparency";
 
 describe("tutor data transparency", () => {
-  it("describes the beta tutor data flow without inventing retention evidence", () => {
+  it("describes the local-only beta tutor data flow and merged log retention", () => {
     expect(tutorDataCategory.id).toBe("tutor");
     expect(tutorDataCategory.title).toBe("KI-Tutor");
 
@@ -24,8 +24,8 @@ describe("tutor data transparency", () => {
     expect(tutorDataCategory.recipients).toContain("eigene Tutor-Infrastruktur");
     expect(tutorDataCategory.recipients).toContain("kein externer Cloud-KI-Anbieter");
 
-    expect(tutorDataCategory.retention).toContain("keine feste Aufbewahrungsfrist zugesagt");
-    expect(tutorDataCategory.retention).not.toContain("30 Tage");
+    expect(tutorDataCategory.retention).toContain("30 Tagen");
+    expect(tutorDataCategory.retention).toContain("technischen Tutor- und Relay-Logs");
   });
 
   it("includes the tutor category in the rendered data category contract", () => {
