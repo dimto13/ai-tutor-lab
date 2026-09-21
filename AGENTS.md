@@ -35,8 +35,8 @@
 3. **Aufgabenverwaltung läuft ausschließlich über GitHub Issues.** Neue Aufgaben werden direkt
    als Issue angelegt — mit Epic-Label, Prio-Label, Typ-Label und Milestone, und als Sub-Issue
    unter dem passenden Epic. Inhaltliche Änderungen an Tickets gehören in den Issue-Text.
-   `backlog/backlog.yaml`, `backlog/tickets.csv` und `docs/06-backlog.md` sind eingefrorenes
-   Archiv des ursprünglichen Planungsstands und dürfen nicht mehr gepflegt werden. Das operative
+   Es gibt keine Plan-, Backlog- oder Roadmap-Dateien im Repository; der ursprüngliche
+   Planungsstand vom 2026-08-08 ist nur noch über die Git-Historie auffindbar. Das operative
    Implementation-Control ist kein Backlog-Task, sondern die Status-, Queue-, Evidence- und
    Handoff-SSOT. Es wird **nicht über eine Issue-Nummer**, sondern ausschließlich als das genau eine
    offene Issue mit dem Label `control:active` gefunden. Existieren null oder mehrere offene Issues
