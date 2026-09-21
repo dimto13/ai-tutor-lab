@@ -122,8 +122,5 @@ if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary, "utf8");
 }
 console.log(
-  "Passive tutor evidence is local-only: records=" +
-    evidence.length +
-    " completed=" +
-    completed,
+  "Passive tutor evidence is local-only: records=" + evidence.length + " completed=" + completed,
 );
