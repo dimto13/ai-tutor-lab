@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { tutorDataCategory } from "../src/data-transparency/tutorDataCategory";
+import { dataCategories } from "../src/data-transparency/userDataTransparency";
 
 describe("tutor data transparency", () => {
   it("describes the beta tutor data flow without inventing retention evidence", () => {
@@ -25,5 +26,19 @@ describe("tutor data transparency", () => {
 
     expect(tutorDataCategory.retention).toContain("keine feste Aufbewahrungsfrist zugesagt");
     expect(tutorDataCategory.retention).not.toContain("30 Tage");
+  });
+
+  it("includes the tutor category in the rendered data category contract", () => {
+    const categories = dataCategories({
+      storageMode: "cloud",
+      scoreVisibility: "private",
+      leaderboardsEnabled: false,
+      namedApprovalConfirmed: false,
+      rawTelemetryRetentionDays: null,
+      telemetryPseudonymizationMode: "SESSION",
+    });
+
+    expect(categories).toContainEqual(tutorDataCategory);
+    expect(categories.filter((category) => category.id === "tutor")).toHaveLength(1);
   });
 });
