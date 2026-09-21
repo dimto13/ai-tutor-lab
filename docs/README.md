@@ -25,29 +25,27 @@ vom POC zur produktreifen Plattform.
 
 ## Dokumentenlandkarte
 
-| Datei                                | Zweck                                                                                           | Zielgruppe               |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------ |
-| `01-vision-und-scope.md`             | Warum, für wen, was gehört dazu — und was nicht                                                 | alle                     |
-| `02-domaenenmodell.md`               | Fachliches Modell, Entitäten, TypeScript-Contracts                                              | Entwicklung, LLM-Agenten |
-| `03-architektur.md`                  | Schichtenmodell, Runtime-Adapter, Event-Bus, Deployment-Stufen                                  | Entwicklung              |
-| `04-anforderungen.md`                | Nummerierte funktionale/nicht-funktionale Anforderungen (FR/NFR)                                | Product, QA              |
-| `05-gamification.md`                 | Punkte-, Kompetenz- und Nachweissystem                                                          | Product, Compliance      |
-| `06-backlog.md`                      | Ursprünglicher Planungsstand — **Archiv**, siehe [`../backlog/README.md`](../backlog/README.md) | Historie                 |
-| `07-roadmap.md`                      | Meilensteine M0–M6, Reihenfolge, Abbruchkriterien                                               | Steuerung                |
-| `08-offene-entscheidungen.md`        | ADRs, Risiken, offene Fragen an dich                                                            | Entscheider              |
-| `09-glossar.md`                      | Begriffe, damit Modelle konsistent bleiben                                                      | alle                     |
-| `10-dokumenten-check.md`             | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary                            | Product, Security        |
-| `12-simulator-aktualitaet.md`        | Halbjährliche Produktprüfung, Verantwortlichkeit und automatische Drift-Tickets                 | Product, QA, Entwicklung |
-| `18-monorepo-architektur.md`         | Workspace-Struktur, Package-Grenzen, Training Engine und Deployment-Basis                       | Entwicklung              |
-| `19-aws-amplify-konventionen.md`     | Verbindliche AWS-Amplify-, Build-, Release- und Gen-2-Regeln                                    | Entwicklung, LLM-Agenten |
-| `20-cloud-provider-boundary.md`      | Cloud-neutrale Ports/Adapter-Grenze; AWS heute, weitere Provider später                         | Entwicklung, LLM-Agenten |
-| `23-cloud-abnahme-kanal.md`          | Lesender OIDC-Zugang von GitHub Actions zu AWS für die Cloud-Abnahme                            | Entwicklung, Security    |
-| `24-control-plane.md`                | Dynamische CONTROL-Discovery, Handoffs, Scheduler-Vertrag und Rollover                          | Steuerung, LLM-Agenten   |
-| `../prompts/model-briefing.md`       | Kompakter Kontext-Prompt für beliebige LLMs                                                     | dich, LLM-Agenten        |
-| `../prompts/prototyp-iteration-2.md` | Umbau-Auftrag für das Prototyping-Werkzeug                                                      | dich                     |
+| Datei                            | Zweck                                                                           | Zielgruppe               |
+| -------------------------------- | ------------------------------------------------------------------------------- | ------------------------ |
+| `01-vision-und-scope.md`         | Warum, für wen, was gehört dazu — und was nicht                                 | alle                     |
+| `02-domaenenmodell.md`           | Fachliches Modell, Entitäten, TypeScript-Contracts                              | Entwicklung, LLM-Agenten |
+| `03-architektur.md`              | Schichtenmodell, Runtime-Adapter, Event-Bus, Deployment-Stufen                  | Entwicklung              |
+| `04-anforderungen.md`            | Nummerierte funktionale/nicht-funktionale Anforderungen (FR/NFR)                | Product, QA              |
+| `05-gamification.md`             | Punkte-, Kompetenz- und Nachweissystem                                          | Product, Compliance      |
+| `08-offene-entscheidungen.md`    | ADRs, Risiken, offene Fragen an dich                                            | Entscheider              |
+| `09-glossar.md`                  | Begriffe, damit Modelle konsistent bleiben                                      | alle                     |
+| `10-dokumenten-check.md`         | Datenklassifizierung: Lernmodul + Prüfwerkzeug in Mandanten-Boundary            | Product, Security        |
+| `12-simulator-aktualitaet.md`    | Halbjährliche Produktprüfung, Verantwortlichkeit und automatische Drift-Tickets | Product, QA, Entwicklung |
+| `18-monorepo-architektur.md`     | Workspace-Struktur, Package-Grenzen, Training Engine und Deployment-Basis       | Entwicklung              |
+| `19-aws-amplify-konventionen.md` | Verbindliche AWS-Amplify-, Build-, Release- und Gen-2-Regeln                    | Entwicklung, LLM-Agenten |
+| `20-cloud-provider-boundary.md`  | Cloud-neutrale Ports/Adapter-Grenze; AWS heute, weitere Provider später         | Entwicklung, LLM-Agenten |
+| `23-cloud-abnahme-kanal.md`      | Lesender OIDC-Zugang von GitHub Actions zu AWS für die Cloud-Abnahme            | Entwicklung, Security    |
+| `24-control-plane.md`            | Dynamische CONTROL-Discovery, Handoffs, Scheduler-Vertrag und Rollover          | Steuerung, LLM-Agenten   |
+| `../prompts/model-briefing.md`   | Kompakter Kontext-Prompt für beliebige LLMs                                     | dich, LLM-Agenten        |
 
-Die **aktuelle** Aufgabenlage steht nicht in einer Datei, sondern in den
-[GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues).
+Aufgabenlage, Planung und Meilensteine stehen nicht in Dateien, sondern ausschließlich in den
+[GitHub Issues](https://github.com/dimto13/ai-tutor-lab/issues) und
+[Milestones](https://github.com/dimto13/ai-tutor-lab/milestones).
 
 Das operative Implementation-Control wird ebenfalls nicht über eine fest codierte Issue-Nummer gefunden.
 Kanonisch ist genau das eine offene Issue mit dem Label `control:active`; Details stehen in
@@ -92,8 +90,8 @@ View-Eigenschaft nicht schreiben kann.
 1. Inhaltliche Änderungen an einem Ticket → direkt im Issue-Text. Es gibt keine
    vorgelagerte Datei mehr.
 2. Statusarbeit (zuweisen, Board-Spalte, Checkboxen abhaken, schließen) → ebenfalls im Issue.
-3. `backlog/` und `docs/06-backlog.md` sind eingefrorenes Archiv des Planungsstands vom
-   2026-08-08 und werden nicht mehr aktualisiert.
+3. Es gibt keine Plan-, Backlog- oder Roadmap-Dateien. Der ursprüngliche Planungsstand vom
+   2026-08-08 ist nur noch über die Git-Historie auffindbar.
 4. Codeänderungen laufen über einen eigenen Branch und einen Pull Request; direkte Pushes
    auf `main` sind gesperrt. Der PR referenziert das Issue (`Closes #123`).
 
