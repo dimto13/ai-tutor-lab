@@ -1,0 +1,130 @@
+{
+  "id": "table-version-compare.explore",
+  "moduleId": "table-version-compare",
+  "mode": "explore",
+  "learningLayer": "ai_workflow",
+  "title": "Tabellenversionen vergleichen – frei erkunden",
+  "description": "Erkunde drei synthetische Bestandsstände und finde belastbare Änderungen über stabile Objekt-IDs statt Zeilenposition oder Namen.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["artifact.preview"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["synthetischer-anlagenvergleich"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Synthetischer Versionsvergleich\nErkunde v1, v2 und v3. Finde eine stabile Kennung, trenne geändert, neu und entfallen und entscheide, welche Spalte fachlich irrelevant ist. Alle Daten sind frei erfunden."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "artifactPreview": {
+        "activeArtifactId": "version-v1",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "version-v1",
+            "type": "table",
+            "title": "Bestand v1",
+            "columns": [
+              { "key": "assetId", "label": "Objekt-ID" },
+              { "key": "name", "label": "Bezeichnung" },
+              { "key": "location", "label": "Standort" },
+              { "key": "status", "label": "Status" },
+              { "key": "importNote", "label": "Importnotiz" }
+            ],
+            "rows": [
+              { "assetId": "A-100", "name": "Prüfstand Alpha", "location": "Halle 1", "status": "aktiv", "importNote": "Quelle v1" },
+              { "assetId": "A-200", "name": "Messgerät Beta", "location": "Labor", "status": "aktiv", "importNote": "Quelle v1" },
+              { "assetId": "A-300", "name": "Pumpe Gamma", "location": "Halle 2", "status": "aktiv", "importNote": "Quelle v1" },
+              { "assetId": "A-400", "name": "Sensor Delta", "location": "Halle 3", "status": "aktiv", "importNote": "Quelle v1" }
+            ]
+          },
+          {
+            "id": "version-v2",
+            "type": "table",
+            "title": "Bestand v2",
+            "columns": [
+              { "key": "assetId", "label": "Objekt-ID" },
+              { "key": "name", "label": "Bezeichnung" },
+              { "key": "location", "label": "Standort" },
+              { "key": "status", "label": "Status" },
+              { "key": "importNote", "label": "Importnotiz" }
+            ],
+            "rows": [
+              { "assetId": "A-200", "name": "Messgerät Beta", "location": "Labor 2", "status": "aktiv", "importNote": "neu importiert" },
+              { "assetId": "A-100", "name": "Prüfstand Alpha Nord", "location": "Halle 1", "status": "aktiv", "importNote": "neu importiert" },
+              { "assetId": "A-400", "name": "Sensor Delta", "location": "Halle 3", "status": "wartung", "importNote": "neu importiert" },
+              { "assetId": "A-500", "name": "Kamera Epsilon", "location": "Halle 4", "status": "aktiv", "importNote": "neu importiert" }
+            ]
+          },
+          {
+            "id": "version-v3",
+            "type": "table",
+            "title": "Bestand v3 · Prüffall",
+            "columns": [
+              { "key": "assetId", "label": "Objekt-ID" },
+              { "key": "name", "label": "Bezeichnung" },
+              { "key": "location", "label": "Standort" },
+              { "key": "status", "label": "Status" },
+              { "key": "importNote", "label": "Importnotiz" }
+            ],
+            "rows": [
+              { "assetId": "A-100", "name": "Prüfstand Alpha Nord", "location": "Halle 1", "status": "aktiv", "importNote": "Prüflauf" },
+              { "assetId": "A-400", "name": "Sensor Delta", "location": "Halle 3", "status": "wartung", "importNote": "Prüflauf" },
+              { "assetId": "A-500", "name": "Kamera Epsilon", "location": "Halle 4", "status": "aktiv", "importNote": "Prüflauf" },
+              { "assetId": "A-600", "name": "Messgerät Beta", "location": "Labor 3", "status": "aktiv", "importNote": "Prüflauf" }
+            ]
+          },
+          {
+            "id": "comparison-contract",
+            "type": "data",
+            "title": "Vergleichsvertrag · zur Kontrolle",
+            "value": {
+              "stableKey": "assetId",
+              "comparedColumns": ["name", "location", "status"],
+              "ignoredColumns": ["importNote"],
+              "assumptions": "assetId bleibt fachlich stabil; Zeilenposition und sichtbarer Name sind keine Identität.",
+              "limits": "Nur deklarative Szenariodaten; keine Excel-/CSV-Parsinglogik."
+            }
+          },
+          {
+            "id": "control-result",
+            "type": "data",
+            "title": "Kontrollbefund",
+            "value": "v1→v2: geändert A-100/name, A-200/location, A-400/status; neu A-500; entfallen A-300. v2→v3: neu A-600; entfallen A-200. Gleicher Name 'Messgerät Beta' macht A-200 und A-600 nicht identisch."
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 80,
+  "exploreTargets": ["artifact.preview.selector"],
+  "steps": [
+    {
+      "id": "explore-version-diff",
+      "title": "Identität und Änderungen frei erkunden",
+      "description": "Untersuche die drei Bestandsstände in beliebiger Reihenfolge und prüfe deine Befunde am Vergleichsvertrag und Kontrollbefund.",
+      "instruction": "Finde eine stabile Kennung. Trenne geänderte Felder, neue und entfallene Datensätze. Prüfe danach v2→v3 und erkläre, warum A-200 und A-600 trotz gleicher Bezeichnung verschiedene Datensätze sind.",
+      "why": "Ein robuster Vergleich hängt von fachlicher Identität und expliziten Vergleichsspalten ab, nicht von Sortierung oder sichtbaren Namen.",
+      "helpLevels": [
+        "Vergleiche zuerst assetId und die Reihenfolge der Zeilen.",
+        "importNote ändert sich überall, ist laut Vergleichsvertrag aber fachlich irrelevant.",
+        "v1→v2: A-100, A-200 und A-400 geändert; A-500 neu; A-300 entfallen. v2→v3: A-600 neu und A-200 entfallen."
+      ],
+      "successMessage": "Du hast den Versionsvergleich frei erkundet und den Identitätsfall eingeordnet."
+    }
+  ]
+}
