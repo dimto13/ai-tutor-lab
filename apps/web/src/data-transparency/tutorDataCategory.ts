@@ -1,4 +1,11 @@
-import type { DataCategoryDescription } from "./userDataTransparency";
+export interface TutorDataCategoryDescription {
+  id: string;
+  title: string;
+  stored: string;
+  storage: string;
+  recipients: string;
+  retention: string;
+}
 
 /**
  * Privacy description for the beta tutor path.
@@ -6,7 +13,7 @@ import type { DataCategoryDescription } from "./userDataTransparency";
  * Keep this independent from policy claims such as legal basis or transfer mechanism.
  * Those belong to #451 after their acceptance evidence exists.
  */
-export const tutorDataCategory: DataCategoryDescription = {
+export const tutorDataCategory = {
   id: "tutor",
   title: "KI-Tutor",
   stored:
@@ -17,4 +24,4 @@ export const tutorDataCategory: DataCategoryDescription = {
     "Empfänger sind die für Relay und Befehlsübermittlung eingesetzten AWS-Dienste sowie die eigene Tutor-Infrastruktur des Anbieters. In der geschlossenen Beta erhält kein externer Cloud-KI-Anbieter deine Tutor-Frage.",
   retention:
     "Frage- und Antworttexte werden nicht als operative Log-Inhalte gespeichert. Die technischen Tutor- und Relay-Logs sind auf eine Aufbewahrung von 30 Tagen konfiguriert.",
-};
+} satisfies TutorDataCategoryDescription;
