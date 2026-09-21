@@ -41,6 +41,38 @@ export interface PlatformShortcutVariant {
  * all variants remain available to mouse, keyboard, and touch UIs.
  */
 export interface PlatformShortcutMetadata {
-  primaryPlatform: PlatformShortcutVariant["platform"];
+  primaryPlatform?: PlatformShortcutVariant["platform"];
   variants: PlatformShortcutVariant[];
+}
+
+/** Preserve legacy string instructions while allowing declarative literal segments. */
+export function getGuidedInstructionSegments(
+  instruction: string,
+  content?: GuidedInstructionContent,
+): GuidedInstructionSegment[] {
+  return content?.segments ?? [{ kind: "text", text: instruction }];
+}
+
+/** Compare only declared file/path values; callers must not use this for code or free text. */
+export function filePathEquals(
+  actual: string,
+  expected: string,
+  caseSensitivity: FilePathCaseSensitivity,
+): boolean {
+  return caseSensitivity === "insensitive"
+    ? actual.toLocaleLowerCase("en-US") === expected.toLocaleLowerCase("en-US")
+    : actual === expected;
+}
+
+/** Resolve the explicitly preferred shortcut, falling back to the first declared variant. */
+export function getPrimaryShortcutVariant(
+  metadata: PlatformShortcutMetadata,
+): PlatformShortcutVariant | undefined {
+  if (metadata.primaryPlatform) {
+    const primary = metadata.variants.find(
+      (variant) => variant.platform === metadata.primaryPlatform,
+    );
+    if (primary) return primary;
+  }
+  return metadata.variants[0];
 }
