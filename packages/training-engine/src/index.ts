@@ -2,6 +2,7 @@ export * from "./types.ts";
 export * from "./attestation.ts";
 export * from "./contentHierarchy.ts";
 export * from "./eventBus.ts";
+export * from "./guidedInstruction.ts";
 export * from "./guidedNavigation.ts";
 export * from "./guidedRecovery.ts";
 export * from "./helpPolicy.ts";
