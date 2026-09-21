@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const scanRoots = ["AGENTS.md", "CLAUDE.md", "README.md", "prompts", "docs", ".github"];
 const textExtensions = new Set([".md", ".yml", ".yaml", ".json"]);
-const excludedPrefixes = ["docs/archiv/", "backlog/"];
+const excludedPrefixes = ["docs/archiv/"];
 
 const hardcodedControlPatterns = [
   /implementation[- ]control(?:[- ]issue|-ssot)?[^\n]{0,120}#\d+/i,
