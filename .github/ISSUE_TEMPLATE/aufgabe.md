@@ -16,5 +16,5 @@ Anforderung (FR/NFR): —
 Epic: —
 Abhängigkeiten: —
 
-> Aufgaben und ihr inhaltlicher Status werden ausschließlich in GitHub Issues gepflegt.
-> `backlog/` und `docs/06-backlog.md` sind eingefrorenes Archiv und werden nicht synchronisiert.
+> Aufgaben, Planung und inhaltlicher Status werden ausschließlich in GitHub Issues gepflegt.
+> Es gibt keine Plan- oder Backlog-Dateien im Repository.

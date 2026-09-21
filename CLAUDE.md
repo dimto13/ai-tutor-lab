@@ -22,8 +22,8 @@ Bei Arbeit an Auth/Identity, Persistenz, Cloud-SDKs, Amplify-Backend oder Deploy
 ## GitHub-Aufgabenverwaltung
 
 - Zentrales Board: [AI Tutor – Development](https://github.com/users/dimto13/projects/3)
-- Aufgaben und Ticketinhalte ausschließlich in GitHub Issues pflegen; `backlog/` und
-  `docs/06-backlog.md` sind eingefrorenes Archiv.
+- Aufgaben, Ticketinhalte, Planung und Meilensteine ausschließlich in GitHub Issues und
+  Milestones pflegen; es gibt keine Plan-, Backlog- oder Roadmap-Dateien im Repository.
 - Statusarbeit wie Zuweisung, Board-Spalte, Checkboxen und Schließen direkt am Issue pflegen.
 - Vor der Bearbeitung eines Tickets dessen Abhängigkeiten, Akzeptanzkriterien und Milestone
   lesen; nach der Bearbeitung den tatsächlichen Stand im Issue beziehungsweise Board abbilden.
