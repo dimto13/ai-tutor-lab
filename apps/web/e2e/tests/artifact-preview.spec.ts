@@ -64,7 +64,9 @@ test("Artefakt-Vorschau: HTML, Tabelle und strukturierte Daten sind sichtbar und
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten", async ({ page }) => {
+test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten und Historie verändert keinen Fortschritt", async ({
+  page,
+}) => {
   await page.goto(scenarioUrl);
   await waitForTrainingReady(page);
   await page.getByRole("button", { name: /Team-Übersicht/ }).click();
@@ -77,7 +79,21 @@ test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten", async ({ page })
   await waitForTrainingReady(page);
   await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");
   await expect(page.getByText("Freigabe bereit", { exact: false })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Freigabestatus ergänzen/ })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Freigabestatus ergänzen", exact: true }),
+  ).toHaveCount(0);
+
+  await page
+    .getByRole("button", { name: "Revision Freigabestatus ergänzen ansehen", exact: true })
+    .click();
+  await expect(page.getByText("Frühere Revision · nur Ansicht", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ergebnis geprüft", exact: true })).toBeDisabled();
+  await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");
+
+  await page.getByRole("button", { name: "Aktueller Stand", exact: true }).click();
+  await expect(page.getByText("Aktueller Stand", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Freigabe bereit", { exact: false })).toBeVisible();
+  await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");
 
   await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();

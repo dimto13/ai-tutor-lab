@@ -1,4 +1,7 @@
 export interface WeeklyContinuityRun {
+  scenarioId?: string;
+  mode?: string;
+  sessionId?: string;
   finishedAt: number;
   durationMs: number;
 }
@@ -15,9 +18,46 @@ export interface WeeklyContinuitySummary {
   goalProgressPercent: number | null;
 }
 
+export interface LearningActivityRun extends WeeklyContinuityRun {
+  scenarioId: string;
+  mode: string;
+  sessionId: string;
+}
+
 const WEEK_COUNT = 8;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
+
+function hasValidTiming(run: WeeklyContinuityRun): boolean {
+  return Number.isFinite(run.finishedAt) && Number.isFinite(run.durationMs) && run.durationMs >= 0;
+}
+
+function validUniqueActivities(runs: readonly WeeklyContinuityRun[]): LearningActivityRun[] {
+  const latestBySession = new Map<string, LearningActivityRun>();
+
+  for (const run of runs) {
+    if (!hasValidTiming(run) || !run.sessionId || !run.scenarioId || !run.mode) {
+      continue;
+    }
+
+    const activity = run as LearningActivityRun;
+    const current = latestBySession.get(activity.sessionId);
+    if (!current || activity.finishedAt > current.finishedAt) {
+      latestBySession.set(activity.sessionId, activity);
+    }
+  }
+
+  return [...latestBySession.values()];
+}
+
+export function recentLearningActivities(
+  runs: readonly WeeklyContinuityRun[],
+  limit = 5,
+): LearningActivityRun[] {
+  return validUniqueActivities(runs)
+    .sort((left, right) => right.finishedAt - left.finishedAt)
+    .slice(0, Math.max(0, limit));
+}
 
 export function startOfUtcWeek(timestamp: number): number {
   const date = new Date(timestamp);
@@ -36,13 +76,7 @@ export function buildWeeklyContinuity(
   const totals = new Map<number, number>();
 
   for (const run of runs) {
-    if (
-      !Number.isFinite(run.finishedAt) ||
-      !Number.isFinite(run.durationMs) ||
-      run.durationMs < 0
-    ) {
-      continue;
-    }
+    if (!hasValidTiming(run)) continue;
     const weekStart = startOfUtcWeek(run.finishedAt);
     if (weekStart < firstWeekStart || weekStart > currentWeekStart) continue;
     totals.set(weekStart, (totals.get(weekStart) ?? 0) + run.durationMs);

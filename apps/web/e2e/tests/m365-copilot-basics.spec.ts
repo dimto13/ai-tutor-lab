@@ -56,7 +56,18 @@ test("M365 Copilot Explore vermittelt alle semantischen Kontrollflächen", async
   await page.goto("/training/m365-copilot-basics.explore");
   await waitForTraining(page);
 
-  for (const chrome of ["New chat", "Search", "Library", "Create", "Agents"]) {
+  const newChatExplore = page.getByRole("button", { name: "New chat erkunden" });
+  await newChatExplore.click();
+  await expect(page.getByText(/Der Chat ist der Einstieg in Microsoft 365 Copilot/)).toBeVisible();
+
+  const searchExplore = page.getByRole("button", { name: "Search erkunden" });
+  await searchExplore.focus();
+  await searchExplore.press("Enter");
+  await expect(
+    page.getByText(/Die Suche findet Inhalte, auf die du bereits Zugriff hast/),
+  ).toBeVisible();
+
+  for (const chrome of ["Library", "Create", "Agents"]) {
     await page.getByRole("button", { name: `${chrome} erkunden` }).click();
   }
 
