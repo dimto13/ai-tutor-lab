@@ -1,44 +1,43 @@
-import { describe, expect, it } from "vitest";
-import { tutorDataCategory } from "../src/data-transparency/tutorDataCategory";
-import { dataCategories } from "../src/data-transparency/userDataTransparency";
+import assert from "node:assert/strict";
+import test from "node:test";
+import { tutorDataCategory } from "../src/data-transparency/tutorDataCategory.ts";
+import { dataCategories } from "../src/data-transparency/userDataTransparency.ts";
 
-describe("tutor data transparency", () => {
-  it("describes the local-only beta tutor data flow and merged log retention", () => {
-    expect(tutorDataCategory.id).toBe("tutor");
-    expect(tutorDataCategory.title).toBe("KI-Tutor");
+test("tutor data transparency describes the local-only beta tutor data flow and merged log retention", () => {
+  assert.equal(tutorDataCategory.id, "tutor");
+  assert.equal(tutorDataCategory.title, "KI-Tutor");
 
-    expect(tutorDataCategory.stored).toContain("Frage");
-    expect(tutorDataCategory.stored).toContain("Szenario- und Schrittkontext");
-    expect(tutorDataCategory.stored).toContain("Programmcode wird nicht");
-    expect(tutorDataCategory.stored).toContain("Request-ID");
-    expect(tutorDataCategory.stored).toContain("Route");
-    expect(tutorDataCategory.stored).toContain("Status");
-    expect(tutorDataCategory.stored).toContain("Frage- und Antworttexte werden nicht");
+  assert.match(tutorDataCategory.stored, /Frage/);
+  assert.match(tutorDataCategory.stored, /Szenario- und Schrittkontext/);
+  assert.match(tutorDataCategory.stored, /Programmcode wird nicht/);
+  assert.match(tutorDataCategory.stored, /Request-ID/);
+  assert.match(tutorDataCategory.stored, /Route/);
+  assert.match(tutorDataCategory.stored, /Status/);
+  assert.match(tutorDataCategory.stored, /Frage- und Antworttexte werden nicht/);
 
-    expect(tutorDataCategory.storage).toContain("AWS-Infrastruktur in den USA");
-    expect(tutorDataCategory.storage).toContain("eigener Hardware");
-    expect(tutorDataCategory.storage).toContain("ausschließlich lokale Modelle");
-    expect(tutorDataCategory.storage).toContain("externe Cloud-KI-Route ist nicht aktiviert");
+  assert.match(tutorDataCategory.storage, /AWS-Infrastruktur in den USA/);
+  assert.match(tutorDataCategory.storage, /eigener Hardware/);
+  assert.match(tutorDataCategory.storage, /ausschließlich lokale Modelle/);
+  assert.match(tutorDataCategory.storage, /externe Cloud-KI-Route ist nicht aktiviert/);
 
-    expect(tutorDataCategory.recipients).toContain("AWS-Dienste");
-    expect(tutorDataCategory.recipients).toContain("eigene Tutor-Infrastruktur");
-    expect(tutorDataCategory.recipients).toContain("kein externer Cloud-KI-Anbieter");
+  assert.match(tutorDataCategory.recipients, /AWS-Dienste/);
+  assert.match(tutorDataCategory.recipients, /eigene Tutor-Infrastruktur/);
+  assert.match(tutorDataCategory.recipients, /kein externer Cloud-KI-Anbieter/);
 
-    expect(tutorDataCategory.retention).toContain("30 Tagen");
-    expect(tutorDataCategory.retention).toContain("technischen Tutor- und Relay-Logs");
+  assert.match(tutorDataCategory.retention, /30 Tagen/);
+  assert.match(tutorDataCategory.retention, /technischen Tutor- und Relay-Logs/);
+});
+
+test("tutor data transparency is included exactly once in the rendered data category contract", () => {
+  const categories = dataCategories({
+    storageMode: "cloud",
+    scoreVisibility: "private",
+    leaderboardsEnabled: false,
+    namedApprovalConfirmed: false,
+    rawTelemetryRetentionDays: null,
+    telemetryPseudonymizationMode: "SESSION",
   });
 
-  it("includes the tutor category in the rendered data category contract", () => {
-    const categories = dataCategories({
-      storageMode: "cloud",
-      scoreVisibility: "private",
-      leaderboardsEnabled: false,
-      namedApprovalConfirmed: false,
-      rawTelemetryRetentionDays: null,
-      telemetryPseudonymizationMode: "SESSION",
-    });
-
-    expect(categories).toContainEqual(tutorDataCategory);
-    expect(categories.filter((category) => category.id === "tutor")).toHaveLength(1);
-  });
+  assert.ok(categories.some((category) => category === tutorDataCategory));
+  assert.equal(categories.filter((category) => category.id === "tutor").length, 1);
 });
