@@ -3,6 +3,7 @@ import { Stack } from "aws-cdk-lib";
 import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { EventSourceMapping, FunctionUrlAuthType, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { accountDeletion } from "./functions/account-deletion/resource";
@@ -30,6 +31,23 @@ export const backend = defineBackend({
 
 const { cfnIdentityPool, cfnUserPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
+
+// Closed-beta privacy baseline (#508): all Lambda log groups managed by this backend expire after
+// 30 days. This changes retention only; it does not add log statements or alter tutor routing.
+for (const backendFunction of [
+  backend.accountDeletion,
+  backend.runtimeIncidentReporter,
+  backend.telemetryAggregateProjector,
+  backend.telemetryDeletionWorker,
+  backend.tutorRelay,
+  backend.userDataExport,
+]) {
+  backendFunction.resources.lambda.logGroup.applyRemovalPolicy;
+  backendFunction.resources.lambda.logGroup.node.defaultChild;
+  backendFunction.resources.lambda.logGroup.logGroupName;
+  backendFunction.resources.lambda.logGroup.logGroupArn;
+  backendFunction.resources.lambda.logGroup.retention = RetentionDays.ONE_MONTH;
+}
 
 const { amplifyDynamoDbTables } = backend.data.resources.cfnResources;
 const rawTelemetryCfnTable = requiredResource(
