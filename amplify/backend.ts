@@ -3,6 +3,7 @@ import { Stack } from "aws-cdk-lib";
 import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { EventSourceMapping, FunctionUrlAuthType, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { LogRetention, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { accountDeletion } from "./functions/account-deletion/resource";
@@ -30,6 +31,24 @@ export const backend = defineBackend({
 
 const { cfnIdentityPool, cfnUserPool } = backend.auth.resources.cfnResources;
 cfnIdentityPool.allowUnauthenticatedIdentities = false;
+
+// Closed-beta privacy baseline (#508): apply 30-day retention to every Lambda log group currently
+// managed by this backend. LogRetention updates the policy of an existing group (or waits for Lambda
+// to create it) instead of trying to take CloudFormation ownership of an already-created group.
+for (const [name, backendFunction] of [
+  ["accountDeletion", backend.accountDeletion],
+  ["runtimeIncidentReporter", backend.runtimeIncidentReporter],
+  ["telemetryAggregateProjector", backend.telemetryAggregateProjector],
+  ["telemetryDeletionWorker", backend.telemetryDeletionWorker],
+  ["tutorRelay", backend.tutorRelay],
+  ["userDataExport", backend.userDataExport],
+] as const) {
+  const lambda = backendFunction.resources.lambda;
+  new LogRetention(Stack.of(lambda), `${name}LogRetention`, {
+    logGroupName: `/aws/lambda/${lambda.functionName}`,
+    retention: RetentionDays.ONE_MONTH,
+  });
+}
 
 const { amplifyDynamoDbTables } = backend.data.resources.cfnResources;
 const rawTelemetryCfnTable = requiredResource(
