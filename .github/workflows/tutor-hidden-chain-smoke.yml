@@ -148,3 +148,9 @@ jobs:
             echo "- tutor relay log groups visible: \`${relay_groups}\`"
             echo "- message bodies: \`not emitted\`"
           } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Existing tutor evidence stays local-only (0 token)
+        env:
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+          WINDOW_HOURS: ${{ inputs.evidence_window_hours }}
+        run: node scripts/verify-tutor-passive-evidence.mjs
