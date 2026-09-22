@@ -38,8 +38,5 @@ test("tutor data transparency is wired into the rendered data category contract"
     transparencySource,
     /import \{ tutorDataCategory \} from "\.\/tutorDataCategory";/,
   );
-  assert.equal(
-    transparencySource.match(/^\s*tutorDataCategory,\s*$/gm)?.length,
-    1,
-  );
+  assert.equal(transparencySource.match(/^\s*tutorDataCategory,\s*$/gm)?.length, 1);
 });
