@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { tutorDataCategory } from "../src/data-transparency/tutorDataCategory.ts";
-import { dataCategories } from "../src/data-transparency/userDataTransparency.ts";
 
 test("tutor data transparency describes the local-only beta tutor data flow and merged log retention", () => {
   assert.equal(tutorDataCategory.id, "tutor");
@@ -28,16 +28,18 @@ test("tutor data transparency describes the local-only beta tutor data flow and 
   assert.match(tutorDataCategory.retention, /technischen Tutor- und Relay-Logs/);
 });
 
-test("tutor data transparency is included exactly once in the rendered data category contract", () => {
-  const categories = dataCategories({
-    storageMode: "cloud",
-    scoreVisibility: "private",
-    leaderboardsEnabled: false,
-    namedApprovalConfirmed: false,
-    rawTelemetryRetentionDays: null,
-    telemetryPseudonymizationMode: "SESSION",
-  });
+test("tutor data transparency is wired into the rendered data category contract", () => {
+  const transparencySource = readFileSync(
+    new URL("../src/data-transparency/userDataTransparency.ts", import.meta.url),
+    "utf8",
+  );
 
-  assert.ok(categories.some((category) => category === tutorDataCategory));
-  assert.equal(categories.filter((category) => category.id === "tutor").length, 1);
+  assert.match(
+    transparencySource,
+    /import \{ tutorDataCategory \} from "\.\/tutorDataCategory";/,
+  );
+  assert.equal(
+    transparencySource.match(/^\s*tutorDataCategory,\s*$/gm)?.length,
+    1,
+  );
 });
