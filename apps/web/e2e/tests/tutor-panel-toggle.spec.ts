@@ -59,6 +59,23 @@ test("Tutor panel can be dismissed in explore and challenge modes", async ({ pag
   }
 });
 
+test("Tutor surfaces keep a visible bottom gap", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 720 });
+  await page.goto("/training/vscode-basics.explore");
+  await ready(page);
+
+  const expanded = page.getByTestId("tutor-chat-expanded");
+  const expandedBox = await expanded.boundingBox();
+  expect(expandedBox).not.toBeNull();
+  expect(720 - ((expandedBox?.y ?? 720) + (expandedBox?.height ?? 0))).toBeGreaterThan(0);
+
+  await page.getByTestId("tutor-chat-close").click();
+  const collapsed = page.getByTestId("tutor-chat-collapsed");
+  const collapsedBox = await collapsed.boundingBox();
+  expect(collapsedBox).not.toBeNull();
+  expect(720 - ((collapsedBox?.y ?? 720) + (collapsedBox?.height ?? 0))).toBeGreaterThan(0);
+});
+
 test("Collapsed tutor releases training space on a short responsive viewport", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 640 });
   await page.goto("/training/vscode-basics.explore");
