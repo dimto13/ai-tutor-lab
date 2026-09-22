@@ -1,5 +1,6 @@
 import type { UserIdentity } from "@/auth/authService";
 import { browserLocalStorage } from "@/persistence/adapters/browserLocalStorage";
+import { tutorDataCategory } from "./tutorDataCategory";
 
 export type ScoreVisibility = "private" | "aggregate" | "named";
 export type DataStorageMode = "browser-local" | "cloud";
@@ -145,6 +146,7 @@ export function dataCategories(context: DataTransparencyContext): DataCategoryDe
       retention:
         "Die fachliche Nachweisgültigkeit beträgt 12 Monate. Das ist keine Löschfrist; für den gespeicherten Nachweis ist aktuell keine separate automatische Löschfrist definiert.",
     },
+    tutorDataCategory,
     {
       id: "telemetry",
       title: "Nutzungs- und Lernstatistik",
