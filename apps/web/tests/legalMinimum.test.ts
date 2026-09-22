@@ -2,8 +2,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
-const privacy = fs.readFileSync(new URL("../src/routes/datenschutz.tsx", import.meta.url), "utf8");
-const imprint = fs.readFileSync(new URL("../src/routes/impressum.tsx", import.meta.url), "utf8");
+const privacy = fs.readFileSync(
+  new URL("../src/routes/datenschutz.tsx", import.meta.url),
+  "utf8",
+);
+const imprint = fs.readFileSync(
+  new URL("../src/routes/impressum.tsx", import.meta.url),
+  "utf8",
+);
 
 test("imprint exposes the owner-approved provider and contact", () => {
   assert.match(imprint, /Tobias Freudling/);
@@ -26,7 +32,13 @@ test("privacy notice locks the closed-beta processing contract", () => {
 });
 
 test("privacy notice preserves beta caution and re-review path", () => {
-  assert.match(privacy, /keine vertraulichen Daten oder personenbezogenen Daten Dritter/);
-  assert.match(privacy, /Materielle Änderungen an Empfängern, AWS-Region, Tutor-\/Modellroute/);
+  assert.match(
+    privacy,
+    /keine vertraulichen Daten oder personenbezogenen Daten Dritter/,
+  );
+  assert.match(
+    privacy,
+    /Materielle Änderungen an Empfängern, AWS-Region, Tutor-\/Modellroute/,
+  );
   assert.match(privacy, /vor einem öffentlichen oder kommerziellen Rollout/);
 });
