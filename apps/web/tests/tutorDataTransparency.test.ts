@@ -15,12 +15,12 @@ test("tutor data transparency describes the local-only beta tutor data flow and 
   assert.match(tutorDataCategory.stored, /Status/);
   assert.match(tutorDataCategory.stored, /Frage- und Antworttexte werden nicht/);
 
-  assert.match(tutorDataCategory.storage, /AWS-Infrastruktur in den USA/);
+  assert.match(tutorDataCategory.storage, /Cloud-Infrastruktur des Anbieters in den USA/);
   assert.match(tutorDataCategory.storage, /eigener Hardware/);
   assert.match(tutorDataCategory.storage, /ausschließlich lokale Modelle/);
   assert.match(tutorDataCategory.storage, /externe Cloud-KI-Route ist nicht aktiviert/);
 
-  assert.match(tutorDataCategory.recipients, /AWS-Dienste/);
+  assert.match(tutorDataCategory.recipients, /Cloud-Dienste/);
   assert.match(tutorDataCategory.recipients, /eigene Tutor-Infrastruktur/);
   assert.match(tutorDataCategory.recipients, /kein externer Cloud-KI-Anbieter/);
 
