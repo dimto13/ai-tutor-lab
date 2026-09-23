@@ -52,7 +52,10 @@
    entstandenen `main` vollständig grün ist. Solange diese Main-CI läuft, wird kein weiterer PR gemergt.
    Eine rote Main-CI ist ein aktiver Blocker und wird vor dem nächsten Queue-Punkt repariert oder durch
    CONTROL explizit einem querschnittlichen Quality-Block zugewiesen. Der Pre-Commit-Hook in `.githooks/`
-   fängt Formatverstöße bereits beim Commit ab; er wird durch `npm ci` automatisch aktiviert.
+   formatiert vollständig gestagte Dateien vor dem Commit automatisch mit Prettier und staged die
+   kanonische Ausgabe erneut; bei teilweise gestagten Dateien bricht er fail-safe ab, statt ungestagte
+   Änderungen versehentlich mit aufzunehmen. Der dauerhafte PR-Formatter repariert reine
+   Prettier-Abweichungen auf repo-eigenen PRs automatisch; `format:check` bleibt trotzdem ein harter CI-Guard.
 7. **Automatische und menschliche Reviews sind Merge-Gates, nicht nur Information.** Vor jedem Merge
    werden alle PR-Reviews und PR-Kommentare seit der letzten relevanten Codeänderung geprüft. Das gilt
    ausdrücklich für das Jenkins-Review mit Marker `[agy-review]`, weitere Review-Bots und menschliche
