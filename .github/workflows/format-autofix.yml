@@ -1,7 +1,7 @@
 name: Format Autofix
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - main
     types:
@@ -37,8 +37,21 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          git show "${BASE_SHA}:.prettierrc.json" > "${RUNNER_TEMP}/prettierrc.json"
-          git show "${BASE_SHA}:.prettierignore" > "${RUNNER_TEMP}/prettierignore"
+          git show "${BASE_SHA}:.prettierrc.json" 2>/dev/null > "${RUNNER_TEMP}/prettierrc.json" \
+            || printf '{}\n' > "${RUNNER_TEMP}/prettierrc.json"
+          git show "${BASE_SHA}:.prettierignore" 2>/dev/null > "${RUNNER_TEMP}/prettierignore" \
+            || : > "${RUNNER_TEMP}/prettierignore"
+          git show "${BASE_SHA}:package-lock.json" > "${RUNNER_TEMP}/package-lock.json"
+
+          prettier_version=$(node -e '
+            const fs = require("node:fs");
+            const lock = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const version = lock.packages?.["node_modules/prettier"]?.version;
+            if (!version) process.exit(1);
+            process.stdout.write(version);
+          ' "${RUNNER_TEMP}/package-lock.json")
+
+          echo "PRETTIER_VERSION=${prettier_version}" >> "${GITHUB_ENV}"
 
       - name: Collect and classify changed files
         id: changed
@@ -66,12 +79,11 @@ jobs:
       - name: Apply canonical Prettier formatting
         if: steps.changed.outputs.has_files == 'true' && steps.changed.outputs.safe_scope == 'true'
         run: |
-          mapfile -d '' files < "${RUNNER_TEMP}/changed-files"
-          npm exec --yes prettier@3.7.3 -- \
+          xargs -0 -r npm exec --yes "prettier@${PRETTIER_VERSION}" -- \
             --config "${RUNNER_TEMP}/prettierrc.json" \
             --ignore-path "${RUNNER_TEMP}/prettierignore" \
             --ignore-unknown \
-            --write -- "${files[@]}"
+            --write -- < "${RUNNER_TEMP}/changed-files"
 
       - name: Commit formatting changes
         id: commit
