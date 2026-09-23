@@ -1,28 +1,58 @@
 #!/bin/sh
 #
-# Blockiert Commits, die nicht Prettier-konforme Dateien enthalten.
+# Formatiert vollständig gestagte Dateien vor dem Commit automatisch mit Prettier.
 # Aktivierung: automatisch ueber das "prepare"-Skript beim npm install.
 # Einmalig umgehen: git commit --no-verify
 #
-# Grund: Ein Formatverstoss laesst den CI-Schritt "Check formatting" im Job
-# "validate" fehlschlagen und blockiert damit auch den Folgejob "e2e-training-modes".
+# Teilweise gestagte Dateien werden absichtlich nicht automatisch veraendert:
+# ein anschliessendes "git add" wuerde sonst ungestagte Aenderungen mit aufnehmen.
 
 BIN="./node_modules/.bin/prettier"
 if [ ! -x "$BIN" ]; then
-  echo "pre-commit: Prettier nicht gefunden, Formatpruefung uebersprungen."
+  echo "pre-commit: Prettier nicht gefunden, Formatierung uebersprungen."
   echo "            Bitte 'npm ci' ausfuehren, damit der Hook greift."
   exit 0
 fi
+
+STAGED_FILE_LIST=$(mktemp)
+UNSTAGED_FILE_LIST=$(mktemp)
+STAGED_SORTED=$(mktemp)
+UNSTAGED_SORTED=$(mktemp)
+trap 'rm -f "$STAGED_FILE_LIST" "$UNSTAGED_FILE_LIST" "$STAGED_SORTED" "$UNSTAGED_SORTED"' EXIT
+
+git diff --cached --name-only --diff-filter=ACMR > "$STAGED_FILE_LIST"
+if [ ! -s "$STAGED_FILE_LIST" ]; then
+  exit 0
+fi
+
+git diff --name-only --diff-filter=ACMR > "$UNSTAGED_FILE_LIST"
+sort "$STAGED_FILE_LIST" > "$STAGED_SORTED"
+sort "$UNSTAGED_FILE_LIST" > "$UNSTAGED_SORTED"
+PARTIAL=$(comm -12 "$STAGED_SORTED" "$UNSTAGED_SORTED")
+
+if [ -n "$PARTIAL" ]; then
+  echo
+  echo "Commit abgebrochen: teilweise gestagte Dateien koennen nicht sicher autoformatiert werden."
+  printf '%s\n' "$PARTIAL" | sed 's/^/  - /'
+  echo
+  echo "Bitte die Dateien vollstaendig stagen oder die ungestagten Aenderungen separat sichern."
+  echo
+  exit 1
+fi
+
+git diff --cached --name-only --diff-filter=ACMR -z \
+  | xargs -0 -r "$BIN" --ignore-unknown --write >/dev/null
+
+git diff --cached --name-only --diff-filter=ACMR -z \
+  | xargs -0 -r git add --
 
 DIFFERENT=$(git diff --cached --name-only --diff-filter=ACMR -z \
   | xargs -0 -r "$BIN" --ignore-unknown --list-different 2>/dev/null)
 
 if [ -n "$DIFFERENT" ]; then
   echo
-  echo "Commit abgebrochen: diese Dateien entsprechen nicht dem Prettier-Stil."
+  echo "Commit abgebrochen: Prettier konnte nicht alle gestagten Dateien kanonisch formatieren."
   printf '%s\n' "$DIFFERENT" | sed 's/^/  - /'
-  echo
-  echo "Beheben mit:  npm run format     (danach die Dateien erneut stagen)"
   echo
   exit 1
 fi
