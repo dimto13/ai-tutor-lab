@@ -7,7 +7,8 @@ export const Route = createFileRoute("/datenschutz")({
       { title: "Datenschutz – AI Training Lab" },
       {
         name: "description",
-        content: "Datenschutzhinweise für die geschlossene AI Training Lab Beta.",
+        content:
+          "Datenschutzhinweise für die geschlossene AI Training Lab Beta.",
       },
     ],
   }),
@@ -52,8 +53,8 @@ function PrivacyPage() {
                 1. Verantwortlicher und Datenschutzkontakt
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Tobias Freudling, Einzelunternehmen, Leopoldstraße 143, 80804 München,
-                Deutschland. Datenschutzanfragen:{" "}
+                Tobias Freudling, Einzelunternehmen, Leopoldstraße 143, 80804
+                München, Deutschland. Datenschutzanfragen:{" "}
                 <a
                   className="underline underline-offset-4"
                   href="mailto:dimto@online.de"
@@ -69,10 +70,11 @@ function PrivacyPage() {
                 2. Geschlossene Beta
               </h2>
               <p className="mt-2 text-muted-foreground">
-                AI Training Lab ist eine kleine geschlossene Testphase. Die Teilnahme ist
-                freiwillig und nur für freigeschaltete Tester möglich. Bitte gib in
-                Tutor-Fragen und Feedback keine vertraulichen Daten oder personenbezogenen
-                Daten Dritter ein. Feedback wird zur Fehleranalyse und Produktverbesserung
+                AI Training Lab ist eine kleine geschlossene Testphase. Die
+                Teilnahme ist freiwillig und nur für freigeschaltete Tester
+                möglich. Bitte gib in Tutor-Fragen und Feedback keine
+                vertraulichen Daten oder personenbezogenen Daten Dritter ein.
+                Feedback wird zur Fehleranalyse und Produktverbesserung
                 ausgewertet.
               </p>
             </section>
@@ -82,38 +84,44 @@ function PrivacyPage() {
                 3. Verarbeitungen und Rechtsgrundlagen
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO verarbeiten wir die für Konto
-                und Anmeldung, Beta-Zugang, Training, Fortschritt, Punkte und Nachweise, den
-                KI-Tutor sowie die technisch notwendige Nutzung der Plattform erforderlichen
-                Daten.
+                Auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO verarbeiten wir die
+                für Konto und Anmeldung, Beta-Zugang, Training, Fortschritt,
+                Punkte und Nachweise, den KI-Tutor sowie die technisch
+                notwendige Nutzung der Plattform erforderlichen Daten.
               </p>
               <p className="mt-2 text-muted-foreground">
-                Auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO verarbeiten wir pseudonymisierte
-                Nutzungs- und Lernstatistik, freiwilliges Beta-Feedback, Betriebs-,
-                Sicherheits- und Fehlerprotokolle sowie Owner/Admin-Monitoring einschließlich
-                Login-IP-Adresse und User-Agent. Die berechtigten Interessen sind auf
-                Betriebssicherheit, Missbrauchsschutz, Fehlersuche und Verbesserung der
-                geschlossenen Beta begrenzt. Werbeprofile oder
+                Auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO verarbeiten wir
+                pseudonymisierte Nutzungs- und Lernstatistik, freiwilliges
+                Beta-Feedback, Betriebs-, Sicherheits- und Fehlerprotokolle
+                sowie Owner/Admin-Monitoring einschließlich Login-IP-Adresse und
+                User-Agent. Die berechtigten Interessen sind auf
+                Betriebssicherheit, Missbrauchsschutz, Fehlersuche und
+                Verbesserung der geschlossenen Beta begrenzt. Werbeprofile oder
                 Drittanbieter-Werbe-/Tracking-Nutzung finden nicht statt.
               </p>
             </section>
 
             <section aria-labelledby="privacy-infrastructure">
-              <h2 id="privacy-infrastructure" className="text-base font-semibold">
+              <h2
+                id="privacy-infrastructure"
+                className="text-base font-semibold"
+              >
                 4. Hosting, Empfänger und USA
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Die Plattform nutzt Amazon Web Services (AWS) als Auftragsverarbeiter und
-                Cloud-Infrastruktur in der Region us-east-1 (USA). Für notwendige
-                Drittlandübermittlungen stützen wir uns auf das AWS Data Processing Addendum
-                einschließlich der darin eingebundenen EU-Standardvertragsklauseln (SCCs).
+                Die Plattform nutzt Amazon Web Services (AWS) als
+                Auftragsverarbeiter und Cloud-Infrastruktur in der Region
+                us-east-1 (USA). Für notwendige Drittlandübermittlungen stützen
+                wir uns auf das AWS Data Processing Addendum einschließlich der
+                darin eingebundenen EU-Standardvertragsklauseln (SCCs).
               </p>
               <p className="mt-2 text-muted-foreground">
-                Der KI-Tutor wird in der geschlossenen Beta ausschließlich über lokale Modelle
-                auf eigener Anbieter-Hardware ausgeführt; es gibt dabei keinen externen
-                Cloud-KI-Empfänger. Die technische Vermittlung erfolgt über AWS Lambda und
-                Systems Manager zur Anbieter-Hardware. Tutor-Frage- und Antworttexte werden
-                nicht in den Betriebsprotokollen gespeichert.
+                Der KI-Tutor wird in der geschlossenen Beta ausschließlich über
+                lokale Modelle auf eigener Anbieter-Hardware ausgeführt; es gibt
+                dabei keinen externen Cloud-KI-Empfänger. Die technische
+                Vermittlung erfolgt über AWS Lambda und Systems Manager zur
+                Anbieter-Hardware. Tutor-Frage- und Antworttexte werden nicht in
+                den Betriebsprotokollen gespeichert.
               </p>
             </section>
 
@@ -123,8 +131,8 @@ function PrivacyPage() {
               </h2>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
                 <li>
-                  Konto- und Trainingsdaten: bis zur Kontolöschung, spätestens 30 Tage nach
-                  Ende der Beta.
+                  Konto- und Trainingsdaten: bis zur Kontolöschung, spätestens
+                  30 Tage nach Ende der Beta.
                 </li>
                 <li>Beta-Allowlist: bis zum Ende der Beta.</li>
                 <li>Nutzungs-/Lernstatistik: 90 Tage.</li>
@@ -132,8 +140,8 @@ function PrivacyPage() {
                 <li>CloudWatch-/Tutor-Logs: 30 Tage.</li>
               </ul>
               <p className="mt-2 text-muted-foreground">
-                Technisch notwendige Anmelde- und Trainingszustände können außerdem auf deinem
-                Endgerät im Browser gespeichert werden.
+                Technisch notwendige Anmelde- und Trainingszustände können
+                außerdem auf deinem Endgerät im Browser gespeichert werden.
               </p>
             </section>
 
@@ -142,10 +150,11 @@ function PrivacyPage() {
                 6. Betrieb und Monitoring
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Owner/Admin-Monitoring ist internes Betriebswerkzeug, kein Nutzerfeature. Es
-                dient ausschließlich Betrieb, Sicherheit, Fehleranalyse und Betreuung der
-                geschlossenen Beta und kann Kontoaktivität sowie Login-IP-Adresse und
-                User-Agent aus Betriebsdaten einbeziehen.
+                Owner/Admin-Monitoring ist internes Betriebswerkzeug, kein
+                Nutzerfeature. Es dient ausschließlich Betrieb, Sicherheit,
+                Fehleranalyse und Betreuung der geschlossenen Beta und kann
+                Kontoaktivität sowie Login-IP-Adresse und User-Agent aus
+                Betriebsdaten einbeziehen.
               </p>
             </section>
 
@@ -154,15 +163,19 @@ function PrivacyPage() {
                 7. Deine Rechte
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Du kannst Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
-                Datenübertragbarkeit und Widerspruch im Rahmen der gesetzlichen Voraussetzungen
-                verlangen. Unter{" "}
-                <Link to="/datentransparenz" className="underline underline-offset-4">
+                Du kannst Auskunft, Berichtigung, Löschung, Einschränkung der
+                Verarbeitung, Datenübertragbarkeit und Widerspruch im Rahmen der
+                gesetzlichen Voraussetzungen verlangen. Unter{" "}
+                <Link
+                  to="/datentransparenz"
+                  className="underline underline-offset-4"
+                >
                   Meine Daten
                 </Link>{" "}
-                kannst du deine Daten einsehen und exportieren. Die Kontolöschung steht nach
-                Live-Abnahme des Self-Service-Wegs dort bereit; bis dahin wende dich an den
-                Datenschutzkontakt. Beschwerden kannst du an das Bayerische Landesamt für
+                kannst du deine Daten einsehen und exportieren. Die
+                Kontolöschung steht nach Live-Abnahme des Self-Service-Wegs dort
+                bereit; bis dahin wende dich an den Datenschutzkontakt.
+                Beschwerden kannst du an das Bayerische Landesamt für
                 Datenschutzaufsicht (BayLDA) richten.
               </p>
             </section>
@@ -172,10 +185,12 @@ function PrivacyPage() {
                 8. Änderungen des Datenflusses
               </h2>
               <p className="mt-2 text-muted-foreground">
-                Materielle Änderungen an Empfängern, AWS-Region, Tutor-/Modellroute, erhobenen
-                Daten oder Speicherfristen werden vor einem Deploy erneut geprüft und die
-                nutzerseitigen Datenschutzinformationen entsprechend aktualisiert. Vor einem
-                öffentlichen oder kommerziellen Rollout erfolgt ebenfalls eine erneute Prüfung.
+                Materielle Änderungen an Empfängern, AWS-Region,
+                Tutor-/Modellroute, erhobenen Daten oder Speicherfristen werden
+                vor einem Deploy erneut geprüft und die nutzerseitigen
+                Datenschutzinformationen entsprechend aktualisiert. Vor einem
+                öffentlichen oder kommerziellen Rollout erfolgt ebenfalls eine
+                erneute Prüfung.
               </p>
             </section>
           </div>
