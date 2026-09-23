@@ -39,18 +39,14 @@ async function readScenario(mode: (typeof modes)[number]): Promise<Scenario> {
 }
 
 function artifact(scenario: Scenario, id: string): Artifact {
-  const found = scenario.environment.seed.artifactPreview.artifacts.find(
-    (item) => item.id === id,
-  );
+  const found = scenario.environment.seed.artifactPreview.artifacts.find((item) => item.id === id);
   assert.ok(found, `missing artifact ${id}`);
   return found;
 }
 
 function valueObject(artifactValue: unknown): Record<string, unknown> {
   assert.ok(
-    typeof artifactValue === "object" &&
-      artifactValue !== null &&
-      !Array.isArray(artifactValue),
+    typeof artifactValue === "object" && artifactValue !== null && !Array.isArray(artifactValue),
     "artifact value must be an object",
   );
   return artifactValue as Record<string, unknown>;
@@ -79,9 +75,7 @@ test("table version compare keeps the same declarative comparison contract in al
       );
     }
 
-    const contract = valueObject(
-      artifact(scenario, "comparison-contract").value,
-    );
+    const contract = valueObject(artifact(scenario, "comparison-contract").value);
     assert.equal(contract.stableKey, "assetId");
     assert.deepEqual(contract.comparedColumns, ["name", "location", "status"]);
     assert.deepEqual(contract.ignoredColumns, ["importNote"]);
