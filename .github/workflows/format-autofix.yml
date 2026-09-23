@@ -1,0 +1,94 @@
+name: Format Autofix
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: read
+
+jobs:
+  prettier:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Load trusted formatter contract
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git show "${BASE_SHA}:.prettierrc.json" > "${RUNNER_TEMP}/prettierrc.json"
+          git show "${BASE_SHA}:.prettierignore" > "${RUNNER_TEMP}/prettierignore"
+
+      - name: Collect changed files
+        id: changed
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git diff --name-only --diff-filter=ACMR -z "${BASE_SHA}...HEAD" > "${RUNNER_TEMP}/changed-files"
+          if [ -s "${RUNNER_TEMP}/changed-files" ]; then
+            echo "has_files=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "has_files=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Apply canonical Prettier formatting
+        if: steps.changed.outputs.has_files == 'true'
+        run: |
+          mapfile -d '' files < "${RUNNER_TEMP}/changed-files"
+          npm exec --yes prettier@3.7.3 -- \
+            --config "${RUNNER_TEMP}/prettierrc.json" \
+            --ignore-path "${RUNNER_TEMP}/prettierignore" \
+            --ignore-unknown \
+            --write "${files[@]}"
+
+      - name: Commit formatting changes
+        id: commit
+        if: steps.changed.outputs.has_files == 'true'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          xargs -0 -r git add -- < "${RUNNER_TEMP}/changed-files"
+          git diff --cached --check
+          git commit -m "chore: apply canonical formatting"
+          git push origin "HEAD:${HEAD_REF}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Dispatch Code CI for formatted head
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/code-ci.yml/dispatches" \
+            -f "ref=${HEAD_REF}"
