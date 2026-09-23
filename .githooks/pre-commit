@@ -18,7 +18,7 @@ STAGED_FILE_LIST=$(mktemp)
 UNSTAGED_FILE_LIST=$(mktemp)
 STAGED_SORTED=$(mktemp)
 UNSTAGED_SORTED=$(mktemp)
-trap 'rm -f "$STAGED_FILE_LIST" "$UNSTAGED_FILE_LIST" "$STAGED_SORTED" "$UNSTAGED_SORTED"' EXIT
+trap 'rm -f "$STAGED_FILE_LIST" "$UNSTAGED_FILE_LIST" "$STAGED_SORTED" "$UNSTAGED_SORTED"' 0
 
 git diff --cached --name-only --diff-filter=ACMR > "$STAGED_FILE_LIST"
 if [ ! -s "$STAGED_FILE_LIST" ]; then
