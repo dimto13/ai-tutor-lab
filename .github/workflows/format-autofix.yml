@@ -37,8 +37,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          git show "${BASE_SHA}:.prettierrc.json" 2>/dev/null > "${RUNNER_TEMP}/prettierrc.json" \
-            || printf '{}\n' > "${RUNNER_TEMP}/prettierrc.json"
+          git show "${BASE_SHA}:.prettierrc" > "${RUNNER_TEMP}/.prettierrc"
           git show "${BASE_SHA}:.prettierignore" 2>/dev/null > "${RUNNER_TEMP}/prettierignore" \
             || : > "${RUNNER_TEMP}/prettierignore"
           git show "${BASE_SHA}:package-lock.json" > "${RUNNER_TEMP}/package-lock.json"
@@ -69,7 +68,7 @@ jobs:
           echo "has_files=true" >> "${GITHUB_OUTPUT}"
 
           if tr '\0' '\n' < "${RUNNER_TEMP}/changed-files" \
-            | grep -Eq '^(\.github/workflows/|\.prettierrc\.json$|\.prettierignore$)'; then
+            | grep -Eq '^(\.github/workflows/|\.prettierrc$|\.prettierrc\.json$|\.prettierignore$)'; then
             echo "safe_scope=false" >> "${GITHUB_OUTPUT}"
             echo "Privileged workflow/formatter-contract changes are intentionally not auto-written."
           else
@@ -80,7 +79,7 @@ jobs:
         if: steps.changed.outputs.has_files == 'true' && steps.changed.outputs.safe_scope == 'true'
         run: |
           xargs -0 -r npm exec --yes "prettier@${PRETTIER_VERSION}" -- \
-            --config "${RUNNER_TEMP}/prettierrc.json" \
+            --config "${RUNNER_TEMP}/.prettierrc" \
             --ignore-path "${RUNNER_TEMP}/prettierignore" \
             --ignore-unknown \
             --write -- < "${RUNNER_TEMP}/changed-files"
