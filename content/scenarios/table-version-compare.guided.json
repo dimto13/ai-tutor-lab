@@ -46,10 +46,34 @@
               { "key": "importNote", "label": "Importnotiz (irrelevant)" }
             ],
             "rows": [
-              { "assetId": "A-100", "name": "Prüfstand Alpha", "location": "Halle 1", "status": "aktiv", "importNote": "Quelle v1" },
-              { "assetId": "A-200", "name": "Messgerät Beta", "location": "Labor", "status": "aktiv", "importNote": "Quelle v1" },
-              { "assetId": "A-300", "name": "Pumpe Gamma", "location": "Halle 2", "status": "aktiv", "importNote": "Quelle v1" },
-              { "assetId": "A-400", "name": "Sensor Delta", "location": "Halle 3", "status": "aktiv", "importNote": "Quelle v1" }
+              {
+                "assetId": "A-100",
+                "name": "Prüfstand Alpha",
+                "location": "Halle 1",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              },
+              {
+                "assetId": "A-200",
+                "name": "Messgerät Beta",
+                "location": "Labor",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              },
+              {
+                "assetId": "A-300",
+                "name": "Pumpe Gamma",
+                "location": "Halle 2",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              },
+              {
+                "assetId": "A-400",
+                "name": "Sensor Delta",
+                "location": "Halle 3",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              }
             ]
           },
           {
@@ -65,10 +89,34 @@
               { "key": "importNote", "label": "Importnotiz (irrelevant)" }
             ],
             "rows": [
-              { "assetId": "A-200", "name": "Messgerät Beta", "location": "Labor 2", "status": "aktiv", "importNote": "neu importiert" },
-              { "assetId": "A-100", "name": "Prüfstand Alpha Nord", "location": "Halle 1", "status": "aktiv", "importNote": "neu importiert" },
-              { "assetId": "A-400", "name": "Sensor Delta", "location": "Halle 3", "status": "wartung", "importNote": "neu importiert" },
-              { "assetId": "A-500", "name": "Kamera Epsilon", "location": "Halle 4", "status": "aktiv", "importNote": "neu importiert" }
+              {
+                "assetId": "A-200",
+                "name": "Messgerät Beta",
+                "location": "Labor 2",
+                "status": "aktiv",
+                "importNote": "neu importiert"
+              },
+              {
+                "assetId": "A-100",
+                "name": "Prüfstand Alpha Nord",
+                "location": "Halle 1",
+                "status": "aktiv",
+                "importNote": "neu importiert"
+              },
+              {
+                "assetId": "A-400",
+                "name": "Sensor Delta",
+                "location": "Halle 3",
+                "status": "wartung",
+                "importNote": "neu importiert"
+              },
+              {
+                "assetId": "A-500",
+                "name": "Kamera Epsilon",
+                "location": "Halle 4",
+                "status": "aktiv",
+                "importNote": "neu importiert"
+              }
             ]
           },
           {
@@ -84,10 +132,34 @@
               { "key": "importNote", "label": "Importnotiz (irrelevant)" }
             ],
             "rows": [
-              { "assetId": "A-100", "name": "Prüfstand Alpha Nord", "location": "Halle 1", "status": "aktiv", "importNote": "Prüflauf" },
-              { "assetId": "A-400", "name": "Sensor Delta", "location": "Halle 3", "status": "wartung", "importNote": "Prüflauf" },
-              { "assetId": "A-500", "name": "Kamera Epsilon", "location": "Halle 4", "status": "aktiv", "importNote": "Prüflauf" },
-              { "assetId": "A-600", "name": "Messgerät Beta", "location": "Labor 3", "status": "aktiv", "importNote": "Prüflauf" }
+              {
+                "assetId": "A-100",
+                "name": "Prüfstand Alpha Nord",
+                "location": "Halle 1",
+                "status": "aktiv",
+                "importNote": "Prüflauf"
+              },
+              {
+                "assetId": "A-400",
+                "name": "Sensor Delta",
+                "location": "Halle 3",
+                "status": "wartung",
+                "importNote": "Prüflauf"
+              },
+              {
+                "assetId": "A-500",
+                "name": "Kamera Epsilon",
+                "location": "Halle 4",
+                "status": "aktiv",
+                "importNote": "Prüflauf"
+              },
+              {
+                "assetId": "A-600",
+                "name": "Messgerät Beta",
+                "location": "Labor 3",
+                "status": "aktiv",
+                "importNote": "Prüflauf"
+              }
             ]
           },
           {
@@ -110,9 +182,23 @@
             "description": "Erwarteter fachlicher Endzustand, getrennt nach geändert, neu und entfallen.",
             "value": {
               "changed": [
-                { "assetId": "A-100", "fields": { "name": { "from": "Prüfstand Alpha", "to": "Prüfstand Alpha Nord" } } },
-                { "assetId": "A-200", "fields": { "location": { "from": "Labor", "to": "Labor 2" } } },
-                { "assetId": "A-400", "fields": { "status": { "from": "aktiv", "to": "wartung" } } }
+                {
+                  "assetId": "A-100",
+                  "fields": {
+                    "name": {
+                      "from": "Prüfstand Alpha",
+                      "to": "Prüfstand Alpha Nord"
+                    }
+                  }
+                },
+                {
+                  "assetId": "A-200",
+                  "fields": { "location": { "from": "Labor", "to": "Labor 2" } }
+                },
+                {
+                  "assetId": "A-400",
+                  "fields": { "status": { "from": "aktiv", "to": "wartung" } }
+                }
               ],
               "added": ["A-500"],
               "removed": ["A-300"],

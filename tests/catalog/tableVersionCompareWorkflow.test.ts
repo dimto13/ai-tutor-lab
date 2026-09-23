@@ -39,14 +39,18 @@ async function readScenario(mode: (typeof modes)[number]): Promise<Scenario> {
 }
 
 function artifact(scenario: Scenario, id: string): Artifact {
-  const found = scenario.environment.seed.artifactPreview.artifacts.find((item) => item.id === id);
+  const found = scenario.environment.seed.artifactPreview.artifacts.find(
+    (item) => item.id === id,
+  );
   assert.ok(found, `missing artifact ${id}`);
   return found;
 }
 
 function valueObject(artifactValue: unknown): Record<string, unknown> {
   assert.ok(
-    typeof artifactValue === "object" && artifactValue !== null && !Array.isArray(artifactValue),
+    typeof artifactValue === "object" &&
+      artifactValue !== null &&
+      !Array.isArray(artifactValue),
     "artifact value must be an object",
   );
   return artifactValue as Record<string, unknown>;
@@ -69,16 +73,15 @@ test("table version compare keeps the same declarative comparison contract in al
     for (const id of ["version-v1", "version-v2", "version-v3"]) {
       const table = artifact(scenario, id);
       assert.equal(table.type, "table");
-      assert.deepEqual(table.columns?.map((column) => column.key), [
-        "assetId",
-        "name",
-        "location",
-        "status",
-        "importNote",
-      ]);
+      assert.deepEqual(
+        table.columns?.map((column) => column.key),
+        ["assetId", "name", "location", "status", "importNote"],
+      );
     }
 
-    const contract = valueObject(artifact(scenario, "comparison-contract").value);
+    const contract = valueObject(
+      artifact(scenario, "comparison-contract").value,
+    );
     assert.equal(contract.stableKey, "assetId");
     assert.deepEqual(contract.comparedColumns, ["name", "location", "status"]);
     assert.deepEqual(contract.ignoredColumns, ["importNote"]);
@@ -158,4 +161,3 @@ test("third version preserves the identity trap and verifies addition/removal by
     },
   });
 });
-
