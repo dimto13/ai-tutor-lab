@@ -96,6 +96,8 @@ test("each mode exposes comparison evidence appropriate to its learning contract
   assert.match(String(controlResult.value), /A-300/);
   assert.match(String(controlResult.value), /A-600/);
   assert.match(String(controlResult.value), /A-200/);
+  assert.equal(explore.environment.seed.artifactPreview.revisions, undefined);
+  assert.equal(explore.completionValidation, undefined);
 
   const challenge = await readScenario("challenge");
   const challengeRevision = revision(challenge);
