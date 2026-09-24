@@ -3,8 +3,7 @@ import { BookOpen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { requestGuidedConceptHighlight } from "@/components/overlay/guidedConceptHighlight";
 import { segmentGlossaryText } from "@/lib/glossary";
-
-const LITERAL_INPUT_PATTERN = /`([^`\n]+)`/g;
+import { segmentGuidedLiteralText } from "@/lib/guidedLiteralText";
 
 function GlossarySegments({ text, conceptKeys }: { text: string; conceptKeys: readonly string[] }) {
   return segmentGlossaryText(text, conceptKeys).map((segment, index) => {
@@ -56,19 +55,7 @@ export function GlossaryText({
   children: string;
   conceptKeys: readonly string[];
 }) {
-  const parts: Array<{ kind: "text" | "literal"; text: string }> = [];
-  let cursor = 0;
-
-  for (const match of children.matchAll(LITERAL_INPUT_PATTERN)) {
-    const index = match.index ?? 0;
-    if (index > cursor) parts.push({ kind: "text", text: children.slice(cursor, index) });
-    parts.push({ kind: "literal", text: match[1] ?? "" });
-    cursor = index + match[0].length;
-  }
-  if (cursor < children.length) parts.push({ kind: "text", text: children.slice(cursor) });
-  if (parts.length === 0) parts.push({ kind: "text", text: children });
-
-  return parts.map((part, index) =>
+  return segmentGuidedLiteralText(children).map((part, index) =>
     part.kind === "literal" ? (
       <code
         key={`${index}-${part.text}`}
