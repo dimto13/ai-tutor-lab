@@ -29,7 +29,7 @@ export function GuidePanel() {
     (Boolean(recovery) || progress.activeStepMistakes >= FAILURES_PER_HELP_OFFER || helpLevel > 0);
 
   return (
-    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel lg:w-[380px] lg:flex-none lg:border-l">
+    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel pb-2.5 lg:w-[380px] lg:flex-none lg:border-l">
       {mode === "guided" ? (
         <GuidedGuide />
       ) : (
@@ -351,81 +351,65 @@ function ExploreGuide() {
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <Search className="h-3.5 w-3.5 text-accent" /> Explorer-Modus
       </div>
-      <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">
-        Oberfläche frei untersuchen
-      </h2>
+      <h2 className="mt-2 text-lg font-semibold leading-snug text-foreground">Erkunde frei</h2>
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-        Klicke frei auf Bereiche der simulierten Oberfläche. Es gibt keine falsche Reihenfolge und
-        keine Fehlermeldungen.
+        Öffne die markierten Bereiche und finde heraus, wofür sie gedacht sind. Es gibt keine feste
+        Reihenfolge.
       </p>
 
-      <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 p-3">
-        <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-accent">
-          <span>Erkundungsfortschritt</span>
-          <span>{percent} %</span>
-        </div>
-        <p className="mt-1 text-[13px] text-foreground">
-          {exploredSurfaceCount} von {surface.length} Oberflächen untersucht
-        </p>
-      </div>
-
-      {concept && activeSurface ? (
+      {surface.length > 0 ? (
         <div className="mt-4 rounded-lg border border-border bg-card p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Entdeckungen
+          </p>
+          <p className="mt-1 text-[12px] text-foreground">
+            {exploredSurfaceCount} von {surface.length} relevanten Bereichen erkundet
+          </p>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-accent transition-all"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {activeSurface ? (
+        <div className="mt-4 rounded-lg border border-accent/30 bg-accent/10 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-accent">
-            {activeSurface.label}
+            Gerade angesehen
           </p>
-          <h3 className="mt-1 text-sm font-semibold text-foreground">{concept.term}</h3>
-          <p className="mt-2 text-[13px] leading-relaxed text-foreground">{concept.simple}</p>
-          <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-            {concept.advanced}
+          <p className="mt-1 text-sm font-medium text-foreground">{activeSurface.label}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            {activeSurface.description}
           </p>
+          {concept ? (
+            <div className="mt-3 border-t border-accent/20 pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Begriff erklärt
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-foreground">{concept.short}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                {concept.whyItMatters}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-border bg-card p-3 text-[13px] leading-relaxed text-muted-foreground">
-          Klicke auf ein inspizierbares Element, um seine Erklärung zu sehen.
-        </div>
+        <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+          Wähle im Werkzeug einen relevanten Bereich aus. Hier erscheint dann eine kurze Erklärung.
+        </p>
       )}
 
-      <div className="mt-5" data-testid="explore-surface-progress">
-        <p
-          id="explore-surface-progress-title"
-          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-        >
-          Oberflächen
+      <div className="mt-4 rounded-lg border border-border bg-card p-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Noch offen
         </p>
-        <p
-          id="explore-surface-progress-hint"
-          className="mt-1 mb-3 text-[12px] leading-relaxed text-muted-foreground"
-        >
-          Diese Liste zeigt nur deinen Erkundungsfortschritt. Interagiere direkt im Simulator, um
-          weitere Oberflächen zu erkunden.
-        </p>
-        <ul
-          data-testid="explore-surface-status-list"
-          aria-labelledby="explore-surface-progress-title"
-          aria-describedby="explore-surface-progress-hint"
-          className="space-y-1.5"
-        >
+        <ul className="mt-2 space-y-1.5">
           {surface.map((item) => {
             const done = progress.exploredTargets.includes(item.ref);
             return (
-              <li
-                key={item.ref}
-                data-testid="explore-surface-status"
-                data-explore-status={done ? "completed" : "open"}
-                className="flex min-w-0 items-start gap-2 text-[12.5px]"
-              >
-                {done ? (
-                  <CheckCircle2
-                    className="mt-0.5 h-4 w-4 shrink-0 text-success"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Circle
-                    className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50"
-                    aria-hidden="true"
-                  />
-                )}
+              <li key={item.ref} className="flex items-center gap-2 text-[12px]">
                 <span
                   className={`min-w-0 flex-1 break-words ${done ? "text-muted-foreground" : "text-foreground"}`}
                 >
