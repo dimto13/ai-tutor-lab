@@ -226,6 +226,11 @@
       "id": "verify_table_analysis_plausibility",
       "title": "Tabellenauswertungen durch Kontrollrechnung plausibilisieren",
       "description": "Zwischenwerte und Aggregation gegeneinander prüfen, eine fehlende Datenkategorie anhand der Differenz identifizieren und den fachlichen Endbefund bewusst verifizieren."
+    },
+    {
+      "id": "verify_stable_identity_table_diff",
+      "title": "Tabellenversionen über stabile Identitäten vergleichen",
+      "description": "Geänderte, hinzugekommene und entfallene Datensätze über eine stabile fachliche Kennung zuordnen, irrelevante Spalten ausschließen und den Diff-Endzustand gegen gezielte Prüffälle verifizieren."
     }
   ]
 }
