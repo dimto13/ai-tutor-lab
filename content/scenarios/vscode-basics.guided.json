@@ -5,13 +5,44 @@
   "learningLayer": "tool",
   "title": "Visual Studio Code – Geführte Grundlagen",
   "description": "Lerne die wichtigsten Bereiche der VS-Code-Oberfläche kennen, einschließlich Primary und Secondary Side Bar, und übe danach einen einfachen Arbeitskontext mit einem einzelnen Ordner, Dateien, Editor und zusätzlichem Bereich (Panel). Erweiterte Workspace-Konfiguration bleibt optional.",
-  "learningObjectives": ["understand_vscode_ui", "understand_workspace", "create_file", "edit_and_save_vscode_file", "understand_panel_views"],
+  "learningObjectives": [
+    "understand_vscode_ui",
+    "understand_workspace",
+    "create_file",
+    "edit_and_save_vscode_file",
+    "understand_panel_views"
+  ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["vscode.activity_bar", "vscode.file_menu", "vscode.side_bar", "vscode.view", "vscode.explorer", "vscode.editor", "vscode.panel", "vscode.terminal", "vscode.problems", "vscode.output", "vscode.status_bar", "vscode.folder", "vscode.workspace"],
-    "introductionStepRefs": ["vscode.ui.activity-bar", "vscode.ui.side-bar", "vscode.ui.explorer", "vscode.ui.editor", "vscode.ui.panel", "vscode.ui.status-bar"]
+    "glossaryConcepts": [
+      "vscode.activity_bar",
+      "vscode.file_menu",
+      "vscode.side_bar",
+      "vscode.view",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.panel",
+      "vscode.terminal",
+      "vscode.problems",
+      "vscode.output",
+      "vscode.status_bar",
+      "vscode.folder",
+      "vscode.workspace"
+    ],
+    "introductionStepRefs": [
+      "vscode.ui.activity-bar",
+      "vscode.ui.side-bar",
+      "vscode.ui.explorer",
+      "vscode.ui.editor",
+      "vscode.ui.panel",
+      "vscode.ui.status-bar"
+    ]
   },
-  "environment": { "productId": "vscode", "version": "1.x", "runtimeAdapterId": "vscode-simulator" },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator"
+  },
   "estimatedMinutes": 14,
   "points": 100,
   "steps": [
@@ -21,7 +52,11 @@
       "description": "Du kennst jetzt die Rollen von Activity Bar, Primary Side Bar, Secondary Side Bar und Explorer. Als Nächstes öffnest du die Datei- und Ordnerübersicht selbst.",
       "instruction": "Öffne den Explorer über sein Symbol in der Activity Bar.",
       "rationale": "Die Activity Bar wählt den Hauptbereich aus; dessen Inhalt erscheint in der Primary Side Bar. Die Secondary Side Bar bleibt davon getrennt und kann zusätzliche Ansichten (Views) aufnehmen.",
-      "helpLevels": ["Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol.", "Klicke auf das oberste Symbol mit den zwei Dateien.", "Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol."],
+      "helpLevels": [
+        "Suche ganz links in der schmalen Activity Bar nach dem Explorer-Symbol.",
+        "Klicke auf das oberste Symbol mit den zwei Dateien.",
+        "Das Explorer-Symbol wird hervorgehoben. Klicke genau auf dieses Symbol."
+      ],
       "expectedEvent": "explorer.opened",
       "validation": { "kind": "event", "type": "explorer.opened" },
       "highlightTarget": "vscode.activityBar.explorer",
@@ -34,9 +69,17 @@
       "description": "Mit Open Folder öffnest du einen einzelnen Ordner als Arbeitskontext. Ein gespeicherter Workspace kann zusätzlich mehrere Ordner und eigene VS-Code-Einstellungen bündeln. Diese Multi-Root-Konfiguration musst du im Anfängerpfad noch nicht bedienen.",
       "instruction": "Öffne über File → Open Folder... den vorbereiteten Ordner `ai-training-demo`.",
       "rationale": "Für viele einfache Aufgaben reicht ein einzelner geöffneter Ordner. Den Unterschied zum Workspace sollst du verstehen, ohne schon eine erweiterte Workspace-Konfiguration durchführen zu müssen.",
-      "helpLevels": ["Öffne oben das File-Menü.", "Wähle im File-Menü Open Folder... .", "Das File-Menü wird hervorgehoben. Öffne es und klicke auf Open Folder... ."],
+      "helpLevels": [
+        "Öffne oben das File-Menü.",
+        "Wähle im File-Menü Open Folder... .",
+        "Das File-Menü wird hervorgehoben. Öffne es und klicke auf Open Folder... ."
+      ],
       "expectedEvent": "folder.opened",
-      "validation": { "kind": "event", "type": "folder.opened", "match": { "name": "ai-training-demo" } },
+      "validation": {
+        "kind": "event",
+        "type": "folder.opened",
+        "match": { "name": "ai-training-demo" }
+      },
       "highlightTarget": "vscode.menu.file",
       "highlightTooltip": "File enthält Befehle für Dateien, Ordner und Workspaces.",
       "successMessage": "Ordner geöffnet. Du arbeitest jetzt in einem einfachen Arbeitskontext; ein Workspace kann später mehrere Ordner und Einstellungen bündeln."
@@ -47,13 +90,31 @@
       "description": "Neue Dateien legst du direkt im Explorer innerhalb eines geöffneten Ordners an. Für diesen Grundlagenkurs verwenden wir bewusst eine normale Textdatei statt Programmcode.",
       "instruction": "Erstelle im Projektordner `ai-training-demo` eine Datei `notiz.txt`.",
       "rationale": "So übst du die Dateioperation im Explorer, ohne gleichzeitig eine Programmiersprache lernen zu müssen.",
-      "helpLevels": ["Im Kopf des Explorers gibt es die Aktion Neue Datei.", "Klicke auf Neue Datei und tippe notiz.txt ein.", "Der Neue-Datei-Button wird hervorgehoben. Klicke darauf, gib notiz.txt ein und bestätige mit Enter."],
+      "helpLevels": [
+        "Im Kopf des Explorers gibt es die Aktion Neue Datei.",
+        "Klicke auf Neue Datei und tippe notiz.txt ein.",
+        "Der Neue-Datei-Button wird hervorgehoben. Klicke darauf, gib notiz.txt ein und bestätige mit Enter."
+      ],
       "expectedEvent": "file.created",
-      "validation": { "kind": "event", "type": "file.created", "match": { "filename": "notiz.txt" } },
+      "validation": {
+        "kind": "event",
+        "type": "file.created",
+        "match": { "filename": "notiz.txt" }
+      },
       "highlightTarget": "vscode.explorer.newFile",
       "highlightTooltip": "Neue Datei im aktuellen Projektordner anlegen.",
-      "onFailure": { "message": "Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.", "markTarget": "vscode.explorer.tree" },
-      "recovery": { "onValidationFailure": { "id": "restore-create-file-entry", "strategy": "step_snapshot", "message": "Der Dateizustand passt nicht mehr zu diesem Schritt. Stelle den Schritt wieder her; dein Fehlversuch bleibt dokumentiert.", "label": "Schritt wiederherstellen" } },
+      "onFailure": {
+        "message": "Fast richtig. Für diese Übung brauchen wir genau den Dateinamen notiz.txt.",
+        "markTarget": "vscode.explorer.tree"
+      },
+      "recovery": {
+        "onValidationFailure": {
+          "id": "restore-create-file-entry",
+          "strategy": "step_snapshot",
+          "message": "Der Dateizustand passt nicht mehr zu diesem Schritt. Stelle den Schritt wieder her; dein Fehlversuch bleibt dokumentiert.",
+          "label": "Schritt wiederherstellen"
+        }
+      },
       "successMessage": "notiz.txt wurde erstellt und im Editor geöffnet."
     },
     {
@@ -62,16 +123,44 @@
       "description": "Der Editor ist die große Arbeitsfläche für den Inhalt einer Datei. Sobald du eine Datei änderst, markiert VS Code sie als ungespeichert. In der Tab-Leiste erkennst du diesen Zustand am Punkt neben dem Dateinamen.",
       "instruction": "Tippe den Text `Hello AI Training` in `notiz.txt`. Prüfe den Punkt für ungespeicherte Änderungen und speichere die Datei anschließend mit Strg+S beziehungsweise Cmd+S auf macOS.",
       "rationale": "Eine Änderung im Editor ist nicht dasselbe wie eine gespeicherte Datei. Der Dirty-State zeigt dir, dass sich der sichtbare Inhalt seit dem letzten Speichern geändert hat. Erst der Speichervorgang beseitigt diese Markierung.",
-      "helpLevels": ["Klicke in den Editor, tippe genau Hello AI Training und beobachte den Punkt neben notiz.txt.", "Nach der Änderung ist notiz.txt als ungespeichert markiert. Drücke Strg+S; auf macOS Cmd+S.", "Der Editor wird hervorgehoben. Tippe Hello AI Training, prüfe die Ungespeichert-Markierung im Tab und speichere mit Strg+S beziehungsweise Cmd+S."],
+      "helpLevels": [
+        "Klicke in den Editor, tippe genau Hello AI Training und beobachte den Punkt neben notiz.txt.",
+        "Nach der Änderung ist notiz.txt als ungespeichert markiert. Drücke Strg+S; auf macOS Cmd+S.",
+        "Der Editor wird hervorgehoben. Tippe Hello AI Training, prüfe die Ungespeichert-Markierung im Tab und speichere mit Strg+S beziehungsweise Cmd+S."
+      ],
       "expectedEvent": "file.saved",
-      "validation": { "kind": "all", "of": [
-        { "kind": "event", "type": "file.saved", "match": { "filename": "notiz.txt" } },
-        { "kind": "state", "selector": "filesystem.contents", "match": { "notiz.txt": "Hello AI Training" } },
-        { "kind": "state", "selector": "editor.dirtyFiles", "excludes": "notiz.txt" }
-      ] },
+      "validation": {
+        "kind": "all",
+        "of": [
+          { "kind": "event", "type": "file.saved", "match": { "filename": "notiz.txt" } },
+          {
+            "kind": "state",
+            "selector": "filesystem.contents",
+            "match": { "notiz.txt": "Hello AI Training" }
+          },
+          { "kind": "state", "selector": "editor.dirtyFiles", "excludes": "notiz.txt" }
+        ]
+      },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Bearbeite notiz.txt, erkenne den ungespeicherten Zustand am Punkt im Tab und speichere anschließend mit Strg+S beziehungsweise Cmd+S.",
-      "recovery": { "stateRules": [{ "when": { "kind": "not", "of": { "kind": "state", "selector": "editor.activeFile", "equals": "notiz.txt" } }, "action": { "id": "reactivate-training-file", "strategy": "runtime_repair", "message": "notiz.txt ist nicht mehr im Editor aktiv. Du kannst die Datei direkt wieder in den Arbeitszustand dieses Schritts holen.", "label": "Korrigieren", "runtimeAdapterId": "vscode-simulator", "command": { "type": "editor.activate-file", "payload": { "filename": "notiz.txt" } } } }] },
+      "recovery": {
+        "stateRules": [
+          {
+            "when": {
+              "kind": "not",
+              "of": { "kind": "state", "selector": "editor.activeFile", "equals": "notiz.txt" }
+            },
+            "action": {
+              "id": "reactivate-training-file",
+              "strategy": "runtime_repair",
+              "message": "notiz.txt ist nicht mehr im Editor aktiv. Du kannst die Datei direkt wieder in den Arbeitszustand dieses Schritts holen.",
+              "label": "Korrigieren",
+              "runtimeAdapterId": "vscode-simulator",
+              "command": { "type": "editor.activate-file", "payload": { "filename": "notiz.txt" } }
+            }
+          }
+        ]
+      },
       "successMessage": "Text korrekt gespeichert. Die Ungespeichert-Markierung ist verschwunden."
     },
     {
@@ -80,7 +169,11 @@
       "description": "Im zusätzlichen Bereich können mehrere spezialisierte Ansichten liegen. Das Terminal ist die Ansicht für Textbefehle, Probleme (Problems) sammelt Fehler und Warnungen, und Ausgabe (Output) zeigt Protokoll- und Statusausgaben.",
       "instruction": "Öffne über Terminal → New Terminal ein integriertes Terminal.",
       "rationale": "Wenn du Bereich und Ansicht unterscheidest, erkennst du, dass Terminal, Probleme und Ausgabe unterschiedliche Werkzeuge im selben unteren Bereich sind. Das Terminal-Menü ist ein regulärer Einstieg in diese Ansicht.",
-      "helpLevels": ["Öffne oben in der Menüleiste das Menü Terminal.", "Wähle im geöffneten Terminal-Menü New Terminal.", "Das Terminal-Menü wird hervorgehoben. Öffne es und klicke auf New Terminal."],
+      "helpLevels": [
+        "Öffne oben in der Menüleiste das Menü Terminal.",
+        "Wähle im geöffneten Terminal-Menü New Terminal.",
+        "Das Terminal-Menü wird hervorgehoben. Öffne es und klicke auf New Terminal."
+      ],
       "expectedEvent": "terminal.opened",
       "validation": { "kind": "event", "type": "terminal.opened" },
       "highlightTarget": "vscode.menu.terminal",
@@ -93,7 +186,11 @@
       "description": "Die Probleme-Ansicht zeigt erkannte Fehler, Warnungen und andere Diagnosen. Sie ist nicht dasselbe wie das Terminal.",
       "instruction": "Wechsle im unteren Bereich auf Problems.",
       "rationale": "Je nach Aufgabe brauchst du Textbefehle, Diagnosen oder Protokolle. Die Ansichten haben unterschiedliche Zwecke.",
-      "helpLevels": ["Die Ansichten des unteren Bereichs stehen als Tabs oberhalb der Ausgabe.", "Klicke auf Problems.", "Der Problems-Tab wird hervorgehoben. Klicke genau auf Problems."],
+      "helpLevels": [
+        "Die Ansichten des unteren Bereichs stehen als Tabs oberhalb der Ausgabe.",
+        "Klicke auf Problems.",
+        "Der Problems-Tab wird hervorgehoben. Klicke genau auf Problems."
+      ],
       "expectedEvent": "panel.opened",
       "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "problems" } },
       "highlightTarget": "vscode.panel.problems",
@@ -106,7 +203,11 @@
       "description": "Die Ausgabe-Ansicht zeigt Protokoll- und Statusausgaben von VS Code und Erweiterungen.",
       "instruction": "Wechsle im unteren Bereich auf Output.",
       "rationale": "Die Ausgabe eignet sich für technische Protokolle und Statusmeldungen, die du nur lesen und nicht wie im Terminal eingeben musst.",
-      "helpLevels": ["Bleibe im unteren Bereich und sieh dir die Tabs der Ansichten an.", "Klicke auf Output.", "Der Output-Tab wird hervorgehoben. Klicke genau auf Output."],
+      "helpLevels": [
+        "Bleibe im unteren Bereich und sieh dir die Tabs der Ansichten an.",
+        "Klicke auf Output.",
+        "Der Output-Tab wird hervorgehoben. Klicke genau auf Output."
+      ],
       "expectedEvent": "panel.opened",
       "validation": { "kind": "event", "type": "panel.opened", "match": { "panel": "output" } },
       "highlightTarget": "vscode.panel.output",
