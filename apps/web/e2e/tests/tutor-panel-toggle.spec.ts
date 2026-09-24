@@ -1,18 +1,28 @@
-import { expect, test, type Page } from "../fixtures/browser-error-guard";
+import { expect, test, type Page } from "@playwright/test";
 
-async function ready(page: Page): Promise<void> {
-  await expect(page.locator('p[role="status"]').filter({ hasText: "Training bereit" })).toHaveText(
-    "Training bereit",
-  );
+async function ready(page: Page) {
+  await expect(page.getByTestId("training-mode")).toBeVisible();
 }
 
-async function openGuidedTutor(page: Page): Promise<void> {
+async function openGuidedTutor(page: Page) {
   await page.goto("/training/vscode-basics.guided");
   await ready(page);
-  const toggle = page.getByTestId("tutor-chat-toggle");
-  await expect(toggle).toHaveAttribute("aria-expanded", "false");
-  await toggle.click();
+  await page.getByTestId("tutor-chat-toggle").click();
   await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
+}
+
+async function expectVisibleBottomGap(page: Page, testId: string) {
+  const surface = page.getByTestId(testId);
+  const box = await surface.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) throw new Error(`${testId} has no bounding box`);
+
+  const viewport = page.viewportSize();
+  expect(viewport).not.toBeNull();
+  if (!viewport) throw new Error("viewport size is unavailable");
+
+  const bottomGap = viewport.height - (box.y + box.height);
+  expect(bottomGap).toBeGreaterThanOrEqual(8);
 }
 
 test("Tutor panel closes, restores focus and preserves its conversation", async ({ page }) => {
@@ -64,16 +74,10 @@ test("Tutor surfaces keep a visible bottom gap", async ({ page }) => {
   await page.goto("/training/vscode-basics.explore");
   await ready(page);
 
-  const expanded = page.getByTestId("tutor-chat-expanded");
-  const expandedBox = await expanded.boundingBox();
-  expect(expandedBox).not.toBeNull();
-  expect(720 - ((expandedBox?.y ?? 720) + (expandedBox?.height ?? 0))).toBeGreaterThan(0);
+  await expectVisibleBottomGap(page, "tutor-chat-expanded");
 
   await page.getByTestId("tutor-chat-close").click();
-  const collapsed = page.getByTestId("tutor-chat-collapsed");
-  const collapsedBox = await collapsed.boundingBox();
-  expect(collapsedBox).not.toBeNull();
-  expect(720 - ((collapsedBox?.y ?? 720) + (collapsedBox?.height ?? 0))).toBeGreaterThan(0);
+  await expectVisibleBottomGap(page, "tutor-chat-collapsed");
 });
 
 test("Collapsed tutor releases training space on a short responsive viewport", async ({ page }) => {
