@@ -1,16 +1,12 @@
+import { Fragment } from "react";
 import { BookOpen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { requestGuidedConceptHighlight } from "@/components/overlay/guidedConceptHighlight";
 import { segmentGlossaryText } from "@/lib/glossary";
+import { segmentGuidedLiteralText } from "@/lib/guidedLiteralText";
 
-export function GlossaryText({
-  children,
-  conceptKeys,
-}: {
-  children: string;
-  conceptKeys: readonly string[];
-}) {
-  return segmentGlossaryText(children, conceptKeys).map((segment, index) => {
+function GlossarySegments({ text, conceptKeys }: { text: string; conceptKeys: readonly string[] }) {
+  return segmentGlossaryText(text, conceptKeys).map((segment, index) => {
     if (!segment.concept) return <span key={`${index}-${segment.text}`}>{segment.text}</span>;
 
     const concept = segment.concept;
@@ -50,4 +46,27 @@ export function GlossaryText({
       </Popover>
     );
   });
+}
+
+export function GlossaryText({
+  children,
+  conceptKeys,
+}: {
+  children: string;
+  conceptKeys: readonly string[];
+}) {
+  return segmentGuidedLiteralText(children).map((part, index) =>
+    part.kind === "literal" ? (
+      <code
+        key={`${index}-${part.text}`}
+        className="mx-0.5 inline-block rounded border border-current bg-muted px-1.5 py-0.5 font-mono font-semibold text-foreground shadow-sm forced-colors:bg-[Canvas] forced-colors:text-[CanvasText]"
+      >
+        {part.text}
+      </code>
+    ) : (
+      <Fragment key={`${index}-${part.text}`}>
+        <GlossarySegments text={part.text} conceptKeys={conceptKeys} />
+      </Fragment>
+    ),
+  );
 }
