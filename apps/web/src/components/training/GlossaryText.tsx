@@ -73,7 +73,6 @@ export function GlossaryText({
       <code
         key={`${index}-${part.text}`}
         className="mx-0.5 inline-block rounded border border-current bg-muted px-1.5 py-0.5 font-mono font-semibold text-foreground shadow-sm forced-colors:bg-[Canvas] forced-colors:text-[CanvasText]"
-        aria-label={`Einzugebender Wert: ${part.text}`}
       >
         {part.text}
       </code>
