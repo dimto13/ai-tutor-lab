@@ -1,16 +1,13 @@
+import { Fragment } from "react";
 import { BookOpen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { requestGuidedConceptHighlight } from "@/components/overlay/guidedConceptHighlight";
 import { segmentGlossaryText } from "@/lib/glossary";
 
-export function GlossaryText({
-  children,
-  conceptKeys,
-}: {
-  children: string;
-  conceptKeys: readonly string[];
-}) {
-  return segmentGlossaryText(children, conceptKeys).map((segment, index) => {
+const LITERAL_INPUT_PATTERN = /`([^`\n]+)`/g;
+
+function GlossarySegments({ text, conceptKeys }: { text: string; conceptKeys: readonly string[] }) {
+  return segmentGlossaryText(text, conceptKeys).map((segment, index) => {
     if (!segment.concept) return <span key={`${index}-${segment.text}`}>{segment.text}</span>;
 
     const concept = segment.concept;
@@ -50,4 +47,40 @@ export function GlossaryText({
       </Popover>
     );
   });
+}
+
+export function GlossaryText({
+  children,
+  conceptKeys,
+}: {
+  children: string;
+  conceptKeys: readonly string[];
+}) {
+  const parts: Array<{ kind: "text" | "literal"; text: string }> = [];
+  let cursor = 0;
+
+  for (const match of children.matchAll(LITERAL_INPUT_PATTERN)) {
+    const index = match.index ?? 0;
+    if (index > cursor) parts.push({ kind: "text", text: children.slice(cursor, index) });
+    parts.push({ kind: "literal", text: match[1] ?? "" });
+    cursor = index + match[0].length;
+  }
+  if (cursor < children.length) parts.push({ kind: "text", text: children.slice(cursor) });
+  if (parts.length === 0) parts.push({ kind: "text", text: children });
+
+  return parts.map((part, index) =>
+    part.kind === "literal" ? (
+      <code
+        key={`${index}-${part.text}`}
+        className="mx-0.5 inline-block rounded border border-current bg-muted px-1.5 py-0.5 font-mono font-semibold text-foreground shadow-sm forced-colors:bg-[Canvas] forced-colors:text-[CanvasText]"
+        aria-label={`Einzugebender Wert: ${part.text}`}
+      >
+        {part.text}
+      </code>
+    ) : (
+      <Fragment key={`${index}-${part.text}`}>
+        <GlossarySegments text={part.text} conceptKeys={conceptKeys} />
+      </Fragment>
+    ),
+  );
 }
