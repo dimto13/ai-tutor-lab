@@ -28,6 +28,7 @@ type Scenario = {
       };
     };
   };
+  steps: Array<{ id: string; why?: string }>;
 };
 
 async function readScenario(mode: (typeof modes)[number]): Promise<Scenario> {
@@ -107,6 +108,14 @@ test("each mode exposes comparison evidence appropriate to its learning contract
   assert.deepEqual(v1ToV2.added, ["A-500"]);
   assert.deepEqual(v1ToV2.removed, ["A-300"]);
   assert.deepEqual(challengeValue.ignoredColumns, ["importNote"]);
+});
+
+test("challenge keeps learner-facing rationale in comparison language", async () => {
+  const challenge = await readScenario("challenge");
+  const deriveDiff = challenge.steps.find((step) => step.id === "derive-diff");
+  assert.ok(deriveDiff, "challenge derive-diff step must exist");
+  assert.match(deriveDiff.why ?? "", /belastbarer Vergleich/);
+  assert.doesNotMatch(deriveDiff.why ?? "", /\bDiff\b/);
 });
 
 test("third version preserves the identity trap and verifies addition/removal by stable id", async () => {
