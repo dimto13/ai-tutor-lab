@@ -1,17 +1,21 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "../fixtures/browser-error-guard";
 
-async function ready(page: Page) {
-  await expect(page.getByTestId("training-mode")).toBeVisible();
+async function ready(page: Page): Promise<void> {
+  await expect(page.locator('p[role="status"]').filter({ hasText: "Training bereit" })).toHaveText(
+    "Training bereit",
+  );
 }
 
-async function openGuidedTutor(page: Page) {
+async function openGuidedTutor(page: Page): Promise<void> {
   await page.goto("/training/vscode-basics.guided");
   await ready(page);
-  await page.getByTestId("tutor-chat-toggle").click();
+  const toggle = page.getByTestId("tutor-chat-toggle");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
   await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
 }
 
-async function expectVisibleBottomGap(page: Page, testId: string) {
+async function expectVisibleBottomGap(page: Page, testId: string): Promise<void> {
   const surface = page.getByTestId(testId);
   const box = await surface.boundingBox();
   expect(box).not.toBeNull();
