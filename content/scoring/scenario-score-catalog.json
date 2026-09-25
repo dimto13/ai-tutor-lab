@@ -226,6 +226,30 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "table-version-compare.challenge",
+      "mode": "challenge",
+      "version": "1",
+      "points": 220,
+      "estimatedMinutes": 12,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "table-version-compare.explore",
+      "mode": "explore",
+      "version": "1",
+      "points": 80,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
+      "id": "table-version-compare.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 140,
+      "estimatedMinutes": 14,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "vscode-basics.challenge",
       "mode": "challenge",
       "version": "1",
