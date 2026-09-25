@@ -15,6 +15,20 @@ async function openGuidedTutor(page: Page): Promise<void> {
   await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
 }
 
+async function expectVisibleBottomGap(page: Page, testId: string): Promise<void> {
+  const surface = page.getByTestId(testId);
+  const box = await surface.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) throw new Error(`${testId} has no bounding box`);
+
+  const viewport = page.viewportSize();
+  expect(viewport).not.toBeNull();
+  if (!viewport) throw new Error("viewport size is unavailable");
+
+  const bottomGap = viewport.height - (box.y + box.height);
+  expect(bottomGap).toBeGreaterThanOrEqual(8);
+}
+
 test("Tutor panel closes, restores focus and preserves its conversation", async ({ page }) => {
   await openGuidedTutor(page);
 
@@ -57,6 +71,17 @@ test("Tutor panel can be dismissed in explore and challenge modes", async ({ pag
     await page.getByTestId("tutor-chat-toggle").click();
     await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
   }
+});
+
+test("Tutor surfaces keep a visible bottom gap", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 720 });
+  await page.goto("/training/vscode-basics.explore");
+  await ready(page);
+
+  await expectVisibleBottomGap(page, "tutor-chat-expanded");
+
+  await page.getByTestId("tutor-chat-close").click();
+  await expectVisibleBottomGap(page, "tutor-chat-collapsed");
 });
 
 test("Collapsed tutor releases training space on a short responsive viewport", async ({ page }) => {
