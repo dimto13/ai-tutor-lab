@@ -1,0 +1,275 @@
+{
+  "id": "table-version-compare.challenge",
+  "moduleId": "table-version-compare",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "Challenge: Tabellenversionen belastbar vergleichen",
+  "description": "Prüfe drei synthetische Bestandsstände selbstständig und verifiziere einen fachlich belastbaren Versionsvergleich.",
+  "learningObjectives": ["verify_stable_identity_table_diff"],
+  "audience": { "personaId": "non-programmer", "glossaryConcepts": ["artifact.preview"] },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["synthetischer-anlagenvergleich"],
+      "files": ["auftrag.md"],
+      "contents": {
+        "auftrag.md": "# Challenge Versionsvergleich\nVergleiche v1, v2 und v3 fachlich belastbar. Begründe die stabile Kennung, trenne geändert, neu und entfallen, schließe irrelevante Spalten aus und verifiziere den Endbefund. Alle Daten sind frei erfunden."
+      },
+      "openTabs": ["auftrag.md"],
+      "activeFile": "auftrag.md",
+      "artifactPreview": {
+        "activeArtifactId": "version-v1",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "version-v1",
+            "type": "table",
+            "title": "Bestand v1",
+            "columns": [
+              { "key": "assetId", "label": "Objekt-ID" },
+              { "key": "name", "label": "Bezeichnung" },
+              { "key": "location", "label": "Standort" },
+              { "key": "status", "label": "Status" },
+              { "key": "importNote", "label": "Importnotiz" }
+            ],
+            "rows": [
+              {
+                "assetId": "A-100",
+                "name": "Prüfstand Alpha",
+                "location": "Halle 1",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              },
+              {
+                "assetId": "A-200",
+                "name": "Messgerät Beta",
+                "location": "Labor",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              },
+              {
+                "assetId": "A-300",
+                "name": "Pumpe Gamma",
+                "location": "Halle 2",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              },
+              {
+                "assetId": "A-400",
+                "name": "Sensor Delta",
+                "location": "Halle 3",
+                "status": "aktiv",
+                "importNote": "Quelle v1"
+              }
+            ]
+          },
+          {
+            "id": "version-v2",
+            "type": "table",
+            "title": "Bestand v2",
+            "columns": [
+              { "key": "assetId", "label": "Objekt-ID" },
+              { "key": "name", "label": "Bezeichnung" },
+              { "key": "location", "label": "Standort" },
+              { "key": "status", "label": "Status" },
+              { "key": "importNote", "label": "Importnotiz" }
+            ],
+            "rows": [
+              {
+                "assetId": "A-200",
+                "name": "Messgerät Beta",
+                "location": "Labor 2",
+                "status": "aktiv",
+                "importNote": "neu importiert"
+              },
+              {
+                "assetId": "A-100",
+                "name": "Prüfstand Alpha Nord",
+                "location": "Halle 1",
+                "status": "aktiv",
+                "importNote": "neu importiert"
+              },
+              {
+                "assetId": "A-400",
+                "name": "Sensor Delta",
+                "location": "Halle 3",
+                "status": "wartung",
+                "importNote": "neu importiert"
+              },
+              {
+                "assetId": "A-500",
+                "name": "Kamera Epsilon",
+                "location": "Halle 4",
+                "status": "aktiv",
+                "importNote": "neu importiert"
+              }
+            ]
+          },
+          {
+            "id": "version-v3",
+            "type": "table",
+            "title": "Bestand v3 · Prüffall",
+            "columns": [
+              { "key": "assetId", "label": "Objekt-ID" },
+              { "key": "name", "label": "Bezeichnung" },
+              { "key": "location", "label": "Standort" },
+              { "key": "status", "label": "Status" },
+              { "key": "importNote", "label": "Importnotiz" }
+            ],
+            "rows": [
+              {
+                "assetId": "A-100",
+                "name": "Prüfstand Alpha Nord",
+                "location": "Halle 1",
+                "status": "aktiv",
+                "importNote": "Prüflauf"
+              },
+              {
+                "assetId": "A-400",
+                "name": "Sensor Delta",
+                "location": "Halle 3",
+                "status": "wartung",
+                "importNote": "Prüflauf"
+              },
+              {
+                "assetId": "A-500",
+                "name": "Kamera Epsilon",
+                "location": "Halle 4",
+                "status": "aktiv",
+                "importNote": "Prüflauf"
+              },
+              {
+                "assetId": "A-600",
+                "name": "Messgerät Beta",
+                "location": "Labor 3",
+                "status": "aktiv",
+                "importNote": "Prüflauf"
+              }
+            ]
+          },
+          {
+            "id": "comparison-contract",
+            "type": "data",
+            "title": "Vergleichsvertrag",
+            "value": {
+              "stableKey": "assetId",
+              "comparedColumns": ["name", "location", "status"],
+              "ignoredColumns": ["importNote"],
+              "assumptions": "assetId bleibt fachlich stabil; Zeilenposition und sichtbarer Name sind keine Identität.",
+              "limits": "Nur deklarative Szenariodaten; keine Excel-/CSV-Parsinglogik."
+            }
+          },
+          {
+            "id": "diff-result",
+            "type": "data",
+            "title": "Ungeprüfter Vergleichsbefund",
+            "value": "Prüfe v1→v2 und v2→v3 anhand des Vergleichsvertrags und der stabilen Objekt-ID."
+          }
+        ],
+        "revisions": [
+          {
+            "id": "verify-version-diff",
+            "artifactId": "diff-result",
+            "label": "Belastbaren Versionsvergleich übernehmen",
+            "next": {
+              "id": "diff-result",
+              "type": "data",
+              "title": "Vergleichsbefund · fachlich geprüft",
+              "value": {
+                "stableKey": "assetId",
+                "comparedColumns": ["name", "location", "status"],
+                "ignoredColumns": ["importNote"],
+                "v1ToV2": {
+                  "changed": ["A-100/name", "A-200/location", "A-400/status"],
+                  "added": ["A-500"],
+                  "removed": ["A-300"]
+                },
+                "v2ToV3": { "changed": [], "added": ["A-600"], "removed": ["A-200"] },
+                "identityCheck": "A-200 und A-600 heißen beide Messgerät Beta, sind wegen verschiedener assetId aber verschiedene Datensätze.",
+                "assumptions": "assetId ist die fachlich stabile Kennung; Reihenfolge und sichtbarer Name sind keine Identität.",
+                "limits": "importNote ist fachlich ausgeschlossen; ausschließlich synthetische deklarative Daten, keine Excel-/CSV-Parsinglogik."
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 12,
+  "points": 220,
+  "completionValidation": {
+    "kind": "event",
+    "type": "artifact.verified",
+    "match": { "artifactId": "diff-result", "revisionId": "verify-version-diff" }
+  },
+  "steps": [
+    {
+      "id": "establish-identity",
+      "title": "Stabile Identität festlegen",
+      "description": "Bestimme die fachlich stabile Datensatzkennung und die relevanten Vergleichsspalten.",
+      "instruction": "Vergleiche Tabellenstruktur und Vergleichsvertrag. Begründe, warum assetId statt Zeilenposition oder Name die Datensatzidentität trägt und warum importNote ausgeschlossen wird.",
+      "why": "Ohne stabile Identität werden Umordnungen, Namensgleichheit und echte Änderungen vermischt.",
+      "helpLevels": [
+        "Prüfe, welche Spalte über alle Stände eine fachliche Kennung darstellt.",
+        "Die Zeilenreihenfolge ändert sich; importNote ist nur technische Importinformation.",
+        "Nutze assetId als stabile Kennung und name, location, status als Vergleichsspalten; ignoriere importNote."
+      ],
+      "successMessage": "Identitäts- und Vergleichsvertrag eingeordnet."
+    },
+    {
+      "id": "derive-diff",
+      "title": "Änderungen getrennt ableiten",
+      "description": "Trenne geänderte Felder, neue und entfallene Datensätze für beide Übergänge.",
+      "instruction": "Leite v1→v2 und v2→v3 aus den drei Tabellen ab. Behandle geändert, neu und entfallen getrennt.",
+      "why": "Ein belastbarer Vergleich unterscheidet Feldänderungen von Lebenszyklusänderungen eines Datensatzes.",
+      "helpLevels": [
+        "Ordne zuerst über assetId zu und vergleiche erst danach die relevanten Felder.",
+        "v1→v2 enthält drei Feldänderungen sowie je einen neuen und entfallenen Datensatz.",
+        "Prüfe v1→v2 als A-100/name, A-200/location, A-400/status geändert, A-500 neu und A-300 entfallen; prüfe v2→v3 als A-600 neu und A-200 entfallen."
+      ],
+      "successMessage": "Änderungsarten getrennt abgeleitet."
+    },
+    {
+      "id": "check-identity-trap",
+      "title": "Identitätsfall prüfen",
+      "description": "Bewerte den gleich benannten Datensatz im dritten Stand.",
+      "instruction": "Erkläre, warum A-200 und A-600 trotz gleicher Bezeichnung nicht derselbe Datensatz sind.",
+      "why": "Sichtbare Namen sind nicht zwingend eindeutig oder stabil.",
+      "helpLevels": [
+        "Vergleiche nicht nur die Bezeichnung Messgerät Beta.",
+        "Achte auf die stabile Objekt-ID im zweiten und dritten Stand.",
+        "Prüfe die Objekt-IDs: A-200 entfällt und A-600 kommt neu hinzu; der gleiche Name ändert daran nichts."
+      ],
+      "successMessage": "Identitätsfalle erkannt."
+    },
+    {
+      "id": "verify-diff",
+      "title": "Endbefund verifizieren",
+      "description": "Übernimm den vollständigen Vergleichsbefund und bestätige ihn erst nach fachlicher Kontrolle.",
+      "instruction": "Wende auf den ungeprüften Vergleichsbefund „Belastbaren Versionsvergleich übernehmen“ an und markiere danach genau diesen korrigierten Befund als geprüft.",
+      "why": "Die Challenge bewertet den fachlichen Endzustand, nicht eine feste Klickfolge.",
+      "helpLevels": [
+        "Kontrolliere vor der Verifikation stabile Kennung, Vergleichsspalten und beide Übergänge.",
+        "Der Endbefund muss geändert, neu und entfallen getrennt enthalten sowie den A-200/A-600-Fall erklären.",
+        "Wende „Belastbaren Versionsvergleich übernehmen“ auf den ungeprüften Vergleichsbefund an und verifiziere anschließend den fachlich geprüften Vergleichsbefund."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": { "artifactId": "diff-result", "revisionId": "verify-version-diff" }
+      },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Versionsvergleich fachlich geprüft und verifiziert."
+    }
+  ]
+}
