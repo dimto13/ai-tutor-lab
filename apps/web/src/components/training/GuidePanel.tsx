@@ -29,7 +29,7 @@ export function GuidePanel() {
     (Boolean(recovery) || progress.activeStepMistakes >= FAILURES_PER_HELP_OFFER || helpLevel > 0);
 
   return (
-    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel lg:w-[380px] lg:flex-none lg:border-l">
+    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel pb-2.5 lg:w-[380px] lg:flex-none lg:border-l">
       {mode === "guided" ? (
         <GuidedGuide />
       ) : (
