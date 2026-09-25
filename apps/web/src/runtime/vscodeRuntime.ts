@@ -1,9 +1,13 @@
 import { vscodeRuntime as simulatorRuntime } from "@ai-train-lab/runtime-vscode-sim";
-import type { RuntimeAdapter } from "@ai-train-lab/runtime-core";
+import { matchesRuntimePath, type RuntimeAdapter } from "@ai-train-lab/runtime-core";
 
 export * from "@ai-train-lab/runtime-vscode-sim";
 
 let mountedContainer: HTMLElement | null = null;
+
+const vscodeEnvironment = {
+  pathComparison: "case-insensitive",
+} as const;
 
 function resolveVisibleTransientActionRegions(): DOMRect[] {
   if (!mountedContainer) return [];
@@ -21,6 +25,7 @@ function resolveVisibleTransientActionRegions(): DOMRect[] {
  */
 export const vscodeRuntime = {
   ...simulatorRuntime,
+  environment: vscodeEnvironment,
 
   async mount(container, seed) {
     mountedContainer = container;
@@ -53,9 +58,12 @@ export const vscodeRuntime = {
     }
 
     const files = await simulatorRuntime.query<string[]>("filesystem.files");
-    if (!files.includes(filename)) return { status: "unsupported" as const };
+    const canonicalFilename = files.find((file) =>
+      matchesRuntimePath(file, filename, vscodeEnvironment),
+    );
+    if (!canonicalFilename) return { status: "unsupported" as const };
 
-    simulatorRuntime.setActiveFile(filename);
+    simulatorRuntime.setActiveFile(canonicalFilename);
     // Reuse the normal restore signal so the rendered workspace fully mirrors
     // the repaired runtime state instead of requiring product logic in React.
     await simulatorRuntime.restore(await simulatorRuntime.snapshot());
