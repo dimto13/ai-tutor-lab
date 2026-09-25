@@ -98,12 +98,15 @@
       "description": "Dieser Enabler stellt nur den deterministischen Brownfield-Ausgangsbestand bereit; der vollständige Lernablauf folgt im Guided-Child.",
       "instruction": "Öffne die vorhandene Datei dashboard.html und lies den Ausgangsstand, ohne etwas neu zu erzeugen.",
       "why": "Brownfield-Arbeit beginnt mit dem Verständnis des vorhandenen Bestands.",
-      "helpLevels": ["Öffne dashboard.html im Explorer.", "Lies den vorhandenen Inhalt; ändere noch nichts."],
+      "helpLevels": [
+        "Öffne dashboard.html im Explorer.",
+        "Lies den vorhandenen Inhalt; ändere noch nichts."
+      ],
       "successMessage": "Der vorhandene Codebestand wurde geöffnet.",
       "validation": {
         "kind": "event",
         "type": "vscode.file.opened",
-        "match": {"path": "dashboard.html"}
+        "match": { "path": "dashboard.html" }
       },
       "highlightTarget": "vscode.explorer"
     }
