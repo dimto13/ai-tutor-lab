@@ -16,6 +16,24 @@ export type RuntimeCapability =
   | "agent_mode"
   | "artifact_preview";
 
+export type RuntimePathComparison = "case-sensitive" | "case-insensitive";
+
+export interface RuntimeEnvironmentSemantics {
+  /** Product-neutral identity semantics for filesystem paths and filenames only. */
+  readonly pathComparison: RuntimePathComparison;
+}
+
+export function matchesRuntimePath(
+  actual: string,
+  expected: string,
+  semantics: RuntimeEnvironmentSemantics,
+): boolean {
+  if (semantics.pathComparison === "case-insensitive") {
+    return actual.toLocaleLowerCase("en-US") === expected.toLocaleLowerCase("en-US");
+  }
+  return actual === expected;
+}
+
 export type { RuntimeSeed } from "@ai-train-lab/training-engine";
 
 export interface RuntimeSurfaceDescription {
@@ -44,6 +62,8 @@ export interface RuntimeAdapter {
   readonly id: string;
   readonly productId: string;
   readonly capabilities: readonly RuntimeCapability[];
+  /** Optional environment semantics; consumers must not infer these from product or OS names. */
+  readonly environment?: RuntimeEnvironmentSemantics;
 
   mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void>;
   unmount(): Promise<void>;
