@@ -107,7 +107,7 @@
       "helpLevels": [
         "Öffne dashboard.html im Explorer.",
         "Klicke im Explorer auf dashboard.html und lies den vorhandenen Inhalt; ändere noch nichts.",
-        "Bestätige, dass dashboard.html geöffnet ist, und nimm noch keine Änderung vor."
+        "Öffne im Explorer die Datei dashboard.html, prüfe dort den vorhandenen Inhalt vollständig und lasse die Datei unverändert geöffnet."
       ],
       "successMessage": "Der vorhandene Codebestand wurde geöffnet.",
       "validation": {
