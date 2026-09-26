@@ -7,7 +7,13 @@
   "description": "Deterministischer synthetischer Brownfield-Fixture für Analyse, gezielte Reparaturen und Regressionserkennung.",
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["vscode.product", "vscode.explorer", "web.html", "artifact.preview", "github.copilot"]
+    "glossaryConcepts": [
+      "vscode.product",
+      "vscode.explorer",
+      "web.html",
+      "artifact.preview",
+      "github.copilot"
+    ]
   },
   "environment": {
     "productId": "vscode",
