@@ -110,6 +110,12 @@
   },
   "estimatedMinutes": 10,
   "points": 120,
+  "learningObjectives": [
+    "analyze-before-change",
+    "verify-controlled-changes",
+    "detect-and-repair-regressions",
+    "apply-brownfield-project-rules"
+  ],
   "steps": [
     {
       "id": "produce-verified-brownfield-result",
