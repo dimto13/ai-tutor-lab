@@ -1,0 +1,79 @@
+{
+  "id": "brownfield-dashboard-repair.challenge",
+  "moduleId": "brownfield-dashboard-workflow",
+  "mode": "challenge",
+  "learningLayer": "ai_workflow",
+  "title": "Wartungsdashboard – Brownfield-Reparatur absichern",
+  "description": "Stelle das vorhandene Wartungsdashboard fachlich korrekt her, ergänze die 30-Tage-Wartungsansicht und sichere den Bestand gegen die vorbereitete Regression ab.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["vscode.product", "vscode.explorer", "web.html", "artifact.preview"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {"productId": "artifact-preview", "version": "1.x", "runtimeAdapterId": "artifact-preview-simulator"}
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["wartungsdashboard"],
+      "files": ["dashboard.html", "anlagen.json", "README.md"],
+      "contents": {
+        "dashboard.html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>76,0 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>",
+        "anlagen.json": "{\"anlagen\":[{\"id\":\"A-101\",\"status\":\"running\",\"availability\":98.4,\"maintenanceDue\":\"2026-10-03\"},{\"id\":\"A-204\",\"status\":\"warning\",\"availability\":91.2,\"maintenanceDue\":\"2026-09-29\"},{\"id\":\"A-305\",\"status\":\"stopped\",\"availability\":76.0,\"maintenanceDue\":\"2026-10-12\"}]}",
+        "README.md": "# Wartungsdashboard\nBrownfield-Training: vorhandenen Bestand analysieren, kleine Änderungen einzeln prüfen und bestehendes Verhalten erhalten."
+      },
+      "openTabs": ["dashboard.html", "anlagen.json"],
+      "activeFile": "dashboard.html",
+      "artifactPreview": {
+        "activeArtifactId": "maintenance-dashboard",
+        "viewMode": "preview",
+        "artifacts": [
+          {"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Ausgangsstand","description":"Synthetischer Ausgangsstand mit zwei sichtbaren Defekten.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>76,0 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"},
+          {"id":"brownfield-project-rules","type":"data","title":"Projekt- und Gestaltungsregeln","description":"Übertragbare Regeln für kleine Brownfield-Änderungen.","value":{"informationHierarchy":"Bestehende Hauptkennzahlen bleiben vor ergänzenden Detailansichten sichtbar.","statusRepresentation":"Status wird aus strukturierten Zuständen abgeleitet.","periodLogic":"Zeitfenster werden aus Referenzdatum und strukturierten Datumswerten berechnet.","changeRule":"Vorhandenen Bestand analysieren und gezielt ändern; nicht die komplette Anwendung neu erzeugen."}}
+        ],
+        "revisions": [
+          {"id":"fix-availability","artifactId":"maintenance-dashboard","label":"Nur Verfügbarkeit korrigieren","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Verfügbarkeit korrigiert","description":"Defekt 1 behoben; Defekt 2 bleibt sichtbar.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"}},
+          {"id":"fix-open-incidents","artifactId":"maintenance-dashboard","label":"Nur offene Störungen korrigieren","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Anzeigen korrigiert","description":"Beide Kennzahlen stimmen mit dem Datenbestand überein.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"}},
+          {"id":"add-maintenance-window-with-regression","artifactId":"maintenance-dashboard","label":"30-Tage-Wartungsansicht ergänzen","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Wartungsansicht","description":"Kontrollierte Regression: A-305 fehlt ungewollt in der bestehenden Statusliste.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"}},
+          {"id":"repair-maintenance-regression","artifactId":"maintenance-dashboard","label":"Regression gezielt reparieren","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Wartungsansicht geprüft","description":"Wartungsansicht und vollständige Statusliste sind erhalten.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"}}
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 120,
+  "steps": [
+    {
+      "id": "produce-verified-brownfield-result",
+      "title": "Geprüften Brownfield-Endzustand herstellen",
+      "description": "Ziel: Beide Kennzahlen stimmen mit den strukturierten Daten überein, die 30-Tage-Wartungsansicht ist ergänzt und die bestehende Statusliste bleibt vollständig.",
+      "instruction": "Analysiere zuerst den vorhandenen Code und anlagen.json. Repariere die unabhängigen Defekte gezielt und prüfe Änderungen in der Vorschau. Ergänze danach die vorbereitete 30-Tage-Wartungsansicht, erkenne die dabei entstehende Regression und stelle einen vollständig geprüften Endzustand her. Nutze zum Abschluss die Projekt- und Gestaltungsregeln als übertragbare Leitplanken.",
+      "why": "Bewertet wird ein fachlich korrekter, verifizierter Endzustand bei erhaltener Brownfield-Struktur – nicht das blinde Nachspielen einer Klickfolge.",
+      "helpLevels": [
+        "Vergleiche vor Änderungen dashboard.html mit anlagen.json und prüfe nach jeder fachlichen Änderung die Vorschau.",
+        "Die Wartungserweiterung erzeugt absichtlich eine Regression in der bestehenden Statusliste. Vergleiche den Zustand mit dem Ausgangsbestand.",
+        "Korrigiere zuerst Verfügbarkeit und offene Störungen getrennt, ergänze dann die 30-Tage-Wartungsansicht, stelle A-305 mit der gezielten Regression-Reparatur wieder her und verifiziere den Endzustand."
+      ],
+      "validation": {
+        "kind": "event",
+        "type": "artifact.verified",
+        "match": {
+          "artifactId": "maintenance-dashboard",
+          "artifactType": "html",
+          "revisionId": "repair-maintenance-regression"
+        }
+      },
+      "successMessage": "Das Wartungsdashboard ist fachlich korrigiert, um die Wartungsansicht ergänzt und nach der Regression vollständig verifiziert."
+    }
+  ],
+  "solutionComparison": [
+    "Vor Änderungen den vorhandenen Dashboard-Code und die strukturierten Anlagendaten analysieren.",
+    "Unabhängige Defekte als kleine Änderungen behandeln und fachlich in der Vorschau kontrollieren.",
+    "Die 30-Tage-Wartungsansicht ergänzen, ohne die bestehende Informationshierarchie zu ersetzen.",
+    "Die vorbereitete Regression erkennen: A-305 darf nicht aus der bestehenden Statusliste verschwinden.",
+    "Den vollständigen Endzustand nach der gezielten Regression-Reparatur verifizieren und die Projektregeln auf weitere Brownfield-Aufgaben übertragen."
+  ]
+}
