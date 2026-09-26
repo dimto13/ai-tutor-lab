@@ -48,7 +48,15 @@ function technologyName(technologyId: string): string {
 }
 
 export function CompletionScreen() {
-  const { scenario: canonicalScenario, mode, progress, restart, completedCount } = useTraining();
+  const {
+    scenario: canonicalScenario,
+    mode,
+    progress,
+    restart,
+    completedCount,
+    completionSaveFailure,
+    retryCompletionSave,
+  } = useTraining();
   const scenario = useLocalizedScenario(canonicalScenario);
   const competencyBaseline = useSkillProfiles();
   const scoreFinishedAt = competencyBaseline.status === "loading" ? null : progress.finishedAt;
@@ -104,6 +112,27 @@ export function CompletionScreen() {
           Training abgeschlossen
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
+
+        {completionSaveFailure ? (
+          <div
+            data-completion-save-failure="true"
+            className="mt-6 rounded-xl border border-destructive bg-panel p-4 text-left"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-destructive">
+              Abschluss nicht gespeichert
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-foreground" role="alert">
+              {completionSaveFailure}
+            </p>
+            <button
+              type="button"
+              onClick={retryCompletionSave}
+              className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
+            >
+              Abschluss erneut speichern
+            </button>
+          </div>
+        ) : null}
 
         <section className="mt-7 text-left" aria-labelledby="completion-results-heading">
           <h2 id="completion-results-heading" className="text-lg font-semibold text-foreground">
@@ -172,8 +201,9 @@ export function CompletionScreen() {
           {score.status === "error" ? (
             <div className="mt-4 rounded-xl border border-border bg-panel p-4">
               <p className="text-[13px] leading-relaxed text-muted-foreground" role="status">
-                Der Trainingsabschluss ist gespeichert, die Serverwertung konnte aber noch nicht
-                bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet.
+                {completionSaveFailure
+                  ? "Die Serverwertung konnte nicht bestätigt werden, weil der Abschluss noch nicht gespeichert ist. Es werden keine lokalen Ersatzpunkte berechnet."
+                  : "Der Trainingsabschluss ist gespeichert, die Serverwertung konnte aber noch nicht bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet."}
               </p>
               <button
                 type="button"
@@ -181,6 +211,22 @@ export function CompletionScreen() {
                 className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
               >
                 Serverwertung erneut prüfen
+              </button>
+            </div>
+          ) : null}
+
+          {score.attestationStatus === "error" ? (
+            <div className="mt-4 rounded-xl border border-border bg-panel p-4">
+              <p className="text-[13px] leading-relaxed text-muted-foreground" role="status">
+                Die Punkte sind serverseitig vergeben. Der Challenge-Nachweis konnte noch nicht
+                ausgestellt werden und wird beim erneuten Versuch nachgeholt.
+              </p>
+              <button
+                type="button"
+                onClick={score.retry}
+                className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
+              >
+                Nachweis erneut ausstellen
               </button>
             </div>
           ) : null}

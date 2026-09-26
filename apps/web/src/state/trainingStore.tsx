@@ -40,6 +40,7 @@ import type {
   Validation,
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
+import { completionSaveFailureMessage } from "@/completion/completionSaveFailure";
 import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
 import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
@@ -147,6 +148,9 @@ interface TrainingContextValue {
   challengeOutcome: ChallengeOutcome | null;
   challengeRemainingSeconds: number | null;
   recovery: GuidedRecoveryAction | null;
+  /** Set when a finished training could not be written to the authoritative store. */
+  completionSaveFailure: string | null;
+  retryCompletionSave: () => void;
   revealHelp: () => void;
   resetHelp: () => void;
   completeExplanationStep: () => void;
@@ -238,6 +242,8 @@ export function TrainingProvider({
   const [stateRecovery, setStateRecovery] = useState<ActiveGuidedRecovery | null>(null);
   const [guidedReplayStepId, setGuidedReplayStepId] = useState<string | null>(null);
   const [guidedNavigationPending, setGuidedNavigationPending] = useState(false);
+  const [completionSaveFailure, setCompletionSaveFailure] = useState<string | null>(null);
+  const [completionSaveRetryToken, setCompletionSaveRetryToken] = useState(0);
   const progressRef = useRef(progress);
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
   const guidedNavigationBusyRef = useRef(false);
@@ -436,7 +442,9 @@ export function TrainingProvider({
     void persistence
       .saveSession(progress)
       .then((authoritativeSession) => {
-        if (cancelled || !authoritativeSession) return;
+        if (cancelled) return;
+        setCompletionSaveFailure(null);
+        if (!authoritativeSession) return;
         setProgress((current) => {
           if (current !== progress) return current;
           if (!guidedReplayStepIdRef.current) {
@@ -446,14 +454,19 @@ export function TrainingProvider({
           return authoritativeSession;
         });
       })
-      .catch(() => {
-        // The current session stays usable when persistence is temporarily unavailable.
+      .catch((cause: unknown) => {
+        if (cancelled) return;
+        // An unfinished session stays usable while persistence is temporarily unavailable; the
+        // pending write is buffered. A finished training must not look saved when the
+        // authoritative write failed, so the completion screen reports and retries it (#467).
+        if (progress.finishedAt === null) return;
+        setCompletionSaveFailure(completionSaveFailureMessage(cause));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [progress, hydrated, persistence]);
+  }, [progress, hydrated, persistence, completionSaveRetryToken]);
 
   useEffect(() => {
     if (
@@ -997,6 +1010,8 @@ export function TrainingProvider({
       challengeOutcome: progress.challengeOutcome,
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       recovery,
+      completionSaveFailure,
+      retryCompletionSave: () => setCompletionSaveRetryToken((current) => current + 1),
       revealHelp: () => {
         if (mode !== "guided" || visibleHelpLevel >= 3) return;
         const replayStepId = guidedReplayStepIdRef.current;
@@ -1079,6 +1094,7 @@ export function TrainingProvider({
     visibleHelpLevel,
     challengeRemainingSeconds,
     recommendGuidedAfterChallenge,
+    completionSaveFailure,
     completeStep,
     finishGuidedReplay,
     navigateToGuidedStep,
