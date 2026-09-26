@@ -14,7 +14,11 @@
     "version": "1.x",
     "runtimeAdapterId": "vscode-simulator",
     "integrations": [
-      {"productId": "artifact-preview", "version": "1.x", "runtimeAdapterId": "artifact-preview-simulator"}
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
     ],
     "seed": {
       "workspaceMode": "folder",
@@ -31,14 +35,75 @@
         "activeArtifactId": "maintenance-dashboard",
         "viewMode": "preview",
         "artifacts": [
-          {"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Ausgangsstand","description":"Synthetischer Ausgangsstand mit zwei sichtbaren Defekten.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>76,0 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"},
-          {"id":"brownfield-project-rules","type":"data","title":"Projekt- und Gestaltungsregeln","description":"Übertragbare Regeln für kleine Brownfield-Änderungen.","value":{"informationHierarchy":"Bestehende Hauptkennzahlen bleiben vor ergänzenden Detailansichten sichtbar.","statusRepresentation":"Status wird aus strukturierten Zuständen abgeleitet.","periodLogic":"Zeitfenster werden aus Referenzdatum und strukturierten Datumswerten berechnet.","changeRule":"Vorhandenen Bestand analysieren und gezielt ändern; nicht die komplette Anwendung neu erzeugen."}}
+          {
+            "id": "maintenance-dashboard",
+            "type": "html",
+            "title": "Wartungsdashboard · Ausgangsstand",
+            "description": "Synthetischer Ausgangsstand mit zwei sichtbaren Defekten.",
+            "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>76,0 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"
+          },
+          {
+            "id": "brownfield-project-rules",
+            "type": "data",
+            "title": "Projekt- und Gestaltungsregeln",
+            "description": "Übertragbare Regeln für kleine Brownfield-Änderungen.",
+            "value": {
+              "informationHierarchy": "Bestehende Hauptkennzahlen bleiben vor ergänzenden Detailansichten sichtbar.",
+              "statusRepresentation": "Status wird aus strukturierten Zuständen abgeleitet.",
+              "periodLogic": "Zeitfenster werden aus Referenzdatum und strukturierten Datumswerten berechnet.",
+              "changeRule": "Vorhandenen Bestand analysieren und gezielt ändern; nicht die komplette Anwendung neu erzeugen."
+            }
+          }
         ],
         "revisions": [
-          {"id":"fix-availability","artifactId":"maintenance-dashboard","label":"Nur Verfügbarkeit korrigieren","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Verfügbarkeit korrigiert","description":"Defekt 1 behoben; Defekt 2 bleibt sichtbar.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"}},
-          {"id":"fix-open-incidents","artifactId":"maintenance-dashboard","label":"Nur offene Störungen korrigieren","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Anzeigen korrigiert","description":"Beide Kennzahlen stimmen mit dem Datenbestand überein.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"}},
-          {"id":"add-maintenance-window-with-regression","artifactId":"maintenance-dashboard","label":"30-Tage-Wartungsansicht ergänzen","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Wartungsansicht","description":"Kontrollierte Regression: A-305 fehlt ungewollt in der bestehenden Statusliste.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"}},
-          {"id":"repair-maintenance-regression","artifactId":"maintenance-dashboard","label":"Regression gezielt reparieren","next":{"id":"maintenance-dashboard","type":"html","title":"Wartungsdashboard · Wartungsansicht geprüft","description":"Wartungsansicht und vollständige Statusliste sind erhalten.","html":"<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"}}
+          {
+            "id": "fix-availability",
+            "artifactId": "maintenance-dashboard",
+            "label": "Nur Verfügbarkeit korrigieren",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Verfügbarkeit korrigiert",
+              "description": "Defekt 1 behoben; Defekt 2 bleibt sichtbar.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"
+            }
+          },
+          {
+            "id": "fix-open-incidents",
+            "artifactId": "maintenance-dashboard",
+            "label": "Nur offene Störungen korrigieren",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Anzeigen korrigiert",
+              "description": "Beide Kennzahlen stimmen mit dem Datenbestand überein.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"
+            }
+          },
+          {
+            "id": "add-maintenance-window-with-regression",
+            "artifactId": "maintenance-dashboard",
+            "label": "30-Tage-Wartungsansicht ergänzen",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Wartungsansicht",
+              "description": "Kontrollierte Regression: A-305 fehlt ungewollt in der bestehenden Statusliste.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"
+            }
+          },
+          {
+            "id": "repair-maintenance-regression",
+            "artifactId": "maintenance-dashboard",
+            "label": "Regression gezielt reparieren",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Wartungsansicht geprüft",
+              "description": "Wartungsansicht und vollständige Statusliste sind erhalten.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"
+            }
+          }
         ]
       }
     }
