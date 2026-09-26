@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTrainingSession, recordLastAction } from "@ai-train-lab/training-engine";
+import {
+  TrainingStateUnavailableError,
+  createTrainingSession,
+  recordLastAction,
+} from "@ai-train-lab/training-engine";
 import type { Scenario, TrainingStateKey } from "@ai-train-lab/training-engine";
 import { LocalStorageTrainingStateRepository } from "../src/state/localStorageTrainingStateRepository.ts";
 import type { StorageLike } from "../src/state/localStorageTrainingStateRepository.ts";
@@ -193,4 +197,38 @@ test("loads the latest session after queued writes complete", async () => {
 
   await write;
   assert.equal((await loaded).session.lastAction, "queued");
+});
+
+test("a failed authoritative write for a finished training reaches the caller", async () => {
+  // #467 makes the offline buffer fail closed for completed sessions. That signal is only useful
+  // if the coordinator propagates it instead of resolving as if the write had landed.
+  const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const persistence = coordinator(repository);
+  const initial = (await persistence.loadSession()).session;
+  const finished = { ...initial, finishedAt: 1_700_000_000_000 };
+
+  const unavailable = new TrainingStateUnavailableError(new Error("Failed to fetch"));
+  const failing = new TrainingStatePersistence(
+    {
+      loadSession: async () => null,
+      saveSession: async () => {
+        throw unavailable;
+      },
+      loadRuntimeSnapshot: async () => null,
+      saveRuntimeSnapshot: async () => {
+        throw unavailable;
+      },
+      deleteRuntimeSnapshot: async () => {
+        throw unavailable;
+      },
+    },
+    key,
+    scenario,
+  );
+
+  await assert.rejects(failing.saveSession(finished), TrainingStateUnavailableError);
+
+  // The serialized write chain stays usable after the rejection.
+  await assert.rejects(failing.saveSession(finished), TrainingStateUnavailableError);
+  assert.equal((await persistence.loadSession()).session.finishedAt, null);
 });
