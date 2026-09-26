@@ -1,0 +1,265 @@
+{
+  "id": "brownfield-dashboard-repair.guided",
+  "moduleId": "brownfield-dashboard-workflow",
+  "mode": "guided",
+  "learningLayer": "ai_workflow",
+  "title": "Wartungsdashboard gezielt reparieren und absichern",
+  "description": "Analysiere einen vorhandenen synthetischen Codebestand, behebe zwei sichtbare Defekte einzeln, ergänze eine 30-Tage-Wartungsansicht und erkenne eine kontrollierte Regression.",
+  "audience": {
+    "personaId": "non-programmer",
+    "glossaryConcepts": ["vscode.product", "vscode.explorer", "web.html", "artifact.preview"]
+  },
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "integrations": [
+      {
+        "productId": "artifact-preview",
+        "version": "1.x",
+        "runtimeAdapterId": "artifact-preview-simulator"
+      }
+    ],
+    "seed": {
+      "workspaceMode": "folder",
+      "folders": ["wartungsdashboard"],
+      "files": ["dashboard.html", "anlagen.json", "README.md"],
+      "contents": {
+        "dashboard.html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>76,0 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>",
+        "anlagen.json": "{\"anlagen\":[{\"id\":\"A-101\",\"status\":\"running\",\"availability\":98.4,\"maintenanceDue\":\"2026-10-03\"},{\"id\":\"A-204\",\"status\":\"warning\",\"availability\":91.2,\"maintenanceDue\":\"2026-09-29\"},{\"id\":\"A-305\",\"status\":\"stopped\",\"availability\":76.0,\"maintenanceDue\":\"2026-10-12\"}]}",
+        "README.md": "# Wartungsdashboard\nBrownfield-Training: vorhandenen Bestand analysieren, kleine Änderungen einzeln prüfen und bestehendes Verhalten erhalten."
+      },
+      "openTabs": ["dashboard.html", "anlagen.json"],
+      "activeFile": "dashboard.html",
+      "artifactPreview": {
+        "activeArtifactId": "maintenance-dashboard",
+        "viewMode": "preview",
+        "artifacts": [
+          {
+            "id": "maintenance-dashboard",
+            "type": "html",
+            "title": "Wartungsdashboard · Ausgangsstand",
+            "description": "Synthetischer Ausgangsstand mit zwei sichtbaren Defekten.",
+            "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>76,0 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"
+          },
+          {
+            "id": "brownfield-project-rules",
+            "type": "data",
+            "title": "Projekt- und Gestaltungsregeln",
+            "description": "Übertragbare Regeln für kleine Brownfield-Änderungen.",
+            "value": {
+              "informationHierarchy": "Bestehende Hauptkennzahlen bleiben vor ergänzenden Detailansichten sichtbar.",
+              "statusRepresentation": "Status wird aus strukturierten Zuständen abgeleitet und nicht über frei formulierte Anzeigetexte validiert.",
+              "periodLogic": "Zeitfenster werden aus einem Referenzdatum und strukturierten Datumswerten berechnet; die Anzeigeformulierung ist nicht Teil der fachlichen Gleichheitsprüfung.",
+              "changeRule": "Vorhandenen Bestand analysieren und gezielt ändern; nicht die komplette Anwendung neu erzeugen."
+            }
+          }
+        ],
+        "revisions": [
+          {
+            "id": "fix-availability",
+            "artifactId": "maintenance-dashboard",
+            "label": "Nur Verfügbarkeit korrigieren",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Verfügbarkeit korrigiert",
+              "description": "Defekt 1 ist behoben; Defekt 2 bleibt zur getrennten Diagnose sichtbar.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>0</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"
+            }
+          },
+          {
+            "id": "fix-open-incidents",
+            "artifactId": "maintenance-dashboard",
+            "label": "Nur offene Störungen korrigieren",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Anzeigen korrigiert",
+              "description": "Beide Kennzahlen stimmen mit dem synthetischen Datenbestand überein.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul></main>"
+            }
+          },
+          {
+            "id": "add-maintenance-window-with-regression",
+            "artifactId": "maintenance-dashboard",
+            "label": "30-Tage-Wartungsansicht ergänzen",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Wartungsansicht",
+              "description": "Kontrollierte Regression: Die Wartungsansicht ist ergänzt, aber A-305 fehlt ungewollt in der bestehenden Statusliste.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"
+            }
+          },
+          {
+            "id": "repair-maintenance-regression",
+            "artifactId": "maintenance-dashboard",
+            "label": "Regression gezielt reparieren",
+            "next": {
+              "id": "maintenance-dashboard",
+              "type": "html",
+              "title": "Wartungsdashboard · Wartungsansicht geprüft",
+              "description": "Die 30-Tage-Wartungsansicht bleibt erhalten und die bestehende Statusliste ist vollständig wiederhergestellt.",
+              "html": "<main><h1>Anlagenstatus</h1><p>Stand: 15. September 2026</p><section><h2>Verfügbarkeit</h2><p>88,5 %</p></section><section><h2>Offene Störungen</h2><p>2</p></section><ul><li>A-101 — Läuft</li><li>A-204 — Warnung</li><li>A-305 — Gestoppt</li></ul><section><h2>Wartungen · nächste 30 Tage</h2><ul><li>29.09.2026 — A-204</li><li>03.10.2026 — A-101</li><li>12.10.2026 — A-305</li></ul></section></main>"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "estimatedMinutes": 10,
+  "points": 80,
+  "steps": [
+    {
+      "id": "analyze-dashboard-source",
+      "title": "Vorhandenen Code zuerst analysieren",
+      "description": "Die sichtbaren Symptome werden erst nach dem Lesen des bestehenden Codes eingegrenzt.",
+      "instruction": "Öffne dashboard.html und analysiere den vorhandenen Aufbau, ohne die Anwendung neu zu erzeugen.",
+      "why": "Eine Komplett-Neuerzeugung wäre hier der falsche Weg, weil sie vorhandenes Verhalten unnötig ersetzt und Regressionen verschleiern kann.",
+      "helpLevels": [
+        "Beginne im Explorer mit der vorhandenen Datei dashboard.html.",
+        "Öffne dashboard.html und lies Kennzahlen, Statusliste und vorhandene Struktur, ohne Änderungen vorzunehmen.",
+        "Öffne dashboard.html im Explorer, prüfe die bestehende Informationshierarchie vollständig und lasse den Bestand unverändert; erzeuge keine neue Anwendung."
+      ],
+      "validation": { "kind": "event", "type": "file.opened", "match": { "path": "dashboard.html" } },
+      "highlightTarget": "vscode.activityBar.explorer",
+      "successMessage": "Der bestehende Dashboard-Code wurde vor jeder Mutation geöffnet."
+    },
+    {
+      "id": "analyze-structured-data",
+      "title": "Symptome mit den Daten abgleichen",
+      "description": "Die Kennzahlen werden gegen den strukturierten Datenbestand geprüft, statt Anzeigetexte frei zu erraten.",
+      "instruction": "Öffne anlagen.json und gleiche die sichtbaren Kennzahlen mit den strukturierten Zuständen ab.",
+      "why": "So lassen sich unabhängige Defekte einzeln eingrenzen.",
+      "helpLevels": [
+        "Die Vergleichsdaten liegen in anlagen.json.",
+        "Öffne anlagen.json und vergleiche Verfügbarkeit sowie Anlagenzustände mit dem Dashboard.",
+        "Öffne anlagen.json im Explorer und prüfe die strukturierten Felder availability und status aller drei Anlagen gegen die sichtbaren Kennzahlen."
+      ],
+      "validation": { "kind": "event", "type": "file.opened", "match": { "path": "anlagen.json" } },
+      "highlightTarget": "vscode.activityBar.explorer",
+      "successMessage": "Die sichtbaren Symptome sind mit den strukturierten Quelldaten abgeglichen."
+    },
+    {
+      "id": "repair-availability",
+      "title": "Defekt 1 isoliert reparieren",
+      "description": "Nur die falsche Verfügbarkeitsanzeige wird korrigiert; der zweite Defekt bleibt absichtlich unangetastet.",
+      "instruction": "Wende ausschließlich die Revision „Nur Verfügbarkeit korrigieren“ an.",
+      "why": "Kleine getrennte Änderungen machen Ursache und Wirkung nachvollziehbar.",
+      "helpLevels": [
+        "Nutze die vorbereitete Revision für die Verfügbarkeit.",
+        "Wähle „Nur Verfügbarkeit korrigieren“; ändere die übrige Anzeige noch nicht.",
+        "Wende in der Artefakt-Vorschau ausschließlich die Revision „Nur Verfügbarkeit korrigieren“ an und lasse den zweiten Defekt unverändert."
+      ],
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "maintenance-dashboard", "revisionId": "fix-availability" } },
+      "highlightTarget": "artifact.preview.applyRevision",
+      "successMessage": "Defekt 1 wurde als kleine, isolierte Änderung repariert."
+    },
+    {
+      "id": "verify-availability",
+      "title": "Erste Korrektur im Browser prüfen",
+      "description": "Die erste Änderung wird als eigener fachlicher Prüfschritt bestätigt.",
+      "instruction": "Prüfe die aktuelle Vorschau und markiere das Ergebnis als geprüft.",
+      "why": "Eine Änderung gilt nicht allein deshalb als korrekt, weil sie angewendet wurde.",
+      "helpLevels": [
+        "Kontrolliere die Vorschau vor der Bestätigung.",
+        "Prüfe die Verfügbarkeit und bestätige anschließend „Ergebnis geprüft“.",
+        "Vergleiche die sichtbare Verfügbarkeit mit den strukturierten Daten und klicke danach in der Vorschau auf „Ergebnis geprüft“."
+      ],
+      "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "maintenance-dashboard", "artifactType": "html", "revisionId": "fix-availability" } },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Die erste Korrektur wurde in der Vorschau verifiziert."
+    },
+    {
+      "id": "repair-incidents",
+      "title": "Defekt 2 getrennt reparieren",
+      "description": "Erst nach der ersten Verifikation wird die zweite falsche Kennzahl korrigiert.",
+      "instruction": "Wende die Revision „Nur offene Störungen korrigieren“ an.",
+      "why": "Getrennte Reparaturen verhindern, dass mehrere Ursachen in einer großen Änderung vermischt werden.",
+      "helpLevels": [
+        "Nutze jetzt die zweite vorbereitete Revision.",
+        "Wähle „Nur offene Störungen korrigieren“.",
+        "Wende in der Artefakt-Vorschau die Revision „Nur offene Störungen korrigieren“ an und prüfe, dass die erste Korrektur erhalten bleibt."
+      ],
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "maintenance-dashboard", "revisionId": "fix-open-incidents" } },
+      "highlightTarget": "artifact.preview.applyRevision",
+      "successMessage": "Defekt 2 wurde unabhängig von Defekt 1 repariert."
+    },
+    {
+      "id": "verify-incidents",
+      "title": "Zweite Korrektur im Browser prüfen",
+      "description": "Auch die zweite Änderung erhält einen eigenen Prüfschritt.",
+      "instruction": "Prüfe beide Kennzahlen in der Vorschau und markiere das Ergebnis als geprüft.",
+      "why": "Die vorherige Korrektur muss bei der zweiten Änderung erhalten bleiben.",
+      "helpLevels": [
+        "Prüfe beide Kennzahlen vor der Bestätigung.",
+        "Kontrolliere Verfügbarkeit und offene Störungen und bestätige dann das Ergebnis.",
+        "Vergleiche beide sichtbaren Kennzahlen mit anlagen.json und klicke erst danach auf „Ergebnis geprüft“."
+      ],
+      "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "maintenance-dashboard", "artifactType": "html", "revisionId": "fix-open-incidents" } },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Beide getrennten Reparaturen sind in der Vorschau geprüft."
+    },
+    {
+      "id": "add-maintenance-overview",
+      "title": "30-Tage-Wartungsübersicht ergänzen",
+      "description": "Die bestehende Oberfläche wird gezielt um anstehende Wartungen im definierten Zeitraum erweitert.",
+      "instruction": "Wende die Revision „30-Tage-Wartungsansicht ergänzen“ an.",
+      "why": "Der Zeitraum wird aus strukturierten Datumswerten abgeleitet; die bestehende Anwendung wird nicht komplett neu erzeugt.",
+      "helpLevels": [
+        "Nutze die vorbereitete Wartungsrevision.",
+        "Wähle „30-Tage-Wartungsansicht ergänzen“ und achte anschließend auch auf die bestehende Statusliste.",
+        "Wende die Revision „30-Tage-Wartungsansicht ergänzen“ an und vergleiche danach sowohl die Wartungstermine als auch alle drei bestehenden Anlagen in der Statusliste."
+      ],
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "maintenance-dashboard", "revisionId": "add-maintenance-window-with-regression" } },
+      "highlightTarget": "artifact.preview.applyRevision",
+      "successMessage": "Die 30-Tage-Wartungsansicht ist ergänzt; jetzt muss das Gesamtverhalten geprüft werden."
+    },
+    {
+      "id": "detect-and-repair-regression",
+      "title": "Regression erkennen und gezielt beheben",
+      "description": "Die neue Wartungsansicht hat A-305 ungewollt aus der bestehenden Statusliste entfernt.",
+      "instruction": "Erkenne den Verlust von A-305 und wende „Regression gezielt reparieren“ an, statt das Dashboard neu zu erzeugen.",
+      "why": "Ein Regressionstest schützt bestehendes Verhalten auch dann, wenn die neue Funktion sichtbar korrekt wirkt.",
+      "helpLevels": [
+        "Vergleiche die bestehende Statusliste mit dem Ausgangsbestand.",
+        "A-305 fehlt nach der Wartungserweiterung; nutze die gezielte Reparaturrevision.",
+        "Prüfe die Statusliste gegen den Ausgangsbestand, identifiziere A-305 als fehlenden bestehenden Eintrag und wende ausschließlich „Regression gezielt reparieren“ an."
+      ],
+      "validation": { "kind": "event", "type": "artifact.updated", "match": { "artifactId": "maintenance-dashboard", "revisionId": "repair-maintenance-regression" } },
+      "highlightTarget": "artifact.preview.applyRevision",
+      "successMessage": "Die kontrollierte Regression wurde erkannt und ohne Komplett-Neuerzeugung repariert."
+    },
+    {
+      "id": "verify-final-dashboard",
+      "title": "Alt- und Neufunktion gemeinsam prüfen",
+      "description": "Der Abschluss prüft die reparierten Kennzahlen, die vollständige Statusliste und die neue Wartungsansicht gemeinsam.",
+      "instruction": "Prüfe das vollständige Dashboard und markiere das Ergebnis als geprüft.",
+      "why": "Erst die gemeinsame Regressionprüfung belegt, dass neue und bestehende Funktionen zusammen erhalten sind.",
+      "helpLevels": [
+        "Prüfe Kennzahlen, alle drei Anlagen und die Wartungsliste.",
+        "Kontrolliere 88,5 %, zwei offene Störungen, A-101/A-204/A-305 und die drei Wartungstermine.",
+        "Vergleiche alle bestehenden Kennzahlen und Anlagen mit dem Datenbestand, prüfe die drei Termine im 30-Tage-Fenster und klicke erst danach auf „Ergebnis geprüft“."
+      ],
+      "validation": { "kind": "event", "type": "artifact.verified", "match": { "artifactId": "maintenance-dashboard", "artifactType": "html", "revisionId": "repair-maintenance-regression" } },
+      "highlightTarget": "artifact.preview.verify",
+      "successMessage": "Bestehendes Verhalten und neue Wartungsansicht sind gemeinsam geprüft."
+    },
+    {
+      "id": "review-transferable-rules",
+      "title": "Übertragbare Projektregeln sichern",
+      "description": "Die Regeln halten Informationshierarchie, Statusdarstellung, Periodenlogik und die Brownfield-Änderungsstrategie strukturiert fest.",
+      "instruction": "Wähle das Artefakt „Projekt- und Gestaltungsregeln“ aus und prüfe die strukturierten Regeln.",
+      "why": "Strukturierte Regeln sind übertragbar und vermeiden fragile Validierung über frei formulierte Texte.",
+      "helpLevels": [
+        "Die Regeln liegen als eigenes strukturiertes Artefakt vor.",
+        "Wähle „Projekt- und Gestaltungsregeln“ in der Artefakt-Auswahl.",
+        "Wähle das Datenartefakt „Projekt- und Gestaltungsregeln“ und prüfe die Felder informationHierarchy, statusRepresentation, periodLogic und changeRule."
+      ],
+      "validation": { "kind": "event", "type": "artifact.selected", "match": { "artifactId": "brownfield-project-rules", "artifactType": "data" } },
+      "highlightTarget": "artifact.preview.selector",
+      "successMessage": "Die übertragbaren Brownfield- und Gestaltungsregeln sind als strukturiertes Projektartefakt erfasst."
+    }
+  ]
+}
