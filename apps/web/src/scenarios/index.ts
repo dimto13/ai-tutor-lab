@@ -39,6 +39,7 @@ import claudeCodeBasicsChallengeRaw from "../../../../content/scenarios/claude-c
 import dataClassificationExploreRaw from "../../../../content/scenarios/data-classification-ai-usage.explore.json";
 import dataClassificationGuidedRaw from "../../../../content/scenarios/data-classification-ai-usage.guided.json";
 import dataClassificationChallengeRaw from "../../../../content/scenarios/data-classification-ai-usage.challenge.json";
+import brownfieldDashboardRepairGuidedRaw from "../../../../content/scenarios/brownfield-dashboard-repair.guided.json";
 
 const vscodeExploreScenario = parseScenario(vscodeExploreRaw);
 const vscodeGuidedScenario = parseScenario(vscodeGuidedRaw);
@@ -82,6 +83,7 @@ const claudeCodeBasicsChallengeScenario = parseScenario(claudeCodeBasicsChalleng
 const dataClassificationExploreScenario = parseScenario(dataClassificationExploreRaw);
 const dataClassificationGuidedScenario = parseScenario(dataClassificationGuidedRaw);
 const dataClassificationChallengeScenario = parseScenario(dataClassificationChallengeRaw);
+const brownfieldDashboardRepairGuidedScenario = parseScenario(brownfieldDashboardRepairGuidedRaw);
 
 const scenarios: Record<string, Scenario> = {
   [vscodeExploreScenario.id]: vscodeExploreScenario,
@@ -122,6 +124,7 @@ const scenarios: Record<string, Scenario> = {
   [dataClassificationExploreScenario.id]: dataClassificationExploreScenario,
   [dataClassificationGuidedScenario.id]: dataClassificationGuidedScenario,
   [dataClassificationChallengeScenario.id]: dataClassificationChallengeScenario,
+  [brownfieldDashboardRepairGuidedScenario.id]: brownfieldDashboardRepairGuidedScenario,
 };
 
 export function getScenario(scenarioId: string): Scenario | null {

@@ -10,6 +10,14 @@
       "fastRunThresholdRatio": 0.25
     },
     {
+      "id": "brownfield-dashboard-repair.guided",
+      "mode": "guided",
+      "version": "1",
+      "points": 80,
+      "estimatedMinutes": 10,
+      "fastRunThresholdRatio": 0.25
+    },
+    {
       "id": "claude-code-basics.challenge",
       "mode": "challenge",
       "version": "1",

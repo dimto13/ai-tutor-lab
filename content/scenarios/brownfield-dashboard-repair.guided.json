@@ -123,9 +123,9 @@
         "Öffne dashboard.html im Explorer, prüfe die bestehende Informationshierarchie vollständig und lasse den Bestand unverändert; erzeuge keine neue Anwendung."
       ],
       "validation": {
-        "kind": "event",
-        "type": "file.opened",
-        "match": { "path": "dashboard.html" }
+        "kind": "state",
+        "selector": "editor.activeFile",
+        "equals": "dashboard.html"
       },
       "highlightTarget": "vscode.activityBar.explorer",
       "successMessage": "Der bestehende Dashboard-Code wurde vor jeder Mutation geöffnet."
@@ -141,7 +141,11 @@
         "Öffne anlagen.json und vergleiche Verfügbarkeit sowie Anlagenzustände mit dem Dashboard.",
         "Öffne anlagen.json im Explorer und prüfe die strukturierten Felder availability und status aller drei Anlagen gegen die sichtbaren Kennzahlen."
       ],
-      "validation": { "kind": "event", "type": "file.opened", "match": { "path": "anlagen.json" } },
+      "validation": {
+        "kind": "state",
+        "selector": "editor.activeFile",
+        "equals": "anlagen.json"
+      },
       "highlightTarget": "vscode.activityBar.explorer",
       "successMessage": "Die sichtbaren Symptome sind mit den strukturierten Quelldaten abgeglichen."
     },
