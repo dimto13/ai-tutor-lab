@@ -62,7 +62,8 @@
         "html-page-workflow",
         "table-data-workflow",
         "browser-automation-workflow",
-        "mcp-server-workflow"
+        "mcp-server-workflow",
+        "brownfield-dashboard-workflow"
       ]
     }
   ]

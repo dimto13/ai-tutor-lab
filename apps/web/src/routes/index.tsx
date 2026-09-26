@@ -393,6 +393,25 @@ const workflowTrainings: TrainingCardModel[] = [
       },
     ],
   },
+  {
+    id: "brownfield-dashboard-workflow",
+    scenarioId: null,
+    title: "Wartungsdashboard gezielt reparieren und absichern",
+    description:
+      "Einen vorhandenen synthetischen Codebestand zuerst analysieren, zwei sichtbare Defekte einzeln beheben, jede Korrektur in der Vorschau prüfen, eine 30-Tage-Wartungsübersicht ergänzen und eine kontrollierte Regression erkennen.",
+    icon: Code2,
+    available: true,
+    label: "AI Workflow · 1 Modus",
+    modes: [
+      {
+        scenarioId: "brownfield-dashboard-repair.guided",
+        label: "Guided",
+        description: "Bestand analysieren, Defekte einzeln beheben, Regression erkennen",
+        icon: RouteIcon,
+        multiplier: "×1,0",
+      },
+    ],
+  },
 ];
 
 const aiWorkflowModuleLine = getModuleLineById(moduleLineCatalog, "ai-workflows-in-practice");
