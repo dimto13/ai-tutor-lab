@@ -115,7 +115,7 @@
         "type": "file.opened",
         "match": { "path": "dashboard.html" }
       },
-      "highlightTarget": "vscode.explorer"
+      "highlightTarget": "vscode.activityBar.explorer"
     }
   ]
 }
