@@ -300,6 +300,7 @@ export const scenarioSchema = z
         productId: z.string().min(1),
         version: z.string().min(1),
         runtimeAdapterId: z.string().min(1),
+        pathComparison: z.enum(["case-sensitive", "case-insensitive"]).optional(),
         integrations: z.array(integrationEnvironmentSchema).optional(),
         seed: runtimeSeedSchema.optional(),
       })

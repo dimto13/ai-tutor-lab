@@ -1,13 +1,9 @@
 import { vscodeRuntime as simulatorRuntime } from "@ai-train-lab/runtime-vscode-sim";
-import { matchesRuntimePath, type RuntimeAdapter } from "@ai-train-lab/runtime-core";
+import { findRuntimePath, type RuntimeAdapter } from "@ai-train-lab/runtime-core";
 
 export * from "@ai-train-lab/runtime-vscode-sim";
 
 let mountedContainer: HTMLElement | null = null;
-
-const vscodeEnvironment = {
-  pathComparison: "case-insensitive",
-} as const;
 
 function resolveVisibleTransientActionRegions(): DOMRect[] {
   if (!mountedContainer) return [];
@@ -25,7 +21,6 @@ function resolveVisibleTransientActionRegions(): DOMRect[] {
  */
 export const vscodeRuntime = {
   ...simulatorRuntime,
-  environment: vscodeEnvironment,
 
   async mount(container, seed) {
     mountedContainer = container;
@@ -58,8 +53,11 @@ export const vscodeRuntime = {
     }
 
     const files = await simulatorRuntime.query<string[]>("filesystem.files");
-    const canonicalFilename = files.find((file) =>
-      matchesRuntimePath(file, filename, vscodeEnvironment),
+    // The active profile decides whether an equivalent spelling is the same file.
+    const canonicalFilename = findRuntimePath(
+      files,
+      filename,
+      simulatorRuntime.environment.pathComparison,
     );
     if (!canonicalFilename) return { status: "unsupported" as const };
 

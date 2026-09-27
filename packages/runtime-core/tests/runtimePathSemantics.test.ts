@@ -1,22 +1,52 @@
-import { describe, expect, it } from "vitest";
-import { matchesRuntimePath } from "../src/runtimeAdapter.ts";
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  DEFAULT_RUNTIME_PATH_COMPARISON,
+  findRuntimePath,
+  matchesRuntimePath,
+  resolveRuntimeEnvironmentSemantics,
+} from "../src/runtimeAdapter.ts";
 
-describe("runtime path comparison semantics", () => {
-  it("accepts filename case differences for a case-insensitive profile", () => {
-    expect(
-      matchesRuntimePath("NOTIZ.txt", "notiz.txt", { pathComparison: "case-insensitive" }),
-    ).toBe(true);
+test("a case-insensitive profile accepts equivalent filename casing", () => {
+  assert.equal(matchesRuntimePath("NOTIZ.txt", "notiz.txt", "case-insensitive"), true);
+  assert.equal(
+    findRuntimePath(["README.md", "NOTIZ.txt"], "notiz.txt", "case-insensitive"),
+    "NOTIZ.txt",
+  );
+});
+
+test("a case-sensitive profile keeps filename casing distinct", () => {
+  assert.equal(matchesRuntimePath("NOTIZ.txt", "notiz.txt", "case-sensitive"), false);
+  assert.equal(
+    findRuntimePath(["README.md", "NOTIZ.txt"], "notiz.txt", "case-sensitive"),
+    undefined,
+  );
+});
+
+test("only case differences are folded, never other path differences", () => {
+  assert.equal(matchesRuntimePath("docs/notiz.txt", "src/notiz.txt", "case-insensitive"), false);
+  assert.equal(matchesRuntimePath("notiz.txt", "notiz.text", "case-insensitive"), false);
+  assert.equal(matchesRuntimePath("notiz .txt", "notiz.txt", "case-insensitive"), false);
+});
+
+test("case folding does not depend on the locale of the viewer", () => {
+  // A Turkish locale lowercases "I" to a dotless i; the fixed folding locale
+  // keeps INDEX.md and index.md identical everywhere.
+  assert.equal(matchesRuntimePath("INDEX.md", "index.md", "case-insensitive"), true);
+});
+
+test("paths stay case-sensitive until a profile declares otherwise", () => {
+  assert.equal(DEFAULT_RUNTIME_PATH_COMPARISON, "case-sensitive");
+  assert.deepEqual(resolveRuntimeEnvironmentSemantics(undefined, undefined), {
+    pathComparison: "case-sensitive",
   });
+});
 
-  it("keeps filename case distinct for a case-sensitive profile", () => {
-    expect(
-      matchesRuntimePath("NOTIZ.txt", "notiz.txt", { pathComparison: "case-sensitive" }),
-    ).toBe(false);
+test("the scenario environment profile wins over the runtime default", () => {
+  assert.deepEqual(resolveRuntimeEnvironmentSemantics("case-insensitive", "case-sensitive"), {
+    pathComparison: "case-insensitive",
   });
-
-  it("does not normalize non-case path differences", () => {
-    expect(
-      matchesRuntimePath("docs/notiz.txt", "src/notiz.txt", { pathComparison: "case-insensitive" }),
-    ).toBe(false);
+  assert.deepEqual(resolveRuntimeEnvironmentSemantics(undefined, "case-insensitive"), {
+    pathComparison: "case-insensitive",
   });
 });

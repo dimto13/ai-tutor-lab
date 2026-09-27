@@ -41,7 +41,8 @@
   "environment": {
     "productId": "vscode",
     "version": "1.x",
-    "runtimeAdapterId": "vscode-simulator"
+    "runtimeAdapterId": "vscode-simulator",
+    "pathComparison": "case-insensitive"
   },
   "estimatedMinutes": 14,
   "points": 100,

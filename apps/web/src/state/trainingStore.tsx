@@ -42,7 +42,13 @@ import type {
 import { useAuth } from "@/auth/AuthContext";
 import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
-import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import {
+  getRuntimeAdapter,
+  getRuntimeAdapterForSelector,
+  getRuntimeAdapters,
+  resolveScenarioPathIdentity,
+  applyScenarioEnvironment,
+} from "@/runtime";
 import {
   loadChallengeAttemptHistory,
   recordTimedOutChallengeAttempt,
@@ -191,6 +197,11 @@ function validateDeclarative(
   return validatorRegistry.validate(validation, {
     ...(event ? { event } : {}),
     query: (selector) => queryScenarioState(scenario, selector),
+    pathIdentity: resolveScenarioPathIdentity(
+      scenario.environment?.pathComparison,
+      scenario.environment?.runtimeAdapterId,
+      scenario.environment?.integrationRuntimeAdapterIds,
+    ),
   });
 }
 
@@ -252,6 +263,17 @@ export function TrainingProvider({
       ),
     [scenario],
   );
+  // The declared environment profile reaches every runtime of this scenario before
+  // any workspace mounts, so path identity is consistent across runtimes.
+  const declaredPathComparison = scenario.environment?.pathComparison;
+  useMemo(() => {
+    applyScenarioEnvironment(
+      declaredPathComparison,
+      scenario.environment?.runtimeAdapterId,
+      scenario.environment?.integrationRuntimeAdapterIds,
+    );
+  }, [declaredPathComparison, scenario]);
+
   const guidedNavigationCoordinator = useMemo(
     () => (persistence ? new GuidedNavigationCoordinator(persistence, scenarioRuntimes) : null),
     [persistence, scenarioRuntimes],

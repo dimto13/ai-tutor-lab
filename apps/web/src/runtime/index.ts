@@ -6,6 +6,11 @@ import { m365CopilotRuntime } from "./m365CopilotRuntime.ts";
 import { getRuntimeReferenceDefinition } from "./referenceCatalog.ts";
 import { sourceControlPlatformRuntime } from "./sourceControlPlatformRuntime.ts";
 import { vscodeRuntime } from "./vscodeRuntime.ts";
+import {
+  resolveRuntimeEnvironmentSemantics,
+  type RuntimePathComparison,
+  type RuntimePathIdentity,
+} from "@ai-train-lab/runtime-core";
 import type { RuntimeAdapter } from "./runtimeAdapter.ts";
 import type { TrainingEvent, UiTargetRef } from "../types/training.ts";
 
@@ -163,6 +168,45 @@ export function getRuntimeAdapterForSelector(
     if (definition?.querySelectors.includes(selector)) return runtime;
   }
   return null;
+}
+
+/**
+ * Resolves the active path identity for a scenario: the comparison comes from the
+ * declared environment profile (case-sensitive when nothing declares one), the
+ * path positions come from the runtime's own declaration. Nothing is inferred
+ * from a product, OS or host name.
+ */
+export function resolveScenarioPathIdentity(
+  declaredComparison: RuntimePathComparison | undefined,
+  runtimeAdapterId: string | undefined,
+  integrationRuntimeAdapterIds: readonly string[] = [],
+): RuntimePathIdentity {
+  const { pathComparison } = resolveRuntimeEnvironmentSemantics(declaredComparison);
+  const eventKeys = new Set<string>();
+  const selectors = new Set<string>();
+  for (const id of [runtimeAdapterId, ...integrationRuntimeAdapterIds]) {
+    if (!id) continue;
+    const declared = getRuntimeReferenceDefinition(id)?.pathIdentity;
+    declared?.eventKeys.forEach((key) => eventKeys.add(key));
+    declared?.selectors.forEach((selector) => selectors.add(selector));
+  }
+  return {
+    comparison: pathComparison,
+    eventKeys: [...eventKeys],
+    selectors: [...selectors],
+  };
+}
+
+/** Applies the resolved environment profile to every runtime that accepts one. */
+export function applyScenarioEnvironment(
+  declaredComparison: RuntimePathComparison | undefined,
+  runtimeAdapterId: string | undefined,
+  integrationRuntimeAdapterIds: readonly string[] = [],
+): void {
+  const semantics = resolveRuntimeEnvironmentSemantics(declaredComparison);
+  for (const runtime of getRuntimeAdapters(runtimeAdapterId, integrationRuntimeAdapterIds)) {
+    runtime.applyEnvironment?.(semantics);
+  }
 }
 
 export function getRuntimeAdapterForTarget(

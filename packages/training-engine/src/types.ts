@@ -16,6 +16,48 @@ export type ChallengeOutcome = "active" | "passed" | "timed_out";
 export type UiTargetRef = string;
 export type RuntimeSeed = Record<string, unknown>;
 
+/**
+ * Product-neutral identity semantics for filesystem paths and filenames.
+ *
+ * The engine never infers this from a product, OS or host name; it is declared
+ * by the runtime profile or the scenario environment and passed in explicitly.
+ */
+export type RuntimePathComparison = "case-sensitive" | "case-insensitive";
+
+/**
+ * Where path identity applies, declared by the runtime so the engine stays
+ * product-neutral. Everything not listed here keeps exact comparison, which is
+ * what protects code and free-text content from unintended normalization.
+ */
+export interface RuntimePathIdentity {
+  comparison: RuntimePathComparison;
+  /** Event payload keys whose value is a filesystem path. */
+  eventKeys?: readonly string[];
+  /** State selectors whose value is a path, a list of paths, or a map keyed by path. */
+  selectors?: readonly string[];
+}
+
+/** Identity comparison for two paths under the given semantics. */
+export function matchesRuntimePath(
+  actual: string,
+  expected: string,
+  comparison: RuntimePathComparison,
+): boolean {
+  if (comparison !== "case-insensitive") return actual === expected;
+  // Fixed locale: path case folding must not depend on the viewer's locale,
+  // which would make "I" behave differently in a Turkish locale.
+  return actual.toLocaleLowerCase("en-US") === expected.toLocaleLowerCase("en-US");
+}
+
+/** Canonical existing path that is identical to `expected` under the semantics. */
+export function findRuntimePath(
+  paths: readonly string[],
+  expected: string,
+  comparison: RuntimePathComparison,
+): string | undefined {
+  return paths.find((candidate) => matchesRuntimePath(candidate, expected, comparison));
+}
+
 /** Stable cross-runtime vocabulary defined by the domain model. */
 export type CanonicalTrainingEventType =
   | "workspace.opened"
@@ -260,6 +302,12 @@ export interface ScenarioEnvironment {
   productId: string;
   version: string;
   runtimeAdapterId: string;
+  /**
+   * Environment profile for filesystem path identity. Declared by the learning
+   * contract, not derived from the product: a scenario that teaches exact
+   * spelling keeps the case-sensitive default.
+   */
+  pathComparison?: RuntimePathComparison;
   /** Version-pinned product integrations hosted inside the primary runtime surface. */
   integrations?: ScenarioIntegrationEnvironment[];
   /** Derived by parseScenario for runtime consumers; never authored in scenario JSON. */

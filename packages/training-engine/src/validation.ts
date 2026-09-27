@@ -1,10 +1,14 @@
 import { validateClassification } from "./classificationValidation.ts";
-import type {
-  EngineValidationResult,
-  TrainingEvent,
-  Validation,
-  ValidationOutcome,
-  ValidationResult,
+import {
+  findRuntimePath,
+  matchesRuntimePath,
+  type EngineValidationResult,
+  type RuntimePathComparison,
+  type RuntimePathIdentity,
+  type TrainingEvent,
+  type Validation,
+  type ValidationOutcome,
+  type ValidationResult,
 } from "./types.ts";
 
 export interface ValidatorSpec {
@@ -15,6 +19,11 @@ export interface ValidationContext {
   event?: TrainingEvent;
   events?: readonly TrainingEvent[];
   query?: (selector: string) => Promise<unknown>;
+  /**
+   * Optional filesystem path identity. Absent means exact comparison
+   * everywhere, which is the behaviour for every non-path comparison too.
+   */
+  pathIdentity?: RuntimePathIdentity;
 }
 
 export type ValidationHandler = (
@@ -76,7 +85,13 @@ async function validateEvent(
 
   const payload = eventPayload(event);
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
-    if (payload[key] !== expected) {
+    if (
+      !matchesExpectedValue(
+        payload[key],
+        expected,
+        pathComparisonFor(context, isPathEventKey(context, key)),
+      )
+    ) {
       return nearMiss("event.match", key, EVENT_MISMATCH_MESSAGE);
     }
   }
@@ -106,25 +121,58 @@ async function validateState(
   if (!context.query) return IGNORE;
 
   const value = await context.query(validation.selector);
-  if (Object.hasOwn(validation, "equals") && value !== validation.equals) {
+  const pathSelector = isPathSelector(context, validation.selector);
+  if (
+    Object.hasOwn(validation, "equals") &&
+    !matchesExpectedValue(value, validation.equals, pathComparisonFor(context, pathSelector))
+  ) {
     return nearMiss("state.equals", validation.selector);
   }
-  if (Object.hasOwn(validation, "includes") && !includesValue(value, validation.includes)) {
+  if (
+    Object.hasOwn(validation, "includes") &&
+    !includesValue(
+      value,
+      validation.includes,
+      false,
+      pathSelector ? context.pathIdentity : undefined,
+    )
+  ) {
     return nearMiss("state.includes", validation.selector);
   }
   if (
     validation.includesAny &&
-    !validation.includesAny.some((candidate) => includesValue(value, candidate, true))
+    !validation.includesAny.some((candidate) =>
+      includesValue(value, candidate, true, pathSelector ? context.pathIdentity : undefined),
+    )
   ) {
     return nearMiss("state.includesAny", validation.selector);
   }
-  if (Object.hasOwn(validation, "excludes") && includesValue(value, validation.excludes)) {
+  if (
+    Object.hasOwn(validation, "excludes") &&
+    includesValue(
+      value,
+      validation.excludes,
+      false,
+      pathSelector ? context.pathIdentity : undefined,
+    )
+  ) {
     return nearMiss("state.excludes", validation.selector);
   }
   if (validation.match) {
     if (!isRecord(value)) return nearMiss("state.match", validation.selector);
     for (const [key, expected] of Object.entries(validation.match)) {
-      if (value[key] !== expected) return nearMiss("state.match", key);
+      // Only the key is a path. The value stays an exact comparison so code and
+      // free-text content is never normalized.
+      const actualKey = pathSelector
+        ? findRuntimePath(
+            Object.keys(value),
+            key,
+            context.pathIdentity?.comparison ?? "case-sensitive",
+          )
+        : key;
+      if (actualKey === undefined || value[actualKey] !== expected) {
+        return nearMiss("state.match", key);
+      }
     }
   }
   return PASS;
@@ -259,8 +307,56 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function includesValue(actual: unknown, expected: unknown, normalized = false): boolean {
-  if (Array.isArray(actual)) return actual.includes(expected);
+function isPathEventKey(context: ValidationContext, key: string): boolean {
+  return context.pathIdentity?.eventKeys?.includes(key) ?? false;
+}
+
+function isPathSelector(context: ValidationContext, selector: string): boolean {
+  return context.pathIdentity?.selectors?.includes(selector) ?? false;
+}
+
+/**
+ * Equality for a single value. Path semantics apply only where the runtime
+ * declared a path and the active profile asks for them; everything else, and
+ * every case-sensitive profile, keeps exact comparison.
+ */
+function matchesExpectedValue(
+  actual: unknown,
+  expected: unknown,
+  comparison: RuntimePathComparison | undefined,
+): boolean {
+  if (comparison && typeof actual === "string" && typeof expected === "string") {
+    return matchesRuntimePath(actual, expected, comparison);
+  }
+  return actual === expected;
+}
+
+/** Active path comparison for a declared path position, otherwise undefined. */
+function pathComparisonFor(
+  context: ValidationContext,
+  isPath: boolean,
+): RuntimePathComparison | undefined {
+  return isPath ? context.pathIdentity?.comparison : undefined;
+}
+
+function includesValue(
+  actual: unknown,
+  expected: unknown,
+  normalized = false,
+  pathIdentity?: RuntimePathIdentity,
+): boolean {
+  if (Array.isArray(actual)) {
+    if (pathIdentity && typeof expected === "string") {
+      return (
+        findRuntimePath(
+          actual.filter((item): item is string => typeof item === "string"),
+          expected,
+          pathIdentity.comparison,
+        ) !== undefined
+      );
+    }
+    return actual.includes(expected);
+  }
   if (typeof actual !== "string") return false;
   const expectedText = String(expected);
   return normalized

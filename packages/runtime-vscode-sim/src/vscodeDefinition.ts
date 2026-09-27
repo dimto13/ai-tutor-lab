@@ -7,6 +7,18 @@ export interface RuntimeReferenceDefinition {
   hostProductId?: string;
   surface: readonly RuntimeSurfaceDescription[];
   querySelectors: readonly string[];
+  /**
+   * Positions that carry filesystem path identity, declared by the runtime so
+   * the engine never has to infer them from a product or OS name. Anything not
+   * listed keeps exact comparison, which is what keeps code and free-text
+   * content out of path normalization.
+   */
+  pathIdentity?: {
+    /** Event payload keys whose value is a path. */
+    readonly eventKeys: readonly string[];
+    /** State selectors whose value is a path, a list of paths, or a map keyed by path. */
+    readonly selectors: readonly string[];
+  };
 }
 
 /**
@@ -138,6 +150,18 @@ export const VSCODE_RUNTIME_DEFINITION = {
     "scm.lastCommit.fileCount",
     "scm.lastCommit.branch",
   ],
+  pathIdentity: {
+    eventKeys: ["filename", "path"],
+    selectors: [
+      "filesystem.files",
+      "filesystem.contents",
+      "editor.activeFile",
+      "editor.openTabs",
+      "editor.dirtyFiles",
+      "scm.stagedFiles",
+      "scm.changedFiles",
+    ],
+  },
 } as const satisfies RuntimeReferenceDefinition;
 
 export function getVscodeSurfaceTarget(ref: UiTargetRef): RuntimeSurfaceDescription | null {
