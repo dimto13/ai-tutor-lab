@@ -231,6 +231,26 @@
       "id": "verify_stable_identity_table_diff",
       "title": "Tabellenversionen über stabile Identitäten vergleichen",
       "description": "Geänderte, hinzugekommene und entfallene Datensätze über eine stabile fachliche Kennung zuordnen, irrelevante Spalten ausschließen und den Diff-Endzustand gegen gezielte Prüffälle verifizieren."
+    },
+    {
+      "id": "analyze_existing_code_before_change",
+      "title": "Bestehenden Code vor der Änderung analysieren",
+      "description": "Vorhandenen Aufbau und die zugehörigen strukturierten Daten zuerst lesen und die sichtbaren Symptome eingrenzen, bevor eine Änderung erfolgt, statt den Bestand vollständig neu zu erzeugen."
+    },
+    {
+      "id": "repair_defects_in_isolation",
+      "title": "Defekte einzeln und nachvollziehbar reparieren",
+      "description": "Mehrere unabhängige Defekte getrennt voneinander beheben und jede Korrektur einzeln am sichtbaren Ergebnis verifizieren, damit Ursache und Wirkung zuordenbar bleiben."
+    },
+    {
+      "id": "detect_and_repair_regression",
+      "title": "Regression erkennen und gezielt beheben",
+      "description": "Nach einer Funktionserweiterung auch das bestehende Verhalten prüfen, einen dabei entstandenen Verlust erkennen und ihn beheben, ohne die neue Funktion zurückzunehmen."
+    },
+    {
+      "id": "apply_brownfield_change_rules",
+      "title": "Übertragbare Regeln für Bestandsänderungen anwenden",
+      "description": "Informationshierarchie, Statusdarstellung und Periodenlogik eines bestehenden Arbeitsprodukts als übertragbare Projektregeln festhalten und auf kleine, geprüfte Änderungen anwenden."
     }
   ]
 }

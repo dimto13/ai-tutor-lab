@@ -111,10 +111,10 @@
   "estimatedMinutes": 10,
   "points": 120,
   "learningObjectives": [
-    "analyze-before-change",
-    "verify-controlled-changes",
-    "detect-and-repair-regressions",
-    "apply-brownfield-project-rules"
+    "analyze_existing_code_before_change",
+    "repair_defects_in_isolation",
+    "detect_and_repair_regression",
+    "apply_brownfield_change_rules"
   ],
   "completionValidation": {
     "kind": "event",
@@ -135,7 +135,7 @@
       "helpLevels": [
         "Vergleiche vor Änderungen dashboard.html mit anlagen.json und prüfe nach jeder fachlichen Änderung die Vorschau.",
         "Die Wartungserweiterung erzeugt absichtlich eine Regression in der bestehenden Statusliste. Vergleiche den Zustand mit dem Ausgangsbestand.",
-        "Korrigiere zuerst Verfügbarkeit und offene Störungen getrennt, ergänze dann die 30-Tage-Wartungsansicht, stelle A-305 mit der gezielten Regression-Reparatur wieder her und verifiziere den Endzustand."
+        "Wende zuerst die Revisionen für Verfügbarkeit und offene Störungen getrennt an, füge danach die 30-Tage-Wartungsansicht hinzu, wende anschließend die gezielte Regression-Reparatur für A-305 an und prüfe den Endzustand über die Verifikation."
       ],
       "validation": {
         "kind": "event",
