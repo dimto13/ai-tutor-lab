@@ -79,11 +79,15 @@ export interface RuntimeAdapter {
   readonly id: string;
   readonly productId: string;
   readonly capabilities: readonly RuntimeCapability[];
-  /** Optional environment semantics; consumers must not infer these from product or OS names. */
-  readonly environment?: RuntimeEnvironmentSemantics;
   /**
-   * Optional hook for the platform to apply the resolved environment profile
-   * before mounting. Runtimes that have no path-identity behaviour omit it.
+   * Active environment semantics. This is a method, not a property: adapters in
+   * this codebase are composed by object spread, and a spread would freeze a
+   * getter-backed property to its value at module load.
+   */
+  resolveEnvironment?(): RuntimeEnvironmentSemantics;
+  /**
+   * Optional hook for the platform to apply the resolved environment profile.
+   * Runtimes that have no path-identity behaviour omit it.
    */
   applyEnvironment?(semantics: RuntimeEnvironmentSemantics): void;
 

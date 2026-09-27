@@ -57,7 +57,7 @@ export const vscodeRuntime = {
     const canonicalFilename = findRuntimePath(
       files,
       filename,
-      simulatorRuntime.environment.pathComparison,
+      simulatorRuntime.resolveEnvironment().pathComparison,
     );
     if (!canonicalFilename) return { status: "unsupported" as const };
 

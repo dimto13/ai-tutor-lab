@@ -450,7 +450,12 @@ function saveFile(filename: string): void {
   const canonical = knownFile(filename);
   if (!canonical) return;
   replaceState(
-    { ...state, dirtyFiles: state.dirtyFiles.filter((file) => file !== canonical) },
+    {
+      ...state,
+      dirtyFiles: state.dirtyFiles.filter(
+        (file) => !matchesRuntimePath(file, canonical, pathComparison),
+      ),
+    },
     "mutation",
   );
   // The canonical name is reported so downstream consumers see one identity
@@ -495,8 +500,9 @@ export const vscodeRuntime = {
   productId: VSCODE_RUNTIME_DEFINITION.productId,
   capabilities: ["filesystem", "editor", "terminal", "extensions", "source_control"] as const,
 
-  get environment() {
-    return { pathComparison } as const;
+  /** Method, not a getter: the app and index adapters compose this by spread. */
+  resolveEnvironment(): { readonly pathComparison: RuntimePathComparison } {
+    return { pathComparison };
   },
 
   /**
@@ -526,6 +532,9 @@ export const vscodeRuntime = {
     keyboardContainer = null;
     mountedContainer = null;
     mountedInitialState = null;
+    // The profile belongs to the scenario that was mounted, not to the module:
+    // the next scenario must start from the strict default unless it declares one.
+    pathComparison = DEFAULT_RUNTIME_PATH_COMPARISON;
   },
 
   subscribe(handler) {
@@ -601,7 +610,8 @@ export const vscodeRuntime = {
     const committedContent = trackedName ? state.committedContents[trackedName] : undefined;
     const workingTreeChanged = !trackedName || committedContent !== content;
     const stagedName = knownIn(state.stagedFiles, target);
-    const indexChanged = Boolean(stagedName) && state.stagedContents[target] !== committedContent;
+    const stagedContent = stagedName ? state.stagedContents[stagedName] : undefined;
+    const indexChanged = Boolean(stagedName) && stagedContent !== committedContent;
     const isKnownFile = Boolean(knownFile(target));
     replaceState(
       {

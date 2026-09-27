@@ -347,12 +347,9 @@ function includesValue(
 ): boolean {
   if (Array.isArray(actual)) {
     if (pathIdentity && typeof expected === "string") {
-      return (
-        findRuntimePath(
-          actual.filter((item): item is string => typeof item === "string"),
-          expected,
-          pathIdentity.comparison,
-        ) !== undefined
+      return actual.some(
+        (item) =>
+          typeof item === "string" && matchesRuntimePath(item, expected, pathIdentity.comparison),
       );
     }
     return actual.includes(expected);
