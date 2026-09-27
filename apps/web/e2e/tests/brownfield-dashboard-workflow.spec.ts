@@ -23,7 +23,10 @@ test("Dashboard führt den Brownfield-Workflow als eigenes Training der Modullin
     hasText: "Wartungsdashboard gezielt reparieren und absichern",
   });
   await expect(card).toBeVisible();
-  await expect(card.getByText("AI Workflow · 1 Modus", { exact: true })).toBeVisible();
+  await expect(card.getByText("AI Workflow · 3 Modi", { exact: true })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Explore/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Guided/ })).toBeVisible();
+  await expect(card.getByRole("link", { name: /Challenge/ })).toBeVisible();
 
   await card.getByRole("link", { name: /Guided/ }).click();
   await expect(page).toHaveURL(/\/training\/brownfield-dashboard-repair\.guided$/);
@@ -67,6 +70,52 @@ test("Guided: Bestand wird vor der Mutation analysiert, Defekte einzeln behoben 
 
   await expectGuidedStep(page, 10, "Übertragbare Projektregeln sichern");
   await page.getByRole("button", { name: /Projekt- und Gestaltungsregeln/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
+test("Explore: Bestand, Reparaturen und Regression bleiben frei erkundbar", async ({ page }) => {
+  await page.goto("/training/brownfield-dashboard-repair.explore");
+  await waitForTrainingReady(page);
+
+  await expect(page.getByText("0 von 4 erkundet", { exact: true })).toBeVisible();
+
+  const sidebar = page.getByLabel("Primary Side Bar");
+  await page.getByRole("button", { name: "Explorer", exact: true }).click();
+  await sidebar.getByRole("button", { name: "dashboard.html", exact: true }).click();
+
+  await page
+    .getByRole("button", { name: "Nur Verf\u00fcgbarkeit korrigieren", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Ergebnis gepr\u00fcft", exact: true }).click();
+
+  await expect(page.getByText(/von 4 erkundet/)).toBeVisible();
+  await expect(page.getByText("0 von 4 erkundet", { exact: true })).toHaveCount(0);
+});
+
+test("Challenge: nur der gepr\u00fcfte Endzustand ohne Regression schlie\u00dft das Training ab", async ({
+  page,
+}) => {
+  await page.goto("/training/brownfield-dashboard-repair.challenge");
+  await waitForTrainingReady(page);
+
+  await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Nur Verf\u00fcgbarkeit korrigieren", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Nur offene St\u00f6rungen korrigieren", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "30-Tage-Wartungsansicht erg\u00e4nzen", exact: true })
+    .click();
+
+  // The maintenance window deliberately drops A-305; verifying here must not finish the run.
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Regression gezielt reparieren", exact: true }).click();
+  await page.getByRole("button", { name: "Ergebnis gepr\u00fcft", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
