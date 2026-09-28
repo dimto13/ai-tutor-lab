@@ -31,6 +31,7 @@ import type {
   ChallengeOutcome,
   EngineValidationResult,
   GuidedRecoveryAction,
+  RuntimePathIdentity,
   Scenario,
   TrainingEvent,
   TrainingMode,
@@ -42,7 +43,13 @@ import type {
 import { useAuth } from "@/auth/AuthContext";
 import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
-import { getRuntimeAdapter, getRuntimeAdapterForSelector, getRuntimeAdapters } from "@/runtime";
+import {
+  getRuntimeAdapter,
+  getRuntimeAdapterForSelector,
+  getRuntimeAdapters,
+  resolveScenarioPathIdentity,
+  applyScenarioEnvironment,
+} from "@/runtime";
 import {
   loadChallengeAttemptHistory,
   recordTimedOutChallengeAttempt,
@@ -183,6 +190,25 @@ function queryScenarioState(scenario: Scenario, selector: string): Promise<unkno
   return adapter ? adapter.query(selector) : Promise.resolve(undefined);
 }
 
+/**
+ * Path identity is derived from the scenario and the runtime declarations, both of
+ * which are stable for a scenario, so it is resolved once instead of on every
+ * validation step.
+ */
+const pathIdentityCache = new WeakMap<Scenario, RuntimePathIdentity>();
+
+function scenarioPathIdentity(scenario: Scenario): RuntimePathIdentity {
+  const cached = pathIdentityCache.get(scenario);
+  if (cached) return cached;
+  const identity = resolveScenarioPathIdentity(
+    scenario.environment?.pathComparison,
+    scenario.environment?.runtimeAdapterId,
+    scenario.environment?.integrationRuntimeAdapterIds,
+  );
+  pathIdentityCache.set(scenario, identity);
+  return identity;
+}
+
 function validateDeclarative(
   validation: Validation,
   scenario: Scenario,
@@ -191,6 +217,7 @@ function validateDeclarative(
   return validatorRegistry.validate(validation, {
     ...(event ? { event } : {}),
     query: (selector) => queryScenarioState(scenario, selector),
+    pathIdentity: scenarioPathIdentity(scenario),
   });
 }
 
@@ -252,6 +279,21 @@ export function TrainingProvider({
       ),
     [scenario],
   );
+  // The declared environment profile is pushed to every runtime of this scenario.
+  // An effect is enough: the profile is only read on user interaction and during
+  // recovery, both of which happen after effects have run, and a runtime restores
+  // the strict default on unmount so a scenario switch cannot inherit a profile.
+  const declaredPathComparison = scenario.environment?.pathComparison;
+  const scenarioRuntimeAdapterId = scenario.environment?.runtimeAdapterId;
+  const scenarioIntegrationRuntimeAdapterIds = scenario.environment?.integrationRuntimeAdapterIds;
+  useEffect(() => {
+    applyScenarioEnvironment(
+      declaredPathComparison,
+      scenarioRuntimeAdapterId,
+      scenarioIntegrationRuntimeAdapterIds,
+    );
+  }, [declaredPathComparison, scenarioRuntimeAdapterId, scenarioIntegrationRuntimeAdapterIds]);
+
   const guidedNavigationCoordinator = useMemo(
     () => (persistence ? new GuidedNavigationCoordinator(persistence, scenarioRuntimes) : null),
     [persistence, scenarioRuntimes],

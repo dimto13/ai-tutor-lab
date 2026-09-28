@@ -22,6 +22,7 @@ import { VscodeMenuBar } from "./VscodeMenuBar";
 import { artifactPreviewRuntime } from "@/runtime/artifactPreviewRuntime";
 import { copilotRuntime } from "@/runtime/copilotRuntime";
 import { vscodeRuntime } from "@/runtime/vscodeRuntime";
+import { findRuntimePath, resolveRuntimeEnvironmentSemantics } from "@ai-train-lab/runtime-core";
 import { workspaceBus } from "@/state/eventBus";
 import { useTraining } from "@/state/trainingStore";
 
@@ -57,6 +58,9 @@ function toFileNodes(runtimeFiles: string[]): FileNode[] {
 export function Workspace() {
   const { mode, scenario } = useTraining();
   const runtimeSeed = scenario.environment?.seed;
+  const { pathComparison } = resolveRuntimeEnvironmentSemantics(
+    scenario.environment?.pathComparison,
+  );
   const copilotIntegrated =
     scenario.environment?.integrationRuntimeAdapterIds?.includes(copilotRuntime.id) ?? false;
   const artifactPreviewIntegrated =
@@ -120,12 +124,14 @@ export function Workspace() {
       setNewFileName(null);
     });
 
-    void vscodeRuntime.mount(container, runtimeSeed);
+    // The declared profile travels with the mount: unmount restores the strict
+    // default, so a remount inside the same scenario has to re-establish it.
+    void vscodeRuntime.mount(container, runtimeSeed, { pathComparison });
     return () => {
       unsubscribe();
       void vscodeRuntime.unmount();
     };
-  }, [runtimeSeed]);
+  }, [runtimeSeed, pathComparison]);
 
   useEffect(() => {
     if (newFileName !== null) newFileRef.current?.focus();
@@ -177,24 +183,52 @@ export function Workspace() {
     workspaceBus.emit("repository.opened", { name: "ai-training-demo" });
   };
 
+  // The runtime answers with the canonical name, so React has to use it too;
+  // otherwise both sides hold a different spelling of the same open file.
+  const canonicalFileName = (name: string): string =>
+    findRuntimePath(
+      files.map((file) => file.name),
+      name,
+      pathComparison,
+    ) ?? name;
+
   const openFile = (name: string) => {
-    setTabs((current) => (current.includes(name) ? current : [...current, name]));
-    setActiveFile(name);
-    vscodeRuntime.setActiveFile(name);
+    const canonical = canonicalFileName(name);
+    setTabs((current) =>
+      findRuntimePath(current, canonical, pathComparison) ? current : [...current, canonical],
+    );
+    setActiveFile(canonical);
+    vscodeRuntime.setActiveFile(canonical);
   };
 
   const createFile = (raw: string) => {
     const name = raw.trim();
     setNewFileName(null);
-    if (!name || files.some((file) => file.name === name)) return;
+    if (!name) return;
+
+    const existing = findRuntimePath(
+      files.map((file) => file.name),
+      name,
+      pathComparison,
+    );
+    // Under the active profile an equivalent spelling is the same file: open the
+    // existing one instead of dropping the action or creating a second identity.
+    if (existing) {
+      openFile(existing);
+      return;
+    }
 
     setFiles((current) => [...current, { name, kind: "file" }]);
     setContents((current) => ({ ...current, [name]: "" }));
     vscodeRuntime.addFile(name);
     vscodeRuntime.saveFile(name);
     openFile(name);
-    const acceptedTrainingFiles = new Set(["hello.py", "notiz.txt", "challenge.txt"]);
-    const nextWrongFile = acceptedTrainingFiles.has(name) ? null : name;
+    // Identity of the expected training file follows the active profile, so a
+    // Windows-equivalent spelling is not reported as the wrong file.
+    const acceptedTrainingFiles = ["hello.py", "notiz.txt", "challenge.txt"];
+    const nextWrongFile = findRuntimePath(acceptedTrainingFiles, name, pathComparison)
+      ? null
+      : name;
     setWrongFile(nextWrongFile);
     vscodeRuntime.setWrongFile(nextWrongFile);
     workspaceBus.emit("file.created", { filename: name });

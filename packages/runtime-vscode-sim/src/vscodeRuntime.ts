@@ -1,9 +1,13 @@
 import { workspaceBus } from "@ai-train-lab/runtime-core/eventBus";
 import type { UiTargetRef } from "@ai-train-lab/training-engine";
-import type {
-  RuntimeAdapter,
-  RuntimeSeed,
-  RuntimeSurfaceDescription,
+import {
+  DEFAULT_RUNTIME_PATH_COMPARISON,
+  findRuntimePath,
+  matchesRuntimePath,
+  type RuntimeAdapter,
+  type RuntimePathComparison,
+  type RuntimeSeed,
+  type RuntimeSurfaceDescription,
 } from "@ai-train-lab/runtime-core";
 import {
   executeTerminalCommand as evaluateTerminalCommand,
@@ -392,6 +396,22 @@ function stateFromSeed(seed?: RuntimeSeed): VscodeRuntimeState {
   };
 }
 
+/**
+ * Active path identity profile. Declared by the scenario environment or the
+ * runtime profile and applied by the platform; never inferred from an OS name.
+ */
+let pathComparison: RuntimePathComparison = DEFAULT_RUNTIME_PATH_COMPARISON;
+
+/** Canonical name of an already known file that is the same path under the profile. */
+function knownFile(filename: string): string | undefined {
+  return findRuntimePath(state.files, filename, pathComparison);
+}
+
+/** Canonical name of a path already present in the given list under the profile. */
+function knownIn(paths: readonly string[], filename: string): string | undefined {
+  return findRuntimePath(paths, filename, pathComparison);
+}
+
 let state = initialState();
 let mountedContainer: HTMLElement | null = null;
 let mountedInitialState: VscodeRuntimeState | null = null;
@@ -427,12 +447,20 @@ function currentTerminalPrompt(): string {
 }
 
 function saveFile(filename: string): void {
-  if (!state.files.includes(filename)) return;
+  const canonical = knownFile(filename);
+  if (!canonical) return;
   replaceState(
-    { ...state, dirtyFiles: state.dirtyFiles.filter((file) => file !== filename) },
+    {
+      ...state,
+      dirtyFiles: state.dirtyFiles.filter(
+        (file) => !matchesRuntimePath(file, canonical, pathComparison),
+      ),
+    },
     "mutation",
   );
-  workspaceBus.emit("file.saved", { filename });
+  // The canonical name is reported so downstream consumers see one identity
+  // for the file, not the spelling that happened to be used here.
+  workspaceBus.emit("file.saved", { filename: canonical });
 }
 
 function clickRuntimeTarget(ref: UiTargetRef): boolean {
@@ -472,7 +500,28 @@ export const vscodeRuntime = {
   productId: VSCODE_RUNTIME_DEFINITION.productId,
   capabilities: ["filesystem", "editor", "terminal", "extensions", "source_control"] as const,
 
-  async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
+  /** Method, not a getter: the app and index adapters compose this by spread. */
+  resolveEnvironment(): { readonly pathComparison: RuntimePathComparison } {
+    return { pathComparison };
+  },
+
+  /**
+   * Applies the resolved environment profile. The platform passes what the
+   * scenario declared; the runtime stores it and never derives it itself.
+   */
+  applyEnvironment(semantics: { readonly pathComparison: RuntimePathComparison }): void {
+    pathComparison = semantics.pathComparison;
+  },
+
+  async mount(
+    container: HTMLElement,
+    seed?: RuntimeSeed,
+    environment?: { readonly pathComparison: RuntimePathComparison },
+  ): Promise<void> {
+    // Applied before the seeded state exists: unmount restores the default, so
+    // a remount within the same scenario must re-establish the profile here
+    // rather than rely on a separate effect that does not run again.
+    if (environment) pathComparison = environment.pathComparison;
     keyboardContainer?.removeEventListener("keydown", handleKeyboardShortcut, true);
     keyboardContainer?.removeEventListener("pointerdown", handlePointerFocus, true);
     mountedContainer = container;
@@ -491,6 +540,9 @@ export const vscodeRuntime = {
     keyboardContainer = null;
     mountedContainer = null;
     mountedInitialState = null;
+    // The profile belongs to the scenario that was mounted, not to the module:
+    // the next scenario must start from the strict default unless it declares one.
+    pathComparison = DEFAULT_RUNTIME_PATH_COMPARISON;
   },
 
   subscribe(handler) {
@@ -543,7 +595,9 @@ export const vscodeRuntime = {
   },
 
   addFile(filename: string): void {
-    if (state.files.includes(filename)) return;
+    // Under a case-insensitive profile an equivalent spelling is the same file,
+    // so it must not create a second entry.
+    if (knownFile(filename)) return;
     replaceState(
       {
         ...state,
@@ -557,24 +611,31 @@ export const vscodeRuntime = {
   },
 
   setFileContent(filename: string, content: string): void {
-    const committedContent = state.committedContents[filename];
-    const workingTreeChanged =
-      !state.trackedFiles.includes(filename) || committedContent !== content;
-    const indexChanged =
-      state.stagedFiles.includes(filename) && state.stagedContents[filename] !== committedContent;
+    // Identity of the file is profile-aware; the content itself is stored
+    // verbatim and never normalized.
+    const target = knownFile(filename) ?? filename;
+    const trackedName = knownIn(state.trackedFiles, target);
+    const committedContent = trackedName ? state.committedContents[trackedName] : undefined;
+    const workingTreeChanged = !trackedName || committedContent !== content;
+    const stagedName = knownIn(state.stagedFiles, target);
+    const stagedContent = stagedName ? state.stagedContents[stagedName] : undefined;
+    const indexChanged = Boolean(stagedName) && stagedContent !== committedContent;
+    const isKnownFile = Boolean(knownFile(target));
     replaceState(
       {
         ...state,
-        contents: { ...state.contents, [filename]: content },
+        contents: { ...state.contents, [target]: content },
         dirtyFiles:
-          state.files.includes(filename) && !state.dirtyFiles.includes(filename)
-            ? [...state.dirtyFiles, filename]
+          isKnownFile && !knownIn(state.dirtyFiles, target)
+            ? [...state.dirtyFiles, target]
             : state.dirtyFiles,
-        scmChangedFiles: !state.files.includes(filename)
+        scmChangedFiles: !isKnownFile
           ? state.scmChangedFiles
           : workingTreeChanged || indexChanged
-            ? addUnique(state.scmChangedFiles, filename)
-            : state.scmChangedFiles.filter((file) => file !== filename),
+            ? addUnique(state.scmChangedFiles, target)
+            : state.scmChangedFiles.filter(
+                (file) => !matchesRuntimePath(file, target, pathComparison),
+              ),
       },
       "mutation",
     );
@@ -585,14 +646,13 @@ export const vscodeRuntime = {
   },
 
   setActiveFile(filename: string | null): void {
+    const target = filename === null ? null : (knownFile(filename) ?? filename);
     replaceState(
       {
         ...state,
-        activeFile: filename,
+        activeFile: target,
         openTabs:
-          filename && !state.openTabs.includes(filename)
-            ? [...state.openTabs, filename]
-            : state.openTabs,
+          target && !knownIn(state.openTabs, target) ? [...state.openTabs, target] : state.openTabs,
       },
       "mutation",
     );
@@ -602,8 +662,13 @@ export const vscodeRuntime = {
     replaceState(
       {
         ...state,
-        openTabs: state.openTabs.filter((tab) => tab !== filename),
-        activeFile: state.activeFile === filename ? null : state.activeFile,
+        openTabs: state.openTabs.filter(
+          (tab) => !matchesRuntimePath(tab, filename, pathComparison),
+        ),
+        activeFile:
+          state.activeFile && matchesRuntimePath(state.activeFile, filename, pathComparison)
+            ? null
+            : state.activeFile,
       },
       "mutation",
     );

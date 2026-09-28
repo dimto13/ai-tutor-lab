@@ -1,4 +1,5 @@
 import type {
+  RuntimePathComparison,
   RuntimeRecoveryCommand,
   RuntimeSeed,
   TrainingEvent,
@@ -16,7 +17,41 @@ export type RuntimeCapability =
   | "agent_mode"
   | "artifact_preview";
 
+export interface RuntimeEnvironmentSemantics {
+  /** Product-neutral identity semantics for filesystem paths and filenames only. */
+  readonly pathComparison: RuntimePathComparison;
+}
+
+/**
+ * Without a declared profile, paths stay case-sensitive. The platform never
+ * guesses a profile from a product, OS or host name.
+ */
+export const DEFAULT_RUNTIME_PATH_COMPARISON: RuntimePathComparison = "case-sensitive";
+
+export const DEFAULT_RUNTIME_ENVIRONMENT_SEMANTICS: RuntimeEnvironmentSemantics = {
+  pathComparison: DEFAULT_RUNTIME_PATH_COMPARISON,
+};
+
+/**
+ * Resolves the active semantics from the declared profiles, most specific first:
+ * the scenario environment wins over the runtime's own default.
+ */
+export function resolveRuntimeEnvironmentSemantics(
+  ...declared: readonly (RuntimePathComparison | undefined)[]
+): RuntimeEnvironmentSemantics {
+  const comparison = declared.find((value): value is RuntimePathComparison => Boolean(value));
+  return { pathComparison: comparison ?? DEFAULT_RUNTIME_PATH_COMPARISON };
+}
+
 export type { RuntimeSeed } from "@ai-train-lab/training-engine";
+// Path identity lives in the engine so the engine can compare without depending
+// on this package; re-exported here as the runtime-facing contract.
+export {
+  findRuntimePath,
+  matchesRuntimePath,
+  type RuntimePathComparison,
+  type RuntimePathIdentity,
+} from "@ai-train-lab/training-engine";
 
 export interface RuntimeSurfaceDescription {
   ref: UiTargetRef;
@@ -44,8 +79,29 @@ export interface RuntimeAdapter {
   readonly id: string;
   readonly productId: string;
   readonly capabilities: readonly RuntimeCapability[];
+  /**
+   * Active environment semantics. This is a method, not a property: adapters in
+   * this codebase are composed by object spread, and a spread would freeze a
+   * getter-backed property to its value at module load.
+   */
+  resolveEnvironment?(): RuntimeEnvironmentSemantics;
+  /**
+   * Optional hook for the platform to apply the resolved environment profile.
+   * Runtimes that have no path-identity behaviour omit it.
+   */
+  applyEnvironment?(semantics: RuntimeEnvironmentSemantics): void;
 
-  mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void>;
+  /**
+   * Mounting is the lifecycle point that owns the environment: `unmount`
+   * restores the strict default so no scenario inherits a profile, so whoever
+   * mounts passes the resolved semantics along and a remount re-establishes
+   * them. `applyEnvironment` stays for runtimes the platform does not mount.
+   */
+  mount(
+    container: HTMLElement,
+    seed?: RuntimeSeed,
+    environment?: RuntimeEnvironmentSemantics,
+  ): Promise<void>;
   unmount(): Promise<void>;
 
   subscribe(handler: (event: TrainingEvent) => void): () => void;

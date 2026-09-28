@@ -1,4 +1,4 @@
-import type { RuntimeSeed } from "@ai-train-lab/runtime-core";
+import type { RuntimeEnvironmentSemantics, RuntimeSeed } from "@ai-train-lab/runtime-core";
 import {
   getTerminalBranchContext,
   resetTerminalBranchContext,
@@ -333,11 +333,17 @@ function emitSurfaceEvidence(...refs: string[]): void {
 export const vscodeRuntime = {
   ...baseVscodeRuntime,
 
-  async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
+  // The environment is forwarded, not dropped: this wrapper is the mount the
+  // platform calls, and the profile only reaches the runtime through it.
+  async mount(
+    container: HTMLElement,
+    seed?: RuntimeSeed,
+    environment?: RuntimeEnvironmentSemantics,
+  ): Promise<void> {
     workflowState = workflowStateFromSeed(seed);
     mountedInitialWorkflowState = cloneWorkflowState(workflowState);
     resetTerminalBranchContext(workflowState.branch);
-    await baseVscodeRuntime.mount(container, seed);
+    await baseVscodeRuntime.mount(container, seed, environment);
   },
 
   async unmount(): Promise<void> {

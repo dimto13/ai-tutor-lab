@@ -140,6 +140,7 @@ export interface Scenario {
     productId: string;
     version: string; // SemVer-Range, z. B. '1.x'
     runtimeAdapterId: string; // 'vscode-simulator'
+    pathComparison?: "case-sensitive" | "case-insensitive"; // Pfadprofil, Default case-sensitive
     seed?: RuntimeSeed; // Startzustand: Dateibaum, offene Tabs, Repo-Status
   };
   steps: Step[];
