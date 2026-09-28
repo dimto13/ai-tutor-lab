@@ -72,9 +72,22 @@ test("Windows-Profil: eine abweichend geschriebene Dublette bleibt dieselbe Date
   const sidebar = page.getByLabel("Primary Side Bar");
   await expect(sidebar.getByRole("button", { name: "notiz.txt", exact: true })).toHaveCount(1);
 
+  const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  await editor.fill("erste Fassung");
+
   await createFile(page, "NOTIZ.TXT");
   await expect(sidebar.getByRole("button", { name: "NOTIZ.TXT", exact: true })).toHaveCount(0);
   await expect(sidebar.getByRole("button", { name: "notiz.txt", exact: true })).toHaveCount(1);
+
+  // The equivalent spelling opens the file that already exists: one tab under
+  // the canonical name the runtime reports, and the content is still there.
+  await expect(page.getByRole("button", { name: "NOTIZ.TXT schließen", exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("button", { name: "notiz.txt schließen", exact: true })).toHaveCount(
+    1,
+  );
+  await expect(editor).toHaveValue("erste Fassung");
 });
 
 test("Case-sensitiver Gegenfall: abweichende Schreibweise erfüllt den Endzustand nicht", async ({

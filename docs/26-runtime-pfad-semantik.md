@@ -51,6 +51,7 @@ Mechanismus, der Code- und Freitextinhalte schützt:
 | Position                                     | Vergleich                                    |
 | -------------------------------------------- | -------------------------------------------- |
 | `editor.activeFile` gegen `notiz.txt`        | Pfad → profilabhängig                        |
+| `editor.activeFile` enthält `notiz`          | Pfad-Fragment → profilabhängig               |
 | `filesystem.files` enthält `notiz.txt`       | Pfad-Liste → profilabhängig                  |
 | `filesystem.contents` **Schlüssel**          | Pfad → profilabhängig                        |
 | `filesystem.contents` **Wert** (Dateiinhalt) | **immer exakt**                              |
@@ -59,6 +60,12 @@ Mechanismus, der Code- und Freitextinhalte schützt:
 
 Bei einer Map ist also der Schlüssel ein Pfad, der Wert nie. `{"notiz.txt": "Hallo Welt"}` matcht
 eine Datei `NOTIZ.txt`, aber der Inhalt `hallo welt` bleibt ein Fehlschlag.
+
+Das gilt unabhängig von der Prüfform: Ein einzelner Pfad ist auch dann ein Pfad, wenn nur ein
+Fragment geprüft wird (`includes`, `includesAny`, `excludes`, `contains`, `containsAny`). Eine
+deklarierte Pfadposition nutzt deshalb auch dort `containsRuntimePathFragment` mit derselben festen
+Locale. Sie fällt nie auf die Freitext-Normalisierung zurück, die Umlaute, `ß` und Diakritika mit
+`de-DE` faltet — das ist die Semantik für Prompts und Antworten, nicht für Pfade.
 
 ## Fallfaltung ist locale-fest
 
@@ -72,10 +79,22 @@ keine Trennzeichen-Angleichung: `docs/notiz.txt` bleibt von `src/notiz.txt` vers
 
 ## Wer das Profil anwendet
 
-`TrainingProvider` löst das Profil einmal pro Szenario auf und ruft `applyEnvironment` auf jeder
-Runtime des Szenarios auf, bevor eine Workspace-Komponente mountet. Runtimes ohne
-Pfad-Identitätsverhalten lassen die Methode weg. Die Runtime **speichert** das Profil und leitet es
-nie selbst ab.
+Das Profil gehört zum Mount-Lifecycle, nicht zu einem einmaligen Seiteneffekt. Wer eine Runtime
+mountet, gibt die aufgelöste Semantik mit: `mount(container, seed, environment)`. `unmount` stellt
+den strengen Default wieder her, damit kein Szenario ein Profil erbt — und genau deshalb muss ein
+Remount es neu setzen. Würde nur ein `useEffect` es einmal anwenden, ließe ein Unmount-Remount
+innerhalb desselben Szenarios die Runtime still auf `case-sensitive` zurückfallen, weil sich die
+Abhängigkeiten des Effects nicht geändert haben.
+
+`TrainingProvider` löst das Profil zusätzlich einmal pro Szenario auf und ruft `applyEnvironment`
+auf jeder Runtime des Szenarios auf. Das deckt die Runtimes ab, die die Plattform nicht selbst
+mountet. Runtimes ohne Pfad-Identitätsverhalten lassen beides weg. Die Runtime **speichert** das
+Profil und leitet es nie selbst ab.
+
+Auf der React-Seite gilt dieselbe Identität wie in der Runtime: Der Workspace übernimmt den
+kanonischen Namen, den die Runtime meldet. Eine abweichend geschriebene Neuanlage öffnet die
+vorhandene Datei, statt die Aktion zu verwerfen oder eine zweite Identität in `files`, `tabs` und
+`contents` anzulegen.
 
 Innerhalb des VS-Code-Simulators gilt es für alle Dateioperationen: Anlegen (eine abweichend
 geschriebene Dublette ist dieselbe Datei und wird nicht zweimal angelegt), Speichern, Inhalt setzen,
@@ -87,6 +106,10 @@ nachgelagerte Konsumenten eine Identität sehen und nicht die zufällig getippte
 - `packages/runtime-core/tests/runtimePathSemantics.test.ts` — Auflösung, Default, Locale-Festigkeit.
 - `packages/training-engine/tests/runtimePathIdentity.test.ts` — beide Profile über `state`- und
   `event`-Validierung, plus die Negativfälle (Inhalt, Kommando, nicht deklarierter Selektor).
+- `packages/runtime-vscode-sim/tests/pathProfileFileOperations.test.ts` — Dateioperationen über den
+  Spread-Pfad, Lifecycle-Reset beim Unmount und Wiederherstellung beim Remount.
+- `tests/runtime/vscodeRuntime.contract.test.ts` — die Web-Komposition reicht das Environment durch
+  jeden Mount durch.
 - `apps/web/e2e/tests/runtime-path-semantics.spec.ts` — Windows-Fall und case-sensitiver Gegenfall
   am laufenden Training: `vscode-basics.guided` deklariert `case-insensitive`,
   `vscode-basics.challenge` bleibt beim Default.

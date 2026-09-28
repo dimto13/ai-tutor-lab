@@ -127,3 +127,86 @@ test("without a path identity every comparison stays exact", async () => {
   const result = await registry.validate(activeFile, { query: async () => "NOTIZ.txt" });
   assert.equal(result.outcome, "near-miss");
 });
+
+test("a single path string keeps path semantics for a fragment check", async () => {
+  const activeFileFragment: Validation = {
+    kind: "state",
+    selector: "editor.activeFile",
+    includes: "notiz",
+  };
+  assert.equal(
+    (await registry.validate(activeFileFragment, context("case-insensitive"))).outcome,
+    "pass",
+    "a scalar path must fold under the active profile, not only a list of paths",
+  );
+  assert.equal(
+    (await registry.validate(activeFileFragment, context("case-sensitive"))).outcome,
+    "near-miss",
+    "the case-sensitive profile keeps the fragment check exact",
+  );
+
+  const excludesFragment: Validation = {
+    kind: "state",
+    selector: "editor.activeFile",
+    excludes: "notiz",
+  };
+  assert.equal(
+    (await registry.validate(excludesFragment, context("case-insensitive"))).outcome,
+    "near-miss",
+    "exclusion sees the same identity as inclusion",
+  );
+
+  const includesAnyFragment: Validation = {
+    kind: "state",
+    selector: "editor.activeFile",
+    includesAny: ["notiz"],
+  };
+  assert.equal(
+    (await registry.validate(includesAnyFragment, context("case-insensitive"))).outcome,
+    "pass",
+    "includesAny on a path uses the fixed path locale instead of the free-text folding",
+  );
+});
+
+test("a path event key keeps path semantics for a fragment check", async () => {
+  const containsFilename: Validation = {
+    kind: "event",
+    type: "file.created",
+    contains: { filename: "notiz" },
+  };
+  assert.equal(
+    (
+      await registry.validate(
+        containsFilename,
+        context("case-insensitive", event("file.created", { filename: "NOTIZ.txt" })),
+      )
+    ).outcome,
+    "pass",
+  );
+  assert.equal(
+    (
+      await registry.validate(
+        containsFilename,
+        context("case-sensitive", event("file.created", { filename: "NOTIZ.txt" })),
+      )
+    ).outcome,
+    "near-miss",
+  );
+});
+
+test("an undeclared payload field stays free text with its own normalization", async () => {
+  const promptFragment: Validation = {
+    kind: "event",
+    type: "ai.prompt.submitted",
+    containsAny: { prompt: ["strasse"] },
+  };
+  const prompt = await registry.validate(
+    promptFragment,
+    context("case-insensitive", event("ai.prompt.submitted", { prompt: "Zur Straße" })),
+  );
+  assert.equal(
+    prompt.outcome,
+    "pass",
+    "a prompt is not a path, so the normalizing free-text comparison stays in place",
+  );
+});

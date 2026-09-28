@@ -124,12 +124,14 @@ export function Workspace() {
       setNewFileName(null);
     });
 
-    void vscodeRuntime.mount(container, runtimeSeed);
+    // The declared profile travels with the mount: unmount restores the strict
+    // default, so a remount inside the same scenario has to re-establish it.
+    void vscodeRuntime.mount(container, runtimeSeed, { pathComparison });
     return () => {
       unsubscribe();
       void vscodeRuntime.unmount();
     };
-  }, [runtimeSeed]);
+  }, [runtimeSeed, pathComparison]);
 
   useEffect(() => {
     if (newFileName !== null) newFileRef.current?.focus();
@@ -181,24 +183,40 @@ export function Workspace() {
     workspaceBus.emit("repository.opened", { name: "ai-training-demo" });
   };
 
+  // The runtime answers with the canonical name, so React has to use it too;
+  // otherwise both sides hold a different spelling of the same open file.
+  const canonicalFileName = (name: string): string =>
+    findRuntimePath(
+      files.map((file) => file.name),
+      name,
+      pathComparison,
+    ) ?? name;
+
   const openFile = (name: string) => {
-    setTabs((current) => (current.includes(name) ? current : [...current, name]));
-    setActiveFile(name);
-    vscodeRuntime.setActiveFile(name);
+    const canonical = canonicalFileName(name);
+    setTabs((current) =>
+      findRuntimePath(current, canonical, pathComparison) ? current : [...current, canonical],
+    );
+    setActiveFile(canonical);
+    vscodeRuntime.setActiveFile(canonical);
   };
 
   const createFile = (raw: string) => {
     const name = raw.trim();
     setNewFileName(null);
-    if (
-      !name ||
-      findRuntimePath(
-        files.map((file) => file.name),
-        name,
-        pathComparison,
-      )
-    )
+    if (!name) return;
+
+    const existing = findRuntimePath(
+      files.map((file) => file.name),
+      name,
+      pathComparison,
+    );
+    // Under the active profile an equivalent spelling is the same file: open the
+    // existing one instead of dropping the action or creating a second identity.
+    if (existing) {
+      openFile(existing);
       return;
+    }
 
     setFiles((current) => [...current, { name, kind: "file" }]);
     setContents((current) => ({ ...current, [name]: "" }));

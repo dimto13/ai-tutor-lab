@@ -22,10 +22,10 @@ function resolveVisibleTransientActionRegions(): DOMRect[] {
 export const vscodeRuntime = {
   ...simulatorRuntime,
 
-  async mount(container, seed) {
+  async mount(container, seed, environment) {
     mountedContainer = container;
     try {
-      await simulatorRuntime.mount(container, seed);
+      await simulatorRuntime.mount(container, seed, environment);
     } catch (error) {
       mountedContainer = null;
       throw error;

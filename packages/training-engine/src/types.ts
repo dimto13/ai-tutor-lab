@@ -49,6 +49,22 @@ export function matchesRuntimePath(
   return actual.toLocaleLowerCase("en-US") === expected.toLocaleLowerCase("en-US");
 }
 
+/**
+ * Fragment containment for a path under the given semantics.
+ *
+ * A declared path position keeps path identity even when only a fragment is
+ * checked, and it uses the same fixed locale as `matchesRuntimePath` so a
+ * substring check cannot fall back to the viewer's locale.
+ */
+export function containsRuntimePathFragment(
+  actual: string,
+  expected: string,
+  comparison: RuntimePathComparison,
+): boolean {
+  if (comparison !== "case-insensitive") return actual.includes(expected);
+  return actual.toLocaleLowerCase("en-US").includes(expected.toLocaleLowerCase("en-US"));
+}
+
 /** Canonical existing path that is identical to `expected` under the semantics. */
 export function findRuntimePath(
   paths: readonly string[],

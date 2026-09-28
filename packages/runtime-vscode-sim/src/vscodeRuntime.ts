@@ -513,7 +513,15 @@ export const vscodeRuntime = {
     pathComparison = semantics.pathComparison;
   },
 
-  async mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void> {
+  async mount(
+    container: HTMLElement,
+    seed?: RuntimeSeed,
+    environment?: { readonly pathComparison: RuntimePathComparison },
+  ): Promise<void> {
+    // Applied before the seeded state exists: unmount restores the default, so
+    // a remount within the same scenario must re-establish the profile here
+    // rather than rely on a separate effect that does not run again.
+    if (environment) pathComparison = environment.pathComparison;
     keyboardContainer?.removeEventListener("keydown", handleKeyboardShortcut, true);
     keyboardContainer?.removeEventListener("pointerdown", handlePointerFocus, true);
     mountedContainer = container;

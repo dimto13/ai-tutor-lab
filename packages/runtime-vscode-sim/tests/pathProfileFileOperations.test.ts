@@ -123,3 +123,24 @@ test("unmount restores the strict default so the next scenario cannot inherit a 
 
   await vscodeRuntime.unmount();
 });
+
+test("a remount re-establishes the profile the unmount reset", async () => {
+  await vscodeRuntime.unmount();
+  await vscodeRuntime.mount(createContainer(), { ...seed }, { pathComparison: "case-insensitive" });
+  assert.equal(vscodeRuntime.resolveEnvironment().pathComparison, "case-insensitive");
+
+  // The scenario has not changed, only the view was torn down and rebuilt. The
+  // profile must not silently fall back to the strict default afterwards.
+  await vscodeRuntime.unmount();
+  await vscodeRuntime.mount(createContainer(), { ...seed }, { pathComparison: "case-insensitive" });
+
+  assert.equal(vscodeRuntime.resolveEnvironment().pathComparison, "case-insensitive");
+  vscodeRuntime.addFile("NOTIZ.TXT");
+  assert.deepEqual(
+    await vscodeRuntime.query<string[]>("filesystem.files"),
+    ["notiz.txt", "README.md"],
+    "the remounted runtime still treats an equivalent spelling as the same file",
+  );
+
+  await vscodeRuntime.unmount();
+});

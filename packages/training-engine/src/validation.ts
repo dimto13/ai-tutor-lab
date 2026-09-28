@@ -1,5 +1,6 @@
 import { validateClassification } from "./classificationValidation.ts";
 import {
+  containsRuntimePathFragment,
   findRuntimePath,
   matchesRuntimePath,
   type EngineValidationResult,
@@ -97,15 +98,24 @@ async function validateEvent(
   }
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
-    if (typeof actual !== "string" || !actual.includes(expectedFragment)) {
+    if (
+      typeof actual !== "string" ||
+      !containsFragment(
+        actual,
+        expectedFragment,
+        false,
+        pathComparisonFor(context, isPathEventKey(context, key)),
+      )
+    ) {
       return nearMiss("event.contains", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
   }
   for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {
     const actual = payload[key];
+    const comparison = pathComparisonFor(context, isPathEventKey(context, key));
     if (
       typeof actual !== "string" ||
-      !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))
+      !expectedFragments.some((fragment) => containsFragment(actual, fragment, true, comparison))
     ) {
       return nearMiss("event.containsAny", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
@@ -355,10 +365,23 @@ function includesValue(
     return actual.includes(expected);
   }
   if (typeof actual !== "string") return false;
-  const expectedText = String(expected);
-  return normalized
-    ? containsNormalizedFragment(actual, expectedText)
-    : actual.includes(expectedText);
+  return containsFragment(actual, String(expected), normalized, pathIdentity?.comparison);
+}
+
+/**
+ * Fragment containment for a single value. A single path is still a path, so a
+ * declared path position keeps path semantics here too instead of falling back
+ * to an exact substring or to the free-text normalization, which folds far more
+ * than case and does so in a different locale.
+ */
+function containsFragment(
+  actual: string,
+  expected: string,
+  normalized: boolean,
+  comparison: RuntimePathComparison | undefined,
+): boolean {
+  if (comparison) return containsRuntimePathFragment(actual, expected, comparison);
+  return normalized ? containsNormalizedFragment(actual, expected) : actual.includes(expected);
 }
 
 function normalizeComparableText(value: string): string {

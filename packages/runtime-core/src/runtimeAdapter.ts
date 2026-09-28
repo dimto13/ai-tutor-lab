@@ -91,7 +91,17 @@ export interface RuntimeAdapter {
    */
   applyEnvironment?(semantics: RuntimeEnvironmentSemantics): void;
 
-  mount(container: HTMLElement, seed?: RuntimeSeed): Promise<void>;
+  /**
+   * Mounting is the lifecycle point that owns the environment: `unmount`
+   * restores the strict default so no scenario inherits a profile, so whoever
+   * mounts passes the resolved semantics along and a remount re-establishes
+   * them. `applyEnvironment` stays for runtimes the platform does not mount.
+   */
+  mount(
+    container: HTMLElement,
+    seed?: RuntimeSeed,
+    environment?: RuntimeEnvironmentSemantics,
+  ): Promise<void>;
   unmount(): Promise<void>;
 
   subscribe(handler: (event: TrainingEvent) => void): () => void;
