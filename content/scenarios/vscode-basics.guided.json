@@ -14,10 +14,36 @@
   ],
   "audience": {
     "personaId": "non-programmer",
-    "glossaryConcepts": ["vscode.activity_bar", "vscode.file_menu", "vscode.side_bar", "vscode.view", "vscode.explorer", "vscode.editor", "vscode.panel", "vscode.terminal", "vscode.problems", "vscode.output", "vscode.status_bar", "vscode.folder", "vscode.workspace"],
-    "introductionStepRefs": ["vscode.ui.activity-bar", "vscode.ui.side-bar", "vscode.ui.explorer", "vscode.ui.editor", "vscode.ui.panel", "vscode.ui.status-bar"]
+    "glossaryConcepts": [
+      "vscode.activity_bar",
+      "vscode.file_menu",
+      "vscode.side_bar",
+      "vscode.view",
+      "vscode.explorer",
+      "vscode.editor",
+      "vscode.panel",
+      "vscode.terminal",
+      "vscode.problems",
+      "vscode.output",
+      "vscode.status_bar",
+      "vscode.folder",
+      "vscode.workspace"
+    ],
+    "introductionStepRefs": [
+      "vscode.ui.activity-bar",
+      "vscode.ui.side-bar",
+      "vscode.ui.explorer",
+      "vscode.ui.editor",
+      "vscode.ui.panel",
+      "vscode.ui.status-bar"
+    ]
   },
-  "environment": {"productId":"vscode","version":"1.x","runtimeAdapterId":"vscode-simulator","pathComparison":"case-insensitive"},
+  "environment": {
+    "productId": "vscode",
+    "version": "1.x",
+    "runtimeAdapterId": "vscode-simulator",
+    "pathComparison": "case-insensitive"
+  },
   "estimatedMinutes": 14,
   "points": 100,
   "steps": []
