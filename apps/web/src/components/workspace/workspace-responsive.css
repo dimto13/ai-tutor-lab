@@ -3,15 +3,17 @@
     width: 11rem;
   }
 
-  .workspace-editor-preview:has(> [data-highlight="artifact.preview.panel"]) {
+  div:has(> [data-highlight="vscode.editor"] + [data-highlight="artifact.preview.panel"]) {
     flex-direction: column;
   }
 
-  .workspace-editor-preview > [data-highlight="vscode.editor"] {
+  div:has(> [data-highlight="vscode.editor"] + [data-highlight="artifact.preview.panel"])
+    > [data-highlight="vscode.editor"] {
     min-height: 20rem;
   }
 
-  .workspace-editor-preview > [data-highlight="artifact.preview.panel"] {
+  div:has(> [data-highlight="vscode.editor"] + [data-highlight="artifact.preview.panel"])
+    > [data-highlight="artifact.preview.panel"] {
     width: 100%;
     min-height: 16rem;
     max-height: 46%;
