@@ -1,0 +1,27 @@
+@media (min-width: 768px) and (max-width: 1535px) {
+  [data-highlight="vscode.primarySideBar"] {
+    width: 11rem;
+  }
+
+  .workspace-editor-preview:has(> [data-highlight="artifact.preview.panel"]) {
+    flex-direction: column;
+  }
+
+  .workspace-editor-preview > [data-highlight="vscode.editor"] {
+    min-height: 20rem;
+  }
+
+  .workspace-editor-preview > [data-highlight="artifact.preview.panel"] {
+    width: 100%;
+    min-height: 16rem;
+    max-height: 46%;
+    border-left-width: 0;
+    border-top-width: 2px;
+  }
+}
+
+@media (max-width: 639px) {
+  [data-highlight="vscode.secondarySideBar"] {
+    width: 6rem;
+  }
+}
