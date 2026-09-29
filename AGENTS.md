@@ -55,9 +55,9 @@
      geprüft;
    - bewegt sich `main` danach erneut, ist der Fresh-Main-Check vor dem tatsächlichen Merge zu
      wiederholen. `behind_by == 0` ist unmittelbar vor Merge verpflichtend.
-   Rebase eines bereits veröffentlichten Branches darf nur nach Live-Prüfung des Remote-Heads erfolgen
-   und ausschließlich mit `--force-with-lease`, niemals mit blindem `--force`. `main` und `deploy`
-   werden niemals rebased oder force-gepusht.
+     Rebase eines bereits veröffentlichten Branches darf nur nach Live-Prüfung des Remote-Heads erfolgen
+     und ausschließlich mit `--force-with-lease`, niemals mit blindem `--force`. `main` und `deploy`
+     werden niemals rebased oder force-gepusht.
 5. Szenarien sind Daten (YAML/JSON), kein Code. Keine CSS-Selektoren, keine
    Herstellernamen in Dateinamen, kein Fortschritt per Weiter-Button.
 6. **Nur Grünes nach `main` — einschließlich der nachgelagerten `push`-CI.** `npm run check` läuft nach
