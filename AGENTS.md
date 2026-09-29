@@ -41,8 +41,23 @@
    Handoff-SSOT. Es wird **nicht über eine Issue-Nummer**, sondern ausschließlich als das genau eine
    offene Issue mit dem Label `control:active` gefunden. Existieren null oder mehrere offene Issues
    mit diesem Label, ist das ein Control-Plane-Blocker; Agenten dürfen dann kein CONTROL erraten.
-4. **Keine History-Rewrites und keine Force-Pushes**, sofern dies nicht ausdrücklich und bewusst
-   für einen konkreten Git-Vorgang entschieden wurde.
+4. **Fresh-Main-Integration ist vor jedem Merge ein hartes Gate.** Unmittelbar vor Merge-Freigabe
+   wird der PR-Head live gegen den dann aktuellen `main` verglichen. Ein PR mit
+   `behind_by > 0` ist **nicht mergefähig**, auch wenn GitHub `mergeable=true` meldet und ältere CI
+   grün ist. Der Feature-Branch muss zuerst auf den aktuellen `main` synchronisiert werden:
+   - bevorzugt per `git fetch origin && git rebase origin/main`, solange der Branch nicht geteilt ist
+     bzw. der ausführende Agent sicher der einzige aktuelle Branch-Writer ist;
+   - ist der PR-Branch bereits geteilt/veröffentlicht und ein Rebase würde fremde oder parallele Arbeit
+     durch History-Rewrite gefährden, wird `origin/main` stattdessen mit einem normalen Merge-Commit
+     **ohne Force-Push** in den Feature-Branch integriert;
+   - nach jedem Rebase/Merge von `main` ist die vollständige relevante PR-CI auf dem **neuen exakten
+     Head-SHA** erneut auszuführen; Reviews/Findings, Scope und Preservation werden ebenfalls erneut
+     geprüft;
+   - bewegt sich `main` danach erneut, ist der Fresh-Main-Check vor dem tatsächlichen Merge zu
+     wiederholen. `behind_by == 0` ist unmittelbar vor Merge verpflichtend.
+   Rebase eines bereits veröffentlichten Branches darf nur nach Live-Prüfung des Remote-Heads erfolgen
+   und ausschließlich mit `--force-with-lease`, niemals mit blindem `--force`. `main` und `deploy`
+   werden niemals rebased oder force-gepusht.
 5. Szenarien sind Daten (YAML/JSON), kein Code. Keine CSS-Selektoren, keine
    Herstellernamen in Dateinamen, kein Fortschritt per Weiter-Button.
 6. **Nur Grünes nach `main` — einschließlich der nachgelagerten `push`-CI.** `npm run check` läuft nach
