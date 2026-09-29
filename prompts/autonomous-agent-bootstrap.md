@@ -24,14 +24,20 @@ Jede Rolle führt beim Start dieselbe Rekonstruktion aus:
 Normaler Lifecycle:
 
 ```text
-Issue -> Branch -> Implementierung -> PR -> aktuellen main integrieren
--> vollständige frische PR-CI -> Reviews/Threads dispositionieren -> Merge
+Issue -> Branch -> Implementierung -> PR
+-> Fresh-Main-Sync (bevorzugt Rebase; bei geteiltem Branch sicherer Merge ohne Force)
+-> `behind_by == 0`
+-> vollständige frische Exact-Head-PR-CI -> Reviews/Threads dispositionieren -> Merge
 -> resultierende Main-Push-CI -> DONE -> Handoff -> nächstes autorisiertes Issue
 ```
 
 Ein Merge gilt erst nach grüner Main-Push-CI auf dem resultierenden `main` als DONE. Während
-`MERGED_PENDING_MAIN_CI` bleibt die globale Merge-Lane geschlossen. Fremde Merges führen zum erneuten
-Synchronisieren des eigenen Branches ohne Force-Push und zu vollständiger relevanter PR-CI.
+`MERGED_PENDING_MAIN_CI` bleibt die globale Merge-Lane geschlossen. Unmittelbar vor Merge muss der
+Branch gegenüber dem aktuellen `main` `behind_by == 0` haben. Fremde Merges machen einen zuvor
+READY gesetzten Branch wieder stale: er wird erneut mit aktuellem `main` synchronisiert und erhält
+vollständige frische Exact-Head-PR-CI. Rebase ist bevorzugt, solange kein geteilter Branch umgeschrieben
+wird; andernfalls wird `main` ohne Force-Push in den Feature-Branch gemergt. Ein veröffentlichter
+Rebase darf nur nach Live-Prüfung und mit `--force-with-lease` erfolgen.
 
 `deploy` bleibt immer Owner-only. Externe, manuelle oder Cloud-Evidence darf nie erfunden werden.
 
