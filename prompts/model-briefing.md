@@ -26,6 +26,11 @@ Stack: React, TypeScript, Tailwind, Monorepo, AWS Amplify Hosting. Sprache DE.
 - Entwicklung, Builds und Tests erfolgen auf dem lokalen Entwicklungsrechner und auf Basis eines
   explizit ausgecheckten Git-Branches.
 - Zusammenarbeit und Integration erfolgen über Git/GitHub mit Branches, Commits und Pull Requests.
+- **Vor jedem Merge gilt das Fresh-Main-Gate:** der PR muss gegenüber dem aktuellen `main`
+  `behind_by == 0` haben. Nach Rebase bzw. sicherer Integration des aktuellen `main` muss vollständige
+  frische Exact-Head-CI laufen; bewegt sich `main` erneut, wird der Check wiederholt. Rebase ist
+  bevorzugt, solange kein geteilter Branch gefährdet wird; auf veröffentlichten/geteilten Branches darf
+  kein blinder Force-Push erfolgen.
 - Ziel für Hosting und Deployment ist **AWS Amplify**; weitere AWS-Dienste können später ergänzt werden.
 - **AWS ist die erste Infrastrukturimplementierung, nicht die Architektur der Anwendung.**
   Fachliche Logik und UI bleiben cloud-neutral und sprechen ausschließlich mit eigenen Ports und
