@@ -112,6 +112,18 @@ GitHub.
 
 Die CONTROL-Discovery ändert keine bestehenden Sicherheitsregeln:
 
+- **Fresh-Main-Gate:** unmittelbar vor Merge muss der PR-Head gegenüber dem aktuellen `main`
+  `behind_by == 0` haben. Ein grüner Lauf auf einem älteren Base-Stand reicht nicht.
+- Die bevorzugte Synchronisierung ist ein Rebase auf `origin/main`, solange der Branch nicht geteilt ist
+  bzw. der ausführende Agent sicher der einzige aktuelle Branch-Writer ist. Bei geteilten/veröffentlichten
+  Branches, bei denen History-Rewrite parallele Arbeit gefährden würde, wird `origin/main` stattdessen
+  per normalem Merge-Commit ohne Force-Push integriert.
+- Nach jeder Fresh-Main-Synchronisierung ist vollständige frische Exact-Head-PR-CI erforderlich; Reviews,
+  Findings, Scope und Preservation werden auf diesem neuen Head erneut geprüft.
+- Bewegt sich `main` vor dem tatsächlichen Merge erneut, muss der Fresh-Main-Check wiederholt werden.
+- Ein Rebase eines veröffentlichten Branches verwendet nur nach Remote-Head-Prüfung
+  `--force-with-lease`, niemals blindes `--force`; `main` und `deploy` werden nie rebased oder
+  force-gepusht.
 - ein Merge ist erst nach grüner `push`-CI auf dem resultierenden `main` operativ DONE,
 - während `MERGED_PENDING_MAIN_CI` bleibt die globale Merge-Lane geschlossen,
 - `deploy` bleibt Owner-only,
