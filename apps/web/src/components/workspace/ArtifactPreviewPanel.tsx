@@ -88,7 +88,7 @@ export function ArtifactPreviewPanel() {
       ref={rootRef}
       data-highlight="artifact.preview.panel"
       onClickCapture={() => inspect("artifact.preview.panel")}
-      className="flex min-h-0 w-[46%] min-w-[360px] flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
+      className="flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
     >
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-[#111720] px-3">
         <Eye className="h-4 w-4 text-accent" />
