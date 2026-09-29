@@ -131,7 +131,9 @@ test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten und Historie verä
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-test("HTML-Workflow: Editor bleibt mit Ergebnis und Copilot auf Desktop lesbar", async ({ page }) => {
+test("HTML-Workflow: Editor bleibt mit Ergebnis und Copilot auf Desktop lesbar", async ({
+  page,
+}) => {
   await expectReadableEditorWithPreviewAndCopilot(page, 1280);
   await expectReadableEditorWithPreviewAndCopilot(page, 1440);
 });
