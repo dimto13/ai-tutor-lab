@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "../fixtures/browser-error-guard";
 
 const scenarioUrl = "/training/artifact-preview-foundation.guided";
+const htmlWorkflowUrl = "/training/html-page-workflow.guided";
 
 async function waitForTrainingReady(page: Page): Promise<void> {
   await expect(page.getByRole("status")).toHaveText("Training bereit");
@@ -8,6 +9,37 @@ async function waitForTrainingReady(page: Page): Promise<void> {
 
 async function expectGuidedStep(page: Page, step: number, title: string): Promise<void> {
   await expect(page.getByRole("heading", { name: `Schritt ${step} – ${title}` })).toBeVisible();
+}
+
+async function expectReadableEditorWithPreviewAndCopilot(page: Page, width: number): Promise<void> {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(htmlWorkflowUrl);
+  await waitForTrainingReady(page);
+
+  const editor = page.locator('[data-highlight="vscode.editor"]');
+  const preview = page.locator('[data-highlight="artifact.preview.panel"]');
+  const secondarySideBar = page.locator('[data-highlight="vscode.secondarySideBar"]');
+
+  await expect(editor).toBeVisible();
+  await expect(preview).toBeVisible();
+  await page.getByRole("button", { name: "Copilot", exact: true }).click();
+  await expect(page.locator('[data-highlight="copilot.chat"]')).toBeVisible();
+
+  await expect
+    .poll(async () => {
+      const box = await editor.boundingBox();
+      return box?.width ?? 0;
+    })
+    .toBeGreaterThanOrEqual(320);
+
+  const editorBox = await editor.boundingBox();
+  const previewBox = await preview.boundingBox();
+  const secondaryBox = await secondarySideBar.boundingBox();
+  expect(editorBox).not.toBeNull();
+  expect(previewBox).not.toBeNull();
+  expect(secondaryBox).not.toBeNull();
+  expect(editorBox!.x + editorBox!.width).toBeLessThanOrEqual(previewBox!.x + 1);
+  expect(previewBox!.x + previewBox!.width).toBeLessThanOrEqual(secondaryBox!.x + 1);
 }
 
 test("Artefakt-Vorschau: HTML, Tabelle und strukturierte Daten sind sichtbar und aktionsbasiert prüfbar", async ({
@@ -97,4 +129,9 @@ test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten und Historie verä
 
   await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
+test("HTML-Workflow: Editor bleibt mit Ergebnis und Copilot auf Desktop lesbar", async ({ page }) => {
+  await expectReadableEditorWithPreviewAndCopilot(page, 1280);
+  await expectReadableEditorWithPreviewAndCopilot(page, 1440);
 });
