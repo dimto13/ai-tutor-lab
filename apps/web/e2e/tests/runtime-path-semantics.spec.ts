@@ -36,8 +36,13 @@ test("Windows-Profil: äquivalente Groß-/Kleinschreibung erfüllt den Dateiname
   page,
 }) => {
   await reachCreateFileStep(page);
+
+  // The scenario declares a case-insensitive environment profile, so NOTIZ.txt
+  // is the same path as the requested notiz.txt.
   await createFile(page, "NOTIZ.txt");
   await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
+
+  // The equivalent spelling must not be reported as the wrong training file.
   await expect(page.getByText("Erwartet war notiz.txt", { exact: false })).toHaveCount(0);
 });
 
@@ -45,43 +50,67 @@ test("Windows-Profil: Dateiinhalt bleibt exakt und wird nicht mit gefaltet", asy
   await reachCreateFileStep(page);
   await createFile(page, "NOTIZ.txt");
   await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
+
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
+  // Same letters, different case: the path folds, the content never does.
   await editor.fill("hello ai training");
   await editor.press("Control+s");
   await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
+
   await editor.fill("Hello AI Training");
   await editor.press("Control+s");
   await expectGuidedStep(page, 11, "Bereich und Ansichten unterscheiden");
 });
 
-test("Windows-Profil: eine abweichend geschriebene Dublette bleibt dieselbe Datei", async ({ page }) => {
+test("Windows-Profil: eine abweichend geschriebene Dublette bleibt dieselbe Datei", async ({
+  page,
+}) => {
   await reachCreateFileStep(page);
   await createFile(page, "notiz.txt");
   await expectGuidedStep(page, 10, "Datei bearbeiten und speichern");
+
   const sidebar = page.getByLabel("Primary Side Bar");
   await expect(sidebar.getByRole("button", { name: "notiz.txt", exact: true })).toHaveCount(1);
+
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("erste Fassung");
+
   await createFile(page, "NOTIZ.TXT");
   await expect(sidebar.getByRole("button", { name: "NOTIZ.TXT", exact: true })).toHaveCount(0);
   await expect(sidebar.getByRole("button", { name: "notiz.txt", exact: true })).toHaveCount(1);
-  await expect(page.getByRole("button", { name: "NOTIZ.TXT schließen", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "notiz.txt schließen", exact: true })).toHaveCount(1);
+
+  // The equivalent spelling opens the file that already exists: one tab under
+  // the canonical name the runtime reports, and the content is still there.
+  await expect(page.getByRole("button", { name: "NOTIZ.TXT schließen", exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("button", { name: "notiz.txt schließen", exact: true })).toHaveCount(
+    1,
+  );
   await expect(editor).toHaveValue("erste Fassung");
 });
 
-test("Case-sensitiver Gegenfall: abweichende Schreibweise erfüllt den Endzustand nicht", async ({ page }) => {
+test("Case-sensitiver Gegenfall: abweichende Schreibweise erfüllt den Endzustand nicht", async ({
+  page,
+}) => {
   await page.goto(challengeUrl);
   await waitForTrainingReady(page);
   await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
+
   await page.getByRole("button", { name: "Explorer", exact: true }).click();
   await page.getByRole("button", { name: "ai-training-demo", exact: true }).click();
+
+  // This scenario declares no profile, so the case-sensitive default applies and
+  // CHALLENGE.txt stays a different path than the required challenge.txt.
   await createFile(page, "CHALLENGE.txt");
   const editor = page.getByRole("textbox", { name: "Editor-Inhalt" });
   await editor.fill("VS Code Grundlagen abgeschlossen");
   await editor.press("Control+s");
+
   await expect(page.getByText("Endzustand offen", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toHaveCount(0);
+
+  // The exact spelling completes the very same end state.
   await createFile(page, "challenge.txt");
   await editor.fill("VS Code Grundlagen abgeschlossen");
   await editor.press("Control+s");
