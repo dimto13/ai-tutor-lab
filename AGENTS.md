@@ -101,3 +101,24 @@
     archiviert/geschlossen. Ein kurzzeitiger Zustand mit null oder mehreren aktiven CONTROL-Issues muss
     fail-closed behandelt werden. Repository-Dokumente, CI und Scheduler dürfen keine konkrete
     CONTROL-Issue-Nummer als dauerhaften Vertrag hardcodieren.
+14. **Worker-Pool mit kontrolliertem Work-Stealing.** CHAT1, CHAT2 und CHAT3 sind gleichberechtigte
+    Implementierungs-Worker mit bevorzugten, aber nicht exklusiven Fachgebieten. PLAN ist der alleinige
+    Dispatcher: Hat ein Worker keine sinnvoll fortsetzbare eigene Aufgabe und erlaubt das ACTIVE CONTROL
+    weitere unabhängige autorisierte Arbeit, weist PLAN ihm den nächsten geeigneten Queue-Punkt zu.
+    Worker nehmen sich niemals eigenmächtig fremde Arbeit. Vor einer Umverteilung prüft PLAN mindestens
+    Dependencies, Dateiscope/-kollisionen, laufende Branches/PRs, Acceptance-Gates und Security-/Owner-
+    Grenzen. Mehrere Worker dürfen gleichzeitig auf getrennten Branches implementieren, synchronisieren,
+    testen und ihre PRs bis PREPARED/READY bringen. WAIT, BLOCKED, STALLED, laufende Owner-Deployments
+    oder eine belegte Merge-Lane blockieren unabhängige Vorbereitungskapazität nicht. Die Integration
+    bleibt global seriell: Zu jedem Zeitpunkt existiert höchstens ein MERGE_LANE_OWNER.
+15. **Vor jedem Merge ist ein Rebase auf den dann aktuellen `main` verpflichtend.** Das gilt insbesondere
+    für parallel entwickelte Branches und auch dann, wenn der Branch zuvor bereits grün oder READY war.
+    Der Merge darf erst erfolgen, nachdem der PR-Head die aktuelle `main`-Spitze durch einen echten
+    Rebase als Basis enthält; ein bloßer Merge von `main` in den Feature-Branch erfüllt diese Regel nicht.
+    Nach dem Rebase werden Preservation und Diff-Scope erneut geprüft und die vollständigen erforderlichen
+    PR-Gates als frische Exact-Head-CI auf dem rebasierten Head ausgeführt. Frühere grüne Läufe sind danach
+    keine Merge-Evidence mehr. Rebase-Konflikte werden bewusst aufgelöst; bereits auf `main` vorhandene
+    DONE-Arbeit, Guards, Tests und Workflows dürfen dabei nicht regressieren oder verschwinden. Ein
+    erforderlicher Rebase ist die ausdrücklich autorisierte Ausnahme von Regel 4 für den jeweiligen
+    Feature-Branch; Force-Push ist dabei ausschließlich als `--force-with-lease` auf den eigenen
+    Feature-Branch zulässig, niemals auf `main` oder `deploy`.
