@@ -132,7 +132,11 @@ export interface AmplifyTrainingStateTransportPolicy {
 const defaultTransportPolicy: AmplifyTrainingStateTransportPolicy = {
   attempts: 3,
   timeoutMs: 12_000,
-  delayMs: (attempt) => 250 * attempt,
+  // Jitter statt fester Staffelung: eine Lerngruppe beendet ihr Training typischerweise im selben
+  // Zeitfenster. Nach einer kurzen Serverstoerung wiederholen sonst alle Clients im selben
+  // Rhythmus und erzeugen genau die Throttling-Spitze, die der Retry abfedern soll. Tests
+  // injizieren ihre eigene deterministische Policy.
+  delayMs: (attempt) => 250 * attempt + Math.random() * 250,
   sleep: (ms) =>
     new Promise((resolve) => {
       setTimeout(resolve, ms);
