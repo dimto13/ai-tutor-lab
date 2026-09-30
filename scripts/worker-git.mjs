@@ -43,7 +43,53 @@ const PRESERVED_PREFIXES = [
   "CLAUDE.md",
 ];
 
-const WRITE_PROBE_REF = "refs/heads/worker-git-write-probe";
+// Der Probe-Ref traegt ein Praefix: Branch-Naming-Regeln auf dem Remote lehnen praefixlose Namen
+// haeufig ab, und ein abgelehnter Probe-Push saehe dann wie ein fehlender Schreibzugriff aus.
+const WRITE_PROBE_REF = "refs/heads/worker-probe/write-check";
+
+/**
+ * Unterbrochene Git-Vorgaenge samt der Befehle, die sie tatsaechlich aufloesen. Die Liste ist
+ * gemeinsam, damit `gate` und die Guards nicht auseinanderlaufen -- und die Befehle haengen am
+ * erkannten Vorgang: `git rebase --continue` bei einem unterbrochenen Merge endet in
+ * "fatal: No rebase in progress?" und schickt den Aufrufer in die Irre.
+ */
+const INTERRUPTED_OPERATIONS = [
+  {
+    entry: "rebase-merge",
+    label: "Ein Rebase laeuft noch.",
+    resume: "git rebase --continue",
+    abort: "git rebase --abort",
+  },
+  {
+    entry: "rebase-apply",
+    label: "Ein Rebase oder am-Vorgang laeuft noch.",
+    resume: "git rebase --continue",
+    abort: "git rebase --abort",
+  },
+  {
+    entry: "MERGE_HEAD",
+    label: "Ein Merge laeuft noch.",
+    resume: "git commit",
+    abort: "git merge --abort",
+  },
+  {
+    entry: "CHERRY_PICK_HEAD",
+    label: "Ein Cherry-Pick laeuft noch.",
+    resume: "git cherry-pick --continue",
+    abort: "git cherry-pick --abort",
+  },
+  {
+    entry: "REVERT_HEAD",
+    label: "Ein Revert laeuft noch.",
+    resume: "git revert --continue",
+    abort: "git revert --abort",
+  },
+];
+
+function interruptedOperation() {
+  const gitDir = inRepo(["rev-parse", "--absolute-git-dir"]).stdout;
+  return INTERRUPTED_OPERATIONS.find((operation) => existsSync(path.join(gitDir, operation.entry)));
+}
 
 class Abort extends Error {
   constructor(reason, nextActions = []) {
@@ -194,22 +240,13 @@ function requireCleanTree() {
 }
 
 function requireNoInterruptedOperation() {
-  const gitDir = inRepo(["rev-parse", "--absolute-git-dir"]).stdout;
-  const interrupted = [
-    ["rebase-merge", "Ein Rebase laeuft noch."],
-    ["rebase-apply", "Ein Rebase oder am-Vorgang laeuft noch."],
-    ["MERGE_HEAD", "Ein Merge laeuft noch."],
-    ["CHERRY_PICK_HEAD", "Ein Cherry-Pick laeuft noch."],
-    ["REVERT_HEAD", "Ein Revert laeuft noch."],
-  ].find(([entry]) => existsSync(path.join(gitDir, entry)));
-
-  if (interrupted) {
-    abort(interrupted[1], [
-      "Konflikte aufloesen, dann: git add <dateien> && git rebase --continue",
-      "Oder den Vorgang verwerfen: git rebase --abort",
-      "Danach diesen Befehl erneut ausfuehren.",
-    ]);
-  }
+  const interrupted = interruptedOperation();
+  if (!interrupted) return;
+  abort(interrupted.label, [
+    `Konflikte aufloesen, dann: git add <dateien> && ${interrupted.resume}`,
+    `Oder den Vorgang verwerfen: ${interrupted.abort}`,
+    "Danach diesen Befehl erneut ausfuehren.",
+  ]);
 }
 
 function reportPreservation({ allowDeletions }) {
@@ -235,6 +272,8 @@ function reportPreservation({ allowDeletions }) {
 }
 
 function commandStart(args) {
+  // Sonst scheitert `git switch` mit einer rohen Git-Meldung statt mit der Aufloesung.
+  requireNoInterruptedOperation();
   const branch = args[0] ?? "";
   const problem = branchNameProblem(branch);
   if (problem) {
@@ -432,7 +471,8 @@ function verifyPublished(branch, expected) {
   }
 }
 
-function commandGate() {
+function commandGate(args) {
+  const allowDeletions = args.includes("--allow-deletions");
   const results = [];
   const branch = currentBranch();
 
@@ -451,14 +491,11 @@ function commandGate() {
     detail: dirty === "" ? "clean" : `${dirty.split("\n").length} Datei(en) geaendert`,
   });
 
-  const gitDir = inRepo(["rev-parse", "--absolute-git-dir"]).stdout;
-  const interrupted = ["rebase-merge", "rebase-apply", "MERGE_HEAD", "CHERRY_PICK_HEAD"].some(
-    (entry) => existsSync(path.join(gitDir, entry)),
-  );
+  const interrupted = interruptedOperation();
   results.push({
-    ok: !interrupted,
+    ok: interrupted === undefined,
     label: "kein unterbrochener Git-Vorgang",
-    detail: interrupted ? "Rebase/Merge laeuft" : "keiner",
+    detail: interrupted ? interrupted.label : "keiner",
   });
 
   fetchBranch(INTEGRATION_BRANCH);
@@ -478,11 +515,17 @@ function commandGate() {
       remoteHead === null ? "Branch ist nicht veroeffentlicht" : `${remoteHead} / ${localHead}`,
   });
 
+  // Eine fachlich gewollte Loeschung wird hier genauso quittiert wie in `sync`. Ohne das wuerde
+  // `gate` jeden PR blockieren, der im Rahmen seiner Aufgabe unter `tests/`, `scripts/` oder
+  // `docs/` aufraeumt -- und ein Gate, das man nicht bestehen kann, wird umgangen.
   const removed = blockingDeletions(deletionsAgainstIntegration());
   results.push({
-    ok: removed.length === 0,
+    ok: removed.length === 0 || allowDeletions,
     label: "keine geschuetzte Datei entfernt",
-    detail: removed.length === 0 ? "keine" : removed.join(", "),
+    detail:
+      removed.length === 0
+        ? "keine"
+        : `${removed.join(", ")}${allowDeletions ? " (per --allow-deletions quittiert)" : ""}`,
   });
 
   const failed = results.filter((result) => !result.ok);
@@ -659,7 +702,7 @@ const USAGE = [
   "  start <branch>             legt einen Feature-Branch auf der aktuellen origin/main-Spitze an",
   "  sync [--allow-deletions]   rebased den aktuellen Feature-Branch auf origin/main",
   "  push [--allow-drop]        veroeffentlicht den Branch, Force nur als --force-with-lease",
-  "  gate                       prueft die lokal pruefbaren Merge-Voraussetzungen, ohne zu aendern",
+  "  gate [--allow-deletions]   prueft die lokal pruefbaren Merge-Voraussetzungen, ohne zu aendern",
   "",
 ].join("\n");
 
@@ -675,7 +718,7 @@ function main() {
     case "push":
       return commandPush(args);
     case "gate":
-      return commandGate();
+      return commandGate(args);
     default:
       process.stderr.write(
         command === undefined || command === "--help" || command === "-h"

@@ -59,7 +59,9 @@ Argumente und Optionen werden hinter `--` übergeben, damit npm sie an das Werkz
   ausschließlich mit `--force-with-lease=<ref>:<erwarteter Stand>`. Danach wird der veröffentlichte
   Stand erneut live nachgesehen.
 - `gate` ändert nichts und prüft Feature-Branch, sauberen Arbeitsbaum, keinen unterbrochenen
-  Git-Vorgang, `behind_by == 0`, Gleichstand von lokalem und Remote-Head sowie Preservation.
+  Git-Vorgang, `behind_by == 0`, Gleichstand von lokalem und Remote-Head sowie Preservation. Eine
+  fachlich gewollte Löschung wird mit `--allow-deletions` quittiert, genau wie bei `sync` — ein
+  Gate, das ein aufräumender PR nicht bestehen kann, wird umgangen statt beachtet.
 
 ## Bewachte Grenzen
 
@@ -89,5 +91,9 @@ Werkzeugs zu belegen bleiben:
 
 Ein Rebase-Konflikt beendet `sync` mit Exit-Code 1 und lässt den Rebase bewusst stehen. Danach gilt:
 Konflikte auflösen, `git add`, `git rebase --continue`, anschließend `npm run worker:sync` erneut.
-Verworfen wird mit `git rebase --abort`. Bereits auf `main` erledigte Arbeit, Guards, Tests und
+Verworfen wird mit `git rebase --abort`.
+
+Die Befehle hängen am erkannten Vorgang: bei einem unterbrochenen Merge, Cherry-Pick oder Revert
+nennt der Pfad `git merge --abort`, `git cherry-pick --abort` beziehungsweise `git revert --abort`.
+Ein Rebase-Befehl würde dort in `fatal: No rebase in progress?` enden. Bereits auf `main` erledigte Arbeit, Guards, Tests und
 Workflows dürfen dabei nicht regressieren.

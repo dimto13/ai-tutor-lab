@@ -110,7 +110,10 @@ test("doctor bestaetigt einen vollstaendig ausfuehrbaren Pfad", () => {
     assert.match(result.stdout, /OK {4}Schreibzugriff auf origin/);
     assert.match(result.stdout, /Der Worker-Pfad ist ausfuehrbar/);
     // Der Schreibtest darf keinen Ref zuruecklassen.
-    assert.equal(git(fixture.work, "ls-remote", "origin", "refs/heads/worker-git-write-probe"), "");
+    assert.equal(
+      git(fixture.work, "ls-remote", "origin", "refs/heads/worker-probe/write-check"),
+      "",
+    );
   });
 });
 
@@ -358,6 +361,71 @@ test("gate nennt die fehlenden Merge-Voraussetzungen und bestaetigt den erfuellt
     const passing = worker(fixture.work, "gate");
     assert.equal(passing.status, 0, passing.output);
     assert.doesNotMatch(passing.stdout, /FEHL/);
+  });
+});
+
+// Erzeugt einen unterbrochenen Merge: zwei Zweige aendern dieselbe Zeile.
+function startConflictingMerge(fixture: Fixture, branch: string) {
+  git(fixture.work, "switch", "--create", branch, "--no-track", "origin/main");
+  commit(fixture.work, "README.md", "Zweig-Fassung\n");
+  git(fixture.helper, "switch", "main");
+  git(fixture.helper, "pull", "--ff-only", "origin", "main");
+  writeFileSync(path.join(fixture.helper, "README.md"), "Main-Fassung\n");
+  git(fixture.helper, "add", ".");
+  git(fixture.helper, "commit", "-m", "main: README");
+  git(fixture.helper, "push", "origin", "main");
+  git(fixture.work, "fetch", "origin", "main");
+  const merge = spawnSync("git", ["merge", "origin/main"], {
+    cwd: fixture.work,
+    encoding: "utf8",
+    env: gitEnv,
+  });
+  assert.notEqual(merge.status, 0, "der Merge muss fuer diesen Test in einen Konflikt laufen");
+}
+
+test("ein unterbrochener Merge nennt die Merge-Befehle, nicht die des Rebase", () => {
+  withFixture((fixture) => {
+    startConflictingMerge(fixture, "chat1/10-merge");
+
+    const result = worker(fixture.work, "sync");
+    assert.equal(result.status, 1, result.output);
+    assert.match(result.stderr, /Ein Merge laeuft noch/);
+    assert.match(result.stderr, /git merge --abort/);
+    assert.doesNotMatch(
+      result.stderr,
+      /git rebase --(continue|abort)/,
+      "ein Rebase-Befehl endet hier in 'No rebase in progress?'",
+    );
+
+    // Auch `start` bricht strukturiert ab, statt git eine rohe Meldung ausgeben zu lassen.
+    const started = worker(fixture.work, "start", "chat1/11-neu");
+    assert.equal(started.status, 1, started.output);
+    assert.match(started.stderr, /Ein Merge laeuft noch/);
+
+    // Und das Gate meldet denselben Vorgang.
+    const gate = worker(fixture.work, "gate");
+    assert.equal(gate.status, 1, gate.output);
+    assert.match(gate.stdout, /FEHL {2}kein unterbrochener Git-Vorgang: Ein Merge laeuft noch/);
+
+    git(fixture.work, "merge", "--abort");
+  });
+});
+
+test("gate quittiert eine beabsichtigte Loeschung wie sync", () => {
+  withFixture((fixture) => {
+    assert.equal(worker(fixture.work, "start", "chat1/12-gate-loeschung").status, 0);
+    git(fixture.work, "rm", "--quiet", "tests/guard.test.ts");
+    git(fixture.work, "commit", "-m", "work: Guard bewusst entfernt");
+    assert.equal(worker(fixture.work, "push").status, 0);
+
+    const blocked = worker(fixture.work, "gate");
+    assert.equal(blocked.status, 1, blocked.output);
+    assert.match(blocked.stdout, /FEHL {2}keine geschuetzte Datei entfernt/);
+
+    const acknowledged = worker(fixture.work, "gate", "--allow-deletions");
+    assert.equal(acknowledged.status, 0, acknowledged.output);
+    assert.match(acknowledged.stdout, /quittiert/);
+    assert.doesNotMatch(acknowledged.stdout, /FEHL/);
   });
 });
 
