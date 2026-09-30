@@ -1,10 +1,15 @@
 import { validateClassification } from "./classificationValidation.ts";
-import type {
-  EngineValidationResult,
-  TrainingEvent,
-  Validation,
-  ValidationOutcome,
-  ValidationResult,
+import {
+  containsRuntimePathFragment,
+  findRuntimePath,
+  matchesRuntimePath,
+  type EngineValidationResult,
+  type RuntimePathComparison,
+  type RuntimePathIdentity,
+  type TrainingEvent,
+  type Validation,
+  type ValidationOutcome,
+  type ValidationResult,
 } from "./types.ts";
 
 export interface ValidatorSpec {
@@ -15,6 +20,11 @@ export interface ValidationContext {
   event?: TrainingEvent;
   events?: readonly TrainingEvent[];
   query?: (selector: string) => Promise<unknown>;
+  /**
+   * Optional filesystem path identity. Absent means exact comparison
+   * everywhere, which is the behaviour for every non-path comparison too.
+   */
+  pathIdentity?: RuntimePathIdentity;
 }
 
 export type ValidationHandler = (
@@ -76,21 +86,36 @@ async function validateEvent(
 
   const payload = eventPayload(event);
   for (const [key, expected] of Object.entries(validation.match ?? {})) {
-    if (payload[key] !== expected) {
+    if (
+      !matchesExpectedValue(
+        payload[key],
+        expected,
+        pathComparisonFor(context, isPathEventKey(context, key)),
+      )
+    ) {
       return nearMiss("event.match", key, EVENT_MISMATCH_MESSAGE);
     }
   }
   for (const [key, expectedFragment] of Object.entries(validation.contains ?? {})) {
     const actual = payload[key];
-    if (typeof actual !== "string" || !actual.includes(expectedFragment)) {
+    if (
+      typeof actual !== "string" ||
+      !containsFragment(
+        actual,
+        expectedFragment,
+        false,
+        pathComparisonFor(context, isPathEventKey(context, key)),
+      )
+    ) {
       return nearMiss("event.contains", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
   }
   for (const [key, expectedFragments] of Object.entries(validation.containsAny ?? {})) {
     const actual = payload[key];
+    const comparison = pathComparisonFor(context, isPathEventKey(context, key));
     if (
       typeof actual !== "string" ||
-      !expectedFragments.some((fragment) => containsNormalizedFragment(actual, fragment))
+      !expectedFragments.some((fragment) => containsFragment(actual, fragment, true, comparison))
     ) {
       return nearMiss("event.containsAny", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
@@ -106,25 +131,58 @@ async function validateState(
   if (!context.query) return IGNORE;
 
   const value = await context.query(validation.selector);
-  if (Object.hasOwn(validation, "equals") && value !== validation.equals) {
+  const pathSelector = isPathSelector(context, validation.selector);
+  if (
+    Object.hasOwn(validation, "equals") &&
+    !matchesExpectedValue(value, validation.equals, pathComparisonFor(context, pathSelector))
+  ) {
     return nearMiss("state.equals", validation.selector);
   }
-  if (Object.hasOwn(validation, "includes") && !includesValue(value, validation.includes)) {
+  if (
+    Object.hasOwn(validation, "includes") &&
+    !includesValue(
+      value,
+      validation.includes,
+      false,
+      pathSelector ? context.pathIdentity : undefined,
+    )
+  ) {
     return nearMiss("state.includes", validation.selector);
   }
   if (
     validation.includesAny &&
-    !validation.includesAny.some((candidate) => includesValue(value, candidate, true))
+    !validation.includesAny.some((candidate) =>
+      includesValue(value, candidate, true, pathSelector ? context.pathIdentity : undefined),
+    )
   ) {
     return nearMiss("state.includesAny", validation.selector);
   }
-  if (Object.hasOwn(validation, "excludes") && includesValue(value, validation.excludes)) {
+  if (
+    Object.hasOwn(validation, "excludes") &&
+    includesValue(
+      value,
+      validation.excludes,
+      false,
+      pathSelector ? context.pathIdentity : undefined,
+    )
+  ) {
     return nearMiss("state.excludes", validation.selector);
   }
   if (validation.match) {
     if (!isRecord(value)) return nearMiss("state.match", validation.selector);
     for (const [key, expected] of Object.entries(validation.match)) {
-      if (value[key] !== expected) return nearMiss("state.match", key);
+      // Only the key is a path. The value stays an exact comparison so code and
+      // free-text content is never normalized.
+      const actualKey = pathSelector
+        ? findRuntimePath(
+            Object.keys(value),
+            key,
+            context.pathIdentity?.comparison ?? "case-sensitive",
+          )
+        : key;
+      if (actualKey === undefined || value[actualKey] !== expected) {
+        return nearMiss("state.match", key);
+      }
     }
   }
   return PASS;
@@ -259,13 +317,71 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function includesValue(actual: unknown, expected: unknown, normalized = false): boolean {
-  if (Array.isArray(actual)) return actual.includes(expected);
+function isPathEventKey(context: ValidationContext, key: string): boolean {
+  return context.pathIdentity?.eventKeys?.includes(key) ?? false;
+}
+
+function isPathSelector(context: ValidationContext, selector: string): boolean {
+  return context.pathIdentity?.selectors?.includes(selector) ?? false;
+}
+
+/**
+ * Equality for a single value. Path semantics apply only where the runtime
+ * declared a path and the active profile asks for them; everything else, and
+ * every case-sensitive profile, keeps exact comparison.
+ */
+function matchesExpectedValue(
+  actual: unknown,
+  expected: unknown,
+  comparison: RuntimePathComparison | undefined,
+): boolean {
+  if (comparison && typeof actual === "string" && typeof expected === "string") {
+    return matchesRuntimePath(actual, expected, comparison);
+  }
+  return actual === expected;
+}
+
+/** Active path comparison for a declared path position, otherwise undefined. */
+function pathComparisonFor(
+  context: ValidationContext,
+  isPath: boolean,
+): RuntimePathComparison | undefined {
+  return isPath ? context.pathIdentity?.comparison : undefined;
+}
+
+function includesValue(
+  actual: unknown,
+  expected: unknown,
+  normalized = false,
+  pathIdentity?: RuntimePathIdentity,
+): boolean {
+  if (Array.isArray(actual)) {
+    if (pathIdentity && typeof expected === "string") {
+      return actual.some(
+        (item) =>
+          typeof item === "string" && matchesRuntimePath(item, expected, pathIdentity.comparison),
+      );
+    }
+    return actual.includes(expected);
+  }
   if (typeof actual !== "string") return false;
-  const expectedText = String(expected);
-  return normalized
-    ? containsNormalizedFragment(actual, expectedText)
-    : actual.includes(expectedText);
+  return containsFragment(actual, String(expected), normalized, pathIdentity?.comparison);
+}
+
+/**
+ * Fragment containment for a single value. A single path is still a path, so a
+ * declared path position keeps path semantics here too instead of falling back
+ * to an exact substring or to the free-text normalization, which folds far more
+ * than case and does so in a different locale.
+ */
+function containsFragment(
+  actual: string,
+  expected: string,
+  normalized: boolean,
+  comparison: RuntimePathComparison | undefined,
+): boolean {
+  if (comparison) return containsRuntimePathFragment(actual, expected, comparison);
+  return normalized ? containsNormalizedFragment(actual, expected) : actual.includes(expected);
 }
 
 function normalizeComparableText(value: string): string {
