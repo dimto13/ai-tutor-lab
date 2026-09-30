@@ -32,6 +32,19 @@ const TYPE_LABELS: Record<PreviewArtifact["type"], string> = {
   data: "Daten",
 };
 
+/**
+ * Die Ergebnisflaeche folgt der Ausweichstrategie aus docs/28-arbeitsbereich-layout.md: gestapelt
+ * volle Breite und ihre natuerliche Hoehe bis hoechstens 60 % des Editor-Bereichs, nebeneinander
+ * der bisherige Breitenanteil.
+ *
+ * Bewusst nicht die halbe Hoehe: ihre Kopfzeile, Reiter, Revisionszeile und Fusszeile sind fest und
+ * brauchen je nach Szenario bis zu 290px. Bekommt sie weniger, malen die festen Zeilen ueber ihren
+ * Kasten hinaus und die Aktionsknoepfe landen unter der Statusleiste. Mit natuerlicher Hoehe bleibt
+ * ausserdem mehr Platz fuer den Editor; der Deckel samt Scrollbereich fasst die Faelle, in denen die
+ * Flaeche mehr braucht, als der Bereich hergibt. Entschieden wird an der
+ * Breite des Editor-Bereichs, dem Container in Workspace.tsx -- diese Flaeche folgt nur derselben
+ * Entscheidung und traegt selbst keine Mindestbreite mehr, die den Editor quetschen koennte.
+ */
 export function ArtifactPreviewPanel() {
   const { mode, scenario, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();
   const [state, setState] = useState<ArtifactPreviewState>(EMPTY_STATE);
@@ -88,7 +101,7 @@ export function ArtifactPreviewPanel() {
       ref={rootRef}
       data-highlight="artifact.preview.panel"
       onClickCapture={() => inspect("artifact.preview.panel")}
-      className="flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
+      className="workspace-stacked:w-full workspace-stacked:max-h-[60%] workspace-stacked:flex-none workspace-stacked:overflow-y-auto workspace-stacked:border-l-0 workspace-stacked:border-t-2 flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
     >
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-[#111720] px-3">
         <Eye className="h-4 w-4 text-accent" />

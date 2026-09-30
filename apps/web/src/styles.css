@@ -23,6 +23,24 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
+ * #478: Reicht die Breite des Editor-Bereichs nicht fuer Editor und Ergebnisflaeche nebeneinander,
+ * wird gestapelt statt gequetscht -- aber nur, wenn die Hoehe dafuer reicht. Die Ergebnisflaeche
+ * hat rund 180px feste Kopf- und Fusszeilen; bekommt sie weniger, malt sie ueber ihren Kasten
+ * hinaus und ihre Knoepfe landen unter der Statusleiste. Die Entscheidung ist deshalb
+ * zweidimensional.
+ *
+ * Gemessen wird der Editor-Bereich selbst, nicht die Editor-Spalte und nicht der Viewport. Die
+ * Spalte enthaelt zusaetzlich Tableiste und Terminal; bei offenem Terminal bleiben dem Editor-
+ * Bereich rund 280px, und das reicht zum Stapeln nicht. Und nicht der Viewport, weil: bei 1280px Viewport nimmt der
+ * Platform-Guide so viel Breite, dass viewportbasierte Breakpoints Breiten vergeben, die es nicht
+ * gibt. Genau das liess den Editor auf 24px zusammenlaufen.
+ *
+ * Hergeleitet: 680px aus 366px lesbarer Editorbreite bei 54 % Breitenanteil; 400px aus den 180px
+ * Chrome der Ergebnisflaeche plus nutzbarer Editorhoehe. Siehe docs/28-arbeitsbereich-layout.md.
+ */
+@custom-variant workspace-stacked (@container (max-width: 680px) and (min-height: 400px));
+
+/*
  * Design system definition.
  *
  * The @theme inline block maps CSS custom properties to Tailwind utility

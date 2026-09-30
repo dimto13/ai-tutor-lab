@@ -90,6 +90,22 @@ export function Workspace() {
   const [wrongFile, setWrongFile] = useState<string | null>(null);
   const [copilotChatOpen, setCopilotChatOpen] = useState(false);
 
+  // Ausweichstrategie fuer #478, dokumentiert in docs/28-arbeitsbereich-layout.md.
+  //
+  // Reicht die Breite nicht fuer alle offenen Bereiche, wird nicht weiter proportional gequetscht,
+  // sondern in dieser Reihenfolge nachgegeben:
+  //   1. die Ergebnisflaeche rutscht unter den Editor und behaelt die volle Breite, sobald der
+  //      Editor-Bereich zu schmal und gleichzeitig hoch genug ist (Variante workspace-stacked in
+  //      styles.css; die Hoehe zaehlt mit, weil die Ergebnisflaeche feste Kopf- und Fusszeilen hat),
+  //   2. der Explorer geht auf seine kompakte Breite zurueck, sobald Schritt 1 nicht reicht. Das
+  //      gilt nur in dieser Panelkombination, damit sonst nichts an der Breite des Explorers
+  //      aendert.
+  // Entschieden wird an der Breite des Arbeitsbereichs, nicht an der Viewport-Breite: bei 1280px
+  // Viewport nimmt der Platform-Guide so viel Platz, dass die viewportbasierten md:-Regeln weiter
+  // gelten, obwohl der Arbeitsbereich dafuer zu schmal ist. Genau diese Verwechslung liess den
+  // Editor auf 24px zusammenlaufen.
+  const crowdedHorizontalLayout = artifactPreviewIntegrated && copilotIntegrated && copilotChatOpen;
+
   const runtimeRootRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInputRef = useRef<HTMLInputElement>(null);
@@ -320,7 +336,7 @@ export function Workspace() {
         </span>
       </div>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="@container flex min-h-0 flex-1">
         <div className="flex w-10 shrink-0 flex-col items-center gap-1 border-r border-border bg-activity py-2 sm:w-12">
           {activityItems.map(({ id, icon: Icon, label, target }) => (
             <button
@@ -341,7 +357,9 @@ export function Workspace() {
         <aside
           data-highlight="vscode.primarySideBar"
           onClickCapture={() => inspect("vscode.primarySideBar")}
-          className="flex w-28 shrink-0 flex-col border-r border-border bg-panel sm:w-44 md:w-60"
+          className={`flex shrink-0 flex-col border-r border-border bg-panel ${
+            crowdedHorizontalLayout ? "w-60 @max-[974px]:w-28" : "w-28 sm:w-44 md:w-60"
+          }`}
           aria-label="Primary Side Bar"
         >
           <div data-highlight="vscode.sideBar" className="flex min-h-0 flex-1 flex-col">
@@ -564,35 +582,37 @@ export function Workspace() {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1">
-            <div
-              data-highlight="vscode.editor"
-              onClickCapture={() => inspect("vscode.editor")}
-              className="relative min-h-0 min-w-0 flex-1"
-            >
-              {activeFile ? (
-                <div className="flex h-full">
-                  <div className="select-none border-r border-border bg-editor px-3 py-3 text-right font-mono text-[12px] leading-6 text-muted-foreground">
-                    {(contents[activeFile] ?? "").split("\n").map((_, index) => (
-                      <div key={index}>{index + 1}</div>
-                    ))}
+          <div className="flex min-h-0 min-w-0 flex-1 [container-type:size]">
+            <div className="workspace-stacked:flex-col flex min-h-0 min-w-0 flex-1">
+              <div
+                data-highlight="vscode.editor"
+                onClickCapture={() => inspect("vscode.editor")}
+                className="relative min-h-0 min-w-0 flex-1"
+              >
+                {activeFile ? (
+                  <div className="flex h-full">
+                    <div className="select-none border-r border-border bg-editor px-3 py-3 text-right font-mono text-[12px] leading-6 text-muted-foreground">
+                      {(contents[activeFile] ?? "").split("\n").map((_, index) => (
+                        <div key={index}>{index + 1}</div>
+                      ))}
+                    </div>
+                    <textarea
+                      value={contents[activeFile] ?? ""}
+                      onChange={(event) => updateContent(event.target.value)}
+                      spellCheck={false}
+                      className="h-full min-w-0 flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
+                      placeholder="Dateiinhalt bearbeiten..."
+                      aria-label="Editor-Inhalt"
+                    />
                   </div>
-                  <textarea
-                    value={contents[activeFile] ?? ""}
-                    onChange={(event) => updateContent(event.target.value)}
-                    spellCheck={false}
-                    className="h-full min-w-0 flex-1 resize-none bg-editor px-3 py-3 font-mono text-[13px] leading-6 text-foreground outline-none"
-                    placeholder="Dateiinhalt bearbeiten..."
-                    aria-label="Editor-Inhalt"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  Öffne eine Datei im Explorer, um sie zu bearbeiten.
-                </div>
-              )}
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    Öffne eine Datei im Explorer, um sie zu bearbeiten.
+                  </div>
+                )}
+              </div>
+              {artifactPreviewIntegrated ? <ArtifactPreviewPanel /> : null}
             </div>
-            {artifactPreviewIntegrated ? <ArtifactPreviewPanel /> : null}
           </div>
 
           {panelOpen ? (
