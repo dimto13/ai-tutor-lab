@@ -21,12 +21,18 @@ export const ATTESTATION_FAILURE_MESSAGE = "Nachweis konnte nicht ausgestellt we
 
 export function completionKey(
   userId: string,
-  tenantId: string,
+  tenantId: string | null,
   scenarioId: string,
   mode: TrainingMode,
   finishedAt: number,
 ): string {
-  return `${tenantId}\u0000${userId}\u0000${scenarioId}\u0000${mode}\u0000${finishedAt}`;
+  // `UserIdentity.tenantId` ist mandantenlos zulaessig, der Ledger-Schluessel muss diesen Fall
+  // deshalb tragen. Ein fehlender Mandant ist ein eigener Wert und nicht der leere String: sonst
+  // faellt eine Identitaet ohne Mandant mit einer Identitaet im Mandanten "" zusammen, und genau
+  // diese Verwechslung soll der Schluessel verhindern. Das NUL-Zeichen ist bereits Trennzeichen und
+  // kann in keiner echten Kennung vorkommen.
+  const tenant = tenantId ?? "\u0000none";
+  return `${tenant}\u0000${userId}\u0000${scenarioId}\u0000${mode}\u0000${finishedAt}`;
 }
 
 export function failureMessage(reason: unknown, fallback: string): string {

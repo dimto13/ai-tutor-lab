@@ -122,6 +122,15 @@ test("an issued attestation is never issued twice for the same completion", asyn
   assert.equal(starts, 1);
 });
 
+test("a missing tenant is its own key and does not collide with an empty one", () => {
+  // `UserIdentity.tenantId` darf leer sein. Faellt dieser Fall mit dem Mandanten "" zusammen,
+  // unterdrueckt der Ledger genau ueber die Mandantengrenze hinweg, die er trennen soll.
+  const withoutTenant = completionKey("user-a", null, "a", "guided", 1);
+  assert.notEqual(withoutTenant, completionKey("user-a", "", "a", "guided", 1));
+  assert.notEqual(withoutTenant, completionKey("user-b", null, "a", "guided", 1));
+  assert.equal(withoutTenant, completionKey("user-a", null, "a", "guided", 1));
+});
+
 test("completion keys separate identity, tenant, scenario, mode and completion timestamp", () => {
   const base = completionKey("user-a", "tenant-a", "a", "guided", 1);
   assert.notEqual(base, completionKey("user-a", "tenant-a", "a", "guided", 2));
