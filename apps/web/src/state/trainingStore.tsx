@@ -42,6 +42,11 @@ import type {
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
 import { completionSaveFailureMessage } from "@/completion/completionSaveFailure";
+import {
+  initialCompletionSavePending,
+  settleCompletionSave,
+  startCompletionSave,
+} from "@/completion/completionSavePending";
 import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
 import {
@@ -274,6 +279,7 @@ export function TrainingProvider({
   const [completionSaveFailure, setCompletionSaveFailure] = useState<string | null>(null);
   const [completionSaveRetryToken, setCompletionSaveRetryToken] = useState(0);
   const [completionSavePending, setCompletionSavePending] = useState(false);
+  const completionSaveRef = useRef(initialCompletionSavePending);
   const progressRef = useRef(progress);
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
   const guidedNavigationBusyRef = useRef(false);
@@ -485,14 +491,27 @@ export function TrainingProvider({
     let cancelled = false;
     // Nur der Abschluss-Write ist nutzersichtbar wiederholbar; fuer laufende Sitzungen bleibt der
     // Puffer zustaendig. Der Pending-Zustand sperrt den Wiederholen-Pfad, solange ein Versuch laeuft.
-    const savesFinishedSession = progress.finishedAt !== null;
-    if (savesFinishedSession) setCompletionSavePending(true);
+    //
+    // Der Zustand gehoert dem juengsten Lauf: dieser Effekt startet bei jeder Aenderung neu, und
+    // ein abgebrochener Vorgaenger darf weder haengen bleiben noch den Zustand eines laufenden
+    // Versuchs zuruecknehmen. Die Regel steht in completionSavePending.ts.
+    const started = startCompletionSave(completionSaveRef.current, progress.finishedAt !== null);
+    completionSaveRef.current = started;
+    const run = started.latestRun;
+    setCompletionSavePending(started.pending);
+
+    const settle = () => {
+      const settled = settleCompletionSave(completionSaveRef.current, run);
+      if (settled === completionSaveRef.current) return;
+      completionSaveRef.current = settled;
+      setCompletionSavePending(settled.pending);
+    };
 
     void persistence
       .saveSession(progress)
       .then((authoritativeSession) => {
+        settle();
         if (cancelled) return;
-        if (savesFinishedSession) setCompletionSavePending(false);
         setCompletionSaveFailure(null);
         if (!authoritativeSession) return;
         setProgress((current) => {
@@ -505,8 +524,8 @@ export function TrainingProvider({
         });
       })
       .catch((cause: unknown) => {
+        settle();
         if (cancelled) return;
-        if (savesFinishedSession) setCompletionSavePending(false);
         // An unfinished session stays usable while persistence is temporarily unavailable; the
         // pending write is buffered. A finished training must not look saved when the
         // authoritative write failed, so the completion screen reports and retries it (#467).
