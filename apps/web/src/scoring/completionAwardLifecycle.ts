@@ -19,8 +19,14 @@ const pendingAttestations = new Map<string, Promise<void>>();
 export const AWARD_FAILURE_MESSAGE = "Score konnte nicht gespeichert werden";
 export const ATTESTATION_FAILURE_MESSAGE = "Nachweis konnte nicht ausgestellt werden";
 
-export function completionKey(scenarioId: string, mode: TrainingMode, finishedAt: number): string {
-  return `${scenarioId}\u0000${mode}\u0000${finishedAt}`;
+export function completionKey(
+  userId: string,
+  tenantId: string,
+  scenarioId: string,
+  mode: TrainingMode,
+  finishedAt: number,
+): string {
+  return `${tenantId}\u0000${userId}\u0000${scenarioId}\u0000${mode}\u0000${finishedAt}`;
 }
 
 export function failureMessage(reason: unknown, fallback: string): string {
