@@ -42,6 +42,7 @@ vom POC zur produktreifen Plattform.
 | `23-cloud-abnahme-kanal.md`      | Lesender OIDC-Zugang von GitHub Actions zu AWS für die Cloud-Abnahme            | Entwicklung, Security    |
 | `24-control-plane.md`            | Dynamische CONTROL-Discovery, Handoffs, Scheduler-Vertrag und Rollover          | Steuerung, LLM-Agenten   |
 | `26-runtime-pfad-semantik.md`    | Pfad-/Dateinamen-Identität aus Runtime- bzw. Environment-Profil, ohne OS-Logik  | Entwicklung, LLM-Agenten |
+| `27-worker-git-pfad.md`          | Ausführbarer, bewachter Git-Pfad der Worker: Branch, Rebase, Lease-Push, Gate   | Steuerung, LLM-Agenten   |
 | `../prompts/model-briefing.md`   | Kompakter Kontext-Prompt für beliebige LLMs                                     | dich, LLM-Agenten        |
 
 Aufgabenlage, Planung und Meilensteine stehen nicht in Dateien, sondern ausschließlich in den

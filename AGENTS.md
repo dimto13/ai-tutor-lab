@@ -25,7 +25,9 @@
    [`docs/02-domaenenmodell.md`](docs/02-domaenenmodell.md). Bei Arbeit an `amplify.yml`,
    Amplify-Backend-Code, Auth/Identity, Persistenz, Cloud-SDKs oder Deployment zusätzlich
    [`docs/19-aws-amplify-konventionen.md`](docs/19-aws-amplify-konventionen.md) und
-   [`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md).
+   [`docs/20-cloud-provider-boundary.md`](docs/20-cloud-provider-boundary.md). Vor der ersten
+   Git-Mutation einer Worker-Session zusätzlich
+   [`docs/27-worker-git-pfad.md`](docs/27-worker-git-pfad.md).
 2. **Cloud-Neutralität ist eine harte Architekturgrenze.** UI, Routes, State, Training Engine und
    fachliche Modelle verwenden keine Cognito-, Amplify-, Firebase- oder Google-Cloud-Typen als
    Anwendungsvertrag. Sie hängen an eigenen Ports wie `AuthService` und eigenen Modellen wie
@@ -122,3 +124,9 @@
     erforderlicher Rebase ist die ausdrücklich autorisierte Ausnahme von Regel 4 für den jeweiligen
     Feature-Branch; Force-Push ist dabei ausschließlich als `--force-with-lease` auf den eigenen
     Feature-Branch zulässig, niemals auf `main` oder `deploy`.
+    Der ausführbare, bewachte Pfad dafür ist `npm run worker:doctor`, `worker:start`, `worker:sync`,
+    `worker:push` und `worker:gate`, beschrieben in
+    [`docs/27-worker-git-pfad.md`](docs/27-worker-git-pfad.md). Worker verwenden diesen Pfad statt
+    einer jedes Mal neu zusammengesetzten Folge einzelner Git-Aufrufe; er erzwingt Rebase,
+    Lease-Push, Preservation und die geschützten Refs und nennt bei jedem Abbruch den nächsten
+    exakten Befehl.
