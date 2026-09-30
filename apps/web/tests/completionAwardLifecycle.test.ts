@@ -33,98 +33,130 @@ function award(points: number): AppendScoreEventResult {
   } as unknown as AppendScoreEventResult;
 }
 
+function key(finishedAt: number): string {
+  return completionKey("user-a", "tenant-a", "vscode-shortcuts.challenge", "challenge", finishedAt);
+}
+
 test("a completion is awarded once even when several completion screens ask concurrently", async () => {
   resetCompletionLedger();
-  const key = completionKey("vscode-shortcuts.challenge", "challenge", 42);
+  const completion = key(42);
   let starts = 0;
 
   const start = async () => {
     starts += 1;
     return award(10);
   };
-  const [first, second] = await Promise.all([awardOnce(key, start), awardOnce(key, start)]);
+  const [first, second] = await Promise.all([
+    awardOnce(completion, start),
+    awardOnce(completion, start),
+  ]);
 
   assert.equal(starts, 1);
   assert.equal(first, second);
-  assert.equal(rememberedAward(key)?.event.points, 10);
+  assert.equal(rememberedAward(completion)?.event.points, 10);
 });
 
 test("a failed attestation leaves the awarded score remembered and re-issues only the attestation", async () => {
   resetCompletionLedger();
-  const key = completionKey("vscode-shortcuts.challenge", "challenge", 7);
+  const completion = key(7);
   let awardStarts = 0;
   let attestationStarts = 0;
 
-  await awardOnce(key, async () => {
+  await awardOnce(completion, async () => {
     awardStarts += 1;
     return award(25);
   });
 
   await assert.rejects(
-    issueAttestationOnce(key, async () => {
+    issueAttestationOnce(completion, async () => {
       attestationStarts += 1;
       throw new Error("Nachweisdienst nicht erreichbar");
     }),
     /Nachweisdienst nicht erreichbar/,
   );
 
-  // The score survived the attestation failure.
-  assert.equal(rememberedAward(key)?.event.points, 25);
-  assert.equal(attestationIssued(key), false);
+  assert.equal(rememberedAward(completion)?.event.points, 25);
+  assert.equal(attestationIssued(completion), false);
 
-  // Retrying re-uses the award and starts exactly one new attestation.
-  const retried = await awardOnce(key, async () => {
+  const retried = await awardOnce(completion, async () => {
     awardStarts += 1;
     return award(99);
   });
-  await issueAttestationOnce(key, async () => {
+  await issueAttestationOnce(completion, async () => {
     attestationStarts += 1;
   });
 
   assert.equal(awardStarts, 1, "a remembered award is never replayed");
   assert.equal(attestationStarts, 2);
   assert.equal(retried.event.points, 25);
-  assert.equal(attestationIssued(key), true);
+  assert.equal(attestationIssued(completion), true);
 });
 
 test("a failed award is not remembered and is retried on the next attempt", async () => {
   resetCompletionLedger();
-  const key = completionKey("vscode-shortcuts.challenge", "challenge", 11);
+  const completion = key(11);
 
   await assert.rejects(
-    awardOnce(key, async () => {
+    awardOnce(completion, async () => {
       throw new Error("ServiceUnavailable");
     }),
     /ServiceUnavailable/,
   );
-  assert.equal(rememberedAward(key), null);
+  assert.equal(rememberedAward(completion), null);
 
-  const second = await awardOnce(key, async () => award(5));
+  const second = await awardOnce(completion, async () => award(5));
   assert.equal(second.event.points, 5);
 });
 
 test("an issued attestation is never issued twice for the same completion", async () => {
   resetCompletionLedger();
-  const key = completionKey("vscode-shortcuts.challenge", "challenge", 3);
+  const completion = key(3);
   let starts = 0;
 
   const start = async () => {
     starts += 1;
   };
-  await issueAttestationOnce(key, start);
-  await issueAttestationOnce(key, start);
+  await issueAttestationOnce(completion, start);
+  await issueAttestationOnce(completion, start);
 
   assert.equal(starts, 1);
 });
 
-test("completion keys separate scenario, mode and completion timestamp", () => {
-  assert.notEqual(
-    completionKey("a", "guided", 1),
-    completionKey("a", "guided", 2),
-    "a second run must be able to earn its own award",
-  );
-  assert.notEqual(completionKey("a", "guided", 1), completionKey("a", "challenge", 1));
-  assert.notEqual(completionKey("a", "guided", 1), completionKey("b", "guided", 1));
+test("completion keys separate identity, tenant, scenario, mode and completion timestamp", () => {
+  const base = completionKey("user-a", "tenant-a", "a", "guided", 1);
+  assert.notEqual(base, completionKey("user-a", "tenant-a", "a", "guided", 2));
+  assert.notEqual(base, completionKey("user-a", "tenant-a", "a", "challenge", 1));
+  assert.notEqual(base, completionKey("user-a", "tenant-a", "b", "guided", 1));
+  assert.notEqual(base, completionKey("user-b", "tenant-a", "a", "guided", 1));
+  assert.notEqual(base, completionKey("user-a", "tenant-b", "a", "guided", 1));
+});
+
+test("remembered awards and attestations cannot cross authenticated identities", async () => {
+  resetCompletionLedger();
+  const firstUser = completionKey("user-a", "tenant-a", "same", "challenge", 100);
+  const secondUser = completionKey("user-b", "tenant-a", "same", "challenge", 100);
+
+  await awardOnce(firstUser, async () => award(10));
+  await issueAttestationOnce(firstUser, async () => {});
+
+  assert.equal(rememberedAward(firstUser)?.event.points, 10);
+  assert.equal(attestationIssued(firstUser), true);
+  assert.equal(rememberedAward(secondUser), null);
+  assert.equal(attestationIssued(secondUser), false);
+
+  let secondUserAwardStarts = 0;
+  let secondUserAttestationStarts = 0;
+  await awardOnce(secondUser, async () => {
+    secondUserAwardStarts += 1;
+    return award(20);
+  });
+  await issueAttestationOnce(secondUser, async () => {
+    secondUserAttestationStarts += 1;
+  });
+
+  assert.equal(secondUserAwardStarts, 1);
+  assert.equal(secondUserAttestationStarts, 1);
+  assert.equal(rememberedAward(secondUser)?.event.points, 20);
 });
 
 test("failure messages prefer the server reason and fall back per outcome", () => {
