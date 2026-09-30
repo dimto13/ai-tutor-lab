@@ -424,3 +424,21 @@ test("vscodeRuntime: never resolves targets from the global document after unmou
     }
   }
 });
+
+test("vscodeRuntime: the web composition forwards the environment through every mount", async () => {
+  // Two spreads sit between the caller and the simulator. A wrapper that drops
+  // the third argument would leave the profile at the strict default, which is
+  // exactly the class of defect the method-instead-of-getter rule guards.
+  await vscodeRuntime.unmount();
+  await vscodeRuntime.mount(createContainer(), undefined, { pathComparison: "case-insensitive" });
+  assert.equal(vscodeRuntime.resolveEnvironment().pathComparison, "case-insensitive");
+
+  // Unmount restores the strict default; the next mount re-establishes the
+  // declared profile instead of relying on a separate one-shot application.
+  await vscodeRuntime.unmount();
+  assert.equal(vscodeRuntime.resolveEnvironment().pathComparison, "case-sensitive");
+
+  await vscodeRuntime.mount(createContainer(), undefined, { pathComparison: "case-insensitive" });
+  assert.equal(vscodeRuntime.resolveEnvironment().pathComparison, "case-insensitive");
+  await vscodeRuntime.unmount();
+});
