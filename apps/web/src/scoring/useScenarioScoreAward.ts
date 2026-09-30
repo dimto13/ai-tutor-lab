@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppendScoreEventResult, TrainingMode } from "@ai-train-lab/training-engine";
+import { useAuth } from "../auth/AuthContext";
 import { createApplicationAttestationService } from "../attestations/applicationAttestationService";
 import { createApplicationScenarioScoreService } from "./applicationScenarioScoreService";
 import {
@@ -31,6 +32,7 @@ export function useScenarioScoreAward(
   mode: TrainingMode,
   finishedAt: number | null,
 ): ScenarioScoreAwardState {
+  const auth = useAuth();
   const service = useMemo(() => createApplicationScenarioScoreService(), []);
   const attestationService = useMemo(() => createApplicationAttestationService(), []);
   const [retryToken, setRetryToken] = useState(0);
@@ -45,7 +47,8 @@ export function useScenarioScoreAward(
   }, []);
 
   useEffect(() => {
-    if (!service) {
+    const identity = auth.session?.identity;
+    if (!service || !identity) {
       setStatus("unavailable");
       setResult(null);
       setError(null);
@@ -64,7 +67,13 @@ export function useScenarioScoreAward(
 
     const activeService = service;
     const activeAttestationService = attestationService;
-    const activeCompletionKey = completionKey(scenarioId, mode, finishedAt);
+    const activeCompletionKey = completionKey(
+      identity.userId,
+      identity.tenantId,
+      scenarioId,
+      mode,
+      finishedAt,
+    );
     let cancelled = false;
 
     const remembered = rememberedAward(activeCompletionKey);
@@ -143,7 +152,7 @@ export function useScenarioScoreAward(
     return () => {
       cancelled = true;
     };
-  }, [attestationService, finishedAt, mode, retryToken, scenarioId, service]);
+  }, [attestationService, auth.session, finishedAt, mode, retryToken, scenarioId, service]);
 
   return { status, result, error, attestationStatus, attestationError, retry };
 }
