@@ -41,6 +41,12 @@ import type {
   Validation,
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
+import { completionSaveFailureMessage } from "@/completion/completionSaveFailure";
+import {
+  initialCompletionSavePending,
+  settleCompletionSave,
+  startCompletionSave,
+} from "@/completion/completionSavePending";
 import { createApplicationTrainingStateRepository } from "@/persistence/applicationTrainingStateRepository";
 import { getScenario } from "@/scenarios";
 import {
@@ -154,6 +160,11 @@ interface TrainingContextValue {
   challengeOutcome: ChallengeOutcome | null;
   challengeRemainingSeconds: number | null;
   recovery: GuidedRecoveryAction | null;
+  /** Set when a finished training could not be written to the authoritative store. */
+  completionSaveFailure: string | null;
+  /** True while a write of the finished session is in flight, so the retry cannot be re-entered. */
+  completionSavePending: boolean;
+  retryCompletionSave: () => void;
   revealHelp: () => void;
   resetHelp: () => void;
   completeExplanationStep: () => void;
@@ -265,6 +276,10 @@ export function TrainingProvider({
   const [stateRecovery, setStateRecovery] = useState<ActiveGuidedRecovery | null>(null);
   const [guidedReplayStepId, setGuidedReplayStepId] = useState<string | null>(null);
   const [guidedNavigationPending, setGuidedNavigationPending] = useState(false);
+  const [completionSaveFailure, setCompletionSaveFailure] = useState<string | null>(null);
+  const [completionSaveRetryToken, setCompletionSaveRetryToken] = useState(0);
+  const [completionSavePending, setCompletionSavePending] = useState(false);
+  const completionSaveRef = useRef(initialCompletionSavePending);
   const progressRef = useRef(progress);
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
   const guidedNavigationBusyRef = useRef(false);
@@ -474,11 +489,31 @@ export function TrainingProvider({
   useEffect(() => {
     if (!hydrated || !persistence) return;
     let cancelled = false;
+    // Nur der Abschluss-Write ist nutzersichtbar wiederholbar; fuer laufende Sitzungen bleibt der
+    // Puffer zustaendig. Der Pending-Zustand sperrt den Wiederholen-Pfad, solange ein Versuch laeuft.
+    //
+    // Der Zustand gehoert dem juengsten Lauf: dieser Effekt startet bei jeder Aenderung neu, und
+    // ein abgebrochener Vorgaenger darf weder haengen bleiben noch den Zustand eines laufenden
+    // Versuchs zuruecknehmen. Die Regel steht in completionSavePending.ts.
+    const started = startCompletionSave(completionSaveRef.current, progress.finishedAt !== null);
+    completionSaveRef.current = started;
+    const run = started.latestRun;
+    setCompletionSavePending(started.pending);
+
+    const settle = () => {
+      const settled = settleCompletionSave(completionSaveRef.current, run);
+      if (settled === completionSaveRef.current) return;
+      completionSaveRef.current = settled;
+      setCompletionSavePending(settled.pending);
+    };
 
     void persistence
       .saveSession(progress)
       .then((authoritativeSession) => {
-        if (cancelled || !authoritativeSession) return;
+        settle();
+        if (cancelled) return;
+        setCompletionSaveFailure(null);
+        if (!authoritativeSession) return;
         setProgress((current) => {
           if (current !== progress) return current;
           if (!guidedReplayStepIdRef.current) {
@@ -488,14 +523,20 @@ export function TrainingProvider({
           return authoritativeSession;
         });
       })
-      .catch(() => {
-        // The current session stays usable when persistence is temporarily unavailable.
+      .catch((cause: unknown) => {
+        settle();
+        if (cancelled) return;
+        // An unfinished session stays usable while persistence is temporarily unavailable; the
+        // pending write is buffered. A finished training must not look saved when the
+        // authoritative write failed, so the completion screen reports and retries it (#467).
+        if (progress.finishedAt === null) return;
+        setCompletionSaveFailure(completionSaveFailureMessage(cause));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [progress, hydrated, persistence]);
+  }, [progress, hydrated, persistence, completionSaveRetryToken]);
 
   useEffect(() => {
     if (
@@ -1039,6 +1080,15 @@ export function TrainingProvider({
       challengeOutcome: progress.challengeOutcome,
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       recovery,
+      completionSaveFailure,
+      completionSavePending,
+      retryCompletionSave: () => {
+        // Ein zweiter Klick waehrend eines laufenden Versuchs startet den Persistenz-Effekt neu.
+        // Der Cleanup des vorherigen Durchlaufs verwirft dann dessen Auswertung: ein Write, der in
+        // Wahrheit erfolgreich war, bliebe als Fehler stehen, waehrend weitere Writes nachlaufen.
+        if (completionSavePending) return;
+        setCompletionSaveRetryToken((current) => current + 1);
+      },
       revealHelp: () => {
         if (mode !== "guided" || visibleHelpLevel >= 3) return;
         const replayStepId = guidedReplayStepIdRef.current;
@@ -1121,6 +1171,8 @@ export function TrainingProvider({
     visibleHelpLevel,
     challengeRemainingSeconds,
     recommendGuidedAfterChallenge,
+    completionSaveFailure,
+    completionSavePending,
     completeStep,
     finishGuidedReplay,
     navigateToGuidedStep,
