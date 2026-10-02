@@ -1,0 +1,69 @@
+name: Tracker Hygiene
+
+# Dauerhafter Guard fuer die Regeln aus docs/29-tracker-hygiene.md: Pflicht-Issues sind
+# zugewiesen oder bewusst geparkt, PRs werden nur gemergt oder mit Abschlussgrund geschlossen,
+# Issues nur mit Code-Beleg auf main oder mit Abschlussgrund.
+#
+# `pull_request_target` statt `pull_request`, damit der Guard auch PRs aus Forks wieder oeffnen
+# kann. Er fuehrt dabei ausschliesslich das Skript vom Default-Branch aus, niemals Code aus dem
+# PR, und installiert keine Abhaengigkeiten.
+
+on:
+  issues:
+    types:
+      - closed
+      - reopened
+      - labeled
+      - unlabeled
+  pull_request_target:
+    types:
+      - closed
+      - reopened
+      - labeled
+      - unlabeled
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: tracker-hygiene-${{ github.event.issue.number || github.event.pull_request.number || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  hygiene:
+    # Label-Events nur fuer Labels, die eine Regel betreffen; jedes andere Labeln waere ein Leerlauf.
+    if: >-
+      github.actor != 'github-actions[bot]' && (
+        (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+        contains(fromJSON('["prio: must","beta:gate","stream:chat1","stream:chat2","stream:chat3","stream:owner","work:parked","wontfix","duplicate","superseded","invalid","hygiene:violation"]'), github.event.label.name)
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v7
+        with:
+          # Volle Historie: der Code-Beleg wird gegen die Commit-Nachrichten auf main geprueft.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check tracker hygiene
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "${EVENT_NAME}" = "schedule" ] || [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            node scripts/tracker-hygiene.mjs --sweep --apply
+          else
+            node scripts/tracker-hygiene.mjs --event "${GITHUB_EVENT_PATH}" --apply
+          fi

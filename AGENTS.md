@@ -130,3 +130,11 @@
     einer jedes Mal neu zusammengesetzten Folge einzelner Git-Aufrufe; er erzwingt Rebase,
     Lease-Push, Preservation und die geschützten Refs und nennt bei jedem Abbruch den nächsten
     exakten Befehl.
+16. **Tracker-Hygiene ist ein Guard, keine Empfehlung.** Jedes offene Issue mit `prio: must` oder
+    `beta:gate` trägt genau eins von `stream:chat1`, `stream:chat2`, `stream:chat3`, `stream:owner`
+    oder `work:parked`. Ein PR wird gemergt oder vor dem Schließen mit einem Abschlussgrund versehen:
+    `superseded` beziehungsweise `duplicate` mit Verweis wie `Superseded by #…`, sonst `wontfix` oder
+    `invalid`. Ein Issue wird als erledigt nur mit Code-Beleg auf `main` geschlossen, sonst als
+    „Not planned“ oder „Duplicate“ mit demselben Abschlussgrund. Der Workflow `Tracker Hygiene` meldet
+    Verstöße mit `hygiene:violation` und öffnet falsch Geschlossenes wieder; Regeln und Labels stehen in
+    [`docs/29-tracker-hygiene.md`](docs/29-tracker-hygiene.md).
