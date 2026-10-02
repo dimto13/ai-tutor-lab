@@ -44,6 +44,7 @@ vom POC zur produktreifen Plattform.
 | `26-runtime-pfad-semantik.md`    | Pfad-/Dateinamen-Identität aus Runtime- bzw. Environment-Profil, ohne OS-Logik  | Entwicklung, LLM-Agenten |
 | `27-worker-git-pfad.md`          | Ausführbarer, bewachter Git-Pfad der Worker: Branch, Rebase, Lease-Push, Gate   | Steuerung, LLM-Agenten   |
 | `28-arbeitsbereich-layout.md`    | Lesbarkeitsgrenzen der Arbeitsflächen und Ausweichreihenfolge bei Platzmangel   | Entwicklung, Product     |
+| `29-tracker-hygiene.md`          | Zuweisung von Pflicht-Issues und Abschlussgründe für PRs und Issues, mit Guard  | Steuerung, LLM-Agenten   |
 | `../prompts/model-briefing.md`   | Kompakter Kontext-Prompt für beliebige LLMs                                     | dich, LLM-Agenten        |
 
 Aufgabenlage, Planung und Meilensteine stehen nicht in Dateien, sondern ausschließlich in den
@@ -67,6 +68,8 @@ die Quelle.
 | Zuordnung zum Epic | zusätzlich Label `epic: EP-xx` (für Filter und Board-Gruppierung)                      |
 | Priorität          | Label `prio: must/should/could`                                                        |
 | Typ                | Label `type: story/task/chore/spike`                                                   |
+| Zuweisung          | Label `stream:chat1/chat2/chat3/owner` oder `work:parked`, Pflicht bei `prio: must`    |
+| Abschlussgrund     | Label `superseded/duplicate/wontfix/invalid`, wenn ohne Merge bzw. Code geschlossen    |
 | Meilenstein M1–M6  | GitHub Milestone                                                                       |
 | Akzeptanzkriterien | Checkboxen im Issue-Body                                                               |
 | Board/Tracking     | [GitHub Project „AI Tutor – Development“](https://github.com/users/dimto13/projects/3) |
@@ -97,6 +100,8 @@ View-Eigenschaft nicht schreiben kann.
    2026-08-08 ist nur noch über die Git-Historie auffindbar.
 4. Codeänderungen laufen über einen eigenen Branch und einen Pull Request; direkte Pushes
    auf `main` sind gesperrt. Der PR referenziert das Issue (`Closes #123`).
+5. Ohne Merge beziehungsweise ohne Code wird nur mit Abschlussgrund geschlossen; der Workflow
+   `Tracker Hygiene` öffnet sonst wieder ([`29-tracker-hygiene.md`](29-tracker-hygiene.md)).
 
 ## Arbeitsweise
 

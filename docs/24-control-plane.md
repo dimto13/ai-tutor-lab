@@ -33,21 +33,27 @@ Jede neue Worker- oder PLAN-Session rekonstruiert ihren Zustand in dieser Reihen
 4. aktuellen `main`- und `deploy`-SHA live prüfen,
 5. offene PRs mit Base/Head, Mergeability, CI, Reviews und Threads prüfen,
 6. letzte verfügbare `push`-CI auf aktuellem `main` prüfen,
-7. eigenen autorisierten Queue-Punkt, Dependencies und Scope-Kollisionen bestimmen,
-8. erst danach mutieren.
+7. offene Tracker-Hygiene-Verstöße `is:open label:"hygiene:violation"` prüfen
+   ([`29-tracker-hygiene.md`](29-tracker-hygiene.md)),
+8. eigenen autorisierten Queue-Punkt, Dependencies und Scope-Kollisionen bestimmen,
+9. erst danach mutieren.
 
 Chat-Historie und Modellgedächtnis sind niemals eine Ersatz-SSOT.
 
 ## Issue-driven Queue
 
 Das aktive CONTROL definiert die autorisierten Streams, Queue-Reihenfolge, Dependencies und Ausnahmen.
-Soweit strukturierte Work-Labels eingesetzt werden, können sie zusätzlich als maschinenlesbare
-Arbeitszustände verwendet werden, zum Beispiel:
+
+Die Zuweisung eines offenen Issues mit `prio: must` oder `beta:gate` ist verbindlich maschinenlesbar:
+Es trägt genau eins von `stream:chat1`, `stream:chat2`, `stream:chat3`, `stream:owner` oder
+`work:parked`. PLAN setzt dieses Label beim Dispatch und bei jeder Umverteilung; der Workflow
+`Tracker Hygiene` meldet Pflicht-Issues ohne oder mit widersprüchlicher Zuweisung. Regeln und Labels
+stehen in [`29-tracker-hygiene.md`](29-tracker-hygiene.md).
+
+Weitere Work-Labels können zusätzlich als maschinenlesbare Arbeitszustände verwendet werden, zum
+Beispiel:
 
 ```text
-stream:chat1
-stream:chat2
-stream:chat3
 work:ready
 work:in-progress
 work:wait
@@ -56,7 +62,8 @@ work:merged-pending-main-ci
 ```
 
 Fehlt diese feinere Label-Struktur, bleibt der CONTROL-Body für die Queue autoritativ. Agenten dürfen
-niemals aus fehlenden Labels neue Arbeit erfinden.
+niemals aus fehlenden Labels neue Arbeit erfinden; ein fehlendes `stream:*`-Label an einem
+Pflicht-Issue ist ein Auftrag an PLAN, nicht an den Worker.
 
 ## Rollover
 
@@ -67,7 +74,8 @@ Ein CONTROL-Rollover erfolgt kontrolliert:
 2. Nachfolger noch ohne `control:active` auf Konsistenz prüfen.
 3. Nachfolger mit `control:active` aktivieren.
 4. Das Label unmittelbar vom Vorgänger entfernen.
-5. Vorgänger mit eindeutigem Verweis auf den Nachfolger archivieren oder schließen.
+5. Vorgänger mit `control:archived` labeln, im Titel als `ARCHIVED` mit Verweis auf den Nachfolger
+   kennzeichnen und schließen.
 6. Scheduler und Worker ändern keine hartcodierte Issue-Nummer; sie finden beim nächsten Lauf automatisch
    das neue aktive CONTROL.
 
@@ -75,10 +83,22 @@ Während der sehr kurzen Umschaltung kann vorübergehend mehr als ein oder kein 
 sein. Dieser Zustand ist absichtlich fail-closed: Worker führen dann keine neue Mutation aus, bis wieder
 exakt ein aktives CONTROL vorliegt.
 
+**Rollover-Schwelle.** PLAN bereitet einen Rollover vor, sobald das aktive CONTROL mehr als etwa
+150 Kommentare hat oder sein Abschnitt zum aktuellen Stand nicht mehr dem Live-Zustand entspricht und
+sich nicht mehr durch eine Body-Aktualisierung in einem Lauf korrigieren lässt. Ein CONTROL, dessen
+aktueller Stand nur noch aus den Kommentaren rekonstruierbar ist, verfehlt seinen Zweck: Jede neue
+Session muss es vollständig lesen.
+
 ## Handoffs
 
 Handoffs werden immer im zur Laufzeit entdeckten aktiven CONTROL geschrieben. Ein Handoff verweist nicht
 auf eine dauerhaft konfigurierte CONTROL-Nummer.
+
+**Kommentar-Disziplin.** Ein Handoff-Kommentar entsteht nur bei materieller Änderung: Statuswechsel,
+neuer Head, neues CI- oder Review-Ergebnis, neuer oder aufgelöster Blocker. Ein Lauf ohne solche
+Änderung schreibt keinen Kommentar; Scheduler-Lebendigkeit wird an den Läufen selbst geprüft, nicht an
+wiederholten WAIT-Kommentaren. Der Abschnitt zum aktuellen Stand im CONTROL-Body wird bei jeder
+materiellen Änderung mitgezogen, damit der Body ohne Kommentarhistorie stimmt.
 
 Pflichtfelder:
 

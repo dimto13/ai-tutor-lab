@@ -27,5 +27,8 @@ Bei Arbeit an Auth/Identity, Persistenz, Cloud-SDKs, Amplify-Backend oder Deploy
 - Statusarbeit wie Zuweisung, Board-Spalte, Checkboxen und Schließen direkt am Issue pflegen.
 - Vor der Bearbeitung eines Tickets dessen Abhängigkeiten, Akzeptanzkriterien und Milestone
   lesen; nach der Bearbeitung den tatsächlichen Stand im Issue beziehungsweise Board abbilden.
+- Pflicht-Issues tragen genau ein `stream:*`-Label oder `work:parked`; PRs und Issues werden nur mit
+  Merge beziehungsweise Code-Beleg oder mit Abschlussgrund (`superseded`, `duplicate`, `wontfix`,
+  `invalid`) geschlossen. Details in [`docs/29-tracker-hygiene.md`](docs/29-tracker-hygiene.md).
 - Keine Git-History umschreiben und nicht force-pushen.
 - `deploy` nicht verschieben; die reale AWS-Freigabe bleibt beim Repository-Eigentümer.
