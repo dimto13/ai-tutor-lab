@@ -59,14 +59,18 @@ dispatcht oder umverteilt; die Queue-Reihenfolge steht weiterhin im aktiven CONT
 
 **Ein Issue** wird durch den Merge des PRs geschlossen, der `Closes #123` trägt. Als erledigt gilt es
 auch, wenn ein gemergter PR desselben Repositories darauf verweist oder ein Commit auf `main` die
-Nummer nennt; ein Commit auf einem Feature-Branch genügt nicht. Ist keine Codeänderung nötig, wird es
+Nummer als `#123` oder `owner/repo#123` dieses Repositories nennt. Ein Commit auf einem Feature-Branch
+genügt nicht, ebenso wenig ein Verweis auf ein fremdes Repository, ein URL-Anker oder eine Hex-Farbe
+wie `#123abc`. Ist keine Codeänderung nötig, wird es
 als „Not planned“ beziehungsweise „Duplicate“ geschlossen und trägt einen Abschlussgrund wie oben. Bei
 „Close as duplicate“ in der GitHub-Oberfläche gilt das dort ausgewählte Original als Verweis.
 
-Ein Epic (`type: epic`) gilt als erledigt, wenn alle seine Sub-Issues geschlossen sind.
+Ein Epic (`type: epic`) gilt als erledigt, wenn alle seine Sub-Issues geschlossen sind. Ein Epic ohne
+Sub-Issues ist ein gewöhnliches Issue und braucht einen Code-Beleg oder einen Abschlussgrund.
 
 Erkannte Verweisformen sind `Superseded by`, `Replaced by`, `Duplicate of`, `Ersetzt durch`,
-`Abgelöst durch`, `Duplikat von` und `Nachfolger:`, jeweils gefolgt von `#123` oder `owner/repo#123`.
+`Abgelöst durch`, `Duplikat von` und `Nachfolger:`, jeweils gefolgt von `#123`, `owner/repo#123` oder
+einem vollständigen Link wie `https://github.com/owner/repo/pull/123`.
 
 ## Wann der Guard läuft
 
@@ -76,6 +80,10 @@ Erkannte Verweisformen sind `Superseded by`, `Replaced by`, `Duplicate of`, `Ers
   Label nicht zum Wiederöffnen führt;
 - stündlich als Sweep über alle offenen Pflicht-Issues, alle Elemente mit `hygiene:violation` und alle
   in den letzten drei Tagen geschlossenen Elemente, als Netz für verpasste Events.
+
+Schlägt die Auswertung eines einzelnen Elements fehl, etwa weil eine API nicht antwortet, überspringt
+der Sweep dieses Element vor jeder Änderung und läuft für die übrigen weiter; der Workflow-Lauf endet
+dann rot. Ein unvollständig ausgewertetes Element wird so nie wiedergeöffnet.
 
 Label-Events melden keine neue Pflicht-Lücke, sondern räumen nur eine behobene ab: Das Zwischenstadium
 „`prio: must` gesetzt, Stream noch nicht“ wäre sonst ein Fehlalarm. Neue Lücken meldet der Sweep.
