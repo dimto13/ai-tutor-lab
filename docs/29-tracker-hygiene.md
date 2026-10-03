@@ -25,6 +25,9 @@ Der Kommentar nennt jeweils den nächsten exakten Schritt. Pro Element und Regel
 Guard-Kommentar; er wird aktualisiert statt neu geschrieben und als „behoben“ markiert, sobald die Regel
 erfüllt ist. Dann verschwindet auch das Label.
 
+Lässt sich ein Element nicht wiederöffnen, etwa weil der Branch eines PRs gelöscht ist, nennt der
+Kommentar das. Das Label bleibt, und der Guard versucht das Wiederöffnen nicht in jedem Lauf erneut.
+
 Ein wiedergeöffnetes Element behält `hygiene:violation`, solange es offen ist: Es schuldet noch einen
 regelkonformen Abschluss. Das Label verschwindet beim nächsten korrekten Schließen, also mit dem Merge
 des PRs, der `Closes #…` trägt, oder mit einem Abschlussgrund.
@@ -77,7 +80,8 @@ einem vollständigen Link wie `https://github.com/owner/repo/pull/123`.
 - bei `closed`, `reopened`, `labeled` und `unlabeled` an Issues und PRs, für Label-Events nur bei den
   Labels oben;
 - nach dem Schließen erst nach einer Karenzzeit von zwei Minuten, damit ein unmittelbar danach gesetztes
-  Label nicht zum Wiederöffnen führt;
+  Label oder ein nachgereichter Verweis nicht zum Wiederöffnen führt. Gemergte PRs und Elemente, die
+  schon `wontfix` oder `invalid` tragen, werden sofort ausgewertet, weil nichts mehr nachzutragen ist;
 - stündlich als Sweep über alle offenen Pflicht-Issues, alle Elemente mit `hygiene:violation` und alle
   in den letzten drei Tagen geschlossenen Elemente, als Netz für verpasste Events.
 
