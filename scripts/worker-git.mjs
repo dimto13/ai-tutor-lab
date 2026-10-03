@@ -411,13 +411,14 @@ function commandPush(args) {
 
   // Patch-Vergleich gegen den echten Remote-Stand: nach einem Rebase haben die eigenen
   // Commits neue SHAs, ihre Patches sind aber lokal vorhanden. Ein Commit, dessen Patch
-  // lokal fehlt, stammt daher von jemand anderem und wuerde durch den Force-Push verloren
-  // gehen -- genau der Fall, den ein blindes `--force` verschluckt.
+  // lokal fehlt, wuerde durch den Force-Push verloren gehen -- genau der Fall, den ein
+  // blindes `--force` verschluckt. Ob er fremd ist, entscheidet classifyMissingCommits.
   fetchBranch(branch);
-  const foreign = inRepo(["cherry", "HEAD", `refs/remotes/origin/${branch}`])
+  const missing = inRepo(["cherry", "HEAD", `refs/remotes/origin/${branch}`])
     .stdout.split("\n")
     .filter((line) => line.startsWith("+"))
     .map((line) => line.slice(2));
+  const { rewritten, foreign } = classifyMissingCommits(branch, missing);
 
   if (foreign.length > 0 && !allowDrop) {
     abort(
@@ -426,6 +427,11 @@ function commandPush(args) {
         ...foreign
           .slice(0, 20)
           .map((sha) => `  ${inRepo(["log", "-1", "--format=%h %an %s", sha]).stdout}`),
+        ...(rewritten.length > 0
+          ? [
+              `Nicht blockierend: ${rewritten.length} eigene Vorfassung(en) aus diesem Checkout, lokal durch einen Commit mit gleichem Autor und Betreff ersetzt.`,
+            ]
+          : []),
         `Fremden Stand ansehen: git log --oneline HEAD..origin/${branch}`,
         `Uebernehmen: git rebase origin/${branch}`,
         "Nur wenn das Verwerfen bewusst und belegt richtig ist: erneut mit --allow-drop ausfuehren.",
@@ -449,6 +455,9 @@ function commandPush(args) {
       `\`${branch}\` gepusht.`,
       `  vorher:  ${remoteHead}`,
       `  jetzt:   ${localHead}`,
+      rewritten.length > 0
+        ? `  ersetzt (eigene Vorfassung nach Rebase): ${rewritten.length} Commit(s)`
+        : null,
       foreign.length > 0 ? `  verworfen (quittiert): ${foreign.length} fremde Commit(s)` : null,
       "",
       "Naechster Schritt: frische Exact-Head-CI auf diesem Head abwarten und Reviews pruefen.",
@@ -457,6 +466,56 @@ function commandPush(args) {
       .filter((line) => line !== null)
       .join("\n"),
   );
+}
+
+/**
+ * Teilt Remote-Commits, deren Patch lokal fehlt, in eigene Vorfassungen und fremde Arbeit.
+ *
+ * Nach einem Rebase mit Konfliktaufloesung hat der eigene Commit einen anderen Patch als seine
+ * bereits veroeffentlichte Vorfassung -- genau dafuer loest man den Konflikt auf. Patch-
+ * Identitaet allein haelt die Vorfassung dann fuer fremde Arbeit, und das im Normalfall des
+ * vorgeschriebenen Rebase vor dem Merge. Ein Schutz, der im Regelfall anschlaegt, gewoehnt das
+ * Wegklicken mit `--allow-drop` an, das er verhindern soll.
+ *
+ * Eigene Vorfassung ist ein Remote-Commit deshalb nur, wenn beides zutrifft:
+ *   1. dieser Checkout hatte ihn selbst auf dem Branch (Reflog von `refs/heads/<branch>`), und
+ *   2. lokal liegt ein noch nicht veroeffentlichter Commit mit gleichem Autor und Betreff, der
+ *      ihn ersetzt.
+ * Autor oder Betreff allein trennen nichts: alle Worker committen unter derselben Identitaet,
+ * und Werkzeuge wie der Format-Autofix erzeugen wiederkehrende Betreffe. Was ein anderer Worker
+ * gepusht hat, war nie im lokalen Branch und bleibt blockierend; ebenso ein Commit, den dieser
+ * Checkout hatte und ohne Nachfolger verloren hat. Fehlt das Reflog, ist alles fremd.
+ */
+function classifyMissingCommits(branch, missing) {
+  if (missing.length === 0) return { rewritten: [], foreign: [] };
+
+  const lines = (stdout) => stdout.split("\n").filter((line) => line !== "");
+  const previousHeads = [
+    ...new Set(
+      lines(
+        inRepo(["reflog", "show", "--format=%H", `refs/heads/${branch}`], { allowFailure: true })
+          .stdout,
+      ),
+    ),
+  ];
+  const seenOnBranch =
+    previousHeads.length === 0
+      ? new Set()
+      : new Set(lines(inRepo(["rev-list", "--ignore-missing", ...previousHeads]).stdout));
+  const signature = "%ae%x1f%s";
+  const replacements = new Set(
+    lines(inRepo(["log", `--format=${signature}`, `refs/remotes/origin/${branch}..HEAD`]).stdout),
+  );
+
+  const rewritten = [];
+  const foreign = [];
+  for (const sha of missing) {
+    const own =
+      seenOnBranch.has(sha) &&
+      replacements.has(inRepo(["log", "-1", `--format=${signature}`, sha]).stdout);
+    (own ? rewritten : foreign).push(sha);
+  }
+  return { rewritten, foreign };
 }
 
 // Nach dem Push wird der Remote erneut live gelesen. Ein Push, dessen Ergebnis nicht

@@ -69,6 +69,8 @@ Argumente und Optionen werden hinter `--` übergeben, damit npm sie an das Werkz
 - Ein blindes `--force` existiert im Pfad nicht; ein Test sichert das ab.
 - Commits, deren Änderung auf dem Remote liegt und lokal fehlt, werden nicht stillschweigend
   verworfen. Der Pfad nennt sie und verlangt eine bewusste Quittierung mit `--allow-drop`.
+  Ausgenommen sind eigene Vorfassungen nach einem Rebase; siehe
+  [Eigene Vorfassung oder fremder Commit](#eigene-vorfassung-oder-fremder-commit).
 - Verschwinden gegenüber `main` in `.github/workflows/`, `.githooks/`, `tests/`, `scripts/`, `docs/`,
   `AGENTS.md` oder `CLAUDE.md` blockiert. Eine fachlich gewollte Löschung wird mit
   `--allow-deletions` quittiert.
@@ -76,6 +78,35 @@ Argumente und Optionen werden hinter `--` übergeben, damit npm sie an das Werkz
   verworfen ist.
 - Ein Arbeitsbaum mit nicht eingecheckten Änderungen blockiert Rebase und Push: gepusht wird nur,
   was auch getestet wurde.
+
+## Eigene Vorfassung oder fremder Commit
+
+`push` vergleicht die Commits auf `origin/<branch>` per Patch-Identität (`git cherry`) mit dem lokalen
+Head. Nach einem konfliktfreien Rebase sind die Patches der eigenen Commits unverändert, nur ihre SHAs
+sind neu. Bei einem Rebase **mit Konfliktauflösung** ändert sich dagegen der Patch des eigenen
+Commits, genau dafür löst man den Konflikt auf. Die bereits veröffentlichte Fassung sähe dann wie
+fremde Arbeit aus, und das im Normalfall des verpflichtenden Rebase vor dem Merge.
+
+Ein Remote-Commit, dessen Patch lokal fehlt, gilt deshalb nur dann als **eigene Vorfassung**, wenn
+beides zutrifft:
+
+1. Dieser Checkout hatte ihn selbst auf dem Branch, belegt durch das Reflog von
+   `refs/heads/<branch>`.
+2. Lokal liegt ein noch nicht veröffentlichter Commit mit gleichem Autor und Betreff, der ihn ersetzt.
+
+Eigene Vorfassungen blockieren nicht; `push` weist sie als „ersetzt (eigene Vorfassung nach Rebase)“
+aus. Alles andere bleibt blockierend und wird mit Kurz-SHA, Autor und Betreff benannt:
+
+- Was ein anderer Worker gepusht hat, war nie im lokalen Branch, auch wenn Autor und Betreff gleich
+  sind. Alle Worker committen unter derselben Identität, und der Format-Autofix erzeugt immer wieder
+  denselben Betreff `chore: apply canonical formatting`. Autor oder Betreff allein trennen also nichts.
+- Ein Commit, den dieser Checkout hatte und ohne Nachfolger verloren hat, etwa nach
+  `git reset --hard`, ist kein Rebase, sondern ein Verlust.
+- Ohne Reflog, etwa in einem frisch geklonten Checkout, der den Branch nie selbst hatte, gilt jeder
+  fehlende Commit als fremd. Der Schutz fällt im Zweifel auf Blockieren zurück.
+
+Wurde beim Auflösen auch der Betreff geändert, greift Bedingung 2 nicht. Dann ist `--allow-drop`
+nach eigener Prüfung mit `git log --oneline HEAD..origin/<branch>` der vorgesehene Weg.
 
 ## Was der Pfad nicht beweist
 

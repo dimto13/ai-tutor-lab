@@ -302,6 +302,119 @@ test("push verweigert das Verwerfen fremder Commits auf demselben Branch", () =>
   });
 });
 
+// Aendert README.md auf `main` und laesst `sync` des aktuellen Feature-Branches in den Konflikt
+// laufen; der Konflikt wird mit `resolution` aufgeloest und der Rebase abgeschlossen.
+function syncThroughConflict(fixture: Fixture, resolution: string) {
+  git(fixture.helper, "switch", "main");
+  git(fixture.helper, "pull", "--ff-only", "origin", "main");
+  writeFileSync(path.join(fixture.helper, "README.md"), "Main-Fassung\n");
+  git(fixture.helper, "add", ".");
+  git(fixture.helper, "commit", "-m", "main: README");
+  git(fixture.helper, "push", "origin", "main");
+
+  const conflicted = worker(fixture.work, "sync");
+  assert.equal(conflicted.status, 1, conflicted.output);
+  assert.match(conflicted.stderr, /Konflikte/);
+  writeFileSync(path.join(fixture.work, "README.md"), resolution);
+  git(fixture.work, "add", "README.md");
+  git(fixture.work, "-c", "core.editor=true", "rebase", "--continue");
+
+  const synced = worker(fixture.work, "sync");
+  assert.equal(synced.status, 0, synced.output);
+}
+
+// Pusht einen Commit eines zweiten Workers auf den Branch, ohne dass der Arbeits-Checkout ihn holt.
+function pushForeignCommit(fixture: Fixture, branch: string, file: string, content: string) {
+  git(fixture.helper, "fetch", "origin", branch);
+  git(fixture.helper, "switch", "--create", branch, "--no-track", `origin/${branch}`);
+  commit(fixture.helper, file, content);
+  git(fixture.helper, "push", "origin", branch);
+  return git(fixture.helper, "rev-parse", "HEAD");
+}
+
+function remoteHead(fixture: Fixture, branch: string) {
+  return git(fixture.work, "ls-remote", "origin", `refs/heads/${branch}`).split(/\s+/)[0];
+}
+
+test("push erkennt die eigene Vorfassung nach einem Rebase mit Konfliktaufloesung", () => {
+  withFixture((fixture) => {
+    const branch = "chat1/13-konflikt-rebase";
+    assert.equal(worker(fixture.work, "start", branch).status, 0);
+    commit(fixture.work, "README.md", "Feature-Fassung\n");
+    assert.equal(worker(fixture.work, "push").status, 0);
+
+    // Die Konfliktaufloesung aendert den Patch des eigenen Commits: Patch-Identitaet allein
+    // haelt die veroeffentlichte Vorfassung jetzt fuer fremde Arbeit.
+    syncThroughConflict(fixture, "Feature-Fassung auf Main\n");
+
+    const pushed = worker(fixture.work, "push");
+    assert.equal(pushed.status, 0, pushed.output);
+    assert.doesNotMatch(pushed.output, /Force-Push wuerde sie verwerfen/);
+    assert.match(pushed.stdout, /ersetzt \(eigene Vorfassung nach Rebase\): 1 Commit/);
+    assert.equal(remoteHead(fixture, branch), git(fixture.work, "rev-parse", "HEAD"));
+  });
+});
+
+test("push blockiert einen fremden Commit auch neben einer eigenen Vorfassung", () => {
+  withFixture((fixture) => {
+    const branch = "chat1/14-gemischt";
+    assert.equal(worker(fixture.work, "start", branch).status, 0);
+    commit(fixture.work, "README.md", "Feature-Fassung\n");
+    assert.equal(worker(fixture.work, "push").status, 0);
+    const foreignHead = pushForeignCommit(fixture, branch, "fremd.md", "Fremde Arbeit\n");
+
+    syncThroughConflict(fixture, "Feature-Fassung auf Main\n");
+
+    const blocked = worker(fixture.work, "push");
+    assert.equal(blocked.status, 1, blocked.output);
+    assert.match(blocked.stderr, /hat 1 Commit\(s\), deren Aenderung lokal fehlt/);
+    assert.match(blocked.stderr, /work: fremd\.md/);
+    // Die eigene Vorfassung wird nicht als fremd benannt, aber ausgewiesen.
+    assert.ok(!blocked.stderr.includes("work: README.md"), blocked.stderr);
+    assert.match(blocked.stderr, /Nicht blockierend: 1 eigene Vorfassung/);
+    assert.equal(remoteHead(fixture, branch), foreignHead);
+  });
+});
+
+test("push blockiert einen fremden Commit mit gleichem Autor und Betreff", () => {
+  withFixture((fixture) => {
+    // Alle Worker committen unter derselben Identitaet, und Werkzeuge wie der Format-Autofix
+    // erzeugen wiederkehrende Betreffe. Gleicher Autor und Betreff machen einen Commit, den
+    // dieser Checkout nie hatte, deshalb nicht zur eigenen Vorfassung.
+    const branch = "chat1/15-gleicher-betreff";
+    assert.equal(worker(fixture.work, "start", branch).status, 0);
+    commit(fixture.work, "feature.md", "Feature\n");
+    assert.equal(worker(fixture.work, "push").status, 0);
+    const foreignHead = pushForeignCommit(fixture, branch, "weiter.md", "Fremde Fassung\n");
+
+    commit(fixture.work, "weiter.md", "Eigene Fassung\n");
+    const blocked = worker(fixture.work, "push");
+    assert.equal(blocked.status, 1, blocked.output);
+    assert.match(blocked.stderr, /work: weiter\.md/);
+    assert.doesNotMatch(blocked.stderr, /Nicht blockierend/);
+    assert.equal(remoteHead(fixture, branch), foreignHead);
+  });
+});
+
+test("push blockiert einen eigenen Commit, der ohne Nachfolger verloren ging", () => {
+  withFixture((fixture) => {
+    // Der Checkout hatte den Commit selbst; ohne lokalen Nachfolger ist das kein Rebase, sondern
+    // ein Verlust, und der wird weiterhin nur bewusst quittiert.
+    const branch = "chat1/16-verloren";
+    assert.equal(worker(fixture.work, "start", branch).status, 0);
+    commit(fixture.work, "feature.md", "Feature\n");
+    assert.equal(worker(fixture.work, "push").status, 0);
+    const published = remoteHead(fixture, branch);
+
+    git(fixture.work, "reset", "--hard", "origin/main");
+    commit(fixture.work, "anderes.md", "Anderes\n");
+    const blocked = worker(fixture.work, "push");
+    assert.equal(blocked.status, 1, blocked.output);
+    assert.match(blocked.stderr, /work: feature\.md/);
+    assert.equal(remoteHead(fixture, branch), published);
+  });
+});
+
 test("sync und push verweigern einen verschmutzten Arbeitsbaum", () => {
   withFixture((fixture) => {
     assert.equal(worker(fixture.work, "start", "chat1/6-dirty").status, 0);
