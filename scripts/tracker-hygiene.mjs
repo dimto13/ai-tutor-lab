@@ -54,9 +54,10 @@ const DOC_LINK = "docs/29-tracker-hygiene.md";
 const MARKER_PREFIX = "<!-- tracker-hygiene:rule=";
 
 // Verweis auf Nachfolger oder Original, z. B. "Superseded by #541", "Ersetzt durch #541",
-// "Duplicate of owner/repo#87". Ein Verweis auf das Element selbst zaehlt nicht.
+// "Duplicate of owner/repo#87" oder "Superseded by https://github.com/owner/repo/pull/541".
+// Ein Verweis auf das Element selbst zaehlt nicht.
 const REFERENCE_PATTERN =
-  /\b(?:superseded by|replaced by|duplicate of|ersetzt durch|abgel(?:ö|oe)st durch|duplikat von|nachfolger)\s*:?\s*(?:[\w.-]+\/[\w.-]+)?#(\d+)/giu;
+  /\b(?:superseded by|replaced by|duplicate of|ersetzt durch|abgel(?:ö|oe)st durch|duplikat von|nachfolger)\s*:?\s*(?:https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/(?:issues|pull)\/|(?:[\w.-]+\/[\w.-]+)?#)(\d+)/giu;
 
 export function findSuccessorReference(texts, selfNumber) {
   for (const text of texts) {
@@ -173,15 +174,19 @@ export function evaluateClosedPullRequest(item, { comments }) {
  * auf einem Feature-Branch genuegt nicht -- solange er nicht auf `main` liegt, ist nichts erledigt.
  */
 export function hasCodeEvidence(number, { timeline, mainCommitMessages, repository }) {
+  const ownRepository = repository.toLowerCase();
   const mergedPullReference = timeline.some(
     (event) =>
       event.event === "cross-referenced" &&
       Boolean(event.source?.issue?.pull_request?.merged_at) &&
-      (event.source.issue.html_url ?? "").includes(`/${repository}/pull/`),
+      (event.source.issue.html_url ?? "").toLowerCase().includes(`/${ownRepository}/pull/`),
   );
   if (mergedPullReference) return true;
 
-  const reference = new RegExp(`#${number}(?!\\d)`);
+  // `#123` oder `owner/repo#123` dieses Repositories. Nicht: `other/repo#123`, Anker in URLs
+  // und Hex-Farben wie `#123abc` -- sonst belegte ein fremder Verweis ein eigenes Issue.
+  const escaped = ownRepository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const reference = new RegExp(`(?:^|[^\\w/.#-]|${escaped})#${number}(?!\\w)`, "im");
   return mainCommitMessages.some((message) => reference.test(message));
 }
 
@@ -531,10 +536,18 @@ export async function runSweep(client, context) {
     if (closedAfterActivation(item) && outsideGrace(item, now)) add(raw);
   }
 
+  // Ein Fehler bei einem Element (etwa eine nicht erreichbare Sub-Issue-API) ueberspringt nur
+  // dieses Element, und zwar vor jeder Mutation: ein unvollstaendig ausgewertetes Epic darf
+  // nicht als "ohne Beleg" wiedereroeffnet werden. Der Lauf meldet sich am Ende als fehlerhaft.
   const results = [];
   for (const raw of [...candidates.values()].sort((left, right) => left.number - right.number)) {
     if (isLegacy(normalizeItem(raw))) continue;
-    results.push(await checkItem(client, raw, context));
+    try {
+      results.push(await checkItem(client, raw, context));
+    } catch (error) {
+      context.log(`#${raw.number}: übersprungen, ${error.message}`);
+      results.push({ item: normalizeItem(raw), findings: [], actions: [], error: error.message });
+    }
   }
   return results;
 }
@@ -576,8 +589,13 @@ function parseArgs(argv) {
 
 function writeSummary(results, apply) {
   const lines = results
-    .filter((result) => result.actions.length > 0)
-    .map((result) => `- #${result.item.number} ${result.item.title}: ${result.actions.join(", ")}`);
+    .filter((result) => result.actions.length > 0 || result.error)
+    .map(
+      (result) =>
+        `- #${result.item.number} ${result.item.title}: ${
+          result.error ? `übersprungen (${result.error})` : result.actions.join(", ")
+        }`,
+    );
   const summary = [
     `## Tracker-Hygiene${apply ? "" : " (dry-run)"}`,
     "",
@@ -608,6 +626,7 @@ async function main() {
     ? await runSweep(client, context)
     : await runEvent(client, JSON.parse(readFileSync(options.event, "utf8")), context);
   writeSummary(results, options.apply);
+  if (results.some((result) => result.error)) process.exitCode = 1;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

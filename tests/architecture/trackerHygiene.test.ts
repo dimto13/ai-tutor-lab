@@ -235,11 +235,23 @@ test("Nachfolger- und Duplikat-Verweise werden in gaengigen Formen erkannt", () 
   assert.equal(findSuccessorReference(["Abgelöst durch #12"], 1), 12);
   assert.equal(findSuccessorReference(["Duplicate of owner/repo#87"], 90), 87);
   assert.equal(findSuccessorReference(["Nachfolger: #600"], 514), 600);
+  assert.equal(
+    findSuccessorReference(["Superseded by https://github.com/dimto13/ai-tutor-lab/pull/541"], 531),
+    541,
+  );
+  assert.equal(
+    findSuccessorReference(["Duplicate of https://github.com/owner/repo/issues/87"], 90),
+    87,
+  );
 });
 
 test("ein Verweis auf das Element selbst oder ohne Schluesselwort zaehlt nicht", () => {
   assert.equal(findSuccessorReference(["Superseded by #531"], 531), null);
   assert.equal(findSuccessorReference(["siehe #541"], 531), null);
+  assert.equal(
+    findSuccessorReference(["Superseded by https://github.com/owner/repo/pull/531"], 531),
+    null,
+  );
 });
 
 // --- pr-closed-unmerged ---------------------------------------------------------------------
@@ -300,6 +312,26 @@ test("ein Commit auf main mit Issue-Referenz ist ein Code-Beleg, ohne Praefix-Tr
   assert.equal(
     hasCodeEvidence(52, { timeline: [], mainCommitMessages: messages, repository }),
     false,
+  );
+});
+
+test("fremde Repository-Verweise, Anker und Hex-Farben sind kein Code-Beleg", () => {
+  const evidence = (message: string) =>
+    hasCodeEvidence(123, { timeline: [], mainCommitMessages: [message], repository });
+  assert.equal(evidence("fix: port upstream/other#123"), false);
+  assert.equal(evidence("docs: link https://example.com/page#123"), false);
+  assert.equal(evidence("style: use #123abc for the badge"), false);
+  assert.equal(evidence("fix(owner/repo#123): eigener Verweis mit Repository"), true);
+  assert.equal(evidence("feat: abgeschlossen\n\n#123 erledigt"), true);
+});
+
+test("der PR-Verweis wird ohne Ruecksicht auf Gross-/Kleinschreibung zugeordnet", () => {
+  const reference = mergedPullReference(541);
+  (reference.source as { issue: { html_url: string } }).issue.html_url =
+    "https://github.com/Owner/Repo/pull/541";
+  assert.equal(
+    hasCodeEvidence(528, { timeline: [reference], mainCommitMessages: [], repository }),
+    true,
   );
 });
 
@@ -451,6 +483,22 @@ test("der Sweep laesst Elemente innerhalb der Karenzzeit in Ruhe", async () => {
   const { value } = context();
   await runSweep(tracker.client, value);
   assert.deepEqual(tracker.writes, []);
+});
+
+test("ein Fehler bei einem Element ueberspringt nur dieses, ohne es anzufassen", async () => {
+  const tracker = fakeTracker([
+    closedIssue({ number: 76, labels: ["type: epic"] }),
+    issue({ number: 1, labels: ["prio: must"] }),
+  ]);
+  tracker.client.listSubIssues = async () => {
+    throw Object.assign(new Error("HTTP 404"), { status: 404 });
+  };
+  const { value } = context();
+  const results = await runSweep(tracker.client, value);
+
+  // Das Epic wird nicht als "ohne Beleg" wiedergeoeffnet, der Rest des Sweeps laeuft weiter.
+  assert.deepEqual(tracker.writes, ["comment #1", `label+ #1 ${POLICY.violationLabel}`]);
+  assert.equal(results.find((result) => result.item.number === 76)?.error, "HTTP 404");
 });
 
 test("ohne --apply schreibt der Guard nichts", async () => {
