@@ -51,6 +51,7 @@ export const RULES = Object.freeze({
 });
 
 const DOC_LINK = "docs/29-tracker-hygiene.md";
+const REOPEN_FAILED_TEXT = "Wiederöffnen war nicht möglich";
 const MARKER_PREFIX = "<!-- tracker-hygiene:rule=";
 
 // Verweis auf Nachfolger oder Original, z. B. "Superseded by #541", "Ersetzt durch #541",
@@ -183,10 +184,11 @@ export function hasCodeEvidence(number, { timeline, mainCommitMessages, reposito
   );
   if (mergedPullReference) return true;
 
-  // `#123` oder `owner/repo#123` dieses Repositories. Nicht: `other/repo#123`, Anker in URLs
-  // und Hex-Farben wie `#123abc` -- sonst belegte ein fremder Verweis ein eigenes Issue.
+  // `#123` oder `owner/repo#123` dieses Repositories. Nicht: `other/repo#123`, ein Fork wie
+  // `fork-owner/repo#123`, Anker in URLs und Hex-Farben wie `#123abc` -- sonst belegte ein
+  // fremder Verweis ein eigenes Issue. Die Grenze steht deshalb vor dem optionalen Praefix.
   const escaped = ownRepository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const reference = new RegExp(`(?:^|[^\\w/.#-]|${escaped})#${number}(?!\\w)`, "im");
+  const reference = new RegExp(`(?:^|[^\\w/.#-])(?:${escaped})?#${number}(?!\\w)`, "im");
   return mainCommitMessages.some((message) => reference.test(message));
 }
 
@@ -283,7 +285,7 @@ export function renderViolationComment(finding, { reopened, reopenFailed }) {
   if (reopenFailed) {
     lines.push(
       "",
-      `Wiederöffnen war nicht möglich (${reopenFailed}). Das Label \`${POLICY.violationLabel}\` bleibt, bis der Abschlussgrund nachgetragen ist.`,
+      `${REOPEN_FAILED_TEXT} (${reopenFailed}). Das Label \`${POLICY.violationLabel}\` bleibt, bis der Abschlussgrund nachgetragen ist.`,
     );
   }
   lines.push(
@@ -327,6 +329,13 @@ export async function reconcileItem(
   );
 
   for (const finding of reported) {
+    const existing = markers.find((marker) => marker.rule === finding.rule);
+    // Ein Wiederoeffnen, das schon gescheitert ist, etwa weil der PR-Branch geloescht wurde,
+    // wird nicht in jedem Sweep erneut versucht. Der Kommentar nennt den Abschlussgrund als
+    // Ausweg, und Label-Events werten das Element ohnehin neu aus.
+    if (finding.reopen && existing?.open && existing.body.includes(REOPEN_FAILED_TEXT)) {
+      continue;
+    }
     let reopened = false;
     let reopenFailed = null;
     if (finding.reopen && item.state === "closed") {
@@ -341,7 +350,6 @@ export async function reconcileItem(
       }
     }
     const body = renderViolationComment(finding, { reopened, reopenFailed });
-    const existing = markers.find((marker) => marker.rule === finding.rule);
     if (!existing) {
       actions.push(`kommentieren (${finding.rule})`);
       if (apply) await client.createComment(item.number, body);
@@ -552,6 +560,21 @@ export async function runSweep(client, context) {
   return results;
 }
 
+// Die Karenzzeit gibt Gelegenheit, nach dem Schliessen noch Label oder Verweis nachzutragen. Ein
+// gemergter PR oder ein Element mit einem Abschlussgrund ohne Verweispflicht (`wontfix`,
+// `invalid`) braucht nichts mehr; `superseded` und `duplicate` warten weiter auf den Verweis.
+function closedSettled(event) {
+  const payload = event.pull_request ?? event.issue ?? {};
+  if (payload.merged === true) return true;
+  const labels = (payload.labels ?? []).map((label) =>
+    typeof label === "string" ? label : label.name,
+  );
+  return labels.some(
+    (label) =>
+      POLICY.resolutionLabels.includes(label) && !POLICY.referenceRequiredLabels.includes(label),
+  );
+}
+
 export async function runEvent(client, event, context) {
   const number = event.issue?.number ?? event.pull_request?.number;
   if (!number) {
@@ -559,7 +582,7 @@ export async function runEvent(client, event, context) {
     return [];
   }
   const closing = event.action === "closed";
-  if (closing && context.graceSeconds > 0) {
+  if (closing && context.graceSeconds > 0 && !closedSettled(event)) {
     await context.sleep(context.graceSeconds * 1000);
   }
   const raw = await client.getItem(number);

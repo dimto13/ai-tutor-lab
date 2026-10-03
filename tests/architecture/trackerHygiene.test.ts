@@ -321,6 +321,8 @@ test("fremde Repository-Verweise, Anker und Hex-Farben sind kein Code-Beleg", ()
   assert.equal(evidence("fix: port upstream/other#123"), false);
   assert.equal(evidence("docs: link https://example.com/page#123"), false);
   assert.equal(evidence("style: use #123abc for the badge"), false);
+  assert.equal(evidence("fix: aus fork-owner/repo#123 portiert"), false);
+  assert.equal(evidence("docs: siehe https://github.com/owner/repo#123"), false);
   assert.equal(evidence("fix(owner/repo#123): eigener Verweis mit Repository"), true);
   assert.equal(evidence("feat: abgeschlossen\n\n#123 erledigt"), true);
 });
@@ -467,6 +469,56 @@ test("ein nicht wiederzuoeffnender PR behaelt Label und nennt den Grund", async 
     `label+ #531 ${POLICY.violationLabel}`,
   ]);
   assert.match(tracker.comments.get(531)?.[0]?.body ?? "", /HTTP 422/);
+});
+
+test("ein gescheitertes Wiederoeffnen wird nicht in jedem Sweep wiederholt", async () => {
+  const tracker = fakeTracker([closedPull({ number: 531 })], { 531: { reopenFails: true } });
+  const { value } = context();
+  await runEvent(tracker.client, { action: "closed", pull_request: { number: 531 } }, value);
+  tracker.writes.length = 0;
+
+  await runSweep(tracker.client, value);
+  await runSweep(tracker.client, value);
+  assert.deepEqual(tracker.writes, []);
+  assert.ok(tracker.state.get(531)?.labels?.includes(POLICY.violationLabel));
+});
+
+test("die Karenzzeit entfaellt nur, wenn nichts mehr nachzutragen ist", async () => {
+  const cases: { event: Record<string, unknown>; raw: Raw; waits: boolean }[] = [
+    {
+      event: { action: "closed", pull_request: { number: 541, merged: true } },
+      raw: closedPull({ number: 541, pull_request: { merged_at: closedAt } }),
+      waits: false,
+    },
+    {
+      event: { action: "closed", issue: { number: 7, labels: [{ name: "wontfix" }] } },
+      raw: closedIssue({ number: 7, state_reason: "not_planned", labels: ["wontfix"] }),
+      waits: false,
+    },
+    {
+      event: { action: "closed", pull_request: { number: 531, labels: [{ name: "superseded" }] } },
+      raw: closedPull({ number: 531, labels: ["superseded"] }),
+      waits: true,
+    },
+    {
+      event: { action: "closed", issue: { number: 8, labels: [] } },
+      raw: closedIssue({ number: 8 }),
+      waits: true,
+    },
+  ];
+  for (const { event, raw, waits } of cases) {
+    const sleeps: number[] = [];
+    const tracker = fakeTracker([raw]);
+    const { value } = context({
+      apply: false,
+      graceSeconds: 120,
+      sleep: async (milliseconds: number) => {
+        sleeps.push(milliseconds);
+      },
+    });
+    await runEvent(tracker.client, event, value);
+    assert.deepEqual(sleeps, waits ? [120_000] : [], JSON.stringify(event));
+  }
 });
 
 test("Altbestand vor der Aktivierung wird nicht angefasst", async () => {
