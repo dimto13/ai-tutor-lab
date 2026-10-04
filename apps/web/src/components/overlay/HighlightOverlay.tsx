@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type RefObject,
 } from "react";
 import { Lightbulb } from "lucide-react";
 import { getRuntimeAdapterForTarget, getRuntimeAdapters } from "@/runtime";
@@ -29,9 +30,6 @@ const HIGHLIGHT_TOOLTIP_FALLBACK_SIZE: OverlaySize = { width: 256, height: 72 };
 const HIGHLIGHT_HINT_FALLBACK_SIZE: OverlaySize = { width: 112, height: 32 };
 // max-w-64 alone is overridden by the inline viewport cap, so both limits live here.
 const HIGHLIGHT_TOOLTIP_MAX_WIDTH = "min(16rem, calc(100vw - 24px))";
-// The guide column holds the Guided instruction surface, help and tutor. Platform
-// chrome pointing into the runtime must never sit on the platform's own guide.
-const PLATFORM_GUIDE_SELECTOR = '[data-platform-ui="guide"]';
 
 function unionRects(rects: DOMRect[]): OverlayRect | null {
   if (rects.length === 0) return null;
@@ -61,8 +59,7 @@ function toOverlayRect(rect: DOMRect): OverlayRect {
   return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
 }
 
-function resolvePlatformGuideRegions(): OverlayRect[] {
-  const element = document.querySelector<HTMLElement>(PLATFORM_GUIDE_SELECTOR);
+function resolveElementRegions(element: HTMLElement | null | undefined): OverlayRect[] {
   if (!element) return [];
   const region = element.getBoundingClientRect();
   if (region.width <= 0 || region.height <= 0) return [];
@@ -103,6 +100,7 @@ function sameSize(left: OverlaySize, right: OverlaySize): boolean {
 export function HighlightOverlay({
   targetId,
   contextTargetIds,
+  guideRegionRef,
   runtimeAdapterId,
   integrationRuntimeAdapterIds,
   tooltip,
@@ -111,6 +109,11 @@ export function HighlightOverlay({
   targetId?: string | undefined;
   /** Semantic information surfaces of the active step that the tooltip must keep clear. */
   contextTargetIds?: readonly string[] | undefined;
+  /**
+   * Guide column of the training layout (instruction surface, help, tutor). Platform
+   * chrome pointing into the runtime never sits on the platform's own guide.
+   */
+  guideRegionRef?: RefObject<HTMLElement | null> | undefined;
   runtimeAdapterId?: string | undefined;
   integrationRuntimeAdapterIds?: readonly string[] | undefined;
   tooltip?: string | undefined;
@@ -212,7 +215,7 @@ export function HighlightOverlay({
         sameRects(currentRegions, nextTransientRegions) ? currentRegions : nextTransientRegions,
       );
 
-      const nextGuideRegions = resolvePlatformGuideRegions();
+      const nextGuideRegions = resolveElementRegions(guideRegionRef?.current);
       setGuideRegions((currentRegions) =>
         sameRects(currentRegions, nextGuideRegions) ? currentRegions : nextGuideRegions,
       );
@@ -257,7 +260,7 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetResolvers, contextResolvers, runtimes, runtimeAdapterId]);
+  }, [targetResolvers, contextResolvers, guideRegionRef, runtimes, runtimeAdapterId]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -384,7 +387,7 @@ export function HighlightOverlay({
           ref={hintRef}
           data-testid="highlight-hint"
           data-state={hintExpanded ? "expanded" : "collapsed"}
-          className="platform-ui fixed z-40 rounded-md border border-border bg-popover text-xs text-popover-foreground shadow-xl"
+          className="fixed z-40 rounded-md border border-border bg-popover text-xs text-popover-foreground shadow-xl"
           style={{
             top: hintPosition.top,
             left: hintPosition.left,
