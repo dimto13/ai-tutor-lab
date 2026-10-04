@@ -124,9 +124,23 @@ Pflichtfelder:
 Worker- und Watchdog-Scheduler verwenden dieselbe Discovery-Regel. Ihre Prompts dürfen keine konkrete
 CONTROL-Issue-Nummer als Betriebsvertrag enthalten.
 
-WAIT, BLOCKED, laufende CI, temporär fehlende Evidence, `MERGED_PENDING_MAIN_CI` und SESSION-CUT dürfen
-keinen Worker automatisch deaktivieren. Der nächste geplante Lauf rekonstruiert den Zustand erneut aus
-GitHub.
+Scheduler-Liveness ist vom fachlichen Worker-State getrennt. GitHub/CONTROL bestimmt, ob ein Worker
+ausführbare Arbeit besitzt; der Scheduler ist nur der Executor.
+
+- PLAN ist der permanente Supervisor/Dispatcher und bleibt aktiv.
+- Hat ein Worker keine aktuell ausführbare Aufgabe (insbesondere `NO_EXECUTABLE_WORK`,
+  `WAIT_EXTERNAL`, Owner-only oder reines Idle), darf seine Scheduler-Runtime pausiert sein. PLAN
+  reaktiviert ihn nicht zyklisch nur zur Liveness-Kosmetik.
+- Beim Dispatch einer ausführbaren Aufgabe stellt PLAN sicher, dass der zugehörige Worker-Scheduler aktiv
+  ist. Während `IN_PROGRESS`, fortsetzbarer CI-/Review-Wartezustände oder anderer ohne Owner-Eingriff
+  fortsetzbarer Arbeit ist eine unerwartete Scheduler-Pausierung ein operativer Fehler und wird von PLAN
+  korrigiert.
+- `BLOCKED` wird nach Ursache klassifiziert: Ist der Blocker vom Worker selbst weiter prüfbar, bleibt der
+  Scheduler aktiv; benötigt er ausschließlich Owner-/External-Evidence, darf er pausieren.
+- Worker-Prompts dürfen eine Plattform-Pausierung nicht als fachlichen Abschluss interpretieren. Jeder
+  neue Lauf rekonstruiert seinen Zustand erneut aus GitHub.
+
+Damit ist Scheduler-Aktivität kein persistenter Projektzustand und kein Ersatz für Queue-/Handoff-State.
 
 ## Merge- und Release-Gates
 
