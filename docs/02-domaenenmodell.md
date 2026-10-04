@@ -155,6 +155,7 @@ export interface Step {
   rationale?: string; // Antwort auf "Warum mache ich das?"
   helpLevels: [string, string, string]; // Hinweis → konkrete Anweisung → visuelle Hilfe
   highlightTarget?: UiTargetRef; // semantisch, NIE ein CSS-Selektor
+  contextTargets?: UiTargetRef[]; // Informationsflächen, die Overlays freihalten
   validation: Validation;
   optional?: boolean;
   onFailure?: { message: string; markTarget?: UiTargetRef };
