@@ -113,6 +113,11 @@
     testen und ihre PRs bis PREPARED/READY bringen. WAIT, BLOCKED, STALLED, laufende Owner-Deployments
     oder eine belegte Merge-Lane blockieren unabhängige Vorbereitungskapazität nicht. Die Integration
     bleibt global seriell: Zu jedem Zeitpunkt existiert höchstens ein MERGE_LANE_OWNER.
+    Scheduler-Liveness ist kein fachlicher Worker-State: Ein von der Plattform pausierter Scheduler ist
+    für einen Worker ohne aktuell ausführbare Arbeit zulässig. PLAN aktiviert ihn beim Dispatch einer
+    ausführbaren Aufgabe und hält ihn während fortsetzbarer Arbeit aktiv. Eine Pausierung trotz
+    ausführbarer Zuweisung ist ein operativer Fehler; zyklisches Reaktivieren eines Idle-/Owner-only-/
+    WAIT_EXTERNAL-Workers ist ausdrücklich zu vermeiden.
 15. **Vor jedem Merge ist ein Rebase auf den dann aktuellen `main` verpflichtend.** Das gilt insbesondere
     für parallel entwickelte Branches und auch dann, wenn der Branch zuvor bereits grün oder READY war.
     Der Merge darf erst erfolgen, nachdem der PR-Head die aktuelle `main`-Spitze durch einen echten
