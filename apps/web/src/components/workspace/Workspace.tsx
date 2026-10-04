@@ -537,7 +537,10 @@ export function Workspace() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="relative flex h-9 min-w-0 items-stretch border-b border-border bg-panel">
+          <div
+            data-highlight="vscode.editor.tabs"
+            className="relative flex h-9 min-w-0 items-stretch border-b border-border bg-panel"
+          >
             <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto overflow-y-hidden">
               {tabs.length === 0 ? (
                 <span className="flex items-center px-3 text-xs text-muted-foreground">

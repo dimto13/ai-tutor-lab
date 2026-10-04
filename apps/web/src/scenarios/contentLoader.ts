@@ -171,6 +171,7 @@ const stepSchema = z.object({
   validation: validationSchema.optional(),
   highlightTarget: z.string().min(1).optional(),
   highlightTooltip: z.string().optional(),
+  contextTargets: z.array(z.string().min(1)).min(1).optional(),
   onFailure: z
     .object({
       message: z.string().min(1),

@@ -256,7 +256,9 @@ function validateScenarioReferences(
   if (!adapterId) {
     const hasRuntimeReferences =
       (scenario.exploreTargets?.length ?? 0) > 0 ||
-      scenario.steps.some((step) => Boolean(step.highlightTarget || step.onFailure?.markTarget)) ||
+      scenario.steps.some((step) =>
+        Boolean(step.highlightTarget || step.onFailure?.markTarget || step.contextTargets?.length),
+      ) ||
       collectStateSelectors(scenario.completionValidation, "completionValidation").length > 0;
     if (hasRuntimeReferences) {
       issues.push({
@@ -283,6 +285,9 @@ function validateScenarioReferences(
     if (step.highlightTarget) {
       targetRefs.push({ ref: step.highlightTarget, path: `steps[${index}].highlightTarget` });
     }
+    step.contextTargets?.forEach((ref, contextIndex) => {
+      targetRefs.push({ ref, path: `steps[${index}].contextTargets[${contextIndex}]` });
+    });
     if (step.onFailure?.markTarget) {
       targetRefs.push({
         ref: step.onFailure.markTarget,

@@ -100,6 +100,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
       conceptKey: "vscode.explorer",
     },
     { ref: "vscode.editor", label: "Editor", conceptKey: "vscode.editor" },
+    { ref: "vscode.editor.tabs", label: "Tab-Leiste", conceptKey: "vscode.editor" },
     { ref: "vscode.panel.terminal", label: "Terminal", conceptKey: "vscode.terminal" },
     {
       ref: "vscode.panel.terminal.input",

@@ -54,10 +54,35 @@ Dafür gilt folgende Boundary:
 - Ein `RuntimeAdapter` kann optional über `resolveTransientActionRegions()` die aktuell sichtbaren, handlungsrelevanten Rechtecke seiner Produktoberfläche beschreiben.
 - Produktspezifische DOM-Kenntnis bleibt ausschließlich im konkreten Runtime-Adapter. `HighlightOverlay` und `TutorAttentionOverlay` erhalten nur Rechtecke und kennen weder VS-Code-Selektoren noch konkrete Menüeinträge.
 - Adapter ohne diese optionale Fähigkeit funktionieren unverändert.
-- Beide Plattform-Overlays verwenden dieselbe reine Platzierungslogik: bevorzugt unterhalb des Anchors, danach oberhalb und seitlich; wenn keine Position vollständig frei ist, gewinnt die Position mit der kleinsten Überschneidung. Die gewählte Position bleibt innerhalb des Viewports.
+- Beide Plattform-Overlays verwenden dieselbe reine Platzierungslogik: bevorzugt unterhalb des Anchors, danach oberhalb, rechts und links, jeweils zuerst an der Anfangs-, dann an der Endkante des Anchors ausgerichtet. Jede Position wird in den Viewport geklemmt. Die erste kollisionsfreie Position gewinnt. Ist keine frei, meldet die Platzierung eine Kollision (`overlapArea > 0`) statt einer Position; was dann passiert, regelt der Abschnitt [Informationsflächen und kontrollierter Fallback](#informationsflächen-und-kontrollierter-fallback-454).
 - Die Kollisionsvermeidung ist reine Präsentationslogik. Sie emittiert keine Runtime-Events und verändert weder Validation noch Fortschritt, Replay oder Recovery.
 
 Damit bleibt der semantische `highlightTarget` stabil, während das Overlay auf eine nach dem Öffnen neu sichtbare, produktseitige Handlungsfläche reagieren kann.
+
+## Informationsflächen und kontrollierter Fallback (#454)
+
+Ein Schritt kann den Lernenden auffordern, etwas zu prüfen, das nicht das Aktionsziel ist, zum Beispiel den Punkt für ungespeicherte Änderungen im Editor-Tab, während das Ziel der Editor selbst ist. Solche Flächen deklariert das Szenario als `contextTargets`: semantische `UiTargetRef`-Werte, nie CSS-Selektoren. Sie werden wie jedes andere Ziel gegen die Runtime-Definition validiert und vom Runtime-Adapter aufgelöst.
+
+Der Spotlight-Tooltip (`HighlightOverlay`) hält frei:
+
+- das Aktionsziel selbst,
+- die transienten Handlungsflächen des Runtime-Adapters,
+- die `contextTargets` des aktiven Schritts,
+- die Guide-Spalte der Plattform (`data-platform-ui="guide"`) mit der Guided-Instruktionsfläche, Hilfe und Tutor.
+
+Findet die Platzierung keine kollisionsfreie Position, klappt der Tooltip zu einem kleinen Hinweis-Button ein. Dieser wird mit derselben Platzierungslogik positioniert:
+
+- Der Button übernimmt beim Erscheinen keinen Fokus.
+- Er ist per Tastatur erreichbar, als „Hinweis zum hervorgehobenen Ziel“ benannt und trägt `aria-expanded`.
+- Enter, Leertaste oder Klick klappen den Hinweistext auf. Escape oder ein erneuter Klick klappen ihn wieder ein.
+- Der Text bleibt zusätzlich über die vorhandene Live-Region angesagt.
+- Es gibt keine Positionsanimation. Hover-Übergänge entfallen bei `prefers-reduced-motion`.
+
+Der aufgeklappte Hinweis darf das Ziel kurz überdecken, weil der Lernende ihn ausdrücklich angefordert hat.
+
+Der `TutorAttentionOverlay` ist nach 2,4 Sekunden wieder verschwunden und behält deshalb die Position mit der kleinsten Überschneidung.
+
+Der E2E-Guard `expectGuidedActionTargetUnobstructed` prüft bei jedem Aufruf zusätzlich, dass schwebende Plattform-Chrome die sichtbare Guided-Instruktionsfläche nicht verdeckt. Über `informationSurfaces` nimmt er die Informationsflächen des Schritts mit auf.
 
 ## Sichtbarkeit und Fallback
 

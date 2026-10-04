@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { Lightbulb } from "lucide-react";
 import { getRuntimeAdapterForTarget, getRuntimeAdapters } from "@/runtime";
 import { useTraining } from "@/state/trainingStore";
 import { getGlossaryConceptForTarget } from "@/lib/glossary";
@@ -9,6 +18,7 @@ import {
   subscribeGuidedConceptHighlight,
 } from "./guidedConceptHighlight";
 import {
+  clampToViewport,
   placeOverlayTooltip,
   type OverlayPlacement,
   type OverlayRect,
@@ -16,7 +26,12 @@ import {
 } from "./overlayPlacement";
 
 const HIGHLIGHT_TOOLTIP_FALLBACK_SIZE: OverlaySize = { width: 256, height: 72 };
-const GUIDED_ORIENTATION_SELECTOR = '[data-testid="guided-orientation"]';
+const HIGHLIGHT_HINT_FALLBACK_SIZE: OverlaySize = { width: 112, height: 32 };
+// max-w-64 alone is overridden by the inline viewport cap, so both limits live here.
+const HIGHLIGHT_TOOLTIP_MAX_WIDTH = "min(16rem, calc(100vw - 24px))";
+// The guide column holds the Guided instruction surface, help and tutor. Platform
+// chrome pointing into the runtime must never sit on the platform's own guide.
+const PLATFORM_GUIDE_SELECTOR = '[data-platform-ui="guide"]';
 
 function unionRects(rects: DOMRect[]): OverlayRect | null {
   if (rects.length === 0) return null;
@@ -46,8 +61,8 @@ function toOverlayRect(rect: DOMRect): OverlayRect {
   return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
 }
 
-function resolveGuidedOrientationRegions(): OverlayRect[] {
-  const element = document.querySelector<HTMLElement>(GUIDED_ORIENTATION_SELECTOR);
+function resolvePlatformGuideRegions(): OverlayRect[] {
+  const element = document.querySelector<HTMLElement>(PLATFORM_GUIDE_SELECTOR);
   if (!element) return [];
   const region = element.getBoundingClientRect();
   if (region.width <= 0 || region.height <= 0) return [];
@@ -87,12 +102,15 @@ function sameSize(left: OverlaySize, right: OverlaySize): boolean {
  */
 export function HighlightOverlay({
   targetId,
+  contextTargetIds,
   runtimeAdapterId,
   integrationRuntimeAdapterIds,
   tooltip,
   strong,
 }: {
   targetId?: string | undefined;
+  /** Semantic information surfaces of the active step that the tooltip must keep clear. */
+  contextTargetIds?: readonly string[] | undefined;
   runtimeAdapterId?: string | undefined;
   integrationRuntimeAdapterIds?: readonly string[] | undefined;
   tooltip?: string | undefined;
@@ -101,9 +119,15 @@ export function HighlightOverlay({
   const { scenario, progress } = useTraining();
   const [rect, setRect] = useState<OverlayRect | null>(null);
   const [transientRegions, setTransientRegions] = useState<OverlayRect[]>([]);
-  const [guidedRegions, setGuidedRegions] = useState<OverlayRect[]>([]);
+  const [guideRegions, setGuideRegions] = useState<OverlayRect[]>([]);
+  const [contextRegions, setContextRegions] = useState<OverlayRect[]>([]);
   const [tooltipSize, setTooltipSize] = useState<OverlaySize>(HIGHLIGHT_TOOLTIP_FALLBACK_SIZE);
+  const [hintSize, setHintSize] = useState<OverlaySize>(HIGHLIGHT_HINT_FALLBACK_SIZE);
+  const [expandedHintSize, setExpandedHintSize] = useState<OverlaySize | null>(null);
+  const [hintExpanded, setHintExpanded] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
+  const hintTextId = useId();
   const conceptFocus = useSyncExternalStore(
     subscribeGuidedConceptHighlight,
     getGuidedConceptHighlight,
@@ -141,6 +165,20 @@ export function HighlightOverlay({
       })),
     [targetIds, runtimeAdapterId, integrationRuntimeAdapterIds],
   );
+  const contextResolvers = useMemo(
+    () =>
+      [...new Set(contextTargetIds ?? [])].map((contextTargetId) => ({
+        targetId: contextTargetId,
+        runtime: runtimeAdapterId
+          ? getRuntimeAdapterForTarget(
+              contextTargetId,
+              runtimeAdapterId,
+              integrationRuntimeAdapterIds,
+            )
+          : undefined,
+      })),
+    [contextTargetIds, runtimeAdapterId, integrationRuntimeAdapterIds],
+  );
   const runtimes = useMemo(
     () => getRuntimeAdapters(runtimeAdapterId, integrationRuntimeAdapterIds),
     [runtimeAdapterId, integrationRuntimeAdapterIds],
@@ -150,7 +188,8 @@ export function HighlightOverlay({
     if (targetResolvers.length === 0 || !runtimeAdapterId) {
       setRect(null);
       setTransientRegions([]);
-      setGuidedRegions([]);
+      setGuideRegions([]);
+      setContextRegions([]);
       return;
     }
 
@@ -173,15 +212,41 @@ export function HighlightOverlay({
         sameRects(currentRegions, nextTransientRegions) ? currentRegions : nextTransientRegions,
       );
 
-      const nextGuidedRegions = resolveGuidedOrientationRegions();
-      setGuidedRegions((currentRegions) =>
-        sameRects(currentRegions, nextGuidedRegions) ? currentRegions : nextGuidedRegions,
+      const nextGuideRegions = resolvePlatformGuideRegions();
+      setGuideRegions((currentRegions) =>
+        sameRects(currentRegions, nextGuideRegions) ? currentRegions : nextGuideRegions,
       );
 
+      const nextContextRegions: OverlayRect[] = [];
+      for (const resolver of contextResolvers) {
+        const resolved = resolver.runtime?.resolveTarget(resolver.targetId);
+        if (resolved && resolved.width > 0 && resolved.height > 0) {
+          nextContextRegions.push(toOverlayRect(resolved));
+        }
+      }
+      setContextRegions((currentRegions) =>
+        sameRects(currentRegions, nextContextRegions) ? currentRegions : nextContextRegions,
+      );
+
+      // The tooltip stays rendered (hidden) while the fallback is active, so its
+      // real size keeps deciding whether a collision-free position exists.
       const measuredTooltip = tooltipRef.current?.getBoundingClientRect();
       if (measuredTooltip && measuredTooltip.width > 0 && measuredTooltip.height > 0) {
         const nextSize = { width: measuredTooltip.width, height: measuredTooltip.height };
         setTooltipSize((currentSize) => (sameSize(currentSize, nextSize) ? currentSize : nextSize));
+      }
+
+      const hint = hintRef.current;
+      const measuredHint = hint?.getBoundingClientRect();
+      if (hint && measuredHint && measuredHint.width > 0 && measuredHint.height > 0) {
+        const nextSize = { width: measuredHint.width, height: measuredHint.height };
+        if (hint.dataset["state"] === "expanded") {
+          setExpandedHintSize((currentSize) =>
+            currentSize && sameSize(currentSize, nextSize) ? currentSize : nextSize,
+          );
+        } else {
+          setHintSize((currentSize) => (sameSize(currentSize, nextSize) ? currentSize : nextSize));
+        }
       }
     };
 
@@ -192,12 +257,25 @@ export function HighlightOverlay({
     };
     frame = window.requestAnimationFrame(loop);
     return () => window.cancelAnimationFrame(frame);
-  }, [targetResolvers, runtimes, runtimeAdapterId]);
+  }, [targetResolvers, contextResolvers, runtimes, runtimeAdapterId]);
 
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     setVisible(Boolean(rect));
   }, [rect]);
+
+  const effectiveTooltip = conceptFocus
+    ? `${conceptFocus.term}: zugehöriger Bereich in der Oberfläche.`
+    : tooltip;
+
+  useEffect(() => {
+    setHintExpanded(false);
+  }, [activeStep?.id, effectiveTooltip]);
+
+  const avoid = useMemo(
+    () => [...transientRegions, ...guideRegions, ...contextRegions],
+    [transientRegions, guideRegions, contextRegions],
+  );
 
   const placement = useMemo<OverlayPlacement | null>(() => {
     if (!rect || typeof window === "undefined") return null;
@@ -205,15 +283,36 @@ export function HighlightOverlay({
       anchor: rect,
       tooltip: tooltipSize,
       viewport: { width: window.innerWidth, height: window.innerHeight },
-      avoid: [...transientRegions, ...guidedRegions],
+      avoid,
     });
-  }, [rect, tooltipSize, transientRegions, guidedRegions]);
+  }, [rect, tooltipSize, avoid]);
+
+  // Controlled fallback (#454): when no position keeps the target and every
+  // surface the step needs clear, the tooltip collapses into a small hint button.
+  const collapsed = Boolean(placement && placement.overlapArea > 0);
+
+  const hintPlacement = useMemo<OverlayPlacement | null>(() => {
+    if (!collapsed || !rect || typeof window === "undefined") return null;
+    return placeOverlayTooltip({
+      anchor: rect,
+      tooltip: hintSize,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      avoid,
+    });
+  }, [collapsed, rect, hintSize, avoid]);
+
+  const hintPosition = useMemo(() => {
+    if (!hintPlacement || typeof window === "undefined") return null;
+    if (!hintExpanded || !expandedHintSize) return hintPlacement;
+    // Expanded on request: grow from the button so it stays where it was activated.
+    return clampToViewport(hintPlacement.top, hintPlacement.left, expandedHintSize, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  }, [hintPlacement, hintExpanded, expandedHintSize]);
 
   if (!rect) return null;
   const dim = strong ? "bg-black/60" : "bg-black/35";
-  const effectiveTooltip = conceptFocus
-    ? `${conceptFocus.term}: zugehöriger Bereich in der Oberfläche.`
-    : tooltip;
   const announcement = effectiveTooltip ?? activeStep?.instruction;
 
   return (
@@ -266,17 +365,55 @@ export function HighlightOverlay({
             ref={tooltipRef}
             data-testid="highlight-tooltip"
             data-placement-side={placement.side}
-            className="absolute max-w-64 rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
+            data-placement-align={placement.align}
+            data-placement-fallback={collapsed ? "collapsed" : undefined}
+            className="absolute rounded-md border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl"
             style={{
               top: placement.top,
               left: placement.left,
-              maxWidth: "calc(100vw - 24px)",
+              maxWidth: HIGHLIGHT_TOOLTIP_MAX_WIDTH,
+              visibility: collapsed ? "hidden" : undefined,
             }}
           >
             {effectiveTooltip}
           </div>
         ) : null}
       </div>
+      {effectiveTooltip && visible && collapsed && hintPosition ? (
+        <div
+          ref={hintRef}
+          data-testid="highlight-hint"
+          data-state={hintExpanded ? "expanded" : "collapsed"}
+          className="platform-ui fixed z-40 rounded-md border border-border bg-popover text-xs text-popover-foreground shadow-xl"
+          style={{
+            top: hintPosition.top,
+            left: hintPosition.left,
+            maxWidth: HIGHLIGHT_TOOLTIP_MAX_WIDTH,
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || !hintExpanded) return;
+            event.stopPropagation();
+            setHintExpanded(false);
+          }}
+        >
+          <button
+            type="button"
+            aria-expanded={hintExpanded}
+            aria-controls={hintExpanded ? hintTextId : undefined}
+            aria-label="Hinweis zum hervorgehobenen Ziel"
+            onClick={() => setHintExpanded((expanded) => !expanded)}
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium transition-colors hover:bg-muted motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Lightbulb className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+            Hinweis
+          </button>
+          {hintExpanded ? (
+            <p id={hintTextId} className="px-3 pb-2 leading-relaxed">
+              {effectiveTooltip}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </>
   );
 }

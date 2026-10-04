@@ -197,11 +197,12 @@ export function TutorAttentionOverlay({
           ref={tooltipRef}
           data-testid="tutor-attention-tooltip"
           data-placement-side={placement.side}
-          className="absolute max-w-[18rem] rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
+          className="absolute rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
           style={{
             top: placement.top,
             left: placement.left,
-            maxWidth: "calc(100vw - 24px)",
+            // A class-based max width would be overridden by the inline viewport cap.
+            maxWidth: "min(18rem, calc(100vw - 24px))",
           }}
         >
           <span className="font-semibold text-accent">Tutor-Hinweis:</span> {attention.label}

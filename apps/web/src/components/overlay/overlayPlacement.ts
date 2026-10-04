@@ -17,10 +17,15 @@ export interface OverlayViewport {
 
 export type OverlayPlacementSide = "bottom" | "top" | "right" | "left";
 
+/** Edge of the anchor the overlay is aligned with along its side. */
+export type OverlayPlacementAlign = "start" | "end";
+
 export interface OverlayPlacement {
   top: number;
   left: number;
   side: OverlayPlacementSide;
+  align: OverlayPlacementAlign;
+  /** 0 means collision-free; anything else is a collision the caller has to handle. */
   overlapArea: number;
 }
 
@@ -40,12 +45,12 @@ function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
 }
 
-function clampToViewport(
+export function clampToViewport(
   top: number,
   left: number,
   size: OverlaySize,
   viewport: OverlayViewport,
-  inset: number,
+  inset: number = DEFAULT_VIEWPORT_INSET,
 ): OverlayRect {
   const maxLeft = viewport.width - inset - size.width;
   const maxTop = viewport.height - inset - size.height;
@@ -123,11 +128,18 @@ function totalIntersectionArea(rect: OverlayRect, blockers: readonly OverlayRect
 
 /**
  * Places platform chrome around a runtime anchor without knowing anything about
- * product DOM. Bottom is preferred, then top, right and left. If every candidate
- * intersects the anchor or a runtime-reported transient action region, the
- * candidate with the smallest geometric overlap is selected. Overlapping runtime
- * regions are scored by their union so nested menus do not count the same pixels
- * multiple times. Every candidate is clamped to the viewport before scoring.
+ * product DOM. Bottom is preferred, then top, right and left; on each side the
+ * overlay is first aligned with the anchor's start edge, then with its end edge.
+ * Every candidate is clamped to the viewport and then scored against the anchor
+ * and every region in `avoid`: runtime transient action regions, the platform's
+ * own instruction surface and the information surfaces the current step needs.
+ * Overlapping regions are scored by their union so nested menus do not count the
+ * same pixels multiple times.
+ *
+ * The first collision-free candidate wins. If no candidate is collision-free,
+ * the candidate with the smallest overlap is returned with `overlapArea > 0`.
+ * That result is a collision, not a position: callers must switch to their
+ * controlled fallback instead of rendering the overlay on top of what it covers.
  */
 export function placeOverlayTooltip({
   anchor,
@@ -145,31 +157,26 @@ export function placeOverlayTooltip({
   viewportInset?: number;
 }): OverlayPlacement {
   const blockers = [anchor, ...avoid];
+  const below = bottom(anchor) + gap;
+  const above = anchor.top - gap - tooltip.height;
+  const startLeft = anchor.left;
+  const endLeft = right(anchor) - tooltip.width;
+  const startTop = anchor.top;
+  const endTop = bottom(anchor) - tooltip.height;
   const rawCandidates: Array<{
     side: OverlayPlacementSide;
+    align: OverlayPlacementAlign;
     top: number;
     left: number;
   }> = [
-    {
-      side: "bottom",
-      top: bottom(anchor) + gap,
-      left: anchor.left,
-    },
-    {
-      side: "top",
-      top: anchor.top - gap - tooltip.height,
-      left: anchor.left,
-    },
-    {
-      side: "right",
-      top: anchor.top,
-      left: right(anchor) + gap,
-    },
-    {
-      side: "left",
-      top: anchor.top,
-      left: anchor.left - gap - tooltip.width,
-    },
+    { side: "bottom", align: "start", top: below, left: startLeft },
+    { side: "bottom", align: "end", top: below, left: endLeft },
+    { side: "top", align: "start", top: above, left: startLeft },
+    { side: "top", align: "end", top: above, left: endLeft },
+    { side: "right", align: "start", top: startTop, left: right(anchor) + gap },
+    { side: "right", align: "end", top: endTop, left: right(anchor) + gap },
+    { side: "left", align: "start", top: startTop, left: anchor.left - gap - tooltip.width },
+    { side: "left", align: "end", top: endTop, left: anchor.left - gap - tooltip.width },
   ];
 
   const candidates = rawCandidates.map((candidate) => {
@@ -182,6 +189,8 @@ export function placeOverlayTooltip({
     };
   });
 
+  // Candidates are in preference order, so the first minimum is the first
+  // collision-free candidate whenever one exists.
   return candidates.reduce((best, candidate) =>
     candidate.overlapArea < best.overlapArea ? candidate : best,
   );

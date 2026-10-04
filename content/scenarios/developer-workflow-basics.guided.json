@@ -303,6 +303,7 @@
       },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Ungespeicherte Editoränderung vor der Prüfung sichern.",
+      "contextTargets": ["vscode.editor.tabs"],
       "successMessage": "calculator.py ist gespeichert. Jetzt reviewst du die tatsächliche Git-Differenz."
     },
     {
