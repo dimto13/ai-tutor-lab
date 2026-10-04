@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SCORE_MODE_MULTIPLIER } from "@ai-train-lab/training-engine";
 import {
   BookOpen,
@@ -265,6 +265,7 @@ function TrainingLayout() {
   const scenario = useLocalizedScenario(canonicalScenario);
   const [highlightsOn, setHighlightsOn] = useState(true);
   const [mobileSurface, setMobileSurface] = useState<"workspace" | "guide">("workspace");
+  const guideRegionRef = useRef<HTMLDivElement>(null);
   const [attentionTarget, setAttentionTarget] = useState<string | null>(null);
   const [attentionRun, setAttentionRun] = useState(0);
   const step = scenario.steps.find((s) => s.id === progress.activeStepId);
@@ -491,6 +492,7 @@ function TrainingLayout() {
             <RuntimeWorkspace key={scenario.id} />
           </div>
           <div
+            ref={guideRegionRef}
             data-platform-ui="guide"
             className={`platform-ui ${mobileSurface === "guide" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 lg:flex lg:flex-none ${recovery ? "[&_[data-primary-learning-action=true]]:hidden" : ""}`}
           >
@@ -508,6 +510,7 @@ function TrainingLayout() {
           key={`${overlayTarget}:${attentionRun}`}
           targetId={overlayTarget}
           contextTargetIds={step?.contextTargets}
+          guideRegionRef={guideRegionRef}
           runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
           tooltip={
