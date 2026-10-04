@@ -285,6 +285,12 @@ export interface TrainingStep {
   /** Semantic UI reference, never a CSS selector. */
   highlightTarget?: UiTargetRef;
   highlightTooltip?: string;
+  /**
+   * Semantic information surfaces the learner has to see during this step, e.g. a
+   * status indicator the instruction asks to check. Platform overlays keep them
+   * clear. Semantic UI references only, never CSS selectors.
+   */
+  contextTargets?: UiTargetRef[];
   /** Declarative feedback for a relevant, but incorrect, learner action. */
   onFailure?: StepFailureFeedback;
   /** Generic Guided recovery policy. Runtime-specific commands stay opaque to the engine. */

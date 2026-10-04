@@ -26,6 +26,11 @@ interface ObstructionMeasurement {
 
 interface GuardOptions {
   overlays?: readonly PlatformOverlayChrome[];
+  /**
+   * Surfaces the step asks the learner to look at besides the action target,
+   * e.g. a status indicator. Floating platform chrome must keep them clear.
+   */
+  informationSurfaces?: readonly GuidedActionTarget[];
   timeoutMs?: number;
 }
 
@@ -41,20 +46,36 @@ export function intersectionArea(left: Box, right: Box): number {
   return width * height;
 }
 
-export function platformOverlayChrome(page: Page): readonly PlatformOverlayChrome[] {
+/** Platform chrome that floats above runtime and platform UI. */
+export function floatingPlatformOverlayChrome(page: Page): readonly PlatformOverlayChrome[] {
   return [
     {
       name: "Guided Spotlight-Tooltip",
       locator: page.getByTestId("highlight-tooltip"),
     },
     {
-      name: "Guided-Instruktionsfläche",
-      locator: page.getByTestId("guided-orientation"),
+      name: "Guided-Hinweis (Fallback)",
+      locator: page.getByTestId("highlight-hint"),
     },
     {
       name: "Tutor-Attention-Tooltip",
       locator: page.getByTestId("tutor-attention-tooltip"),
     },
+  ];
+}
+
+export function guidedInstructionSurface(page: Page): GuidedActionTarget {
+  return {
+    name: "Guided-Instruktionsfläche",
+    locator: page.getByTestId("guided-orientation"),
+  };
+}
+
+export function platformOverlayChrome(page: Page): readonly PlatformOverlayChrome[] {
+  const instruction = guidedInstructionSurface(page);
+  return [
+    ...floatingPlatformOverlayChrome(page),
+    { name: instruction.name, locator: instruction.locator },
   ];
 }
 
@@ -134,19 +155,50 @@ function formatObstructions(measurements: readonly ObstructionMeasurement[]): st
     .join("\n");
 }
 
+/**
+ * #312/#454 guard: the action target has 0 px² overlap with platform chrome, and
+ * floating platform chrome also keeps the Guided instruction surface (when it is
+ * on screen) and every information surface the step needs clear.
+ */
 export async function expectGuidedActionTargetUnobstructed(
   page: Page,
   target: GuidedActionTarget,
   options: GuardOptions = {},
 ): Promise<void> {
   await expect(target.locator, `Guided-Ziel "${target.name}" muss sichtbar sein.`).toBeVisible();
+  const informationSurfaces = options.informationSurfaces ?? [];
+  for (const surface of informationSurfaces) {
+    await expect(
+      surface.locator,
+      `Informationsfläche "${surface.name}" muss sichtbar sein.`,
+    ).toBeVisible();
+  }
 
   const overlays = options.overlays ?? platformOverlayChrome(page);
+  const floatingOverlays = floatingPlatformOverlayChrome(page);
+  const instruction = guidedInstructionSurface(page);
   await expect
-    .poll(async () => formatObstructions(await measureObstructions(page, target, overlays)), {
-      message: `Guided-Ziel "${target.name}" muss gegenüber sichtbarer Plattform-Overlay-Chrome 0 px² Überschneidung haben.`,
-      timeout: options.timeoutMs ?? 2_000,
-      intervals: [0, 50, 100, 250],
-    })
+    .poll(
+      async () => {
+        const surfaces = [...informationSurfaces];
+        if ((await instruction.locator.count()) === 1 && (await instruction.locator.isVisible())) {
+          surfaces.push(instruction);
+        }
+        const measurements = [
+          ...(await measureObstructions(page, target, overlays)),
+          ...(
+            await Promise.all(
+              surfaces.map((surface) => measureObstructions(page, surface, floatingOverlays)),
+            )
+          ).flat(),
+        ];
+        return formatObstructions(measurements);
+      },
+      {
+        message: `Guided-Ziel "${target.name}" und die Informationsflächen des Schritts müssen gegenüber sichtbarer Plattform-Overlay-Chrome 0 px² Überschneidung haben.`,
+        timeout: options.timeoutMs ?? 2_000,
+        intervals: [0, 50, 100, 250],
+      },
+    )
     .toBe("");
 }

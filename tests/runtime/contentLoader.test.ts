@@ -272,3 +272,18 @@ test("content loader keeps shared introductions out of challenge semantics", () 
     }),
   );
 });
+
+test("content loader keeps semantic step context targets and rejects empty ones (#454)", () => {
+  const scenario = scenarioWithSeed({});
+  const [step] = scenario.steps;
+  const withContext = (contextTargets: unknown) => ({
+    ...scenario,
+    steps: [{ ...step, highlightTarget: "vscode.editor", contextTargets }],
+  });
+
+  assert.deepEqual(parseScenario(withContext(["vscode.editor.tabs"])).steps[0]?.contextTargets, [
+    "vscode.editor.tabs",
+  ]);
+  assert.throws(() => parseScenario(withContext([])));
+  assert.throws(() => parseScenario(withContext([""])));
+});

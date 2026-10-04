@@ -144,6 +144,7 @@
       },
       "highlightTarget": "vscode.editor",
       "highlightTooltip": "Bearbeite notiz.txt, erkenne den ungespeicherten Zustand am Punkt im Tab und speichere anschließend mit Strg+S beziehungsweise Cmd+S.",
+      "contextTargets": ["vscode.editor.tabs"],
       "recovery": {
         "stateRules": [
           {

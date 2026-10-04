@@ -507,6 +507,7 @@ function TrainingLayout() {
         <HighlightOverlay
           key={`${overlayTarget}:${attentionRun}`}
           targetId={overlayTarget}
+          contextTargetIds={step?.contextTargets}
           runtimeAdapterId={scenario.environment?.runtimeAdapterId}
           integrationRuntimeAdapterIds={scenario.environment?.integrationRuntimeAdapterIds}
           tooltip={
