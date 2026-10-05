@@ -9,10 +9,11 @@ timeout --signal=TERM --kill-after=10s 50m ssh -o BatchMode=yes -o StrictHostKey
 set -Eeuo pipefail
 export PATH=/home/tobi/.local/share/ai-tutor-toolchain/node_modules/.bin:/usr/local/bin:/usr/bin:/bin
 export AI_TUTOR_WORKER_HOME=/media/tobi/crucial/ssd/skripte/ai-tutor-lab-workers/runtime
+export AI_TUTOR_WORKER_STATE_HOME=/home/tobi/.local/state/ai-tutor-lab-jenkins-worker
 export AI_TUTOR_WORKER_ACTION="$2"
-mkdir -p "$AI_TUTOR_WORKER_HOME"
-chmod 700 "$AI_TUTOR_WORKER_HOME"
-exec 9>"$AI_TUTOR_WORKER_HOME/project.lock"
+mkdir -p "$AI_TUTOR_WORKER_HOME" "$AI_TUTOR_WORKER_STATE_HOME"
+chmod 700 "$AI_TUTOR_WORKER_STATE_HOME"
+exec 9>"$AI_TUTOR_WORKER_STATE_HOME/project.lock"
 flock -n 9 || { echo WORKER_ALREADY_RUNNING; exit 0; }
 export AI_TUTOR_WORKER_LOCKED=1
 script_sha=$(gh api "repos/dimto13/ai-tutor-lab/commits/$1" --jq .sha)

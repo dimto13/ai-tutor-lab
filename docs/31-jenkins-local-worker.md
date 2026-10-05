@@ -35,6 +35,10 @@ aber keine sonstigen Konfigurations-Hooks oder MCP/App-Verbindungen. Die Invocat
 Der Modelllauf ist auf 30 Minuten, der Remote-Runner auf 48 und Jenkins-SSH auf 50 Minuten begrenzt.
 Git-Mutationen des Modells sind verboten; Branch/Head und Dateiscope werden danach überprüft.
 
+Vor einem Modelllauf prüft `codex sandbox` echtes Lesen/Schreiben im Checkout und Schreibschutz
+für `.git`. Eine nicht startfähige Sandbox ist BLOCKED, verbraucht keinen weiteren Modelllauf
+und wird niemals durch `danger-full-access` oder eine globale Abschaltung von AppArmor umgangen.
+
 Der Runner führt `worker:doctor/start/sync/push/gate`, vollständiges `npm run check`, kanonischen
 Commit und PR-Veröffentlichung aus. Nach Sync/Commit läuft die vollständige Prüfung erneut.
 Das Ergebnis ist **PREPARED**, nie automatisch DONE. Fresh Exact-Head-CI, alle Reviews/Threads,
@@ -46,8 +50,12 @@ Während PR-CI läuft, erfolgt kein neuer Modelllauf. Neue Review-Findings werde
 klassifiziert/bearbeitet; identische Reviews oder derselbe unveränderte CI-Fehler lösen keine
 Endlosschleife aus. Maximal zwei automatische Jenkins-Reviews bleiben der bestehende Vertrag.
 PREPARED-/BLOCKED-Handoffs werden ins aktuelle CONTROL geschrieben. Identische lokale Fehler werden
-höchstens stündlich wiederholt; WAIT bleibt still. Rohes Modell-JSONL und Runner-Logs liegen privat
+nicht erneut kommentiert; WAIT bleibt still. Rohes Modell-JSONL und Runner-Logs liegen privat
 im jeweiligen `run-<issue>-<timestamp>`-Ordner und nicht im Jenkins-Konsolenlog.
+State/Logs/Sperre verwenden das POSIX-Dateisystem unter
+`/home/tobi/.local/state/ai-tutor-lab-jenkins-worker` (Verzeichnis 0700, Dateien 0600).
+Die NTFS/FUSE-Checkout-Platte erzwingt diese Dateimodi nicht; dort liegen deshalb keine privaten
+Laufzeitlogs. Der Runner bricht bei fehlendem POSIX-Verzeichnisschutz ab.
 
 ## Konfiguration und Abnahme
 

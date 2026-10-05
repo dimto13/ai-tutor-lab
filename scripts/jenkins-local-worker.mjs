@@ -1,6 +1,14 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, openSync, closeSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  openSync,
+  closeSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -63,17 +71,29 @@ export function assertScope(paths, allowed) {
 
 export function reviewInput(pr, inline = []) {
   return [
-    ...pr.comments.filter(
+    ...(pr.comments ?? []).filter(
       (comment) =>
-        !comment.body.startsWith("[jenkins-worker]") && !comment.body.startsWith("[agy-ack]"),
+        !comment.body?.startsWith("[jenkins-worker]") && !comment.body?.startsWith("[agy-ack]"),
     ),
-    ...pr.reviews,
+    ...(pr.reviews ?? []),
     ...inline,
-  ].map((item) => ({
-    id: item.id,
-    body: item.body,
-    at: item.updatedAt ?? item.updated_at ?? item.submittedAt ?? item.createdAt,
-  }));
+  ]
+    .filter((item) => typeof item.body === "string" && item.body.trim())
+    .map((item) => ({
+      id: item.id,
+      body: item.body,
+      at: item.updatedAt ?? item.updated_at ?? item.submittedAt ?? item.createdAt,
+      path: item.path,
+      line: item.line ?? item.original_line,
+      diffHunk: item.diff_hunk,
+      state: item.state,
+    }));
+}
+
+export function assertResult(action, files, pr) {
+  if (!files.length && action === "REPAIR")
+    throw new Error("REPAIR_UNRESOLVED: no repair changes produced");
+  if (!files.length && !pr) throw new Error("NO_IMPLEMENTATION: preserved checkout, see report");
 }
 
 export function nextAction(pr, reviews, state) {
@@ -126,14 +146,18 @@ async function command(
   const fd = log ? openSync(log, "a", 0o600) : null;
   let stdout = "",
     stderr = "";
-  const child = spawn(program, args, {
-    cwd,
-    env,
-    detached: true,
-    stdio: ["pipe", fd ?? "pipe", fd ?? "pipe"],
-  });
+  let child;
+  try {
+    child = spawn(program, args, {
+      cwd,
+      env,
+      detached: true,
+      stdio: ["pipe", fd ?? "pipe", fd ?? "pipe"],
+    });
+  } finally {
+    if (fd !== null) closeSync(fd);
+  }
   children.add(child);
-  if (fd !== null) closeSync(fd);
   child.stdout?.on("data", (chunk) => {
     stdout += chunk;
   });
@@ -363,7 +387,10 @@ async function main() {
   const reviews = pr ? reviewInput(pr, inline) : [];
   const workHome = process.env.AI_TUTOR_WORKER_HOME;
   if (!workHome || !workHome.startsWith("/")) throw new Error("WORKER_HOME_REQUIRED");
-  const statePath = join(workHome, `issue-${task.issue}.json`);
+  const stateHome = process.env.AI_TUTOR_WORKER_STATE_HOME;
+  if (!stateHome || !stateHome.startsWith("/")) throw new Error("PRIVATE_STATE_HOME_REQUIRED");
+  if (!process.env.HOME) throw new Error("AUTH_HOME_REQUIRED");
+  const statePath = join(stateHome, `issue-${task.issue}.json`);
   let state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")) : {};
   if (state.token && state.token !== task.token) state = {};
   const action = nextAction(pr, reviews, state);
@@ -379,8 +406,11 @@ async function main() {
   if (actionMode === "plan" || action.startsWith("WAIT_")) return;
 
   mkdirSync(workHome, { recursive: true, mode: 0o700 });
+  mkdirSync(stateHome, { recursive: true, mode: 0o700 });
+  if (statSync(stateHome).mode & 0o077)
+    throw new Error("PRIVATE_STATE_PERMISSIONS: POSIX 0700 required");
   const workspace = join(workHome, `checkout-${task.issue}`);
-  const runDir = join(workHome, `run-${task.issue}-${Date.now()}`);
+  const runDir = join(stateHome, `run-${task.issue}-${Date.now()}`);
   mkdirSync(runDir, { mode: 0o700 });
   const log = join(runDir, "runner.log");
   const git = (args) => command("git", args, { cwd: workspace });
@@ -421,6 +451,23 @@ async function main() {
       ),
     ];
     assertScope(await changed(), task.allowedPaths);
+    await command(
+      "codex",
+      [
+        "-c",
+        'sandbox_mode="workspace-write"',
+        "-c",
+        "sandbox_workspace_write.network_access=false",
+        "sandbox",
+        "--cd",
+        workspace,
+        "--",
+        "node",
+        "-e",
+        `const fs=require('node:fs');const p='node_modules/.jenkins-sandbox-probe-'+process.pid;fs.readFileSync('AGENTS.md');fs.writeFileSync(p,'probe');fs.unlinkSync(p);let denied=false;try{const fd=fs.openSync('.git/config','a');fs.closeSync(fd);}catch(e){denied=['EPERM','EACCES','EROFS'].includes(e.code);}if(!denied)throw Error('PROTECTED_GIT_WRITABLE');console.log('SANDBOX_READ_WRITE_AND_GIT_GUARD_GREEN');`,
+      ],
+      { cwd: workspace, log: join(runDir, "sandbox.log"), timeout: 15000 },
+    );
     await handoff(
       task,
       "START",
@@ -484,7 +531,7 @@ async function main() {
     const files = await changed();
     assertScope(files, task.allowedPaths);
     await stillAssigned(task);
-    if (!files.length && !pr) throw new Error("NO_IMPLEMENTATION: preserved checkout, see report");
+    assertResult(action, files, pr);
     if (files.length) {
       await npm(["run", "check"]);
       await git(["add", "--", ...files]);
@@ -549,8 +596,8 @@ async function main() {
     );
   } catch (error) {
     const message = String(error.message).slice(0, 1600);
-    const errorKey = digest(message);
-    if (state.lastError !== errorKey || Date.now() - (state.lastErrorAt ?? 0) > 3600000) {
+    const errorKey = digest(message.replace(/run-\d+-\d+/g, "run-<private>"));
+    if (state.lastError !== errorKey) {
       await handoff(
         task,
         "BLOCKED",

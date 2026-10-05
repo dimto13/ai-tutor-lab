@@ -3,10 +3,12 @@ import test from "node:test";
 import { spawnSync } from "node:child_process";
 import {
   assertScope,
+  assertResult,
   buildPrompt,
   nextAction,
   parseDispatch,
   repairDigest,
+  reviewInput,
 } from "../../scripts/jenkins-local-worker.mjs";
 
 const task = {
@@ -55,6 +57,28 @@ test("scope uses exact paths and bounded directory prefixes", () => {
 const checks = ["validate", "e2e-training-modes", "e2e-production-artifact", "prettier"].map(
   (name) => ({ name, status: "COMPLETED", conclusion: "SUCCESS" }),
 );
+test("inline reviews retain context; empty/null approvals do not start work", () => {
+  const inline = {
+    id: 3,
+    body: "fix this",
+    path: "apps/web/A.tsx",
+    original_line: 42,
+    diff_hunk: "context",
+  };
+  const result = reviewInput(
+    { comments: [{ body: null }, { body: "[jenkins-worker] own" }], reviews: [{ body: "" }] },
+    [inline],
+  );
+  assert.equal(result.length, 1);
+  assert.equal(result[0].path, inline.path);
+  assert.equal(result[0].line, 42);
+  assert.equal(result[0].diffHunk, "context");
+});
+test("empty repair cannot be misreported as PREPARED", () => {
+  assert.throws(() => assertResult("REPAIR", [], { number: 1 }), /REPAIR_UNRESOLVED/);
+  assert.throws(() => assertResult("IMPLEMENT", [], null), /NO_IMPLEMENTATION/);
+  assert.doesNotThrow(() => assertResult("REVIEW", [], { number: 1 }));
+});
 test("pending or missing CI never starts a duplicate coding run", () => {
   assert.equal(nextAction(null, [], {}), "IMPLEMENT");
   assert.equal(nextAction({ state: "OPEN", statusCheckRollup: [] }, [], {}), "WAIT_CI");
