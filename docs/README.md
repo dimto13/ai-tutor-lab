@@ -45,6 +45,7 @@ vom POC zur produktreifen Plattform.
 | `27-worker-git-pfad.md`          | Ausführbarer, bewachter Git-Pfad der Worker: Branch, Rebase, Lease-Push, Gate   | Steuerung, LLM-Agenten   |
 | `28-arbeitsbereich-layout.md`    | Lesbarkeitsgrenzen der Arbeitsflächen und Ausweichreihenfolge bei Platzmangel   | Entwicklung, Product     |
 | `29-tracker-hygiene.md`          | Zuweisung von Pflicht-Issues und Abschlussgründe für PRs und Issues, mit Guard  | Steuerung, LLM-Agenten   |
+| `30-jenkins-control-health.md`   | Echter Checkout-Pfad und aktuelle GitHub-Integrationsgates im Jenkins-Timer     | Steuerung, Betrieb       |
 | `../prompts/model-briefing.md`   | Kompakter Kontext-Prompt für beliebige LLMs                                     | dich, LLM-Agenten        |
 
 Aufgabenlage, Planung und Meilensteine stehen nicht in Dateien, sondern ausschließlich in den
