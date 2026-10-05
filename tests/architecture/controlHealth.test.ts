@@ -4,6 +4,7 @@ import {
   assignmentViolations,
   collectHealth,
   evaluateMainGate,
+  parseJsonLines,
 } from "../../scripts/control-health.mjs";
 
 const run = {
@@ -40,6 +41,24 @@ test("a newer failed run or current failed attempt never borrows old green evide
     false,
   );
   assert.equal(evaluateMainGate("current", [{ ...run, run_attempt: 3 }], jobs).green, false);
+});
+
+test("missing Main-Push-CI retains all required job fields without granting green", () => {
+  const gate = evaluateMainGate("current", [], []);
+  assert.equal(gate.green, false);
+  assert.equal(gate.runId, null);
+  assert.equal(gate.status, "missing");
+  assert.equal(gate.jobs.length, 3);
+  assert.ok(gate.jobs.every((job) => job.status === "missing"));
+});
+
+test("paginated JSON tolerates empty page separators but rejects corrupt evidence", () => {
+  assert.deepEqual(parseJsonLines('\n {"number":1}\n\n {"number":2}\n '), [
+    { number: 1 },
+    { number: 2 },
+  ]);
+  assert.deepEqual(parseJsonLines("\n\n"), []);
+  assert.throws(() => parseJsonLines('{"number":1}\ninvalid'));
 });
 
 test("all required jobs must be unique, completed and successful in the current attempt", () => {

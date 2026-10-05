@@ -23,7 +23,18 @@ export function evaluateMainGate(mainSha, runs, jobs) {
         candidate.event === "push",
     )
     .sort((left, right) => right.id - left.id)[0];
-  if (!run) return { green: false, reason: "MISSING_EXACT_MAIN_PUSH_RUN" };
+  if (!run) {
+    return {
+      green: false,
+      reason: "MISSING_EXACT_MAIN_PUSH_RUN",
+      runId: null,
+      runAttempt: null,
+      url: null,
+      status: "missing",
+      conclusion: null,
+      jobs: requiredJobs.map((name) => ({ name, status: "missing", conclusion: null })),
+    };
+  }
 
   const results = requiredJobs.map((name) => {
     const matches = jobs.filter(
@@ -63,15 +74,18 @@ export function assignmentViolations(issues) {
   });
 }
 
+export function parseJsonLines(stdout) {
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
 async function gh(args) {
   const { stdout } = await exec("gh", args, { timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
   if (args.includes("--paginate")) {
-    return stdout.trim()
-      ? stdout
-          .trim()
-          .split("\n")
-          .map((line) => JSON.parse(line))
-      : [];
+    return parseJsonLines(stdout);
   }
   return JSON.parse(stdout);
 }
@@ -147,34 +161,46 @@ export async function collectHealth(read = gh) {
       ])
     : [];
 
-  const pullRequests = await Promise.all(
-    prs.map(async (pr) => {
-      const compare = await read([
-        "api",
-        `repos/${repository}/compare/${mainSha}...${pr.headRefOid}`,
-      ]);
-      return {
-        number: pr.number,
-        title: pr.title,
-        head: pr.headRefOid,
-        branch: pr.headRefName,
-        base: pr.baseRefName,
-        draft: pr.isDraft,
-        behindMain: compare.behind_by,
-        reviewDecision: pr.reviewDecision,
-        checks: (pr.statusCheckRollup ?? []).map((check) => ({
-          name: check.name ?? check.context,
-          status: check.status ?? check.state,
-          conclusion: check.conclusion ?? null,
-        })),
-        nextAction:
-          compare.behind_by > 0
-            ? "Checkout executor: worker:sync, check, worker:push; then fresh CI/review"
-            : "PLAN: inspect complete CI, reviews and threads; serialize merge through local worker:gate",
-        url: pr.url,
-      };
-    }),
-  );
+  const pullRequests = [];
+  for (let offset = 0; offset < prs.length; offset += 4) {
+    const batch = await Promise.all(
+      prs.slice(offset, offset + 4).map(async (pr) => {
+        const compare = await read([
+          "api",
+          `repos/${repository}/compare/${mainSha}...${pr.headRefOid}`,
+        ]);
+        return {
+          number: pr.number,
+          title: pr.title,
+          head: pr.headRefOid,
+          branch: pr.headRefName,
+          base: pr.baseRefName,
+          draft: pr.isDraft,
+          behindMain: compare.behind_by,
+          reviewDecision: pr.reviewDecision,
+          checks: (pr.statusCheckRollup ?? []).map((check) => ({
+            name: check.name ?? check.context,
+            status: check.status ?? check.state,
+            conclusion: check.conclusion ?? null,
+          })),
+          nextAction:
+            compare.behind_by > 0
+              ? "Checkout executor: worker:sync, check, worker:push; then fresh CI/review"
+              : pr.isDraft
+                ? "Assigned executor: finish draft implementation and validation"
+                : !requiredJobs.every((name) =>
+                      (pr.statusCheckRollup ?? []).some(
+                        (check) => check.name === name && check.conclusion === "SUCCESS",
+                      ),
+                    )
+                  ? "Assigned executor: inspect or await all exact-head PR CI jobs before review/merge"
+                  : "PLAN: inspect complete CI, reviews and threads; serialize merge through local worker:gate",
+          url: pr.url,
+        };
+      }),
+    );
+    pullRequests.push(...batch);
+  }
   const mainAfter = await read(["api", `repos/${repository}/branches/main`]);
   if (mainAfter.commit.sha !== mainSha)
     throw new Error("MAIN_MOVED_DURING_INSPECTION: retry required");
