@@ -12,15 +12,15 @@ Registrierung, keine Änderung von `.bashrc`, globaler Codex-Konfiguration, AppA
 
 Alle projektbezogenen Pfade liegen sichtbar unter `/home/tobi/skripte/ai-tutor-lab-jenkins/`:
 
-| Pfad                             | Zweck                                                           |
-| -------------------------------- | --------------------------------------------------------------- |
-| `source/<exact-sha>/`            | veröffentlichte Runner/Quota/Dispatch-Skripte desselben Git-SHA |
-| `toolchain/node_modules/.bin/`   | Node 22.23.2 und npm 10.9.8, keine globale Installation         |
-| `workspaces/checkout-<issue>/`   | eigener persistenter Feature-Branch-Checkout                    |
-| `state/project.lock`             | projektweite Sperre zusätzlich zu Jenkins non-concurrent        |
-| `state/quota-<provider>.json`    | Tages-Skip / Quota-Snapshot, keine Auth-Tokens                  |
-| `state/issue-<issue>.json`       | Request-Identität, PR, Ergebnis und Fehler-Deduplizierung       |
-| `state/run-<issue>-<timestamp>/` | private Runner-/Container-/Modell-Logs und Ausgabe              |
+| Pfad                                         | Zweck                                                           |
+| -------------------------------------------- | --------------------------------------------------------------- |
+| `source/<exact-sha>/`                        | veröffentlichte Runner/Quota/Dispatch-Skripte desselben Git-SHA |
+| `toolchain/node_modules/.bin/`               | Node 22.23.2 und npm 10.9.8, keine globale Installation         |
+| `workspaces/checkout-<issue>-<branch-hash>/` | eigener persistenter Feature-Branch-Checkout                    |
+| `state/project.lock`                         | projektweite Sperre zusätzlich zu Jenkins non-concurrent        |
+| `state/quota-<provider>.json`                | Tages-Skip / Quota-Snapshot, keine Auth-Tokens                  |
+| `state/issue-<issue>.json`                   | Request-Identität, PR, Ergebnis und Fehler-Deduplizierung       |
+| `state/run-<issue>-<timestamp>/`             | private Runner-/Container-/Modell-Logs und Ausgabe              |
 
 State/Logs sind 0700/0600 auf dem RMI-POSIX-Dateisystem. Alte `msi`-Checkouts/Logs bleiben als historische
 Evidence erhalten, werden nicht verwendet und nicht gelöscht. Modell und Reasoning stehen explizit
@@ -77,8 +77,12 @@ entfernt; Checkout und Ausgabe bleiben erhalten. Unbestätigte Container-Bereini
 
 Der Host-Runner prüft Branch/Head/Scope und Auftrag erneut, führt den bewachten `worker:*`-Pfad und
 vollständiges `npm run check` nach der letzten Änderung/Rebase aus, pusht mit Lease und erzeugt einen
-PREPARED PR. TEST und REBASE brauchen keinen Modelllauf. Derselbe erledigte Request wird nicht erneut
-ausgeführt. CI-/Review-Reparaturen brauchen einen neuen expliziten PLAN-Auftrag; grüne CI allein ist
+PREPARED PR. TEST und REBASE brauchen keinen Modelllauf. Derselbe erledigte oder gescheiterte Request
+wird nicht erneut ausgeführt. Ein Fehlerhalt bleibt auch bei fehlgeschlagenem GitHub-Handoff persistent;
+der erste Fehler ist in Jenkins sichtbar. PLAN muss nach Ursachenklärung einen geänderten Auftrag
+freigeben, vorzugsweise mit neuem `token`. Checkouts sind zusätzlich nach Branch getrennt; für Arbeit
+an einer bestehenden PR wird deren Branch ausdrücklich wiederverwendet. CI-/Review-Reparaturen brauchen
+einen neuen expliziten PLAN-Auftrag; grüne CI allein ist
 keine Merge-Freigabe. PLAN prüft alle Integration-/Acceptance-Gates unabhängig.
 
 ## Betrieb und Abnahme

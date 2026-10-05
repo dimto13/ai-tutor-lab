@@ -24,6 +24,11 @@ const digest = (value) => createHash("sha256").update(JSON.stringify(value)).dig
 const requiredChecks = ["validate", "e2e-training-modes", "e2e-production-artifact", "prettier"];
 const workerImage = "ai-tutor-lab-coding:node22-codex0.160.0";
 
+export function requestIsHeld(task, state) {
+  const key = digest(task);
+  return state.completedRequest === key || state.blockedRequest === key;
+}
+
 export function dockerArgs(workspace, outputDir, args, network = "bridge") {
   return [
     "run",
@@ -553,13 +558,16 @@ async function main() {
   );
   if (actionMode === "plan" || action.startsWith("WAIT_")) return;
   if (action === "REBASE" && !pr) throw new Error("REBASE_REQUIRES_EXISTING_PR");
-  if (state.completedRequest === digest(task)) return;
+  if (requestIsHeld(task, state)) {
+    console.log(JSON.stringify({ status: "WAIT_PLAN_DISPATCH", issue: task.issue, held: true }));
+    return;
+  }
 
   mkdirSync(workHome, { recursive: true, mode: 0o700 });
   mkdirSync(stateHome, { recursive: true, mode: 0o700 });
   if (statSync(stateHome).mode & 0o077)
     throw new Error("PRIVATE_STATE_PERMISSIONS: POSIX 0700 required");
-  const workspace = join(workHome, `checkout-${task.issue}`);
+  const workspace = join(workHome, `checkout-${task.issue}-${digest(task.branch).slice(0, 12)}`);
   const runDir = join(stateHome, `run-${task.issue}-${Date.now()}`);
   mkdirSync(runDir, { mode: 0o700 });
   const outputDir = join(runDir, "model-output");
@@ -811,6 +819,10 @@ async function main() {
       return;
     }
     const errorKey = digest(message.replace(/run-\d+-\d+/g, "run-<private>"));
+    // Persist the hold even if GitHub cannot accept the handoff. Never retry a model blindly.
+    state.blockedRequest = digest(task);
+    state.blockedReason = message;
+    writeFileSync(statePath, JSON.stringify({ ...state, token: task.token }), { mode: 0o600 });
     if (state.lastError !== errorKey) {
       await handoff(
         task,
@@ -820,7 +832,11 @@ async function main() {
       state.lastError = errorKey;
       state.lastErrorAt = Date.now();
     }
-    writeFileSync(statePath, JSON.stringify({ ...state, token: task.token }), { mode: 0o600 });
+    writeFileSync(
+      statePath,
+      JSON.stringify({ ...state, token: task.token, blockedRequest: digest(task) }),
+      { mode: 0o600 },
+    );
     throw error;
   }
 }

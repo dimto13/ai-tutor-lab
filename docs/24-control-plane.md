@@ -221,7 +221,12 @@ fail-closed abgewiesen. `dependencies` muss auch in dieser Form vorhanden sein. 
 Codeblöcken und der alte `jenkins-local-dispatch:v1` aktivieren keine Arbeit.
 
 `DISABLED`, `CANCELLED`, `PREPARED` und `DONE` sind keine ausführbaren Aufträge. Der Executor quittiert
-einen vollständig bearbeiteten Request persistent und führt denselben Auftrag nicht erneut aus.
+einen vollständig bearbeiteten oder gescheiterten Request persistent und führt denselben Auftrag nicht
+erneut aus. Ein Fehlerhalt wird vor dem GitHub-Handoff gespeichert und bleibt bei dessen Ausfall gültig;
+Jenkins zeigt den ersten Fehler. Nach Ursachenklärung gibt PLAN einen geänderten Auftrag frei (neuer
+`token` empfohlen); ein unveränderter REQUESTED-Block ist keine Erlaubnis für blinde Modell-Retries.
+Checkouts sind nach Issue und Branch isoliert. Für Folgearbeit an einer bestehenden PR muss PLAN deren
+Branch explizit nennen, statt mit einem neuen Token versehentlich eine zweite Branch anzufordern.
 TEST und REBASE benötigen keinen Modelllauf. REBASE verwendet eine bestehende PR-Branch; ein grünes
 Testergebnis erzeugt keinen künstlichen Commit oder PR.
 

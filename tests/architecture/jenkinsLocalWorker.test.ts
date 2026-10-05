@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import {
   assertScope,
   assertResult,
@@ -12,6 +13,7 @@ import {
   reviewInput,
   updateWorkerSection,
   dockerArgs,
+  requestIsHeld,
 } from "../../scripts/jenkins-local-worker.mjs";
 
 const task = {
@@ -30,6 +32,23 @@ const task = {
   "self-select-work": "forbidden",
 };
 const body = (value = task) => `<!-- external-executor:v1\n${JSON.stringify(value)}\n-->`;
+test("failed or completed requests cannot restart without a changed PLAN dispatch", () => {
+  const request = parseDispatch(body());
+  const key = createHash("sha256").update(JSON.stringify(request)).digest("hex");
+  assert.equal(requestIsHeld(request, { blockedRequest: key }), true);
+  assert.equal(requestIsHeld(request, { completedRequest: key }), true);
+  assert.equal(requestIsHeld(request, {}), false);
+  const source = readFileSync("scripts/jenkins-local-worker.mjs", "utf8");
+  assert.ok(
+    source.indexOf("state.blockedRequest = digest(task)") <
+      source.indexOf("if (state.lastError !== errorKey)"),
+  );
+  assert.match(source, /checkout-\$\{task\.issue\}-\$\{digest\(task\.branch\)/);
+  assert.equal(
+    requestIsHeld({ ...request, token: "fresh-plan-token" }, { blockedRequest: key }),
+    false,
+  );
+});
 test("dispatch is explicit, unique and fail closed", () => {
   assert.equal(parseDispatch("no assignment"), null);
   assert.equal(parseDispatch(body({ ...task, status: "DISABLED" })), null);
