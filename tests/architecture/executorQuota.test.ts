@@ -50,6 +50,7 @@ test("unavailable, non-numeric, expired and partial responses fail closed", () =
 test("daily skip survives quota reset time, but new Berlin day requires fresh read", () => {
   const low = evaluateQuota(quota(44, 60), now);
   assert.equal(cachedSkip(low, "codex", now + 30 * 60_000), low);
+  assert.equal(cachedSkip(low, "codex", now + 30 * 60_000, true), low);
   assert.equal(cachedSkip(low, "codex", Date.parse("2026-10-05T22:01:00Z")), null);
   assert.equal(cachedSkip(low, "claude", now), null);
   assert.equal(cachedSkip(evaluateQuota(quota(), now), "codex", now), null);
@@ -59,6 +60,7 @@ test("unknown quota retries no earlier than 15 minutes", () => {
   const unknown = evaluateQuota(null, now);
   assert.equal(cachedSkip(unknown, "codex", now + 14 * 60_000), unknown);
   assert.equal(cachedSkip(unknown, "codex", now + 15 * 60_000), null);
+  assert.equal(cachedSkip(unknown, "codex", now, true), null);
 });
 test("all dispatch safety metadata is mandatory; no Owner/external escalation", () => {
   const data = {
@@ -132,6 +134,8 @@ test("quota is before checkout and model, read-only endpoint only, no quota bypa
       compact.indexOf('awaitcommand("docker",dockerArgs(workspace,outputDir,[...args'),
   );
   assert.match(source, /quotaGuard: \(\) => checkQuota\(stateHome, true\)/);
+  assert.match(source, /cachedSkip\(previous, provider, Date\.now\(\), force\)/);
+  assert.match(source, /await quotaCheck;/);
   assert.match(source, /hostname\(\) !== "rmi"/);
   const adapter = readFileSync("scripts/executor-quota.mjs", "utf8");
   assert.match(adapter, /account\/rateLimits\/read/);

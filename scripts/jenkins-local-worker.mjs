@@ -194,24 +194,27 @@ async function command(
   let timedOut = false;
   let quotaStopped = false,
     checkingQuota = false,
+    quotaCheck,
     quotaForceTimer;
   const quotaTimer = quotaGuard
-    ? setInterval(async () => {
+    ? setInterval(() => {
         if (checkingQuota || quotaStopped) return;
         checkingQuota = true;
-        try {
-          if (!(await quotaGuard())) {
+        quotaCheck = (async () => {
+          try {
+            if (!(await quotaGuard())) {
+              quotaStopped = true;
+              kill(child, "SIGTERM");
+              quotaForceTimer = setTimeout(() => kill(child, "SIGKILL"), 10000);
+            }
+          } catch {
             quotaStopped = true;
             kill(child, "SIGTERM");
             quotaForceTimer = setTimeout(() => kill(child, "SIGKILL"), 10000);
+          } finally {
+            checkingQuota = false;
           }
-        } catch {
-          quotaStopped = true;
-          kill(child, "SIGTERM");
-          quotaForceTimer = setTimeout(() => kill(child, "SIGKILL"), 10000);
-        } finally {
-          checkingQuota = false;
-        }
+        })();
       }, 60000)
     : null;
   const timer = setTimeout(() => {
@@ -234,11 +237,15 @@ async function command(
             ),
       );
     });
+    clearInterval(quotaTimer);
+    await quotaCheck;
+    if (quotaStopped) throw new Error("QUOTA_STOP: preserved work, no publication");
     return stdout.trim();
   } finally {
     clearTimeout(timer);
     clearTimeout(forceTimer);
     clearInterval(quotaTimer);
+    await quotaCheck;
     clearTimeout(quotaForceTimer);
     children.delete(child);
     // Killing the Docker client alone must not leave an unattended model container alive.
@@ -330,7 +337,8 @@ async function checkQuota(stateHome, force = false) {
   if (!["codex", "claude"].includes(provider)) throw new Error("INVALID_PROVIDER");
   const path = join(stateHome, `quota-${provider}.json`);
   const previous = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null;
-  let snapshot = force ? null : cachedSkip(previous, provider);
+  // A known below-floor result locks this Berlin day, including forced live checks.
+  let snapshot = cachedSkip(previous, provider, Date.now(), force);
   if (!snapshot) {
     let result = null;
     // No provider fallback, API-key purchase, credit consumption or fabricated percentage.

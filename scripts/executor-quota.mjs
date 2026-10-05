@@ -60,7 +60,7 @@ export function evaluateQuota(result, now = Date.now()) {
   };
 }
 
-export function cachedSkip(snapshot, provider, now = Date.now()) {
+export function cachedSkip(snapshot, provider, now = Date.now(), force = false) {
   if (
     !snapshot ||
     snapshot.provider !== provider ||
@@ -69,7 +69,8 @@ export function cachedSkip(snapshot, provider, now = Date.now()) {
   )
     return null;
   if (snapshot.status === "SKIPPED_QUOTA" && snapshot.day === berlinDay(now)) return snapshot;
-  if (snapshot.status === "SKIPPED_QUOTA_UNKNOWN" && snapshot.retryAfter > now) return snapshot;
+  if (!force && snapshot.status === "SKIPPED_QUOTA_UNKNOWN" && snapshot.retryAfter > now)
+    return snapshot;
   return null; // An allowed snapshot is never authority for a later model start.
 }
 
