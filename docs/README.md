@@ -46,6 +46,7 @@ vom POC zur produktreifen Plattform.
 | `28-arbeitsbereich-layout.md`    | Lesbarkeitsgrenzen der Arbeitsflächen und Ausweichreihenfolge bei Platzmangel   | Entwicklung, Product     |
 | `29-tracker-hygiene.md`          | Zuweisung von Pflicht-Issues und Abschlussgründe für PRs und Issues, mit Guard  | Steuerung, LLM-Agenten   |
 | `30-jenkins-control-health.md`   | Echter Checkout-Pfad und aktuelle GitHub-Integrationsgates im Jenkins-Timer     | Steuerung, Betrieb       |
+| `31-jenkins-local-worker.md`     | Explizite CONTROL-Aufträge durch autonome lokale Jenkins-Coding-Worker          | Steuerung, Betrieb       |
 | `../prompts/model-briefing.md`   | Kompakter Kontext-Prompt für beliebige LLMs                                     | dich, LLM-Agenten        |
 
 Aufgabenlage, Planung und Meilensteine stehen nicht in Dateien, sondern ausschließlich in den

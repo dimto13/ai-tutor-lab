@@ -1,6 +1,6 @@
 # Jenkins-Control-Health
 
-`81_AI_TUTOR_CONTROL_HEALTH` ergänzt PLAN mit wiederholbarer, lesender Evidence. PLAN bleibt der
+`80_AI_TUTOR_CONTROL_HEALTH` ergänzt PLAN mit wiederholbarer, lesender Evidence. PLAN bleibt der
 Dispatcher; der Job entscheidet weder über neue Arbeit noch über Reviews, Merges oder Deployments.
 
 ## Ausführung
@@ -50,7 +50,7 @@ falsche grüne Evidence. PR-Findings und Review-Threads werden weiterhin durch P
 geprüft; die Check-Liste im Report allein ist keine Merge-Freigabe. Es werden keine E-Mails oder
 wiederholten WAIT-Kommentare erzeugt.
 
-Status: <http://192.168.178.81:8083/job/81_AI_TUTOR_CONTROL_HEALTH/>; Projekt-View:
+Status: <http://192.168.178.81:8083/job/80_AI_TUTOR_CONTROL_HEALTH/>; Projekt-View:
 <http://192.168.178.81:8083/view/80_AI_TUTOR_LAB/>. Der erwartete gesunde Nachweis ist ein tatsächlich
 vom Timer gestarteter erfolgreicher Build, nicht nur eine manuelle Ausführung.
 
