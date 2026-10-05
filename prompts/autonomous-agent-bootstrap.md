@@ -24,14 +24,15 @@ Jede Rolle führt beim Start dieselbe Rekonstruktion aus:
 Normaler Lifecycle:
 
 ```text
-Issue -> Branch -> Implementierung -> PR -> aktuellen main integrieren
+Issue -> Branch -> Implementierung -> PR -> auf aktuellen main rebasen
 -> vollständige frische PR-CI -> Reviews/Threads dispositionieren -> Merge
 -> resultierende Main-Push-CI -> DONE -> Handoff -> nächstes autorisiertes Issue
 ```
 
 Ein Merge gilt erst nach grüner Main-Push-CI auf dem resultierenden `main` als DONE. Während
 `MERGED_PENDING_MAIN_CI` bleibt die globale Merge-Lane geschlossen. Fremde Merges führen zum erneuten
-Synchronisieren des eigenen Branches ohne Force-Push und zu vollständiger relevanter PR-CI.
+Synchronisieren über `npm run worker:sync`, einem Lease-Push über `npm run worker:push` und zu
+vollständiger frischer Exact-Head-PR-CI. Ein Merge von `main` in den Feature-Branch ist kein Ersatz.
 
 `deploy` bleibt immer Owner-only. Externe, manuelle oder Cloud-Evidence darf nie erfunden werden.
 
@@ -43,8 +44,8 @@ aktiven CONTROL hinterlegen. SESSION-CUT ist kein STOP; die nächste Session set
 
 Beim ersten Lauf einer neu aufgesetzten Chat-Rolle darf und soll der Chat die geplanten Aufgaben prüfen.
 Vorhandene kanonische Scheduler werden wiederverwendet und bei veraltetem Prompt repariert, nicht
-dupliziert. Ein deaktivierter kanonischer Worker wird aktiviert, sofern das aktive CONTROL den Stream
-nicht ausdrücklich dauerhaft stillgelegt hat. Mehrere aktive Scheduler derselben Rolle werden auf genau
+dupliziert. Ein deaktivierter kanonischer Worker wird aktiviert, sobald PLAN ihm in seinem tatsächlichen
+Executor ausführbare Arbeit zuweist. Mehrere aktive Scheduler derselben Rolle werden auf genau
 einen kanonischen Scheduler reduziert. Unverwandte Automationen des Owners werden nie verändert.
 
 Kanonischer Satz:
@@ -56,8 +57,17 @@ Kanonischer Satz:
 | CHAT2         | `ai-train-lab CHAT2 Worker`     | stündlich `:40`    |
 | CHAT3         | `ai-train-lab CHAT3 Worker`     | stündlich `:50`    |
 
-WAIT, BLOCKED, laufende CI, temporär fehlende Evidence, `MERGED_PENDING_MAIN_CI` oder SESSION-CUT dürfen
-einen Worker niemals automatisch deaktivieren.
+PLAN bleibt als Supervisor aktiv. Idle, `NO_EXECUTABLE_WORK`, `WAIT_EXTERNAL` und ausschließlich
+Owner-abhängige Arbeit dürfen pausieren; PLAN reaktiviert solche Worker nicht zyklisch.
+Fortsetzbare CI-/Review-Wartezustände einschließlich `MERGED_PENDING_MAIN_CI` und SESSION-CUT sind
+kein Anlass zur Pausierung. Eine unerwartete Pausierung während ausführbarer Arbeit ist ein operativer
+Fehler. Details und die Klassifikation von `BLOCKED` stehen in `docs/24-control-plane.md`.
+
+Vor einem Dispatch prüft PLAN die tatsächlichen Fähigkeiten des Executors: Checkout, Git-Schreibzugriff,
+gepinntes Node/npm, Tests und gegebenenfalls Browser/Cloud-Zugriff. Ein API-only Chat bekommt keine
+Implementierungs-, Test- oder Rebase-Aufgabe. `stream:owner` für einen technischen Checkout-Schritt
+bedeutet nicht, dass nur der Mensch ihn ausführen kann; eine dafür autorisierte lokale Session kann ihn
+übernehmen. Owner-only Deployment-Freigaben und externe Akzeptanzevidence bleiben davon getrennt.
 
 ## CHAT1
 
