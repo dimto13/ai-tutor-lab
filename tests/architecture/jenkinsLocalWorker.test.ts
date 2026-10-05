@@ -11,23 +11,34 @@ import {
   repairDigest,
   reviewInput,
   updateWorkerSection,
+  dockerArgs,
 } from "../../scripts/jenkins-local-worker.mjs";
 
 const task = {
-  schemaVersion: 1,
-  enabled: true,
+  status: "REQUESTED",
   token: "test-454",
   issue: 454,
   branch: "owner/454-overlay",
   allowedPaths: ["apps/web/src/components/overlay/", "tests/runtime/overlayPlacement.test.ts"],
+  reason: "CAPABILITY_MISMATCH",
+  action: "IMPLEMENT",
+  acceptance: "Dirty indicator and instructions remain visible; regression covered.",
+  dependencies: [],
+  "basis-main": "a".repeat(40),
+  merge: "forbidden",
+  deploy: "forbidden",
+  "self-select-work": "forbidden",
 };
-const body = (value = task) => `<!-- jenkins-local-dispatch:v1\n${JSON.stringify(value)}\n-->`;
+const body = (value = task) => `<!-- external-executor:v1\n${JSON.stringify(value)}\n-->`;
 test("dispatch is explicit, unique and fail closed", () => {
   assert.equal(parseDispatch("no assignment"), null);
-  assert.equal(parseDispatch(body({ ...task, enabled: false })), null);
-  assert.deepEqual(parseDispatch(body()), task);
+  assert.equal(parseDispatch(body({ ...task, status: "DISABLED" })), null);
+  assert.equal(parseDispatch(body()).branch, task.branch);
+  assert.equal(parseDispatch(body()).basisMain, task["basis-main"]);
   assert.throws(() => parseDispatch(body() + body()), /DISPATCH_COUNT/);
-  assert.throws(() => parseDispatch("<!-- jenkins-local-dispatch:v1 invalid -->"));
+  assert.throws(() => parseDispatch("<!-- external-executor:v1 invalid -->"));
+  assert.equal(parseDispatch(`\`\`\`text\n${body()}\n\`\`\``), null);
+  assert.equal(parseDispatch(body().replace("external-executor", "jenkins-local-dispatch")), null);
 });
 test("protected refs, wrong issue branches and unsafe scopes are rejected", () => {
   for (const branch of ["main", "deploy", "owner/455-other", "owner/454-a;echo"])
@@ -188,11 +199,27 @@ test("configuration rejects arbitrary refs and retains bounded private execution
   assert.match(valid.stdout, /<defaultValue>main<\/defaultValue>/);
   assert.match(valid.stdout, /flock -n 9/);
   assert.match(valid.stdout, /AI_TUTOR_WORKER_LOCKED=1/);
-  assert.match(valid.stdout, /48m node --input-type=module/);
+  assert.match(valid.stdout, /48m node/);
   assert.match(valid.stdout, /<concurrentBuild>false<\/concurrentBuild>/);
+  assert.match(valid.stdout, /ConnectTimeout=8 rmi/);
+  assert.doesNotMatch(valid.stdout, /\bmsi\b|\/media\/tobi\/|\.bashrc/);
+  assert.match(valid.stdout, /WORKER_PROVIDER/);
 });
-test("sandbox preflight uses process cwd without unsupported named-profile cd routing", () => {
+test("container preflight protects Git and never runs an inner host sandbox", () => {
   const source = readFileSync("scripts/jenkins-local-worker.mjs", "utf8");
-  assert.match(source, /"sandbox",\s*"--",\s*"node"/);
-  assert.match(source, /cwd: workspace, log: join\(runDir, "sandbox.log"\)/);
+  assert.match(source, /dockerArgs\(workspace, outputDir/);
+  assert.match(source, /CONTAINER_READ_WRITE_AND_GIT_GUARD_GREEN/);
+  assert.doesNotMatch(source, /"sandbox",\s*"--"/);
+  const args = dockerArgs("/work/checkout", "/state/run-123-456/model-output", ["codex"]);
+  assert.ok(args.includes("--read-only"));
+  assert.ok(args.includes("no-new-privileges"));
+  assert.ok(args.includes("ai-tutor-code-run-123-456"));
+  assert.ok(args.includes("type=bind,src=/work/checkout/.git,dst=/workspace/.git,readonly"));
+  assert.ok(args.some((a) => a.includes("auth.json") && a.endsWith("readonly")));
+  assert.ok(
+    !args.some(
+      (a) => a.includes("docker.sock") || a.includes("jenkins_home") || a.includes(".ssh"),
+    ),
+  );
+  assert.match(source, /OWNED_CONTAINER_CLEANUP_UNCONFIRMED/);
 });

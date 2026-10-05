@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -9,8 +9,12 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { hostname } from "node:os";
+import { parseDispatch, updateSection } from "./executor-contract.mjs";
+import { cachedSkip, evaluateQuota, quotaStatusKey, readCodexQuota } from "./executor-quota.mjs";
+export { parseDispatch } from "./executor-contract.mjs";
 
 const repository = "dimto13/ai-tutor-lab";
 const origin = "git@github.com:dimto13/ai-tutor-lab.git";
@@ -18,6 +22,49 @@ const children = new Set();
 let cancelled = false;
 const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const requiredChecks = ["validate", "e2e-training-modes", "e2e-production-artifact", "prettier"];
+const workerImage = "ai-tutor-lab-coding:node22-codex0.160.0";
+
+export function dockerArgs(workspace, outputDir, args, network = "bridge") {
+  return [
+    "run",
+    "--rm",
+    "--init",
+    "--interactive",
+    "--name",
+    `ai-tutor-code-${basename(dirname(outputDir))}`,
+    "--read-only",
+    "--user",
+    "1000:1000",
+    "--cap-drop",
+    "ALL",
+    "--security-opt",
+    "no-new-privileges",
+    "--memory",
+    "4g",
+    "--cpus",
+    "2",
+    "--pids-limit",
+    "256",
+    "--network",
+    network,
+    "--tmpfs",
+    "/tmp:rw,size=512m,uid=1000,gid=1000",
+    "--tmpfs",
+    "/home/node/.codex:rw,size=128m,uid=1000,gid=1000",
+    "--mount",
+    `type=bind,src=${workspace},dst=/workspace`,
+    "--mount",
+    `type=bind,src=${join(workspace, ".git")},dst=/workspace/.git,readonly`,
+    "--mount",
+    `type=bind,src=${outputDir},dst=/result`,
+    "--mount",
+    "type=bind,src=/home/tobi/.codex/auth.json,dst=/home/node/.codex/auth.json,readonly",
+    "--mount",
+    "type=bind,src=/home/tobi/.cache/ms-playwright,dst=/home/node/.cache/ms-playwright,readonly",
+    workerImage,
+    ...args,
+  ];
+}
 
 export function repairDigest(pr) {
   return digest([
@@ -27,37 +74,6 @@ export function repairDigest(pr) {
       .filter((check) => check && check.conclusion !== "SUCCESS")
       .map((check) => ({ name: check.name, conclusion: check.conclusion })),
   ]);
-}
-
-export function parseDispatch(body) {
-  const blocks = [...body.matchAll(/<!-- jenkins-local-dispatch:v1\s*([\s\S]*?)-->/g)];
-  if (blocks.length === 0) return null;
-  if (blocks.length !== 1) throw new Error("DISPATCH_COUNT: expected one dispatch block");
-  const task = JSON.parse(blocks[0][1]);
-  if (task.enabled === false) return null;
-  if (
-    task.schemaVersion !== 1 ||
-    task.enabled !== true ||
-    !Number.isSafeInteger(task.issue) ||
-    task.issue < 1 ||
-    !/^[a-zA-Z0-9_-]{1,80}$/.test(task.token ?? "") ||
-    !new RegExp(`^owner/${task.issue}-[a-z0-9-]+$`).test(task.branch ?? "") ||
-    !Array.isArray(task.allowedPaths) ||
-    task.allowedPaths.length === 0 ||
-    task.allowedPaths.length > 30
-  )
-    throw new Error("INVALID_DISPATCH: explicit owner issue, branch, token and scope required");
-  for (const path of task.allowedPaths) {
-    if (
-      typeof path !== "string" ||
-      !/^[a-zA-Z0-9_./-]+$/.test(path) ||
-      path.startsWith("/") ||
-      path.split("/").some((part) => part === ".." || part === ".") ||
-      !/^(apps\/web\/|packages\/|tests\/)/.test(path)
-    )
-      throw new Error("INVALID_SCOPE: only explicit application/package/test paths are permitted");
-  }
-  return task;
 }
 
 export function assertScope(paths, allowed) {
@@ -98,7 +114,12 @@ export function assertResult(action, files, pr) {
 }
 
 export function updateWorkerSection(body, section) {
-  return body.replace(/(?:^|\n)## Local Jenkins worker\n[\s\S]*?(?=\n## |$)/, "") + `\n${section}`;
+  return (
+    body.replace(
+      /(?:^|\n)## (?:Local Jenkins worker|External executor result)\n[\s\S]*?(?=\n## |$)/,
+      "",
+    ) + `\n${section}`
+  );
 }
 
 export function nextAction(pr, reviews, state) {
@@ -119,7 +140,7 @@ export function buildPrompt(task, issue, action, reviews) {
   return `You are a bounded local implementation worker for ${repository}, issue #${task.issue}.
 Read AGENTS.md, prompts/model-briefing.md, docs/24-control-plane.md, docs/02-domaenenmodell.md and docs/27-worker-git-pfad.md BEFORE editing. Follow their architecture and acceptance rules.
 The orchestrator has already created your explicitly assigned feature branch ${task.branch}. PLAN remains the dispatcher. Do not select other issues.
-THIS RUN IS ${action}. Edit only these authorized paths: ${JSON.stringify(task.allowedPaths)}.
+THIS RUN IS ${action}. Dispatch reason: ${task.reason}. Acceptance: ${JSON.stringify(task.acceptance)}. Edit only these authorized paths: ${JSON.stringify(task.allowedPaths)}.
 You may read repository files and run focused tests. Use apply_patch for edits. Add a failing-before/passing-after regression for IMPLEMENT/REPAIR. Preserve existing guards, tests and architecture. Do not weaken tests to obtain green.
 Do not perform ANY Git/GitHub mutation: no commit, checkout, rebase, push, merge, label, issue/PR comment or closure. The orchestrator handles the guarded Git path, full validation, PR creation and handoff. Never deploy or access AWS. Do not read credentials, home configuration, unrelated documents or environment secrets. No MCP/apps, networking, code agents, additional workers or scheduled tasks. Do not change scripts, workflows, hooks, AGENTS.md, lockfiles, dependencies or infrastructure.
 End within 30 minutes. Leave valid scoped source changes, or explain the precise blocker. Final response: concise public-safe Markdown with summary, tests actually executed, remaining acceptance, and classification/technical disposition of every supplied review finding. Do NOT claim full CI, main integration or cloud acceptance.
@@ -145,7 +166,7 @@ process.once("SIGTERM", () => {
 async function command(
   program,
   args,
-  { cwd, log, input, timeout = 480000, env = process.env } = {},
+  { cwd, log, input, timeout = 480000, env = process.env, quotaGuard } = {},
 ) {
   if (cancelled) throw new Error("RUN_CANCELLED: preserve work, no publication");
   const fd = log ? openSync(log, "a", 0o600) : null;
@@ -171,6 +192,28 @@ async function command(
   });
   child.stdin.end(input);
   let timedOut = false;
+  let quotaStopped = false,
+    checkingQuota = false,
+    quotaForceTimer;
+  const quotaTimer = quotaGuard
+    ? setInterval(async () => {
+        if (checkingQuota || quotaStopped) return;
+        checkingQuota = true;
+        try {
+          if (!(await quotaGuard())) {
+            quotaStopped = true;
+            kill(child, "SIGTERM");
+            quotaForceTimer = setTimeout(() => kill(child, "SIGKILL"), 10000);
+          }
+        } catch {
+          quotaStopped = true;
+          kill(child, "SIGTERM");
+          quotaForceTimer = setTimeout(() => kill(child, "SIGKILL"), 10000);
+        } finally {
+          checkingQuota = false;
+        }
+      }, 60000)
+    : null;
   const timer = setTimeout(() => {
     timedOut = true;
     kill(child, "SIGTERM");
@@ -180,11 +223,13 @@ async function command(
     await new Promise((accept, reject) => {
       child.once("error", reject);
       child.once("close", (code) =>
-        code === 0 && !timedOut && !cancelled
+        code === 0 && !timedOut && !cancelled && !quotaStopped
           ? accept()
           : reject(
               new Error(
-                `${program} failed (${timedOut ? "timeout" : code}); ${log ? `see ${log}` : stderr.slice(-1200)}`,
+                quotaStopped
+                  ? "QUOTA_STOP: preserved work, no publication"
+                  : `${program} failed (${timedOut ? "timeout" : code}); ${log ? `see ${log}` : stderr.slice(-1200)}`,
               ),
             ),
       );
@@ -193,7 +238,21 @@ async function command(
   } finally {
     clearTimeout(timer);
     clearTimeout(forceTimer);
+    clearInterval(quotaTimer);
+    clearTimeout(quotaForceTimer);
     children.delete(child);
+    // Killing the Docker client alone must not leave an unattended model container alive.
+    if (program === "docker" && args[0] === "run" && args.includes("--name")) {
+      const name = args[args.indexOf("--name") + 1];
+      if (!/^ai-tutor-code-run-\d+-\d+$/.test(name))
+        throw new Error("INVALID_OWNED_CONTAINER_NAME");
+      await new Promise((accept, reject) =>
+        execFile("docker", ["rm", "--force", name], { timeout: 15000 }, (error, stdout, stderr) => {
+          if (!error || /No such container/i.test(stderr)) accept();
+          else reject(new Error("OWNED_CONTAINER_CLEANUP_UNCONFIRMED"));
+        }),
+      );
+    }
   }
 }
 
@@ -250,7 +309,7 @@ async function handoff(task, status, details) {
   await gh(["issue", "comment", String(control.number), "--repo", repository, "--body", message]);
   const fresh = await controls();
   if (digest(parseDispatch(fresh.body)) !== digest(task)) return;
-  const section = `## Local Jenkins worker\n\n${message}\nUpdated ${new Date().toISOString()}.\n`;
+  const section = `## External executor result\n\n${message}\nUpdated ${new Date().toISOString()}.\n`;
   const body = updateWorkerSection(fresh.body, section);
   await command(
     "gh",
@@ -266,13 +325,66 @@ async function protectedRefs() {
   );
 }
 
+async function checkQuota(stateHome, force = false) {
+  const provider = process.env.AI_TUTOR_WORKER_PROVIDER ?? "codex";
+  if (!["codex", "claude"].includes(provider)) throw new Error("INVALID_PROVIDER");
+  const path = join(stateHome, `quota-${provider}.json`);
+  const previous = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null;
+  let snapshot = force ? null : cachedSkip(previous, provider);
+  if (!snapshot) {
+    let result = null;
+    // No provider fallback, API-key purchase, credit consumption or fabricated percentage.
+    if (provider === "codex") {
+      try {
+        result = await readCodexQuota();
+      } catch {
+        /* fail closed */
+      }
+    }
+    snapshot = { ...evaluateQuota(result), provider };
+    writeFileSync(path, JSON.stringify(snapshot), { mode: 0o600 });
+  }
+  const key = quotaStatusKey(snapshot);
+  const control = await controls();
+  const marker = `<!-- executor-quota-state:${digest(key)} -->`;
+  if (!control.body.includes(marker)) {
+    const message =
+      `${marker}\n<!-- executor-quota:v1\n${JSON.stringify(snapshot)}\n-->\n` +
+      (snapshot.status === "QUOTA_ALLOWED"
+        ? "Quota permits a start, not a dispatch. PLAN must still authorize the task."
+        : "No coding, checkout, dependency install, tests or model start. PLAN must not retrigger this request or switch providers to bypass the reserve. Canonical schedulers stay enabled. Below 50%: skip for this Europe/Berlin day; unknown quota: retry only after 15 minutes. New-day quota must be read afresh; no automatic quota reset/extra credits.");
+    await command(
+      "gh",
+      ["api", "--method", "PATCH", `repos/${repository}/issues/${control.number}`, "--input", "-"],
+      {
+        input: JSON.stringify({
+          body: updateSection(control.body, "External executor quota", message),
+        }),
+        timeout: 30000,
+      },
+    );
+  }
+  console.log(JSON.stringify({ ...snapshot, cached: snapshot === previous, host: hostname() }));
+  return snapshot.status === "QUOTA_ALLOWED";
+}
+
 async function main() {
   const actionMode = process.env.AI_TUTOR_WORKER_ACTION ?? "plan";
-  if (!["plan", "execute"].includes(actionMode)) throw new Error("INVALID_ACTION");
-  if (actionMode === "execute" && process.env.AI_TUTOR_WORKER_LOCKED !== "1")
+  if (!["plan", "execute", "quota"].includes(actionMode)) throw new Error("INVALID_ACTION");
+  if (actionMode !== "plan" && process.env.AI_TUTOR_WORKER_LOCKED !== "1")
     throw new Error("WORKER_LOCK_REQUIRED: execute via canonical flock wrapper");
+  if (actionMode !== "plan" && hostname() !== "rmi")
+    throw new Error("RMI_ONLY: no execution on msi or another host");
   const control = await controls();
   const task = parseDispatch(control.body);
+  const stateHome = process.env.AI_TUTOR_WORKER_STATE_HOME;
+  if (!stateHome || !stateHome.startsWith("/")) throw new Error("PRIVATE_STATE_HOME_REQUIRED");
+  if (actionMode !== "plan") {
+    mkdirSync(stateHome, { recursive: true, mode: 0o700 });
+    if (statSync(stateHome).mode & 0o077)
+      throw new Error("PRIVATE_STATE_PERMISSIONS: POSIX 0700 required");
+    if (!(await checkQuota(stateHome)) || actionMode === "quota") return;
+  }
   if (!task) {
     console.log(JSON.stringify({ status: "NO_EXECUTABLE_DISPATCH", control: control.number }));
     return;
@@ -298,6 +410,20 @@ async function main() {
   ]);
   if (prs.length === 100) throw new Error("PR_LIST_TRUNCATED");
   const refs = await protectedRefs();
+  if (task.basisMain !== refs[0])
+    throw new Error("STALE_DISPATCH_BASIS: PLAN must refresh basis-main before execution");
+  for (const number of task.dependencies) {
+    const dependency = await json([
+      "issue",
+      "view",
+      String(number),
+      "--repo",
+      repository,
+      "--json",
+      "state",
+    ]);
+    if (dependency.state !== "CLOSED") throw new Error(`UNRESOLVED_DEPENDENCY: #${number}`);
+  }
   const mainRuns = await json([
     "run",
     "list",
@@ -391,13 +517,23 @@ async function main() {
   const reviews = pr ? reviewInput(pr, inline) : [];
   const workHome = process.env.AI_TUTOR_WORKER_HOME;
   if (!workHome || !workHome.startsWith("/")) throw new Error("WORKER_HOME_REQUIRED");
-  const stateHome = process.env.AI_TUTOR_WORKER_STATE_HOME;
-  if (!stateHome || !stateHome.startsWith("/")) throw new Error("PRIVATE_STATE_HOME_REQUIRED");
   if (!process.env.HOME) throw new Error("AUTH_HOME_REQUIRED");
   const statePath = join(stateHome, `issue-${task.issue}.json`);
   let state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")) : {};
   if (state.token && state.token !== task.token) state = {};
-  const action = nextAction(pr, reviews, state);
+  const selected = nextAction(pr, reviews, state);
+  const action =
+    selected === "WAIT_CI"
+      ? selected
+      : ["TEST", "REBASE"].includes(task.action)
+        ? task.action
+        : selected === "IMPLEMENT"
+          ? task.action
+          : ["REPAIR", "REVIEW"].includes(selected) && task.action === "REPAIR"
+            ? "REPAIR"
+            : selected.startsWith("WAIT_")
+              ? selected
+              : "WAIT_PLAN_DISPATCH";
   console.log(
     JSON.stringify({
       control: control.number,
@@ -408,6 +544,8 @@ async function main() {
     }),
   );
   if (actionMode === "plan" || action.startsWith("WAIT_")) return;
+  if (action === "REBASE" && !pr) throw new Error("REBASE_REQUIRES_EXISTING_PR");
+  if (state.completedRequest === digest(task)) return;
 
   mkdirSync(workHome, { recursive: true, mode: 0o700 });
   mkdirSync(stateHome, { recursive: true, mode: 0o700 });
@@ -416,19 +554,35 @@ async function main() {
   const workspace = join(workHome, `checkout-${task.issue}`);
   const runDir = join(stateHome, `run-${task.issue}-${Date.now()}`);
   mkdirSync(runDir, { mode: 0o700 });
+  const outputDir = join(runDir, "model-output");
+  mkdirSync(outputDir, { mode: 0o700 });
   const log = join(runDir, "runner.log");
   const git = (args) => command("git", args, { cwd: workspace });
   const npm = (args) => command("npm", args, { cwd: workspace, log });
   try {
     if (!existsSync(workspace)) {
+      const remoteBranch = await command("git", [
+        "ls-remote",
+        "--heads",
+        origin,
+        `refs/heads/${task.branch}`,
+      ]);
       await command(
         "git",
-        ["clone", "--single-branch", "--branch", "main", "--", origin, workspace],
+        [
+          "clone",
+          "--single-branch",
+          "--branch",
+          remoteBranch ? task.branch : "main",
+          "--",
+          origin,
+          workspace,
+        ],
         { log },
       );
       await npm(["ci"]);
       await npm(["run", "worker:doctor"]);
-      await npm(["run", "worker:start", "--", task.branch]);
+      if (!remoteBranch) await npm(["run", "worker:start", "--", task.branch]);
     }
     if (
       (await git(["remote", "get-url", "origin"])) !== origin ||
@@ -455,86 +609,109 @@ async function main() {
       ),
     ];
     assertScope(await changed(), task.allowedPaths);
-    await command(
-      "codex",
-      [
+    if (action === "REBASE" && (await changed()).length)
+      throw new Error("REBASE_REQUIRES_CLEAN_CHECKOUT: preserve pending changes");
+    if (action === "TEST") {
+      if ((await changed()).length) throw new Error("TEST_REQUIRES_CLEAN_CHECKOUT");
+      await npm(["run", "check"]);
+      if ((await changed()).length || (await git(["rev-parse", "HEAD"])) !== beforeHead)
+        throw new Error("TEST_MUTATED_SOURCE");
+      await stillAssigned(task);
+      await handoff(
+        task,
+        "TESTED",
+        `Full npm run check GREEN on ${beforeHead}; no model, commit, push, merge or deploy. Issue acceptance and external evidence are not inferred.`,
+      );
+      writeFileSync(
+        statePath,
+        JSON.stringify({ ...state, token: task.token, completedRequest: digest(task) }),
+        { mode: 0o600 },
+      );
+      return;
+    }
+    if (action !== "REBASE") {
+      await command(
+        "docker",
+        dockerArgs(
+          workspace,
+          outputDir,
+          [
+            "node",
+            "-e",
+            `const fs=require('node:fs');const p='node_modules/.jenkins-container-probe-'+process.pid;fs.readFileSync('AGENTS.md');fs.writeFileSync(p,'probe');fs.unlinkSync(p);let denied=false;try{const fd=fs.openSync('.git/config','a');fs.closeSync(fd);}catch(e){denied=['EPERM','EACCES','EROFS'].includes(e.code);}if(!denied)throw Error('PROTECTED_GIT_WRITABLE');console.log('CONTAINER_READ_WRITE_AND_GIT_GUARD_GREEN');`,
+          ],
+          "none",
+        ),
+        { cwd: workspace, log: join(runDir, "container.log"), timeout: 15000 },
+      );
+      await handoff(
+        task,
+        "START",
+        `${action}, branch ${task.branch}, dedicated RMI build container; Git read-only, no host Docker socket or Jenkins data, apps/hooks disabled. No merge/deploy authority. Private logs: ${runDir}.`,
+      );
+      const model = process.env.AI_TUTOR_WORKER_MODEL;
+      const effort = process.env.AI_TUTOR_WORKER_REASONING;
+      if (
+        !/^[a-zA-Z0-9_.-]+$/.test(model ?? "") ||
+        !/^(low|medium|high|xhigh|max|ultra)$/.test(effort ?? "")
+      )
+        throw new Error("EXPLICIT_MODEL_REQUIRED");
+      const args = [
+        "codex",
+        "-a",
+        "never",
+        "exec",
+        "--ignore-user-config",
+        "--disable",
+        "apps",
+        "--disable",
+        "hooks",
+        "--disable",
+        "skill_mcp_dependency_install",
+        "--disable",
+        "multi_agent",
+        "--disable",
+        "multi_agent_v2",
+        "--disable",
+        "browser_use",
+        "--disable",
+        "browser_use_external",
+        "--disable",
+        "computer_use",
+        "--sandbox",
+        "danger-full-access", // Only inside the dedicated externally isolated Docker worker.
         "-c",
-        'sandbox_mode="workspace-write"',
+        'shell_environment_policy.inherit="none"',
         "-c",
-        "sandbox_workspace_write.network_access=false",
-        "sandbox",
-        "--",
-        "node",
-        "-e",
-        `const fs=require('node:fs');const p='node_modules/.jenkins-sandbox-probe-'+process.pid;fs.readFileSync('AGENTS.md');fs.writeFileSync(p,'probe');fs.unlinkSync(p);let denied=false;try{const fd=fs.openSync('.git/config','a');fs.closeSync(fd);}catch(e){denied=['EPERM','EACCES','EROFS'].includes(e.code);}if(!denied)throw Error('PROTECTED_GIT_WRITABLE');console.log('SANDBOX_READ_WRITE_AND_GIT_GUARD_GREEN');`,
-      ],
-      { cwd: workspace, log: join(runDir, "sandbox.log"), timeout: 15000 },
-    );
-    await handoff(
-      task,
-      "START",
-      `${action}, branch ${task.branch}, workspace-write sandbox, networking/apps/hooks disabled. No merge/deploy authority. Private logs: ${runDir}.`,
-    );
-    const config = existsSync(join(process.env.HOME, ".codex/config.toml"))
-      ? readFileSync(join(process.env.HOME, ".codex/config.toml"), "utf8").split(/^\[/m)[0]
-      : "";
-    const model = /^model\s*=\s*"([a-zA-Z0-9_.-]+)"/m.exec(config)?.[1];
-    const effort = /^model_reasoning_effort\s*=\s*"(low|medium|high|xhigh|max|ultra)"/m.exec(
-      config,
-    )?.[1];
-    const args = [
-      "-a",
-      "never",
-      "exec",
-      "--ignore-user-config",
-      "--disable",
-      "apps",
-      "--disable",
-      "hooks",
-      "--disable",
-      "skill_mcp_dependency_install",
-      "--disable",
-      "multi_agent",
-      "--disable",
-      "multi_agent_v2",
-      "--disable",
-      "browser_use",
-      "--disable",
-      "browser_use_external",
-      "--disable",
-      "computer_use",
-      "--sandbox",
-      "workspace-write",
-      "-c",
-      "sandbox_workspace_write.network_access=false",
-      "-c",
-      'shell_environment_policy.inherit="none"',
-      "-c",
-      `shell_environment_policy.set.PATH=${JSON.stringify(process.env.PATH)}`,
-      "-c",
-      `shell_environment_policy.set.HOME=${JSON.stringify(process.env.HOME)}`,
-      "--json",
-      "--color",
-      "never",
-      "--cd",
-      workspace,
-      "--output-last-message",
-      join(runDir, "report.md"),
-    ];
-    if (model) args.push("--model", model);
-    if (effort) args.push("-c", `model_reasoning_effort=${JSON.stringify(effort)}`);
-    const env = Object.fromEntries(
-      ["PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "TERM", "TMPDIR"]
-        .filter((name) => process.env[name])
-        .map((name) => [name, process.env[name]]),
-    );
-    await command("codex", [...args, "-"], {
-      cwd: workspace,
-      input: buildPrompt(task, issue, action, reviews),
-      log: join(runDir, "codex.jsonl"),
-      timeout: 1800000,
-      env,
-    });
+        'shell_environment_policy.set.PATH="/usr/local/bin:/usr/bin:/bin"',
+        "-c",
+        'shell_environment_policy.set.HOME="/home/node"',
+        "--json",
+        "--color",
+        "never",
+        "--cd",
+        "/workspace",
+        "--output-last-message",
+        "/result/report.md",
+      ];
+      if (model) args.push("--model", model);
+      if (effort) args.push("-c", `model_reasoning_effort=${JSON.stringify(effort)}`);
+      const env = Object.fromEntries(
+        ["PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "TERM", "TMPDIR"]
+          .filter((name) => process.env[name])
+          .map((name) => [name, process.env[name]]),
+      );
+      if (!(await checkQuota(stateHome, true))) return;
+      await command("docker", dockerArgs(workspace, outputDir, [...args, "-"]), {
+        cwd: workspace,
+        input: buildPrompt(task, issue, action, reviews),
+        log: join(runDir, "codex.jsonl"),
+        timeout: 1800000,
+        env,
+        quotaGuard: () => checkQuota(stateHome, true),
+      });
+      if (!(await checkQuota(stateHome, true))) return;
+    }
     if (
       (await git(["rev-parse", "HEAD"])) !== beforeHead ||
       (await git(["branch", "--show-current"])) !== task.branch
@@ -543,7 +720,7 @@ async function main() {
     const files = await changed();
     assertScope(files, task.allowedPaths);
     await stillAssigned(task);
-    assertResult(action, files, pr);
+    if (action !== "REBASE") assertResult(action, files, pr);
     if (files.length) {
       await npm(["run", "check"]);
       await git(["add", "--", ...files]);
@@ -563,7 +740,10 @@ async function main() {
         "DEPLOY_MOVED_EXTERNALLY: verify Owner evidence; worker made no deploy action",
       );
     const head = await git(["rev-parse", "HEAD"]);
-    const report = readFileSync(join(runDir, "report.md"), "utf8").slice(0, 18000);
+    const report =
+      action === "REBASE"
+        ? "Guarded worker:sync rebase and complete check executed; no model used."
+        : readFileSync(join(outputDir, "report.md"), "utf8").slice(0, 18000);
     const prUrl =
       pr?.url ??
       (await gh([
@@ -595,7 +775,8 @@ async function main() {
       head,
       prUrl,
       lastReview: digest(reviews),
-      lastRepair: action === "REPAIR" ? repairDigest(pr) : state.lastRepair,
+      lastRepair: action === "REPAIR" && pr ? repairDigest(pr) : state.lastRepair,
+      completedRequest: digest(task),
     };
     writeFileSync(statePath, JSON.stringify(state), { mode: 0o600 });
     await handoff(
@@ -610,6 +791,17 @@ async function main() {
     if (cancelled)
       throw new Error("RUN_CANCELLED: checkout preserved; no BLOCKED handoff or publication");
     const message = String(error.message).slice(0, 1600);
+    if (message.startsWith("QUOTA_STOP")) {
+      console.log(
+        JSON.stringify({
+          status: "SKIPPED_QUOTA_DURING_RUN",
+          issue: task.issue,
+          logs: runDir,
+          workPreserved: true,
+        }),
+      );
+      return;
+    }
     const errorKey = digest(message.replace(/run-\d+-\d+/g, "run-<private>"));
     if (state.lastError !== errorKey) {
       await handoff(

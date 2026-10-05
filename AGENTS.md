@@ -113,11 +113,14 @@
     testen und ihre PRs bis PREPARED/READY bringen. WAIT, BLOCKED, STALLED, laufende Owner-Deployments
     oder eine belegte Merge-Lane blockieren unabhängige Vorbereitungskapazität nicht. Die Integration
     bleibt global seriell: Zu jedem Zeitpunkt existiert höchstens ein MERGE_LANE_OWNER.
-    Scheduler-Liveness ist kein fachlicher Worker-State: Ein von der Plattform pausierter Scheduler ist
-    für einen Worker ohne aktuell ausführbare Arbeit zulässig. PLAN aktiviert ihn beim Dispatch einer
-    ausführbaren Aufgabe und hält ihn während fortsetzbarer Arbeit aktiv. Eine Pausierung trotz
-    ausführbarer Zuweisung ist ein operativer Fehler; zyklisches Reaktivieren eines Idle-/Owner-only-/
-    WAIT_EXTERNAL-Workers ist ausdrücklich zu vermeiden.
+    Die kanonischen PLAN-/CHAT1-/CHAT2-/CHAT3-Scheduler bleiben dauerhaft aktiviert. WAIT, BLOCKED,
+    NO_EXECUTABLE_WORK, WAIT_EXTERNAL, Owner-only, Idle, laufende CI/Reviews, Session-Cuts oder Toolfehler
+    sind keine Gründe zum Pausieren, Deaktivieren, Löschen oder Umplanen. Idle-Worker lesen GitHub erneut
+    und erfinden keine Arbeit; Legacy-Duplikate bleiben deaktiviert. PLAN prüft Scheduler-Liveness
+    ausdrücklich am tatsächlichen Scheduler, nicht an Kommentaraktivität; ohne Zugriff ist sie UNKNOWN.
+    Checkout-Unterstützung folgt ausschließlich dem External-Executor-Vertrag in
+    `docs/24-control-plane.md`: expliziter PLAN-Dispatch, Jenkins→RMI, keine eigene Aufgabenwahl,
+    mindestens 50 Prozent Rest in allen Quota-Fenstern, kein automatischer Merge oder deploy.
 15. **Vor jedem Merge ist ein Rebase auf den dann aktuellen `main` verpflichtend.** Das gilt insbesondere
     für parallel entwickelte Branches und auch dann, wenn der Branch zuvor bereits grün oder READY war.
     Der Merge darf erst erfolgen, nachdem der PR-Head die aktuelle `main`-Spitze durch einen echten

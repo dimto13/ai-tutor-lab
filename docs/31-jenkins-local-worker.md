@@ -1,72 +1,93 @@
-# Autonomer lokaler Jenkins-Executor
+# Jenkins→RMI External Executor
 
-`80_AI_TUTOR_IMPLEMENTATION_WORKER` ergänzt die API-Chats um tatsächlich ausführbare Codearbeit.
-Der Owner hat den autonomen lokalen Betrieb am 2026-10-05 ausdrücklich freigegeben. PLAN bleibt
-Dispatcher; der Executor implementiert ausschließlich einen expliziten Auftrag im dynamisch
-entdeckten ACTIVE CONTROL. Er wählt keine fremden Aufgaben und mergt/deployt niemals automatisch.
+`80_AI_TUTOR_IMPLEMENTATION_WORKER` führt ausschließlich explizite PLAN-Aufträge aus dem dynamisch
+entdeckten ACTIVE CONTROL aus. Kanonischer Vertrag: [24-control-plane.md](24-control-plane.md).
+Kein Work-Stealing, kein automatischer Merge, kein deploy. API-Chats bleiben Planer/Dispatcher.
 
-## Dispatch-Vertrag
+## Sichtbarer Ausführungspfad
 
-CONTROL kann genau einen HTML-Kommentar `jenkins-local-dispatch:v1` enthalten. Sein JSON enthält
-`schemaVersion: 1`, `enabled: true`, einen eindeutigen `token`, die positive `issue`-Nummer,
-`branch: owner/<issue>-<kurzname>` und eine Liste `allowedPaths`. Das Issue muss offen sein und genau
-`stream:owner` als Zuweisung tragen. Neue Aufgaben werden durch PLAN ausdrücklich freigegeben;
-`enabled: false` oder kein Block bedeutet gesunden Leerlauf, nicht Work-Stealing.
+Jenkins-Container auf dem NAS → vorhandenes SSH-Ziel `rmi`, Benutzer `tobi` → isolierter Checkout
+und dediziertes Docker-Build-Image auf RMI. Keine Ausführung auf `msi`, keine neue Jenkins-Agent-
+Registrierung, keine Änderung von `.bashrc`, globaler Codex-Konfiguration, AppArmor oder sysctl.
 
-Zugelassen sind explizite Anwendungs-/Package-/Testpfade. Infrastruktur, Agentenregeln, Hooks,
-Workflows und Runner-Code sind nicht an den Coding-Worker delegiert. Kollisionen mit offenen PRs
-blockieren. Die Zuweisung wird unmittelbar vor Commit/Push erneut gelesen; Änderung oder Rollover
-verhindert die Veröffentlichung und erhält die lokale Arbeit.
+Alle projektbezogenen Pfade liegen sichtbar unter `/home/tobi/skripte/ai-tutor-lab-jenkins/`:
 
-## Tatsächlicher Ausführungspfad
+| Pfad                             | Zweck                                                           |
+| -------------------------------- | --------------------------------------------------------------- |
+| `source/<exact-sha>/`            | veröffentlichte Runner/Quota/Dispatch-Skripte desselben Git-SHA |
+| `toolchain/node_modules/.bin/`   | Node 22.23.2 und npm 10.9.8, keine globale Installation         |
+| `workspaces/checkout-<issue>/`   | eigener persistenter Feature-Branch-Checkout                    |
+| `state/project.lock`             | projektweite Sperre zusätzlich zu Jenkins non-concurrent        |
+| `state/quota-<provider>.json`    | Tages-Skip / Quota-Snapshot, keine Auth-Tokens                  |
+| `state/issue-<issue>.json`       | Request-Identität, PR, Ergebnis und Fehler-Deduplizierung       |
+| `state/run-<issue>-<timestamp>/` | private Runner-/Container-/Modell-Logs und Ausgabe              |
 
-Jenkins NAS → SSH-Alias `msi` / Benutzer `tobi` → persistenter Laufzeitordner
-`/media/tobi/crucial/ssd/skripte/ai-tutor-lab-workers/runtime`. Der Rechner muss eingeschaltet und
-erreichbar sein. Ein SSH-Ausfall ist ein sichtbarer Jobfehler, kein erfolgreich geprüfter Leerlauf.
+State/Logs sind 0700/0600 auf dem RMI-POSIX-Dateisystem. Alte `msi`-Checkouts/Logs bleiben als historische
+Evidence erhalten, werden nicht verwendet und nicht gelöscht. Modell und Reasoning stehen explizit
+in Jenkins: derzeit `gpt-5.6-sol` / `xhigh`, entsprechend der vorgefundenen RMI-Wahl.
 
-Der Timer läuft `H/20 * * * *`. Jenkins verbietet konkurrierende Builds; zusätzlich hält die
-SSH-Ausführung einen projektweiten `flock`. Ein isolierter GitHub-Clone pro Issue verhindert, dass
-eine Benutzer-Worktree oder die Implementierung des Executors überschrieben wird. Toolchain-PATH:
-`/home/tobi/.local/share/ai-tutor-toolchain/node_modules/.bin:/usr/local/bin:/usr/bin:/bin`.
+## Einrichtung und Laufarten
 
-Codex nutzt die vorhandene ChatGPT-Anmeldung des lokalen Benutzers und dessen Modell-/Reasoning-Wahl,
-aber keine sonstigen Konfigurations-Hooks oder MCP/App-Verbindungen. Die Invocation erzwingt
-`workspace-write`, `approval_policy=never`, abgeschaltetes Netzwerk und deaktivierte Apps/Hooks.
-Der Modelllauf ist auf 30 Minuten, der Remote-Runner auf 48 und Jenkins-SSH auf 50 Minuten begrenzt.
-Git-Mutationen des Modells sind verboten; Branch/Head und Dateiscope werden danach überprüft.
+`node scripts/jenkins-local-worker-config.mjs [main|exact-sha]` erzeugt kanonisches XML auf stdout.
+SVN-Commit vor Jenkins-API-Publishing, keine XML-Kopien/Backups. Timer `H/20 * * * *`, non-concurrent,
+RMI-`flock`, maximal 50 Minuten SSH, 48 Minuten Runner, 30 Minuten Modell. Ein Feature-SHA ist nur für
+die gestufte Abnahme gepinnt; Normalbetrieb folgt erst nach grüner Integration `main`.
 
-Vor einem Modelllauf prüft `codex sandbox` echtes Lesen/Schreiben im Checkout und Schreibschutz
-für `.git`. Eine nicht startfähige Sandbox ist BLOCKED, verbraucht keinen weiteren Modelllauf
-und wird niemals durch `danger-full-access` oder eine globale Abschaltung von AppArmor umgangen.
+`WORKER_ACTION`:
 
-Der Runner führt `worker:doctor/start/sync/push/gate`, vollständiges `npm run check`, kanonischen
-Commit und PR-Veröffentlichung aus. Nach Sync/Commit läuft die vollständige Prüfung erneut.
-Das Ergebnis ist **PREPARED**, nie automatisch DONE. Fresh Exact-Head-CI, alle Reviews/Threads,
-erneuter unmittelbarer Rebase/Git-Gate und serieller Merge samt resultierender Main-CI bleiben Gates.
+- `setup`: ausdrücklich gestartete einmalige Jenkins-Einrichtung von Node/npm und Docker-Image. Kein
+  Modell-/Coding-Lauf. Führt `scripts/jenkins-rmi-setup.sh` aus; niemals Timer-Standard. Dockerfile:
+  `scripts/jenkins-rmi-worker.Dockerfile` mit Node 22.23.2, npm 10.9.8 und Codex 0.160.0.
+- `execute` (Timer-Standard): Quota prüfen, danach höchstens den expliziten PLAN-Auftrag ausführen.
+- `quota`: Quota und CONTROL-Status aktualisieren, niemals Coding/Checkout/Tests.
+- `plan`: nur lesende Discovery-/Dispatch-/Scope-Prüfung; kein Modell und keine CONTROL-Mutation.
 
-## Reviews, Fehler und Handoff
+`WORKER_PROVIDER=codex` nutzt die vorhandene RMI-ChatGPT-Anmeldung. Claude ist dort nicht installiert
+und hat noch keinen belastbaren Quota-Adapter: `claude` bleibt UNKNOWN/SKIP, kein automatischer Wechsel.
+Keine automatische Quota-Reset-Nutzung, keine zusätzlichen API-Kosten oder Credits.
 
-Während PR-CI läuft, erfolgt kein neuer Modelllauf. Neue Review-Findings werden in einem Folge-Lauf
-klassifiziert/bearbeitet; identische Reviews oder derselbe unveränderte CI-Fehler lösen keine
-Endlosschleife aus. Maximal zwei automatische Jenkins-Reviews bleiben der bestehende Vertrag.
-PREPARED-/BLOCKED-Handoffs werden ins aktuelle CONTROL geschrieben. Identische lokale Fehler werden
-nicht erneut kommentiert; WAIT bleibt still. Rohes Modell-JSONL und Runner-Logs liegen privat
-im jeweiligen `run-<issue>-<timestamp>`-Ordner und nicht im Jenkins-Konsolenlog.
-State/Logs/Sperre verwenden das POSIX-Dateisystem unter
-`/home/tobi/.local/state/ai-tutor-lab-jenkins-worker` (Verzeichnis 0700, Dateien 0600).
-Die NTFS/FUSE-Checkout-Platte erzwingt diese Dateimodi nicht; dort liegen deshalb keine privaten
-Laufzeitlogs. Der Runner bricht bei fehlendem POSIX-Verzeichnisschutz ab.
+## Quota vor Arbeit
 
-## Konfiguration und Abnahme
+Codex App Server `account/rateLimits/read` wird ohne Thread/Turn/Modellstart aufgerufen. Das Minimum
+von `100 - usedPercent` aller gelieferten Fenster/Buckets muss mindestens 50 sein. Fehlende, abgelaufene
+oder ungültige Daten erlauben keinen Start. Details: [offizielle OpenAI Docs](https://learn.chatgpt.com/docs/app-server).
 
-`node scripts/jenkins-local-worker-config.mjs` liefert kanonisches XML auf stdout. SVN-Commit geht
-Jenkins-API-Publishing voraus; keine XML-Backups. `WORKER_SCRIPT_REF=main` ist der Normalbetrieb;
-ein exakter getesteter Feature-SHA ist nur für gestufte Erstabnahme zulässig. `WORKER_ACTION=plan`
-prüft nur Discovery/Assignment/Scope; `execute` startet Codearbeit, wenn ein fortsetzbarer Auftrag
-vorliegt. Der erste echte Timer-/Sandbox-/Code-/PR-Nachweis muss separat dokumentiert werden;
-ein erfolgreicher Plan-Lauf beweist noch keinen implementierenden Worker.
+Unter 50: für den restlichen Berlin-Kalendertag `SKIPPED_QUOTA`; unbekannt: mindestens 15 Minuten
+Retry-Abstand. Ein Skip endet vor Clone, npm-Installation, Tests, Docker oder Modell. CONTROL bekommt
+einen idempotenten `executor-quota:v1`-Status im Body, keine wiederholten Kommentare. Am nächsten Tag
+wird frisch geprüft. Positive Quota wird vor Modellstart erneut abgefragt, lange Läufe minütlich;
+bei Unterschreitung wird gestoppt, ohne Commit/Push und unter Erhalt der Arbeit. Bereits laufende
+Requests/gerundete Providerzahlen verhindern einen token-genauen Deckel.
+
+## Container- und Git-Grenze
+
+Nur das dedizierte Worker-Image verwendet `codex --sandbox danger-full-access`, weil Docker die äußere
+Ausführungsgrenze stellt. **Nicht** auf dem RMI-Host oder im Jenkins-Controller. Der Container ist
+non-root, Root-FS read-only, Capabilities entfernt, `no-new-privileges`, 4 GiB / 2 CPU / 256 PIDs.
+Checkout ist schreibbar, `.git` read-only. Nur die einzelne Auth-Datei und der Browser-Cache werden
+read-only eingebunden; keine SSH-/GitHub-Credentials, kein Jenkins-Home, kein Docker-Socket. Modell-
+Ausgabe hat einen eigenen Ordner; Runner-Logs und CONTROL-State sind nicht eingebunden.
+Docker-Netzwerk erlaubt Providerzugriff und ist nicht domain-gefiltert. Die Auth-Datei bleibt im
+Container lesbar; kein vollständiger Schutz gegen bösartige Repository-Inhalte wird behauptet.
+Siehe [OpenAI zur äußeren Containergrenze](https://learn.chatgpt.com/docs/agent-approvals-security).
+
+Vor Modellstart wird Lesen/Schreiben im Checkout und Schreibschutz von `.git` real geprüft, ohne
+Modellaufruf. Nach Abbruch/Timeout wird ausschließlich der eindeutig benannte eigene Run-Container
+entfernt; Checkout und Ausgabe bleiben erhalten. Unbestätigte Container-Bereinigung ist ein Fehler.
+
+Der Host-Runner prüft Branch/Head/Scope und Auftrag erneut, führt den bewachten `worker:*`-Pfad und
+vollständiges `npm run check` nach der letzten Änderung/Rebase aus, pusht mit Lease und erzeugt einen
+PREPARED PR. TEST und REBASE brauchen keinen Modelllauf. Derselbe erledigte Request wird nicht erneut
+ausgeführt. CI-/Review-Reparaturen brauchen einen neuen expliziten PLAN-Auftrag; grüne CI allein ist
+keine Merge-Freigabe. PLAN prüft alle Integration-/Acceptance-Gates unabhängig.
+
+## Betrieb und Abnahme
 
 Job: <http://192.168.178.81:8083/job/80_AI_TUTOR_IMPLEMENTATION_WORKER/>.
-Realer Health-Job: <http://192.168.178.81:8083/job/80_AI_TUTOR_CONTROL_HEALTH/>.
-Bei Ausfall: erst Jenkins-Konsole/SSH prüfen; lokal `WORKER_ACTION=plan` über den veröffentlichten
-Runner nachstellen. Das ersetzt keine Timer-Abnahme. `deploy` bleibt ausschließlich Owner-only.
+Gesundes Skip-Signal: echte Jenkins-Konsole zeigt `host:rmi`, `SKIPPED_QUOTA`, aktuelle Quota-Zeit und
+keinen Modell-/Checkout-Start. Es bedeutet **nicht** erfolgreiche Implementierung.
+
+Recovery: nach Quota-Freigabe zuerst `WORKER_ACTION=quota`, danach PLAN-Auftrag validieren und
+`execute`. Bei Toolchain/Image-Problemen gezielt `setup` verwenden. Fehlende SSH/Auth/CONTROL-Daten
+sind Fehler, nicht Leerlauf. Reale Timer-Abnahme und erfolgreicher Coding-/Test-/PR-Lauf müssen
+separat belegt werden; Quota-Skip oder manuelle Tests ersetzen diesen Implementierungsnachweis nicht.
