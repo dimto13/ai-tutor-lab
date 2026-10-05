@@ -24,7 +24,8 @@ export function repairDigest(pr) {
     pr.headRefOid,
     requiredChecks
       .map((name) => pr.statusCheckRollup?.find((check) => check.name === name))
-      .filter((check) => check && check.conclusion !== "SUCCESS"),
+      .filter((check) => check && check.conclusion !== "SUCCESS")
+      .map((check) => ({ name: check.name, conclusion: check.conclusion })),
   ]);
 }
 
@@ -94,6 +95,10 @@ export function assertResult(action, files, pr) {
   if (!files.length && action === "REPAIR")
     throw new Error("REPAIR_UNRESOLVED: no repair changes produced");
   if (!files.length && !pr) throw new Error("NO_IMPLEMENTATION: preserved checkout, see report");
+}
+
+export function updateWorkerSection(body, section) {
+  return body.replace(/(?:^|\n)## Local Jenkins worker\n[\s\S]*?(?=\n## |$)/, "") + `\n${section}`;
 }
 
 export function nextAction(pr, reviews, state) {
@@ -246,8 +251,7 @@ async function handoff(task, status, details) {
   const fresh = await controls();
   if (digest(parseDispatch(fresh.body)) !== digest(task)) return;
   const section = `## Local Jenkins worker\n\n${message}\nUpdated ${new Date().toISOString()}.\n`;
-  const body =
-    fresh.body.replace(/\n## Local Jenkins worker\n[\s\S]*?(?=\n## |$)/, "") + `\n${section}`;
+  const body = updateWorkerSection(fresh.body, section);
   await command(
     "gh",
     ["api", "--method", "PATCH", `repos/${repository}/issues/${fresh.number}`, "--input", "-"],
@@ -459,8 +463,6 @@ async function main() {
         "-c",
         "sandbox_workspace_write.network_access=false",
         "sandbox",
-        "--cd",
-        workspace,
         "--",
         "node",
         "-e",
@@ -491,6 +493,16 @@ async function main() {
       "hooks",
       "--disable",
       "skill_mcp_dependency_install",
+      "--disable",
+      "multi_agent",
+      "--disable",
+      "multi_agent_v2",
+      "--disable",
+      "browser_use",
+      "--disable",
+      "browser_use_external",
+      "--disable",
+      "computer_use",
       "--sandbox",
       "workspace-write",
       "-c",
@@ -595,6 +607,8 @@ async function main() {
       JSON.stringify({ status: "PREPARED", issue: task.issue, head, prUrl, logs: runDir }),
     );
   } catch (error) {
+    if (cancelled)
+      throw new Error("RUN_CANCELLED: checkout preserved; no BLOCKED handoff or publication");
     const message = String(error.message).slice(0, 1600);
     const errorKey = digest(message.replace(/run-\d+-\d+/g, "run-<private>"));
     if (state.lastError !== errorKey) {
