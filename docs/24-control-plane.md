@@ -124,9 +124,27 @@ Pflichtfelder:
 Worker- und Watchdog-Scheduler verwenden dieselbe Discovery-Regel. Ihre Prompts dürfen keine konkrete
 CONTROL-Issue-Nummer als Betriebsvertrag enthalten.
 
-WAIT, BLOCKED, laufende CI, temporär fehlende Evidence, `MERGED_PENDING_MAIN_CI` und SESSION-CUT dürfen
-keinen Worker automatisch deaktivieren. Der nächste geplante Lauf rekonstruiert den Zustand erneut aus
-GitHub.
+Scheduler-Liveness ist vom fachlichen Worker-State getrennt. GitHub/CONTROL bestimmt, ob ein Worker
+ausführbare Arbeit besitzt; der Scheduler ist nur der Executor.
+
+- PLAN ist der permanente Supervisor/Dispatcher und bleibt aktiv.
+- Hat ein Worker keine aktuell ausführbare Aufgabe (insbesondere `NO_EXECUTABLE_WORK`,
+  `WAIT_EXTERNAL`, Owner-only oder reines Idle), darf seine Scheduler-Runtime pausiert sein. PLAN
+  reaktiviert ihn nicht zyklisch nur zur Liveness-Kosmetik.
+- Vor dem Dispatch prüft PLAN den tatsächlichen Executor: Ein API-only Chat kann keinen Commit, Test
+  oder Rebase ausführen. Technische Checkout-Schritte können an eine autorisierte lokale Session
+  übergeben werden; Owner-only Release-Freigaben und externe Evidence werden dadurch nicht delegiert.
+- Beim Dispatch einer ausführbaren Aufgabe stellt PLAN sicher, dass der zugehörige Worker-Scheduler aktiv
+  ist. Während `IN_PROGRESS`, fortsetzbarer CI-/Review-Wartezustände oder anderer ohne Owner-Eingriff
+  fortsetzbarer Arbeit ist eine unerwartete Scheduler-Pausierung ein operativer Fehler und wird von PLAN
+  korrigiert.
+- `MERGED_PENDING_MAIN_CI` und SESSION-CUT pausieren einen Worker mit fortsetzbarer Arbeit nicht.
+- `BLOCKED` wird nach Ursache klassifiziert: Ist der Blocker vom Worker selbst weiter prüfbar, bleibt der
+  Scheduler aktiv; benötigt er ausschließlich Owner-/External-Evidence, darf er pausieren.
+- Worker-Prompts dürfen eine Plattform-Pausierung nicht als fachlichen Abschluss interpretieren. Jeder
+  neue Lauf rekonstruiert seinen Zustand erneut aus GitHub.
+
+Damit ist Scheduler-Aktivität kein persistenter Projektzustand und kein Ersatz für Queue-/Handoff-State.
 
 ## Merge- und Release-Gates
 
@@ -136,6 +154,37 @@ Die CONTROL-Discovery ändert keine bestehenden Sicherheitsregeln:
 - während `MERGED_PENDING_MAIN_CI` bleibt die globale Merge-Lane geschlossen,
 - `deploy` bleibt Owner-only,
 - Cloud-/Manual-Evidence ist SHA-/Artifact-spezifisch und darf nicht erfunden oder umgedeutet werden.
+
+### Maschinenlesbare Main-Push-CI
+
+Die Evidence stammt aus GitHub Actions, Workflow `Code CI` (`.github/workflows/code-ci.yml`). PLAN
+ermittelt zuerst den aktuellen `main`-SHA live und filtert die Runs gleichzeitig nach `branch=main`,
+`event=push` und genau diesem `head_sha`. Ein `pull_request`- oder `workflow_dispatch`-Run ist kein
+Ersatz, auch wenn sein SHA identisch ist.
+
+```sh
+gh api repos/dimto13/ai-tutor-lab/branches/main --jq .commit.sha
+gh api --method GET repos/dimto13/ai-tutor-lab/actions/workflows/code-ci.yml/runs \
+  -f branch=main -f event=push -f head_sha=<main-sha> -f per_page=100
+gh api repos/dimto13/ai-tutor-lab/actions/runs/<run-id>
+gh api --paginate repos/dimto13/ai-tutor-lab/actions/runs/<run-id>/jobs
+```
+
+`<main-sha>` und `<run-id>` sind durch die live ermittelten Werte zu ersetzen. In der verbundenen
+GitHub-Lesefläche sind dieselben REST-Pfade und Filter zu verwenden. Aus passenden Runs wird der
+neueste gewählt; bei einem Re-Run gilt dessen aktuelle `run_attempt`, niemals ein älterer grüner
+Versuch. Die Run-Evidence enthält mindestens `id`, `head_sha`, `head_branch`, `event`, `status`,
+`conclusion`, `run_attempt` und `html_url`. Die Jobs müssen vollständig paginiert gelesen werden.
+
+Das Main-Gate ist erst grün, wenn der passende Run **und** alle drei Jobs `validate`,
+`e2e-training-modes` und `e2e-production-artifact` jeweils `status=completed` und
+`conclusion=success` haben. `queued`, `in_progress`, `failure`, `cancelled`, `timed_out`, `skipped`,
+fehlende Jobs, API-Fehler oder fehlende Evidence bleiben fail-closed. Nach der Abfrage wird `main`
+erneut gelesen: Hat sich der SHA bewegt, wird die Prüfung für den neuen SHA wiederholt.
+
+Der Handoff nennt den exakten resultierenden Main-SHA, Run-ID/URL, Versuch und die drei Job-Ergebnisse.
+Erst dann wird `MERGED_PENDING_MAIN_CI` zu DONE und die globale Merge-Lane freigegeben. Historische
+Belege oder der Stand von `deploy` erfüllen dieses Gate nicht.
 
 ## CI-Guard
 
