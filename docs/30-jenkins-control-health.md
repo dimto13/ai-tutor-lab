@@ -15,6 +15,12 @@ Prüfskript und der fachliche Vertrag bleiben in `dimto13/ai-tutor-lab`. Der Job
 live ermittelten `main`-Commit über GitHub und führt genau diesen Stand aus; lokale Feature-Änderungen
 am Skript werden dadurch nicht unbeabsichtigt zum Scheduler-Vertrag.
 
+Die kanonische Konfiguration erzeugt `node scripts/jenkins-control-health-config.mjs` auf stdout;
+keine Konfigurations-Backups werden angelegt. Nur zur ersten Scheduler-Abnahme darf als Argument ein
+exakter getesteter Feature-SHA angegeben werden. Er erscheint im Parameter `HEALTH_SCRIPT_REF` und
+im Buildlog. Nach Integration wird die Konfiguration mit dem Standard `main` neu erzeugt, zuerst in
+SVN committed und anschließend über die Jenkins-API aktualisiert.
+
 Der Checkout liegt unter `/media/tobi/crucial/ssd/skripte/ai-tutor-lab`. Der Job setzt explizit:
 
 ```sh
