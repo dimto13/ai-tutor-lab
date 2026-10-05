@@ -168,13 +168,17 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       data-testid="tutor-chat-expanded"
       className="platform-ui flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
     >
-      <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        <Bot className="h-4 w-4 text-accent" aria-hidden="true" /> KI-Tutor
-        <div className="ml-auto flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
+          <Bot className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" /> KI-Tutor
+        </span>
+        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
           {mode === "challenge" ? (
-            <span className="normal-case font-normal tracking-normal">nur auf Anfrage</span>
+            <span className="shrink-0 whitespace-nowrap normal-case font-normal tracking-normal">
+              nur auf Anfrage
+            </span>
           ) : null}
-          {problemShortcut}
+          <span className="shrink-0 whitespace-nowrap">{problemShortcut}</span>
           <button
             type="button"
             data-testid="tutor-chat-close"
