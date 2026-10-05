@@ -97,3 +97,37 @@ test("Collapsed tutor releases training space on a short responsive viewport", a
   const box = await collapsed.boundingBox();
   expect(box?.height ?? 640).toBeLessThan(140);
 });
+
+for (const width of [1280, 1440]) {
+  test(`Challenge tutor header keeps labels intact at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/training/vscode-basics.challenge");
+    await ready(page);
+    const panel = page.getByTestId("tutor-chat-expanded");
+    await expect(panel).toBeVisible();
+
+    for (const label of ["KI-Tutor", "nur auf Anfrage", "Ich habe ein Problem"]) {
+      const lines = await panel.evaluate((root, text) => {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          const start = node.textContent?.indexOf(text) ?? -1;
+          if (start < 0) continue;
+          const range = document.createRange();
+          range.setStart(node, start);
+          range.setEnd(node, start + text.length);
+          return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+        }
+        throw new Error(`Missing tutor header label: ${text}`);
+      }, label);
+      expect(lines, `${label} must occupy one intact text line`).toBe(1);
+    }
+
+    const problem = panel.getByRole("button", { name: "Ich habe ein Problem", exact: true });
+    await problem.focus();
+    await problem.press("Enter");
+    await expect(
+      page.getByRole("dialog").getByRole("heading", { name: "Problem melden" }),
+    ).toBeVisible();
+  });
+}
