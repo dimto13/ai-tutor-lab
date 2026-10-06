@@ -39,7 +39,7 @@ jobs:
     # "environment:cloud-acceptance", und nur dafuer erlaubt die AWS-Trust-Policy das Annehmen
     # der Rolle. Die Branch-Beschraenkung des Environments auf main gehoert deshalb zwingend dazu.
     environment: cloud-acceptance
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
       # Erlaubt dem Job lediglich, ein GitHub-OIDC-Token anzufordern. Ob daraus AWS-Zugriff wird,
@@ -191,7 +191,7 @@ jobs:
             exit 1
           fi
 
-          deadline=$((SECONDS + 900))
+          deadline=$((SECONDS + 1200))
           job_id=""
           while [ "${SECONDS}" -lt "${deadline}" ]; do
             jobs=$(aws amplify list-jobs               --app-id "${AMPLIFY_APP_ID}"               --branch-name "${AMPLIFY_BRANCH}"               --max-items 100               --output json)
