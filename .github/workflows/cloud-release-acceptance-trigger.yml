@@ -1,9 +1,8 @@
 name: Cloud Release Acceptance Trigger
 
-# Ein deploy-Push startet keine AWS-Arbeit direkt in diesem Workflow. Er dispatcht die
-# read-only Cloud Acceptance bewusst auf main, damit die bestehende cloud-acceptance
-# Environment-/OIDC-Trust-Grenze unveraendert bleibt. workflow_dispatch ist die von GitHub
-# vorgesehene Ausnahme, die auch mit dem Repository-GITHUB_TOKEN einen Folgelauf erzeugt.
+# Unprivilegierter Marker fuer einen neuen Owner-gesteuerten deploy-Stand.
+# Der nachgelagerte Cloud-Acceptance-Workflow startet ueber workflow_run auf dem Default-Branch.
+# Dadurch braucht dieser Workflow weder AWS-Rechte noch actions:write.
 
 on:
   push:
@@ -11,7 +10,6 @@ on:
       - deploy
 
 permissions:
-  actions: write
   contents: read
 
 concurrency:
@@ -19,30 +17,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  dispatch:
-    name: Dispatch exact deploy acceptance
+  mark-release:
+    name: Mark exact deploy SHA
     runs-on: ubuntu-latest
     steps:
-      - name: Cloud Acceptance auf main fuer exakten deploy-SHA starten
+      - name: Exakten deploy-SHA als Trigger-Evidence ausgeben
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOY_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          payload=$(jq -n \
-            --arg ref "main" \
-            --arg sha "${DEPLOY_SHA}" \
-            '{ref:$ref, inputs:{log_window:"1h", expected_deploy_sha:$sha}}')
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/cloud-acceptance.yml/dispatches" \
-            --data "${payload}"
+          case "${DEPLOY_SHA}" in
+            *[!0-9a-fA-F]*|"")
+              echo "::error::Ungueltiger deploy-SHA: ${DEPLOY_SHA}"
+              exit 1
+              ;;
+          esac
+          if [ "${#DEPLOY_SHA}" -ne 40 ]; then
+            echo "::error::deploy-SHA muss 40-stellig sein."
+            exit 1
+          fi
           {
-            echo "### Cloud release acceptance dispatched"
+            echo "### Cloud release acceptance trigger"
             echo ""
             echo "- deploy SHA: \`${DEPLOY_SHA}\`"
-            echo "- target workflow ref: \`main\`"
+            echo "- downstream: \`Cloud Acceptance\` via \`workflow_run\`"
           } >> "${GITHUB_STEP_SUMMARY}"
