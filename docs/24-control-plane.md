@@ -127,10 +127,11 @@ CONTROL-Issue-Nummer als Betriebsvertrag enthalten.
 Scheduler-Liveness ist vom fachlichen Worker-State getrennt. GitHub/CONTROL bestimmt, ob ein Worker
 ausführbare Arbeit besitzt; der Scheduler ist nur der Executor.
 
-- PLAN ist der permanente Supervisor/Dispatcher und bleibt aktiv.
-- Hat ein Worker keine aktuell ausführbare Aufgabe (insbesondere `NO_EXECUTABLE_WORK`,
-  `WAIT_EXTERNAL`, Owner-only oder reines Idle), darf seine Scheduler-Runtime pausiert sein. PLAN
-  reaktiviert ihn nicht zyklisch nur zur Liveness-Kosmetik.
+- PLAN/WATCHDOG, CHAT1, CHAT2 und CHAT3 bleiben als kanonische Scheduler dauerhaft aktiviert.
+  WAIT, BLOCKED, `NO_EXECUTABLE_WORK`, `WAIT_EXTERNAL`, Owner-only, Idle, laufende CI/Reviews,
+  SESSION-CUT oder Toolfehler erlauben weder Pausierung noch Deaktivierung, Löschen oder Umplanen.
+  Ein Idle-Worker rekonstruiert GitHub beim nächsten Lauf und beendet ihn ohne erfundene Arbeit.
+  Legacy-Duplikate bleiben deaktiviert; unverwandte Owner-Automationen bleiben unangetastet.
 - Vor dem Dispatch prüft PLAN den tatsächlichen Executor: Ein API-only Chat kann keinen Commit, Test
   oder Rebase ausführen. Technische Checkout-Schritte können an eine autorisierte lokale Session
   übergeben werden; Owner-only Release-Freigaben und externe Evidence werden dadurch nicht delegiert.
@@ -139,12 +140,129 @@ ausführbare Arbeit besitzt; der Scheduler ist nur der Executor.
   fortsetzbarer Arbeit ist eine unerwartete Scheduler-Pausierung ein operativer Fehler und wird von PLAN
   korrigiert.
 - `MERGED_PENDING_MAIN_CI` und SESSION-CUT pausieren einen Worker mit fortsetzbarer Arbeit nicht.
-- `BLOCKED` wird nach Ursache klassifiziert: Ist der Blocker vom Worker selbst weiter prüfbar, bleibt der
-  Scheduler aktiv; benötigt er ausschließlich Owner-/External-Evidence, darf er pausieren.
+- `BLOCKED` wird nach Ursache klassifiziert, aber nicht durch eine Scheduler-Pausierung beantwortet.
 - Worker-Prompts dürfen eine Plattform-Pausierung nicht als fachlichen Abschluss interpretieren. Jeder
   neue Lauf rekonstruiert seinen Zustand erneut aus GitHub.
+- PLAN prüft tatsächlichen Aktivierungszustand, letzten geplanten Lauf und Ergebnis in der
+  Scheduler-Runtime. Kommentare sind kein Liveness-Nachweis. Fehlt dieser Zugriff, wird die
+  Monitoring-Lücke als UNKNOWN dokumentiert; „aktiv“ oder „repariert“ darf nicht erfunden werden.
 
 Damit ist Scheduler-Aktivität kein persistenter Projektzustand und kein Ersatz für Queue-/Handoff-State.
+
+## External-Executor-Eskalation
+
+PLAN bleibt alleiniger Dispatcher. Jenkins und Coding-Worker wählen nie selbst ein Issue aus. Ein
+externer Auftrag ist nur für bereits durch CONTROL autorisierte Arbeit mit klarer Acceptance,
+erfüllten Dependencies und kollisionsfreiem Dateiscope zulässig. Ausführung: Jenkins→RMI als `tobi`,
+nicht `msi`. Der vorhandene SSH-Pfad reicht; eine Registrierung als Jenkins-Agent ist kein Bestandteil
+dieses Vertrags. Checkout, Code, Tests und Build laufen auf RMI; Modellinferenz erfolgt beim Anbieter.
+Der Modellprozess läuft im dedizierten Docker-Build-Image auf RMI, nicht mit Vollzugriff auf den Host
+oder im Jenkins-Controller. Root-FS und `.git` sind read-only, nur Checkout und eigener Ausgabeordner
+sind schreibbar. Kein Docker-Socket, Jenkins-Home oder SSH-Schlüssel wird eingebunden. Die vorhandene
+Codex-Anmeldung wird als einzelne read-only Datei eingebunden; sie ist damit im Container lesbar.
+Netzwerk für den Provider ist verfügbar, nicht technisch domain-gefiltert. Die Repository-Trust-Grenze
+bleibt wichtig; Prompts sind kein vollständiger Schutz gegen Credential-Exfiltration. Containergrenzen
+ersetzen die innere Codex-Sandbox; AppArmor/sysctl auf RMI und `msi` bleiben unverändert.
+
+PLAN unterscheidet folgende technisch ausführbare Eskalationsgründe:
+
+- `CAPABILITY_MISMATCH`: konkrete nächste Aktion bekannt, aber Cloud-/API-Worker hat keinen Checkout,
+  Repository-Write, Browser, Runtime oder die erforderliche Toolchain.
+- `STALLED`: derselbe actionable technische Blocker über zwei aufeinanderfolgende geplante Läufe ohne
+  materiellen Fortschritt. Fehlende Kommentare allein erfüllen diese Schwelle nicht.
+- `CI_REPAIR`: rote erforderliche PR-/Main-CI benötigt eine konkret abgegrenzte Code-/Test-Reparatur.
+- `LOCAL_RUNTIME_REQUIRED`: reproduzierbarer Bug mit klarer Acceptance benötigt lokale Runtime-Evidence.
+- `EXECUTOR_CAPACITY`: Cloud-Worker haben keine fortsetzbare eigene Arbeit, aber eine unabhängige,
+  autorisierte und klar abgegrenzte Implementierungsaufgabe ist verfügbar.
+
+Keine Coding-Eskalation bei normal laufender CI oder Review, `WAIT_EXTERNAL`, Owner-only Evidence,
+Deploy-Promotion, Credentials/Secrets, Kosten-/Business-/Legal-Entscheidungen, fehlender Acceptance,
+offenen Dependencies, Scope-Kollisionen, nicht autorisierter Arbeit oder uneindeutigem CONTROL.
+
+### Maschinenlesbarer Auftrag
+
+Genau ein **operativer**, nicht in einem Markdown-Codeblock stehender Kommentar wird verwendet:
+
+```text
+<!-- external-executor:v1
+{
+  "status": "REQUESTED",
+  "issue": <dynamisch zugewiesene Issue-Nummer>,
+  "reason": "CAPABILITY_MISMATCH",
+  "action": "IMPLEMENT",
+  "scope": ["apps/web/src/components/overlay/", "tests/runtime/overlayPlacement.test.ts"],
+  "acceptance": "Konkrete aus dem Issue abgeleitete Kriterien und Regressionstests",
+  "dependencies": [],
+  "basis-main": "<live ermittelter vollständiger main-SHA>",
+  "merge": "forbidden",
+  "deploy": "forbidden",
+  "self-select-work": "forbidden"
+}
+-->
+```
+
+`reason` ist einer der fünf obigen Werte; `action` ist `IMPLEMENT`, `REPAIR`, `TEST` oder `REBASE`.
+`scope` enthält ausschließlich konkrete Dateien oder mit `/` abgeschlossene Verzeichnisse unter
+`apps/web/`, `packages/` oder `tests/`. Agentenregeln, Hooks, Workflows, Runner, Dependencies und
+Infrastruktur sind nicht an diesen Coding-Worker delegiert. `dependencies` enthält Issue-Nummern,
+die live CLOSED sein müssen, oder `[]` für unabhängige Arbeit. Das Issue selbst bleibt OPEN und trägt
+`stream:owner`. PLAN verantwortet zusätzlich die fachliche Dependency-/Acceptance-Prüfung.
+
+`token` und `branch: owner/<issue>-<kurzname>` können explizit angegeben werden. Ohne diese Felder
+leitet der Executor beide deterministisch aus dem vollständigen Auftrag ab. Ein materiell geänderter
+Auftrag benötigt eine neue Identität; bestehende Arbeit wird nicht überschrieben. Vor Start muss
+`basis-main` dem aktuellen Main-SHA entsprechen. Vor Veröffentlichung werden Auftrag und CONTROL
+erneut entdeckt und verglichen; Änderung oder Rollover erhält die Arbeit ohne Push.
+
+Die frühere Form `<!-- external-executor:v1 -->` gefolgt von `key: value` wird bis zum nächsten
+Abschnitt/Kommentar ebenfalls gelesen. Listen werden dabei als JSON-Arrays geschrieben; freie
+„Funktionsbereiche“, YAML-Blöcke oder fehlende Felder sind kein ausführbarer Dateiscope und werden
+fail-closed abgewiesen. `dependencies` muss auch in dieser Form vorhanden sein. Beispiele in
+Codeblöcken und der alte `jenkins-local-dispatch:v1` aktivieren keine Arbeit.
+
+`DISABLED`, `CANCELLED`, `PREPARED` und `DONE` sind keine ausführbaren Aufträge. Der Executor quittiert
+einen vollständig bearbeiteten oder gescheiterten Request persistent und führt denselben Auftrag nicht
+erneut aus. Ein Fehlerhalt wird vor dem GitHub-Handoff gespeichert und bleibt bei dessen Ausfall gültig;
+Jenkins zeigt den ersten Fehler. Nach Ursachenklärung gibt PLAN einen geänderten Auftrag frei (neuer
+`token` empfohlen); ein unveränderter REQUESTED-Block ist keine Erlaubnis für blinde Modell-Retries.
+Checkouts sind nach Issue und Branch isoliert. Für Folgearbeit an einer bestehenden PR muss PLAN deren
+Branch explizit nennen, statt mit einem neuen Token versehentlich eine zweite Branch anzufordern.
+TEST und REBASE benötigen keinen Modelllauf. REBASE verwendet eine bestehende PR-Branch; ein grünes
+Testergebnis erzeugt keinen künstlichen Commit oder PR.
+
+### Kontingentreserve und Skip
+
+Autonome Übernahme ist ausschließlich bei **50–100 Prozent Restkontingent in jedem relevanten
+Zeitfenster des ausdrücklich konfigurierten Anbieters** zulässig. Es zählt das Minimum, nicht der
+Mittelwert. 50 Prozent ist inklusive; fehlende, ungültige oder veraltete Zahlen erlauben keinen Start.
+Codex nutzt `account/rateLimits/read` aus dem App Server: `100 - usedPercent`, einschließlich
+5-Stunden- und Wochenfenster und aller gelieferten Buckets. Dies ist eine Kontoabfrage, kein
+Modellaufruf. API-Key-/Paid-Credits sind kein Ersatz für die verlangte Abonnement-Reserve.
+
+Unter 50 Prozent: `SKIPPED_QUOTA` für den restlichen Kalendertag Europe/Berlin. Unbekannte Quota:
+`SKIPPED_QUOTA_UNKNOWN` mit mindestens 15 Minuten Retry-Abstand. Kein Clone, Install, Test, Build oder
+Modellstart. PLAN erhält genau einen aktuellen `executor-quota:v1`-Status im CONTROL-Body, ohne
+Kommentarspam. PLAN dispatcht/retriggert denselben Skip nicht erneut, schaltet keinen Anbieter um,
+kauft keine Credits und verbraucht keinen automatischen Quota-Reset. Die Scheduler bleiben aktiv.
+
+Am nächsten Tag wird frisch geprüft; ein unverändert knappes Wochenfenster bleibt SKIP. Positive
+Quota-Snapshots werden niemals als spätere Startfreigabe gecacht. Vor jedem Modellstart erfolgt eine
+erneute Abfrage; lange Modellläufe werden minütlich kontrolliert und bei SKIP beendet, ohne Commit
+oder Push und unter Erhalt der Arbeit. Providerzahlen sind gerundet/verzögert; bereits laufende
+Requests können noch Verbrauch verursachen. Die Schwelle ist kein token-genauer Verbrauchsdeckel.
+
+RMI hat derzeit einen authentifizierten Codex-Executor. Claude ist nicht installiert; bis eine
+verlässliche Quota-Abfrage plus Invocation integriert und getestet ist, ist `claude` UNKNOWN/SKIP,
+kein stiller Fallback und kein erfundenes Kontingent.
+
+### Ergebnis und unabhängige PLAN-Prüfung
+
+Der Executor verwendet `worker:doctor/start/sync/push/gate` auf einer isolierten Feature-Branch,
+liefert echte Tests, PR-Head, Main-Basis und Handoff und endet höchstens PREPARED/TESTED. Kein Merge,
+kein deploy, keine Owner-Gates, keine erfundene externe/manual Evidence, kein Scope-Upgrade.
+Nach Rückgabe prüft PLAN unabhängig aktuellen Head/Basis/Rebase, vollständige Exact-Head-CI,
+Reviews/Threads/Findings, Acceptance, Scope, Preservation und die globale Merge-Lane. Integration
+bleibt seriell und nach Merge bis zur grünen exakten resulting-main push-CI geschlossen.
 
 ## Merge- und Release-Gates
 

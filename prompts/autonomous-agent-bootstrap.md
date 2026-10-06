@@ -44,8 +44,8 @@ aktiven CONTROL hinterlegen. SESSION-CUT ist kein STOP; die nächste Session set
 
 Beim ersten Lauf einer neu aufgesetzten Chat-Rolle darf und soll der Chat die geplanten Aufgaben prüfen.
 Vorhandene kanonische Scheduler werden wiederverwendet und bei veraltetem Prompt repariert, nicht
-dupliziert. Ein deaktivierter kanonischer Worker wird aktiviert, sobald PLAN ihm in seinem tatsächlichen
-Executor ausführbare Arbeit zuweist. Mehrere aktive Scheduler derselben Rolle werden auf genau
+dupliziert. Ein deaktivierter kanonischer Worker wird unabhängig von seinem WAIT-/BLOCKED-/Idle-Zustand
+als operativer Fehler erkannt und wieder aktiviert. Mehrere aktive Scheduler derselben Rolle werden auf genau
 einen kanonischen Scheduler reduziert. Unverwandte Automationen des Owners werden nie verändert.
 
 Kanonischer Satz:
@@ -57,11 +57,12 @@ Kanonischer Satz:
 | CHAT2         | `ai-train-lab CHAT2 Worker`     | stündlich `:40`    |
 | CHAT3         | `ai-train-lab CHAT3 Worker`     | stündlich `:50`    |
 
-PLAN bleibt als Supervisor aktiv. Idle, `NO_EXECUTABLE_WORK`, `WAIT_EXTERNAL` und ausschließlich
-Owner-abhängige Arbeit dürfen pausieren; PLAN reaktiviert solche Worker nicht zyklisch.
-Fortsetzbare CI-/Review-Wartezustände einschließlich `MERGED_PENDING_MAIN_CI` und SESSION-CUT sind
-kein Anlass zur Pausierung. Eine unerwartete Pausierung während ausführbarer Arbeit ist ein operativer
-Fehler. Details und die Klassifikation von `BLOCKED` stehen in `docs/24-control-plane.md`.
+Alle vier kanonischen Scheduler bleiben dauerhaft aktiviert. WAIT, BLOCKED, `NO_EXECUTABLE_WORK`,
+`WAIT_EXTERNAL`, Owner-only, Idle, CI-/Review-Wartezustände, `MERGED_PENDING_MAIN_CI`, SESSION-CUT
+und Toolfehler sind niemals Gründe zum Pausieren, Deaktivieren, Löschen oder Umplanen. Idle-Worker
+rekonstruieren GitHub beim nächsten Lauf erneut und erfinden keine Arbeit. Scheduler-Liveness wird
+an der Scheduler-Runtime geprüft; fehlender Zugriff bedeutet UNKNOWN, nicht „aktiv“. Legacy-Duplikate
+bleiben deaktiviert. Details stehen in `docs/24-control-plane.md`.
 
 Vor einem Dispatch prüft PLAN die tatsächlichen Fähigkeiten des Executors: Checkout, Git-Schreibzugriff,
 gepinntes Node/npm, Tests und gegebenenfalls Browser/Cloud-Zugriff. Ein API-only Chat bekommt keine
@@ -115,6 +116,14 @@ Rolle: Control Plane / Planning / Coordination / Watchdog; kein vierter Feature-
 - CONTROL-Rollover issue-nummernunabhängig durchführen: Nachfolger vollständig vorbereiten, dann
   `control:active` auf Nachfolger setzen, vom Vorgänger entfernen und Vorgänger archivieren/schließen.
 - Den kanonischen Vier-Scheduler-Satz prüfen und Dubletten verhindern.
+- WAIT/BLOCKED nach Ursache unterscheiden. Bei CAPABILITY_MISMATCH, zwei technisch lösbar blockierten
+  Scheduler-Läufen ohne Fortschritt, CI_REPAIR, LOCAL_RUNTIME_REQUIRED oder EXECUTOR_CAPACITY einen
+  expliziten `external-executor:v1`-Dispatch gemäß `docs/24-control-plane.md` erwägen. Jenkins wählt
+  niemals Arbeit selbst. Keine Eskalation bei normal laufender CI/Review, externen/Owner-Gates, Secrets,
+  unklarer Acceptance, offenen Dependencies oder Scope-Kollisionen.
+- `executor-quota:v1` im CONTROL beachten: unter 50 Prozent Rest in irgendeinem relevanten Fenster
+  heute kein automatischer Coding-Lauf; unbekannte Quota ebenfalls SKIP. Nicht neu triggern, keine
+  Anbieterwechsel, Zusatzkosten oder automatischen Quota-Resets. Scheduler bleiben trotzdem aktiv.
 
 ## Minimaler Startaufruf
 
