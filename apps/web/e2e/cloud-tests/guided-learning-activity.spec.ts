@@ -30,11 +30,13 @@ async function signIn(page: Page, account: TestCredentials): Promise<void> {
 }
 
 async function serverConfirmedScore(page: Page): Promise<number> {
-  const pointsRow = page.getByText("Punkte", { exact: true }).locator("..");
-  const value = pointsRow.locator("dd");
+  const pointsTerm = page.locator("dt").filter({ hasText: /^Punkte$/ });
+  const value = pointsTerm.locator("xpath=following-sibling::dd[1]");
   await expect(value).toHaveText(/^\d+(?:[.,]\d+)?(?: · bereits gewertet)?$/);
   const text = (await value.textContent())?.trim() ?? "";
-  const numeric = Number.parseFloat(text.replace(",", "."));
+  const numericText = text.match(/^\d+(?:[.,]\d+)?/)?.[0];
+  expect(numericText).toBeTruthy();
+  const numeric = Number.parseFloat(numericText!.replace(",", "."));
   expect(Number.isFinite(numeric)).toBe(true);
   expect(numeric).toBeGreaterThan(0);
   return numeric;
@@ -79,7 +81,7 @@ test("completed Guided training appears once in learning activity and survives a
   // The real product contract is completion save -> server score -> reload. A visible "Punkte"
   // label is not acceptance evidence: after a full reload the completion screen and numeric
   // server-confirmed score must both survive.
-  await page.reload({ waitUntil: "networkidle" });
+  await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
   await expect(page.locator('[data-completion-save-failure="true"]')).toHaveCount(0);
   expect(await serverConfirmedScore(page)).toBe(awardedPoints);
