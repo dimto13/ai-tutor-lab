@@ -36,6 +36,7 @@ async function serverConfirmedScore(page: Page): Promise<number> {
   const text = (await value.textContent())?.trim() ?? "";
   const numeric = Number.parseFloat(text.replace(",", "."));
   expect(Number.isFinite(numeric)).toBe(true);
+  expect(numeric).toBeGreaterThan(0);
   return numeric;
 }
 
