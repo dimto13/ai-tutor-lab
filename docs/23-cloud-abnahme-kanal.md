@@ -127,6 +127,38 @@ Weil bei einem Environment-Job der Branch nicht Teil des Subject-Claims ist, ers
 Branch-Beschränkung des Environments diese Absicherung. Sie darf nicht entfernt werden — sonst
 könnte ein beliebiger Branch die Rolle annehmen.
 
+## Automatische Release-Abnahmekette
+
+Die Release-Abnahme ist dreistufig und an einen **exakten deploy-SHA** gebunden:
+
+1. Ein Push auf `deploy` startet `Cloud Release Acceptance Trigger`. Dieser Workflow hat nur
+   Leserechte, keine AWS-Rechte und verschiebt keinen Ref. Nach seinem erfolgreichen Abschluss startet
+   GitHub `Cloud Acceptance` nativ per `workflow_run`. Bei `workflow_run` liegen
+   `GITHUB_REF`/`GITHUB_SHA` auf dem Default-Branch; der exakte Release-SHA kommt separat aus
+   `github.event.workflow_run.head_sha`.
+2. `Cloud Acceptance` wartet lesend auf den Amplify-Job für genau diesen SHA und akzeptiert ihn nur,
+   wenn der Job sowie `BUILD`, `DEPLOY` und `VERIFY` erfolgreich sind. Danach folgen Backend-
+   Zuordnung, SSR-/CloudWatch-Diagnose und der HTTP-Smoke. Nur ein vollständig erfolgreicher Lauf
+   veröffentlicht das Artefakt `cloud-acceptance-evidence` mit deploy-SHA und Amplify-Job-ID.
+3. Ein erfolgreicher `Cloud Acceptance`-Lauf startet automatisch `Cloud User Acceptance`. Dieser
+   lädt die Evidence aus exakt dem auslösenden Workflow-Run, checkt genau den bestätigten deploy-SHA
+   aus und führt die authentifizierten Cognito/AppSync-/Web-UI-Tests gegen die reale Amplify-URL aus.
+   Vor und nach den Tests wird geprüft, dass `deploy` unverändert auf diesem SHA steht.
+
+Damit ist ein grüner UI-Lauf nicht auf "ungefähr dem aktuellen Deployment", sondern auf derselben
+Release-Revision wie die AWS-Abnahme. Bewegt sich `deploy` während der Kette, ist die Abnahme
+ungültig und schlägt fail-closed fehl.
+
+Zusätzlich läuft `Cloud Acceptance` täglich zeitversetzt. Ein erfolgreicher täglicher Lauf löst
+ebenfalls `Cloud User Acceptance` aus und dient als Drift-Monitoring für die bereits deployte
+Umgebung. Der manuelle `Cloud User Acceptance`-Trigger bleibt für Diagnosezwecke erhalten, zählt
+aber ohne vorgelagerte exakte Cloud-Acceptance-Evidence nicht als Release-Freigabe.
+
+Die Environment-Beschränkung auf `main` bleibt unverändert. Der `deploy`-Push selbst übernimmt
+keine AWS-Rolle und besitzt kein `actions:write`; die OIDC-Trust-Grenze wird daher für diese
+Automatisierung nicht aufgeweicht. Verbindliche Annahme bleibt, dass `deploy` ausschließlich durch
+den Owner aus einem bereits integrierten `main`-Stand bewegt wird.
+
 ## Erstnachweis
 
 Workflow `Cloud Acceptance` manuell auf `main` starten (`workflow_dispatch`). Erfolgreich ist der
@@ -161,9 +193,19 @@ Die AWS-Kontonummer wird in den Logs maskiert, weil Workflow-Logs öffentlicher 
 Nach dem ersten erfolgreichen Lauf lassen sich die `Resource: "*"`-Einträge zusätzlich auf die
 konkreten ARNs einschränken.
 
-## Nächster Schnitt
+## Cloud User Acceptance
 
-Auf diesem Kanal folgt die Playwright-Abnahme gegen die reale Amplify-URL mit einem dedizierten
-Cognito-Testnutzer. Dafür kommen zwei Environment-Secrets hinzu — `CLOUD_TEST_EMAIL` und
-`CLOUD_TEST_PASSWORD` —, ausschließlich für einen eigens angelegten Testnutzer. AWS-Zugangsdaten
-gehören auch dann nicht in dieses Repository.
+Der Workflow [`Cloud User Acceptance`](../.github/workflows/cloud-user-acceptance.yml) ist die
+zustandsverändernde, aber ausschließlich über öffentliche Produktgrenzen arbeitende Abnahmestufe.
+Er besitzt keine AWS-IAM-Rechte. Dedizierte Cognito-Testkonten melden sich über die reale Web-App an
+und prüfen AppSync/Persistenz, Isolation und die zentralen Web-UI-Pfade.
+
+Für Completion/Scoring gilt eine zusätzliche Qualitätsgrenze: Ein Test, der nur die Sichtbarkeit des
+Labels „Punkte“ prüft, ist kein Score-Nachweis. Der reale Guided-Abschluss muss einen
+serverbestätigten numerischen Score zeigen; nach vollständigem Reload beziehungsweise frischem
+Browserkontext müssen derselbe Abschluss und derselbe Score weiterhin vorhanden sein. Direkte
+GraphQL-Tests bleiben Backend-Contract-Tests, ersetzen aber diesen UI-Orchestrierungsnachweis nicht,
+weil sie Save und Award bewusst sequenziell aufrufen und damit UI-Races nicht erkennen können.
+
+Die Testkonten und Passwörter liegen ausschließlich als Secrets im GitHub-Environment
+`cloud-acceptance`. AWS-Zugangsdaten gehören nicht in diesen Workflow.

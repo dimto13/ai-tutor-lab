@@ -17,23 +17,79 @@ name: Cloud User Acceptance
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Cloud Acceptance"]
+    types: [completed]
+    branches: [main]
 
 concurrency:
   group: cloud-user-acceptance
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
   authenticated-user-e2e:
-    name: Cognito + AppSync Cross-Device
+    name: Cognito + AppSync + Web UI
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: cloud-acceptance
     timeout-minutes: 20
     steps:
-      - name: Checkout
+      - name: Exakte Cloud-Acceptance-Evidence laden
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: cloud-acceptance-evidence
+          path: ${{ runner.temp }}/cloud-acceptance-evidence
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Abnahme-SHA bestimmen
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DEPLOY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_BRANCH}" ]; then
+            echo "::error::Environment-Variable AMPLIFY_BRANCH fehlt."
+            exit 1
+          fi
+          if [ "${EVENT_NAME}" = "workflow_run" ]; then
+            evidence="${RUNNER_TEMP}/cloud-acceptance-evidence/cloud-acceptance-evidence.json"
+            deploy_sha=$(jq -er '.deploySha | select(type == "string" and length == 40)' "${evidence}")
+            source="chained"
+          else
+            deploy_sha=$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" "refs/heads/${DEPLOY_BRANCH}" | awk '{print $1}')
+            source="manual-diagnostic"
+          fi
+          if [ -z "${deploy_sha}" ]; then
+            echo "::error::Exakter deploy-SHA konnte nicht ermittelt werden."
+            exit 1
+          fi
+          echo "deploy_sha=${deploy_sha}" >> "${GITHUB_OUTPUT}"
+          echo "acceptance_source=${source}" >> "${GITHUB_OUTPUT}"
+
+      - name: Exakten deploy-Stand auschecken
         uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.release.outputs.deploy_sha }}
+
+      - name: deploy-Ref vor UI-Abnahme pruefen
+        env:
+          EXPECTED_DEPLOY_SHA: ${{ steps.release.outputs.deploy_sha }}
+          DEPLOY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
+        run: |
+          set -euo pipefail
+          current=$(git ls-remote origin "refs/heads/${DEPLOY_BRANCH}" | awk '{print $1}')
+          if [ "${current}" != "${EXPECTED_DEPLOY_SHA}" ]; then
+            echo "::error::deploy wurde zwischen Cloud Acceptance und UI-Abnahme bewegt: erwartet ${EXPECTED_DEPLOY_SHA}, aktuell ${current}."
+            exit 1
+          fi
 
       - name: Node.js einrichten
         uses: actions/setup-node@v7
@@ -118,6 +174,28 @@ jobs:
             echo "- Cross-User-Isolation im selben Tenant: bestanden"
             echo "- Cross-Tenant-Isolation: bestanden"
             echo "- personal:<sub>-Fallback ohne tenant:*-Gruppe: bestanden"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: deploy-Ref nach UI-Abnahme erneut pruefen
+        env:
+          EXPECTED_DEPLOY_SHA: ${{ steps.release.outputs.deploy_sha }}
+          DEPLOY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
+          ACCEPTANCE_SOURCE: ${{ steps.release.outputs.acceptance_source }}
+        run: |
+          set -euo pipefail
+          current=$(git ls-remote origin "refs/heads/${DEPLOY_BRANCH}" | awk '{print $1}')
+          if [ "${current}" != "${EXPECTED_DEPLOY_SHA}" ]; then
+            echo "::error::deploy wurde waehrend der UI-Abnahme bewegt: erwartet ${EXPECTED_DEPLOY_SHA}, aktuell ${current}."
+            exit 1
+          fi
+          {
+            echo "### Abnahme-Artefakt"
+            echo ""
+            echo "- deploy SHA: \`${EXPECTED_DEPLOY_SHA}\`"
+            echo "- Quelle: \`${ACCEPTANCE_SOURCE}\`"
+            if [ "${ACCEPTANCE_SOURCE}" = "manual-diagnostic" ]; then
+              echo "- Hinweis: manueller Lauf ist Diagnose; Release-Evidence entsteht aus der verketteten Cloud-Acceptance-Abnahme."
+            fi
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Screenshot bei Fehler hochladen
