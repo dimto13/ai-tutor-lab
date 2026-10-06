@@ -273,6 +273,29 @@ Die CONTROL-Discovery ändert keine bestehenden Sicherheitsregeln:
 - `deploy` bleibt Owner-only,
 - Cloud-/Manual-Evidence ist SHA-/Artifact-spezifisch und darf nicht erfunden oder umgedeutet werden.
 
+### Cloud-/User-Acceptance als eigener Gate-Typ
+
+Cloud- oder Nutzer-Akzeptanz ist kein Nebenprodukt eines PR-Merges. Wenn die Acceptance eines Issues
+den real deployten Cognito/AppSync-/Web-UI-Pfad verlangt, bleibt dieses Issue nach dem Code-Merge
+offen, bis die exakte Release-Revision die geforderte Cloud User Acceptance bestanden hat. Solche
+Issues duerfen deshalb nicht allein durch `Fixes #...` oder andere Auto-Close-Semantik als fachlich
+DONE dargestellt werden.
+
+Die Release-Kette ist artefaktgebunden:
+
+1. Owner bewegt ausschließlich bewusst `main -> deploy`.
+2. Der `deploy`-Push dispatcht `Cloud Acceptance` auf `main`, ohne die bestehende
+   `cloud-acceptance`-Environment-/OIDC-Trust-Grenze zu erweitern.
+3. `Cloud Acceptance` akzeptiert nur einen erfolgreichen Amplify-Job fuer **genau den aktuellen
+   deploy-SHA** und publiziert diesen SHA als Run-Evidence.
+4. Nur ein erfolgreicher Cloud-Acceptance-Run startet automatisch `Cloud User Acceptance`.
+5. Cloud User Acceptance prueft den realen authentifizierten Web-UI-/AppSync-Pfad auf genau diesem
+   deploy-SHA und verifiziert vor und nach dem Lauf, dass `deploy` nicht bewegt wurde.
+
+Ein manueller Cloud-User-Acceptance-Lauf bleibt Diagnose und ersetzt die verkettete Release-Evidence
+nicht. Ein taeglicher Cloud-Acceptance-Lauf mit anschliessender UI-Abnahme dient zusaetzlich als
+Drift-Monitoring; er veraendert weder `deploy` noch AWS-Ressourcen.
+
 ### Maschinenlesbare Main-Push-CI
 
 Die Evidence stammt aus GitHub Actions, Workflow `Code CI` (`.github/workflows/code-ci.yml`). PLAN
