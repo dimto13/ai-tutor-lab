@@ -15,6 +15,14 @@ on:
         description: "Zeitfenster der CloudWatch-Diagnose, z. B. 1h, 30m, 2d"
         required: false
         default: "1h"
+      expected_deploy_sha:
+        description: "Optionaler exakter deploy-SHA; wird vom Release-Trigger gesetzt"
+        required: false
+        default: ""
+  schedule:
+    # Taegliches Drift-Monitoring. Release-Abnahmen werden zusaetzlich bei jedem deploy-Push
+    # ueber den separaten Release-Trigger auf main gestartet.
+    - cron: "23 2 * * *"
 
 concurrency:
   group: cloud-acceptance
@@ -147,6 +155,104 @@ jobs:
           AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
         run: npm run amplify:status:once
 
+      - name: Exakten deploy-SHA gegen Amplify verifizieren
+        env:
+          EXPECTED_DEPLOY_SHA: ${{ inputs.expected_deploy_sha }}
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+          AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
+        run: |
+          set -euo pipefail
+
+          live_deploy_sha=$(git ls-remote origin "refs/heads/${AMPLIFY_BRANCH}" | awk '{print $1}')
+          if [ -z "${live_deploy_sha}" ]; then
+            echo "::error::deploy-Ref ${AMPLIFY_BRANCH} konnte nicht aufgeloest werden."
+            exit 1
+          fi
+
+          expected="${EXPECTED_DEPLOY_SHA:-}"
+          if [ -n "${expected}" ]; then
+            case "${expected}" in
+              *[!0-9a-fA-F]*)
+                echo "::error::expected_deploy_sha ist kein Git-SHA: ${expected}"
+                exit 1
+                ;;
+            esac
+            if [ "${#expected}" -ne 40 ]; then
+              echo "::error::expected_deploy_sha muss ein voller 40-stelliger SHA sein."
+              exit 1
+            fi
+            deploy_sha="${expected}"
+          else
+            deploy_sha="${live_deploy_sha}"
+          fi
+
+          if [ "${live_deploy_sha}" != "${deploy_sha}" ]; then
+            echo "::error::deploy wurde vor der Cloud-Abnahme bewegt: erwartet ${deploy_sha}, aktuell ${live_deploy_sha}."
+            exit 1
+          fi
+
+          deadline=$((SECONDS + 900))
+          job_id=""
+          while [ "${SECONDS}" -lt "${deadline}" ]; do
+            jobs=$(aws amplify list-jobs               --app-id "${AMPLIFY_APP_ID}"               --branch-name "${AMPLIFY_BRANCH}"               --max-items 100               --output json)
+            match=$(printf '%s' "${jobs}" | jq -c --arg sha "${deploy_sha}"               '[.jobSummaries[] | select(.commitId == $sha)] | sort_by(.startTime) | reverse | .[0] // empty')
+
+            if [ -z "${match}" ]; then
+              sleep 15
+              continue
+            fi
+
+            status=$(printf '%s' "${match}" | jq -r '.status')
+            job_id=$(printf '%s' "${match}" | jq -r '.jobId')
+            case "${status}" in
+              SUCCEED)
+                break
+                ;;
+              FAILED|CANCELLED)
+                echo "::error::Amplify-Job ${job_id} fuer deploy@${deploy_sha} endete mit ${status}."
+                exit 1
+                ;;
+              CREATED|PENDING|PROVISIONING|RUNNING|CANCELLING)
+                sleep 15
+                ;;
+              *)
+                echo "::error::Unerwarteter Amplify-Status ${status} fuer Job ${job_id}."
+                exit 1
+                ;;
+            esac
+          done
+
+          if [ -z "${job_id}" ]; then
+            echo "::error::Kein Amplify-Job fuer deploy@${deploy_sha} innerhalb des Zeitbudgets gefunden."
+            exit 1
+          fi
+
+          detail=$(aws amplify get-job             --app-id "${AMPLIFY_APP_ID}"             --branch-name "${AMPLIFY_BRANCH}"             --job-id "${job_id}"             --output json)
+
+          final_status=$(printf '%s' "${detail}" | jq -r '.job.summary.status')
+          if [ "${final_status}" != "SUCCEED" ]; then
+            echo "::error::Amplify-Job ${job_id} ist nicht erfolgreich: ${final_status}."
+            exit 1
+          fi
+
+          for phase in BUILD DEPLOY VERIFY; do
+            phase_status=$(printf '%s' "${detail}" | jq -r --arg phase "${phase}"               '[.job.steps[] | select(.stepName == $phase)][0].status // "MISSING"')
+            if [ "${phase_status}" != "SUCCEED" ]; then
+              echo "::error::Amplify-Phase ${phase} fuer Job ${job_id}: ${phase_status}."
+              exit 1
+            fi
+          done
+
+          jq -n             --arg deploy_sha "${deploy_sha}"             --arg amplify_job_id "${job_id}"             --arg amplify_branch "${AMPLIFY_BRANCH}"             --arg accepted_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"             '{schemaVersion:1, deploySha:$deploy_sha, amplifyJobId:$amplify_job_id, amplifyBranch:$amplify_branch, acceptedAt:$accepted_at}'             > "${RUNNER_TEMP}/cloud-acceptance-evidence.json"
+
+          {
+            echo "### Exakte Deploy-Evidence"
+            echo ""
+            echo "- deploy SHA: \`${deploy_sha}\`"
+            echo "- Amplify Job: \`${job_id}\`"
+            echo "- BUILD / DEPLOY / VERIFY: SUCCEED"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Backend-Ressourcen auflisten
         # Breiter Inventarblick fuer #44/#45. Der folgende Bindungs-Schritt beweist anschliessend,
         # welche dieser Ressourcen die live ausgelieferte Anwendung tatsaechlich referenziert.
@@ -251,7 +357,7 @@ jobs:
         # Luecke hatte den HTTP-500-Fall auf deploy verursacht (docs/19, Abschnitt 2).
         if: ${{ !cancelled() }}
         env:
-          LOG_WINDOW: ${{ inputs.log_window }}
+          LOG_WINDOW: ${{ inputs.log_window || '1h' }}
         run: |
           set -euo pipefail
           group="/aws/amplify/${{ vars.AMPLIFY_APP_ID }}"
@@ -298,3 +404,12 @@ jobs:
             echo "::error::Die deployte Anwendung antwortet mit HTTP ${code} statt 200."
             exit 1
           fi
+
+      - name: Deploy-Evidence fuer Cloud User Acceptance bereitstellen
+        uses: actions/upload-artifact@v7
+        with:
+          name: cloud-acceptance-evidence
+          path: ${{ runner.temp }}/cloud-acceptance-evidence.json
+          if-no-files-found: error
+          retention-days: 7
+
