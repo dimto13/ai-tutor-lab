@@ -284,8 +284,10 @@ DONE dargestellt werden.
 Die Release-Kette ist artefaktgebunden:
 
 1. Owner bewegt ausschließlich bewusst `main -> deploy`.
-2. Der `deploy`-Push dispatcht `Cloud Acceptance` auf `main`, ohne die bestehende
-   `cloud-acceptance`-Environment-/OIDC-Trust-Grenze zu erweitern.
+2. Der `deploy`-Push startet nur den unprivilegierten `Cloud Release Acceptance Trigger`.
+   `Cloud Acceptance` folgt nativ per `workflow_run` auf dem Default-Branch; der exakte deploy-SHA
+   wird aus dem auslösenden Run übernommen. Die bestehende
+   `cloud-acceptance`-Environment-/OIDC-Trust-Grenze wird nicht erweitert.
 3. `Cloud Acceptance` akzeptiert nur einen erfolgreichen Amplify-Job fuer **genau den aktuellen
    deploy-SHA** und publiziert diesen SHA als Run-Evidence.
 4. Nur ein erfolgreicher Cloud-Acceptance-Run startet automatisch `Cloud User Acceptance`.
