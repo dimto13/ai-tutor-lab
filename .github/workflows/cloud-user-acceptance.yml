@@ -55,6 +55,10 @@ jobs:
           DEPLOY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
         run: |
           set -euo pipefail
+          if [ -z "${DEPLOY_BRANCH}" ]; then
+            echo "::error::Environment-Variable AMPLIFY_BRANCH fehlt."
+            exit 1
+          fi
           if [ "${EVENT_NAME}" = "workflow_run" ]; then
             evidence="${RUNNER_TEMP}/cloud-acceptance-evidence/cloud-acceptance-evidence.json"
             deploy_sha=$(jq -er '.deploySha | select(type == "string" and length == 40)' "${evidence}")
