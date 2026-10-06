@@ -433,4 +433,3 @@ jobs:
           path: ${{ runner.temp }}/cloud-acceptance-evidence.json
           if-no-files-found: error
           retention-days: 7
-
