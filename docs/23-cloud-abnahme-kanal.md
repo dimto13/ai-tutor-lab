@@ -127,7 +127,6 @@ Weil bei einem Environment-Job der Branch nicht Teil des Subject-Claims ist, ers
 Branch-Beschränkung des Environments diese Absicherung. Sie darf nicht entfernt werden — sonst
 könnte ein beliebiger Branch die Rolle annehmen.
 
-
 ## Automatische Release-Abnahmekette
 
 Die Release-Abnahme ist dreistufig und an einen **exakten deploy-SHA** gebunden:
