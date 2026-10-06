@@ -20,9 +20,13 @@ on:
         required: false
         default: ""
   schedule:
-    # Taegliches Drift-Monitoring. Release-Abnahmen werden zusaetzlich bei jedem deploy-Push
-    # ueber den separaten Release-Trigger auf main gestartet.
+    # Taegliches Drift-Monitoring. Release-Abnahmen werden zusaetzlich nach jedem deploy-Push
+    # ueber den unprivilegierten Release-Trigger gestartet.
     - cron: "23 2 * * *"
+  workflow_run:
+    workflows: ["Cloud Release Acceptance Trigger"]
+    types: [completed]
+    branches: [deploy]
 
 concurrency:
   group: cloud-acceptance
@@ -34,6 +38,7 @@ permissions:
 jobs:
   aws-diagnose:
     name: AWS-Diagnose
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     # Das Environment ist Teil der Vertrauensbeziehung: der OIDC-Subject-Claim enthaelt
     # "environment:cloud-acceptance", und nur dafuer erlaubt die AWS-Trust-Policy das Annehmen
@@ -157,7 +162,7 @@ jobs:
 
       - name: Exakten deploy-SHA gegen Amplify verifizieren
         env:
-          EXPECTED_DEPLOY_SHA: ${{ inputs.expected_deploy_sha }}
+          EXPECTED_DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.expected_deploy_sha }}
           AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
           AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
         run: |
