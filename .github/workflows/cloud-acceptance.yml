@@ -194,8 +194,13 @@ jobs:
           deadline=$((SECONDS + 1200))
           job_id=""
           while [ "${SECONDS}" -lt "${deadline}" ]; do
-            jobs=$(aws amplify list-jobs               --app-id "${AMPLIFY_APP_ID}"               --branch-name "${AMPLIFY_BRANCH}"               --max-items 100               --output json)
-            match=$(printf '%s' "${jobs}" | jq -c --arg sha "${deploy_sha}"               '[.jobSummaries[] | select(.commitId == $sha)] | sort_by(.startTime) | reverse | .[0] // empty')
+            jobs=$(aws amplify list-jobs \
+              --app-id "${AMPLIFY_APP_ID}" \
+              --branch-name "${AMPLIFY_BRANCH}" \
+              --max-items 100 \
+              --output json)
+            match=$(printf '%s' "${jobs}" | jq -c --arg sha "${deploy_sha}" \
+              '[.jobSummaries[] | select(.commitId == $sha)] | sort_by(.startTime) | reverse | .[0] // empty')
 
             if [ -z "${match}" ]; then
               sleep 15
@@ -227,7 +232,11 @@ jobs:
             exit 1
           fi
 
-          detail=$(aws amplify get-job             --app-id "${AMPLIFY_APP_ID}"             --branch-name "${AMPLIFY_BRANCH}"             --job-id "${job_id}"             --output json)
+          detail=$(aws amplify get-job \
+            --app-id "${AMPLIFY_APP_ID}" \
+            --branch-name "${AMPLIFY_BRANCH}" \
+            --job-id "${job_id}" \
+            --output json)
 
           final_status=$(printf '%s' "${detail}" | jq -r '.job.summary.status')
           if [ "${final_status}" != "SUCCEED" ]; then
@@ -236,14 +245,21 @@ jobs:
           fi
 
           for phase in BUILD DEPLOY VERIFY; do
-            phase_status=$(printf '%s' "${detail}" | jq -r --arg phase "${phase}"               '[.job.steps[] | select(.stepName == $phase)][0].status // "MISSING"')
+            phase_status=$(printf '%s' "${detail}" | jq -r --arg phase "${phase}" \
+              '[.job.steps[] | select(.stepName == $phase)][0].status // "MISSING"')
             if [ "${phase_status}" != "SUCCEED" ]; then
               echo "::error::Amplify-Phase ${phase} fuer Job ${job_id}: ${phase_status}."
               exit 1
             fi
           done
 
-          jq -n             --arg deploy_sha "${deploy_sha}"             --arg amplify_job_id "${job_id}"             --arg amplify_branch "${AMPLIFY_BRANCH}"             --arg accepted_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"             '{schemaVersion:1, deploySha:$deploy_sha, amplifyJobId:$amplify_job_id, amplifyBranch:$amplify_branch, acceptedAt:$accepted_at}'             > "${RUNNER_TEMP}/cloud-acceptance-evidence.json"
+          jq -n \
+            --arg deploy_sha "${deploy_sha}" \
+            --arg amplify_job_id "${job_id}" \
+            --arg amplify_branch "${AMPLIFY_BRANCH}" \
+            --arg accepted_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{schemaVersion:1, deploySha:$deploy_sha, amplifyJobId:$amplify_job_id, amplifyBranch:$amplify_branch, acceptedAt:$accepted_at}' \
+            > "${RUNNER_TEMP}/cloud-acceptance-evidence.json"
 
           {
             echo "### Exakte Deploy-Evidence"
