@@ -132,9 +132,11 @@ könnte ein beliebiger Branch die Rolle annehmen.
 
 Die Release-Abnahme ist dreistufig und an einen **exakten deploy-SHA** gebunden:
 
-1. Ein Push auf `deploy` startet `Cloud Release Acceptance Trigger`. Dieser Workflow hat keine
-   AWS-Rechte und verschiebt keinen Ref. Er dispatcht ausschließlich `Cloud Acceptance` auf `main`
-   und übergibt den exakten `deploy`-SHA.
+1. Ein Push auf `deploy` startet `Cloud Release Acceptance Trigger`. Dieser Workflow hat nur
+   Leserechte, keine AWS-Rechte und verschiebt keinen Ref. Nach seinem erfolgreichen Abschluss startet
+   GitHub `Cloud Acceptance` nativ per `workflow_run`. Bei `workflow_run` liegen
+   `GITHUB_REF`/`GITHUB_SHA` auf dem Default-Branch; der exakte Release-SHA kommt separat aus
+   `github.event.workflow_run.head_sha`.
 2. `Cloud Acceptance` wartet lesend auf den Amplify-Job für genau diesen SHA und akzeptiert ihn nur,
    wenn der Job sowie `BUILD`, `DEPLOY` und `VERIFY` erfolgreich sind. Danach folgen Backend-
    Zuordnung, SSR-/CloudWatch-Diagnose und der HTTP-Smoke. Nur ein vollständig erfolgreicher Lauf
@@ -154,7 +156,9 @@ Umgebung. Der manuelle `Cloud User Acceptance`-Trigger bleibt für Diagnosezweck
 aber ohne vorgelagerte exakte Cloud-Acceptance-Evidence nicht als Release-Freigabe.
 
 Die Environment-Beschränkung auf `main` bleibt unverändert. Der `deploy`-Push selbst übernimmt
-keine AWS-Rolle; die OIDC-Trust-Grenze wird daher für diese Automatisierung nicht aufgeweicht.
+keine AWS-Rolle und besitzt kein `actions:write`; die OIDC-Trust-Grenze wird daher für diese
+Automatisierung nicht aufgeweicht. Verbindliche Annahme bleibt, dass `deploy` ausschließlich durch
+den Owner aus einem bereits integrierten `main`-Stand bewegt wird.
 
 ## Erstnachweis
 
