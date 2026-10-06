@@ -168,6 +168,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          if [ -z "${AMPLIFY_APP_ID}" ] || [ -z "${AMPLIFY_BRANCH}" ]; then
+            echo "::error::AMPLIFY_APP_ID und AMPLIFY_BRANCH muessen gesetzt sein."
+            exit 1
+          fi
+
           live_deploy_sha=$(git ls-remote origin "refs/heads/${AMPLIFY_BRANCH}" | awk '{print $1}')
           if [ -z "${live_deploy_sha}" ]; then
             echo "::error::deploy-Ref ${AMPLIFY_BRANCH} konnte nicht aufgeloest werden."
@@ -198,6 +203,7 @@ jobs:
 
           deadline=$((SECONDS + 1200))
           job_id=""
+          job_succeeded=false
           while [ "${SECONDS}" -lt "${deadline}" ]; do
             jobs=$(aws amplify list-jobs \
               --app-id "${AMPLIFY_APP_ID}" \
@@ -205,7 +211,7 @@ jobs:
               --max-items 100 \
               --output json)
             match=$(printf '%s' "${jobs}" | jq -c --arg sha "${deploy_sha}" \
-              '[.jobSummaries[] | select(.commitId == $sha)] | sort_by(.startTime) | reverse | .[0] // empty')
+              '[.jobSummaries[] | select(.commitId == $sha)] | sort_by(.jobId | tonumber) | reverse | .[0] // empty')
 
             if [ -z "${match}" ]; then
               sleep 15
@@ -216,6 +222,7 @@ jobs:
             job_id=$(printf '%s' "${match}" | jq -r '.jobId')
             case "${status}" in
               SUCCEED)
+                job_succeeded=true
                 break
                 ;;
               FAILED|CANCELLED)
@@ -232,8 +239,12 @@ jobs:
             esac
           done
 
-          if [ -z "${job_id}" ]; then
-            echo "::error::Kein Amplify-Job fuer deploy@${deploy_sha} innerhalb des Zeitbudgets gefunden."
+          if [ "${job_succeeded}" != "true" ]; then
+            if [ -n "${job_id}" ]; then
+              echo "::error::Zeitbudget fuer Amplify-Job ${job_id} auf deploy@${deploy_sha} abgelaufen."
+            else
+              echo "::error::Kein Amplify-Job fuer deploy@${deploy_sha} innerhalb des Zeitbudgets gefunden."
+            fi
             exit 1
           fi
 
