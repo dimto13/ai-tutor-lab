@@ -289,10 +289,10 @@ export function TrainingProvider({
   const [guidedNavigationPending, setGuidedNavigationPending] = useState(false);
   const [completionSaveFailure, setCompletionSaveFailure] = useState<string | null>(null);
   const [completionSaveRetryToken, setCompletionSaveRetryToken] = useState(0);
-  const [completionSavePending, setCompletionSavePending] = useState(false);
   const [completionSaveConfirmation, setCompletionSaveConfirmation] = useState(
     initialCompletionSaveConfirmation,
   );
+  const completionSavePending = completionSaveConfirmation.status === "pending";
   const completionSaveRef = useRef(initialCompletionSavePending);
   const progressRef = useRef(progress);
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
@@ -513,7 +513,6 @@ export function TrainingProvider({
     const started = startCompletionSave(completionSaveRef.current, finishedAt !== null);
     completionSaveRef.current = started;
     const run = started.latestRun;
-    setCompletionSavePending(started.pending);
     setCompletionSaveConfirmation(
       finishedAt === null ? initialCompletionSaveConfirmation : pendingCompletionSave(finishedAt),
     );
@@ -522,7 +521,6 @@ export function TrainingProvider({
       const settled = settleCompletionSave(completionSaveRef.current, run);
       if (settled === completionSaveRef.current) return;
       completionSaveRef.current = settled;
-      setCompletionSavePending(settled.pending);
     };
 
     void persistence
