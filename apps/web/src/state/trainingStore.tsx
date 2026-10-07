@@ -532,7 +532,9 @@ export function TrainingProvider({
         if (cancelled) return;
         setCompletionSaveFailure(null);
         setCompletionSaveConfirmation(
-          finishedAt === null ? initialCompletionSaveConfirmation : confirmedCompletionSave(finishedAt),
+          finishedAt === null
+            ? initialCompletionSaveConfirmation
+            : confirmedCompletionSave(finishedAt),
         );
         if (!authoritativeSession) return;
         setProgress((current) => {
