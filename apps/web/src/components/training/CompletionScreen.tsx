@@ -124,9 +124,9 @@ export function CompletionScreen() {
               : "Abschluss wird gespeichert …"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
-        {completionSaveStatus === "pending" ? (
+        {completionSaveStatus === "idle" || completionSaveStatus === "pending" ? (
           <p
-            data-completion-save-status="pending"
+            data-completion-save-status={completionSaveStatus}
             className="mt-3 text-[12px] leading-relaxed text-muted-foreground"
             role="status"
           >
