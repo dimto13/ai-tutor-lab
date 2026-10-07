@@ -22,6 +22,7 @@ import {
   shouldWaitForCompletionRecommendation,
   type SkillProfileChange,
 } from "@/completion/completionOutcome";
+import { confirmedCompletionFinishedAt } from "@/completion/completionSaveConfirmation";
 import { scoreRetryFollowsCompletionSave } from "@/completion/completionSaveRecovery";
 import { technologyCatalog } from "@/catalog";
 import { useTrainingRecommendation } from "@/dashboard/useTrainingRecommendation";
@@ -56,12 +57,18 @@ export function CompletionScreen() {
     restart,
     completedCount,
     completionSaveFailure,
+    completionSaveStatus,
+    completionSaveFinishedAt,
     completionSavePending,
     retryCompletionSave,
   } = useTraining();
   const scenario = useLocalizedScenario(canonicalScenario);
   const competencyBaseline = useSkillProfiles();
-  const scoreFinishedAt = competencyBaseline.status === "loading" ? null : progress.finishedAt;
+  const confirmedFinishedAt = confirmedCompletionFinishedAt(progress.finishedAt, {
+    status: completionSaveStatus,
+    finishedAt: completionSaveFinishedAt,
+  });
+  const scoreFinishedAt = competencyBaseline.status === "loading" ? null : confirmedFinishedAt;
   const score = useScenarioScoreAward(scenario.id, mode, scoreFinishedAt);
   const previousCompletionSaveFailure = useRef<string | null>(null);
   const scoreStatus = score.status;
@@ -123,9 +130,23 @@ export function CompletionScreen() {
           id="completion-title"
           className="mt-5 text-2xl font-semibold tracking-tight text-foreground"
         >
-          Training abgeschlossen
+          {completionSaveStatus === "confirmed" && completionSaveFinishedAt === progress.finishedAt
+            ? "Training abgeschlossen"
+            : completionSaveStatus === "error"
+              ? "Abschluss nicht gespeichert"
+              : "Abschluss wird gespeichert …"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
+        {completionSaveStatus === "pending" ? (
+          <p
+            data-completion-save-status="pending"
+            className="mt-3 text-[12px] leading-relaxed text-muted-foreground"
+            role="status"
+          >
+            Deine Abschlussdaten werden serverseitig bestätigt. Die Punktevergabe startet erst
+            danach.
+          </p>
+        ) : null}
 
         {completionSaveFailure ? (
           <div
