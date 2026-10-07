@@ -5,6 +5,7 @@ import {
   confirmedCompletionFinishedAt,
   confirmedCompletionSave,
   failedCompletionSave,
+  initialCompletionSaveConfirmation,
   pendingCompletionSave,
 } from "../src/completion/completionSaveConfirmation.ts";
 import {
@@ -85,4 +86,9 @@ test("a failed completion save never unlocks scoring", () => {
 test("a confirmation is bound to the exact completion key", () => {
   assert.equal(confirmedCompletionFinishedAt(101, confirmedCompletionSave(100)), null);
   assert.equal(confirmedCompletionFinishedAt(100, confirmedCompletionSave(100)), 100);
+});
+
+test("unfinished and idle completions never unlock scoring", () => {
+  assert.equal(confirmedCompletionFinishedAt(null, confirmedCompletionSave(100)), null);
+  assert.equal(confirmedCompletionFinishedAt(100, initialCompletionSaveConfirmation), null);
 });
