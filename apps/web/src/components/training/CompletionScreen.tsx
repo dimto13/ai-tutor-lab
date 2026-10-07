@@ -8,7 +8,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   SCORE_MODE_MULTIPLIER,
   type AppendScoreEventResult,
@@ -23,7 +23,6 @@ import {
   type SkillProfileChange,
 } from "@/completion/completionOutcome";
 import { confirmedCompletionFinishedAt } from "@/completion/completionSaveConfirmation";
-import { scoreRetryFollowsCompletionSave } from "@/completion/completionSaveRecovery";
 import { technologyCatalog } from "@/catalog";
 import { useTrainingRecommendation } from "@/dashboard/useTrainingRecommendation";
 import {
@@ -70,18 +69,6 @@ export function CompletionScreen() {
   });
   const scoreFinishedAt = competencyBaseline.status === "loading" ? null : confirmedFinishedAt;
   const score = useScenarioScoreAward(scenario.id, mode, scoreFinishedAt);
-  const previousCompletionSaveFailure = useRef<string | null>(null);
-  const scoreStatus = score.status;
-  const retryScore = score.retry;
-  useEffect(() => {
-    const follows = scoreRetryFollowsCompletionSave({
-      previousCompletionSaveFailure: previousCompletionSaveFailure.current,
-      completionSaveFailure,
-      scoreStatus,
-    });
-    previousCompletionSaveFailure.current = completionSaveFailure;
-    if (follows) retryScore();
-  }, [completionSaveFailure, scoreStatus, retryScore]);
   const recommendationRefreshKey = completionRecommendationRefreshKey(score.status, score.result);
   const recommendationFreshnessBaseline =
     competencyBaseline.status === "ready" &&
@@ -240,9 +227,8 @@ export function CompletionScreen() {
           {score.status === "error" ? (
             <div className="mt-4 rounded-xl border border-border bg-panel p-4">
               <p className="text-[13px] leading-relaxed text-muted-foreground" role="status">
-                {completionSaveFailure
-                  ? "Die Serverwertung konnte nicht bestätigt werden, weil der Abschluss noch nicht gespeichert ist. Es werden keine lokalen Ersatzpunkte berechnet."
-                  : "Der Trainingsabschluss ist gespeichert, die Serverwertung konnte aber noch nicht bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet."}
+                Der Trainingsabschluss ist gespeichert, die Serverwertung konnte aber noch nicht
+                bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet.
               </p>
               <button
                 type="button"
