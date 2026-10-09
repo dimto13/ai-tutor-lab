@@ -8,7 +8,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   SCORE_MODE_MULTIPLIER,
   type AppendScoreEventResult,
@@ -22,7 +22,7 @@ import {
   shouldWaitForCompletionRecommendation,
   type SkillProfileChange,
 } from "@/completion/completionOutcome";
-import { scoreRetryFollowsCompletionSave } from "@/completion/completionSaveRecovery";
+import { confirmedCompletionFinishedAt } from "@/completion/completionSaveConfirmation";
 import { technologyCatalog } from "@/catalog";
 import { useTrainingRecommendation } from "@/dashboard/useTrainingRecommendation";
 import {
@@ -56,25 +56,19 @@ export function CompletionScreen() {
     restart,
     completedCount,
     completionSaveFailure,
+    completionSaveStatus,
+    completionSaveFinishedAt,
     completionSavePending,
     retryCompletionSave,
   } = useTraining();
   const scenario = useLocalizedScenario(canonicalScenario);
   const competencyBaseline = useSkillProfiles();
-  const scoreFinishedAt = competencyBaseline.status === "loading" ? null : progress.finishedAt;
+  const confirmedFinishedAt = confirmedCompletionFinishedAt(progress.finishedAt, {
+    status: completionSaveStatus,
+    finishedAt: completionSaveFinishedAt,
+  });
+  const scoreFinishedAt = competencyBaseline.status === "loading" ? null : confirmedFinishedAt;
   const score = useScenarioScoreAward(scenario.id, mode, scoreFinishedAt);
-  const previousCompletionSaveFailure = useRef<string | null>(null);
-  const scoreStatus = score.status;
-  const retryScore = score.retry;
-  useEffect(() => {
-    const follows = scoreRetryFollowsCompletionSave({
-      previousCompletionSaveFailure: previousCompletionSaveFailure.current,
-      completionSaveFailure,
-      scoreStatus,
-    });
-    previousCompletionSaveFailure.current = completionSaveFailure;
-    if (follows) retryScore();
-  }, [completionSaveFailure, scoreStatus, retryScore]);
   const recommendationRefreshKey = completionRecommendationRefreshKey(score.status, score.result);
   const recommendationFreshnessBaseline =
     competencyBaseline.status === "ready" &&
@@ -123,9 +117,23 @@ export function CompletionScreen() {
           id="completion-title"
           className="mt-5 text-2xl font-semibold tracking-tight text-foreground"
         >
-          Training abgeschlossen
+          {completionSaveStatus === "confirmed" && completionSaveFinishedAt === progress.finishedAt
+            ? "Training abgeschlossen"
+            : completionSaveStatus === "error"
+              ? "Abschluss nicht gespeichert"
+              : "Abschluss wird gespeichert …"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{scenario.title}</p>
+        {completionSaveStatus === "idle" || completionSaveStatus === "pending" ? (
+          <p
+            data-completion-save-status={completionSaveStatus}
+            className="mt-3 text-[12px] leading-relaxed text-muted-foreground"
+            role="status"
+          >
+            Deine Abschlussdaten werden serverseitig bestätigt. Die Punktevergabe startet erst
+            danach.
+          </p>
+        ) : null}
 
         {completionSaveFailure ? (
           <div
@@ -219,9 +227,8 @@ export function CompletionScreen() {
           {score.status === "error" ? (
             <div className="mt-4 rounded-xl border border-border bg-panel p-4">
               <p className="text-[13px] leading-relaxed text-muted-foreground" role="status">
-                {completionSaveFailure
-                  ? "Die Serverwertung konnte nicht bestätigt werden, weil der Abschluss noch nicht gespeichert ist. Es werden keine lokalen Ersatzpunkte berechnet."
-                  : "Der Trainingsabschluss ist gespeichert, die Serverwertung konnte aber noch nicht bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet."}
+                Der Trainingsabschluss ist gespeichert, die Serverwertung konnte aber noch nicht
+                bestätigt werden. Es werden keine lokalen Ersatzpunkte berechnet.
               </p>
               <button
                 type="button"

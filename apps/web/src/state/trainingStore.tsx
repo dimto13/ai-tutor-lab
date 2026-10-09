@@ -41,6 +41,13 @@ import type {
   Validation,
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
+import {
+  confirmedCompletionSave,
+  failedCompletionSave,
+  initialCompletionSaveConfirmation,
+  pendingCompletionSave,
+  type CompletionSaveStatus,
+} from "@/completion/completionSaveConfirmation";
 import { completionSaveFailureMessage } from "@/completion/completionSaveFailure";
 import {
   initialCompletionSavePending,
@@ -162,6 +169,10 @@ interface TrainingContextValue {
   recovery: GuidedRecoveryAction | null;
   /** Set when a finished training could not be written to the authoritative store. */
   completionSaveFailure: string | null;
+  /** Authoritative save lifecycle for the exact completion identified by completionSaveFinishedAt. */
+  completionSaveStatus: CompletionSaveStatus;
+  /** finishedAt owned by completionSaveStatus; confirmations never transfer to a different run. */
+  completionSaveFinishedAt: number | null;
   /** True while a write of the finished session is in flight, so the retry cannot be re-entered. */
   completionSavePending: boolean;
   retryCompletionSave: () => void;
@@ -278,7 +289,10 @@ export function TrainingProvider({
   const [guidedNavigationPending, setGuidedNavigationPending] = useState(false);
   const [completionSaveFailure, setCompletionSaveFailure] = useState<string | null>(null);
   const [completionSaveRetryToken, setCompletionSaveRetryToken] = useState(0);
-  const [completionSavePending, setCompletionSavePending] = useState(false);
+  const [completionSaveConfirmation, setCompletionSaveConfirmation] = useState(
+    initialCompletionSaveConfirmation,
+  );
+  const completionSavePending = completionSaveConfirmation.status === "pending";
   const completionSaveRef = useRef(initialCompletionSavePending);
   const progressRef = useRef(progress);
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
@@ -495,16 +509,18 @@ export function TrainingProvider({
     // Der Zustand gehoert dem juengsten Lauf: dieser Effekt startet bei jeder Aenderung neu, und
     // ein abgebrochener Vorgaenger darf weder haengen bleiben noch den Zustand eines laufenden
     // Versuchs zuruecknehmen. Die Regel steht in completionSavePending.ts.
-    const started = startCompletionSave(completionSaveRef.current, progress.finishedAt !== null);
+    const finishedAt = progress.finishedAt;
+    const started = startCompletionSave(completionSaveRef.current, finishedAt !== null);
     completionSaveRef.current = started;
     const run = started.latestRun;
-    setCompletionSavePending(started.pending);
+    setCompletionSaveConfirmation(
+      finishedAt === null ? initialCompletionSaveConfirmation : pendingCompletionSave(finishedAt),
+    );
 
     const settle = () => {
       const settled = settleCompletionSave(completionSaveRef.current, run);
       if (settled === completionSaveRef.current) return;
       completionSaveRef.current = settled;
-      setCompletionSavePending(settled.pending);
     };
 
     void persistence
@@ -513,6 +529,11 @@ export function TrainingProvider({
         settle();
         if (cancelled) return;
         setCompletionSaveFailure(null);
+        setCompletionSaveConfirmation(
+          finishedAt === null
+            ? initialCompletionSaveConfirmation
+            : confirmedCompletionSave(finishedAt),
+        );
         if (!authoritativeSession) return;
         setProgress((current) => {
           if (current !== progress) return current;
@@ -529,7 +550,11 @@ export function TrainingProvider({
         // An unfinished session stays usable while persistence is temporarily unavailable; the
         // pending write is buffered. A finished training must not look saved when the
         // authoritative write failed, so the completion screen reports and retries it (#467).
-        if (progress.finishedAt === null) return;
+        if (finishedAt === null) {
+          setCompletionSaveConfirmation(initialCompletionSaveConfirmation);
+          return;
+        }
+        setCompletionSaveConfirmation(failedCompletionSave(finishedAt));
         setCompletionSaveFailure(completionSaveFailureMessage(cause));
       });
 
@@ -1081,6 +1106,8 @@ export function TrainingProvider({
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       recovery,
       completionSaveFailure,
+      completionSaveStatus: completionSaveConfirmation.status,
+      completionSaveFinishedAt: completionSaveConfirmation.finishedAt,
       completionSavePending,
       retryCompletionSave: () => {
         // Ein zweiter Klick waehrend eines laufenden Versuchs startet den Persistenz-Effekt neu.
@@ -1172,6 +1199,7 @@ export function TrainingProvider({
     challengeRemainingSeconds,
     recommendGuidedAfterChallenge,
     completionSaveFailure,
+    completionSaveConfirmation,
     completionSavePending,
     completeStep,
     finishGuidedReplay,
