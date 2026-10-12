@@ -10,6 +10,7 @@ import {
   type TrainingMode,
 } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
+import { decodeAwsJson } from "../../adapters/awsJson.ts";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data scoring error";
@@ -107,7 +108,7 @@ function scoreEvent(value: unknown): ScoreEvent {
     mode: trainingMode(source["mode"]),
     occurredAt: finiteNumber(source["occurredAt"], "occurredAt"),
     points: finiteNumber(source["points"], "points"),
-    breakdown: scoreBreakdown(source["breakdown"]),
+    breakdown: scoreBreakdown(decodeAwsJson(source["breakdown"], "Score event breakdown")),
     sourceRevision,
   };
 }

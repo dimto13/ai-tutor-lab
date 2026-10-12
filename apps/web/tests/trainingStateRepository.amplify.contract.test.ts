@@ -50,12 +50,29 @@ class FakeAmplifyTrainingStateBackend {
     };
   }
 
+  invalidJson() {
+    return {
+      data: null,
+      errors: [{ message: "AWSJSON argument payload must be a JSON string" }],
+    };
+  }
+
+  /**
+   * `payload` is AWSJSON. AppSync carries it as a JSON string in both directions, exactly as the
+   * cloud acceptance specs send and decode it; the resolver sees the parsed value. A fake that passed
+   * objects through let the adapter ship without ever encoding or decoding it (#528, #545).
+   */
+  envelope(value: StoredValue) {
+    return { ...structuredClone(value), payload: JSON.stringify(value.payload) };
+  }
+
   save(
     store: Map<string, StoredValue>,
     storageKey: string,
     subject: TrainingSubjectRef,
     args: OperationArgs,
   ) {
+    if (typeof args.payload !== "string") return this.invalidJson();
     const current = store.get(storageKey);
     const expectedRevision = args.expectedRevision ?? null;
     const actualRevision = current?.revision ?? null;
@@ -67,11 +84,16 @@ class FakeAmplifyTrainingStateBackend {
       schemaVersion: args.schemaVersion ?? 0,
       revision: (actualRevision ?? 0) + 1,
       updatedAt: this.timestamp++,
-      payload: structuredClone(args.payload),
+      payload: JSON.parse(args.payload) as unknown,
       ...(args.runtimeId ? { runtimeId: args.runtimeId } : {}),
     };
     store.set(storageKey, value);
-    return { data: structuredClone(value), errors: undefined };
+    return { data: this.envelope(value), errors: undefined };
+  }
+
+  load(store: Map<string, StoredValue>, storageKey: string) {
+    const value = store.get(storageKey);
+    return { data: value ? this.envelope(value) : null, errors: undefined };
   }
 
   deleteRuntime(subject: TrainingSubjectRef, args: OperationArgs) {
@@ -88,14 +110,10 @@ class FakeAmplifyTrainingStateBackend {
   clientFor(subject: TrainingSubjectRef): unknown {
     return {
       queries: {
-        loadTrainingState: async (args: OperationArgs) => ({
-          data: structuredClone(this.sessions.get(this.sessionKey(subject, args)) ?? null),
-          errors: undefined,
-        }),
-        loadRuntimeSnapshot: async (args: OperationArgs) => ({
-          data: structuredClone(this.runtimes.get(this.runtimeKey(subject, args)) ?? null),
-          errors: undefined,
-        }),
+        loadTrainingState: async (args: OperationArgs) =>
+          this.load(this.sessions, this.sessionKey(subject, args)),
+        loadRuntimeSnapshot: async (args: OperationArgs) =>
+          this.load(this.runtimes, this.runtimeKey(subject, args)),
       },
       mutations: {
         saveTrainingState: async (args: OperationArgs) =>
