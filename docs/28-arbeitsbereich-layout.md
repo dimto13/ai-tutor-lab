@@ -44,8 +44,32 @@ Reicht die Breite nicht, gibt in dieser Reihenfolge nach:
    sich außerhalb dieser Kombination nichts am Explorer ändert. Die Activity-Bar bleibt sichtbar,
    der Explorer ist also mit einem Klick zurück.
 
-Die Assistenzleiste gibt nicht nach: sie ist in den betroffenen Schritten der Grund, warum es eng
-ist — dort wird gerade eine Eingabe verlangt.
+3. **Die Assistenzleiste wird schmaler** (320 px auf 256 px), sobald der Arbeitsbereich-Rumpf
+   schmaler als 800 px ist. Sie bleibt offen und bedienbar: In den betroffenen Schritten ist sie der
+   Grund, warum es eng ist, denn dort wird gerade eine Eingabe verlangt. 256 px reichen für Eingabe
+   und Vorschläge.
+
+4. **Der Explorer klappt ganz ein**, solange der Chat offen ist und der Rumpf schmaler als 736 px
+   ist. Den Chat zu schließen bringt ihn zurück. Das ist vertretbar, weil kein Guided-Schritt mit
+   Ergebnisfläche und Assistenz auf den Explorer zielt; diese Schritte zielen auf
+   `copilot.chat.prompt` oder `artifact.preview.*`.
+
+Die Schwellen folgen aus der Breitenbilanz des Rumpfs (Activity-Bar 48 px, Explorer, Editor-Bereich,
+Assistenz) bei einer Untergrenze von 320 px für den Editor-Bereich: kompakter Explorer und volle
+Assistenz brauchen 800 px, kompakter Explorer und schmale Assistenz 736 px. Unterhalb von 1024 px
+Viewport-Breite greift diese Kette nicht mehr allein: Die Trainingsroute schaltet dort zwischen
+Arbeitsbereich und Guide um, statt beide nebeneinander zu zeigen.
+
+**Niedrige Viewports.** Gestapelt wird ab 340 px Höhe des Editor-Bereichs, nicht erst ab 400 px. Ein
+1366×768-Laptop mit Browserleiste hat einen Viewport von rund 1366×600 bis 1366×660, und mit der
+Grenze von 400 px blieben Editor und Ergebnisfläche dort nebeneinander bei je rund 200 px. Gestapelt
+bekommt die Ergebnisfläche bei 340 px Höhe rund 200 px und scrollt darin; der Editor behält rund fünf
+Zeilen.
+
+**Zeilen der Ergebnisfläche.** Kopfzeile, Artefakt-Auswahl, Titelzeile mit Umschalter
+Vorschau/Quelltext und die Aktionszeile brechen um, statt horizontal zu scrollen. Ein Knopf, den man
+nur durch seitliches Scrollen in einer 128 px breiten Fläche erreicht, ist auf Touch-Geräten praktisch
+nicht auffindbar.
 
 ## Umsetzung
 
@@ -55,7 +79,7 @@ Ebenen einen CSS-Container:
 - der **Arbeitsbereich-Rumpf** (`@container`, inline-size) trägt die Entscheidung über den Explorer,
 - der **Editor-Bereich** (`container-type: size`) trägt die Entscheidung über das Stapeln. Die
   Variante `workspace-stacked` in `apps/web/src/styles.css` fragt beide Achsen ab:
-  `(max-width: 680px) and (min-height: 400px)`. 680 px folgt aus 366 px lesbarer Editorbreite bei
+  `(max-width: 680px) and (min-height: 340px)`. 680 px folgt aus 366 px lesbarer Editorbreite bei
   einem Breitenanteil von 54 %.
 
 Zwei Fallen, die dabei je einen Fehlversuch gekostet haben:
@@ -78,10 +102,13 @@ Strategie stapelte auch dort, wo die Höhe nicht reichte, und brach vier Trainin
 Aktionsknöpfe dann unter der Statusleiste lagen.
 
 `apps/web/e2e/tests/artifact-preview.spec.ts` prüft die Panelkombination aus Explorer, Editor,
-Ergebnisfläche und Copilot auf 1280 px und 1440 px, in getrennten Testfällen. Der Test prüft die
-Grenzen und die Anordnung, nicht eine bestimmte Himmelsrichtung: beide Flächen behalten ihre
-Untergrenze, keine überlagert eine andere, die Assistenz bleibt rechts, und die Ergebnisfläche liegt
-entweder rechts vom Editor oder darunter.
+Ergebnisfläche und Copilot auf 1280×900, 1440×900, 1300×620 (niedrig) und 1024×768 (schmal), in
+getrennten Testfällen. Der Test prüft die Grenzen und die Anordnung, nicht eine bestimmte
+Himmelsrichtung: beide Flächen behalten ihre Untergrenze, keine überlagert eine andere, die Assistenz
+bleibt rechts, und die Ergebnisfläche liegt entweder rechts vom Editor oder darunter. Außerdem
+scrollt die Ergebnisfläche nicht horizontal, und „Ergebnis geprüft“ liegt in ihrer Breite. Dieselbe
+Begrenzung prüft ein eigener Testfall bei 320 px und 390 px ohne Assistenz. Geprüft wird die Fläche,
+nicht die Klickbarkeit: Playwright scrollt für einen Klick selbst und bliebe sonst grün.
 
 Gemessen wird erst, wenn zwei aufeinanderfolgende Messungen identisch sind. Die Assistenzleiste
 animiert ihre Breite; eine einzelne Messung direkt nach dem Öffnen trifft sonst das Layout mitten im

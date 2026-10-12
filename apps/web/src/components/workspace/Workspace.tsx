@@ -99,7 +99,10 @@ export function Workspace() {
   //      styles.css; die Hoehe zaehlt mit, weil die Ergebnisflaeche feste Kopf- und Fusszeilen hat),
   //   2. der Explorer geht auf seine kompakte Breite zurueck, sobald Schritt 1 nicht reicht. Das
   //      gilt nur in dieser Panelkombination, damit sonst nichts an der Breite des Explorers
-  //      aendert.
+  //      aendert,
+  //   3. die Assistenzleiste wird schmaler (320px auf 256px), bleibt aber offen und bedienbar,
+  //   4. der Explorer klappt ganz ein, solange der Chat offen ist; Chat schliessen bringt ihn
+  //      zurueck. Kein Guided-Schritt dieser Panelkombination zielt auf den Explorer.
   // Entschieden wird an der Breite des Arbeitsbereichs, nicht an der Viewport-Breite: bei 1280px
   // Viewport nimmt der Platform-Guide so viel Platz, dass die viewportbasierten md:-Regeln weiter
   // gelten, obwohl der Arbeitsbereich dafuer zu schmal ist. Genau diese Verwechslung liess den
@@ -358,7 +361,9 @@ export function Workspace() {
           data-highlight="vscode.primarySideBar"
           onClickCapture={() => inspect("vscode.primarySideBar")}
           className={`flex shrink-0 flex-col border-r border-border bg-panel ${
-            crowdedHorizontalLayout ? "w-60 @max-[974px]:w-28" : "w-28 sm:w-44 md:w-60"
+            crowdedHorizontalLayout
+              ? "w-60 @max-[974px]:w-28 @max-[735px]:hidden"
+              : "w-28 sm:w-44 md:w-60"
           }`}
           aria-label="Primary Side Bar"
         >
@@ -714,7 +719,11 @@ export function Workspace() {
           onClickCapture={() => inspect("vscode.secondarySideBar")}
           aria-label="Secondary Side Bar"
           className={`flex shrink-0 flex-col overflow-hidden border-l border-border bg-panel transition-all ${
-            copilotIntegrated && copilotChatOpen ? "w-40 sm:w-72 md:w-80" : "w-10 sm:w-12"
+            crowdedHorizontalLayout
+              ? "w-80 @max-[799px]:w-64"
+              : copilotIntegrated && copilotChatOpen
+                ? "w-40 sm:w-72 md:w-80"
+                : "w-10 sm:w-12"
           }`}
         >
           {copilotIntegrated ? (

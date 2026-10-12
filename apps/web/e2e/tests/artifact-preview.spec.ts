@@ -145,13 +145,22 @@ test("Artefakt-Vorschau: Revision bleibt nach Reload erhalten und Historie verä
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 });
 
-// Getrennte Testfaelle statt zwei Viewports in einem Lauf: sonst verdeckt ein Fehlschlag bei
-// 1280px das Ergebnis fuer 1440px.
-for (const width of [1280, 1440]) {
-  test(`HTML-Workflow: Editor bleibt mit Ergebnis und Copilot bei ${width}px lesbar`, async ({
+// Getrennte Testfaelle statt mehrerer Viewports in einem Lauf: sonst verdeckt ein Fehlschlag bei
+// einem Viewport das Ergebnis fuer die anderen. 1300x620 steht fuer niedrige Laptop-Viewports, bei
+// denen erst ab 340px Hoehe gestapelt wird; 1024x768 fuer die schmalste Desktop-Breite neben der
+// Guide-Spalte, bei der Assistenz und Explorer nachgeben muessen (docs/28-arbeitsbereich-layout.md).
+const READABILITY_VIEWPORTS = [
+  { width: 1280, height: 900 },
+  { width: 1440, height: 900 },
+  { width: 1300, height: 620 },
+  { width: 1024, height: 768 },
+] as const;
+
+for (const { width, height } of READABILITY_VIEWPORTS) {
+  test(`HTML-Workflow: Editor bleibt mit Ergebnis und Copilot bei ${width}x${height} lesbar`, async ({
     page,
   }) => {
-    await page.setViewportSize({ width, height: 900 });
+    await page.setViewportSize({ width, height });
     await page.goto(htmlWorkflowUrl);
     await waitForTrainingReady(page);
 
@@ -195,5 +204,58 @@ for (const width of [1280, 1440]) {
     expect(sideBySide || stacked, "Ergebnisflaeche liegt weder rechts noch unter dem Editor").toBe(
       true,
     );
+
+    // Die Aktionen der Ergebnisflaeche liegen in ihrer Breite. Playwright scrollt fuer einen
+    // Klick selbst, deshalb wird die Begrenzung durch die Flaeche geprueft, nicht nur die
+    // Klickbarkeit: horizontales Scrollen findet auf Touch-Geraeten niemand.
+    const panel = page.locator('[data-highlight="artifact.preview.panel"]');
+    const horizontalOverflow = await panel.evaluate(
+      (element) => element.scrollWidth - element.clientWidth,
+    );
+    expect(horizontalOverflow, `Ergebnisflaeche scrollt horizontal: ${layout}`).toBeLessThanOrEqual(
+      1,
+    );
+    const verify = await boxOf(page, '[data-highlight="artifact.preview.verify"]');
+    expect(verify.x, `Pruefen-Knopf links ausserhalb: ${layout}`).toBeGreaterThanOrEqual(
+      preview.x - 1,
+    );
+    expect(
+      verify.x + verify.width,
+      `Pruefen-Knopf rechts ausserhalb: ${layout}`,
+    ).toBeLessThanOrEqual(preview.x + preview.width + 1);
+  });
+}
+
+// #478 (Sweep #535): Bei 320–390px blieb von „Ergebnis geprüft" nur ein Streifen sichtbar, der Rest
+// lag hinter einem horizontalen Scroll in der Ergebnisflaeche. Die Zeilen brechen jetzt um.
+for (const { width, height } of [
+  { width: 320, height: 720 },
+  { width: 390, height: 844 },
+] as const) {
+  test(`Ergebnisflaeche: Aktionen liegen bei ${width}px vollstaendig in der Flaeche`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto(htmlWorkflowUrl);
+    await waitForTrainingReady(page);
+
+    const panel = page.locator('[data-highlight="artifact.preview.panel"]');
+    await expect(panel).toBeVisible();
+    const preview = await boxOf(page, '[data-highlight="artifact.preview.panel"]');
+    const horizontalOverflow = await panel.evaluate(
+      (element) => element.scrollWidth - element.clientWidth,
+    );
+    expect(horizontalOverflow, "Ergebnisflaeche scrollt horizontal").toBeLessThanOrEqual(1);
+
+    for (const target of ["artifact.preview.verify", "artifact.preview.viewToggle"]) {
+      const box = await boxOf(page, `[data-highlight="${target}"]`);
+      const geometry = JSON.stringify({ preview, box });
+      expect(box.x, `${target} links ausserhalb: ${geometry}`).toBeGreaterThanOrEqual(
+        preview.x - 1,
+      );
+      expect(box.x + box.width, `${target} rechts ausserhalb: ${geometry}`).toBeLessThanOrEqual(
+        preview.x + preview.width + 1,
+      );
+    }
   });
 }

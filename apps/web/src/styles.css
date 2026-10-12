@@ -38,7 +38,7 @@
  * Hergeleitet: 680px aus 366px lesbarer Editorbreite bei 54 % Breitenanteil; 400px aus den 180px
  * Chrome der Ergebnisflaeche plus nutzbarer Editorhoehe. Siehe docs/28-arbeitsbereich-layout.md.
  */
-@custom-variant workspace-stacked (@container (max-width: 680px) and (min-height: 400px));
+@custom-variant workspace-stacked (@container (max-width: 680px) and (min-height: 340px));
 
 /*
  * Design system definition.

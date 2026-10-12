@@ -103,7 +103,7 @@ export function ArtifactPreviewPanel() {
       onClickCapture={() => inspect("artifact.preview.panel")}
       className="workspace-stacked:w-full workspace-stacked:max-h-[60%] workspace-stacked:flex-none workspace-stacked:overflow-y-auto workspace-stacked:border-l-0 workspace-stacked:border-t-2 flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
     >
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-[#111720] px-3">
+      <div className="flex min-h-10 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-[#111720] px-3 py-1.5">
         <Eye className="h-4 w-4 text-accent" />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
           Ergebnis · simuliert
@@ -116,7 +116,7 @@ export function ArtifactPreviewPanel() {
       <div
         data-highlight="artifact.preview.selector"
         onClickCapture={() => inspect("artifact.preview.selector")}
-        className="flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-panel p-2"
+        className="flex shrink-0 flex-wrap gap-1 border-b border-border bg-panel p-2"
       >
         {state.artifacts.map((artifact) => {
           const Icon =
@@ -126,9 +126,9 @@ export function ArtifactPreviewPanel() {
               key={artifact.id}
               type="button"
               onClick={() => artifactPreviewRuntime.selectArtifact(artifact.id)}
-              className={`inline-flex min-w-fit items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] ${artifact.id === state.activeArtifactId ? "border-accent/60 bg-accent/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
+              className={`inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md border px-2.5 py-1.5 text-left text-[11px] ${artifact.id === state.activeArtifactId ? "border-accent/60 bg-accent/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
             >
-              <Icon className="h-3.5 w-3.5" /> {artifact.title}
+              <Icon className="h-3.5 w-3.5 shrink-0" /> {artifact.title}
               <span className="text-[9px] uppercase text-muted-foreground">
                 {TYPE_LABELS[artifact.type]}
               </span>
@@ -139,8 +139,8 @@ export function ArtifactPreviewPanel() {
 
       {activeArtifact && displayedArtifact ? (
         <>
-          <div className="flex shrink-0 items-center gap-3 border-b border-border px-3 py-2">
-            <div className="min-w-0 flex-1">
+          <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-2">
+            <div className="min-w-0 flex-[1_1_8rem]">
               <p className="truncate text-xs font-semibold text-foreground">
                 {displayedArtifact.title}
               </p>
@@ -161,7 +161,7 @@ export function ArtifactPreviewPanel() {
               <div
                 data-highlight="artifact.preview.viewToggle"
                 onClickCapture={() => inspect("artifact.preview.viewToggle")}
-                className="flex rounded-md border border-border p-0.5"
+                className="flex max-w-full flex-wrap rounded-md border border-border p-0.5"
               >
                 <ViewButton
                   active={state.viewMode === "preview"}
@@ -194,15 +194,15 @@ export function ArtifactPreviewPanel() {
             />
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 border-t border-border bg-panel p-3">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border bg-panel p-3">
             {nextRevision ? (
               <button
                 type="button"
                 data-highlight="artifact.preview.applyRevision"
                 onClick={() => artifactPreviewRuntime.applyRevision(nextRevision.id)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-medium text-foreground hover:bg-accent/20"
+                className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-left text-xs font-medium text-foreground hover:bg-accent/20"
               >
-                <RefreshCw className="h-3.5 w-3.5 text-accent" /> {nextRevision.label}
+                <RefreshCw className="h-3.5 w-3.5 shrink-0 text-accent" /> {nextRevision.label}
               </button>
             ) : (
               <span className="text-[10px] text-muted-foreground">
@@ -217,12 +217,12 @@ export function ArtifactPreviewPanel() {
               title={
                 selectedRevision !== null ? "Prüfen ist nur im aktuellen Stand möglich." : undefined
               }
-              className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium ${selectedRevision !== null ? "cursor-not-allowed border-border text-muted-foreground opacity-60" : state.verifiedIds.includes(activeArtifact.id) ? "border-success/40 bg-success/10 text-success" : "border-border text-foreground hover:border-ring"}`}
+              className={`ml-auto inline-flex max-w-full items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium ${selectedRevision !== null ? "cursor-not-allowed border-border text-muted-foreground opacity-60" : state.verifiedIds.includes(activeArtifact.id) ? "border-success/40 bg-success/10 text-success" : "border-border text-foreground hover:border-ring"}`}
             >
               {state.verifiedIds.includes(activeArtifact.id) ? (
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
               ) : (
-                <ShieldCheck className="h-3.5 w-3.5" />
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
               )}
               {state.verifiedIds.includes(activeArtifact.id) ? "Geprüft" : "Ergebnis geprüft"}
             </button>
