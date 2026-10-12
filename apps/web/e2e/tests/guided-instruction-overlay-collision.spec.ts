@@ -186,6 +186,14 @@ for (const viewport of SMALL_VIEWPORTS) {
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
     await expect(editor).toBeFocused();
 
+    // The same holds for the keyboard: tabbing away from the opened hint closes it.
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Tab");
+    await expect(toggle).not.toBeFocused();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+
     await editor.press("Control+s");
     await expectStep(page, 11, "Bereich und Ansichten unterscheiden");
   });
