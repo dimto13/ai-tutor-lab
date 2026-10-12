@@ -128,7 +128,11 @@ export function ArtifactPreviewPanel() {
               onClick={() => artifactPreviewRuntime.selectArtifact(artifact.id)}
               className={`inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md border px-2.5 py-1.5 text-left text-[11px] ${artifact.id === state.activeArtifactId ? "border-accent/60 bg-accent/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0" /> {artifact.title}
+              {/* Icon und Titel bleiben zusammen; nur das Typ-Badge bricht bei Enge separat um. */}
+              <span className="inline-flex min-w-0 items-start gap-1.5">
+                <Icon className="mt-px h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 break-words">{artifact.title}</span>
+              </span>
               <span className="text-[9px] uppercase text-muted-foreground">
                 {TYPE_LABELS[artifact.type]}
               </span>
@@ -202,7 +206,8 @@ export function ArtifactPreviewPanel() {
                 onClick={() => artifactPreviewRuntime.applyRevision(nextRevision.id)}
                 className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-left text-xs font-medium text-foreground hover:bg-accent/20"
               >
-                <RefreshCw className="h-3.5 w-3.5 shrink-0 text-accent" /> {nextRevision.label}
+                <RefreshCw className="h-3.5 w-3.5 shrink-0 text-accent" />
+                <span className="min-w-0 break-words">{nextRevision.label}</span>
               </button>
             ) : (
               <span className="text-[10px] text-muted-foreground">

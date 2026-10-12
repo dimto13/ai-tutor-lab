@@ -247,7 +247,11 @@ for (const { width, height } of [
     );
     expect(horizontalOverflow, "Ergebnisflaeche scrollt horizontal").toBeLessThanOrEqual(1);
 
-    for (const target of ["artifact.preview.verify", "artifact.preview.viewToggle"]) {
+    for (const target of [
+      "artifact.preview.verify",
+      "artifact.preview.viewToggle",
+      "artifact.preview.applyRevision",
+    ]) {
       const box = await boxOf(page, `[data-highlight="${target}"]`);
       const geometry = JSON.stringify({ preview, box });
       expect(box.x, `${target} links ausserhalb: ${geometry}`).toBeGreaterThanOrEqual(
