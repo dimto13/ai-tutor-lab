@@ -56,6 +56,7 @@ export function CompletionScreen() {
     restart,
     completedCount,
     completionSaveFailure,
+    completionSaveDiagnostic,
     completionSaveStatus,
     completionSaveFinishedAt,
     completionSavePending,
@@ -157,6 +158,9 @@ export function CompletionScreen() {
                 ? "Abschluss wird gespeichert …"
                 : "Abschluss erneut speichern"}
             </button>
+            {completionSaveDiagnostic ? (
+              <CompletionSaveDiagnostic diagnostic={completionSaveDiagnostic} />
+            ) : null}
           </div>
         ) : null}
 
@@ -440,6 +444,40 @@ export function CompletionScreen() {
         </div>
       </section>
     </main>
+  );
+}
+
+/**
+ * Die Backend-Ursache eines gescheiterten Abschluss-Writes, aufklappbar und kopierbar.
+ *
+ * Damit kann eine Testerin oder ein Tester die eigentliche Meldung ohne Browser-Konsole
+ * weitergeben (#528).
+ */
+function CompletionSaveDiagnostic({ diagnostic }: { diagnostic: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyDiagnostic() {
+    if (!navigator.clipboard) return;
+    await navigator.clipboard.writeText(diagnostic);
+    setCopied(true);
+  }
+
+  return (
+    <details data-completion-save-diagnostic="true" className="mt-3 text-[12px]">
+      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+        Technische Details
+      </summary>
+      <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md border border-border bg-background p-2 font-mono text-[11px] leading-relaxed text-foreground">
+        {diagnostic}
+      </pre>
+      <button
+        type="button"
+        onClick={() => void copyDiagnostic()}
+        className="mt-2 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
+      >
+        {copied ? "Kopiert" : "Details kopieren"}
+      </button>
+    </details>
   );
 }
 
