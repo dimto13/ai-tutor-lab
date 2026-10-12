@@ -275,6 +275,30 @@ export function HighlightOverlay({
     setHintExpanded(false);
   }, [activeStep?.id, effectiveTooltip]);
 
+  // Measure the opened hint before paint so it is clamped into the viewport in the frame it
+  // opens, instead of overflowing for one frame until the measurement loop catches up.
+  useLayoutEffect(() => {
+    if (!hintExpanded) return;
+    const measured = hintRef.current?.getBoundingClientRect();
+    if (!measured || measured.width <= 0 || measured.height <= 0) return;
+    const nextSize = { width: measured.width, height: measured.height };
+    setExpandedHintSize((currentSize) =>
+      currentSize && sameSize(currentSize, nextSize) ? currentSize : nextSize,
+    );
+  }, [hintExpanded, effectiveTooltip]);
+
+  // The fallback exists because the text would cover something the step needs, so the opened
+  // hint closes as soon as the learner works anywhere else.
+  useEffect(() => {
+    if (!hintExpanded) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && hintRef.current?.contains(event.target)) return;
+      setHintExpanded(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
+  }, [hintExpanded]);
+
   const avoid = useMemo(
     () => [...transientRegions, ...guideRegions, ...contextRegions],
     [transientRegions, guideRegions, contextRegions],
@@ -391,6 +415,9 @@ export function HighlightOverlay({
           style={{
             top: hintPosition.top,
             left: hintPosition.left,
+            // max-content keeps the measured size independent of the distance to the viewport
+            // edge; a fixed box near the right edge would otherwise shrink and be clamped short.
+            width: "max-content",
             maxWidth: HIGHLIGHT_TOOLTIP_MAX_WIDTH,
           }}
           onKeyDown={(event) => {

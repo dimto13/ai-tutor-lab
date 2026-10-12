@@ -177,6 +177,15 @@ for (const viewport of SMALL_VIEWPORTS) {
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
 
+    // Opened, the hint covers a step surface; working anywhere else closes it again.
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await hintText.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await editor.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(editor).toBeFocused();
+
     await editor.press("Control+s");
     await expectStep(page, 11, "Bereich und Ansichten unterscheiden");
   });
