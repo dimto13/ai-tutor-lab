@@ -162,6 +162,9 @@ test("accessibility preferences travel as AWSJSON and null stays null", async ()
   assert.equal(sent[1]?.["accessibility"], null);
   assert.equal(cleared.accessibility, null);
 
+  await repository.save(subject, { ...value, accessibility: undefined }, 2);
+  assert.equal(sent[2]?.["accessibility"], null);
+
   const loaded = await repository.load(subject);
   assert.deepEqual(loaded?.accessibility, accessibility);
 });

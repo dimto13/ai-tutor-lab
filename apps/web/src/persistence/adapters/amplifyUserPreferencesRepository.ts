@@ -99,7 +99,8 @@ export function createAmplifyUserPreferencesRepositoryWithClient(
         language: value.language,
         preferredTrainingMode: value.preferredTrainingMode,
         weeklyGoalMinutes: value.weeklyGoalMinutes,
-        accessibility: (value.accessibility === null
+        // Like the resolver's `?? null`, a missing value is stored as null, not encoded.
+        accessibility: (value.accessibility == null
           ? null
           : encodeAwsJson(value.accessibility)) as AccessibilityArg,
         selfAssessedAiLevel: value.selfAssessedAiLevel,
