@@ -1,6 +1,7 @@
 import { generateClient } from "aws-amplify/data";
 import type { TrainingEvent } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
+import { decodeAwsJson, encodeAwsJson } from "../../adapters/awsJson.ts";
 import {
   TelemetryDeliveryError,
   type ScenarioLearningAnalytics,
@@ -8,7 +9,7 @@ import {
   type TelemetryEventWriter,
   type TelemetryPseudonymizationMode,
   type TrainingAnalyticsService,
-} from "../telemetryPipeline";
+} from "../telemetryPipeline.ts";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data telemetry error";
@@ -76,7 +77,8 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
     throw new Error("Training analytics payload is invalid");
   }
   const source = value as Record<string, unknown>;
-  if (!Array.isArray(source["steps"])) throw new Error("Training analytics steps is invalid");
+  const steps = decodeAwsJson(source["steps"], "Training analytics steps");
+  if (!Array.isArray(steps)) throw new Error("Training analytics steps is invalid");
   if (typeof source["cohortSuppressed"] !== "boolean" || typeof source["truncated"] !== "boolean") {
     throw new Error("Training analytics privacy metadata is invalid");
   }
@@ -88,7 +90,7 @@ function scenarioAnalytics(value: unknown): ScenarioLearningAnalytics {
     averageDurationMs: optionalDuration(source["averageDurationMs"]),
     cohortSuppressed: source["cohortSuppressed"],
     truncated: source["truncated"],
-    steps: source["steps"].map(stepMetric),
+    steps: steps.map(stepMetric),
   };
 }
 
@@ -102,7 +104,9 @@ export function createAmplifyTelemetryEventWriterWithClient(
 ): TelemetryEventWriter {
   return {
     async write(event: TrainingEvent) {
-      const result = await client.mutations.appendTrainingTelemetryEvent({ event });
+      const result = await client.mutations.appendTrainingTelemetryEvent({
+        event: encodeAwsJson(event),
+      });
       if (result.errors?.length) {
         throw new TelemetryDeliveryError(errorText(result.errors), false);
       }

@@ -9,6 +9,7 @@ import {
   type AttestationView,
 } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
+import { decodeAwsJson } from "../../adapters/awsJson.ts";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data attestation error";
@@ -86,7 +87,10 @@ function view(value: unknown): AttestationView {
     throw new Error("Attestation sourceRevision is invalid");
   }
 
-  const evidenceSource = objectValue(source["evidence"], "evidence");
+  const evidenceSource = objectValue(
+    decodeAwsJson(source["evidence"], "Attestation evidence"),
+    "evidence",
+  );
   const evidenceStatus = evidenceSource["evidenceStatus"];
   const challengeOutcome = evidenceSource["challengeOutcome"];
   if (evidenceStatus !== "eligible" || challengeOutcome !== "passed") {

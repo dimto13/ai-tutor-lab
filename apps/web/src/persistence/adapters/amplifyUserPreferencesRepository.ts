@@ -1,6 +1,7 @@
 import { generateClient } from "aws-amplify/data";
 import { isSelfAssessedAiLevel, type TrainingMode } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
+import { decodeAwsJson, encodeAwsJson } from "../../adapters/awsJson.ts";
 import {
   UserPreferencesConflictError,
   type UserPreferencesRecord,
@@ -72,15 +73,16 @@ function preferencesRecord(
     language: typeof data.language === "string" ? data.language : null,
     preferredTrainingMode: trainingMode(data.preferredTrainingMode),
     weeklyGoalMinutes: typeof data.weeklyGoalMinutes === "number" ? data.weeklyGoalMinutes : null,
-    accessibility: data.accessibility ?? null,
+    accessibility: decodeAwsJson(data.accessibility, "User preferences accessibility") ?? null,
     selfAssessedAiLevel: data.selfAssessedAiLevel ?? null,
     revision: data.revision,
     updatedAt: data.updatedAt,
   };
 }
 
-export function createAmplifyUserPreferencesRepository(): UserPreferencesRepository {
-  const client = generateClient<Schema>();
+export function createAmplifyUserPreferencesRepositoryWithClient(
+  client: ReturnType<typeof generateClient<Schema>>,
+): UserPreferencesRepository {
   type SaveArgs = Parameters<typeof client.mutations.saveUserPreferences>[0];
   type AccessibilityArg = Exclude<SaveArgs["accessibility"], undefined>;
 
@@ -97,7 +99,9 @@ export function createAmplifyUserPreferencesRepository(): UserPreferencesReposit
         language: value.language,
         preferredTrainingMode: value.preferredTrainingMode,
         weeklyGoalMinutes: value.weeklyGoalMinutes,
-        accessibility: value.accessibility as AccessibilityArg,
+        accessibility: (value.accessibility === null
+          ? null
+          : encodeAwsJson(value.accessibility)) as AccessibilityArg,
         selfAssessedAiLevel: value.selfAssessedAiLevel,
         ...(expectedRevision === null ? {} : { expectedRevision }),
       };
@@ -115,4 +119,8 @@ export function createAmplifyUserPreferencesRepository(): UserPreferencesReposit
   };
 
   return repository;
+}
+
+export function createAmplifyUserPreferencesRepository(): UserPreferencesRepository {
+  return createAmplifyUserPreferencesRepositoryWithClient(generateClient<Schema>());
 }
