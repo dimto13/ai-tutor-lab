@@ -13,6 +13,7 @@ if (!baseURL) {
 // - /, /willkommen, /anmelden, /kompetenz
 // - vscode-basics.explore, vscode-basics.guided, vscode-basics.challenge
 // - guided reload/resume persistence
+// - no protected content while an anonymous visitor is redirected (#563)
 const productionArtifactTestTitles = [
   "Copilot-Kachel bietet Explore, Guided und Challenge",
   "zeigt die Eröffnungsszene und führt zu Anmeldung oder Registrierung",
@@ -22,6 +23,7 @@ const productionArtifactTestTitles = [
   "Guided: Explorer, Folder, Editor, Speichern und Panel laufen als Anfängerpfad",
   "Challenge: freier Klickpfad wird ausschließlich über den gespeicherten Zielzustand bewertet",
   "Reload: geführter Fortschritt und übersprungene Grundbegriffe bleiben erhalten",
+  "zeigt nach dem Abmelden auf dem Weg zur Landingpage keine Plattforminhalte",
 ] as const;
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -33,6 +35,7 @@ export default defineConfig({
   testDir: "./tests",
   testMatch: [
     "landing-page.spec.ts",
+    "auth-gate-no-flash.spec.ts",
     "skill-profile.spec.ts",
     "copilot-modes.spec.ts",
     "vscode-basics.spec.ts",
