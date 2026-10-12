@@ -18,8 +18,19 @@ test("decodes AWSJSON strings and passes parsed values and null through", () => 
   assert.equal(decodeAwsJson(undefined, "payload"), undefined);
 });
 
-test("invalid AWSJSON names the field instead of becoming an empty value", () => {
-  assert.throws(() => decodeAwsJson("{not json", "Remote training state payload"), {
-    message: "Remote training state payload is not valid AWSJSON",
-  });
+test("invalid AWSJSON names the field and keeps the parser error as cause", () => {
+  assert.throws(
+    () => decodeAwsJson("{not json", "Remote training state payload"),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.equal(error.message, "Remote training state payload is not valid AWSJSON");
+      assert.ok(error.cause instanceof SyntaxError);
+      return true;
+    },
+  );
+});
+
+test("a JSON string value has to arrive quoted", () => {
+  assert.equal(decodeAwsJson('"text"', "label"), "text");
+  assert.throws(() => decodeAwsJson("text", "label"), { message: "label is not valid AWSJSON" });
 });

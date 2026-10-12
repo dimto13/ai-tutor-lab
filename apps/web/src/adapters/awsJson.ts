@@ -15,14 +15,15 @@ export function encodeAwsJson(value: unknown): string {
 }
 
 /**
- * A string is decoded; anything else is returned unchanged, so an already parsed value and `null`
- * pass through. Invalid JSON is an error naming the field, never a silently empty value.
+ * Every string is decoded as JSON, so a JSON string value arrives quoted (`"\"text\""`). Objects,
+ * arrays, numbers, booleans and `null` are returned unchanged. Invalid JSON is an error naming the
+ * field, never a silently empty value.
  */
 export function decodeAwsJson(value: unknown, field: string): unknown {
   if (typeof value !== "string") return value;
   try {
     return JSON.parse(value) as unknown;
-  } catch {
-    throw new Error(`${field} is not valid AWSJSON`);
+  } catch (cause) {
+    throw new Error(`${field} is not valid AWSJSON`, { cause });
   }
 }
