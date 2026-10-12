@@ -101,9 +101,9 @@ export function ArtifactPreviewPanel() {
       ref={rootRef}
       data-highlight="artifact.preview.panel"
       onClickCapture={() => inspect("artifact.preview.panel")}
-      className="workspace-stacked:w-full workspace-stacked:max-h-[60%] workspace-stacked:flex-none workspace-stacked:overflow-y-auto workspace-stacked:border-l-0 workspace-stacked:border-t-2 flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
+      className="workspace-stacked:w-full workspace-stacked:max-h-[60%] workspace-stacked:workspace-low:max-h-[68%] workspace-stacked:flex-none workspace-stacked:overflow-y-auto workspace-stacked:border-l-0 workspace-stacked:border-t-2 flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
     >
-      <div className="flex min-h-10 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-[#111720] px-3 py-1.5">
+      <div className="workspace-stacked:workspace-low:min-h-7 workspace-stacked:workspace-low:py-0.5 flex min-h-10 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-[#111720] px-3 py-1.5">
         <Eye className="h-4 w-4 text-accent" />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
           Ergebnis · simuliert
@@ -149,7 +149,7 @@ export function ArtifactPreviewPanel() {
                 {displayedArtifact.title}
               </p>
               {displayedArtifact.description ? (
-                <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                <p className="workspace-stacked:workspace-low:hidden mt-0.5 truncate text-[10px] text-muted-foreground">
                   {displayedArtifact.description}
                 </p>
               ) : null}
@@ -190,7 +190,7 @@ export function ArtifactPreviewPanel() {
             onSelectRevision={setSelectedRevisionId}
           />
 
-          <div className="min-h-0 flex-1 overflow-auto p-3">
+          <div data-testid="artifact-preview-content" className="min-h-0 flex-1 overflow-auto p-3">
             <ArtifactPreviewSurface
               artifact={displayedArtifact}
               viewMode={state.viewMode}

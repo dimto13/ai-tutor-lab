@@ -16,6 +16,9 @@ async function expectGuidedStep(page: Page, step: number, title: string): Promis
 // prueft deshalb die Grenzen und die Anordnung, nicht eine bestimmte Himmelsrichtung.
 const EDITOR_MIN_WIDTH = 320;
 const PREVIEW_MIN_WIDTH = 280;
+// Gestapelt auf niedrigen Viewports belegten die festen Zeilen der Ergebnisflaeche anfangs die ganze
+// Hoehe, und vom gerenderten Ergebnis blieb nur das Padding (Jenkins-Review zu #478).
+const PREVIEW_CONTENT_MIN_HEIGHT = 56;
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -215,6 +218,11 @@ for (const { width, height } of READABILITY_VIEWPORTS) {
     expect(horizontalOverflow, `Ergebnisflaeche scrollt horizontal: ${layout}`).toBeLessThanOrEqual(
       1,
     );
+    const content = await boxOf(page, '[data-testid="artifact-preview-content"]');
+    expect(
+      content.height,
+      `Vom Ergebnisinhalt bleibt kein Platz: ${JSON.stringify({ content, preview })}`,
+    ).toBeGreaterThanOrEqual(PREVIEW_CONTENT_MIN_HEIGHT);
     const verify = await boxOf(page, '[data-highlight="artifact.preview.verify"]');
     expect(verify.x, `Pruefen-Knopf links ausserhalb: ${layout}`).toBeGreaterThanOrEqual(
       preview.x - 1,
