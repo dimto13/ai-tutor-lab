@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectSignedIn } from "../helpers/sign-in";
 
 interface GraphQLErrorShape {
   message: string;
@@ -28,7 +29,7 @@ async function signIn(page: Page): Promise<void> {
   await page.getByLabel("E-Mail").fill(requireEnvironmentValue("CLOUD_TEST_EMAIL"));
   await page.getByLabel("Passwort").fill(requireEnvironmentValue("CLOUD_TEST_PASSWORD"));
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expectSignedIn(page);
   await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
 }
 

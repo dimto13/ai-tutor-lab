@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { expectSignedIn } from "../helpers/sign-in";
 
 interface TestCredentials {
   email: string;
@@ -81,7 +82,7 @@ async function signIn(page: Page, account: TestCredentials): Promise<void> {
   await page.getByLabel("E-Mail").fill(account.email);
   await page.getByLabel("Passwort").fill(account.password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expectSignedIn(page);
   await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
 }
 
