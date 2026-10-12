@@ -8,7 +8,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   SCORE_MODE_MULTIPLIER,
   type AppendScoreEventResult,
@@ -453,13 +453,26 @@ export function CompletionScreen() {
  * Damit kann eine Testerin oder ein Tester die eigentliche Meldung ohne Browser-Konsole
  * weitergeben (#528).
  */
+const COPY_FEEDBACK_MS = 2500;
+
 function CompletionSaveDiagnostic({ diagnostic }: { diagnostic: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+    const timer = window.setTimeout(() => setCopyState("idle"), COPY_FEEDBACK_MS);
+    return () => window.clearTimeout(timer);
+  }, [copyState]);
 
   async function copyDiagnostic() {
-    if (!navigator.clipboard) return;
-    await navigator.clipboard.writeText(diagnostic);
-    setCopied(true);
+    try {
+      // Without permission or outside a secure context the clipboard is missing or rejects.
+      if (!navigator.clipboard) throw new Error("Clipboard API unavailable");
+      await navigator.clipboard.writeText(diagnostic);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
   }
 
   return (
@@ -475,8 +488,15 @@ function CompletionSaveDiagnostic({ diagnostic }: { diagnostic: string }) {
         onClick={() => void copyDiagnostic()}
         className="mt-2 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
       >
-        {copied ? "Kopiert" : "Details kopieren"}
+        Details kopieren
       </button>
+      <span role="status" aria-live="polite" className="ml-2 text-[11px] text-muted-foreground">
+        {copyState === "copied"
+          ? "Kopiert"
+          : copyState === "failed"
+            ? "Kopieren nicht möglich, bitte den Text markieren und kopieren."
+            : ""}
+      </span>
     </details>
   );
 }
