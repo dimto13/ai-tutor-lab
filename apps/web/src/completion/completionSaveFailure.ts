@@ -50,7 +50,7 @@ function describeOne(cause: unknown): string | null {
   if (typeof cause === "string") return cause;
   if (typeof cause === "object" && cause !== null) {
     const errors = Reflect.get(cause, "errors");
-    if (Array.isArray(errors)) {
+    if (Array.isArray(errors) && errors.length > 0) {
       return errors
         .map((entry: unknown) => {
           if (typeof entry !== "object" || entry === null) return String(entry);
@@ -86,10 +86,16 @@ export function trainingStateSaveDiagnostic(
   context: TrainingStateSaveContext,
 ): string {
   const chain: string[] = [];
+  const visited = new Set<unknown>();
   let current: unknown = cause;
   for (let depth = 0; depth < MAX_CAUSE_DEPTH && current !== undefined; depth += 1) {
+    if (typeof current === "object" && current !== null) {
+      if (visited.has(current)) break;
+      visited.add(current);
+    }
     const description = describeOne(current);
-    if (description && !chain.includes(description)) chain.push(description);
+    // A wrapper that only repeats its cause's text adds nothing; different texts all stay.
+    if (description && description !== chain[chain.length - 1]) chain.push(description);
     current = nextCause(current);
   }
 

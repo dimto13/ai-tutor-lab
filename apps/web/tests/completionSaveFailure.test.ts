@@ -112,3 +112,26 @@ test("the diagnostic stops at a cycle and stays short enough to paste", () => {
   assert.ok(long.length <= 1202, `diagnostic has ${long.length} characters`);
   assert.ok(long.endsWith(" …"));
 });
+
+test("the diagnostic keeps a repeated text from a different level and stops at a revisited error", () => {
+  const inner = new Error("Network error");
+  const middle = new Error("Retry exhausted", { cause: inner });
+  const outer = new Error("Network error", { cause: middle });
+  assert.match(
+    trainingStateSaveDiagnostic(outer, context),
+    /Ursache: Network error ← Retry exhausted ← Network error$/,
+  );
+
+  const first = new Error("first");
+  const second = new Error("second", { cause: first });
+  Object.defineProperty(first, "cause", { value: second });
+  assert.match(trainingStateSaveDiagnostic(first, context), /Ursache: first ← second$/);
+});
+
+test("an empty GraphQL errors array falls back to the error message", () => {
+  const diagnostic = trainingStateSaveDiagnostic(
+    { errors: [], message: "Request failed with status code 502" },
+    context,
+  );
+  assert.match(diagnostic, /Ursache: Request failed with status code 502$/);
+});
