@@ -8,14 +8,21 @@ export async function expectSignedIn(page: Page): Promise<void> {
   try {
     await expect(page).toHaveURL(/\/$/);
   } catch (error) {
+    throw new Error(`Anmeldung nicht abgeschlossen. ${await describeSignInPage(page)}`, {
+      cause: error,
+    });
+  }
+}
+
+// Ist die Seite schon geschlossen, darf das Auslesen den eigentlichen Fehler nicht überdecken.
+async function describeSignInPage(page: Page): Promise<string> {
+  try {
     const alerts = (await page.getByRole("alert").allInnerTexts())
       .map((text) => text.trim())
       .filter((text) => text.length > 0);
-    throw new Error(
-      `Anmeldung nicht abgeschlossen (Seite ${new URL(page.url()).pathname}). Meldung der Anmeldeseite: ${
-        alerts.length > 0 ? alerts.join(" | ") : "keine"
-      }`,
-      { cause: error },
-    );
+    const message = alerts.length > 0 ? alerts.join(" | ") : "keine";
+    return `Seite ${new URL(page.url()).pathname}. Meldung der Anmeldeseite: ${message}`;
+  } catch {
+    return "Die Anmeldeseite war nicht mehr auslesbar.";
   }
 }
