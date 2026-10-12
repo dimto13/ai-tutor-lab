@@ -128,8 +128,17 @@ export function HighlightOverlay({
   const [hintSize, setHintSize] = useState<OverlaySize>(HIGHLIGHT_HINT_FALLBACK_SIZE);
   const [expandedHintSize, setExpandedHintSize] = useState<OverlaySize | null>(null);
   const [hintExpanded, setHintExpanded] = useState(false);
+  // Placement depends on the viewport as much as on the anchor; a resize that leaves every rect in
+  // place must still re-place the tooltip.
+  const [viewport, setViewport] = useState<OverlaySize>(() =>
+    typeof window === "undefined"
+      ? { width: 0, height: 0 }
+      : { width: window.innerWidth, height: window.innerHeight },
+  );
   const tooltipRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
+  // Set while a pointer press inside the hint moves focus, so that blur does not close it.
+  const pointerInsideHintRef = useRef(false);
   const hintTextId = useId();
   const conceptFocus = useSyncExternalStore(
     subscribeGuidedConceptHighlight,
@@ -198,6 +207,11 @@ export function HighlightOverlay({
 
     let frame = 0;
     const measure = () => {
+      const nextViewport = { width: window.innerWidth, height: window.innerHeight };
+      setViewport((currentViewport) =>
+        sameSize(currentViewport, nextViewport) ? currentViewport : nextViewport,
+      );
+
       const resolvedRects: DOMRect[] = [];
       for (const resolver of targetResolvers) {
         const resolved = resolver.runtime?.resolveTarget(resolver.targetId);
@@ -273,6 +287,7 @@ export function HighlightOverlay({
 
   useEffect(() => {
     setHintExpanded(false);
+    setExpandedHintSize(null);
   }, [activeStep?.id, effectiveTooltip]);
 
   // Measure the opened hint before paint so it is clamped into the viewport in the frame it
@@ -309,10 +324,10 @@ export function HighlightOverlay({
     return placeOverlayTooltip({
       anchor: rect,
       tooltip: tooltipSize,
-      viewport: { width: window.innerWidth, height: window.innerHeight },
+      viewport,
       avoid,
     });
-  }, [rect, tooltipSize, avoid]);
+  }, [rect, tooltipSize, viewport, avoid]);
 
   // Controlled fallback (#454): when no position keeps the target and every
   // surface the step needs clear, the tooltip collapses into a small hint button.
@@ -323,20 +338,17 @@ export function HighlightOverlay({
     return placeOverlayTooltip({
       anchor: rect,
       tooltip: hintSize,
-      viewport: { width: window.innerWidth, height: window.innerHeight },
+      viewport,
       avoid,
     });
-  }, [collapsed, rect, hintSize, avoid]);
+  }, [collapsed, rect, hintSize, viewport, avoid]);
 
   const hintPosition = useMemo(() => {
     if (!hintPlacement || typeof window === "undefined") return null;
     if (!hintExpanded || !expandedHintSize) return hintPlacement;
     // Expanded on request: grow from the button so it stays where it was activated.
-    return clampToViewport(hintPlacement.top, hintPlacement.left, expandedHintSize, {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
-  }, [hintPlacement, hintExpanded, expandedHintSize]);
+    return clampToViewport(hintPlacement.top, hintPlacement.left, expandedHintSize, viewport);
+  }, [hintPlacement, hintExpanded, expandedHintSize, viewport]);
 
   if (!rect) return null;
   const dim = strong ? "bg-black/60" : "bg-black/35";
@@ -423,6 +435,21 @@ export function HighlightOverlay({
           onKeyDown={(event) => {
             if (event.key !== "Escape" || !hintExpanded) return;
             event.stopPropagation();
+            setHintExpanded(false);
+          }}
+          onPointerDown={() => {
+            pointerInsideHintRef.current = true;
+            // The blur caused by this press runs within the same input task.
+            window.setTimeout(() => {
+              pointerInsideHintRef.current = false;
+            }, 0);
+          }}
+          onBlur={(event) => {
+            // Keyboard counterpart of the outside pointer: tabbing on, even out of the document,
+            // closes the hint. A press on the hint text moves focus to the body and keeps it open.
+            if (!hintExpanded || pointerInsideHintRef.current) return;
+            const next = event.relatedTarget;
+            if (next instanceof Node && event.currentTarget.contains(next)) return;
             setHintExpanded(false);
           }}
         >

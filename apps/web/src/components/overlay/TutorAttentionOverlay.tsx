@@ -197,6 +197,7 @@ export function TutorAttentionOverlay({
           ref={tooltipRef}
           data-testid="tutor-attention-tooltip"
           data-placement-side={placement.side}
+          data-placement-align={placement.align}
           className="absolute rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
           style={{
             top: placement.top,
