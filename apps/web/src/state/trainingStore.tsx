@@ -48,7 +48,10 @@ import {
   pendingCompletionSave,
   type CompletionSaveStatus,
 } from "@/completion/completionSaveConfirmation";
-import { completionSaveFailureMessage } from "@/completion/completionSaveFailure";
+import {
+  completionSaveFailureMessage,
+  trainingStateSaveDiagnostic,
+} from "@/completion/completionSaveFailure";
 import {
   initialCompletionSavePending,
   settleCompletionSave,
@@ -169,6 +172,8 @@ interface TrainingContextValue {
   recovery: GuidedRecoveryAction | null;
   /** Set when a finished training could not be written to the authoritative store. */
   completionSaveFailure: string | null;
+  /** Technical cause of that failure as reported by the backend, for support and diagnosis. */
+  completionSaveDiagnostic: string | null;
   /** Authoritative save lifecycle for the exact completion identified by completionSaveFinishedAt. */
   completionSaveStatus: CompletionSaveStatus;
   /** finishedAt owned by completionSaveStatus; confirmations never transfer to a different run. */
@@ -288,6 +293,7 @@ export function TrainingProvider({
   const [guidedReplayStepId, setGuidedReplayStepId] = useState<string | null>(null);
   const [guidedNavigationPending, setGuidedNavigationPending] = useState(false);
   const [completionSaveFailure, setCompletionSaveFailure] = useState<string | null>(null);
+  const [completionSaveDiagnostic, setCompletionSaveDiagnostic] = useState<string | null>(null);
   const [completionSaveRetryToken, setCompletionSaveRetryToken] = useState(0);
   const [completionSaveConfirmation, setCompletionSaveConfirmation] = useState(
     initialCompletionSaveConfirmation,
@@ -529,6 +535,7 @@ export function TrainingProvider({
         settle();
         if (cancelled) return;
         setCompletionSaveFailure(null);
+        setCompletionSaveDiagnostic(null);
         setCompletionSaveConfirmation(
           finishedAt === null
             ? initialCompletionSaveConfirmation
@@ -547,6 +554,16 @@ export function TrainingProvider({
       .catch((cause: unknown) => {
         settle();
         if (cancelled) return;
+        // The learner text is generic on purpose; the backend's own message is logged here and,
+        // for a finished training, shown as details. Without it a write that kept failing could
+        // not be traced to a cause (#528, #545).
+        const diagnostic = trainingStateSaveDiagnostic(cause, {
+          scenarioId: progress.scenarioId,
+          mode: progress.mode,
+          finishedAt,
+          occurredAt: Date.now(),
+        });
+        console.error(`[training-state] save failed\n${diagnostic}`, cause);
         // An unfinished session stays usable while persistence is temporarily unavailable; the
         // pending write is buffered. A finished training must not look saved when the
         // authoritative write failed, so the completion screen reports and retries it (#467).
@@ -556,6 +573,7 @@ export function TrainingProvider({
         }
         setCompletionSaveConfirmation(failedCompletionSave(finishedAt));
         setCompletionSaveFailure(completionSaveFailureMessage(cause));
+        setCompletionSaveDiagnostic(diagnostic);
       });
 
     return () => {
@@ -1106,6 +1124,7 @@ export function TrainingProvider({
       challengeRemainingSeconds: isChallengeFailed ? 0 : challengeRemainingSeconds,
       recovery,
       completionSaveFailure,
+      completionSaveDiagnostic,
       completionSaveStatus: completionSaveConfirmation.status,
       completionSaveFinishedAt: completionSaveConfirmation.finishedAt,
       completionSavePending,
@@ -1199,6 +1218,7 @@ export function TrainingProvider({
     challengeRemainingSeconds,
     recommendGuidedAfterChallenge,
     completionSaveFailure,
+    completionSaveDiagnostic,
     completionSaveConfirmation,
     completionSavePending,
     completeStep,
