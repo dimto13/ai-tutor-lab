@@ -13,6 +13,7 @@ import type {
   TrainingStateRepository,
 } from "@ai-train-lab/training-engine";
 import type { Schema } from "../../../../../amplify/data/resource";
+import { decodeAwsJson, encodeAwsJson } from "../../adapters/awsJson.ts";
 
 function errorText(errors: unknown): string {
   if (!Array.isArray(errors)) return "Unknown Amplify Data error";
@@ -249,7 +250,7 @@ function sessionRecord(
     key,
     revision: data.revision,
     updatedAt: data.updatedAt,
-    value: data.payload as StoredTrainingSession,
+    value: decodeAwsJson(data.payload, "Remote training state payload") as StoredTrainingSession,
   };
 }
 
@@ -283,7 +284,7 @@ function runtimeRecord(
     key,
     revision: data.revision,
     updatedAt: data.updatedAt,
-    value: data.payload,
+    value: decodeAwsJson(data.payload, "Remote runtime snapshot payload"),
   };
 }
 
@@ -320,7 +321,7 @@ export function createAmplifyTrainingStateRepositoryWithClient(
         scenarioId: key.scenarioId,
         mode: key.mode,
         schemaVersion: TRAINING_STATE_SCHEMA_VERSION,
-        payload: session as SaveSessionArgs["payload"],
+        payload: encodeAwsJson(session) as SaveSessionArgs["payload"],
         ...(options.expectedRevision === null
           ? {}
           : { expectedRevision: options.expectedRevision }),
@@ -358,7 +359,7 @@ export function createAmplifyTrainingStateRepositoryWithClient(
         mode: key.mode,
         runtimeId,
         schemaVersion: TRAINING_STATE_SCHEMA_VERSION,
-        payload: snapshot as SaveRuntimeArgs["payload"],
+        payload: encodeAwsJson(snapshot) as SaveRuntimeArgs["payload"],
         ...(options.expectedRevision === null
           ? {}
           : { expectedRevision: options.expectedRevision }),
