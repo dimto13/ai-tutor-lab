@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
+import { expectSignedIn } from "../helpers/sign-in";
 import {
   closeAccountSettings,
   openAccountSettings,
@@ -24,7 +25,7 @@ async function signIn(page: Page, email: string, password: string) {
   await page.getByLabel("E-Mail").fill(email);
   await page.getByLabel("Passwort").fill(password);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expectSignedIn(page);
   await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
 }
 
