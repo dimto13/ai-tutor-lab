@@ -39,6 +39,8 @@
  * Chrome der Ergebnisflaeche plus nutzbarer Editorhoehe. Siehe docs/28-arbeitsbereich-layout.md.
  */
 @custom-variant workspace-stacked (@container (max-width: 680px) and (min-height: 340px));
+/* Niedriger Editor-Bereich (#478): gestapelt bleibt dort sonst kein Platz fuer den Vorschauinhalt. */
+@custom-variant workspace-low (@container (max-height: 459px));
 
 /*
  * Design system definition.

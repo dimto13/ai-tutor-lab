@@ -62,9 +62,15 @@ Arbeitsbereich und Guide um, statt beide nebeneinander zu zeigen.
 
 **Niedrige Viewports.** Gestapelt wird ab 340 px Höhe des Editor-Bereichs, nicht erst ab 400 px. Ein
 1366×768-Laptop mit Browserleiste hat einen Viewport von rund 1366×600 bis 1366×660, und mit der
-Grenze von 400 px blieben Editor und Ergebnisfläche dort nebeneinander bei je rund 200 px. Gestapelt
-bekommt die Ergebnisfläche bei 340 px Höhe rund 200 px und scrollt darin; der Editor behält rund fünf
-Zeilen.
+Grenze von 400 px blieben Editor und Ergebnisfläche dort nebeneinander bei je rund 200 px.
+
+Gestapelt belegen die festen Zeilen der Ergebnisfläche (Kopfzeile, Auswahl, Titel, Aktionen) aber rund
+215 px. Bei 60 % von 340–460 px Höhe blieb für das gerenderte Ergebnis nur das Padding. Unter 460 px
+Höhe (Variante `workspace-low`) bekommt die Ergebnisfläche deshalb 68 % statt 60 %, die Kopfzeile wird
+kompakter, und die Beschreibungszeile des Artefakts entfällt. Der Inhalt behält so 65–105 px, der Editor
+rund vier bis fünf Zeilen, und die Aktionen bleiben ohne Scrollen sichtbar. Die ganze Ergebnisfläche
+scrollen zu lassen ist keine Alternative: Guided-Spotlights scrollen ihr Ziel nicht in den sichtbaren
+Bereich und würden dann auf einen verdeckten Knopf zeigen.
 
 **Zeilen der Ergebnisfläche.** Kopfzeile, Artefakt-Auswahl, Titelzeile mit Umschalter
 Vorschau/Quelltext und die Aktionszeile brechen um, statt horizontal zu scrollen. Ein Knopf, den man
@@ -107,7 +113,8 @@ getrennten Testfällen. Der Test prüft die Grenzen und die Anordnung, nicht ein
 Himmelsrichtung: beide Flächen behalten ihre Untergrenze, keine überlagert eine andere, die Assistenz
 bleibt rechts, und die Ergebnisfläche liegt entweder rechts vom Editor oder darunter. Außerdem
 scrollt die Ergebnisfläche nicht horizontal, und „Ergebnis geprüft“ liegt in ihrer Breite. Dieselbe
-Begrenzung prüft ein eigener Testfall bei 320 px und 390 px ohne Assistenz. Geprüft wird die Fläche,
+Begrenzung prüft ein eigener Testfall bei 320 px und 390 px ohne Assistenz. Gestapelt muss außerdem
+vom gerenderten Ergebnis eine Mindesthöhe sichtbar bleiben. Geprüft wird die Fläche,
 nicht die Klickbarkeit: Playwright scrollt für einen Klick selbst und bliebe sonst grün.
 
 Gemessen wird erst, wenn zwei aufeinanderfolgende Messungen identisch sind. Die Assistenzleiste
