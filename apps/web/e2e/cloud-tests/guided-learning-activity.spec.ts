@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { expectSignedIn } from "../helpers/sign-in";
 
 interface TestCredentials {
@@ -43,16 +43,55 @@ async function serverConfirmedScore(page: Page): Promise<number> {
   return numeric;
 }
 
+const guidedSteps: readonly { title: string; action: (page: Page) => Locator }[] = [
+  {
+    title: "HTML-Artefakt auswählen",
+    action: (page) => page.getByRole("button", { name: /Team-Übersicht/ }),
+  },
+  {
+    title: "Vorschau und Quelltext unterscheiden",
+    action: (page) => page.getByRole("button", { name: "Quelltext", exact: true }),
+  },
+  {
+    title: "Deterministische Revision anwenden",
+    action: (page) => page.getByRole("button", { name: /Freigabestatus ergänzen/ }),
+  },
+  {
+    title: "Ergebnis aktiv verifizieren",
+    action: (page) => page.getByRole("button", { name: "Ergebnis geprüft", exact: true }),
+  },
+];
+
+/**
+ * The acceptance account keeps its server state between runs. Since training state is really
+ * persisted (#528, #545), a run finds the previous completion, or after an aborted run a session in
+ * the middle. Both are states the product restores on purpose, so the run continues from them the
+ * way a learner would instead of assuming a fresh start. A restored completion is restarted, which
+ * also exercises the repeat path that must not award points twice.
+ */
 async function completeGuidedTraining(page: Page): Promise<number> {
   await page.goto("/training/artifact-preview-foundation.guided");
   await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toHaveText(
     "Training bereit",
   );
-  await page.getByRole("button", { name: /Team-Übersicht/ }).click();
-  await page.getByRole("button", { name: "Quelltext", exact: true }).click();
-  await page.getByRole("button", { name: /Freigabestatus ergänzen/ }).click();
-  await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  const completed = page.getByRole("heading", { name: "Training abgeschlossen" });
+  const currentStep = page.locator("#guided-current-step-title");
+  await expect(completed.or(currentStep).first()).toBeVisible();
+  if (await completed.isVisible()) {
+    await page.getByRole("button", { name: "Training erneut starten" }).click();
+    await expect(completed).toHaveCount(0);
+  }
+
+  for (let remaining = guidedSteps.length; remaining > 0; remaining -= 1) {
+    const title = ((await currentStep.textContent()) ?? "").trim();
+    const step = guidedSteps.find((candidate) => title.endsWith(candidate.title));
+    expect(step, `unexpected guided step "${title}"`).toBeTruthy();
+    await step!.action(page).click();
+    if (step === guidedSteps[guidedSteps.length - 1]) break;
+    await expect(currentStep).not.toHaveText(title);
+  }
+
+  await expect(completed).toBeVisible();
   await expect(page.locator('[data-completion-save-failure="true"]')).toHaveCount(0);
   return serverConfirmedScore(page);
 }
