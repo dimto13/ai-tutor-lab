@@ -99,11 +99,11 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setOpen(false);
   };
 
-  const appendTutorMessage = (text: string, offer?: ChatOffer) => {
+  const appendTutorMessage = (text: string, offer?: ChatOffer, inHistory = !offer) => {
     const id = nextMessageId();
     setMessages((messages) => [
       ...messages,
-      { id, role: "tutor", text, inHistory: !offer, ...(offer ? { offer } : {}) },
+      { id, role: "tutor", text, inHistory, ...(offer ? { offer } : {}) },
     ]);
   };
 
@@ -170,8 +170,13 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setInput("");
     const history = conversationHistory(messages);
     const sourceId = nextMessageId();
+    // A new message moves on: older offers would otherwise answer an old message later.
     setMessages((messages) => [
-      ...messages,
+      ...messages.map((message) =>
+        message.offer && !message.offer.resolved
+          ? { ...message, offer: { ...message.offer, resolved: true } }
+          : message,
+      ),
       { id: sourceId, role: "user", text: question, inHistory: true },
     ]);
 
@@ -209,6 +214,8 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     resolveOffer(message.id);
     appendTutorMessage(
       "Danke! Deine Meldung ist beim Team angekommen. Dein Trainingsfortschritt bleibt unverändert.",
+      undefined,
+      false,
     );
   };
 

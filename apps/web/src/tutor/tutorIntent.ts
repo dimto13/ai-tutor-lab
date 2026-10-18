@@ -163,7 +163,7 @@ const USABILITY_MATCHERS = USABILITY_FEEDBACK.map(wholeWords);
 
 const STUCK = [
   "was soll ich",
-  "wie (?:geht es |gehts |gehts )?weiter",
+  "wie (?:geht es |gehts )?weiter",
   "was (?:muss|kann|soll) ich (?:\\S+ ){0,3}(?:tun|machen)",
   "nächsten? schritt",
   "jetzt machen",

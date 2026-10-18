@@ -43,7 +43,8 @@ Gegenproben.
 
 - Der Chat sendet bis zu sechs vorherige Nachrichten mit (`TUTOR_HISTORY_MAX_TURNS`, höchstens
   `TUTOR_HISTORY_MAX_CHARS` Zeichen), damit Bezugsfragen wie „und wo finde ich das?“ funktionieren.
-  Begrüßung und Meldungsangebote gehören nicht dazu.
+  Übernommen werden nur beantwortete Frage-Antwort-Paare, damit die Rollen strikt abwechseln;
+  Begrüßung, Meldungsangebote und Quittungen gehören nicht dazu.
 - Das Modell kann `kind: "feedback"` liefern, wenn es eine Plattformkritik erkennt; die Oberfläche
   bietet dann ebenfalls die Meldung an.
 

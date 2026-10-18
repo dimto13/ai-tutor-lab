@@ -224,8 +224,10 @@ function buildSystemMessage(context: TutorLlmContext): string {
 }
 
 /**
- * Keeps the newest turns within the turn and character limits. Earlier tutor answers are replayed
- * in the JSON answer format, so the model keeps answering in it.
+ * Keeps the newest turns within the turn and character limits. Only answered questions are
+ * replayed, so the roles strictly alternate and the current question follows a tutor answer;
+ * some chat APIs reject two user turns in a row or a conversation that opens with the assistant.
+ * Earlier tutor answers are replayed in the JSON answer format, so the model keeps answering in it.
  */
 function buildHistoryMessages(history: readonly TutorConversationTurn[] | undefined): LlmMessage[] {
   const kept: LlmMessage[] = [];
@@ -245,7 +247,16 @@ function buildHistoryMessages(history: readonly TutorConversationTurn[] | undefi
         : { role: "user", content: text },
     );
   }
-  return kept;
+  const answered: LlmMessage[] = [];
+  for (let index = 0; index < kept.length - 1; index += 1) {
+    const question = kept[index];
+    const answer = kept[index + 1];
+    if (question?.role === "user" && answer?.role === "assistant") {
+      answered.push(question, answer);
+      index += 1;
+    }
+  }
+  return answered;
 }
 
 function buildUserMessage(question: TutorLlmQuestion, includeUserCode: boolean): string {

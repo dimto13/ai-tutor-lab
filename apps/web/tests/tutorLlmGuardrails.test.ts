@@ -254,17 +254,51 @@ test("the replayed history keeps only the newest turns within the turn and size 
     question: {
       question: "Weiter?",
       history: [
-        { role: "user", text: "a".repeat(TUTOR_HISTORY_MAX_CHARS) },
-        { role: "user", text: "Kurze letzte Frage" },
+        { role: "user", text: "a".repeat(TUTOR_HISTORY_MAX_CHARS - 10) },
+        { role: "tutor", text: "Lange alte Antwort" },
+        { role: "user", text: "Frage 2" },
+        { role: "tutor", text: "Antwort 2" },
       ],
     },
     includeUserCode: false,
   });
   const sizedTurns = (provider.requests[1]?.messages ?? []).slice(1, -1);
   assert.deepEqual(
-    sizedTurns.map(({ content }) => content),
-    ["Kurze letzte Frage"],
+    sizedTurns.map(({ role }) => role),
+    ["user", "assistant"],
   );
+  assert.equal(sizedTurns[0]?.content, "Frage 2");
+});
+
+test("only answered questions are replayed, so the roles strictly alternate", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({ answer: "Ok.", kind: "explanation", uiTargetRefs: [] }),
+  );
+
+  await service(provider).answer({
+    sessionKey: "session-history-roles",
+    context,
+    question: {
+      question: "Und wo finde ich den?",
+      history: [
+        { role: "tutor", text: "Antwort ohne Frage im Verlauf" },
+        { role: "user", text: "Der Button reagiert nicht" },
+        { role: "user", text: "Was ist der Explorer?" },
+        { role: "tutor", text: "Der Explorer zeigt die Dateien." },
+        { role: "user", text: "Unbeantwortete Meldung" },
+      ],
+    },
+    includeUserCode: false,
+  });
+
+  const messages = provider.requests[0]?.messages ?? [];
+  assert.deepEqual(
+    messages.map(({ role }) => role),
+    ["system", "user", "assistant", "user"],
+  );
+  assert.equal(messages[1]?.content, "Was ist der Explorer?");
+  assert.equal(messages[3]?.content, "Und wo finde ich den?");
 });
 
 test("a platform problem comes back as feedback instead of a learning answer (#147, #548)", async () => {

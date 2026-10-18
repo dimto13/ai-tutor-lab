@@ -177,6 +177,12 @@ test("Tutor-Angebot lässt sich ablehnen und mehrdeutige Fragen werden zurückge
   await expect(history).toContainText("Ich möchte dich richtig verstehen");
   await expect(offer.getByRole("button", { name: "Hilfe zur Aufgabe" })).toBeVisible();
   await expect(offer.getByRole("button", { name: "Als Problem melden" })).toBeVisible();
+
+  // A new message moves on, so the open offer cannot answer the old message later.
+  await input.fill("Was ist ein Workspace?");
+  await page.getByRole("button", { name: "Senden" }).click();
+  await expect(history).toContainText("Ein Workspace beschreibt deinen Arbeitskontext");
+  await expect(offer).toHaveCount(0);
   await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
 });
 
