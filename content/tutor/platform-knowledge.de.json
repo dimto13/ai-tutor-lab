@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "topics": [
+    {
+      "id": "report",
+      "title": "Problem oder Vorschlag melden",
+      "patterns": [
+        "(?:wie|wo|wem|wohin) (?:\\S+ ){0,5}(?:melden|melde|mitteilen|weitergeben|feedback geben|feedback senden)",
+        "(?:problem|fehler|bug|feedback|vorschlag) (?:\\S+ ){0,2}(?:melden|einreichen|abgeben|senden)"
+      ],
+      "answer": "Über „Ich habe ein Problem“ im Tutor-Bereich meldest du Fehler, Bedienprobleme oder Verbesserungsvorschläge. Scenario, Schritt und Modus werden automatisch als Kontext angehängt, und du prüfst deinen Text vor dem Senden. Du kannst mir dein Anliegen auch direkt schreiben – ich biete dir dann an, es als Meldung aufzunehmen."
+    },
+    {
+      "id": "modes",
+      "title": "Trainingsmodi",
+      "patterns": [
+        "trainingsmod(?:us|i)",
+        "explore",
+        "guided",
+        "challenge",
+        "mod(?:us|i) (?:\\S+ ){0,3}(?:trainings?|übung|plattform)"
+      ],
+      "answer": "Es gibt drei Trainingsmodi: In Explore erkundest du die Oberfläche frei, ohne Fehler machen zu können. In Guided führt dich die Plattform Schritt für Schritt und bietet pro Schritt bis zu drei Hilfen an. In Challenge ist nur das Ziel vorgegeben, geprüft wird dein Ergebnis. Für die Punkte zählt Explore halb, Guided einfach und Challenge doppelt."
+    },
+    {
+      "id": "help",
+      "title": "Hilfen und Hinweise",
+      "patterns": [
+        "hilfestufen?",
+        "hilfe (?:1|2|3|eins|zwei|drei)",
+        "hinweise? (?:\\S+ ){0,3}(?:anzeigen|abrufen|kosten|kostet|nutzen)",
+        "(?:kostet|kosten) (?:\\S+ ){0,3}(?:hilfen?|hinweise?)"
+      ],
+      "answer": "Im Guided-Modus kannst du im Guide-Bereich bis zu drei Hilfen nacheinander anzeigen. Jede Hilfe wird konkreter, die dritte hebt das Ziel zusätzlich hervor. Vor dem Abruf siehst du, wie viel Prozent des Schrittbonus die Hilfe kostet. Fehlversuche selbst kosten keine Punkte."
+    },
+    {
+      "id": "points",
+      "title": "Punkte und Kompetenzprofil",
+      "patterns": ["punkte", "punktzahl", "punktestand", "score", "kompetenzprofil"],
+      "answer": "Für ein abgeschlossenes Training vergibt die Plattform Punkte. Der Modus zählt mit: Explore ×0,5, Guided ×1, Challenge ×2. Genutzte Hilfen verringern den Schrittbonus, Fehlversuche kosten keine Punkte. Deinen Stand findest du im Kompetenzprofil, erreichbar über das Kontomenü."
+    },
+    {
+      "id": "saving",
+      "title": "Trainingsstand speichern und fortsetzen",
+      "patterns": [
+        "fortschritt (?:\\S+ ){0,3}(?:gespeichert|gesichert|verloren)",
+        "(?:gespeichert|gesichert) (?:\\S+ ){0,3}fortschritt",
+        "später (?:\\S+ ){0,2}(?:weitermachen|fortsetzen|weiter)",
+        "training (?:\\S+ ){0,2}(?:unterbrechen|fortsetzen|pausieren)",
+        "verliere ich",
+        "weitermachen wo"
+      ],
+      "answer": "Wenn du angemeldet bist, speichert die Plattform deinen Trainingsstand automatisch. Du kannst das Training unterbrechen und später an derselben Stelle weitermachen."
+    },
+    {
+      "id": "simulation",
+      "title": "Simulierte Umgebung",
+      "patterns": [
+        "kaputt machen",
+        "etwas kaputt",
+        "echten? (?:dateien|rechner|computer|system|systeme)",
+        "auf meinem (?:rechner|computer|pc|laptop)",
+        "simulation",
+        "simuliert"
+      ],
+      "answer": "Du arbeitest in einer simulierten Umgebung. Dateien, Befehle und Einstellungen wirken nur in dieser Übung – nicht auf deinem Rechner und nicht in echten Systemen. Du kannst also gefahrlos ausprobieren."
+    },
+    {
+      "id": "how-it-works",
+      "title": "So funktioniert das Training",
+      "patterns": [
+        "wie funktioniert (?:das|dieses|die|diese) (?:training|plattform|übung|modul|kurs|lernplattform)",
+        "wie (?:läuft|geht) (?:das|dieses|die) (?:training|übung)",
+        "was ist (?:das hier|diese plattform|diese seite)",
+        "wofür ist (?:diese|die) plattform",
+        "weiter ?button"
+      ],
+      "answer": "Du übst hier in einer simulierten Arbeitsumgebung. Die Plattform erkennt deine Aktionen im Werkzeug und führt dich Schritt für Schritt. Bei Aufgabenschritten geht es automatisch weiter, sobald deine Aktion erkannt wurde – einen Weiter-Button gibt es dafür nicht. Erklärschritte bestätigst du mit „Konzept verstanden“ oder „Grundbegriff verstanden“."
+    }
+  ]
+}

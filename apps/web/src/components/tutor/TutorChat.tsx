@@ -5,15 +5,48 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { findGlossaryConcept } from "@/lib/glossary";
 import { getRuntimeTargetLabel } from "@/runtime/referenceCatalog";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
-import { answerDeterministically } from "@/tutor/deterministicTutor";
+import {
+  replyDeterministically,
+  type TutorFeedbackOffer,
+  type TutorReply,
+} from "@/tutor/deterministicTutor";
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
+import { TUTOR_HISTORY_MAX_TURNS, type TutorConversationTurn } from "@/tutor/llm/tutorGuardrails";
 import { preferServerTutor } from "@/tutor/serverTutorAnswer";
 import { useTutorContext } from "@/tutor/tutorContext";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
 
+interface ChatOffer extends TutorFeedbackOffer {
+  /** The learner's own message, which becomes the reviewable feedback draft. */
+  sourceText: string;
+  sourceId: number;
+  resolved: boolean;
+}
+
 interface Message {
+  id: number;
   role: "tutor" | "user";
   text: string;
+  /** Greetings and the tutor's own offers are not part of the conversation the model sees. */
+  inHistory: boolean;
+  offer?: ChatOffer;
+}
+
+const GREETING =
+  "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.";
+
+const OFFER_LABELS: Record<TutorFeedbackOffer["kind"], { report: string; answer: string }> = {
+  problem: { report: "Als Problem melden", answer: "Nein, ich brauche Hilfe zur Aufgabe" },
+  ux: { report: "Feedback senden", answer: "Nein, das war eine Frage" },
+  improvement: { report: "Als Vorschlag melden", answer: "Nein, das war eine Frage" },
+  general: { report: "Feedback senden", answer: "Nein, das war eine Frage" },
+};
+
+function conversationHistory(messages: Message[]): TutorConversationTurn[] {
+  return messages
+    .filter((message) => message.inHistory)
+    .slice(-TUTOR_HISTORY_MAX_TURNS)
+    .map((message) => ({ role: message.role, text: message.text.slice(0, 2_000) }));
 }
 
 const SUGGESTIONS = [
@@ -30,20 +63,15 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const { mode } = tutorContext;
   const [open, setOpen] = useState(() => mode !== "guided");
   const [messages, setMessages] = useState<Message[]>(() =>
-    mode === "challenge"
-      ? []
-      : [
-          {
-            role: "tutor",
-            text: "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.",
-          },
-        ],
+    mode === "challenge" ? [] : [{ id: 0, role: "tutor", text: GREETING, inHistory: false }],
   );
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const collapsedToggleRef = useRef<HTMLButtonElement>(null);
   const restoreToggleFocusRef = useRef(false);
+  const nextMessageIdRef = useRef(1);
+  const nextMessageId = () => nextMessageIdRef.current++;
 
   useEffect(() => {
     setOpen(mode !== "guided");
@@ -71,18 +99,39 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setOpen(false);
   };
 
-  const send = async (text: string) => {
-    const question = text.trim();
-    if (!question || pending) return;
-    setInput("");
-    setMessages((messages) => [...messages, { role: "user", text: question }]);
-    setPending(true);
+  const appendTutorMessage = (text: string, offer?: ChatOffer) => {
+    const id = nextMessageId();
+    setMessages((messages) => [
+      ...messages,
+      { id, role: "tutor", text, inHistory: !offer, ...(offer ? { offer } : {}) },
+    ]);
+  };
 
+  const resolveOffer = (messageId: number) => {
+    setMessages((messages) =>
+      messages.map((message) =>
+        message.id === messageId && message.offer
+          ? { ...message, offer: { ...message.offer, resolved: true } }
+          : message,
+      ),
+    );
+  };
+
+  /** Asks the server tutor, falling back to the deterministic reply whenever it is unavailable. */
+  const answer = async (
+    question: string,
+    sourceId: number,
+    fallback: TutorReply,
+    history: TutorConversationTurn[],
+    allowFeedback: boolean,
+  ) => {
+    setPending(true);
     try {
-      let answer = answerDeterministically(question, tutorContext, findGlossaryConcept);
+      let text = fallback.text;
+      let modelSawFeedback = false;
       const accessToken = auth.session?.accessToken ?? null;
       if (accessToken) {
-        const serverAnswer = await preferServerTutor(answer, () =>
+        const serverAnswer = await preferServerTutor(fallback.text, () =>
           askTutorLlm({
             data: {
               scenarioId: tutorContext.scenario.id,
@@ -90,10 +139,12 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
               currentStepId: tutorContext.currentStep?.id ?? null,
               question,
               accessToken,
+              ...(history.length > 0 ? { history } : {}),
             },
           }),
         );
-        answer = serverAnswer.answer;
+        text = serverAnswer.answer;
+        modelSawFeedback = serverAnswer.kind === "feedback";
         if (serverAnswer.uiTargetRefs.length > 0) {
           requestTutorAttention(
             serverAnswer.uiTargetRefs,
@@ -102,10 +153,63 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         }
       }
 
-      setMessages((messages) => [...messages, { role: "tutor", text: answer }]);
+      appendTutorMessage(
+        text,
+        modelSawFeedback && allowFeedback
+          ? { kind: "problem", clarify: false, sourceText: question, sourceId, resolved: false }
+          : undefined,
+      );
     } finally {
       setPending(false);
     }
+  };
+
+  const send = async (text: string) => {
+    const question = text.trim();
+    if (!question || pending) return;
+    setInput("");
+    const history = conversationHistory(messages);
+    const sourceId = nextMessageId();
+    setMessages((messages) => [
+      ...messages,
+      { id: sourceId, role: "user", text: question, inHistory: true },
+    ]);
+
+    const reply = replyDeterministically(question, tutorContext, findGlossaryConcept);
+    if (reply.offer) {
+      // A report or an ambiguous message needs no model call: the learner decides first (#147).
+      appendTutorMessage(reply.text, {
+        ...reply.offer,
+        sourceText: question,
+        sourceId,
+        resolved: false,
+      });
+      return;
+    }
+    await answer(question, sourceId, reply, history, true);
+  };
+
+  /** The learner rejected the feedback reading, so the original message is answered as a question. */
+  const answerInstead = async (message: Message) => {
+    const offer = message.offer;
+    if (!offer || pending) return;
+    resolveOffer(message.id);
+    const sourceIndex = messages.findIndex((candidate) => candidate.id === offer.sourceId);
+    const history = conversationHistory(
+      sourceIndex >= 0 ? messages.slice(0, sourceIndex) : messages,
+    );
+    const fallback = replyDeterministically(offer.sourceText, tutorContext, findGlossaryConcept, {
+      intent: offer.kind === "problem" ? "next_step" : "question",
+      confidence: "high",
+    });
+    await answer(offer.sourceText, offer.sourceId, fallback, history, false);
+  };
+
+  const reportSubmitted = (message: Message) => {
+    resolveOffer(message.id);
+    appendTutorMessage(
+      "Danke! Deine Meldung ist beim Team angekommen. Dein Trainingsfortschritt bleibt unverändert.",
+    );
   };
 
   const problemShortcut = (
@@ -205,8 +309,8 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
             wenn du Unterstützung möchtest.
           </p>
         ) : null}
-        {messages.map((message, index) => (
-          <div key={index} className="flex gap-2">
+        {messages.map((message) => (
+          <div key={message.id} className="flex gap-2">
             <div
               className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                 message.role === "tutor" ? "bg-accent/15 text-accent" : "bg-muted text-foreground"
@@ -218,16 +322,26 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
                 <User className="h-3.5 w-3.5" />
               )}
             </div>
-            <p
-              data-feedback-redact={message.role === "user" ? "true" : undefined}
-              className={`rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
-                message.role === "tutor"
-                  ? "bg-card text-foreground"
-                  : "bg-accent/10 text-foreground"
-              }`}
-            >
-              {message.text}
-            </p>
+            <div className="min-w-0">
+              <p
+                data-feedback-redact={message.role === "user" ? "true" : undefined}
+                className={`rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
+                  message.role === "tutor"
+                    ? "bg-card text-foreground"
+                    : "bg-accent/10 text-foreground"
+                }`}
+              >
+                {message.text}
+              </p>
+              {message.offer && !message.offer.resolved ? (
+                <TutorOfferActions
+                  offer={message.offer}
+                  disabled={pending}
+                  onAnswer={() => void answerInstead(message)}
+                  onSubmitted={() => reportSubmitted(message)}
+                />
+              ) : null}
+            </div>
           </div>
         ))}
         {pending ? (
@@ -272,6 +386,60 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           <Send className="h-4 w-4" />
         </button>
       </div>
+    </div>
+  );
+}
+
+function TutorOfferActions({
+  offer,
+  disabled,
+  onAnswer,
+  onSubmitted,
+}: {
+  offer: ChatOffer;
+  disabled: boolean;
+  onAnswer: () => void;
+  onSubmitted: () => void;
+}) {
+  const labels = OFFER_LABELS[offer.kind];
+  const report = (
+    <FeedbackCapture
+      source="tutor"
+      flow={offer.kind === "general" ? "general" : "problem"}
+      triggerLabel={labels.report}
+      compact
+      initialText={offer.sourceText}
+      initialKind={offer.kind}
+      onSubmitted={onSubmitted}
+    />
+  );
+  const answerButton = (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onAnswer}
+      className="inline-flex items-center rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {offer.clarify
+        ? offer.kind === "problem"
+          ? "Hilfe zur Aufgabe"
+          : "Frage beantworten"
+        : labels.answer}
+    </button>
+  );
+  return (
+    <div data-testid="tutor-feedback-offer" className="mt-1.5 flex flex-wrap gap-1.5">
+      {offer.clarify ? (
+        <>
+          {answerButton}
+          {report}
+        </>
+      ) : (
+        <>
+          {report}
+          {answerButton}
+        </>
+      )}
     </div>
   );
 }

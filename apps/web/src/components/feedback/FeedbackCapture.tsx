@@ -22,6 +22,11 @@ interface FeedbackCaptureProps {
   triggerLabel?: string;
   compact?: boolean;
   flow?: "general" | "problem";
+  /** Draft the dialog opens with, e.g. the tutor message the learner wants to report (#147). */
+  initialText?: string;
+  initialKind?: FeedbackKind;
+  /** Runs when the dialog closes after a delivered submission, so its confirmation stays visible. */
+  onSubmitted?: () => void;
 }
 
 const problemKinds: Array<{ value: FeedbackKind; label: string }> = [
@@ -43,17 +48,22 @@ export function FeedbackCapture({
   triggerLabel = "Feedback geben",
   compact = false,
   flow = "general",
+  initialText,
+  initialKind,
+  onSubmitted,
 }: FeedbackCaptureProps) {
   const { scenario, mode, progress } = useTraining();
   const runtimeAdapterId = scenario.environment?.runtimeAdapterId;
   const runtimeAdapter = useMemo(() => getRuntimeAdapter(runtimeAdapterId), [runtimeAdapterId]);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [kind, setKind] = useState<FeedbackKind>(flow === "problem" ? "problem" : "general");
+  const defaultKind: FeedbackKind = initialKind ?? (flow === "problem" ? "problem" : "general");
+  const [kind, setKind] = useState<FeedbackKind>(defaultKind);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingRecord, setPendingRecord] = useState<FeedbackRecord | null>(null);
+  const [delivered, setDelivered] = useState(false);
   const [recordCount, setRecordCount] = useState(0);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const [screenshotConsentVisible, setScreenshotConsentVisible] = useState(false);
@@ -95,11 +105,12 @@ export function FeedbackCapture({
 
   const resetTransientState = () => {
     setText("");
-    setKind(flow === "problem" ? "problem" : "general");
+    setKind(defaultKind);
     setSaved(false);
     setSaveError(null);
     setSubmitting(false);
     setPendingRecord(null);
+    setDelivered(false);
     setScreenshotConsentVisible(false);
     setScreenshot(null);
     setScreenshotBusy(false);
@@ -109,12 +120,15 @@ export function FeedbackCapture({
   const changeOpen = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (nextOpen) {
+      if (initialText) setText(initialText);
+      setKind(defaultKind);
       setSaved(false);
       setSaveError(null);
       setRecordCount(loadFeedbackRecords().length);
       setNoticeAcknowledged(hasAcknowledgedFeedbackNotice());
       return;
     }
+    if (delivered) onSubmitted?.();
     resetTransientState();
   };
 
@@ -151,6 +165,7 @@ export function FeedbackCapture({
       setPendingRecord(null);
       setText("");
       setSaved(true);
+      setDelivered(true);
     } finally {
       setSubmitting(false);
     }

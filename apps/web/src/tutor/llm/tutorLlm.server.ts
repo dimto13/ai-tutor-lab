@@ -8,6 +8,7 @@ import { buildTutorContext } from "./tutorContext";
 import {
   InMemoryTutorSessionBudgetStore,
   TutorLlmService,
+  type TutorConversationTurn,
   type TutorLlmAnswer,
   type TutorLlmContext,
   type TutorSessionBudgetPolicy,
@@ -53,6 +54,7 @@ export interface TutorLlmServerInput {
   question: string;
   accessToken: string | null;
   userCode?: string;
+  history?: readonly TutorConversationTurn[];
 }
 
 function positiveInteger(value: string | undefined, fallback: number): number {
@@ -306,6 +308,7 @@ export async function answerTutorQuestionOnServer(
     question: {
       question: input.question,
       ...(input.userCode ? { userCode: input.userCode } : {}),
+      ...(input.history?.length ? { history: input.history } : {}),
     },
     includeUserCode: mayIncludeUserCode(identity, input.userCode, env),
   });

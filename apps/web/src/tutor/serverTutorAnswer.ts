@@ -1,8 +1,10 @@
-import type { TutorLlmAnswer } from "./llm/tutorGuardrails";
+import type { TutorLlmAnswer, TutorLlmAnswerKind } from "./llm/tutorGuardrails";
 
 export interface ServerTutorOutcome {
   answer: string;
   uiTargetRefs: string[];
+  /** Set only when the server tutor answered; "feedback" means the model saw a platform problem. */
+  kind?: TutorLlmAnswerKind;
 }
 
 /**
@@ -18,9 +20,11 @@ export async function preferServerTutor(
     if (response.status === "unavailable" || !response.answer.trim()) {
       return { answer: deterministicAnswer, uiTargetRefs: [] };
     }
+    if (response.status !== "ok") return { answer: response.answer, uiTargetRefs: [] };
     return {
       answer: response.answer,
-      uiTargetRefs: response.status === "ok" ? response.uiTargetRefs : [],
+      uiTargetRefs: response.uiTargetRefs,
+      ...(response.kind ? { kind: response.kind } : {}),
     };
   } catch {
     return { answer: deterministicAnswer, uiTargetRefs: [] };
