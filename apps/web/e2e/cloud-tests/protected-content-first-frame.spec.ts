@@ -45,7 +45,9 @@ async function newObservedContext(browser: Browser): Promise<BrowserContext> {
   return context;
 }
 
+// CDP gibt es nur in Chromium. Andere Browser laufen ungedrosselt; die Prüfung selbst gilt unverändert.
 async function throttleNetwork(page: Page): Promise<void> {
+  if (page.context().browser()?.browserType().name() !== "chromium") return;
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Network.enable");
   await cdp.send("Network.emulateNetworkConditions", {

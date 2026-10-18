@@ -14,7 +14,9 @@ import type { BrowserContext, Page } from "@playwright/test";
 
 export const ANONYMOUS_PLATFORM_CHROME = '[data-testid="account-menu-anonymous"]';
 
-const PROTECTED_SELECTORS = ['[data-testid^="account-menu"]'] as const;
+// Das anonyme Kontomenü wird zusätzlich einzeln erfasst: Beim Abmelden ist die Plattform bis zum
+// Klick berechtigt sichtbar, gewertet wird dort nur dieses Merkmal.
+const PROTECTED_SELECTORS = [ANONYMOUS_PLATFORM_CHROME, '[data-testid^="account-menu"]'] as const;
 
 const PROTECTED_TEXTS = [
   "Meine Trainings",
@@ -54,6 +56,7 @@ export async function observeProtectedContent(context: BrowserContext): Promise<
         inspectedMutations: 0,
         reset() {
           state.findings.length = 0;
+          state.inspectedMutations = 0;
           seen.clear();
         },
       };
@@ -96,7 +99,7 @@ export async function observeProtectedContent(context: BrowserContext): Promise<
             if (node.matches(selector) || node.querySelector(selector)) record(selector);
           }
         }
-        const text = textOf(node);
+        const text = textOf(node).replace(/\s+/g, " ");
         for (const marker of texts) {
           if (text.includes(marker)) record(marker);
         }
@@ -148,8 +151,8 @@ export function protectedMarkersInHtml(html: string): string[] {
   const body = html.match(/<body[\s\S]*<\/body>/i)?.[0] ?? html;
   const markup = body.replace(/<(script|style|template)\b[\s\S]*?<\/\1>/gi, "");
   const markers: string[] = [];
-  if (/data-testid="account-menu/.test(markup)) markers.push(PROTECTED_SELECTORS[0]);
-  const text = markup.replace(/<[^>]+>/g, "");
+  if (/data-testid=["']account-menu/.test(markup)) markers.push('[data-testid^="account-menu"]');
+  const text = markup.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
   for (const marker of PROTECTED_TEXTS) {
     if (text.includes(marker)) markers.push(marker);
   }
