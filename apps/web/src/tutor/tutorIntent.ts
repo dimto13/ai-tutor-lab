@@ -177,16 +177,16 @@ const STUCK = [
   "brauche (?:\\S+ ){0,2}hilfe",
   "hilf mir",
   "was (?:jetzt|nun)",
-  "^hilfe$",
 ].map(wholeWords);
+const BARE_HELP = /^hilfe$/u;
 
 // "Wieso ist das Highlight weg?" is no question about the purpose of the step.
 const RATIONALE = [
   "(?:warum|wieso|weshalb|wozu) (?:\\S+ ){0,2}(?:mache|machen|muss|müssen|soll|sollen|sollte|tue|tun|brauche|lerne|übe|üben)",
   "(?:warum|wieso|weshalb|wozu) (?:ist|sind) (?:das|dieser schritt|diese aufgabe|es) (?:\\S+ )?(?:wichtig|nötig|notwendig|sinnvoll|gut)",
   "wozu (?:ist|dient) (?:das|dieser schritt|diese aufgabe)",
-  "^(?:warum|wieso|weshalb|wozu)(?: das)?$",
 ].map(wholeWords);
+const BARE_WHY = /^(?:warum|wieso|weshalb|wozu)(?: das)?$/u;
 const PROGRESS = wholeWords("wo bin ich|fortschritt|mein(?:en)? status|wie weit bin ich");
 
 const SMALLTALK =
@@ -250,7 +250,7 @@ export function classifyTutorIntent(
   if (THANKS.test(text) && words <= 6 && !question && problem === 0) {
     return { intent: "smalltalk", confidence: "high" };
   }
-  if (STUCK.some((matcher) => matcher.test(text)) && problem < 2) {
+  if ((BARE_HELP.test(text) || STUCK.some((matcher) => matcher.test(text))) && problem < 2) {
     return { intent: "next_step", confidence: "high" };
   }
   // "Wie melde ich einen Fehler?" or "Kann ich etwas kaputt machen?" ask about the platform; they
@@ -287,7 +287,7 @@ export function classifyTutorIntent(
   }
 
   if (platformTopic && words <= 4) return { intent: "platform", confidence: "high", platformTopic };
-  if (question && RATIONALE.some((matcher) => matcher.test(text))) {
+  if (question && (BARE_WHY.test(text) || RATIONALE.some((matcher) => matcher.test(text)))) {
     return { intent: "rationale", confidence: "high" };
   }
   if (PROGRESS.test(text) && question) return { intent: "progress", confidence: "high" };

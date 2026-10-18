@@ -107,6 +107,13 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     ]);
   };
 
+  /** Only answered messages reach the model, so a report does not use up the history (#576). */
+  const setInHistory = (messageId: number, inHistory: boolean) => {
+    setMessages((messages) =>
+      messages.map((message) => (message.id === messageId ? { ...message, inHistory } : message)),
+    );
+  };
+
   const resolveOffer = (messageId: number) => {
     setMessages((messages) =>
       messages.map((message) =>
@@ -153,9 +160,11 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         }
       }
 
+      const offerFeedback = modelSawFeedback && allowFeedback;
+      if (offerFeedback) setInHistory(sourceId, false);
       appendTutorMessage(
         text,
-        modelSawFeedback && allowFeedback
+        offerFeedback
           ? { kind: "problem", clarify: false, sourceText: question, sourceId, resolved: false }
           : undefined,
       );
@@ -170,6 +179,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setInput("");
     const history = conversationHistory(messages);
     const sourceId = nextMessageId();
+    const reply = replyDeterministically(question, tutorContext, findGlossaryConcept);
     // A new message moves on: older offers would otherwise answer an old message later.
     setMessages((messages) => [
       ...messages.map((message) =>
@@ -177,10 +187,9 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           ? { ...message, offer: { ...message.offer, resolved: true } }
           : message,
       ),
-      { id: sourceId, role: "user", text: question, inHistory: true },
+      { id: sourceId, role: "user", text: question, inHistory: !reply.offer },
     ]);
 
-    const reply = replyDeterministically(question, tutorContext, findGlossaryConcept);
     if (reply.offer) {
       // A report or an ambiguous message needs no model call: the learner decides first (#147).
       appendTutorMessage(reply.text, {
@@ -199,6 +208,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     const offer = message.offer;
     if (!offer || pending) return;
     resolveOffer(message.id);
+    setInHistory(offer.sourceId, true);
     const sourceIndex = messages.findIndex((candidate) => candidate.id === offer.sourceId);
     const history = conversationHistory(
       sourceIndex >= 0 ? messages.slice(0, sourceIndex) : messages,

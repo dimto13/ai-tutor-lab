@@ -8,7 +8,10 @@ export function normalizeTutorText(value: string): string {
     .trim();
 }
 
-/** Matches the pattern only as whole words, so "tipp" does not hit "tippe". */
+/**
+ * Matches the pattern only as whole words, so "tipp" does not hit "tippe". No lookbehind, which
+ * older Safari versions cannot parse.
+ */
 export function wholeWords(source: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${source})(?![\\p{L}\\p{N}])`, "u");
+  return new RegExp(`(?:^|[^\\p{L}\\p{N}])(?:${source})(?![\\p{L}\\p{N}])`, "u");
 }
