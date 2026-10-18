@@ -207,5 +207,15 @@ Browserkontext müssen derselbe Abschluss und derselbe Score weiterhin vorhanden
 GraphQL-Tests bleiben Backend-Contract-Tests, ersetzen aber diesen UI-Orchestrierungsnachweis nicht,
 weil sie Save und Award bewusst sequenziell aufrufen und damit UI-Races nicht erkennen können.
 
+Für den Zugriffsschutz gilt dasselbe (#563): Ein Endzustand oder Screenshot belegt nicht, dass eine
+geschützte Route ohne gültige Sitzung nie gerendert wurde. `protected-content-first-frame.spec.ts`
+installiert deshalb vor dem Anwendungscode jedes Dokuments einen DOM-Beobachter und prüft zusätzlich
+das ausgelieferte SSR-HTML. Abgedeckt sind drei Sitzungsprofile: nie angemeldet, über die UI
+abgemeldet und eine gespeicherte, aber per Cognito `GlobalSignOut` widerrufene Sitzung. Für die
+widerrufene Sitzung prüft der Test zusätzlich, dass die App die gespeicherte Sitzung bei Cognito
+validiert und erst nach deren Ablehnung weiterleitet.
+Der Widerruf läuft mit dem Access-Token des Testkontos selbst über die öffentliche Cognito-API und
+beendet alle Sitzungen dieses Kontos, deshalb verwendet der Test das Konto `CLOUD_TEST_PERSONAL_*`.
+
 Die Testkonten und Passwörter liegen ausschließlich als Secrets im GitHub-Environment
 `cloud-acceptance`. AWS-Zugangsdaten gehören nicht in diesen Workflow.
