@@ -54,7 +54,8 @@ const guidedSteps: readonly { title: string; action: (page: Page) => Locator }[]
   },
   {
     title: "Deterministische Revision anwenden",
-    action: (page) => page.getByRole("button", { name: /Freigabestatus ergänzen/ }),
+    // Anchored: once the revision is applied, the revision history also names it (#580).
+    action: (page) => page.getByRole("button", { name: /^Freigabestatus ergänzen/ }),
   },
   {
     title: "Ergebnis aktiv verifizieren",

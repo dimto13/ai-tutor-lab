@@ -208,6 +208,15 @@ function eventPayload(event: TrainingEvent): Record<string, unknown> {
   return event.payload as Record<string, unknown>;
 }
 
+/**
+ * A repeated action leaves the tool as it was (#580). It may complete the step that waits for it,
+ * for a session restored behind its tool; otherwise it stays silent and counts no mistake, so a
+ * double click does not fail the next step.
+ */
+function isRepeatedAction(payload: Record<string, unknown>): boolean {
+  return payload["repeated"] === true;
+}
+
 function queryScenarioState(scenario: Scenario, selector: string): Promise<unknown> {
   const adapter = getRuntimeAdapterForSelector(
     selector,
@@ -935,6 +944,7 @@ export function TrainingProvider({
         const challengeStartedAt = startedProgress.startedAt;
         const result = await validateDeclarative(scenario.completionValidation, scenario, event);
         if (result.outcome !== "pass") {
+          if (isRepeatedAction(payload)) return;
           const message = await challengeDiagnosticMessage(scenario, event);
           const currentProgress = progressRef.current;
           if (
@@ -991,6 +1001,7 @@ export function TrainingProvider({
 
       if (guidedReplayStepIdRef.current !== replayStepAtStart) return;
       if (result.outcome === "ignore") return;
+      if (result.outcome !== "pass" && isRepeatedAction(payload)) return;
 
       if (replayStepAtStart) {
         if (result.outcome === "pass") {

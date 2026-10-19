@@ -271,3 +271,51 @@ for (const { width, height } of [
     }
   });
 }
+
+// #580: Sitzung und Werkzeugzustand werden getrennt gespeichert. Der Cloud-Testaccount blieb nach
+// dem #578-Fehler auf Schritt 2 stehen, waehrend die Ansicht schon "Quelltext" zeigte und die
+// Revision angewendet war. Die verlangten Klicks muessen den Schritt trotzdem abschliessen.
+test("Artefakt-Vorschau: Schritte lassen sich abschließen, wenn das Werkzeug schon im Zielzustand ist", async ({
+  page,
+}) => {
+  const sessionKey =
+    "ai-training-lab:tenant:value:local-tenant:user:local-learner:artifact-preview-foundation.guided:mode:guided:state:v4";
+  await page.goto(scenarioUrl);
+  await waitForTrainingReady(page);
+
+  await page.getByRole("button", { name: /Team-Übersicht/ }).click();
+  await expectGuidedStep(page, 2, "Vorschau und Quelltext unterscheiden");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key) ?? "null")?.value?.activeStepId,
+        sessionKey,
+      ),
+    )
+    .toBe("switch-to-source");
+  const sessionAtStepTwo = await page.evaluate((key) => localStorage.getItem(key), sessionKey);
+
+  await page.getByRole("button", { name: "Quelltext", exact: true }).click();
+  await expectGuidedStep(page, 3, "Deterministische Revision anwenden");
+  await page.getByRole("button", { name: /^Freigabestatus ergänzen/ }).click();
+  await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");
+  await expect(
+    page.locator('[data-highlight="artifact.preview.applyRevision"][data-revision-applied="true"]'),
+  ).toBeVisible();
+
+  // Die Sitzung faellt auf Schritt 2 zurueck, der gespeicherte Werkzeugzustand nicht.
+  await page.evaluate(
+    ([key, value]) => localStorage.setItem(key!, value!),
+    [sessionKey, sessionAtStepTwo],
+  );
+  await page.reload();
+  await waitForTrainingReady(page);
+  await expectGuidedStep(page, 2, "Vorschau und Quelltext unterscheiden");
+
+  await page.getByRole("button", { name: "Quelltext", exact: true }).click();
+  await expectGuidedStep(page, 3, "Deterministische Revision anwenden");
+  await page.getByRole("button", { name: /^Freigabestatus ergänzen/ }).click();
+  await expectGuidedStep(page, 4, "Ergebnis aktiv verifizieren");
+  await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
