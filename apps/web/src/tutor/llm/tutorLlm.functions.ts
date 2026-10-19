@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { TUTOR_HISTORY_MAX_TURNS } from "./tutorGuardrails";
 import { answerTutorQuestionOnServer } from "./tutorLlm.server";
 
 const tutorLlmInputSchema = z.object({
@@ -9,6 +10,15 @@ const tutorLlmInputSchema = z.object({
   question: z.string().trim().min(1).max(4_000),
   accessToken: z.string().min(1).max(20_000).nullable(),
   userCode: z.string().max(20_000).optional(),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "tutor"]),
+        text: z.string().trim().min(1).max(2_000),
+      }),
+    )
+    .max(TUTOR_HISTORY_MAX_TURNS)
+    .optional(),
 });
 
 export const askTutorLlm = createServerFn({ method: "POST" })
@@ -21,5 +31,6 @@ export const askTutorLlm = createServerFn({ method: "POST" })
       question: data.question,
       accessToken: data.accessToken,
       ...(data.userCode === undefined ? {} : { userCode: data.userCode }),
+      ...(data.history === undefined ? {} : { history: data.history }),
     }),
   );

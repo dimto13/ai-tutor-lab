@@ -115,6 +115,114 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   await accessibility.check("explicit tutor problem feedback confirmation");
 });
 
+test("Alltagssprachliche Problemmeldung geht mit einem Klick aus dem Chat an das Team (#147)", async ({
+  page,
+  accessibility,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await waitForTrainingReady(page);
+  // Wörtlich aus dem Owner-Pilot: früher eine Aussage ohne Antwort mit Verweis auf ein Formular.
+  const report =
+    "bei speichern meiner punkte pass was nicht. das Fenster ist sofort weg gewesen, sodass ich nicht meinen punktestand sehen konnte";
+
+  await page.getByRole("button", { name: "Tutor fragen" }).click();
+  await page.getByPlaceholder("Frage an den Tutor…").fill(report);
+  await page.getByRole("button", { name: "Senden" }).click();
+
+  const history = page.getByRole("region", { name: "Tutor-Verlauf" });
+  await expect(history).toContainText("Fehler in der Plattform");
+  await expect(history).toContainText("Kompetenzprofil");
+  await expect(history).not.toContainText("Ich habe ein Problem");
+  await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
+
+  const offer = page.getByTestId("tutor-feedback-offer");
+  await offer.getByRole("button", { name: "Ja, an das Team senden" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    history.locator('p, [role="alert"]').filter({
+      hasText: /Deine Meldung ist beim Team angekommen|lokal gesichert/,
+    }),
+  ).toBeVisible();
+
+  const records = (await readFeedbackRecords(page)) as Array<{
+    source?: string;
+    kind?: string;
+    text?: string;
+    context?: { scenarioId?: string; stepId?: string | null; mode?: string };
+  }>;
+  expect(records).toHaveLength(1);
+  expect(records[0]?.source).toBe("tutor");
+  expect(records[0]?.kind).toBe("problem");
+  expect(records[0]?.text).toBe(report);
+  expect(records[0]?.context?.scenarioId).toBe("vscode-basics.guided");
+  expect(records[0]?.context?.stepId).toBeTruthy();
+  expect(records[0]?.context?.mode).toBe("guided");
+  await accessibility.check("tutor one-click problem report");
+});
+
+test("Erkannte Problemmeldung lässt sich vor dem Senden bearbeiten (#147, #548)", async ({
+  page,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await waitForTrainingReady(page);
+  const report =
+    "Ich finde es seltsam: Nach Enter und Speichern ist die Aufgabe als nicht richtig deklariert. Das muss in der Plattform korrigiert werden.";
+
+  await page.getByRole("button", { name: "Tutor fragen" }).click();
+  await page.getByPlaceholder("Frage an den Tutor…").fill(report);
+  await page.getByRole("button", { name: "Senden" }).click();
+
+  const history = page.getByRole("region", { name: "Tutor-Verlauf" });
+  await expect(history).toContainText("Fehler in der Plattform");
+  await expect(history).not.toContainText("Ein Issue beschreibt");
+
+  const offer = page.getByTestId("tutor-feedback-offer");
+  await offer.getByRole("button", { name: "Vorher bearbeiten" }).click();
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag."),
+  ).toHaveValue(report);
+  await expect(dialog.getByRole("radio", { name: "Problem / Bug" })).toBeChecked();
+  await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
+  await expectDeliveryResult(dialog);
+
+  const records = (await readFeedbackRecords(page)) as Array<{ kind?: string; text?: string }>;
+  expect(records).toHaveLength(1);
+  expect(records[0]?.kind).toBe("problem");
+  expect(records[0]?.text).toBe(report);
+});
+
+test("Tutor-Angebot lässt sich ablehnen und mehrdeutige Fragen werden zurückgefragt", async ({
+  page,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await waitForTrainingReady(page);
+  await page.getByRole("button", { name: "Tutor fragen" }).click();
+  const input = page.getByPlaceholder("Frage an den Tutor…");
+  const history = page.getByRole("region", { name: "Tutor-Verlauf" });
+
+  await input.fill("Der Speichern-Button reagiert nicht");
+  await page.getByRole("button", { name: "Senden" }).click();
+  const offer = page.getByTestId("tutor-feedback-offer");
+  await offer.getByRole("button", { name: "Nein, ich brauche Hilfe zur Aufgabe" }).click();
+  await expect(offer).toHaveCount(0);
+  await expect(history.getByRole("paragraph")).toHaveCount(4);
+
+  await input.fill("Warum funktioniert mein Befehl nicht?");
+  await page.getByRole("button", { name: "Senden" }).click();
+  await expect(history).toContainText("Ich möchte dich richtig verstehen");
+  await expect(offer.getByRole("button", { name: "Hilfe zur Aufgabe" })).toBeVisible();
+  await expect(offer.getByRole("button", { name: "Als Problem melden" })).toBeVisible();
+
+  // A new message moves on, so the open offer cannot answer the old message later.
+  await input.fill("Was ist ein Workspace?");
+  await page.getByRole("button", { name: "Senden" }).click();
+  await expect(history).toContainText("Ein Workspace beschreibt deinen Arbeitskontext");
+  await expect(offer).toHaveCount(0);
+  await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
+});
+
 test("Problemmeldung lässt sich abbrechen, ohne Feedback oder Training-State zu verändern", async ({
   page,
 }) => {

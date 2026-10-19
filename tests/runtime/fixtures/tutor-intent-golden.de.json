@@ -1,0 +1,560 @@
+{
+  "version": 1,
+  "description": "Synthetische deutsche Tutor-Eingaben für das deterministische Intent-Routing (#147, #575). Keine echten Nutzer- oder Firmendaten; #548 ist sinngemäß aus der Owner-Meldung übernommen. Fälle mit Präfix probe- stammen aus einer Gegenprobe mit neuen Formulierungen, die vor den Musterkorrekturen nur zur Hälfte richtig geroutet wurden. Fälle mit Präfix pilot- sind wörtliche Owner-Eingaben aus dem Pilot, Fälle mit Präfix matrix- prüfen die Entscheidungsmatrix für Aussagen einschließlich Gegenproben.",
+  "cases": [
+    {
+      "id": "548-enter-save-judged-wrong",
+      "category": "problem_free_text",
+      "input": "Ich finde es irgendwie seltsam wenn ich den Text eingebe und Enter drücke und danach speichern möchte dann ist die Aufgabe als nicht richtig deklariert das ist doch sinnfrei. Ich erfülle doch die Aufgabe, nur dass ich ein Enter-Zeichen eingebe, das ist intuitiv und normal. Das muss doch in der Plattform korrigiert werden",
+      "expected": "problem_report"
+    },
+    {
+      "id": "548-paraphrase-short",
+      "category": "problem_free_text",
+      "input": "Ich habe die Aufgabe eigentlich richtig gemacht, trotzdem wird sie als falsch gewertet",
+      "expected": "problem_report"
+    },
+    {
+      "id": "548-paraphrase-question",
+      "category": "ambiguous",
+      "input": "Warum wird meine Eingabe als falsch gewertet, obwohl ich alles richtig gemacht habe?",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report"
+    },
+    {
+      "id": "button-does-not-react",
+      "category": "problem_free_text",
+      "input": "Der Speichern-Button reagiert nicht",
+      "expected": "problem_report"
+    },
+    {
+      "id": "step-not-recognized",
+      "category": "problem_free_text",
+      "input": "Ich habe die Datei gespeichert, aber der Schritt wird nicht als erledigt erkannt.",
+      "expected": "problem_report"
+    },
+    {
+      "id": "page-frozen",
+      "category": "problem_free_text",
+      "input": "Die Seite hängt sich auf, sobald ich das Terminal öffne",
+      "expected": "problem_report"
+    },
+    {
+      "id": "nothing-happens",
+      "category": "problem_free_text",
+      "input": "Wenn ich auf Commit klicke, passiert gar nichts",
+      "expected": "problem_report"
+    },
+    {
+      "id": "explicit-problem-phrase",
+      "category": "problem_free_text",
+      "input": "Ich habe ein Problem mit der Plattform, die Anzeige ist kaputt",
+      "expected": "problem_report"
+    },
+    {
+      "id": "points-not-counted",
+      "category": "problem_free_text",
+      "input": "Meine Punkte werden nicht gezählt, das ist ärgerlich",
+      "expected": "problem_report"
+    },
+    {
+      "id": "bug-question",
+      "category": "ambiguous",
+      "input": "Warum funktioniert mein Befehl nicht?",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report"
+    },
+    {
+      "id": "weak-complaint",
+      "category": "ambiguous",
+      "input": "Das ist komisch.",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report"
+    },
+    {
+      "id": "feature-would-be-good",
+      "category": "feature_free_text",
+      "input": "Es wäre gut, wenn es eine Übersicht aller Tastenkürzel gäbe",
+      "expected": "feature_request"
+    },
+    {
+      "id": "feature-wish",
+      "category": "feature_free_text",
+      "input": "Ich würde mir wünschen, dass man Übungen wiederholen kann",
+      "expected": "feature_request"
+    },
+    {
+      "id": "feature-missing-option",
+      "category": "feature_free_text",
+      "input": "Es fehlt eine Möglichkeit, die Schrift größer zu stellen",
+      "expected": "feature_request"
+    },
+    {
+      "id": "feature-why-no",
+      "category": "ambiguous",
+      "input": "Warum gibt es keinen Zurück-Button?",
+      "expected": "unclear",
+      "feedbackCandidate": "feature_request"
+    },
+    {
+      "id": "feedback-praise",
+      "category": "feedback_free_text",
+      "input": "Die Übung macht echt Spaß",
+      "expected": "feedback"
+    },
+    {
+      "id": "feedback-confusing",
+      "category": "feedback_free_text",
+      "input": "Die Erklärung im Guide ist verwirrend",
+      "expected": "feedback",
+      "usability": true
+    },
+    {
+      "id": "feedback-too-hard",
+      "category": "feedback_free_text",
+      "input": "Das Modul ist für Anfänger zu schwer",
+      "expected": "feedback"
+    },
+    {
+      "id": "step-next",
+      "category": "step_question",
+      "input": "Was soll ich jetzt machen?",
+      "expected": "next_step"
+    },
+    {
+      "id": "step-stuck",
+      "category": "step_question",
+      "input": "Ich komme hier nicht weiter",
+      "expected": "next_step"
+    },
+    {
+      "id": "step-my-task",
+      "category": "step_question",
+      "input": "Was ist meine Aufgabe?",
+      "expected": "next_step",
+      "note": "Negativkontrolle: „Aufgabe“ ist Glossar-Alias von „Issue“ und darf die Schrittfrage nicht kapern."
+    },
+    {
+      "id": "step-why",
+      "category": "step_question",
+      "input": "Wozu mache ich das eigentlich?",
+      "expected": "rationale"
+    },
+    {
+      "id": "step-progress",
+      "category": "step_question",
+      "input": "Wie weit bin ich schon?",
+      "expected": "progress"
+    },
+    {
+      "id": "definition-workspace",
+      "category": "definition",
+      "input": "Was ist ein Workspace?",
+      "expected": "definition"
+    },
+    {
+      "id": "definition-bug-word",
+      "category": "definition",
+      "input": "Was ist ein Bug?",
+      "expected": "definition",
+      "note": "Negativkontrolle: ein Problemwort in einer Begriffsfrage ist keine Problemmeldung."
+    },
+    {
+      "id": "definition-explain",
+      "category": "definition",
+      "input": "Erklär mir bitte, was ein Commit ist",
+      "expected": "definition"
+    },
+    {
+      "id": "definition-bare-term",
+      "category": "definition",
+      "input": "Workspace",
+      "expected": "definition"
+    },
+    {
+      "id": "definition-difference",
+      "category": "definition",
+      "input": "Unterschied Git und GitHub?",
+      "expected": "definition"
+    },
+    {
+      "id": "platform-report-how",
+      "category": "platform",
+      "input": "Wie melde ich einen Fehler?",
+      "expected": "platform",
+      "platformTopic": "report",
+      "note": "Negativkontrolle: die Frage nach dem Meldeweg ist selbst keine Meldung."
+    },
+    {
+      "id": "platform-modes",
+      "category": "platform",
+      "input": "Was ist der Unterschied zwischen Guided und Challenge?",
+      "expected": "platform",
+      "platformTopic": "modes"
+    },
+    {
+      "id": "platform-points",
+      "category": "platform",
+      "input": "Wie bekomme ich Punkte?",
+      "expected": "platform",
+      "platformTopic": "points"
+    },
+    {
+      "id": "platform-hint-cost",
+      "category": "platform",
+      "input": "Kostet es Punkte, wenn ich mir einen Hinweis anzeigen lasse?",
+      "expected": "platform"
+    },
+    {
+      "id": "platform-saving",
+      "category": "platform",
+      "input": "Wird mein Fortschritt gespeichert, wenn ich jetzt aufhöre?",
+      "expected": "platform",
+      "platformTopic": "saving"
+    },
+    {
+      "id": "platform-break-something",
+      "category": "platform",
+      "input": "Kann ich hier etwas kaputt machen?",
+      "expected": "platform",
+      "platformTopic": "simulation",
+      "note": "Negativkontrolle: „kaputt“ in einer Plattformfrage ist keine Problemmeldung."
+    },
+    {
+      "id": "platform-how-it-works",
+      "category": "platform",
+      "input": "Wie funktioniert das Training hier?",
+      "expected": "platform",
+      "platformTopic": "how-it-works"
+    },
+    {
+      "id": "tool-terminal",
+      "category": "tool_question",
+      "input": "Wo finde ich das Terminal?",
+      "expected": "question"
+    },
+    {
+      "id": "tool-copilot-suggestion",
+      "category": "tool_question",
+      "input": "Wie nehme ich einen Vorschlag von Copilot an?",
+      "expected": "question",
+      "note": "Negativkontrolle: Copilot-„Vorschläge“ sind Lerninhalt, kein Verbesserungsvorschlag."
+    },
+    {
+      "id": "tool-error-message",
+      "category": "tool_question",
+      "input": "Ich bekomme im Terminal einen Fehler, was bedeutet das?",
+      "expected": "question",
+      "note": "Negativkontrolle: eine Fehlermeldung im simulierten Werkzeug ist eine Lernfrage."
+    },
+    {
+      "id": "tool-agent-mode",
+      "category": "tool_question",
+      "input": "Was ist der Agent-Modus?",
+      "expected": "definition",
+      "note": "Negativkontrolle: Produktmodi sind nicht die Trainingsmodi der Plattform."
+    },
+    {
+      "id": "tool-delete-file",
+      "category": "tool_question",
+      "input": "Wie lösche ich eine Datei?",
+      "expected": "question"
+    },
+    {
+      "id": "followup-and-there",
+      "category": "follow_up",
+      "input": "Und wie speichere ich die Datei dann?",
+      "expected": "question",
+      "note": "Bezugsfragen beantwortet der Server-Tutor mit dem Chatverlauf; deterministisch bleibt es eine Frage."
+    },
+    {
+      "id": "general-knowledge",
+      "category": "general_question",
+      "input": "Was ist die Hauptstadt von Frankreich?",
+      "expected": "definition",
+      "note": "Ohne Glossartreffer gibt der deterministische Tutor offen zu, keine vorbereitete Antwort zu haben."
+    },
+    {
+      "id": "general-ai-question",
+      "category": "general_question",
+      "input": "Kann eine KI auch Fehler machen?",
+      "expected": "question"
+    },
+    {
+      "id": "smalltalk-thanks",
+      "category": "smalltalk",
+      "input": "Danke, das hat geholfen",
+      "expected": "smalltalk"
+    },
+    {
+      "id": "smalltalk-hello",
+      "category": "smalltalk",
+      "input": "Hallo",
+      "expected": "smalltalk"
+    },
+    {
+      "id": "probe-text-not-taken",
+      "category": "problem_free_text",
+      "input": "Irgendwas stimmt hier nicht, mein Text wird nicht übernommen",
+      "expected": "problem_report"
+    },
+    {
+      "id": "probe-simulator-not-loading",
+      "category": "problem_free_text",
+      "input": "Bei mir lädt der Simulator nicht",
+      "expected": "problem_report"
+    },
+    {
+      "id": "probe-tutor-misunderstands",
+      "category": "problem_free_text",
+      "input": "Der Tutor versteht mich überhaupt nicht",
+      "expected": "problem_report",
+      "note": "#548-Klasse: Kritik am Tutor darf nicht in eine Begriffsantwort zu „Tutor“ fallen."
+    },
+    {
+      "id": "probe-unfair-grading",
+      "category": "problem_free_text",
+      "input": "Die Bewertung ist unfair, ich hab das genauso gemacht wie beschrieben",
+      "expected": "problem_report"
+    },
+    {
+      "id": "probe-pity-wish",
+      "category": "feature_free_text",
+      "input": "Schade, dass man den Editor nicht größer ziehen kann",
+      "expected": "feature_request"
+    },
+    {
+      "id": "probe-video-suggestion",
+      "category": "ambiguous",
+      "input": "Könnte man nicht noch ein Video dazu machen?",
+      "expected": "unclear",
+      "feedbackCandidate": "feature_request"
+    },
+    {
+      "id": "probe-praise-explained",
+      "category": "feedback_free_text",
+      "input": "Toll erklärt!",
+      "expected": "feedback"
+    },
+    {
+      "id": "probe-small-window",
+      "category": "feedback_free_text",
+      "input": "Das Fenster ist zu klein auf meinem Handy",
+      "expected": "feedback",
+      "usability": true
+    },
+    {
+      "id": "probe-task-unclear",
+      "category": "feedback_free_text",
+      "input": "Die Aufgabe ist unklar",
+      "expected": "feedback",
+      "usability": true,
+      "note": "Negativkontrolle: „Aufgabe“ darf nicht die Issue-Definition auslösen."
+    },
+    {
+      "id": "probe-dont-understand-branch",
+      "category": "definition",
+      "input": "Ich verstehe nicht, was ein Branch ist",
+      "expected": "definition"
+    },
+    {
+      "id": "probe-what-does-explorer",
+      "category": "definition",
+      "input": "Was macht der Explorer?",
+      "expected": "definition"
+    },
+    {
+      "id": "probe-what-means-staged",
+      "category": "definition",
+      "input": "Was heißt staged?",
+      "expected": "definition"
+    },
+    {
+      "id": "probe-open-folder",
+      "category": "tool_question",
+      "input": "Wie öffne ich einen Ordner?",
+      "expected": "question"
+    },
+    {
+      "id": "probe-must-save",
+      "category": "tool_question",
+      "input": "Muss ich die Datei speichern?",
+      "expected": "question"
+    },
+    {
+      "id": "probe-copilot-modes",
+      "category": "tool_question",
+      "input": "Welche Modi gibt es in Copilot?",
+      "expected": "question",
+      "note": "Negativkontrolle: keine Trainingsmodi-Antwort für Produktmodi."
+    },
+    {
+      "id": "probe-highlight-gone",
+      "category": "tool_question",
+      "input": "Wieso ist das Highlight weg?",
+      "expected": "question",
+      "note": "Negativkontrolle: nicht jedes „Wieso“ fragt nach der Schrittbegründung."
+    },
+    {
+      "id": "probe-unclear-how",
+      "category": "tool_question",
+      "input": "Mir ist unklar, wie ich den Ordner öffne",
+      "expected": "question"
+    },
+    {
+      "id": "probe-finished-what-now",
+      "category": "step_question",
+      "input": "Ich bin fertig, was jetzt?",
+      "expected": "next_step"
+    },
+    {
+      "id": "probe-help-only",
+      "category": "step_question",
+      "input": "Hilfe",
+      "expected": "next_step"
+    },
+    {
+      "id": "probe-restart",
+      "category": "platform",
+      "input": "Kann ich die Übung neu starten?",
+      "expected": "question",
+      "note": "Nicht im Plattformwissen: der Server-Tutor muss ehrlich antworten, nichts erfinden."
+    },
+    {
+      "id": "pilot-1019-points-window-chat",
+      "category": "problem_free_text",
+      "input": "bei speichern meiner punkte pass was nicht. das Fenster ist sofort weg gewesen, sodass ich nicht meinen punktestand sehen konnte oder auch nicht sichergeste",
+      "expected": "problem_report",
+      "note": "Owner-Pilot 2026-10-19 im Tutor-Chat, wörtlich. Vor der Entscheidungsmatrix eine Aussage ohne Antwort mit Verweis auf „Ich habe ein Problem“."
+    },
+    {
+      "id": "pilot-1019-points-window-report",
+      "category": "problem_free_text",
+      "input": "der punktestand wurde nicht gespeichert vermute ich. das Problem ist, dass das Fenster mit der Übersicht nach dem training sofort wieder verschwunden ist. ich konnte nix sehen oder prüfen.",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-summary-gone",
+      "category": "problem_free_text",
+      "input": "Die Zusammenfassung war gleich wieder weg",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-points-not-visible",
+      "category": "problem_free_text",
+      "input": "Ich sehe meine Punkte nicht",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-overview-closed",
+      "category": "problem_free_text",
+      "input": "Die Übersicht ging sofort wieder zu",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-something-off",
+      "category": "ambiguous",
+      "input": "Da passt was nicht",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report"
+    },
+    {
+      "id": "matrix-tool-not-visible",
+      "category": "ambiguous",
+      "input": "Ich sehe das Terminal nicht",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report",
+      "note": "Gegenprobe: Ein Element des simulierten Werkzeugs ist eher eine Lernfrage. Der Tutor fragt nach, statt eine Meldung anzubieten."
+    },
+    {
+      "id": "matrix-tool-panel-gone",
+      "category": "ambiguous",
+      "input": "Das Fenster mit der Ausgabe ist weg",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report",
+      "note": "Gegenprobe: Plattform- und Werkzeugbezug zugleich – nachfragen."
+    },
+    {
+      "id": "matrix-not-yet-saved",
+      "category": "tool_question",
+      "input": "Ich habe die Datei noch nicht gespeichert",
+      "expected": "question",
+      "note": "Gegenprobe: Fortschrittsaussage, keine Störung."
+    }
+  ],
+  "heldOutDescription": "Unverändert übernommene zweite Gegenprobe. Die Muster wurden danach nicht angepasst. Die exakte Trefferquote wird nur berichtet; als Gate gilt hier ausschließlich, dass keine Problem-, Wunsch- oder Feedbackmeldung still als Begriffs-, Schritt- oder Plattformantwort endet.",
+  "heldOut": [
+    {
+      "id": "held-ctrl-s-not-checked",
+      "category": "problem_free_text",
+      "input": "Wenn ich Strg+S drücke, wird die Aufgabe trotzdem nicht abgehakt",
+      "expected": "problem_report"
+    },
+    {
+      "id": "held-font-unreadable",
+      "category": "feedback_free_text",
+      "input": "Die Schrift ist kaum lesbar",
+      "expected": "feedback"
+    },
+    {
+      "id": "held-dark-mode",
+      "category": "feature_free_text",
+      "input": "Ich hätte gern einen dunklen Modus",
+      "expected": "feature_request"
+    },
+    {
+      "id": "held-where-points",
+      "category": "platform",
+      "input": "Wo sehe ich, wie viele Punkte ich habe?",
+      "expected": "platform"
+    },
+    {
+      "id": "held-real-vscode",
+      "category": "platform",
+      "input": "Ist das hier echtes VS Code?",
+      "expected": "platform"
+    },
+    {
+      "id": "held-terminal-what-for",
+      "category": "definition",
+      "input": "Was ist ein Terminal und wofür brauche ich es?",
+      "expected": "definition"
+    },
+    {
+      "id": "held-back-to-start",
+      "category": "problem_free_text",
+      "input": "Nach dem Klick auf Weiter bin ich wieder am Anfang gelandet",
+      "expected": "problem_report"
+    },
+    {
+      "id": "held-explain-simpler",
+      "category": "follow_up",
+      "input": "Kannst du mir das noch einfacher erklären?",
+      "expected": "question"
+    },
+    {
+      "id": "held-highlight-wrong-place",
+      "category": "problem_free_text",
+      "input": "Das Highlight zeigt auf die falsche Stelle",
+      "expected": "problem_report"
+    },
+    {
+      "id": "held-ask-copilot",
+      "category": "tool_question",
+      "input": "Wie kann ich Copilot eine Frage stellen?",
+      "expected": "question"
+    },
+    {
+      "id": "held-thanks-worked",
+      "category": "smalltalk",
+      "input": "Danke, jetzt hat es geklappt",
+      "expected": "smalltalk"
+    },
+    {
+      "id": "held-tutor-helpful",
+      "category": "feedback_free_text",
+      "input": "Ich finde den Tutor super hilfreich",
+      "expected": "feedback"
+    }
+  ]
+}

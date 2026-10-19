@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Camera, Download, MessageSquareWarning, Trash2, X } from "lucide-react";
 import { captureTrainingSurfaceScreenshot } from "@/lib/feedbackScreenshot";
@@ -12,16 +12,19 @@ import {
   type FeedbackRecord,
   type FeedbackScreenshotAttachment,
   type FeedbackSource,
-  type FeedbackViewportClass,
 } from "@/lib/feedbackStore";
-import { getRuntimeAdapter } from "@/runtime";
-import { useTraining } from "@/state/trainingStore";
+import { useFeedbackContext, viewportClass } from "./useFeedbackContext";
 
 interface FeedbackCaptureProps {
   source: FeedbackSource;
   triggerLabel?: string;
   compact?: boolean;
   flow?: "general" | "problem";
+  /** Draft the dialog opens with, e.g. the tutor message the learner wants to report (#147). */
+  initialText?: string;
+  initialKind?: FeedbackKind;
+  /** Runs when the dialog closes after a delivered submission, so its confirmation stays visible. */
+  onSubmitted?: () => void;
 }
 
 const problemKinds: Array<{ value: FeedbackKind; label: string }> = [
@@ -30,30 +33,25 @@ const problemKinds: Array<{ value: FeedbackKind; label: string }> = [
   { value: "improvement", label: "Verbesserungsvorschlag" },
 ];
 
-function viewportClass(): FeedbackViewportClass {
-  if (typeof window === "undefined") return "unknown";
-  if (window.innerWidth <= 359) return "compact";
-  if (window.innerWidth <= 767) return "small";
-  if (window.innerWidth <= 1279) return "medium";
-  return "large";
-}
-
 export function FeedbackCapture({
   source,
   triggerLabel = "Feedback geben",
   compact = false,
   flow = "general",
+  initialText,
+  initialKind,
+  onSubmitted,
 }: FeedbackCaptureProps) {
-  const { scenario, mode, progress } = useTraining();
-  const runtimeAdapterId = scenario.environment?.runtimeAdapterId;
-  const runtimeAdapter = useMemo(() => getRuntimeAdapter(runtimeAdapterId), [runtimeAdapterId]);
+  const context = useFeedbackContext(source);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [kind, setKind] = useState<FeedbackKind>(flow === "problem" ? "problem" : "general");
+  const defaultKind: FeedbackKind = initialKind ?? (flow === "problem" ? "problem" : "general");
+  const [kind, setKind] = useState<FeedbackKind>(defaultKind);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingRecord, setPendingRecord] = useState<FeedbackRecord | null>(null);
+  const [delivered, setDelivered] = useState(false);
   const [recordCount, setRecordCount] = useState(0);
   const [noticeAcknowledged, setNoticeAcknowledged] = useState(false);
   const [screenshotConsentVisible, setScreenshotConsentVisible] = useState(false);
@@ -61,45 +59,14 @@ export function FeedbackCapture({
   const [screenshotBusy, setScreenshotBusy] = useState(false);
   const [screenshotError, setScreenshotError] = useState<string | null>(null);
 
-  const stepId =
-    progress.activeStepId ?? (source === "completion" ? (scenario.steps.at(-1)?.id ?? null) : null);
-
-  const context = useMemo(
-    () => ({
-      scenarioId: scenario.id,
-      stepId,
-      mode,
-      runtimeAdapterId: runtimeAdapterId ?? null,
-      runtime: {
-        productId: runtimeAdapter?.productId ?? null,
-        capabilities: [...(runtimeAdapter?.capabilities ?? [])],
-        viewportClass: viewportClass(),
-        stepStatus: stepId ? (progress.statuses[stepId] ?? null) : null,
-        hintsUsed: progress.hintsUsed,
-        mistakes: progress.mistakes,
-      },
-      appVersion: import.meta.env["VITE_APP_VERSION"] || "0.0.0-local",
-      commit: import.meta.env["VITE_APP_COMMIT_SHA"] || "local",
-    }),
-    [
-      mode,
-      progress.hintsUsed,
-      progress.mistakes,
-      progress.statuses,
-      runtimeAdapter,
-      runtimeAdapterId,
-      scenario.id,
-      stepId,
-    ],
-  );
-
   const resetTransientState = () => {
     setText("");
-    setKind(flow === "problem" ? "problem" : "general");
+    setKind(defaultKind);
     setSaved(false);
     setSaveError(null);
     setSubmitting(false);
     setPendingRecord(null);
+    setDelivered(false);
     setScreenshotConsentVisible(false);
     setScreenshot(null);
     setScreenshotBusy(false);
@@ -109,12 +76,15 @@ export function FeedbackCapture({
   const changeOpen = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (nextOpen) {
+      if (initialText) setText(initialText);
+      setKind(defaultKind);
       setSaved(false);
       setSaveError(null);
       setRecordCount(loadFeedbackRecords().length);
       setNoticeAcknowledged(hasAcknowledgedFeedbackNotice());
       return;
     }
+    if (delivered) onSubmitted?.();
     resetTransientState();
   };
 
@@ -151,6 +121,7 @@ export function FeedbackCapture({
       setPendingRecord(null);
       setText("");
       setSaved(true);
+      setDelivered(true);
     } finally {
       setSubmitting(false);
     }

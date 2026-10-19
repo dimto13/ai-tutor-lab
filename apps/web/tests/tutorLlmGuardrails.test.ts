@@ -3,6 +3,8 @@ import test from "node:test";
 import type { LlmProvider, LlmRequest, LlmResponse } from "../src/tutor/llm/provider.ts";
 import {
   InMemoryTutorSessionBudgetStore,
+  TUTOR_HISTORY_MAX_CHARS,
+  TUTOR_HISTORY_MAX_TURNS,
   TutorLlmService,
   type TutorLlmContext,
   type TutorLlmAuditEvent,
@@ -186,6 +188,144 @@ test("fails closed when Unicode action language has no semantic UI reference", a
   });
 
   assert.equal(result.status, "guardrail");
+});
+
+test("earlier chat turns reach the provider before the current question, answers as JSON", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({
+      answer: "Den Explorer öffnest du über das oberste Symbol links.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
+  );
+
+  await service(provider).answer({
+    sessionKey: "session-follow-up",
+    context,
+    question: {
+      question: "Und wo finde ich den?",
+      history: [
+        { role: "user", text: "Was ist der Explorer?" },
+        { role: "tutor", text: "Der Explorer zeigt die Dateien deines Workspace." },
+      ],
+    },
+    includeUserCode: false,
+  });
+
+  const messages = provider.requests[0]?.messages ?? [];
+  assert.deepEqual(
+    messages.map(({ role }) => role),
+    ["system", "user", "assistant", "user"],
+  );
+  assert.equal(messages[1]?.content, "Was ist der Explorer?");
+  assert.deepEqual(JSON.parse(messages[2]?.content ?? "{}"), {
+    answer: "Der Explorer zeigt die Dateien deines Workspace.",
+    kind: "explanation",
+    uiTargetRefs: [],
+  });
+  assert.equal(messages[3]?.content, "Und wo finde ich den?");
+  assert.match(messages[0]?.content ?? "", /beantworte immer die letzte Nutzernachricht/);
+});
+
+test("the replayed history keeps only the newest turns within the turn and size limits", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({ answer: "Ok.", kind: "explanation", uiTargetRefs: [] }),
+  );
+  const history = Array.from({ length: 10 }, (_, index) => ({
+    role: index % 2 === 0 ? ("user" as const) : ("tutor" as const),
+    text: `Nachricht ${index}`,
+  }));
+
+  await service(provider).answer({
+    sessionKey: "session-history-limit",
+    context,
+    question: { question: "Weiter?", history },
+    includeUserCode: false,
+  });
+  const turns = (provider.requests[0]?.messages ?? []).slice(1, -1);
+  assert.equal(turns.length, TUTOR_HISTORY_MAX_TURNS);
+  assert.equal(turns[0]?.content, "Nachricht 4");
+
+  await service(provider).answer({
+    sessionKey: "session-history-size",
+    context,
+    question: {
+      question: "Weiter?",
+      history: [
+        { role: "user", text: "a".repeat(TUTOR_HISTORY_MAX_CHARS - 10) },
+        { role: "tutor", text: "Lange alte Antwort" },
+        { role: "user", text: "Frage 2" },
+        { role: "tutor", text: "Antwort 2" },
+      ],
+    },
+    includeUserCode: false,
+  });
+  const sizedTurns = (provider.requests[1]?.messages ?? []).slice(1, -1);
+  assert.deepEqual(
+    sizedTurns.map(({ role }) => role),
+    ["user", "assistant"],
+  );
+  assert.equal(sizedTurns[0]?.content, "Frage 2");
+});
+
+test("only answered questions are replayed, so the roles strictly alternate", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({ answer: "Ok.", kind: "explanation", uiTargetRefs: [] }),
+  );
+
+  await service(provider).answer({
+    sessionKey: "session-history-roles",
+    context,
+    question: {
+      question: "Und wo finde ich den?",
+      history: [
+        { role: "tutor", text: "Antwort ohne Frage im Verlauf" },
+        { role: "user", text: "Der Button reagiert nicht" },
+        { role: "user", text: "Was ist der Explorer?" },
+        { role: "tutor", text: "Der Explorer zeigt die Dateien." },
+        { role: "user", text: "Unbeantwortete Meldung" },
+      ],
+    },
+    includeUserCode: false,
+  });
+
+  const messages = provider.requests[0]?.messages ?? [];
+  assert.deepEqual(
+    messages.map(({ role }) => role),
+    ["system", "user", "assistant", "user"],
+  );
+  assert.equal(messages[1]?.content, "Was ist der Explorer?");
+  assert.equal(messages[3]?.content, "Und wo finde ich den?");
+});
+
+test("a platform problem comes back as feedback instead of a learning answer (#147, #548)", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({
+      answer: "Du meinst, dass dein Speichern nach Enter als falsch gewertet wurde.",
+      kind: "feedback",
+      uiTargetRefs: [],
+    }),
+  );
+
+  const result = await service(provider).answer({
+    sessionKey: "session-feedback-kind",
+    context: {
+      ...context,
+      platformKnowledge: [{ title: "Problem melden", answer: "Über „Ich habe ein Problem“." }],
+    },
+    question: { question: "Nach Enter und Speichern gilt die Aufgabe als falsch." },
+    includeUserCode: false,
+  });
+
+  assert.equal(result.status, "ok");
+  assert.equal(result.kind, "feedback");
+  const systemMessage = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(systemMessage, /setze kind auf feedback/);
+  assert.match(systemMessage, /Plattformwissen:\n- Problem melden: Über „Ich habe ein Problem“\./);
 });
 
 test("user code enters the provider prompt only after the caller grants tenant opt-in", async () => {

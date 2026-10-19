@@ -245,7 +245,17 @@ export class OfflineBufferedTrainingStateRepository
 
     try {
       const remoteRecord = await this.remote.loadSession(key);
-      cacheSession(this.store, key, remoteRecord);
+      // Revisions only grow (#578). A read that started before a newer write and answers after it must
+      // not rewind the shared cache: every other repository instance for this key, such as the
+      // completion screen's recommendation reader, would turn the next write into a conflict.
+      const current = this.store.loadSession(key);
+      const stale =
+        remoteRecord !== null &&
+        current !== null &&
+        !current.pending &&
+        current.remoteRevision !== null &&
+        current.remoteRevision > remoteRecord.revision;
+      if (!stale) cacheSession(this.store, key, remoteRecord);
       return remoteRecord;
     } catch (error) {
       if (error instanceof TrainingStateUnavailableError) {
@@ -261,7 +271,16 @@ export class OfflineBufferedTrainingStateRepository
     options: TrainingStateWriteOptions,
   ): Promise<TrainingStateRecord<StoredTrainingSession>> {
     const cached = this.store.loadSession(key);
-    const remoteRevision = assertSessionExpectedRevision(cached, options.expectedRevision);
+    let remoteRevision: number | null;
+    try {
+      remoteRevision = assertSessionExpectedRevision(cached, options.expectedRevision);
+    } catch (error) {
+      if (!(error instanceof TrainingStateConflictError) || cached?.pending) throw error;
+      // The server decides between the caller and a disagreeing cache, so the caller's reload
+      // after this conflict reads a consistent revision.
+      const latest = await latestSessionAfterConflict(this.remote, this.store, key);
+      throw new TrainingStateConflictError(options.expectedRevision, latest?.revision ?? null);
+    }
 
     try {
       const saved = await this.remote.saveSession(key, session, {

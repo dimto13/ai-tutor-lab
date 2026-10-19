@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { TrainingEvent } from "@ai-train-lab/training-engine";
+import { submitBetaFeedbackWithClient } from "../src/adapters/betaFeedbackClient.ts";
 import { createAmplifyAttestationServiceWithClient } from "../src/attestations/adapters/amplifyAttestationService.ts";
 import { createAmplifyUserPreferencesRepositoryWithClient } from "../src/persistence/adapters/amplifyUserPreferencesRepository.ts";
 import {
@@ -167,4 +168,76 @@ test("accessibility preferences travel as AWSJSON and null stays null", async ()
 
   const loaded = await repository.load(subject);
   assert.deepEqual(loaded?.accessibility, accessibility);
+});
+
+test("beta feedback reaches AppSync as a JSON string without screenshot or runtime details", async () => {
+  const sent: Captured[] = [];
+  type Client = Parameters<typeof submitBetaFeedbackWithClient>[0];
+  const client = {
+    mutations: {
+      submitBetaFeedback: async (args: Captured) => {
+        sent.push(args);
+        // The resolver only accepts an object after AppSync parsed the AWSJSON string.
+        if (typeof args["input"] !== "string") {
+          return {
+            data: null,
+            errors: [
+              { message: "Variable 'input' has an invalid value.", errorType: "BadRequest" },
+            ],
+          };
+        }
+        return { data: { accepted: true, duplicate: false }, errors: undefined };
+      },
+    },
+  } as unknown as Client;
+
+  const result = await submitBetaFeedbackWithClient(client, {
+    id: "7f4aa9e6-21da-4138-9b11-f00d374ed329",
+    source: "tutor",
+    kind: "problem",
+    text: "Das Fenster mit der Übersicht war nach dem Training sofort wieder weg.",
+    context: {
+      scenarioId: "vscode-basics.guided",
+      stepId: "open_output",
+      mode: "guided",
+      runtimeAdapterId: "vscode-simulator",
+      runtime: {
+        productId: "vscode",
+        capabilities: ["editor"],
+        viewportClass: "large",
+        stepStatus: "ACTIVE",
+        hintsUsed: 0,
+        mistakes: 1,
+      },
+      appVersion: "0.0.0",
+      commit: "32c998aa32fabfd470da2cb9dce9d68f46bbebb8",
+      timestamp: "2026-10-19T07:15:16.547Z",
+    },
+    screenshot: {
+      kind: "screenshot",
+      mediaType: "image/png",
+      dataUrl: "data:image/png;base64,AAAA",
+      width: 1,
+      height: 1,
+      capturedArea: "training-surface",
+    },
+  });
+
+  assert.deepEqual(result, { ok: true, duplicate: false });
+  assert.equal(typeof sent[0]?.["input"], "string");
+  assert.deepEqual(JSON.parse(sent[0]?.["input"] as string), {
+    id: "7f4aa9e6-21da-4138-9b11-f00d374ed329",
+    source: "tutor",
+    kind: "problem",
+    text: "Das Fenster mit der Übersicht war nach dem Training sofort wieder weg.",
+    context: {
+      scenarioId: "vscode-basics.guided",
+      stepId: "open_output",
+      mode: "guided",
+      runtimeAdapterId: "vscode-simulator",
+      appVersion: "0.0.0",
+      commit: "32c998aa32fabfd470da2cb9dce9d68f46bbebb8",
+      timestamp: "2026-10-19T07:15:16.547Z",
+    },
+  });
 });

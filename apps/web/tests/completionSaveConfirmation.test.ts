@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { AppendScoreEventResult } from "@ai-train-lab/training-engine";
 import {
+  completionSaveAfterWrite,
   confirmedCompletionFinishedAt,
   confirmedCompletionSave,
   failedCompletionSave,
@@ -91,4 +92,21 @@ test("a confirmation is bound to the exact completion key", () => {
 test("unfinished and idle completions never unlock scoring", () => {
   assert.equal(confirmedCompletionFinishedAt(null, confirmedCompletionSave(100)), null);
   assert.equal(confirmedCompletionFinishedAt(100, initialCompletionSaveConfirmation), null);
+});
+
+test("a completion write that resolved to another persisted session is not confirmed", () => {
+  assert.deepEqual(completionSaveAfterWrite(42_000, null), confirmedCompletionSave(42_000));
+  assert.deepEqual(
+    completionSaveAfterWrite(42_000, { finishedAt: 42_000 }),
+    confirmedCompletionSave(42_000),
+  );
+  assert.deepEqual(
+    completionSaveAfterWrite(42_000, { finishedAt: null }),
+    initialCompletionSaveConfirmation,
+  );
+  assert.deepEqual(
+    completionSaveAfterWrite(42_000, { finishedAt: 41_000 }),
+    initialCompletionSaveConfirmation,
+  );
+  assert.deepEqual(completionSaveAfterWrite(null, null), initialCompletionSaveConfirmation);
 });

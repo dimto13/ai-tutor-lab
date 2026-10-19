@@ -26,6 +26,7 @@ test("the deterministic answer stays whenever the server tutor fails (#28, #481)
     assert.deepEqual(await preferServerTutor(DETERMINISTIC, ask), {
       answer: DETERMINISTIC,
       uiTargetRefs: [],
+      fallback: true,
     });
   }
 });

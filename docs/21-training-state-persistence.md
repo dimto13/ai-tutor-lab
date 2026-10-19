@@ -43,9 +43,10 @@ AppSync Resolver -> DynamoDB
 
 Die Training Engine kennt weder `localStorage` noch Amplify, AppSync oder DynamoDB.
 
-`apps/web/src/state/trainingStatePersistence.ts` serialisiert Schreibvorgaenge und kapselt
+`apps/web/src/state/trainingStatePersistence.ts` serialisiert Lese- und Schreibvorgaenge und kapselt
 Revisionsverwaltung. Ein echter Revisionskonflikt wird nicht durch einen stillen Client-Overwrite
-aufgeloest: Die persistierte Autoritaet wird erneut geladen.
+aufgeloest: Die persistierte Autoritaet wird erneut geladen. Einzige Ausnahme ist ein Abschluss
+(#578, siehe „Konflikte und Autoritaet“).
 
 Die optionale Reconnect-Faehigkeit liegt bewusst **nicht** im Training-Engine-Port. Sie wird als
 Web-Anwendungscapability `PendingTrainingStateSynchronization` modelliert. Damit bleiben lokale oder
@@ -237,6 +238,26 @@ Session-, Runtime- und Preference-Schreibvorgaenge verwenden `expectedRevision`.
 - Reconnect ohne Konkurrenz: Der letzte gepufferte Kandidat wird gegen diese Basis geschrieben.
 - Reconnect mit Konkurrenz: Der konditionale Write scheitert; der Serverstand wird geladen und gewinnt.
 
+### Abschluss gegen aelteren Stand desselben Versuchs (#578)
+
+Ein Abschluss darf nicht an einem Revisionskonflikt verloren gehen. Vorher ersetzte der Konfliktpfad
+einen fertigen Versuch durch den aelteren, unfertigen Serverstand; die Abschlussansicht verschwand,
+der letzte Schritt war wieder aktiv, und der Store meldete den Abschluss trotzdem als gespeichert.
+
+- `finishedAttemptSupersedes` (Training Engine): Ist der lokale Stand fertig und der persistierte
+  Stand ein unfertiger Stand **desselben Versuchs** (gleiches Subject, Szenario, Modus und
+  `startedAt`), wird der Abschluss auf die aktuelle Revision geschrieben (hoechstens drei Versuche,
+  danach sichtbarer Speicherfehler mit Wiederholen).
+- Ein Neustart (anderes `startedAt`), ein bereits gespeicherter Abschluss, eine abgelaufene
+  Challenge und ein fehlender Record behalten die Serverautoritaet.
+- `completionSaveAfterWrite`: Ein Write, der auf eine andere persistierte Session aufgeloest wurde,
+  gilt nie als bestaetigter Abschluss.
+- Revisionen wachsen nur. Ein Read darf den gemeinsamen Revisions-Cache im Browser nicht
+  zuruecksetzen: Ein Read, der vor einem neueren Write startet und danach antwortet (etwa die
+  Empfehlungen der Abschlussansicht ueber eine eigene Repository-Instanz), liess sonst den naechsten
+  Write lokal scheitern. Widerspricht der Cache dem Aufrufer, laedt der Puffer vor dem Konflikt den
+  Serverstand.
+
 Im Cognito-/Produktionsmodus ist der serverseitige Zustand immer die persistierte Autoritaet.
 LocalStorage ist Cache, Outbox und Legacy-Migrationsquelle, aber keine zweite gleichberechtigte
 Wahrheit.
@@ -259,6 +280,8 @@ offline-gepufferte Implementierungen. Zusaetzliche Offline-Tests pruefen insbeso
 - Wiederaufnahme des gepufferten Zustands nach Browser-/Repository-Neustart
 - explizite pending-Synchronisation fuer Browser-Reconnect
 - Serverautoritaet bei konkurrierender Geraeteaenderung
+- Abschluss gegen veraltete parallele Reads und aelteren Stand desselben Versuchs
+  (`apps/web/tests/completionConflict.test.ts`, #578)
 - gepufferte Runtime-Loeschungen
 - kein Fallback bei Auth-/Anwendungsfehlern
 - enge Klassifizierung von Amplify-Fetch-/Netzwerkfehlern

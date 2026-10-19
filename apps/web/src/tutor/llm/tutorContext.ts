@@ -1,6 +1,7 @@
 import type { TrainingMode } from "@ai-train-lab/training-engine";
 import type { Scenario } from "@/types/training";
 import { getRuntimeReferenceDefinition } from "../../runtime/referenceCatalog.ts";
+import { getPlatformTopics } from "../platformKnowledge.ts";
 import type { TutorLlmContext } from "./tutorGuardrails";
 
 // Pure so the server route and the live acceptance script build the identical tutor context.
@@ -48,5 +49,6 @@ export function buildTutorContext(
     stepUiTargetRefs: [...stepUiTargetRefs],
     allowedUiTargetRefs: [...new Set([...stepUiTargetRefs, ...Object.keys(uiTargetLabels)])],
     uiTargetLabels,
+    platformKnowledge: getPlatformTopics().map(({ title, answer }) => ({ title, answer })),
   };
 }

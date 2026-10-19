@@ -97,6 +97,29 @@ export function sameTrainingSubject(
   return left.userId === right.userId && left.tenantId === right.tenantId;
 }
 
+/**
+ * Conflict rule for a finished session: a completion must not be lost to a revision conflict (#578).
+ *
+ * When the persisted record is an older, unfinished snapshot of the same attempt (same subject,
+ * scenario, mode and `startedAt`), the finished local session strictly extends it and may be written
+ * on top of that revision. A restarted attempt, an already persisted completion, a timed-out
+ * challenge or a missing record keep the persisted authority.
+ */
+export function finishedAttemptSupersedes(
+  local: TrainingSession,
+  persisted: TrainingSession | null,
+): boolean {
+  if (local.finishedAt === null || !persisted) return false;
+  return (
+    persisted.finishedAt === null &&
+    persisted.challengeOutcome !== "timed_out" &&
+    persisted.startedAt === local.startedAt &&
+    persisted.scenarioId === local.scenarioId &&
+    persisted.mode === local.mode &&
+    sameTrainingSubject(persisted.subject, local.subject)
+  );
+}
+
 export function sameTrainingStateKey(left: TrainingStateKey, right: TrainingStateKey): boolean {
   return (
     left.scenarioId === right.scenarioId &&

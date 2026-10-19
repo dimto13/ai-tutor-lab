@@ -1,4 +1,8 @@
-import { TrainingStateConflictError, restoreTrainingSession } from "@ai-train-lab/training-engine";
+import {
+  TrainingStateConflictError,
+  finishedAttemptSupersedes,
+  restoreTrainingSession,
+} from "@ai-train-lab/training-engine";
 import type {
   Scenario,
   TrainingSession,
@@ -23,13 +27,17 @@ export interface TrainingStateReconnectResult {
   runtimeRestores: RuntimeReconnectRestore[];
 }
 
+const MAX_COMPLETION_REBASE_ATTEMPTS = 3;
+
 /**
  * Application-level coordinator for one user/scenario/mode persistence scope.
  *
- * It serializes writes so React state updates cannot create self-conflicts and
+ * It serializes reads and writes so React state updates cannot create self-conflicts and
  * keeps repository revisions outside UI components. A real concurrent write
  * resolves to the repository's latest persisted session, which is the same
- * authority rule required once the remote repository becomes primary.
+ * authority rule required once the remote repository becomes primary. The one
+ * exception is a completion: it is written on top of an older unfinished snapshot
+ * of the same attempt instead of being discarded (`finishedAttemptSupersedes`).
  */
 export class TrainingStatePersistence {
   private readonly repository: TrainingStateRepository;
@@ -47,41 +55,56 @@ export class TrainingStatePersistence {
     this.scenario = scenario;
   }
 
-  async loadSession(): Promise<TrainingStateLoadResult> {
-    await this.sessionWriteChain;
-    const record = await this.repository.loadSession(this.key);
-    this.sessionRevision = record?.revision ?? null;
-    return {
-      session: restoreTrainingSession(
-        this.scenario,
-        this.scenario.id,
-        record?.value,
-        Date.now(),
-        this.key.subject,
-      ),
-      revision: this.sessionRevision,
-    };
+  loadSession(): Promise<TrainingStateLoadResult> {
+    // A read runs in the write chain: answering with an older revision after a newer write would
+    // otherwise rewind `sessionRevision` and turn the next write into a conflict.
+    const operation = this.sessionWriteChain.then(async () => {
+      const record = await this.repository.loadSession(this.key);
+      this.sessionRevision = record?.revision ?? null;
+      return {
+        session: restoreTrainingSession(
+          this.scenario,
+          this.scenario.id,
+          record?.value,
+          Date.now(),
+          this.key.subject,
+        ),
+        revision: this.sessionRevision,
+      };
+    });
+
+    this.sessionWriteChain = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return operation;
   }
 
   saveSession(session: TrainingSession): Promise<TrainingSession | null> {
     const operation = this.sessionWriteChain.then(async () => {
-      try {
-        const saved = await this.repository.saveSession(this.key, session, {
-          expectedRevision: this.sessionRevision,
-        });
-        this.sessionRevision = saved.revision;
-        return null;
-      } catch (error) {
-        if (!(error instanceof TrainingStateConflictError)) throw error;
-        const latest = await this.repository.loadSession(this.key);
-        this.sessionRevision = latest?.revision ?? null;
-        return restoreTrainingSession(
-          this.scenario,
-          this.scenario.id,
-          latest?.value,
-          Date.now(),
-          this.key.subject,
-        );
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          const saved = await this.repository.saveSession(this.key, session, {
+            expectedRevision: this.sessionRevision,
+          });
+          this.sessionRevision = saved.revision;
+          return null;
+        } catch (error) {
+          if (!(error instanceof TrainingStateConflictError)) throw error;
+          const latest = await this.repository.loadSession(this.key);
+          this.sessionRevision = latest?.revision ?? null;
+          const persisted = restoreTrainingSession(
+            this.scenario,
+            this.scenario.id,
+            latest?.value,
+            Date.now(),
+            this.key.subject,
+          );
+          // Discarding a finished attempt here made the completion screen vanish and left the
+          // last step active again (#578). A repeated conflict surfaces as a save error with retry.
+          if (!latest || !finishedAttemptSupersedes(session, persisted)) return persisted;
+          if (attempt >= MAX_COMPLETION_REBASE_ATTEMPTS) throw error;
+        }
       }
     });
 

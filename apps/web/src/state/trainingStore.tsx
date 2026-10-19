@@ -42,7 +42,7 @@ import type {
 } from "@ai-train-lab/training-engine";
 import { useAuth } from "@/auth/AuthContext";
 import {
-  confirmedCompletionSave,
+  completionSaveAfterWrite,
   failedCompletionSave,
   initialCompletionSaveConfirmation,
   pendingCompletionSave,
@@ -536,11 +536,7 @@ export function TrainingProvider({
         if (cancelled) return;
         setCompletionSaveFailure(null);
         setCompletionSaveDiagnostic(null);
-        setCompletionSaveConfirmation(
-          finishedAt === null
-            ? initialCompletionSaveConfirmation
-            : confirmedCompletionSave(finishedAt),
-        );
+        setCompletionSaveConfirmation(completionSaveAfterWrite(finishedAt, authoritativeSession));
         if (!authoritativeSession) return;
         setProgress((current) => {
           if (current !== progress) return current;

@@ -17,7 +17,7 @@ export const tutorDataCategory = {
   id: "tutor",
   title: "KI-Tutor",
   stored:
-    "Bei einer Tutor-Frage werden deine Frage sowie der Szenario- und Schrittkontext verarbeitet. Programmcode wird nicht an den Tutor übermittelt. Frage- und Antworttexte werden nicht in den operativen Logs gespeichert; dort werden nur technische Angaben wie Request-ID, Route und Status protokolliert.",
+    "Bei einer Tutor-Frage werden deine Frage, bis zu sechs vorherige Nachrichten desselben Chats sowie der Szenario- und Schrittkontext verarbeitet. Programmcode wird nicht an den Tutor übermittelt. Frage- und Antworttexte werden nicht in den operativen Logs gespeichert; dort werden nur technische Angaben wie Request-ID, Route und Status protokolliert.",
   storage:
     "Für Relay und Befehlsübermittlung wird Cloud-Infrastruktur des Anbieters in den USA verwendet. Die KI-Modelle laufen auf eigener Hardware des Anbieters. In der geschlossenen Beta werden ausschließlich lokale Modelle verwendet; eine externe Cloud-KI-Route ist nicht aktiviert.",
   recipients:
