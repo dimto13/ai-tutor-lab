@@ -11,7 +11,8 @@ async function source(): Promise<string> {
 test("beta feedback client matches the server ingest envelope", async () => {
   const code = await source();
 
-  assert.match(code, /submitBetaFeedback\(\{\s*input:\s*\{/s);
+  // AWSJSON argument: the envelope must be encoded as a JSON string (#569).
+  assert.match(code, /submitBetaFeedback\(\{\s*input:\s*encodeAwsJson\(\{/s);
   assert.match(code, /id:\s*record\.id/);
   assert.match(code, /source:\s*record\.source/);
   assert.match(code, /kind:\s*record\.kind/);
