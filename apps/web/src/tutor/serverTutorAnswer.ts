@@ -5,6 +5,8 @@ export interface ServerTutorOutcome {
   uiTargetRefs: string[];
   /** Set only when the server tutor answered; "feedback" means the model saw a platform problem. */
   kind?: TutorLlmAnswerKind;
+  /** Set when the deterministic answer stayed, so its own follow-up offer still applies. */
+  fallback?: true;
 }
 
 /**
@@ -18,7 +20,7 @@ export async function preferServerTutor(
   try {
     const response = await ask();
     if (response.status === "unavailable" || !response.answer.trim()) {
-      return { answer: deterministicAnswer, uiTargetRefs: [] };
+      return { answer: deterministicAnswer, uiTargetRefs: [], fallback: true };
     }
     if (response.status !== "ok") return { answer: response.answer, uiTargetRefs: [] };
     return {
@@ -27,6 +29,6 @@ export async function preferServerTutor(
       ...(response.kind ? { kind: response.kind } : {}),
     };
   } catch {
-    return { answer: deterministicAnswer, uiTargetRefs: [] };
+    return { answer: deterministicAnswer, uiTargetRefs: [], fallback: true };
   }
 }

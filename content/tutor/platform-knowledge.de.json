@@ -8,7 +8,7 @@
         "(?:wie|wo|wem|wohin) (?:\\S+ ){0,5}(?:melden|melde|mitteilen|weitergeben|feedback geben|feedback senden)",
         "(?:problem|fehler|bug|feedback|vorschlag) (?:\\S+ ){0,2}(?:melden|einreichen|abgeben|senden)"
       ],
-      "answer": "Über „Ich habe ein Problem“ im Tutor-Bereich meldest du Fehler, Bedienprobleme oder Verbesserungsvorschläge. Scenario, Schritt und Modus werden automatisch als Kontext angehängt, und du prüfst deinen Text vor dem Senden. Du kannst mir dein Anliegen auch direkt schreiben – ich biete dir dann an, es als Meldung aufzunehmen."
+      "answer": "Schreib mir einfach, was passiert ist. Wenn es nach einem Fehler oder Vorschlag klingt, kannst du deine Nachricht hier im Chat mit einem Klick an das Team senden – Szenario, Schritt und Modus werden automatisch als Kontext angehängt, und du musst nichts noch einmal beschreiben. Alternativ öffnet „Ich habe ein Problem“ im Tutor-Bereich ein Formular, in dem du zusätzlich die Art der Meldung wählst."
     },
     {
       "id": "modes",

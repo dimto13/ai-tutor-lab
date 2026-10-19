@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Synthetische deutsche Tutor-Eingaben für das deterministische Intent-Routing (#147, #575). Keine echten Nutzer- oder Firmendaten; #548 ist sinngemäß aus der Owner-Meldung übernommen. Fälle mit Präfix probe- stammen aus einer Gegenprobe mit neuen Formulierungen, die vor den Musterkorrekturen nur zur Hälfte richtig geroutet wurden.",
+  "description": "Synthetische deutsche Tutor-Eingaben für das deterministische Intent-Routing (#147, #575). Keine echten Nutzer- oder Firmendaten; #548 ist sinngemäß aus der Owner-Meldung übernommen. Fälle mit Präfix probe- stammen aus einer Gegenprobe mit neuen Formulierungen, die vor den Musterkorrekturen nur zur Hälfte richtig geroutet wurden. Fälle mit Präfix pilot- sind wörtliche Owner-Eingaben aus dem Pilot, Fälle mit Präfix matrix- prüfen die Entscheidungsmatrix für Aussagen einschließlich Gegenproben.",
   "cases": [
     {
       "id": "548-enter-save-judged-wrong",
@@ -419,6 +419,67 @@
       "input": "Kann ich die Übung neu starten?",
       "expected": "question",
       "note": "Nicht im Plattformwissen: der Server-Tutor muss ehrlich antworten, nichts erfinden."
+    },
+    {
+      "id": "pilot-1019-points-window-chat",
+      "category": "problem_free_text",
+      "input": "bei speichern meiner punkte pass was nicht. das Fenster ist sofort weg gewesen, sodass ich nicht meinen punktestand sehen konnte oder auch nicht sichergeste",
+      "expected": "problem_report",
+      "note": "Owner-Pilot 2026-10-19 im Tutor-Chat, wörtlich. Vor der Entscheidungsmatrix eine Aussage ohne Antwort mit Verweis auf „Ich habe ein Problem“."
+    },
+    {
+      "id": "pilot-1019-points-window-report",
+      "category": "problem_free_text",
+      "input": "der punktestand wurde nicht gespeichert vermute ich. das Problem ist, dass das Fenster mit der Übersicht nach dem training sofort wieder verschwunden ist. ich konnte nix sehen oder prüfen.",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-summary-gone",
+      "category": "problem_free_text",
+      "input": "Die Zusammenfassung war gleich wieder weg",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-points-not-visible",
+      "category": "problem_free_text",
+      "input": "Ich sehe meine Punkte nicht",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-overview-closed",
+      "category": "problem_free_text",
+      "input": "Die Übersicht ging sofort wieder zu",
+      "expected": "problem_report"
+    },
+    {
+      "id": "matrix-something-off",
+      "category": "ambiguous",
+      "input": "Da passt was nicht",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report"
+    },
+    {
+      "id": "matrix-tool-not-visible",
+      "category": "ambiguous",
+      "input": "Ich sehe das Terminal nicht",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report",
+      "note": "Gegenprobe: Ein Element des simulierten Werkzeugs ist eher eine Lernfrage. Der Tutor fragt nach, statt eine Meldung anzubieten."
+    },
+    {
+      "id": "matrix-tool-panel-gone",
+      "category": "ambiguous",
+      "input": "Das Fenster mit der Ausgabe ist weg",
+      "expected": "unclear",
+      "feedbackCandidate": "problem_report",
+      "note": "Gegenprobe: Plattform- und Werkzeugbezug zugleich – nachfragen."
+    },
+    {
+      "id": "matrix-not-yet-saved",
+      "category": "tool_question",
+      "input": "Ich habe die Datei noch nicht gespeichert",
+      "expected": "question",
+      "note": "Gegenprobe: Fortschrittsaussage, keine Störung."
     }
   ],
   "heldOutDescription": "Unverändert übernommene zweite Gegenprobe. Die Muster wurden danach nicht angepasst. Die exakte Trefferquote wird nur berichtet; als Gate gilt hier ausschließlich, dass keine Problem-, Wunsch- oder Feedbackmeldung still als Begriffs-, Schritt- oder Plattformantwort endet.",

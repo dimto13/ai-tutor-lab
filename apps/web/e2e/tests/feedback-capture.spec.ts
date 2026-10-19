@@ -115,9 +115,53 @@ test("Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kon
   await accessibility.check("explicit tutor problem feedback confirmation");
 });
 
-test("Frei formulierte Problemmeldung wird erkannt und erst nach Prüfung gesendet (#147, #548)", async ({
+test("Alltagssprachliche Problemmeldung geht mit einem Klick aus dem Chat an das Team (#147)", async ({
   page,
   accessibility,
+}) => {
+  await page.goto("/training/vscode-basics.guided");
+  await waitForTrainingReady(page);
+  // Wörtlich aus dem Owner-Pilot: früher eine Aussage ohne Antwort mit Verweis auf ein Formular.
+  const report =
+    "bei speichern meiner punkte pass was nicht. das Fenster ist sofort weg gewesen, sodass ich nicht meinen punktestand sehen konnte";
+
+  await page.getByRole("button", { name: "Tutor fragen" }).click();
+  await page.getByPlaceholder("Frage an den Tutor…").fill(report);
+  await page.getByRole("button", { name: "Senden" }).click();
+
+  const history = page.getByRole("region", { name: "Tutor-Verlauf" });
+  await expect(history).toContainText("Fehler in der Plattform");
+  await expect(history).toContainText("Kompetenzprofil");
+  await expect(history).not.toContainText("Ich habe ein Problem");
+  await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
+
+  const offer = page.getByTestId("tutor-feedback-offer");
+  await offer.getByRole("button", { name: "Ja, an das Team senden" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    history.locator('p, [role="alert"]').filter({
+      hasText: /Deine Meldung ist beim Team angekommen|lokal gesichert/,
+    }),
+  ).toBeVisible();
+
+  const records = (await readFeedbackRecords(page)) as Array<{
+    source?: string;
+    kind?: string;
+    text?: string;
+    context?: { scenarioId?: string; stepId?: string | null; mode?: string };
+  }>;
+  expect(records).toHaveLength(1);
+  expect(records[0]?.source).toBe("tutor");
+  expect(records[0]?.kind).toBe("problem");
+  expect(records[0]?.text).toBe(report);
+  expect(records[0]?.context?.scenarioId).toBe("vscode-basics.guided");
+  expect(records[0]?.context?.stepId).toBeTruthy();
+  expect(records[0]?.context?.mode).toBe("guided");
+  await accessibility.check("tutor one-click problem report");
+});
+
+test("Erkannte Problemmeldung lässt sich vor dem Senden bearbeiten (#147, #548)", async ({
+  page,
 }) => {
   await page.goto("/training/vscode-basics.guided");
   await waitForTrainingReady(page);
@@ -129,12 +173,11 @@ test("Frei formulierte Problemmeldung wird erkannt und erst nach Prüfung gesend
   await page.getByRole("button", { name: "Senden" }).click();
 
   const history = page.getByRole("region", { name: "Tutor-Verlauf" });
-  await expect(history).toContainText("Das klingt nach einem Problem mit der Plattform");
+  await expect(history).toContainText("Fehler in der Plattform");
   await expect(history).not.toContainText("Ein Issue beschreibt");
-  await expect.poll(async () => (await readFeedbackRecords(page)).length).toBe(0);
 
   const offer = page.getByTestId("tutor-feedback-offer");
-  await offer.getByRole("button", { name: "Als Problem melden" }).click();
+  await offer.getByRole("button", { name: "Vorher bearbeiten" }).click();
   const dialog = page.getByRole("dialog", { name: "Problem melden" });
   await expect(dialog).toBeVisible();
   await expect(
@@ -144,16 +187,10 @@ test("Frei formulierte Problemmeldung wird erkannt und erst nach Prüfung gesend
   await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
   await expectDeliveryResult(dialog);
 
-  const records = (await readFeedbackRecords(page)) as Array<{
-    source?: string;
-    kind?: string;
-    text?: string;
-  }>;
+  const records = (await readFeedbackRecords(page)) as Array<{ kind?: string; text?: string }>;
   expect(records).toHaveLength(1);
-  expect(records[0]?.source).toBe("tutor");
   expect(records[0]?.kind).toBe("problem");
   expect(records[0]?.text).toBe(report);
-  await accessibility.check("tutor free-text problem offer");
 });
 
 test("Tutor-Angebot lässt sich ablehnen und mehrdeutige Fragen werden zurückgefragt", async ({

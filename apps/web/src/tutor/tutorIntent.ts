@@ -208,6 +208,41 @@ const DEFINITION_PATTERNS = [
 const DEFINITION_TAIL =
   / (?:genau|eigentlich|technisch|im detail|ausführlich|tiefer|vertieft|genauer|nochmal|bitte|überhaupt|denn)$/u;
 
+// Decision matrix for statements (#147). The phrase lists above miss everyday wording such as
+// "bei speichern meiner punkte pass was nicht, das fenster ist sofort weg gewesen". The matrix
+// reads two dimensions instead of whole sentences: whether something does not behave as expected
+// (malfunction) and what it refers to (a platform surface, the simulated tool or nothing named).
+// Questions keep the existing routing; the model decides those.
+const NEGATION = "(?:nicht|nix|nichts|kein(?:e|en|er|em)?)";
+const FUNCTION_VERB =
+  "(?:sehen|sehe|siehst|sieht|sah|sichtbar|angezeigt|anzeigen|zeigt|gezeigt|speichert|gespeichert|gesichert|sichern|passt|pass|passen|stimmt|stimmen|geht|ging|klappt|klappte|lädt|laden|geladen|öffnet|geöffnet|reagiert|erkannt|erkennt|gezählt|zählt|abgehakt|übernommen|gewertet|geprüft|prüfen|funktioniert|funktionierte|erscheint|erschien|auftaucht|aufgetaucht)";
+const NEGATED_FUNCTION = [
+  `${NEGATION} (?:\\S+ ){0,4}${FUNCTION_VERB}`,
+  `${FUNCTION_VERB} (?:\\S+ ){0,4}${NEGATION}`,
+].map(wholeWords);
+const DEFECT = wholeWords(
+  "weg|verschwunden|verschwindet|verschwand|leer|kaputt|falsche[nmrs]?|eingefroren|abgestürzt|zurückgesetzt|(?:wieder|sofort|gleich|einfach) zu|wieder am anfang|von vorne?",
+);
+const PLATFORM_SURFACE = wholeWords(
+  "fenster|übersicht|zusammenfassung|auswertung|abschluss\\w*|ergebnis\\w*|punkte?|punktestand|punktzahl|score|fortschritt|seite|anzeige|bildschirm|button|knopf|schaltfläche|dialog|popup|meldung|hinweis\\w*|highlight|markierung|overlay|tutor|guide|aufgabe|schritt|training|plattform|app|weiter|modul|kompetenzprofil|dashboard|haken",
+);
+const SIMULATED_TOOL = wholeWords(
+  "terminal|explorer|editor|datei\\w*|ordner|befehl\\w*|commit|branch|copilot|claude|output|ausgabe|problems|menü|tab|panel|erweiterung\\w*|extension\\w*|repository|repo|tabelle|folie\\w*",
+);
+
+/**
+ * 2: a malfunction of a platform surface, which is a report. 1: a malfunction of the simulated
+ * tool or of nothing named, which the tutor asks back about. 0: no malfunction.
+ */
+function statementMalfunction(text: string): 0 | 1 | 2 {
+  // "noch nicht gespeichert" describes progress, not a malfunction.
+  const relevant = text.replace(/(?:^| )noch nicht(?= |$)/gu, " ");
+  const malfunction =
+    NEGATED_FUNCTION.some((matcher) => matcher.test(relevant)) || DEFECT.test(relevant);
+  if (!malfunction) return 0;
+  return PLATFORM_SURFACE.test(relevant) && !SIMULATED_TOOL.test(relevant) ? 2 : 1;
+}
+
 function score(text: string, list: Signal[]): number {
   return list.reduce((total, { matcher, weight }) => total + (matcher.test(text) ? weight : 0), 0);
 }
@@ -243,7 +278,7 @@ export function classifyTutorIntent(
   const words = text.split(" ").length;
   const question = isQuestion(message, text);
   const platformTopic = findPlatformTopic(message);
-  const problem = score(text, PROBLEM_SIGNALS);
+  const problem = Math.max(score(text, PROBLEM_SIGNALS), question ? 0 : statementMalfunction(text));
   const feature = score(text, FEATURE_SIGNALS);
   const feedback = score(text, FEEDBACK_SIGNALS);
 

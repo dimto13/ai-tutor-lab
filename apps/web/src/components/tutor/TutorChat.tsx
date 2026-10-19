@@ -5,6 +5,12 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { findGlossaryConcept } from "@/lib/glossary";
 import { getRuntimeTargetLabel } from "@/runtime/referenceCatalog";
 import { requestTutorAttention } from "@/components/overlay/tutorAttention";
+import { persistBetaFeedback, retryBetaFeedback } from "@/lib/betaFeedbackSubmission";
+import {
+  acknowledgeFeedbackNotice,
+  hasAcknowledgedFeedbackNotice,
+  type FeedbackRecord,
+} from "@/lib/feedbackStore";
 import {
   replyDeterministically,
   type TutorFeedbackOffer,
@@ -15,12 +21,17 @@ import { TUTOR_HISTORY_MAX_TURNS, type TutorConversationTurn } from "@/tutor/llm
 import { preferServerTutor } from "@/tutor/serverTutorAnswer";
 import { useTutorContext } from "@/tutor/tutorContext";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
+import { useFeedbackContext, viewportClass } from "@/components/feedback/useFeedbackContext";
+
+type OfferDelivery = { status: "sending" } | { status: "failed"; record: FeedbackRecord | null };
 
 interface ChatOffer extends TutorFeedbackOffer {
-  /** The learner's own message, which becomes the reviewable feedback draft. */
+  /** The learner's own message, which is sent as it is or opens as the dialog draft. */
   sourceText: string;
   sourceId: number;
   resolved: boolean;
+  /** Direct delivery from the chat, so the learner never has to describe the problem again. */
+  delivery?: OfferDelivery;
 }
 
 interface Message {
@@ -35,11 +46,30 @@ interface Message {
 const GREETING =
   "Ich kenne dein aktuelles Modul und den Trainingskontext. Du kannst jederzeit eine konkrete Frage stellen.";
 
-const OFFER_LABELS: Record<TutorFeedbackOffer["kind"], { report: string; answer: string }> = {
-  problem: { report: "Als Problem melden", answer: "Nein, ich brauche Hilfe zur Aufgabe" },
-  ux: { report: "Feedback senden", answer: "Nein, das war eine Frage" },
-  improvement: { report: "Als Vorschlag melden", answer: "Nein, das war eine Frage" },
-  general: { report: "Feedback senden", answer: "Nein, das war eine Frage" },
+const OFFER_LABELS: Record<
+  TutorFeedbackOffer["kind"],
+  { send: string; clarifiedSend: string; answer: string }
+> = {
+  problem: {
+    send: "Ja, an das Team senden",
+    clarifiedSend: "Als Problem melden",
+    answer: "Nein, ich brauche Hilfe zur Aufgabe",
+  },
+  ux: {
+    send: "Feedback senden",
+    clarifiedSend: "Feedback senden",
+    answer: "Nein, das war eine Frage",
+  },
+  improvement: {
+    send: "Vorschlag senden",
+    clarifiedSend: "Als Vorschlag melden",
+    answer: "Nein, das war eine Frage",
+  },
+  general: {
+    send: "Feedback senden",
+    clarifiedSend: "Feedback senden",
+    answer: "Nein, das war eine Frage",
+  },
 };
 
 function conversationHistory(messages: Message[]): TutorConversationTurn[] {
@@ -60,6 +90,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const auth = useAuth();
   const { t } = useLanguage();
   const tutorContext = useTutorContext();
+  const feedbackContext = useFeedbackContext("tutor");
   const { mode } = tutorContext;
   const [open, setOpen] = useState(() => mode !== "guided");
   const [messages, setMessages] = useState<Message[]>(() =>
@@ -67,6 +98,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   );
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
+  const [noticeAcknowledged, setNoticeAcknowledged] = useState(hasAcknowledgedFeedbackNotice);
   const listRef = useRef<HTMLDivElement>(null);
   const collapsedToggleRef = useRef<HTMLButtonElement>(null);
   const restoreToggleFocusRef = useRef(false);
@@ -114,15 +146,17 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     );
   };
 
-  const resolveOffer = (messageId: number) => {
+  const patchOffer = (messageId: number, patch: Partial<ChatOffer>) => {
     setMessages((messages) =>
       messages.map((message) =>
         message.id === messageId && message.offer
-          ? { ...message, offer: { ...message.offer, resolved: true } }
+          ? { ...message, offer: { ...message.offer, ...patch } }
           : message,
       ),
     );
   };
+
+  const resolveOffer = (messageId: number) => patchOffer(messageId, { resolved: true });
 
   /** Asks the server tutor, falling back to the deterministic reply whenever it is unavailable. */
   const answer = async (
@@ -135,7 +169,8 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setPending(true);
     try {
       let text = fallback.text;
-      let modelSawFeedback = false;
+      // Without a model answer, the deterministic reply keeps its own follow-up offer.
+      let offer: TutorFeedbackOffer | undefined = fallback.fallbackOffer;
       const accessToken = auth.session?.accessToken ?? null;
       if (accessToken) {
         const serverAnswer = await preferServerTutor(fallback.text, () =>
@@ -151,7 +186,10 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           }),
         );
         text = serverAnswer.answer;
-        modelSawFeedback = serverAnswer.kind === "feedback";
+        if (!serverAnswer.fallback) {
+          offer =
+            serverAnswer.kind === "feedback" ? { kind: "problem", clarify: false } : undefined;
+        }
         if (serverAnswer.uiTargetRefs.length > 0) {
           requestTutorAttention(
             serverAnswer.uiTargetRefs,
@@ -160,14 +198,12 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         }
       }
 
-      const offerFeedback = modelSawFeedback && allowFeedback;
-      if (offerFeedback) setInHistory(sourceId, false);
-      appendTutorMessage(
-        text,
-        offerFeedback
-          ? { kind: "problem", clarify: false, sourceText: question, sourceId, resolved: false }
-          : undefined,
-      );
+      if (offer && allowFeedback) {
+        setInHistory(sourceId, false);
+        appendTutorMessage(text, { ...offer, sourceText: question, sourceId, resolved: false });
+      } else {
+        appendTutorMessage(text);
+      }
     } finally {
       setPending(false);
     }
@@ -229,8 +265,49 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     );
   };
 
+  /** Sends the learner's message as it is, with the structured training context (#147). */
+  const sendReport = async (message: Message) => {
+    const offer = message.offer;
+    if (!offer || offer.resolved || offer.delivery?.status === "sending") return;
+    const failedRecord = offer.delivery?.status === "failed" ? offer.delivery.record : null;
+    patchOffer(message.id, { delivery: { status: "sending" } });
+    const result = failedRecord
+      ? await retryBetaFeedback(failedRecord)
+      : await persistBetaFeedback(
+          "tutor",
+          offer.sourceText,
+          {
+            ...feedbackContext,
+            runtime: { ...feedbackContext.runtime, viewportClass: viewportClass() },
+          },
+          { kind: offer.kind },
+        );
+    if (!result.ok) {
+      patchOffer(message.id, { delivery: { status: "failed", record: result.record } });
+      return;
+    }
+    acknowledgeFeedbackNotice();
+    setNoticeAcknowledged(true);
+    reportSubmitted(message);
+  };
+
+  // An open offer becomes the draft of the header shortcut, so that path needs no retyping either.
+  const openOfferMessage = [...messages]
+    .reverse()
+    .find((message) => message.offer && !message.offer.resolved);
   const problemShortcut = (
-    <FeedbackCapture source="tutor" triggerLabel="Ich habe ein Problem" compact flow="problem" />
+    <FeedbackCapture
+      source="tutor"
+      triggerLabel="Ich habe ein Problem"
+      compact
+      flow="problem"
+      {...(openOfferMessage?.offer
+        ? {
+            initialText: openOfferMessage.offer.sourceText,
+            onSubmitted: () => reportSubmitted(openOfferMessage),
+          }
+        : {})}
+    />
   );
 
   if (!open) {
@@ -354,6 +431,8 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
                 <TutorOfferActions
                   offer={message.offer}
                   disabled={pending}
+                  noticeAcknowledged={noticeAcknowledged}
+                  onSend={() => void sendReport(message)}
                   onAnswer={() => void answerInstead(message)}
                   onSubmitted={() => reportSubmitted(message)}
                 />
@@ -410,20 +489,43 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
 function TutorOfferActions({
   offer,
   disabled,
+  noticeAcknowledged,
+  onSend,
   onAnswer,
   onSubmitted,
 }: {
   offer: ChatOffer;
   disabled: boolean;
+  noticeAcknowledged: boolean;
+  onSend: () => void;
   onAnswer: () => void;
   onSubmitted: () => void;
 }) {
   const labels = OFFER_LABELS[offer.kind];
-  const report = (
+  const sending = offer.delivery?.status === "sending";
+  const failed = offer.delivery?.status === "failed";
+  const sendButton = (
+    <button
+      type="button"
+      disabled={disabled || sending}
+      onClick={onSend}
+      className="inline-flex items-center rounded-md bg-accent px-2 py-1 text-[11px] font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {sending
+        ? "Wird gesendet …"
+        : failed
+          ? "Erneut senden"
+          : offer.clarify
+            ? labels.clarifiedSend
+            : labels.send}
+    </button>
+  );
+  // Hidden while sending, so the same report cannot go out twice.
+  const edit = sending ? null : (
     <FeedbackCapture
       source="tutor"
       flow={offer.kind === "general" ? "general" : "problem"}
-      triggerLabel={labels.report}
+      triggerLabel="Vorher bearbeiten"
       compact
       initialText={offer.sourceText}
       initialKind={offer.kind}
@@ -433,7 +535,7 @@ function TutorOfferActions({
   const answerButton = (
     <button
       type="button"
-      disabled={disabled}
+      disabled={disabled || sending}
       onClick={onAnswer}
       className="inline-flex items-center rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
@@ -445,18 +547,34 @@ function TutorOfferActions({
     </button>
   );
   return (
-    <div data-testid="tutor-feedback-offer" className="mt-1.5 flex flex-wrap gap-1.5">
-      {offer.clarify ? (
-        <>
-          {answerButton}
-          {report}
-        </>
-      ) : (
-        <>
-          {report}
-          {answerButton}
-        </>
-      )}
+    <div data-testid="tutor-feedback-offer" className="mt-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        {offer.clarify ? (
+          <>
+            {answerButton}
+            {sendButton}
+            {edit}
+          </>
+        ) : (
+          <>
+            {sendButton}
+            {edit}
+            {answerButton}
+          </>
+        )}
+      </div>
+      {failed ? (
+        <p role="alert" className="mt-1.5 text-[11px] leading-relaxed text-warning">
+          Deine Meldung ist lokal gesichert, konnte aber noch nicht an das Team gesendet werden.
+          Versuche es bitte erneut.
+        </p>
+      ) : null}
+      {!noticeAcknowledged ? (
+        <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+          Gesendet werden deine Nachricht und der Trainingskontext (Szenario, Schritt, Modus) an die
+          geschützte Beta-Inbox. Bitte keine personenbezogenen oder vertraulichen Inhalte.
+        </p>
+      ) : null}
     </div>
   );
 }

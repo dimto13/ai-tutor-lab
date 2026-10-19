@@ -1,5 +1,6 @@
 import type { FeedbackKind } from "../lib/feedbackStore";
 import type { TutorContext } from "./tutorContext";
+import { findPlatformTopic } from "./platformKnowledge.ts";
 import { classifyTutorIntent, type TutorIntent, type TutorIntentDecision } from "./tutorIntent.ts";
 import { normalizeTutorText } from "./tutorText.ts";
 
@@ -13,9 +14,10 @@ export interface TutorGlossaryConcept {
 export type GlossaryLookup = (question: string) => TutorGlossaryConcept | null;
 
 /**
- * Offer to record the learner's own text as feedback. Nothing is sent before the learner reviews
- * the draft in the feedback dialog (#147). With `clarify`, the tutor first asks whether the
- * learner wanted an answer instead.
+ * Offer to pass the learner's own text to the team as feedback. Nothing is sent before the learner
+ * confirms it in the chat with one click or edits it in the feedback dialog (#147); the learner never
+ * has to describe the problem again. With `clarify`, the tutor first asks whether the learner wanted
+ * an answer instead.
  */
 export interface TutorFeedbackOffer {
   kind: FeedbackKind;
@@ -26,6 +28,11 @@ export interface TutorReply {
   text: string;
   intent: TutorIntent;
   offer?: TutorFeedbackOffer;
+  /**
+   * Used only when no model answered: an unrecognised statement is asked back with both ways
+   * instead of being sent off to a button elsewhere.
+   */
+  fallbackOffer?: TutorFeedbackOffer;
 }
 
 const NO_OPEN_STEP = "Für dieses Modul ist aktuell keine weitere Aufgabe offen.";
@@ -66,9 +73,18 @@ function unpreparedAnswer(
     : "Dazu gibt es im zentralen Begriffskatalog keine vorbereitete Definition.";
 }
 
+const ASK_BACK =
+  "Ich möchte dich richtig verstehen: Brauchst du Hilfe bei der Aufgabe, oder funktioniert in der Plattform etwas nicht so, wie es sollte?";
+
 function unpreparedStatement(context: TutorContext): string {
   const step = context.currentStep;
-  return `Dazu habe ich keine vorbereitete Antwort. Stell mir gern eine konkrete Frage, zum Beispiel „Was soll ich jetzt machen?“. Falls in der Plattform etwas nicht funktioniert, nutze „Ich habe ein Problem“.${step ? ` Für die aktuelle Aufgabe: ${step.instruction}` : ""}`;
+  return `${ASK_BACK}${step ? ` Für die aktuelle Aufgabe: ${step.instruction}` : ""}`;
+}
+
+/** What the learner may want to know about the platform part their report touches. */
+function reportContext(question: string): string {
+  const topic = findPlatformTopic(question);
+  return topic && topic.id !== "report" ? ` Zur Einordnung: ${topic.answer}` : "";
 }
 
 export function classifyWithGlossary(
@@ -155,19 +171,19 @@ export function replyDeterministically(
     case "problem_report":
       return {
         intent,
-        text: `Das klingt nach einem Problem mit der Plattform und nicht nach einer Lernfrage. Ich kann es als Problemmeldung an das Team weitergeben: Dein Text wird als Entwurf übernommen, und du prüfst ihn vor dem Senden.${stepHelpHint(context)}`,
+        text: `Danke, das klingt nach einem Fehler in der Plattform und nicht nach etwas, das du falsch gemacht hast. Ich kann deine Beschreibung so, wie du sie geschrieben hast, mit dem Trainingskontext an das Team weitergeben – du musst nichts noch einmal eintippen.${reportContext(question)}${stepHelpHint(context)}`,
         offer: { kind: "problem", clarify: false },
       };
     case "feature_request":
       return {
         intent,
-        text: "Danke für deinen Vorschlag! Ich kann ihn als Verbesserungsvorschlag an das Team weitergeben: Dein Text wird als Entwurf übernommen, und du prüfst ihn vor dem Senden.",
+        text: "Danke für deinen Vorschlag! Ich kann ihn so, wie du ihn geschrieben hast, als Verbesserungsvorschlag an das Team weitergeben.",
         offer: { kind: "improvement", clarify: false },
       };
     case "feedback":
       return {
         intent,
-        text: "Danke für deine Rückmeldung! Wenn du möchtest, gebe ich sie als Feedback an das Team weiter. Du prüfst den Text vor dem Senden.",
+        text: "Danke für deine Rückmeldung! Wenn du möchtest, kann ich sie so, wie du sie geschrieben hast, an das Team weitergeben.",
         offer: { kind: decision.usability ? "ux" : "general", clarify: false },
       };
     case "unclear":
@@ -179,11 +195,7 @@ export function replyDeterministically(
         };
       }
       if (decision.feedbackCandidate) {
-        return {
-          intent,
-          text: "Ich möchte dich richtig verstehen: Brauchst du Hilfe bei der Aufgabe, oder funktioniert in der Plattform etwas nicht so, wie es sollte?",
-          offer: { kind: "problem", clarify: true },
-        };
+        return { intent, text: ASK_BACK, offer: { kind: "problem", clarify: true } };
       }
       return {
         intent,
@@ -192,13 +204,13 @@ export function replyDeterministically(
     case "question":
       // A statement without a question form never gets a glossary text: this is how a complaint
       // turned into the definition of "Issue" (#548).
-      return {
-        intent,
-        text:
-          decision.confidence === "high"
-            ? unpreparedAnswer(question, context, findGlossaryConcept)
-            : unpreparedStatement(context),
-      };
+      return decision.confidence === "high"
+        ? { intent, text: unpreparedAnswer(question, context, findGlossaryConcept) }
+        : {
+            intent,
+            text: unpreparedStatement(context),
+            fallbackOffer: { kind: "problem", clarify: true },
+          };
   }
 }
 

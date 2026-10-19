@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Camera, Download, MessageSquareWarning, Trash2, X } from "lucide-react";
 import { captureTrainingSurfaceScreenshot } from "@/lib/feedbackScreenshot";
@@ -12,10 +12,8 @@ import {
   type FeedbackRecord,
   type FeedbackScreenshotAttachment,
   type FeedbackSource,
-  type FeedbackViewportClass,
 } from "@/lib/feedbackStore";
-import { getRuntimeAdapter } from "@/runtime";
-import { useTraining } from "@/state/trainingStore";
+import { useFeedbackContext, viewportClass } from "./useFeedbackContext";
 
 interface FeedbackCaptureProps {
   source: FeedbackSource;
@@ -35,14 +33,6 @@ const problemKinds: Array<{ value: FeedbackKind; label: string }> = [
   { value: "improvement", label: "Verbesserungsvorschlag" },
 ];
 
-function viewportClass(): FeedbackViewportClass {
-  if (typeof window === "undefined") return "unknown";
-  if (window.innerWidth <= 359) return "compact";
-  if (window.innerWidth <= 767) return "small";
-  if (window.innerWidth <= 1279) return "medium";
-  return "large";
-}
-
 export function FeedbackCapture({
   source,
   triggerLabel = "Feedback geben",
@@ -52,9 +42,7 @@ export function FeedbackCapture({
   initialKind,
   onSubmitted,
 }: FeedbackCaptureProps) {
-  const { scenario, mode, progress } = useTraining();
-  const runtimeAdapterId = scenario.environment?.runtimeAdapterId;
-  const runtimeAdapter = useMemo(() => getRuntimeAdapter(runtimeAdapterId), [runtimeAdapterId]);
+  const context = useFeedbackContext(source);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const defaultKind: FeedbackKind = initialKind ?? (flow === "problem" ? "problem" : "general");
@@ -70,38 +58,6 @@ export function FeedbackCapture({
   const [screenshot, setScreenshot] = useState<FeedbackScreenshotAttachment | null>(null);
   const [screenshotBusy, setScreenshotBusy] = useState(false);
   const [screenshotError, setScreenshotError] = useState<string | null>(null);
-
-  const stepId =
-    progress.activeStepId ?? (source === "completion" ? (scenario.steps.at(-1)?.id ?? null) : null);
-
-  const context = useMemo(
-    () => ({
-      scenarioId: scenario.id,
-      stepId,
-      mode,
-      runtimeAdapterId: runtimeAdapterId ?? null,
-      runtime: {
-        productId: runtimeAdapter?.productId ?? null,
-        capabilities: [...(runtimeAdapter?.capabilities ?? [])],
-        viewportClass: viewportClass(),
-        stepStatus: stepId ? (progress.statuses[stepId] ?? null) : null,
-        hintsUsed: progress.hintsUsed,
-        mistakes: progress.mistakes,
-      },
-      appVersion: import.meta.env["VITE_APP_VERSION"] || "0.0.0-local",
-      commit: import.meta.env["VITE_APP_COMMIT_SHA"] || "local",
-    }),
-    [
-      mode,
-      progress.hintsUsed,
-      progress.mistakes,
-      progress.statuses,
-      runtimeAdapter,
-      runtimeAdapterId,
-      scenario.id,
-      stepId,
-    ],
-  );
 
   const resetTransientState = () => {
     setText("");

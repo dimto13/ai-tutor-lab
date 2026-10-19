@@ -162,7 +162,7 @@ test("ambiguous inputs ask back with both choices instead of guessing", () => {
   }
 });
 
-test("reports, wishes and feedback are offered for review, never sent by the tutor", () => {
+test("reports, wishes and feedback are offered to the learner, never sent by the tutor alone", () => {
   const expectedKinds: Partial<Record<TutorIntent, string[]>> = {
     problem_report: ["problem"],
     feature_request: ["improvement"],
@@ -195,7 +195,12 @@ test("a statement without a question form gets no glossary text even when it nam
   );
   assert.ok(findGlossaryConcept("Der Explorer sieht bei mir anders aus"));
   for (const glossaryText of glossaryTexts) assert.ok(!reply.text.includes(glossaryText));
-  assert.match(reply.text, /Ich habe ein Problem/);
+  // Without a model the tutor asks back with both ways in the chat instead of sending the learner
+  // to a button elsewhere, where the message would have to be described again.
+  assert.match(reply.text, /^Ich möchte dich richtig verstehen/);
+  assert.doesNotMatch(reply.text, /Ich habe ein Problem/);
+  assert.deepEqual(reply.fallbackOffer, { kind: "problem", clarify: true });
+  assert.equal(reply.offer, undefined);
 });
 
 test("a problem report in guided mode still points at the first help of the step", () => {
@@ -207,4 +212,16 @@ test("a problem report in guided mode still points at the first help of the step
     () => null,
   );
   assert.doesNotMatch(challenge.text, /File-Menü/);
+});
+
+test("the decision matrix turns an everyday report into one offer with the matching platform facts", () => {
+  const entry = golden.cases.find(({ id }) => id === "pilot-1019-points-window-chat");
+  assert.ok(entry);
+  const reply = replyDeterministically(entry.input, context, findGlossaryConcept);
+  assert.equal(reply.intent, "problem_report");
+  assert.deepEqual(reply.offer, { kind: "problem", clarify: false });
+  assert.match(reply.text, /nichts noch einmal eintippen/);
+  // The learner could not check the points, so the reply says where they are shown.
+  assert.match(reply.text, /Kompetenzprofil/);
+  assert.doesNotMatch(reply.text, /Ich habe ein Problem/);
 });

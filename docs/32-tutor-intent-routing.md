@@ -13,14 +13,40 @@ Eingabe mit einem Glossarwort als Begriffsfrage behandelte.
 | `definition`                                   | „Was ist ein Workspace?“                | Glossar; nur hier und nur zum erfragten Begriff                      |
 | `platform`                                     | „Wie bekomme ich Punkte?“               | Antwort aus `content/tutor/platform-knowledge.de.json`               |
 | `question`                                     | „Wo finde ich das Terminal?“            | Modell; ohne Modell ehrliche Nichtantwort statt geratener Definition |
-| `problem_report`, `feature_request`,`feedback` | „Der Speichern-Button reagiert nicht“   | Kein Modellaufruf; Angebot, den eigenen Text als Meldung zu prüfen   |
+| `problem_report`, `feature_request`,`feedback` | „Der Speichern-Button reagiert nicht“   | Kein Modellaufruf; eigenen Text mit einem Klick an das Team senden   |
 | `unclear`                                      | „Warum funktioniert mein Befehl nicht?“ | Rückfrage mit beiden Wegen: Antwort oder Meldung                     |
 | `smalltalk`                                    | „Danke!“                                | Kurze Antwort ohne Glossar                                           |
 
-Eine Meldung wird **nie automatisch gesendet**. Der Tutor öffnet auf Wunsch den bestehenden
-Feedback-Dialog mit dem Text als Entwurf; die Person prüft, ändert und sendet selbst. Mit
-„Nein, das war eine Frage“ beziehungsweise „Nein, ich brauche Hilfe zur Aufgabe“ wird dieselbe
-Eingabe als Frage beantwortet.
+Eine Meldung wird **nie ohne Klick gesendet**, aber die Person muss sie auch **nie noch einmal
+beschreiben** (Owner-Pilot 2026-10-19). Unter der Tutor-Antwort stehen direkt im Chat:
+
+- „Ja, an das Team senden“ (bei einer Rückfrage „Als Problem melden“): sendet die eigene Nachricht
+  unverändert mit dem strukturierten Kontext aus `useFeedbackContext` an die Beta-Inbox. Scheitert
+  die Zustellung, bleibt der Datensatz lokal gesichert, und derselbe Knopf sendet ihn erneut.
+- „Vorher bearbeiten“: öffnet den bestehenden Feedback-Dialog mit dem Text als Entwurf.
+- „Nein, ich brauche Hilfe zur Aufgabe“ beziehungsweise „Nein, das war eine Frage“: beantwortet
+  dieselbe Eingabe als Frage.
+
+Bis zur ersten erfolgreichen Meldung steht darunter der Datenschutzhinweis. Ein noch offenes Angebot
+wird auch zum Entwurf von „Ich habe ein Problem“. Bei einer Meldung ergänzt der Tutor passendes
+Plattformwissen, etwa wo Punkte zu sehen sind, und im Guided-Modus die erste Hilfe des Schritts.
+
+## Entscheidungsmatrix für Aussagen
+
+Die Signallisten erkennen feste Wendungen, aber keine Alltagssprache wie „bei speichern meiner punkte
+pass was nicht, das fenster ist sofort weg gewesen“. Für **Aussagen** liest der Tutor deshalb
+zusätzlich zwei Merkmale (`statementMalfunction` in `tutorIntent.ts`):
+
+| Störung                                               | Bezug                                    | Absicht               |
+| ----------------------------------------------------- | ---------------------------------------- | --------------------- |
+| Verneinung nahe einem Funktionsverb oder Verschwinden | Plattform (Fenster, Übersicht, Punkte …) | `problem_report`      |
+| wie oben                                              | simuliertes Werkzeug oder nichts         | `unclear` (Rückfrage) |
+| keine                                                 | –                                        | bisherige Regeln      |
+
+„noch nicht“ beschreibt Fortschritt und zählt nicht als Störung. Fragen werden nicht über die Matrix
+geroutet; sie gehen wie bisher an das Modell, das `kind: "feedback"` setzen kann. Antwortet kein
+Modell, fragt der Tutor bei einer nicht erkannten Aussage mit beiden Wegen zurück
+(`fallbackOffer`), statt auf einen Button zu verweisen.
 
 ## Sicherheitsregel
 
@@ -56,8 +82,10 @@ Gegenproben.
 - `tests/runtime/tutorIntentGolden.test.ts`: Routing, #548-Regression, Sicherheitsregel,
   Rückfrage, Plattformwissen.
 - `apps/web/tests/tutorLlmGuardrails.test.ts`: Verlauf, Grenzen, `feedback`-Antworten.
-- `apps/web/e2e/tests/feedback-capture.spec.ts`: freier Problemtext bis zum gesendeten Datensatz,
-  Ablehnen des Angebots, Rückfrage.
+- `apps/web/e2e/tests/feedback-capture.spec.ts`: Pilot-Satz bis zum gesendeten Datensatz mit einem
+  Klick, Bearbeiten im Dialog, Ablehnen des Angebots, Rückfrage.
+- Golden-Fälle mit Präfix `pilot-` sind wörtliche Owner-Eingaben, `matrix-` prüft die
+  Entscheidungsmatrix einschließlich Gegenproben (Werkzeugbezug, „noch nicht gespeichert“).
 
 Die Golden-Tests prüfen die deterministische Erkennung ohne Modellkosten. Sie belegen **nicht** die
 Antwortqualität eines echten Modells; dafür ist die kontrollierte Real-Model-Evaluation aus #575
