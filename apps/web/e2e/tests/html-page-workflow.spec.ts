@@ -75,6 +75,9 @@ test("Guided: Seite wird dreifach iteriert, im Quelltext geprüft und ein stille
   await page.getByRole("button", { name: "Quelltext", exact: true }).click();
   await expect(page.getByText("<table>", { exact: false })).toBeVisible();
   await expectGuidedStep(page, 6, "Zur gerenderten Seite zurückkehren");
+  // Ein zweiter Klick auf die aktive Ansicht aendert nichts und darf den naechsten Schritt nicht
+  // als Fehlversuch werten (#580).
+  await page.getByRole("button", { name: "Quelltext", exact: true }).click();
   await page.getByRole("button", { name: "Vorschau", exact: true }).click();
   await expectGuidedStep(page, 7, "Revision 3: Verhalten ergänzen");
 
@@ -100,6 +103,8 @@ test("Guided: Seite wird dreifach iteriert, im Quelltext geprüft und ein stille
   await page.getByRole("button", { name: "Konzept verstanden", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  const mistakesMetric = page.getByText("Fehlversuche", { exact: true }).locator("..");
+  await expect(mistakesMetric.getByText("0", { exact: true })).toBeVisible();
 });
 
 test("Challenge: Abschluss gelingt erst nach Korrektur des stillen Verlusts und finaler Prüfung", async ({

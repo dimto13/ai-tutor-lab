@@ -268,10 +268,16 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
     // Learner actions report themselves even when the tool is already in the target state, like
     // selecting an artifact or opening a VS Code panel. The tool state and the training session are
     // stored separately; when a restored session is behind the tool (#580), a silent click left the
-    // guided step impossible to complete.
+    // guided step impossible to complete. Such a repeat carries `repeated: true`: it may complete
+    // the waiting step, but the training store does not count it as a new attempt.
     setViewMode(viewMode) {
-      if (state.viewMode !== viewMode) replaceState({ ...state, viewMode }, "mutation");
-      emit("artifact.viewSwitched", { viewMode, artifactId: state.activeArtifactId });
+      const repeated = state.viewMode === viewMode;
+      if (!repeated) replaceState({ ...state, viewMode }, "mutation");
+      emit("artifact.viewSwitched", {
+        viewMode,
+        artifactId: state.activeArtifactId,
+        ...(repeated ? { repeated: true } : {}),
+      });
     },
 
     applyRevision(revisionId) {
@@ -300,6 +306,7 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
         artifactId: revision.artifactId,
         artifactType: revision.next.type,
         revisionId,
+        ...(applied ? { repeated: true } : {}),
       });
     },
 

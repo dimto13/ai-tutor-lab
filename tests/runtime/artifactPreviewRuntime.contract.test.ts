@@ -245,6 +245,9 @@ test("artifactPreviewRuntime: a learner action in the target state still reports
     runtime.setViewMode("source");
     runtime.applyRevision("page-v2");
     runtime.verifyActiveArtifact();
+    // The first switch and the first application change the tool and are no repeats.
+    assert.equal(events[0]?.payload["repeated"], undefined);
+    assert.equal(events[1]?.payload["repeated"], undefined);
     const before = await runtime.snapshot();
     events.length = 0;
 
@@ -257,8 +260,14 @@ test("artifactPreviewRuntime: a learner action in the target state still reports
       events.map(({ type }) => type),
       ["artifact.viewSwitched", "artifact.updated"],
     );
-    assert.deepEqual(events[0]?.payload, { viewMode: "source", artifactId: "page" });
+    // Marked as repeats, so the training store does not count a mismatch as a new attempt.
+    assert.deepEqual(events[0]?.payload, {
+      viewMode: "source",
+      artifactId: "page",
+      repeated: true,
+    });
     assert.equal(events[1]?.payload["revisionId"], "page-v2");
+    assert.equal(events[1]?.payload["repeated"], true);
     assert.equal(await runtime.query("artifact.viewMode"), "source");
     assert.equal(await runtime.query("artifact.current.revision"), "page-v2");
     assert.match((await runtime.query<{ html: string }>("artifact.current")).html, /Updated/);
