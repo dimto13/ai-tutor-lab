@@ -29,7 +29,7 @@ export function GuidePanel() {
     (Boolean(recovery) || progress.activeStepMistakes >= FAILURES_PER_HELP_OFFER || helpLevel > 0);
 
   return (
-    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel pb-7 lg:w-[380px] lg:flex-none lg:border-l">
+    <aside className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-border bg-panel pb-2 lg:w-[380px] lg:flex-none lg:border-l">
       {mode === "guided" ? (
         <GuidedGuide />
       ) : (
@@ -97,7 +97,7 @@ function GuidedGuide() {
       <section
         data-testid="guided-orientation"
         data-platform-ui="guided-primary-action"
-        className="platform-ui shrink-0 border-b border-border bg-background p-3 sm:p-4"
+        className="platform-ui min-h-0 max-h-[55%] shrink-0 overflow-y-auto border-b border-border bg-background p-3 sm:p-4"
         aria-label="Aktueller Lernauftrag"
       >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
