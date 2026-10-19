@@ -109,6 +109,15 @@ export function buildWeeklyContinuity(
   };
 }
 
+/**
+ * Learning time as every view shows it (#582): whole minutes, at least one, so the completion
+ * screen and the learning activities never disagree about the same run. `null` when not measured.
+ */
+export function formatLearningTime(learningMs: number | null): string | null {
+  if (learningMs === null || !Number.isFinite(learningMs) || learningMs < 0) return null;
+  return `${Math.max(1, Math.round(learningMs / 60_000))} Min.`;
+}
+
 export function formatWeekLabel(weekStart: number): string {
   return new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",

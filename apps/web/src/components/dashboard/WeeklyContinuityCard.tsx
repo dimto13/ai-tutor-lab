@@ -3,6 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { loadMyWeeklyContinuityRuns } from "@/continuity/applicationWeeklyContinuity";
 import {
   buildWeeklyContinuity,
+  formatLearningTime,
   formatWeekLabel,
   recentLearningActivities,
   type WeeklyContinuityRun,
@@ -16,12 +17,6 @@ const modeLabels: Record<string, string> = {
   guided: "Guided",
   challenge: "Challenge",
 };
-
-function formatLearningTime(learningMs: number | null): string {
-  if (learningMs === null) return "Dauer nicht erfasst";
-  const minutes = Math.max(1, Math.round(learningMs / 60_000));
-  return `${minutes} Min.`;
-}
 
 export function WeeklyContinuityCard() {
   const preferences = useUserPreferences();
@@ -156,7 +151,7 @@ export function WeeklyContinuityCard() {
                 </span>
                 <span className="flex gap-3 text-muted-foreground">
                   <span>{modeLabels[run.mode.toLowerCase()] ?? run.mode}</span>
-                  <span>{formatLearningTime(run.learningMs)}</span>
+                  <span>{formatLearningTime(run.learningMs) ?? "Dauer nicht erfasst"}</span>
                 </span>
               </li>
             ))}

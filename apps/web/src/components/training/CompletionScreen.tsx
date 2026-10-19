@@ -23,6 +23,7 @@ import {
   type SkillProfileChange,
 } from "@/completion/completionOutcome";
 import { confirmedCompletionFinishedAt } from "@/completion/completionSaveConfirmation";
+import { formatLearningTime } from "@/continuity/weeklyContinuity";
 import { technologyCatalog } from "@/catalog";
 import { useTrainingRecommendation } from "@/dashboard/useTrainingRecommendation";
 import {
@@ -94,10 +95,7 @@ export function CompletionScreen() {
   );
   const scorePresentation = completionScorePresentation(score.status, score.result);
   // Measured learning time, not the time between start and finish: breaks do not count (#582).
-  const learningTime =
-    progress.activeMs === null
-      ? "nicht erfasst"
-      : `${Math.max(1, Math.round((progress.activeMs / 60000) * 10) / 10)} Min.`;
+  const learningTime = formatLearningTime(progress.activeMs) ?? "nicht erfasst";
   const unitLabel = mode === "explore" ? "Erkundung" : mode === "challenge" ? "Ziel" : "Schritte";
   const unitValue =
     mode === "explore"

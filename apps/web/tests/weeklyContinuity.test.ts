@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildWeeklyContinuity,
+  formatLearningTime,
   recentLearningActivities,
   type WeeklyContinuityRun,
 } from "../src/continuity/weeklyContinuity.ts";
@@ -101,4 +102,12 @@ test("a run without measured learning time is listed but counts no minutes (#582
     ["after-582", "before-582"],
   );
   assert.equal(buildWeeklyContinuity([unmeasured, measured], 30, NOW).currentWeekMinutes, 9);
+});
+
+test("every view formats learning time the same way: whole minutes, at least one", () => {
+  assert.equal(formatLearningTime(2.5 * 60_000), "3 Min.");
+  assert.equal(formatLearningTime(13 * 60_000), "13 Min.");
+  assert.equal(formatLearningTime(10_000), "1 Min.");
+  assert.equal(formatLearningTime(null), null);
+  assert.equal(formatLearningTime(Number.NaN), null);
 });
