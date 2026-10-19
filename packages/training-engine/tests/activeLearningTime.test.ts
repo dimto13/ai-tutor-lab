@@ -146,3 +146,19 @@ test("implausible stored learning time is treated as unknown", () => {
     assert.equal(session.activeMs, null, JSON.stringify(broken));
   }
 });
+
+test("a last action stored in the future does not pause the measurement", () => {
+  // Another device with its clock an hour ahead saved the session.
+  const ahead = completeTrainingStep(
+    createTrainingSession(guided, "s", 0),
+    guided,
+    "one",
+    2 * HOUR,
+  );
+  const stored = JSON.parse(JSON.stringify(ahead));
+
+  let session = restoreTrainingSession(guided, "s", stored, HOUR);
+  assert.equal(session.lastActivityAt, HOUR);
+  session = completeTrainingStep(session, guided, "two", HOUR + 2 * MINUTE);
+  assert.equal(session.activeMs, (ahead.activeMs ?? 0) + 2 * MINUTE);
+});

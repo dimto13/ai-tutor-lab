@@ -235,7 +235,11 @@ export function restoreTrainingSession(
   return session;
 }
 
-/** A session stored before #582 has no measured learning time; it stays unknown. */
+/**
+ * A session stored before #582 has no measured learning time; it stays unknown. A last action in
+ * the future, written by a device whose clock runs ahead, starts from now, so measuring does not
+ * pause until this clock catches up.
+ */
 function restoredActivity(
   stored: StoredTrainingSession,
   startedAt: number,
@@ -246,7 +250,7 @@ function restoredActivity(
   if (activeMs === null || activeMs < 0 || lastActivityAt === null || lastActivityAt < startedAt) {
     return { activeMs: null, lastActivityAt: now };
   }
-  return { activeMs, lastActivityAt };
+  return { activeMs, lastActivityAt: Math.min(lastActivityAt, now) };
 }
 
 /**
