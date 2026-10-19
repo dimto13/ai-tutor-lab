@@ -265,24 +265,33 @@ export function createArtifactPreviewRuntime(): ArtifactPreviewRuntimeAdapter {
       emit("artifact.selected", { artifactId, artifactType: artifact.type });
     },
 
+    // Learner actions report themselves even when the tool is already in the target state, like
+    // selecting an artifact or opening a VS Code panel. The tool state and the training session are
+    // stored separately; when a restored session is behind the tool (#580), a silent click left the
+    // guided step impossible to complete.
     setViewMode(viewMode) {
-      if (state.viewMode === viewMode) return;
-      replaceState({ ...state, viewMode }, "mutation");
+      if (state.viewMode !== viewMode) replaceState({ ...state, viewMode }, "mutation");
       emit("artifact.viewSwitched", { viewMode, artifactId: state.activeArtifactId });
     },
 
     applyRevision(revisionId) {
       const revision = state.revisions.find((candidate) => candidate.id === revisionId);
-      if (!revision || state.appliedRevisionIds.includes(revisionId)) return;
-      const artifacts = state.artifacts.map((artifact) =>
-        artifact.id === revision.artifactId ? cloneArtifact(revision.next) : artifact,
-      );
+      if (!revision) return;
+      const applied = state.appliedRevisionIds.includes(revisionId);
+      const artifacts = applied
+        ? state.artifacts
+        : state.artifacts.map((artifact) =>
+            artifact.id === revision.artifactId ? cloneArtifact(revision.next) : artifact,
+          );
+      // Applying again confirms the revision and, like the first time, asks for a new verification.
       replaceState(
         {
           ...state,
           artifacts,
           activeArtifactId: revision.artifactId,
-          appliedRevisionIds: [...state.appliedRevisionIds, revisionId],
+          appliedRevisionIds: applied
+            ? state.appliedRevisionIds
+            : [...state.appliedRevisionIds, revisionId],
           verifiedIds: state.verifiedIds.filter((id) => id !== revision.artifactId),
         },
         "mutation",

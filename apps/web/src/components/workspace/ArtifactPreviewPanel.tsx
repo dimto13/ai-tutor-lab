@@ -65,6 +65,15 @@ export function ArtifactPreviewPanel() {
     (revision) =>
       revision.artifactId === activeArtifact?.id && !state.appliedRevisionIds.includes(revision.id),
   );
+  // Once every revision is applied, the latest one stays available, so a step that still waits for
+  // it can be completed (#580).
+  const appliedRevision = nextRevision
+    ? undefined
+    : [...state.appliedRevisionIds]
+        .reverse()
+        .map((id) => state.revisions.find((revision) => revision.id === id))
+        .find((revision) => revision?.artifactId === activeArtifact?.id);
+  const revisionAction = nextRevision ?? appliedRevision;
   const appliedRevisionKey = state.appliedRevisionIds.join("|");
 
   useEffect(() => {
@@ -199,15 +208,21 @@ export function ArtifactPreviewPanel() {
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border bg-panel p-3">
-            {nextRevision ? (
+            {revisionAction ? (
               <button
                 type="button"
                 data-highlight="artifact.preview.applyRevision"
-                onClick={() => artifactPreviewRuntime.applyRevision(nextRevision.id)}
-                className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-left text-xs font-medium text-foreground hover:bg-accent/20"
+                data-revision-applied={revisionAction === appliedRevision ? "true" : undefined}
+                onClick={() => artifactPreviewRuntime.applyRevision(revisionAction.id)}
+                className={`inline-flex max-w-full items-center gap-1.5 rounded-md border px-3 py-2 text-left text-xs font-medium text-foreground ${revisionAction === appliedRevision ? "border-border hover:border-ring" : "border-accent/40 bg-accent/10 hover:bg-accent/20"}`}
               >
                 <RefreshCw className="h-3.5 w-3.5 shrink-0 text-accent" />
-                <span className="min-w-0 break-words">{nextRevision.label}</span>
+                <span className="min-w-0 break-words">
+                  {revisionAction.label}
+                  {revisionAction === appliedRevision ? (
+                    <span className="font-normal text-muted-foreground"> · angewendet</span>
+                  ) : null}
+                </span>
               </button>
             ) : (
               <span className="text-[10px] text-muted-foreground">
