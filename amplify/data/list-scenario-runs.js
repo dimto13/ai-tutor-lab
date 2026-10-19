@@ -86,6 +86,7 @@ export function response(ctx) {
       startedAt: item.startedAt,
       finishedAt: item.finishedAt,
       durationMs: item.durationMs,
+      activeDurationMs: typeof item.activeDurationMs === "number" ? item.activeDurationMs : null,
       estimatedMinutes: item.estimatedMinutes,
       fastRunThresholdRatio: item.fastRunThresholdRatio,
       fastRunThresholdMs: item.fastRunThresholdMs,

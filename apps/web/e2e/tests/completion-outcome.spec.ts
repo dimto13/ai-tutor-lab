@@ -20,6 +20,44 @@ async function completeArtifactTraining(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
 }
 
+// #582: Die Dauer ist die gemessene Lernzeit. Eine Pause zwischen zwei Lernaktionen zaehlt
+// hoechstens zehn Minuten, auch wenn der Versuch ueber Nacht offen war.
+test("a break overnight does not count as learning time", async ({ page }) => {
+  const sessionKey =
+    "ai-training-lab:tenant:value:local-tenant:user:local-learner:artifact-preview-foundation.guided:mode:guided:state:v4";
+  await page.goto(scenarioUrl);
+  await waitForTrainingReady(page);
+  await page.getByRole("button", { name: /Team-Übersicht/ }).click();
+  await page.getByRole("button", { name: "Quelltext", exact: true }).click();
+  await page.getByRole("button", { name: /Freigabestatus ergänzen/ }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key) ?? "null")?.value?.activeStepId,
+        sessionKey,
+      ),
+    )
+    .toBe("verify-artifact");
+
+  // Der Versuch begann gestern; bis zur letzten Aktion waren drei Minuten Lernzeit gemessen.
+  await page.evaluate((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) ?? "null");
+    const yesterday = Date.now() - 20 * 60 * 60 * 1000;
+    stored.value.startedAt = yesterday - 3 * 60 * 1000;
+    stored.value.lastActivityAt = yesterday;
+    stored.value.activeMs = 3 * 60 * 1000;
+    localStorage.setItem(key, JSON.stringify(stored));
+  }, sessionKey);
+  await page.reload();
+  await waitForTrainingReady(page);
+
+  await page.getByRole("button", { name: "Ergebnis geprüft", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+  const results = page.locator('section[aria-labelledby="completion-results-heading"]');
+  const duration = results.getByText("Dauer", { exact: true }).locator("..");
+  await expect(duration).toContainText("13 Min.");
+});
+
 test("completion shows every required metric, competency state and exactly one follow-up action", async ({
   page,
   accessibility,

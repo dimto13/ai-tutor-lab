@@ -93,10 +93,11 @@ export function CompletionScreen() {
     recommendation.recommendationLoading,
   );
   const scorePresentation = completionScorePresentation(score.status, score.result);
-  const minutes = Math.max(
-    1,
-    Math.round((((progress.finishedAt ?? Date.now()) - progress.startedAt) / 60000) * 10) / 10,
-  );
+  // Measured learning time, not the time between start and finish: breaks do not count (#582).
+  const learningTime =
+    progress.activeMs === null
+      ? "nicht erfasst"
+      : `${Math.max(1, Math.round((progress.activeMs / 60000) * 10) / 10)} Min.`;
   const unitLabel = mode === "explore" ? "Erkundung" : mode === "challenge" ? "Ziel" : "Schritte";
   const unitValue =
     mode === "explore"
@@ -176,7 +177,7 @@ export function CompletionScreen() {
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               { label: unitLabel, value: unitValue },
-              { label: "Dauer", value: `${minutes} Min.` },
+              { label: "Dauer", value: learningTime },
               { label: "Modus", value: `${mode} ×${SCORE_MODE_MULTIPLIER[mode]}` },
               { label: "Punkte", value: scorePresentation.value },
               { label: "Hinweise", value: String(progress.hintsUsed) },

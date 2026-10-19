@@ -53,7 +53,24 @@ export interface TrainingSession {
   lastAction: string | null;
   exploredTargets: string[];
   lastInspectedRef: string | null;
+  /**
+   * Learning time actually spent (#582). Each gap between two learner actions counts at most
+   * ACTIVITY_GAP_CAP_MS, so a tab left open overnight adds minutes, not hours. `null` for a
+   * session from before this was measured: its learning time is unknown.
+   */
+  activeMs: number | null;
+  /** The last learner action counted into `activeMs`. */
+  lastActivityAt: number;
 }
+
+/** A longer gap between two learner actions is a break and counts only this much (#582). */
+export const ACTIVITY_GAP_CAP_MS = 10 * 60_000;
+
+/**
+ * Repeated events of the same type update the learning time at most this often, so that a stream
+ * of events does not write the session on every event.
+ */
+export const ACTIVITY_HEARTBEAT_MS = 60_000;
 
 export interface StoredTrainingSession extends Partial<
   Omit<TrainingSession, "statuses" | "hintUsage" | "attempts" | "subject">
@@ -105,6 +122,8 @@ export function createTrainingSession(
     lastAction: null,
     exploredTargets: [],
     lastInspectedRef: null,
+    activeMs: 0,
+    lastActivityAt: now,
   };
   assertSessionInvariant(session);
   return session;
@@ -210,9 +229,38 @@ export function restoreTrainingSession(
     lastAction: typeof stored.lastAction === "string" ? stored.lastAction : null,
     exploredTargets,
     lastInspectedRef,
+    ...restoredActivity(stored, startedAt, now),
   };
   assertSessionInvariant(session);
   return session;
+}
+
+/** A session stored before #582 has no measured learning time; it stays unknown. */
+function restoredActivity(
+  stored: StoredTrainingSession,
+  startedAt: number,
+  now: number,
+): Pick<TrainingSession, "activeMs" | "lastActivityAt"> {
+  const activeMs = finiteNumber(stored.activeMs);
+  const lastActivityAt = finiteNumber(stored.lastActivityAt);
+  if (activeMs === null || activeMs < 0 || lastActivityAt === null || lastActivityAt < startedAt) {
+    return { activeMs: null, lastActivityAt: now };
+  }
+  return { activeMs, lastActivityAt };
+}
+
+/**
+ * Counts the time since the last learner action into the learning time, at most
+ * ACTIVITY_GAP_CAP_MS (#582). A finished session keeps its learning time.
+ */
+export function recordActivity(session: TrainingSession, now = Date.now()): TrainingSession {
+  if (session.finishedAt !== null || now <= session.lastActivityAt) return session;
+  const gap = Math.min(now - session.lastActivityAt, ACTIVITY_GAP_CAP_MS);
+  return {
+    ...session,
+    activeMs: session.activeMs === null ? null : session.activeMs + gap,
+    lastActivityAt: now,
+  };
 }
 
 export function applyValidationResult(
@@ -233,6 +281,7 @@ export function applyValidationResult(
 
   if (result.outcome === "near-miss" && options.countNearMiss === false) return session;
 
+  const active = recordActivity(session, now);
   const attempts = [
     ...session.attempts,
     createAttempt(session, stepId, result.outcome, now, result.message),
@@ -240,7 +289,7 @@ export function applyValidationResult(
 
   if (result.outcome === "near-miss") {
     const next: TrainingSession = {
-      ...session,
+      ...active,
       statuses: { ...session.statuses, [stepId]: "VALIDATION_FAILED" },
       mistakes: session.mistakes + 1,
       activeStepMistakes: session.activeStepMistakes + 1,
@@ -250,7 +299,7 @@ export function applyValidationResult(
     return next;
   }
 
-  return completeTrainingStep({ ...session, attempts }, scenario, stepId, now);
+  return completeTrainingStep({ ...active, attempts }, scenario, stepId, now);
 }
 
 /** Completes an explanation or otherwise explicitly acknowledged guided step. */
@@ -272,7 +321,7 @@ export function completeTrainingStep(
   if (activeStepId) statuses[activeStepId] = "ACTIVE";
 
   const next: TrainingSession = {
-    ...session,
+    ...recordActivity(session, now),
     statuses,
     activeStepId,
     activeStepMistakes: 0,
@@ -297,7 +346,7 @@ export function skipOptionalStep(
   if (activeStepId) statuses[activeStepId] = "ACTIVE";
 
   const next: TrainingSession = {
-    ...session,
+    ...recordActivity(session, now),
     statuses,
     activeStepId,
     activeStepMistakes: 0,
@@ -329,7 +378,7 @@ export function recordHintUsage(
 ): TrainingSession {
   if (session.mode !== "guided" || session.activeStepId !== stepId) return session;
   return {
-    ...session,
+    ...recordActivity(session, now),
     hintsUsed: session.hintsUsed + 1,
     hintUsage: [...session.hintUsage, { stepId, level, timestamp: now }],
   };
@@ -353,8 +402,17 @@ export function recordMistake(session: TrainingSession): TrainingSession {
   };
 }
 
-export function recordLastAction(session: TrainingSession, action: string): TrainingSession {
-  return session.lastAction === action ? session : { ...session, lastAction: action };
+export function recordLastAction(
+  session: TrainingSession,
+  action: string,
+  now = Date.now(),
+): TrainingSession {
+  if (session.lastAction === action && now - session.lastActivityAt < ACTIVITY_HEARTBEAT_MS) {
+    return session;
+  }
+  const active = recordActivity(session, now);
+  if (active === session && session.lastAction === action) return session;
+  return { ...active, lastAction: action };
 }
 
 export function inspectExploreTarget(
@@ -369,7 +427,7 @@ export function inspectExploreTarget(
     : [...session.exploredTargets, ref];
   const targetCount = scenario.exploreTargets?.length ?? 0;
   return {
-    ...session,
+    ...recordActivity(session, now),
     exploredTargets,
     lastInspectedRef: ref,
     finishedAt:
@@ -387,7 +445,7 @@ export function completeChallenge(
   if (session.mode !== "challenge" || session.challengeOutcome !== "active") return session;
   const challengeStep = scenario.steps[0];
   const next: TrainingSession = {
-    ...session,
+    ...recordActivity(session, now),
     statuses: challengeStep
       ? { ...session.statuses, [challengeStep.id]: "COMPLETED" }
       : session.statuses,

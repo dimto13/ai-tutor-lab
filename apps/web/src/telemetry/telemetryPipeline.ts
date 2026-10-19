@@ -352,7 +352,8 @@ export class TrainingTelemetryRecorder {
         {
           scenarioId: session.scenarioId,
           mode: session.mode,
-          durationMs: Math.max(0, finishedAt - session.startedAt),
+          // Learning time without breaks (#582); unknown for a session from before it was measured.
+          ...(session.activeMs === null ? {} : { durationMs: session.activeMs }),
         },
       ),
     );

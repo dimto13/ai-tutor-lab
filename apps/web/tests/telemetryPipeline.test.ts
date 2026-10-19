@@ -179,6 +179,8 @@ function session(overrides: Partial<TrainingSession> = {}): TrainingSession {
     lastAction: null,
     exploredTargets: [],
     lastInspectedRef: null,
+    activeMs: 0,
+    lastActivityAt: 1_000,
     ...overrides,
   };
 }
@@ -234,6 +236,7 @@ test("TrainingTelemetryRecorder reuses TrainingEvent without leaking subject ide
         { id: "attempt-2", stepId: "stepA", outcome: "pass", timestamp: 1_500 },
       ],
       lastAction: "file.updated",
+      activeMs: 1_200,
     }),
     2_500,
   );
@@ -254,4 +257,10 @@ test("TrainingTelemetryRecorder reuses TrainingEvent without leaking subject ide
       (value.payload as { stepId?: string }).stepId === "stepA",
   );
   assert.equal((firstStepCompletion?.payload as { durationMs?: number }).durationMs, 600);
+
+  // The completion reports the measured learning time, not finishedAt - startedAt (#582).
+  const completion = events.find(
+    (value) => value.type === learningTelemetryEventType.sessionCompleted,
+  );
+  assert.equal((completion?.payload as { durationMs?: number }).durationMs, 1_200);
 });

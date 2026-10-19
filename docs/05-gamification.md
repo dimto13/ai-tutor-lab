@@ -79,6 +79,13 @@ Projektphasen). Stattdessen: **Wochenziel**, frei einstellbar (Standard 20 Minut
 Anzeige der letzten 8 Wochen als ruhiges Balkendiagramm. Kein Verlust bei Unterbrechung,
 keine Push-Erinnerung ohne Opt-in.
 
+**Lernzeit** ist die gemessene aktive Zeit eines Versuchs, nicht die Spanne von Start bis
+Abschluss (#582). Die Sitzung zählt die Zeit zwischen zwei Lernaktionen; eine Lücke zählt
+höchstens zehn Minuten, damit ein über Nacht offener Tab keine Stunden ergibt. Wochenziel,
+Lernaktivitäten, Abschlussbildschirm und Telemetrie verwenden dieselbe Zahl. Läufe von vor dieser
+Messung haben keine Lernzeit: Sie erscheinen als „Dauer nicht erfasst“ und zählen nicht zum
+Wochenziel. Die Schnelllauf-Prüfung (`suspect_fast`) bleibt auf der Spanne von Start bis Abschluss.
+
 ## 5.5 Kompetenznachweise (Attestation)
 
 Der ökonomisch wertvollste Teil des Systems. Ein Nachweis entsteht, wenn alle Lernziele eines
