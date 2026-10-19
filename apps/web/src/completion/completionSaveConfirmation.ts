@@ -40,3 +40,21 @@ export function confirmedCompletionFinishedAt(
   if (confirmation.status !== "confirmed") return null;
   return confirmation.finishedAt === progressFinishedAt ? progressFinishedAt : null;
 }
+
+/**
+ * Confirmation after a session write settled. `authoritative` is the persisted session the write
+ * was resolved to after a conflict, or `null` when the written session itself was stored.
+ *
+ * A conflict that resolved to a different session did not store this completion, so it is never
+ * reported as confirmed; the completion screen follows the persisted state instead.
+ */
+export function completionSaveAfterWrite(
+  finishedAt: number | null,
+  authoritative: { readonly finishedAt: number | null } | null,
+): CompletionSaveConfirmation {
+  if (finishedAt === null) return initialCompletionSaveConfirmation;
+  if (authoritative && authoritative.finishedAt !== finishedAt) {
+    return initialCompletionSaveConfirmation;
+  }
+  return confirmedCompletionSave(finishedAt);
+}
