@@ -126,7 +126,7 @@ function DataTransparencyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 bg-background">
       <header className="border-b border-border bg-panel">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <GraduationCap className="h-5 w-5 text-accent" aria-hidden="true" />

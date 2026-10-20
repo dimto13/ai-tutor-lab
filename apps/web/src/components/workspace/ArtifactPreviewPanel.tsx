@@ -34,7 +34,7 @@ const TYPE_LABELS: Record<PreviewArtifact["type"], string> = {
 
 /**
  * Die Ergebnisflaeche folgt der Ausweichstrategie aus docs/28-arbeitsbereich-layout.md: gestapelt
- * volle Breite und ihre natuerliche Hoehe bis hoechstens 60 % des Editor-Bereichs, nebeneinander
+ * volle Breite und ihre natuerliche Hoehe bis hoechstens 63 % des Editor-Bereichs, nebeneinander
  * der bisherige Breitenanteil.
  *
  * Bewusst nicht die halbe Hoehe: ihre Kopfzeile, Reiter, Revisionszeile und Fusszeile sind fest und
@@ -110,7 +110,7 @@ export function ArtifactPreviewPanel() {
       ref={rootRef}
       data-highlight="artifact.preview.panel"
       onClickCapture={() => inspect("artifact.preview.panel")}
-      className="workspace-stacked:w-full workspace-stacked:max-h-[60%] workspace-stacked:workspace-low:max-h-[68%] workspace-stacked:flex-none workspace-stacked:overflow-y-auto workspace-stacked:border-l-0 workspace-stacked:border-t-2 flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
+      className="workspace-stacked:w-full workspace-stacked:max-h-[63%] workspace-stacked:workspace-low:max-h-[72%] workspace-stacked:flex-none workspace-stacked:overflow-y-auto workspace-stacked:border-l-0 workspace-stacked:border-t-2 flex min-h-0 w-[46%] min-w-0 flex-col border-l-2 border-accent/40 bg-[#0b0f14]"
     >
       <div className="workspace-stacked:workspace-low:min-h-7 workspace-stacked:workspace-low:py-0.5 flex min-h-10 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border bg-[#111720] px-3 py-1.5">
         <Eye className="h-4 w-4 text-accent" />

@@ -190,9 +190,12 @@ export function M365CopilotWorkspace() {
       className="m365-product-ui relative flex min-h-0 min-w-0 flex-1 bg-background text-foreground"
       aria-label="Microsoft 365 Copilot Simulation"
     >
+      {/* Outside explore the navigation holds no focusable control, but on a low workspace it
+          scrolls. tabIndex keeps that scroll reachable by keyboard (axe scrollable-region-focusable). */}
       <nav
         id="m365-copilot-navigation"
-        className={`${mobileNavOpen ? "absolute inset-y-0 left-0 z-30 block shadow-xl" : "hidden"} w-56 max-w-[calc(100vw-2rem)] shrink-0 overflow-y-auto border-r border-border bg-background p-3 sm:static sm:block sm:max-w-none sm:bg-muted/40 sm:shadow-none`}
+        tabIndex={0}
+        className={`${mobileNavOpen ? "absolute inset-y-0 left-0 z-30 block shadow-xl" : "hidden"} w-56 max-w-[calc(100vw-2rem)] shrink-0 overflow-y-auto border-r border-border bg-background p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:static sm:block sm:max-w-none sm:bg-muted/40 sm:shadow-none`}
         aria-label="Copilot Navigation"
         onKeyDown={(event) => {
           if (event.key === "Escape" && mobileNavOpen) closeMobileNavigation();
