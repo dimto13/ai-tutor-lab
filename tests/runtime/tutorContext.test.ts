@@ -49,7 +49,12 @@ test("challenge and explore do not receive graded Guided hints", async () => {
   const explore = buildTutorContext(scenario, "explore", "create_file");
   assert.equal(challenge.step?.helpLevels, undefined);
   assert.equal(explore.step?.helpLevels, undefined);
-  assert.equal(challenge.step?.instruction, scenario.steps.find((step) => step.id === "create_file")?.instruction);
+  assert.equal(challenge.step?.possibleFailure, null);
+  assert.equal(explore.step?.possibleFailure, null);
+  assert.equal(
+    challenge.step?.instruction,
+    scenario.steps.find((step) => step.id === "create_file")?.instruction,
+  );
 });
 
 test("tutor context rejects a step that is not part of the scenario", async () => {
