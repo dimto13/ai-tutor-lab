@@ -15,6 +15,14 @@ test("guided tutor context prefers the step targets and knows the runtime catalo
   const context = buildTutorContext(scenario, "guided", "create_file");
 
   assert.equal(context.step?.id, "create_file");
+  assert.equal(context.scenarioDescription, scenario.description);
+  const authoredStep = scenario.steps.find((candidate) => candidate.id === "create_file");
+  assert.ok(authoredStep);
+  assert.deepEqual(
+    context.step?.helpLevels,
+    authoredStep.helpLevels.filter((hint) => hint.trim() && hint.trim() !== "__highlight__"),
+  );
+  assert.equal(context.step?.possibleFailure, authoredStep.onFailure?.message ?? null);
   assert.deepEqual(context.stepUiTargetRefs, ["vscode.explorer.newFile", "vscode.explorer.tree"]);
   assert.deepEqual(context.allowedUiTargetRefs.slice(0, 2), context.stepUiTargetRefs);
   // #476: a question about the terminal outside the current step can still point at it.
@@ -33,6 +41,15 @@ test("explore tutor context adds the explore targets and falls back to the step'
   }
   assert.equal(context.step?.rationale, step.why);
   assert.deepEqual(buildTutorContext(scenario, "guided", null).stepUiTargetRefs, []);
+});
+
+test("challenge and explore do not receive graded Guided hints", async () => {
+  const scenario = await loadScenario("vscode-basics.guided");
+  const challenge = buildTutorContext(scenario, "challenge", "create_file");
+  const explore = buildTutorContext(scenario, "explore", "create_file");
+  assert.equal(challenge.step?.helpLevels, undefined);
+  assert.equal(explore.step?.helpLevels, undefined);
+  assert.equal(challenge.step?.instruction, scenario.steps.find((step) => step.id === "create_file")?.instruction);
 });
 
 test("tutor context rejects a step that is not part of the scenario", async () => {
