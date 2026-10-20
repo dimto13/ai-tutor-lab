@@ -97,7 +97,7 @@ function GuidedGuide() {
       <section
         data-testid="guided-orientation"
         data-platform-ui="guided-primary-action"
-        className="platform-ui min-h-0 max-h-[55%] shrink-0 overflow-y-auto border-b border-border bg-background p-3 sm:p-4"
+        className="platform-ui min-h-0 max-h-[55%] overflow-y-auto border-b border-border bg-background p-3 sm:p-4"
         aria-label="Aktueller Lernauftrag"
       >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
