@@ -447,7 +447,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         ) : null}
       </div>
       {mode !== "challenge" ? (
-        <div className="flex flex-wrap gap-1.5 px-4 pb-2">
+        <div className="flex flex-wrap gap-1.5 px-4 pb-1">
           {SUGGESTIONS.map((suggestion) => (
             <button
               key={suggestion}
@@ -461,7 +461,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           ))}
         </div>
       ) : null}
-      <div className="flex items-center gap-2 border-t border-border p-3">
+      <div className="flex items-center gap-2 border-t border-border p-2">
         <input
           value={input}
           disabled={pending}
