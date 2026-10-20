@@ -37,6 +37,7 @@ export function buildTutorContext(
 
   return {
     scenarioTitle: scenario.title,
+    scenarioDescription: scenario.description,
     mode,
     step: step
       ? {
@@ -44,6 +45,16 @@ export function buildTutorContext(
           title: step.title,
           instruction: step.instruction,
           rationale: step.rationale ?? step.why ?? null,
+          // Only Guided receives pre-authored help levels. Challenge must not leak solutions.
+          ...(mode === "guided"
+            ? {
+                helpLevels: step.helpLevels.filter(
+                  (hint) => hint.trim().length > 0 && hint.trim() !== "__highlight__",
+                ),
+              }
+            : {}),
+          // A possible diagnostic clue, not an assertion that a failure happened.
+          possibleFailure: step.onFailure?.message ?? null,
         }
       : null,
     stepUiTargetRefs: [...stepUiTargetRefs],
