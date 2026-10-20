@@ -366,7 +366,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       data-testid="tutor-chat-expanded"
       className="platform-ui flex max-h-[46%] min-h-[min(250px,48dvh)] shrink-0 flex-col overflow-hidden border-t border-border"
     >
-      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground [@media(max-height:500px)]:py-1">
         <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
           <Bot className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" /> KI-Tutor
         </span>
@@ -461,7 +461,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
           ))}
         </div>
       ) : null}
-      <div className="flex items-center gap-2 border-t border-border p-2">
+      <div className="flex items-center gap-2 border-t border-border p-2 [@media(max-height:500px)]:p-1">
         <input
           value={input}
           disabled={pending}
