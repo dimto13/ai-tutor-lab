@@ -123,6 +123,8 @@ export const schema = a.schema({
       startedAt: a.float().required(),
       finishedAt: a.float().required(),
       durationMs: a.float().required(),
+      // Measured learning time (#582); absent on runs recorded before it was measured.
+      activeDurationMs: a.float(),
       estimatedMinutes: a.float(),
       fastRunThresholdRatio: a.float(),
       fastRunThresholdMs: a.float(),
@@ -407,6 +409,7 @@ export const schema = a.schema({
     startedAt: a.float().required(),
     finishedAt: a.float().required(),
     durationMs: a.float().required(),
+    activeDurationMs: a.float(),
     estimatedMinutes: a.float(),
     fastRunThresholdRatio: a.float(),
     fastRunThresholdMs: a.float(),

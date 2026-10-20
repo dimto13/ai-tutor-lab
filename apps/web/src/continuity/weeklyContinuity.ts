@@ -3,7 +3,11 @@ export interface WeeklyContinuityRun {
   mode?: string;
   sessionId?: string;
   finishedAt: number;
-  durationMs: number;
+  /**
+   * Learning time the session measured, without breaks (#582). `null` for a run from before it was
+   * measured: it is still a learning activity, but counts no minutes.
+   */
+  learningMs: number | null;
 }
 
 export interface WeeklyContinuityWeek {
@@ -29,7 +33,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
 function hasValidTiming(run: WeeklyContinuityRun): boolean {
-  return Number.isFinite(run.finishedAt) && Number.isFinite(run.durationMs) && run.durationMs >= 0;
+  return (
+    Number.isFinite(run.finishedAt) &&
+    (run.learningMs === null || (Number.isFinite(run.learningMs) && run.learningMs >= 0))
+  );
 }
 
 function validUniqueActivities(runs: readonly WeeklyContinuityRun[]): LearningActivityRun[] {
@@ -79,7 +86,7 @@ export function buildWeeklyContinuity(
     if (!hasValidTiming(run)) continue;
     const weekStart = startOfUtcWeek(run.finishedAt);
     if (weekStart < firstWeekStart || weekStart > currentWeekStart) continue;
-    totals.set(weekStart, (totals.get(weekStart) ?? 0) + run.durationMs);
+    totals.set(weekStart, (totals.get(weekStart) ?? 0) + (run.learningMs ?? 0));
   }
 
   const weeks = Array.from({ length: WEEK_COUNT }, (_, index) => {
@@ -100,6 +107,15 @@ export function buildWeeklyContinuity(
       ? Math.min(100, Math.round((currentWeekMinutes / goalMinutes) * 100))
       : null,
   };
+}
+
+/**
+ * Learning time as every view shows it (#582): whole minutes, at least one, so the completion
+ * screen and the learning activities never disagree about the same run. `null` when not measured.
+ */
+export function formatLearningTime(learningMs: number | null): string | null {
+  if (learningMs === null || !Number.isFinite(learningMs) || learningMs < 0) return null;
+  return `${Math.max(1, Math.round(learningMs / 60_000))} Min.`;
 }
 
 export function formatWeekLabel(weekStart: number): string {

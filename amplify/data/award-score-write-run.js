@@ -164,6 +164,14 @@ function runOwnerKey(subject) {
   ].join(".");
 }
 
+// The session measures learning time without breaks (#582). It can never exceed the wall-clock
+// duration; a session from before the measurement has none, and the run then has none either.
+function activeDuration(payload, durationMs) {
+  const activeMs = payload.activeMs;
+  if (typeof activeMs !== "number" || !Number.isFinite(activeMs) || activeMs < 0) return null;
+  return Math.min(activeMs, durationMs);
+}
+
 function timingEvidence(payload, definition) {
   const startedAt = payload.startedAt;
   const finishedAt = payload.finishedAt;
@@ -221,6 +229,7 @@ export function request(ctx) {
   }
 
   const evidence = timingEvidence(payload, definition);
+  const activeDurationMs = activeDuration(payload, evidence.durationMs);
   const id = scenarioRunId(
     subject,
     ctx.args.scenarioId,
@@ -249,6 +258,8 @@ export function request(ctx) {
     sourceRevision: session.revision,
     appendToken,
   };
+
+  if (activeDurationMs !== null) values.activeDurationMs = activeDurationMs;
 
   ctx.stash.scenarioRunId = id;
   ctx.stash.scenarioRunAppendToken = appendToken;

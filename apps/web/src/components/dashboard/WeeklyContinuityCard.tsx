@@ -3,11 +3,13 @@ import { CalendarDays } from "lucide-react";
 import { loadMyWeeklyContinuityRuns } from "@/continuity/applicationWeeklyContinuity";
 import {
   buildWeeklyContinuity,
+  formatLearningTime,
   formatWeekLabel,
   recentLearningActivities,
   type WeeklyContinuityRun,
 } from "@/continuity/weeklyContinuity";
 import { useUserPreferences } from "@/profile/UserPreferencesContext";
+import { getScenario } from "@/scenarios";
 
 const DEFAULT_GOAL_MINUTES = 60;
 const modeLabels: Record<string, string> = {
@@ -15,11 +17,6 @@ const modeLabels: Record<string, string> = {
   guided: "Guided",
   challenge: "Challenge",
 };
-
-function formatDuration(durationMs: number): string {
-  const minutes = Math.max(1, Math.round(durationMs / 60_000));
-  return `${minutes} Min.`;
-}
 
 export function WeeklyContinuityCard() {
   const preferences = useUserPreferences();
@@ -147,11 +144,14 @@ export function WeeklyContinuityCard() {
                 key={run.sessionId}
                 className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs"
                 data-session-id={run.sessionId}
+                data-scenario-id={run.scenarioId}
               >
-                <span className="min-w-0 font-medium text-foreground">{run.scenarioId}</span>
+                <span className="min-w-0 font-medium text-foreground">
+                  {getScenario(run.scenarioId)?.title ?? run.scenarioId}
+                </span>
                 <span className="flex gap-3 text-muted-foreground">
                   <span>{modeLabels[run.mode.toLowerCase()] ?? run.mode}</span>
-                  <span>{formatDuration(run.durationMs)}</span>
+                  <span>{formatLearningTime(run.learningMs) ?? "Dauer nicht erfasst"}</span>
                 </span>
               </li>
             ))}

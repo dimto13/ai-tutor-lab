@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildWeeklyContinuity,
+  formatLearningTime,
   recentLearningActivities,
   type WeeklyContinuityRun,
 } from "../src/continuity/weeklyContinuity.ts";
@@ -15,7 +16,7 @@ function run(overrides: Partial<WeeklyContinuityRun> = {}): WeeklyContinuityRun 
     mode: "guided",
     sessionId: "session-1",
     finishedAt: NOW - 60_000,
-    durationMs: 12 * 60_000,
+    learningMs: 12 * 60_000,
     ...overrides,
   };
 }
@@ -29,18 +30,18 @@ test("projects persisted scenario, mode and measured duration", () => {
 
 test("deduplicates retry evidence by session id and keeps the latest state", () => {
   const original = run();
-  const retry = run({ finishedAt: NOW, durationMs: 99 * 60_000 });
+  const retry = run({ finishedAt: NOW, learningMs: 99 * 60_000 });
 
   const activities = recentLearningActivities([original, retry]);
 
   assert.equal(activities.length, 1);
-  assert.equal(activities[0]?.durationMs, retry.durationMs);
+  assert.equal(activities[0]?.learningMs, retry.learningMs);
 });
 
 test("preserves historical weekly minutes without activity metadata", () => {
   const legacy: WeeklyContinuityRun = {
     finishedAt: NOW - 60_000,
-    durationMs: 12 * 60_000,
+    learningMs: 12 * 60_000,
   };
 
   assert.deepEqual(recentLearningActivities([legacy]), []);
@@ -49,12 +50,12 @@ test("preserves historical weekly minutes without activity metadata", () => {
 
 test("does not apply scoring mode multipliers to learning time", () => {
   const runs = [
-    run({ sessionId: "explore", mode: "explore", durationMs: 10 * 60_000 }),
-    run({ sessionId: "guided", mode: "guided", durationMs: 10 * 60_000 }),
+    run({ sessionId: "explore", mode: "explore", learningMs: 10 * 60_000 }),
+    run({ sessionId: "guided", mode: "guided", learningMs: 10 * 60_000 }),
     run({
       sessionId: "challenge",
       mode: "challenge",
-      durationMs: 10 * 60_000,
+      learningMs: 10 * 60_000,
     }),
   ];
 
@@ -68,7 +69,7 @@ test("fails closed for incomplete activity metadata and invalid timing", () => {
     run({ mode: "", sessionId: "missing-mode" }),
   ];
   const invalidTiming = [
-    run({ durationMs: -1, sessionId: "negative-duration" }),
+    run({ learningMs: -1, sessionId: "negative-duration" }),
     run({ finishedAt: Number.NaN, sessionId: "invalid-finished-at" }),
   ];
 
@@ -90,4 +91,23 @@ test("sorts newest activities first and respects the requested limit", () => {
     activities.map((activity) => activity.sessionId),
     ["newest", "middle"],
   );
+});
+
+test("a run without measured learning time is listed but counts no minutes (#582)", () => {
+  const unmeasured = run({ sessionId: "before-582", learningMs: null });
+  const measured = run({ sessionId: "after-582", learningMs: 9 * 60_000, finishedAt: NOW });
+
+  assert.deepEqual(
+    recentLearningActivities([unmeasured, measured]).map((activity) => activity.sessionId),
+    ["after-582", "before-582"],
+  );
+  assert.equal(buildWeeklyContinuity([unmeasured, measured], 30, NOW).currentWeekMinutes, 9);
+});
+
+test("every view formats learning time the same way: whole minutes, at least one", () => {
+  assert.equal(formatLearningTime(2.5 * 60_000), "3 Min.");
+  assert.equal(formatLearningTime(13 * 60_000), "13 Min.");
+  assert.equal(formatLearningTime(10_000), "1 Min.");
+  assert.equal(formatLearningTime(null), null);
+  assert.equal(formatLearningTime(Number.NaN), null);
 });

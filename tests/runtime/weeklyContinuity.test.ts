@@ -12,9 +12,9 @@ test("weekly continuity returns exactly eight calendar weeks and aggregates run 
   const previousWeek = currentWeek - 7 * 24 * 60 * 60 * 1000;
   const summary = buildWeeklyContinuity(
     [
-      { finishedAt: currentWeek + 60_000, durationMs: 20 * 60_000 },
-      { finishedAt: currentWeek + 120_000, durationMs: 25 * 60_000 },
-      { finishedAt: previousWeek + 60_000, durationMs: 30 * 60_000 },
+      { finishedAt: currentWeek + 60_000, learningMs: 20 * 60_000 },
+      { finishedAt: currentWeek + 120_000, learningMs: 25 * 60_000 },
+      { finishedAt: previousWeek + 60_000, learningMs: 30 * 60_000 },
     ],
     60,
     MONDAY,
@@ -32,10 +32,10 @@ test("weekly continuity ignores old or malformed runs and caps goal display at 1
   const oldWeek = currentWeek - 8 * 7 * 24 * 60 * 60 * 1000;
   const summary = buildWeeklyContinuity(
     [
-      { finishedAt: currentWeek + 60_000, durationMs: 90 * 60_000 },
-      { finishedAt: oldWeek, durationMs: 500 * 60_000 },
-      { finishedAt: Number.NaN, durationMs: 60_000 },
-      { finishedAt: currentWeek + 120_000, durationMs: -1 },
+      { finishedAt: currentWeek + 60_000, learningMs: 90 * 60_000 },
+      { finishedAt: oldWeek, learningMs: 500 * 60_000 },
+      { finishedAt: Number.NaN, learningMs: 60_000 },
+      { finishedAt: currentWeek + 120_000, learningMs: -1 },
     ],
     60,
     MONDAY,

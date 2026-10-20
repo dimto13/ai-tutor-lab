@@ -100,8 +100,7 @@ async function completeGuidedTraining(page: Page): Promise<number> {
 async function latestPersistedActivity(page: Page) {
   const activity = page
     .getByTestId("learning-activities")
-    .locator("li[data-session-id]")
-    .filter({ hasText: "artifact-preview-foundation" })
+    .locator('li[data-session-id][data-scenario-id="artifact-preview-foundation.guided"]')
     .first();
   await expect(activity).toBeVisible();
   await expect(activity).toContainText("Guided");

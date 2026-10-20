@@ -18,13 +18,13 @@ export async function loadAmplifyWeeklyContinuityRuns(): Promise<WeeklyContinuit
   const runs: WeeklyContinuityRun[] = [];
   for (const run of result.data ?? []) {
     if (!run) continue;
-    if (typeof run.finishedAt !== "number" || typeof run.durationMs !== "number") {
-      continue;
-    }
+    if (typeof run.finishedAt !== "number") continue;
 
+    // `durationMs` is the wall-clock time between start and finish, breaks included. Only the
+    // measured learning time counts (#582).
     const continuityRun: WeeklyContinuityRun = {
       finishedAt: run.finishedAt,
-      durationMs: run.durationMs,
+      learningMs: typeof run.activeDurationMs === "number" ? run.activeDurationMs : null,
     };
     if (typeof run.scenarioId === "string") continuityRun.scenarioId = run.scenarioId;
     if (typeof run.mode === "string") continuityRun.mode = run.mode;
