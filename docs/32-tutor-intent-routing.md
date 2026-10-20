@@ -65,6 +65,32 @@ Gegenproben.
   Systemprompt und soll Plattformfragen nur damit beantworten. Jede Aussage dort muss im Code oder
   in der UI belegbar sein; ein neuer Eintrag braucht einen Golden-Fall.
 
+## Modusgerechtes Grounding und Coaching (Paket 1)
+
+Der Server erstellt den LLM-Kontext aus dem **kanonisch geladenen Szenario** und nicht aus frei
+vom Browser behaupteten Trainingsdaten. Neben Titel, Schrittanweisung, Begründung und erlaubten
+UI-Referenzen enthält er die Szenariobeschreibung. Im Guided-Modus erhält das Modell zusätzlich
+die aktuell authored gestuften Hilfen und einen möglichen `onFailure.message`-Hinweis. Ein solcher
+Hinweis ist **kein Beleg**, dass der konkrete Nutzer diesen Fehler gemacht hat; ohne bestätigte
+Runtime-Evidence darf der Tutor keinen Fehlversuch oder Abschluss behaupten.
+
+Die Antwortpolitik unterscheidet die Lernmodi:
+
+- **Guided:** die konkrete Frage direkt beantworten; zunächst die geringste passende Hilfe, bei
+  ausdrücklicher Nachfrage präziser; ausschließlich die Hilfen des aktuellen Schritts verwenden.
+- **Explore:** Elemente, ihren Zweck und Zusammenhänge erklären, ohne eine starre Klickfolge
+  oder einen bereits erzielten Fortschritt vorzugeben.
+- **Challenge:** Denkansätze und Begriffe auf Nachfrage erklären, ohne ungefragt die komplette
+  Lösung oder eine Klickfolge vorzugeben. Guided-Hilfestufen und Fehlervorlagen werden in diesem
+  Modus **nicht an das Modell übermittelt**.
+
+Bei unklarem Kontext wird eine gezielte Rückfrage erwartet, nicht die Behauptung, der Tutor habe
+aktuelle Simulatoraktionen beobachtet. Die Änderung ist eine Kontext-/Prompt-Verbesserung und
+**noch kein Beleg** für adaptives Coaching oder gute reale Modellantworten. Insbesondere werden
+aktuelle Fehlversuche, Interaktionsereignisse und die langfristige Lernhistorie noch nicht an das
+Modell übergeben. Diese Zustandsgrenze bleibt einem gesonderten, datenschutzgeprüften Paket
+vorbehalten (Bezug #420/#575).
+
 ## Server-Tutor
 
 - Der Chat sendet bis zu sechs vorherige Nachrichten mit (`TUTOR_HISTORY_MAX_TURNS`, höchstens
