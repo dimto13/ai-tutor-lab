@@ -191,14 +191,14 @@ function buildSystemMessage(context: TutorLlmContext): string {
         `Aktueller Schritt: ${context.step.title}`,
         `Anweisung: ${context.step.instruction}`,
         ...(context.step.rationale ? [`Begründung: ${context.step.rationale}`] : []),
-        ...(context.step.helpLevels?.length
+        ...(context.mode === "guided" && context.step.helpLevels?.length
           ? [
               `Gestufte Hilfen (von allgemein zu konkret):\n${context.step.helpLevels
                 .map((hint, index) => `${index + 1}. ${hint}`)
                 .join("\n")}`,
             ]
           : []),
-        ...(context.step.possibleFailure
+        ...(context.mode === "guided" && context.step.possibleFailure
           ? [
               `Möglicher Fehlerhinweis (kein Nachweis eines aufgetretenen Fehlers): ${context.step.possibleFailure}`,
             ]
