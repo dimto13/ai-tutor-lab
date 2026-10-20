@@ -46,7 +46,9 @@ for (const viewport of viewports) {
     const problem = page.getByRole("button", { name: "Ich habe ein Problem", exact: true });
     await expectReachableWithoutScroll(page, problem);
     await problem.click();
-    await expect(page.getByRole("dialog").getByRole("heading", { name: "Problem melden" })).toBeVisible();
+    await expect(
+      page.getByRole("dialog").getByRole("heading", { name: "Problem melden" }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Problemmeldung abbrechen" }).click();
 
     await expectReachableWithoutScroll(page, toggle);
@@ -59,6 +61,8 @@ for (const viewport of viewports) {
     await close.click();
     await expect(toggle).toBeFocused();
 
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
   });
 }
