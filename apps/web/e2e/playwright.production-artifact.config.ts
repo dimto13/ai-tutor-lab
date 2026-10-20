@@ -24,6 +24,10 @@ const productionArtifactTestTitles = [
   "Challenge: freier Klickpfad wird ausschließlich über den gespeicherten Zielzustand bewertet",
   "Reload: geführter Fortschritt und übersprungene Grundbegriffe bleiben erhalten",
   "zeigt nach dem Abmelden auf dem Weg zur Landingpage keine Plattforminhalte",
+  "#574 Tutor and problem entry remain reachable in landscape-844",
+  "#574 Tutor and problem entry remain reachable in landscape-932",
+  "#574 Tutor and problem entry remain reachable in portrait",
+  "#574 Tutor and problem entry remain reachable in desktop",
 ] as const;
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -39,6 +43,7 @@ export default defineConfig({
     "skill-profile.spec.ts",
     "copilot-modes.spec.ts",
     "vscode-basics.spec.ts",
+    "mobile-landscape-tutor.spec.ts",
   ],
   grep: productionArtifactGrep,
   timeout: 30_000,

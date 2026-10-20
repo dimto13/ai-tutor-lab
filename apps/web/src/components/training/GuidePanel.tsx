@@ -101,8 +101,9 @@ function GuidedGuide() {
       <section
         data-testid="guided-orientation"
         data-platform-ui="guided-primary-action"
-        className="platform-ui shrink-0 border-b border-border bg-background p-3 sm:p-4"
+        className="platform-ui min-h-0 max-h-[55%] overflow-y-auto border-b border-border bg-background p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         aria-label="Aktueller Lernauftrag"
+        tabIndex={0}
       >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Dein nächster Schritt · {stepNumber} von {scenario.steps.length}
