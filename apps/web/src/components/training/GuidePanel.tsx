@@ -28,8 +28,10 @@ export function GuidePanel() {
     mode === "guided" &&
     (Boolean(recovery) || progress.activeStepMistakes >= FAILURES_PER_HELP_OFFER || helpLevel > 0);
 
+  // pb-8: the training shell is h-screen below the 24px language bar, so its bottom 24px lie
+  // below the fold; the extra 8px keep the tutor visibly clear of the viewport edge (#475, #585).
   return (
-    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel pb-7 lg:w-[380px] lg:flex-none lg:border-l">
+    <aside className="flex h-full min-w-0 flex-1 flex-col border-border bg-panel pb-8 lg:w-[380px] lg:flex-none lg:border-l">
       {mode === "guided" ? (
         <GuidedGuide />
       ) : (

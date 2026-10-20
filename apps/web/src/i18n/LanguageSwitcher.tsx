@@ -21,10 +21,10 @@ export function LanguageSwitcher() {
   return (
     <div
       data-platform-ui="language-switcher"
-      className="relative z-[120] flex h-5 w-full shrink-0 items-center justify-end gap-1 border-b border-border bg-panel/95 px-2 backdrop-blur"
+      className="relative z-[120] flex h-6 w-full shrink-0 items-center justify-end gap-1 border-b border-border bg-panel/95 px-2 backdrop-blur"
     >
       <Languages className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <label className="flex h-5 items-center gap-1 text-[11px] font-medium text-foreground">
+      <label className="flex h-6 items-center gap-1 text-[11px] font-medium text-foreground">
         <span>{t("languageLabel")}</span>
         <select
           aria-label={t("changeLanguage")}
@@ -36,7 +36,7 @@ export function LanguageSwitcher() {
               setError(cause instanceof Error ? cause.message : t("genericError"));
             });
           }}
-          className="h-5 rounded border border-border bg-background px-1 py-0 text-[11px] leading-none text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          className="h-6 min-w-6 rounded border border-border bg-background px-1 py-0 text-[11px] leading-none text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
