@@ -92,6 +92,12 @@ Rest. Die Höhe der Leiste steht dafür nirgends in der Route. Ein `h-screen` un
 Dokument um die Leistenhöhe überstehen: Die Statusleiste lag unter dem sichtbaren Bereich, und ein
 Klick nahe dem unteren Rand scrollte das ganze Fenster mitsamt Kopfzeile nach oben.
 
+Die Hülle selbst darf nicht scrollen. Mit offenem Tutor-Chat ist die Guide-Spalte unterhalb von rund 760 px
+Viewporthöhe höher als verfügbar; dieser Überlauf scrollt in der Spalte (#596). Scrollte stattdessen
+die Hülle, wenn der Chat sein Eingabefeld in den sichtbaren Bereich holt, lagen Kopfzeile und
+Schrittnavigation unter der Sprachleiste, und axe meldete die Sprachauswahl und die Schrittnavigation
+als zu kleine beziehungsweise verdeckte Ziele.
+
 **Zeilen der Ergebnisfläche.** Kopfzeile, Artefakt-Auswahl, Titelzeile mit Umschalter
 Vorschau/Quelltext und die Aktionszeile brechen um, statt horizontal zu scrollen. Ein Knopf, den man
 nur durch seitliches Scrollen in einer 128 px breiten Fläche erreicht, ist auf Touch-Geräten praktisch
@@ -144,5 +150,6 @@ damit ein Fehlschlag nicht erst im nächsten CI-Lauf erklärbar wird.
 
 `apps/web/e2e/tests/training-viewport-fit.spec.ts` prüft die Höhe der Trainingsroute auf 1280×720,
 1280×900, 1300×620, 1024×768, 390×844 und 320×640: Das Dokument ist genau viewporthoch, die Hülle
-beginnt direkt unter der Sprachleiste, und die Statusleiste liegt vollständig im Viewport. Die
-Leistenhöhe setzt der Test nicht voraus.
+beginnt direkt unter der Sprachleiste, und die Statusleiste liegt vollständig im Viewport. Nach einem
+Klick auf „Senden“ im Tutor-Chat sind weder Fenster noch Hülle gescrollt. Die Leistenhöhe setzt der
+Test nicht voraus.

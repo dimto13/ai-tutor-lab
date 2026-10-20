@@ -17,6 +17,7 @@ type Geometry = {
   innerHeight: number;
   scrollHeight: number;
   scrollY: number;
+  shellScrollTop: number | null;
   languageBar: { top: number; bottom: number } | null;
   shell: { top: number; bottom: number } | null;
   statusBar: { top: number; bottom: number } | null;
@@ -34,6 +35,7 @@ async function readGeometry(page: Page): Promise<Geometry> {
       innerHeight: window.innerHeight,
       scrollHeight: document.documentElement.scrollHeight,
       scrollY: window.scrollY,
+      shellScrollTop: document.querySelector("[data-viewport-shell]")?.scrollTop ?? null,
       languageBar: verticalBox('[data-platform-ui="language-switcher"]'),
       shell: verticalBox("[data-viewport-shell]"),
       statusBar: verticalBox('[data-highlight="vscode.statusBar"]'),
@@ -82,7 +84,12 @@ for (const { width, height } of VIEWPORTS) {
   });
 }
 
-test("Ein Klick unten im Tutor-Chat scrollt das Fenster nicht", async ({ page }) => {
+// #596: Mit offenem Tutor-Chat ist die Guide-Spalte auf niedrigen Viewports hoeher als verfuegbar.
+// Scrollte dann die Huelle statt der Spalte, lag „Training verlassen" unter der Sprachleiste, und
+// axe meldete deren Auswahl und die Schrittnavigation als zu kleine beziehungsweise verdeckte Ziele.
+test("Ein Klick unten im Tutor-Chat verschiebt weder Fenster noch Trainingshülle", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status")).toHaveText("Training bereit");
@@ -95,9 +102,16 @@ test("Ein Klick unten im Tutor-Chat scrollt das Fenster nicht", async ({ page })
   ).toBeVisible();
 
   const geometry = await readGeometry(page);
-  const measured = JSON.stringify(geometry);
+  const leave = await page.getByRole("link", { name: "Training verlassen" }).boundingBox();
+  const measured = JSON.stringify({ ...geometry, leave });
   expect(geometry.scrollY, `Fenster ist gescrollt: ${measured}`).toBe(0);
+  expect(geometry.shellScrollTop, `Trainingshuelle ist gescrollt: ${measured}`).toBe(0);
   expect(geometry.languageBar?.top, `Sprachleiste nicht am oberen Rand: ${measured}`).toBe(0);
+  expect(leave, `„Training verlassen" fehlt: ${measured}`).not.toBeNull();
+  expect(
+    leave?.y,
+    `„Training verlassen" liegt unter der Sprachleiste: ${measured}`,
+  ).toBeGreaterThanOrEqual((geometry.languageBar?.bottom ?? 0) - 1);
 });
 
 async function expectNoOverflow(page: Page): Promise<void> {
