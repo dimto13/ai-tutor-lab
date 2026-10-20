@@ -108,8 +108,8 @@ test("guided prompt uses authored explanation, graded hints and explicitly uncer
   const prompt = provider.requests[0]?.messages[0]?.content ?? "";
   assert.match(prompt, /Szenariobeschreibung: Orientiere dich in der Oberfläche/);
   assert.match(prompt, /Gestufte Hilfen \(von allgemein zu konkret\):/);
-  assert.match(prompt, /1\\. Sieh links nach\\./);
-  assert.match(prompt, /2\\. Öffne das Explorer-Symbol\\./);
+  assert.match(prompt, /1\. Sieh links nach\./);
+  assert.match(prompt, /2\. Öffne das Explorer-Symbol\./);
   assert.match(prompt, /Möglicher Fehlerhinweis \(kein Nachweis eines aufgetretenen Fehlers\)/);
   assert.match(prompt, /ohne Bestätigung durch die Trainings-Engine nicht als erledigt/);
   assert.match(prompt, /Antworte zuerst auf die tatsächlich gestellte Frage/);
@@ -133,7 +133,7 @@ test("explore and challenge use different teaching policies without a Guided hin
       assert.match(prompt, /verrate nicht ungefragt die komplette Lösung/);
       assert.match(prompt, /keine Guided-Hilfestufen/);
     } else {
-      assert.match(prompt, /För(dere|dere) eigenes Erkunden/);
+      assert.match(prompt, /Fördere eigenes Erkunden/);
       assert.match(prompt, /keine verpflichtende Klickreihenfolge/);
     }
   }
