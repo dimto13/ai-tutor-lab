@@ -304,3 +304,44 @@ test("new validator kinds can be registered without changing the state machine",
 
   assert.equal((await registry.validate({ kind: "always" })).outcome, "pass");
 });
+
+test("minWords counts words, not wording, for events and state (#591)", async () => {
+  const registry = createDefaultValidatorRegistry();
+  const eventValidation: Validation = {
+    kind: "event",
+    type: "platform.pull_request.review.replied",
+    minWords: { reply: 3 },
+  };
+  for (const [reply, outcome] of [
+    ["Erledigt.", "near-miss"],
+    ["a + b", "near-miss"],
+    ["Link und Zugangsdaten geprüft.", "pass"],
+    ["Habe ich kontrolliert, passt", "pass"],
+  ] as const) {
+    const result = await registry.validate(eventValidation, {
+      event: event("platform.pull_request.review.replied", { reply }),
+    });
+    assert.equal(result.outcome, outcome, reply);
+  }
+  const missing = await registry.validate(eventValidation, {
+    event: event("platform.pull_request.review.replied", {}),
+  });
+  assert.equal(missing.outcome, "near-miss");
+  assert.equal(missing.details?.["field"], "reply");
+
+  const stateValidation: Validation = {
+    kind: "state",
+    selector: "platform.pullRequest.description",
+    minWords: 3,
+  };
+  const short = await registry.validate(stateValidation, {
+    query: async () => "Prüfung folgt.",
+  });
+  assert.equal(short.outcome, "near-miss");
+  assert.equal(short.details?.["field"], "platform.pullRequest.description");
+  assert.equal(
+    (await registry.validate(stateValidation, { query: async () => "Prüfung der Änderung." }))
+      .outcome,
+    "pass",
+  );
+});

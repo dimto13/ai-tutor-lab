@@ -53,3 +53,44 @@ test("completion validation rejects magic words in description state", () => {
   });
   assert.equal(violations.length, 1);
 });
+
+test("#591: keyword lists on free text are rejected like a single magic word", () => {
+  assert.deepEqual(
+    validateStepFreeTextPolicy({
+      validation: {
+        kind: "event",
+        containsAny: { description: ["geprüft", "kontrolliert"], branch: ["feature/"] },
+      },
+    }).map(({ path }) => path),
+    ["validation.containsAny.description"],
+  );
+  assert.deepEqual(
+    validateCompletionFreeTextPolicy({
+      kind: "any",
+      of: [
+        {
+          kind: "not",
+          of: { kind: "state", selector: "copilot.prompt.last", includesAny: ["Summe"] },
+        },
+      ],
+    }).map(({ path }) => path),
+    ["completionValidation.of[0].of.includesAny"],
+  );
+});
+
+test("a minimum word count stays allowed: it does not depend on a wording", () => {
+  assert.deepEqual(
+    validateStepFreeTextPolicy({
+      validation: { kind: "event", minWords: { description: 3 } } as never,
+    }),
+    [],
+  );
+  assert.deepEqual(
+    validateCompletionFreeTextPolicy({
+      kind: "state",
+      selector: "platform.pullRequest.description",
+      minWords: 3,
+    } as never),
+    [],
+  );
+});

@@ -1,4 +1,4 @@
-import type { TrainingMode } from "@ai-train-lab/training-engine";
+import { isAuthoredStepFailure, type TrainingMode } from "@ai-train-lab/training-engine";
 import type { Scenario } from "@/types/training";
 import { getRuntimeReferenceDefinition } from "../../runtime/referenceCatalog.ts";
 import { getPlatformTopics } from "../platformKnowledge.ts";
@@ -9,6 +9,7 @@ export function buildTutorContext(
   scenario: Scenario,
   mode: TrainingMode,
   currentStepId: string | null,
+  lastFailure: string | null = null,
 ): TutorLlmContext {
   const step = currentStepId
     ? (scenario.steps.find((candidate) => candidate.id === currentStepId) ?? null)
@@ -54,6 +55,9 @@ export function buildTutorContext(
                   .filter((hint) => hint.length > 0 && hint !== "__highlight__"),
                 // A possible diagnostic clue, not evidence of an actual user failure.
                 possibleFailure: step.onFailure?.message?.trim() || null,
+                // What the learner's last attempt actually missed (#591). The client sends the
+                // text, so only text the step authored reaches the prompt.
+                ...(lastFailure && isAuthoredStepFailure(step, lastFailure) ? { lastFailure } : {}),
               }
             : {}),
         }

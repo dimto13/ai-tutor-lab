@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import { getRuntimeReferenceDefinition } from "../../apps/web/src/runtime/referenceCatalog.ts";
 import { parseScenario } from "../../apps/web/src/scenarios/contentLoader.ts";
@@ -15,10 +15,7 @@ const runtimeCoreUrl = new URL(
   import.meta.url,
 );
 const trainingStoreUrl = new URL("../../apps/web/src/state/trainingStore.tsx", import.meta.url);
-const vscodeScenarioUrl = new URL(
-  "../../content/scenarios/vscode-basics.guided.json",
-  import.meta.url,
-);
+const scenarioDirectoryUrl = new URL("../../content/scenarios/", import.meta.url);
 
 function stateSelectors(validation: Validation): string[] {
   if (validation.kind === "state") return [validation.selector];
@@ -38,50 +35,70 @@ test("guided recovery keeps product semantics out of training-engine and runtime
   ]);
 
   for (const source of [typesSource, recoverySource, runtimeCoreSource]) {
-    assert.doesNotMatch(source, /vscode|notiz\.txt|editor\.activate-file/i);
+    assert.doesNotMatch(
+      source,
+      /vscode|notiz\.txt|editor\.activate-file|pull-request\.open-editor/i,
+    );
   }
-  assert.doesNotMatch(storeSource, /notiz\.txt|editor\.activate-file/i);
+  assert.doesNotMatch(storeSource, /notiz\.txt|editor\.activate-file|pull-request\.open-editor/i);
   assert.match(runtimeCoreSource, /recover\?\(command: RuntimeRecoveryCommand\)/);
   assert.match(recoverySource, /statuses:\s*\{ \.\.\.session\.statuses, \[stepId\]: "ACTIVE" \}/);
   assert.doesNotMatch(recoverySource, /score|award|points|completeTrainingStep/i);
 });
 
-test("authored recovery rules only query selectors exposed by their scenario runtimes", async () => {
-  const raw = JSON.parse(await readFile(vscodeScenarioUrl, "utf8"));
-  const scenario = parseScenario(raw);
-  const primaryRuntimeId = scenario.environment?.runtimeAdapterId;
-  assert.ok(primaryRuntimeId);
+const scenarioFiles = (await readdir(scenarioDirectoryUrl)).filter((file) =>
+  file.endsWith(".json"),
+);
+const scenariosWithRecovery = (
+  await Promise.all(
+    scenarioFiles.map(async (file) =>
+      parseScenario(JSON.parse(await readFile(new URL(file, scenarioDirectoryUrl), "utf8"))),
+    ),
+  )
+).filter((scenario) => scenario.steps.some((step) => step.recovery));
 
-  const runtimeIds = [
-    primaryRuntimeId,
-    ...(scenario.environment?.integrationRuntimeAdapterIds ?? []),
-  ];
-  const runtimeDefinitions = runtimeIds.map((runtimeId) => {
-    const definition = getRuntimeReferenceDefinition(runtimeId);
-    assert.ok(definition, `missing runtime definition for ${runtimeId}`);
-    return definition;
-  });
+test("recovery is authored beyond VS Code, so the rule below checks more than one runtime", () => {
+  assert.ok(
+    new Set(scenariosWithRecovery.map((scenario) => scenario.environment?.runtimeAdapterId)).size >=
+      2,
+  );
+});
 
-  for (const step of scenario.steps) {
-    for (const rule of step.recovery?.stateRules ?? []) {
-      for (const selector of stateSelectors(rule.when)) {
+for (const scenario of scenariosWithRecovery)
+  test(`${scenario.id}: recovery rules only query selectors exposed by their scenario runtimes`, async () => {
+    const primaryRuntimeId = scenario.environment?.runtimeAdapterId;
+    assert.ok(primaryRuntimeId);
+
+    const runtimeIds = [
+      primaryRuntimeId,
+      ...(scenario.environment?.integrationRuntimeAdapterIds ?? []),
+    ];
+    const runtimeDefinitions = runtimeIds.map((runtimeId) => {
+      const definition = getRuntimeReferenceDefinition(runtimeId);
+      assert.ok(definition, `missing runtime definition for ${runtimeId}`);
+      return definition;
+    });
+
+    for (const step of scenario.steps) {
+      for (const rule of step.recovery?.stateRules ?? []) {
+        for (const selector of stateSelectors(rule.when)) {
+          assert.ok(
+            runtimeDefinitions.some((runtime) => runtime.querySelectors.includes(selector)),
+            `${scenario.id}/${step.id} recovery selector is not exposed: ${selector}`,
+          );
+        }
+      }
+
+      const actions = [
+        ...(step.recovery?.onValidationFailure ? [step.recovery.onValidationFailure] : []),
+        ...(step.recovery?.stateRules?.map(({ action }) => action) ?? []),
+      ];
+      for (const action of actions) {
+        if (!action.runtimeAdapterId) continue;
         assert.ok(
-          runtimeDefinitions.some((runtime) => runtime.querySelectors.includes(selector)),
-          `${scenario.id}/${step.id} recovery selector is not exposed: ${selector}`,
+          runtimeIds.includes(action.runtimeAdapterId),
+          `${scenario.id}/${step.id} recovery targets unrelated runtime ${action.runtimeAdapterId}`,
         );
       }
     }
-
-    const actions = [
-      ...(step.recovery?.onValidationFailure ? [step.recovery.onValidationFailure] : []),
-      ...(step.recovery?.stateRules?.map(({ action }) => action) ?? []),
-    ];
-    for (const action of actions) {
-      if (!action.runtimeAdapterId) continue;
-      assert.ok(
-        runtimeIds.includes(action.runtimeAdapterId),
-        `${scenario.id}/${step.id} recovery targets unrelated runtime ${action.runtimeAdapterId}`,
-      );
-    }
-  }
-});
+  });

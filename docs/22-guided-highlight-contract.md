@@ -88,7 +88,7 @@ Der E2E-Guard `expectGuidedActionTargetUnobstructed` prüft bei jedem Aufruf zus
 
 Ein semantischer Zielbereich kann nur markiert werden, wenn er in der aktuellen Produktoberfläche tatsächlich sichtbar ist. Sind von einem Konzept mehrere `uiTargets` sichtbar, werden deren Rechtecke zu einem gemeinsamen Fokus zusammengeführt. Noch nicht geöffnete Bereiche werden nicht künstlich als erledigte Runtime-Aktion geöffnet.
 
-Ein `near-miss` erhält weiterhin verständliches `onFailure`-Feedback und kann einen passenden semantischen Zielbereich markieren. Fehlerfeedback hat weiterhin Vorrang vor normaler Hilfestellung. Irrelevante Runtime-Events bleiben `ignore` und werden nicht als Fehler gezählt. Die drei vorhandenen Hilfestufen bleiben der explizite Eskalationspfad, wenn ein Lernender trotz korrekter Zielorientierung nicht weiterkommt.
+Ein `near-miss` erhält weiterhin verständliches `onFailure`-Feedback und kann einen passenden semantischen Zielbereich markieren. Prüft ein Schritt mehrere Felder (zum Beispiel Titel, Branch und Beschreibung eines Pull Requests), benennt `onFailure.fieldMessages` je Feld, was konkret fehlt und wie der Lernende es korrigiert; ein allgemeines „der erwartete Inhalt fehlt noch“ lässt ihn raten (#591). Die Meldung bleibt am Fehlversuch gespeichert, damit sie nach einem Neuladen wieder erscheint und der Tutor sie kennt. Fehlerfeedback hat weiterhin Vorrang vor normaler Hilfestellung. Irrelevante Runtime-Events bleiben `ignore` und werden nicht als Fehler gezählt. Die drei vorhandenen Hilfestufen bleiben der explizite Eskalationspfad, wenn ein Lernender trotz korrekter Zielorientierung nicht weiterkommt.
 
 ## Ursache aus #230
 

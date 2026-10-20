@@ -488,3 +488,35 @@ test("the same guardrail contract applies to different provider implementations"
     assert.equal(result.status, "guardrail");
   }
 });
+
+test("a failed attempt reaches the model with the help path, so it explains what is missing (#591)", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({ answer: "Ergänze die Beschreibung.", kind: "explanation", uiTargetRefs: [] }),
+  );
+
+  await service(provider).answer({
+    sessionKey: "session-last-failure",
+    context: {
+      ...context,
+      step: {
+        ...context.step!,
+        helpLevels: ["Hinweis", "Konkrete Anweisung", "Visuelle Hilfe mit Handlung"],
+        lastFailure: "Die Beschreibung ist noch zu knapp.",
+      },
+    },
+    question: { question: "Ich komme nicht weiter" },
+    includeUserCode: false,
+  });
+
+  const systemMessage = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(
+    systemMessage,
+    /Gestufte Hilfen \(von allgemein zu konkret\):\n1\. Hinweis\n2\. Konkrete Anweisung\n3\. Visuelle Hilfe mit Handlung/,
+  );
+  assert.match(
+    systemMessage,
+    /Der letzte Versuch des Lernenden hat diesen Schritt nicht abgeschlossen\. Rückmeldung der Plattform: Die Beschreibung ist noch zu knapp\./,
+  );
+  assert.match(systemMessage, /Wiederhole nicht nur die Anweisung des Schritts/);
+});

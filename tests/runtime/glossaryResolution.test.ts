@@ -19,6 +19,7 @@ const tutorContext: TutorContext = {
   },
   mode: "guided",
   currentStep: null,
+  lastFailure: null,
   completedStepIds: [],
   recentEvents: [],
   hintUsage: 0,

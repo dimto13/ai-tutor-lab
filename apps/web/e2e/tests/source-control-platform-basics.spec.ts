@@ -87,16 +87,32 @@ test("Guided: kompletter Pull-Request- und Review-Ablauf entsteht durch Aktionen
   await page.getByRole("button", { name: "Commits", exact: true }).click();
   await expectGuidedStep(page, 5, "Pull Request nachvollziehbar beschreiben");
 
+  // #591: a too short description says what is missing, and the guide offers the edit form.
+  const feedback = page.getByTestId("guided-orientation");
   await createTrainingPullRequest(page, "Prüfung folgt.");
   await expectGuidedStep(page, 5, "Pull Request nachvollziehbar beschreiben");
-  await page.getByRole("button", { name: "Pull Request bearbeiten", exact: true }).click();
+  await expect(feedback).toContainText("Die Beschreibung ist noch leer oder zu knapp.");
+  await page.getByTestId("guided-recovery-primary-action").click();
   await page.getByRole("textbox", { name: "Pull-Request-Titel" }).fill("");
   await page
     .getByRole("textbox", { name: "Pull-Request-Beschreibung" })
     .fill("Einrichtung geprüft; keine Zugangsdaten enthalten.");
   await page.getByRole("button", { name: "Änderungen speichern", exact: true }).click();
   await expectGuidedStep(page, 5, "Pull Request nachvollziehbar beschreiben");
-  await page.getByRole("button", { name: "Pull Request bearbeiten", exact: true }).click();
+  await expect(feedback).toContainText("Der Titel weicht vom vorgegebenen Titel ab.");
+
+  // The reason survives a reload, and the tutor names it instead of repeating the task.
+  await page.reload();
+  await waitForTrainingReady(page);
+  await expect(feedback).toContainText("Der Titel weicht vom vorgegebenen Titel ab.");
+  await page.getByRole("button", { name: "Tutor fragen" }).click();
+  await page.getByPlaceholder("Frage an den Tutor…").fill("Ich komme nicht weiter");
+  await page.getByRole("button", { name: "Senden" }).click();
+  await expect(page.getByRole("region", { name: "Tutor-Verlauf" })).toContainText(
+    "Dein letzter Versuch hat den Schritt noch nicht abgeschlossen: Der Titel weicht vom vorgegebenen Titel ab.",
+  );
+
+  await page.getByRole("main").getByRole("button", { name: "Pull Request bearbeiten" }).click();
   await page
     .getByRole("textbox", { name: "Pull-Request-Titel" })
     .fill("README um Einstieg ergänzen");
@@ -117,6 +133,9 @@ test("Guided: kompletter Pull-Request- und Review-Ablauf entsteht durch Aktionen
   await page.getByRole("textbox", { name: "Antwort auf Review" }).fill("Erledigt.");
   await page.getByRole("button", { name: "Antworten", exact: true }).click();
   await expectGuidedStep(page, 7, "Review-Feedback beantworten");
+  await expect(page.getByTestId("guided-orientation")).toContainText(
+    "Deine Antwort ist noch zu knapp.",
+  );
   await page
     .getByRole("textbox", { name: "Antwort auf Review" })
     .fill("Links und Inhalte geprüft; keine Zugangsdaten enthalten.");
@@ -130,6 +149,36 @@ test("Guided: kompletter Pull-Request- und Review-Ablauf entsteht durch Aktionen
   await page.getByRole("button", { name: "Unterhaltung", exact: true }).click();
   await page.getByRole("button", { name: "Bereit zum Merge", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+});
+
+test("Guided: ein vorab angelegter Pull Request führt Schritt 5 nicht in eine Sackgasse (#591)", async ({
+  page,
+}) => {
+  await page.goto(guidedUrl);
+  await waitForTrainingReady(page);
+
+  // Ahead of the steps: a pull request from main with the beta tester's own description.
+  await createTrainingPullRequest(page, "Prüfung der Änderung.");
+  await expectGuidedStep(page, 1, "Git und GitHub unterscheiden");
+  await page.getByRole("button", { name: "Überblick", exact: true }).click();
+  await page.getByRole("button", { name: "Code", exact: true }).click();
+  await createTrainingBranch(page);
+  await page.getByRole("button", { name: "Commits", exact: true }).click();
+  await expectGuidedStep(page, 5, "Pull Request nachvollziehbar beschreiben");
+
+  // The creation form is gone; the guide offers the edit form, saving takes the new branch.
+  const recovery = page.getByTestId("guided-recovery");
+  await expect(recovery).toContainText("Der Pull Request ist schon angelegt");
+  await recovery.getByRole("button", { name: "Pull Request bearbeiten" }).click();
+  await expect(recovery).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Pull-Request-Beschreibung" })).toHaveValue(
+    "Prüfung der Änderung.",
+  );
+  await page.getByRole("button", { name: "Änderungen speichern", exact: true }).click();
+  await expectGuidedStep(page, 6, "Tatsächlichen Diff prüfen");
+  await expect(
+    page.getByText("feature/readme-guide möchte nach main zusammengeführt werden"),
+  ).toBeVisible();
 });
 
 test("Challenge: Endzustand zählt unabhängig von der Reihenfolge der Teilaktionen", async ({

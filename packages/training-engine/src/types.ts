@@ -185,6 +185,11 @@ export type Validation =
       contains?: Record<string, string>;
       /** Case-insensitive synonym fragments; at least one fragment per field must match. */
       containsAny?: Record<string, string[]>;
+      /**
+       * Minimum number of words in a free-text field. Language-neutral, so it rejects an empty
+       * or one-word answer without depending on a wording the learner cannot guess (#591).
+       */
+      minWords?: Record<string, number>;
     }
   | {
       kind: "state";
@@ -195,6 +200,8 @@ export type Validation =
       includesAny?: unknown[];
       excludes?: unknown;
       match?: Record<string, unknown>;
+      /** Minimum number of words when the selected state is free text. */
+      minWords?: number;
     }
   | ClassificationValidationSpec
   | {
@@ -255,6 +262,11 @@ export interface StepFailureFeedback {
   message: string;
   /** Optional semantic runtime target to emphasize while showing the failure feedback. */
   markTarget?: UiTargetRef;
+  /**
+   * Messages for a failure of one validated field (an event payload key or a state selector),
+   * so the learner learns which part of the action is missing. Falls back to `message`.
+   */
+  fieldMessages?: Record<string, string>;
 }
 
 export interface ChallengeDiagnostic {
