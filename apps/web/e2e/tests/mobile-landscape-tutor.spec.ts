@@ -46,8 +46,16 @@ for (const viewport of viewports) {
     const problem = page.getByRole("button", { name: "Ich habe ein Problem", exact: true });
     await expectReachableWithoutScroll(page, problem);
     await problem.click();
+    const dialog = page.getByRole("dialog", { name: "Problem melden" });
+    await expect(dialog.getByRole("heading", { name: "Problem melden" })).toBeVisible();
+    await dialog
+      .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
+      .fill("Synthetischer Landscape-Test: Tutor und Hilfe müssen erreichbar sein.");
+    await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
     await expect(
-      page.getByRole("dialog").getByRole("heading", { name: "Problem melden" }),
+      dialog.locator('[role="status"], [role="alert"]').filter({
+        hasText: /Feedback (?:an die Beta-Inbox gesendet|ist lokal gesichert)/,
+      }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Problemmeldung abbrechen" }).click();
 
@@ -56,6 +64,14 @@ for (const viewport of viewports) {
     await expect(toggle).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("tutor-chat-expanded")).toBeVisible();
+    const chatInput = page.getByPlaceholder("Frage an den Tutor…");
+    await expectReachableWithoutScroll(page, chatInput);
+    await expectReachableWithoutScroll(
+      page,
+      page.getByRole("button", { name: "Senden", exact: true }),
+    );
+    await chatInput.fill("Wie finde ich den Explorer?");
+    await expect(chatInput).toHaveValue("Wie finde ich den Explorer?");
     const close = page.getByTestId("tutor-chat-close");
     await expectReachableWithoutScroll(page, close);
     await close.click();

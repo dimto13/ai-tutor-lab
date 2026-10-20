@@ -364,7 +364,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       id="tutor-chat-panel"
       data-platform-ui="tutor-chat"
       data-testid="tutor-chat-expanded"
-      className="platform-ui flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
+      className="platform-ui flex max-h-[46%] min-h-[min(250px,48dvh)] shrink-0 flex-col overflow-hidden border-t border-border"
     >
       <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
