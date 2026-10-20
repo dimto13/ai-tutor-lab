@@ -44,6 +44,28 @@ test("language switcher is keyboard operable and can return to German", async ({
   await expect(page.getByRole("combobox", { name: "Sprache wechseln" })).toHaveValue("de");
 });
 
+// axe's target-size rule also passes an undersized target when its neighbours happen to be far
+// enough away, so it only catches this select in some layouts. Check the size itself (#585).
+test("language select keeps the WCAG 2.2 minimum target size in training", async ({ page }) => {
+  for (const viewport of [
+    { width: 1280, height: 720 },
+    { width: 320, height: 640 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/training/vscode-basics.guided");
+    await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toBeVisible();
+
+    const box = await page
+      .getByRole("combobox", { name: /Sprache wechseln|Change language/ })
+      .boundingBox();
+    expect(box, `language select at ${viewport.width}x${viewport.height}`).not.toBeNull();
+    expect(box!.width, `width at ${viewport.width}x${viewport.height}`).toBeGreaterThanOrEqual(24);
+    expect(box!.height, `height at ${viewport.width}x${viewport.height}`).toBeGreaterThanOrEqual(
+      24,
+    );
+  }
+});
+
 test("language switch during guided training preserves the active step and localizes scenario content", async ({
   page,
 }) => {
