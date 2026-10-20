@@ -89,7 +89,11 @@ test("accepts an action only when every referenced UI target exists in the curre
 test("guided prompt uses authored explanation, graded hints and explicitly uncertain diagnostics", async () => {
   const provider = new FakeProvider(
     "provider-a",
-    response({ answer: "Schau zuerst links auf die Activity Bar.", kind: "explanation", uiTargetRefs: [] }),
+    response({
+      answer: "Schau zuerst links auf die Activity Bar.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
   );
   await service(provider).answer({
     sessionKey: "session-guided-coaching",
