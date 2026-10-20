@@ -52,7 +52,7 @@ export const Route = createFileRoute("/training/$scenarioId")({
 
 function TrainingNotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main className="flex flex-1 items-center justify-center bg-background px-4">
       <section
         aria-labelledby="training-not-found-title"
         className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-xl"
@@ -131,7 +131,7 @@ function TimedChallengeBriefing({
   return (
     <div
       data-platform-ui="challenge-briefing"
-      className={`platform-ui flex min-h-screen flex-col bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
+      className={`platform-ui flex flex-1 flex-col bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
       aria-busy={!isReady}
     >
       <p role="status" aria-live="polite" className="sr-only">
@@ -309,7 +309,8 @@ function TrainingLayout() {
 
   return (
     <div
-      className={`flex h-screen flex-col overflow-hidden bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
+      data-viewport-shell
+      className={`flex min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
       aria-busy={!isReady}
     >
       <p role="status" aria-live="polite" className="sr-only">

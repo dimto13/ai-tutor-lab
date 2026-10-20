@@ -23,7 +23,7 @@ const authService = createApplicationAuthService();
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex flex-1 items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
@@ -139,9 +139,15 @@ function RootComponent() {
           <UserPreferencesProvider>
             <LanguageProvider>
               <AuthGate>
-                <LanguageSwitcher />
-                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-                <Outlet />
+                {/* Pages scroll the document and fill the height left below the language bar with
+                    flex-1. A route marked data-viewport-shell owns the viewport instead: the frame
+                    becomes exactly viewport-high, so the shell gets a definite height without
+                    knowing how tall the bar is (#595). */}
+                <div className="flex min-h-screen flex-col has-[>[data-viewport-shell]]:h-screen">
+                  <LanguageSwitcher />
+                  {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                  <Outlet />
+                </div>
               </AuthGate>
             </LanguageProvider>
           </UserPreferencesProvider>

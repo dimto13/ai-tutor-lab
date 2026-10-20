@@ -30,7 +30,7 @@ anderen. Reicht der Platz nicht, wird gestapelt oder eingeklappt — nicht weite
 Reicht die Breite nicht, gibt in dieser Reihenfolge nach:
 
 1. **Die Ergebnisfläche rutscht unter den Editor.** Sie behält die volle Breite und bekommt ihre
-   natürliche Höhe, höchstens 60 % des Editor-Bereichs; darüber scrollt sie. Der Editor bekommt die
+   natürliche Höhe, höchstens 63 % des Editor-Bereichs; darüber scrollt sie. Der Editor bekommt die
    volle Breite und die restliche Höhe.
 
    Bewusst nicht die halbe Höhe: Kopfzeile, Reiter, Revisionszeile und Fußzeile der Ergebnisfläche
@@ -38,6 +38,11 @@ Reicht die Breite nicht, gibt in dieser Reihenfolge nach:
    über ihren Kasten hinaus und die Aktionsknöpfe landen unter der Statusleiste — messbar als
    Playwright-Klick, den die Statusleiste abfängt. Mit natürlicher Höhe bleibt außerdem mehr Platz
    für den Editor.
+
+   Bis #595 waren es 60 %. Bei 1024×768 ist der Editor-Bereich nur 340 px breit, die Aktionszeile
+   bricht dort um, und die festen Zeilen belegen rund 257 px. Seit die Trainingsroute nur noch den
+   Platz unter der Sprachleiste nimmt, ist der Bereich dort 515–519 px statt 539 px hoch; 60 % ließen
+   dem Inhalt 51–53 px statt der geprüften 56 px. 63 % geben ihm wieder 66–69 px.
 
 2. **Der Explorer geht auf seine kompakte Breite zurück** (240 px auf 112 px), sobald Schritt 1
    nicht reicht. Das gilt nur, solange Ergebnisfläche und Assistenz gleichzeitig offen sind, damit
@@ -61,16 +66,31 @@ Viewport-Breite greift diese Kette nicht mehr allein: Die Trainingsroute schalte
 Arbeitsbereich und Guide um, statt beide nebeneinander zu zeigen.
 
 **Niedrige Viewports.** Gestapelt wird ab 340 px Höhe des Editor-Bereichs, nicht erst ab 400 px. Ein
-1366×768-Laptop mit Browserleiste hat einen Viewport von rund 1366×600 bis 1366×660, und mit der
-Grenze von 400 px blieben Editor und Ergebnisfläche dort nebeneinander bei je rund 200 px.
+1366×768-Laptop mit Browserleiste hat einen Viewport von rund 1366×600 bis 1366×660. Über dem
+Editor-Bereich liegen Sprachleiste, Kopfzeile, Schrittnavigation und Tableiste, darunter die
+Statusleiste; dem Editor-Bereich bleiben dort rund 347–411 px. Mit der Grenze von 400 px blieben Editor
+und Ergebnisfläche nebeneinander bei je rund 200 px.
 
 Gestapelt belegen die festen Zeilen der Ergebnisfläche (Kopfzeile, Auswahl, Titel, Aktionen) aber rund
 215 px. Bei 60 % von 340–460 px Höhe blieb für das gerenderte Ergebnis nur das Padding. Unter 460 px
-Höhe (Variante `workspace-low`) bekommt die Ergebnisfläche deshalb 68 % statt 60 %, die Kopfzeile wird
-kompakter, und die Beschreibungszeile des Artefakts entfällt. Der Inhalt behält so 65–105 px, der Editor
-rund vier bis fünf Zeilen, und die Aktionen bleiben ohne Scrollen sichtbar. Die ganze Ergebnisfläche
-scrollen zu lassen ist keine Alternative: Guided-Spotlights scrollen ihr Ziel nicht in den sichtbaren
-Bereich und würden dann auf einen verdeckten Knopf zeigen.
+Höhe (Variante `workspace-low`) bekommt die Ergebnisfläche deshalb 72 % statt 63 %, die Kopfzeile wird
+kompakter, und die Beschreibungszeile des Artefakts entfällt; kompakt bleiben rund 187 px feste Zeilen.
+Die 72 % sind so gewählt, dass schon an der Stapelgrenze von 340 px vom Inhalt die geprüfte Mindesthöhe
+von 56 px bleibt (0,72 × 340 px − 187 px ≈ 58 px). Im Laptop-Bereich behält der Inhalt so 63–109 px, der
+Editor rund drei bis vier Zeilen, und die Aktionen bleiben ohne Scrollen sichtbar. Die ganze
+Ergebnisfläche scrollen zu lassen ist keine Alternative: Guided-Spotlights scrollen ihr Ziel nicht in
+den sichtbaren Bereich und würden dann auf einen verdeckten Knopf zeigen.
+
+Bis #595 waren es 68 %. Damals ragte die Trainingsroute um die Höhe der Sprachleiste über den Viewport
+hinaus, und der Editor-Bereich war um diese 20–24 px höher als sichtbar. Seit die Route genau den Platz
+unter der Leiste nimmt, blieben bei 68 % und 1366×600 nur noch 49–52 px Inhalt.
+
+**Höhe der Trainingsroute.** Die Trainingsroute füllt genau den Viewport: Der Rahmen in
+`apps/web/src/routes/__root.tsx` ist eine Flex-Spalte aus Sprachleiste und Seite. Trägt die Seite
+`data-viewport-shell`, wird der Rahmen genau viewporthoch, und die Seite nimmt mit `flex-1 min-h-0` den
+Rest. Die Höhe der Leiste steht dafür nirgends in der Route. Ein `h-screen` unter der Leiste ließ das
+Dokument um die Leistenhöhe überstehen: Die Statusleiste lag unter dem sichtbaren Bereich, und ein
+Klick nahe dem unteren Rand scrollte das ganze Fenster mitsamt Kopfzeile nach oben.
 
 **Zeilen der Ergebnisfläche.** Kopfzeile, Artefakt-Auswahl, Titelzeile mit Umschalter
 Vorschau/Quelltext und die Aktionszeile brechen um, statt horizontal zu scrollen. Ein Knopf, den man
@@ -121,3 +141,8 @@ Gemessen wird erst, wenn zwei aufeinanderfolgende Messungen identisch sind. Die 
 animiert ihre Breite; eine einzelne Messung direkt nach dem Öffnen trifft sonst das Layout mitten im
 Übergang und liefert Breiten, die es nie gab. Jede Fehlermeldung enthält die gemessene Geometrie,
 damit ein Fehlschlag nicht erst im nächsten CI-Lauf erklärbar wird.
+
+`apps/web/e2e/tests/training-viewport-fit.spec.ts` prüft die Höhe der Trainingsroute auf 1280×720,
+1280×900, 1300×620, 1024×768, 390×844 und 320×640: Das Dokument ist genau viewporthoch, die Hülle
+beginnt direkt unter der Sprachleiste, und die Statusleiste liegt vollständig im Viewport. Die
+Leistenhöhe setzt der Test nicht voraus.

@@ -70,7 +70,7 @@ function AuthorPreviewRoute() {
 
   if (!scenario || !step) {
     return (
-      <main className="platform-ui min-h-screen bg-background p-6 text-foreground">
+      <main className="platform-ui flex-1 bg-background p-6 text-foreground">
         <p>Keine Szenarien verfügbar.</p>
       </main>
     );
@@ -121,7 +121,7 @@ function AuthorPreviewRoute() {
   return (
     <main
       data-platform-ui="author-preview"
-      className="platform-ui min-h-screen bg-background text-foreground"
+      className="platform-ui flex-1 bg-background text-foreground"
     >
       <header className="border-b border-border bg-panel px-4 py-3 sm:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3">
