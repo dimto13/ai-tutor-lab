@@ -309,7 +309,7 @@ function TrainingLayout() {
 
   return (
     <div
-      className={`flex h-screen flex-col overflow-hidden bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
+      className={`flex h-[calc(100dvh-1.25rem)] flex-col overflow-hidden bg-background text-foreground ${isReady ? "" : "pointer-events-none"}`}
       aria-busy={!isReady}
     >
       <p role="status" aria-live="polite" className="sr-only">
