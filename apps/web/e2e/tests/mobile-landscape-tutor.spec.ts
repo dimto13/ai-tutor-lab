@@ -77,8 +77,11 @@ for (const viewport of viewports) {
     await close.click();
     await expect(toggle).toBeFocused();
 
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-      true,
-    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 }
