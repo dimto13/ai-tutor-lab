@@ -127,12 +127,22 @@ test("explore and challenge use different teaching policies without a Guided hin
     );
     await service(provider).answer({
       sessionKey: `session-${mode}-coaching`,
-      context: { ...context, mode, step: { ...context.step! } },
+      context: {
+        ...context,
+        mode,
+        step: {
+          ...context.step!,
+          helpLevels: ["Geheime Guided-Hilfe."],
+          possibleFailure: "Geheime Fehlerursache.",
+        },
+      },
       question: { question: "Hilf mir bitte." },
       includeUserCode: false,
     });
     const prompt = provider.requests[0]?.messages[0]?.content ?? "";
     assert.doesNotMatch(prompt, /Gestufte Hilfen/);
+    assert.doesNotMatch(prompt, /Geheime Guided-Hilfe/);
+    assert.doesNotMatch(prompt, /Geheime Fehlerursache/);
     if (mode === "challenge") {
       assert.match(prompt, /verrate nicht ungefragt die komplette Lösung/);
       assert.match(prompt, /keine Guided-Hilfestufen/);
