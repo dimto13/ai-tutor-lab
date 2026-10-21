@@ -20,7 +20,7 @@ test("guided tutor context prefers the step targets and knows the runtime catalo
   assert.ok(authoredStep);
   assert.deepEqual(
     context.step?.helpLevels,
-    authoredStep.helpLevels.filter((hint) => hint.trim() && hint.trim() !== "__highlight__"),
+    authoredStep.helpLevels.map((hint) => hint.trim()).filter((hint) => hint && hint !== "__highlight__"),
   );
   assert.equal(context.step?.possibleFailure, authoredStep.onFailure?.message ?? null);
   assert.deepEqual(context.stepUiTargetRefs, ["vscode.explorer.newFile", "vscode.explorer.tree"]);
@@ -41,6 +41,37 @@ test("explore tutor context adds the explore targets and falls back to the step'
   }
   assert.equal(context.step?.rationale, step.why);
   assert.deepEqual(buildTutorContext(scenario, "guided", null).stepUiTargetRefs, []);
+});
+
+test("guided context normalizes authored hints and discards blank failure messages", async () => {
+  const scenario = await loadScenario("vscode-basics.guided");
+  const testScenario = {
+    ...scenario,
+    steps: scenario.steps.map((step) =>
+      step.id === "create_file"
+        ? {
+            ...step,
+            helpLevels: ["  Schaue links.  ", "\nExplorer öffnen.\n", " __highlight__ "],
+            onFailure: { ...step.onFailure, message: "  \t " },
+          }
+        : step,
+    ),
+  };
+  const context = buildTutorContext(testScenario, "guided", "create_file");
+  assert.deepEqual(context.step?.helpLevels, ["Schaue links.", "Explorer öffnen."]);
+  assert.equal(context.step?.possibleFailure, null);
+});
+
+test("guided context handles a legacy step without a helpLevels array", async () => {
+  const scenario = await loadScenario("vscode-basics.guided");
+  const legacyScenario = {
+    ...scenario,
+    steps: scenario.steps.map((step) =>
+      step.id === "create_file" ? { ...step, helpLevels: undefined } : step,
+    ),
+  } as unknown as typeof scenario;
+  const context = buildTutorContext(legacyScenario, "guided", "create_file");
+  assert.deepEqual(context.step?.helpLevels, []);
 });
 
 test("challenge and explore do not receive graded Guided hints", async () => {
