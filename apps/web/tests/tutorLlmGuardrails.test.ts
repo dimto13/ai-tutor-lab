@@ -148,7 +148,7 @@ test("explore and challenge use different teaching policies without a Guided hin
       assert.match(prompt, /keine Guided-Hilfestufen/);
     } else {
       assert.match(prompt, /Fördere eigenes Erkunden/);
-      assert.match(prompt, /keine verpflichtende Klickreihenfolge/);
+      assert.match(prompt, /ohne eine verpflichtende Klickreihenfolge/);
     }
   }
 });
