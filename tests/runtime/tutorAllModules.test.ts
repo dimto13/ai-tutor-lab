@@ -46,7 +46,7 @@ async function allRegisteredScenarioVariants() {
  * This tests contracts and scenario grounding with simulated model output, not
  * semantic accuracy of a real Gemma completion (the separate #575 gate).
  */
-test("every authored module and mode receives its own scoped Tutor context and safe response routing", async (t) => {
+test("all module/mode scoped Tutor contexts expose individual subtests", async (t) => {
   const entries = await allRegisteredScenarioVariants();
   assert.ok(entries.length >= 18, "Unexpected loss of authored or generated scenario coverage");
 
@@ -139,7 +139,7 @@ test("every authored module and mode receives its own scoped Tutor context and s
   assert.deepEqual([...modes].sort(), ["challenge", "explore", "guided"]);
 });
 
-test("a context without an active step is valid in every learning mode, including free Explore", async (t) => {
+test("all module/mode no-step contexts expose individual subtests", async (t) => {
   const entries = await allRegisteredScenarioVariants();
   for (const { name: filename, scenario } of entries) {
     await t.test(`no-active-step [${filename}] (${scenario.mode ?? "guided"})`, () => {
@@ -159,7 +159,6 @@ test("a context without an active step is valid in every learning mode, includin
       }
     });
   }
-
 });
 
 test("changing to a different module rejects stale steps and client-reported progress", async () => {
