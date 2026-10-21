@@ -365,9 +365,9 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       id="tutor-chat-panel"
       data-platform-ui="tutor-chat"
       data-testid="tutor-chat-expanded"
-      className="platform-ui flex max-h-[46%] min-h-[250px] flex-col border-t border-border"
+      className="platform-ui flex max-h-[65%] min-h-[min(250px,60%)] shrink-0 flex-col overflow-hidden border-t border-border"
     >
-      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground [@media(max-height:500px)]:py-1">
         <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
           <Bot className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" /> KI-Tutor
         </span>
@@ -448,21 +448,21 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         ) : null}
       </div>
       {mode !== "challenge" ? (
-        <div className="flex flex-wrap gap-1.5 px-4 pb-2">
+        <div className="flex flex-wrap gap-1.5 px-4 pb-1 [@media(max-height:500px)]:flex-nowrap [@media(max-height:500px)]:overflow-x-auto">
           {SUGGESTIONS.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
               disabled={pending}
               onClick={() => void send(suggestion)}
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none [@media(max-height:500px)]:shrink-0"
             >
               {suggestion}
             </button>
           ))}
         </div>
       ) : null}
-      <div className="flex items-center gap-2 border-t border-border p-3">
+      <div className="flex items-center gap-2 border-t border-border p-2 [@media(max-height:500px)]:p-1">
         <input
           value={input}
           disabled={pending}

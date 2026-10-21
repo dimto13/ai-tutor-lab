@@ -28,12 +28,10 @@ export function GuidePanel() {
     mode === "guided" &&
     (Boolean(recovery) || progress.activeStepMistakes >= FAILURES_PER_HELP_OFFER || helpLevel > 0);
 
-  // pb-2: the training shell ends exactly at the viewport edge (#595), so these 8px are the visible
-  // clearance that keeps the tutor off the viewport bottom (#475). With the tutor chat open the
-  // column can be taller than the space it gets; it scrolls here, otherwise the shell would scroll
-  // and push the header and step navigation under the language bar (#596).
+  // #574: scroll the orientation and explanation independently while anchoring Tutor actions.
+  // Preserve the #475 bottom clearance and #595/#596 fixed training shell.
   return (
-    <aside className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto border-border bg-panel pb-2 lg:w-[380px] lg:flex-none lg:border-l">
+    <aside className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-border bg-panel pb-2 lg:w-[380px] lg:flex-none lg:border-l">
       {mode === "guided" ? (
         <GuidedGuide />
       ) : (
@@ -101,8 +99,9 @@ function GuidedGuide() {
       <section
         data-testid="guided-orientation"
         data-platform-ui="guided-primary-action"
-        className="platform-ui shrink-0 border-b border-border bg-background p-3 sm:p-4"
+        className="platform-ui min-h-0 max-h-[55%] shrink-0 overflow-y-auto border-b border-border bg-background p-3 sm:p-4 [@media(max-height:500px)]:max-h-[35%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         aria-label="Aktueller Lernauftrag"
+        tabIndex={0}
       >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Dein nächster Schritt · {stepNumber} von {scenario.steps.length}
