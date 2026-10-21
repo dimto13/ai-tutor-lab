@@ -137,7 +137,7 @@ test("Copilot Grundlagen ist von Schritt 1 bis 14 vollständig und plausibel dur
   await prompt.fill("test");
   await prompt.press("Enter");
   await expect(page.getByText("Schritt 7 – Dateikontext bewusst hinzufügen")).toBeVisible();
-  await expect(page.getByText(/erwartete Inhalt fehlt noch/)).toBeVisible();
+  await expect(page.getByText(/Deine Frage ist noch zu knapp/)).toBeVisible();
 
   await prompt.fill("Was macht die aktuell geöffnete Datei?");
   await prompt.press("Enter");

@@ -175,7 +175,7 @@
               {
                 "kind": "state",
                 "selector": "copilot.prompt.last",
-                "includesAny": ["add", "Addition", "Summe", "zwei Zahlen"]
+                "minWords": 3
               }
             ]
           }

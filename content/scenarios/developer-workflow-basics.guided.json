@@ -225,7 +225,7 @@
       "helpLevels": [
         "Formuliere knapp, welche Funktion in calculator.py entstehen soll.",
         "Deine Anfrage sollte die Addition oder add(a, b) benennen.",
-        "Nutze die hervorgehobene Prompt-Eingabe; calculator.py ist bereits angehängt."
+        "Die Prompt-Eingabe wird hervorgehoben; calculator.py ist bereits angehängt. Schreibe dort zum Beispiel „Ergänze in calculator.py eine Funktion add(a, b), die zwei Zahlen addiert.“ und drücke Enter."
       ],
       "expectedEvent": "copilot.prompt.submitted",
       "validation": {
@@ -234,12 +234,19 @@
         "match": {
           "activeFile": "calculator.py"
         },
-        "containsAny": {
-          "prompt": ["add", "addition", "summe", "zwei zahlen"]
+        "minWords": {
+          "prompt": 3
         }
       },
       "highlightTarget": "copilot.chat.prompt",
       "highlightTooltip": "Konkreten Auftrag mit begrenztem Dateikontext senden.",
+      "onFailure": {
+        "message": "Dein Auftrag ist angekommen, erfüllt diesen Schritt aber noch nicht.",
+        "fieldMessages": {
+          "activeFile": "calculator.py ist nicht mehr als Kontext angehängt. Hänge calculator.py über „Kontext hinzufügen“ wieder an und sende deinen Auftrag erneut.",
+          "prompt": "Dein Auftrag ist noch zu knapp. Bitte Copilot in einem ganzen Satz, zum Beispiel: „Ergänze in calculator.py eine Funktion add(a, b), die zwei Zahlen addiert.“"
+        }
+      },
       "successMessage": "Copilot hat den Auftrag mit calculator.py als Kontext verarbeitet. Jetzt prüfst du die konkrete Codeänderung im Editor."
     },
     {

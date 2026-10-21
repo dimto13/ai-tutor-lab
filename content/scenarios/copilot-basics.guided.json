@@ -226,12 +226,19 @@
         "match": {
           "activeFile": "calculator.py"
         },
-        "containsAny": {
-          "prompt": ["Datei", "macht", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
+        "minWords": {
+          "prompt": 3
         }
       },
       "highlightTarget": "copilot.chat.addContext",
       "highlightTooltip": "Füge calculator.py gezielt als Chat-Kontext hinzu und stelle danach deine Frage.",
+      "onFailure": {
+        "message": "Deine Frage ist angekommen, erfüllt diesen Schritt aber noch nicht.",
+        "fieldMessages": {
+          "activeFile": "calculator.py ist noch nicht als Kontext angehängt. Wähle „Kontext hinzufügen“, hänge calculator.py an und stelle deine Frage erneut.",
+          "prompt": "Deine Frage ist noch zu knapp. Frage in einem ganzen Satz, was die Datei macht, zum Beispiel: „Was macht diese Datei? Antworte kurz und gegliedert.“"
+        }
+      },
       "successMessage": "Deine frei formulierte Frage wurde mit bewusst angehängter calculator.py verarbeitet."
     },
     {

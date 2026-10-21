@@ -79,6 +79,6 @@ Auch deterministische Simulatorantworten dürfen bei einer Freitextaufgabe nicht
 
 Geprüft werden auch Bedingungen in `all`, `any`, `sequence` und `not`. Ausnahme sind Schritte mit `exactTextValidation: true`.
 
-Schlüsselwortlisten, die vor dieser Regel entstanden sind, stehen als `KNOWN_KEYWORD_GATES` im Skript und werden in #599 abgebaut. Die Liste darf nur schrumpfen: Ein Eintrag, der nicht mehr verletzt, lässt die Prüfung ebenfalls fehlschlagen, bis er entfernt ist. Die E2E-Tests prüfen weiterhin sinnvolle Varianten und bewusst zu knappe Eingaben, damit `minWords` keine beliebige Freigabe wird.
+Die früheren Schlüsselwortlisten auf Prompts in Copilot-, Developer-Workflow- und Research-Modulen sind mit #599 abgelöst; es gibt keine Ausnahmeliste. In der Research-Einordnung sind die drei Quellentypen selbst das Lernziel, deshalb trägt dieser Schritt `exactTextValidation` und nennt die Begriffe in Anweisung, Hilfe und Fehlermeldung. Die E2E-Tests prüfen weiterhin sinnvolle Varianten und bewusst zu knappe Eingaben, damit `minWords` keine beliebige Freigabe wird.
 
 Exakte Prüfungen auf nicht-freie Werte bleiben unverändert zulässig, zum Beispiel Dateinamen, Code-/Dateiinhalte, Branch-Namen oder strukturierte Runtime-Zustände.

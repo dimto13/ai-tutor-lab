@@ -388,26 +388,32 @@
           {
             "kind": "state",
             "selector": "copilot.prompt.last",
-            "includesAny": ["Herstellerdokumentation", "Hersteller"]
+            "includesAny": ["Hersteller", "Anbieter"]
           },
           {
             "kind": "state",
             "selector": "copilot.prompt.last",
-            "includesAny": ["offizieller Blog", "offiziellen Blog", "Blog"]
+            "includesAny": ["Blog"]
           },
           {
             "kind": "state",
             "selector": "copilot.prompt.last",
-            "includesAny": ["Community-Beitrag", "Community"]
+            "includesAny": ["Community", "Forum"]
           },
           {
             "kind": "state",
             "selector": "copilot.prompt.last",
-            "includesAny": ["Empfehlung", "empfehle", "Vorgehen"]
+            "minWords": 12
           }
         ]
       },
-      "highlightTarget": "copilot.chat.prompt"
+      "highlightTarget": "copilot.chat.prompt",
+      "expectedEvent": "copilot.prompt.submitted",
+      "exactTextValidation": true,
+      "onFailure": {
+        "message": "Deine Einordnung ist angekommen, nennt aber noch nicht alle drei Quellentypen oder ist zu knapp. Nenne Herstellerdokumentation, offiziellen Blog und Community-Beitrag und schließe mit einer Empfehlung, zum Beispiel: „Die Herstellerdokumentation ist die Primärquelle, der offizielle Blog ergänzt Aktuelles, der Community-Beitrag dient nur als Kontext. Ich empfehle, die Zahl vor der Entscheidung zu korrigieren.“",
+        "markTarget": "copilot.chat.prompt"
+      }
     }
   ]
 }
