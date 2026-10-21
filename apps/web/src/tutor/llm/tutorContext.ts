@@ -35,9 +35,10 @@ export function buildTutorContext(
     }
   }
 
+  const scenarioDescription = scenario.description.trim().slice(0, 1_200);
   return {
     scenarioTitle: scenario.title,
-    scenarioDescription: scenario.description.trim().slice(0, 1_200) || undefined,
+    ...(scenarioDescription ? { scenarioDescription } : {}),
     mode,
     step: step
       ? {
