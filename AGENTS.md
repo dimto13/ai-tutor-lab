@@ -118,9 +118,15 @@
     sind keine Gründe zum Pausieren, Deaktivieren, Löschen oder Umplanen. Idle-Worker lesen GitHub erneut
     und erfinden keine Arbeit; Legacy-Duplikate bleiben deaktiviert. PLAN prüft Scheduler-Liveness
     ausdrücklich am tatsächlichen Scheduler, nicht an Kommentaraktivität; ohne Zugriff ist sie UNKNOWN.
-    Checkout-Unterstützung folgt ausschließlich dem External-Executor-Vertrag in
-    `docs/24-control-plane.md`: expliziter PLAN-Dispatch, Jenkins→RMI, keine eigene Aufgabenwahl,
-    mindestens 50 Prozent Rest in allen Quota-Fenstern, kein automatischer Merge oder deploy.
+    Executor-Routing folgt dem Vertrag in `docs/24-control-plane.md`: PLAN dispatcht
+    ausschließlich autorisierte Arbeit; kein Worker wählt selbst Aufgaben. Jenkins→RMI bleibt die
+    checkout-/runtime-fähige Route und behält seine eigene 50-Prozent-Quota-Reserve. Ein
+    `SKIPPED_QUOTA`, Toolausfall oder Capability-Mismatch blockiert aber nur diese Route, nicht das
+    ausführbare P0-/Must-Work-Item. Für klar abgegrenzte Codearbeit darf PLAN stattdessen einen
+    GitHub-API-fähigen CHAT-Worker auf eigenem Branch/PR einsetzen und Exact-Head PR-CI plus Reviews als
+    Feedbackschleife nutzen. Nach zwei geplanten Läufen ohne materiellen Fortschritt muss PLAN die
+    Route wechseln oder `ACTION_REQUIRED` eskalieren. Kein API-Worker darf direkt `main`/`deploy`
+    verändern oder nicht ausgeführte lokale/browser/cloud Evidence behaupten.
 15. **Vor jedem Merge ist ein Rebase auf den dann aktuellen `main` verpflichtend.** Das gilt insbesondere
     für parallel entwickelte Branches und auch dann, wenn der Branch zuvor bereits grün oder READY war.
     Der Merge darf erst erfolgen, nachdem der PR-Head die aktuelle `main`-Spitze durch einen echten

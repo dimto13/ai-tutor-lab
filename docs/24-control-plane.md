@@ -239,11 +239,27 @@ Codex nutzt `account/rateLimits/read` aus dem App Server: `100 - usedPercent`, e
 5-Stunden- und Wochenfenster und aller gelieferten Buckets. Dies ist eine Kontoabfrage, kein
 Modellaufruf. API-Key-/Paid-Credits sind kein Ersatz für die verlangte Abonnement-Reserve.
 
-Unter 50 Prozent: `SKIPPED_QUOTA` für den restlichen Kalendertag Europe/Berlin. Unbekannte Quota:
-`SKIPPED_QUOTA_UNKNOWN` mit mindestens 15 Minuten Retry-Abstand. Kein Clone, Install, Test, Build oder
-Modellstart. PLAN erhält genau einen aktuellen `executor-quota:v1`-Status im CONTROL-Body, ohne
-Kommentarspam. PLAN dispatcht/retriggert denselben Skip nicht erneut, schaltet keinen Anbieter um,
-kauft keine Credits und verbraucht keinen automatischen Quota-Reset. Die Scheduler bleiben aktiv.
+Unter 50 Prozent: `SKIPPED_QUOTA` für diese lokale Executor-Route am restlichen
+Kalendertag Europe/Berlin. Unbekannte Quota: `SKIPPED_QUOTA_UNKNOWN` mit mindestens 15 Minuten
+Retry-Abstand. Für diese Route erfolgen kein Clone, Install, Test, Build oder Modellstart. PLAN
+dispatcht/retriggert denselben lokalen Skip nicht erneut und umgeht die Reserve nicht durch Credits
+oder Providerwechsel. Die Scheduler bleiben aktiv.
+
+### Fail-forward bei Executor-Ausfall
+
+Quota-, Tool- oder Capability-Ausfall eines einzelnen Executors blockiert nur diese Route, nicht ein
+bereits ausführbares P0-/Must-Work-Item. PLAN muss automatisch die nächste bereits autorisierte Route
+verwenden: zuerst lokalen Checkout-/Runtime-Executor, sofern dessen Gates erlauben; andernfalls bei
+klar abgegrenzter Codearbeit einen GitHub-API-fähigen CHAT-Worker auf eigenem Feature-Branch, der
+Repository-Dateien nur dort ändert, einen PR öffnet und Exact-Head PR-CI plus Reviews als
+Feedbackschleife verwendet. Nur Arbeit mit zwingender lokaler Browser-/Runtime-/Filesystem-Evidence
+bleibt local-only.
+
+Nach zwei geplanten Läufen ohne materiellen Fortschritt (Commit, PR, CI-Reparatur oder neue belastbare
+Blocker-Disposition) muss PLAN die Route wechseln oder `ACTION_REQUIRED` an den Owner eskalieren.
+Passives WAIT ist für ausführbare P0-/Must-Arbeit dann unzulässig. API-Worker dürfen nie direkt
+`main` oder `deploy` verändern und keine lokale, Browser- oder Cloud-Evidence behaupten, die sie
+nicht tatsächlich ausgeführt haben.
 
 Am nächsten Tag wird frisch geprüft; ein unverändert knappes Wochenfenster bleibt SKIP. Positive
 Quota-Snapshots werden niemals als spätere Startfreigabe gecacht. Vor jedem Modellstart erfolgt eine
