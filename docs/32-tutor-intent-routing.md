@@ -69,7 +69,7 @@ Gegenproben.
 
 Der Server erstellt den LLM-Kontext aus dem **kanonisch geladenen Szenario** und nicht aus frei
 vom Browser behaupteten Trainingsdaten. Neben Titel, Schrittanweisung, Begründung und erlaubten
-UI-Referenzen enthält er die Szenariobeschreibung. Im Guided-Modus erhält das Modell zusätzlich
+UI-Referenzen enthält er die bereinigte, auf 1.200 Zeichen begrenzte Szenariobeschreibung. Im Guided-Modus erhält das Modell zusätzlich
 die aktuell authored gestuften Hilfen und einen möglichen `onFailure.message`-Hinweis. Ein solcher
 Hinweis ist **kein Beleg**, dass der konkrete Nutzer diesen Fehler gemacht hat; ohne bestätigte
 Runtime-Evidence darf der Tutor keinen Fehlversuch oder Abschluss behaupten.
