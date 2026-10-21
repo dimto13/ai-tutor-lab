@@ -4,6 +4,7 @@ import {
   DEFAULT_STEP_FAILURE_MESSAGE,
   isAuthoredStepFailure,
   latestStepFailureMessage,
+  reportsNearMiss,
   stepFailureMessage,
   validationFailureFields,
 } from "../src/failureFeedback.ts";
@@ -151,4 +152,43 @@ test("only the step's own messages count as authored failures", () => {
   );
   assert.equal(isAuthoredStepFailure(step, DEFAULT_STEP_FAILURE_MESSAGE), false);
   assert.equal(isAuthoredStepFailure({}, "Trage genau den vorgegebenen Titel ein."), false);
+});
+
+test("a state-only step reports only the failures it wrote a message for (#591)", () => {
+  const nearMiss = (field: string) => ({
+    outcome: "near-miss" as const,
+    details: { rule: "state.equals", field },
+  });
+  const validation: Validation = {
+    kind: "all",
+    of: [
+      { kind: "state", selector: "prompt.submitted", equals: true },
+      { kind: "state", selector: "prompt.audience", equals: true },
+    ],
+  };
+  const stateOnly: Pick<TrainingStep, "onFailure" | "validation"> = {
+    validation,
+    onFailure: { message: "Noch nicht.", fieldMessages: { "prompt.audience": "Für wen?" } },
+  };
+  // Not sent yet: progress, not a failure.
+  assert.equal(reportsNearMiss(stateOnly, nearMiss("prompt.submitted")), false);
+  assert.equal(reportsNearMiss(stateOnly, nearMiss("prompt.audience")), true);
+  assert.equal(reportsNearMiss({ validation }, nearMiss("x")), false);
+  assert.equal(reportsNearMiss(stateOnly, { outcome: "pass" }), false);
+
+  // An action condition, an expected event or a legacy validator keep every near-miss.
+  assert.equal(
+    reportsNearMiss(
+      { validation: { kind: "event", type: "file.created", match: { filename: "a" } } },
+      nearMiss("filename"),
+    ),
+    true,
+  );
+  assert.equal(
+    reportsNearMiss(
+      { ...stateOnly, expectedEvent: "terminal.command.executed" },
+      nearMiss("prompt.submitted"),
+    ),
+    true,
+  );
 });

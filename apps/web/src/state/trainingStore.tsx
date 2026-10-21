@@ -24,6 +24,7 @@ import {
   recordHintUsage,
   recordLastAction,
   recordMistake,
+  reportsNearMiss,
   resumeGuidedStepAfterRecovery,
   skipConsecutiveOptionalSteps,
   stepFailureMessage,
@@ -1016,6 +1017,8 @@ export function TrainingProvider({
       if (guidedReplayStepIdRef.current !== replayStepAtStart) return;
       if (result.outcome === "ignore") return;
       if (result.outcome !== "pass" && isRepeatedAction(payload)) return;
+      // Partial progress on a state-only step is no mistake (#591).
+      if (result.outcome === "near-miss" && !reportsNearMiss(step, result)) return;
 
       if (replayStepAtStart) {
         if (result.outcome === "pass") {

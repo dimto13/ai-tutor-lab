@@ -158,4 +158,16 @@ describe("M365 Copilot runtime", () => {
     assert.equal("documentBody" in snapshot, false);
     assert.equal("mailBody" in snapshot, false);
   });
+
+  it("exposes each part of the prompt assessment so a step can name what is missing (#591)", async () => {
+    const runtime = createM365CopilotRuntime();
+    runtime.submitPrompt({ ...COMPLETE_PROMPT, audience: false, tone: false });
+
+    assert.equal(await runtime.query("m365.prompt.qualityComplete"), false);
+    assert.equal(await runtime.query("m365.prompt.quality.goal"), true);
+    assert.equal(await runtime.query("m365.prompt.quality.context"), true);
+    assert.equal(await runtime.query("m365.prompt.quality.audience"), false);
+    assert.equal(await runtime.query("m365.prompt.quality.tone"), false);
+    assert.equal(await runtime.query("m365.prompt.quality.outputFormat"), true);
+  });
 });

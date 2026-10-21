@@ -196,6 +196,17 @@ export function createM365CopilotRuntime(): M365CopilotRuntimeAdapter {
             return state.promptSubmitted;
           case "m365.prompt.qualityComplete":
             return promptQualityComplete(state.promptQuality);
+          // Each part of the assessment on its own, so a step can say which part is missing (#591).
+          case "m365.prompt.quality.goal":
+            return state.promptQuality.goal;
+          case "m365.prompt.quality.context":
+            return state.promptQuality.context;
+          case "m365.prompt.quality.audience":
+            return state.promptQuality.audience;
+          case "m365.prompt.quality.tone":
+            return state.promptQuality.tone;
+          case "m365.prompt.quality.outputFormat":
+            return state.promptQuality.outputFormat;
           case "m365.chat.responseVisible":
             return state.responseVisible;
           case "m365.review.factsChecked":

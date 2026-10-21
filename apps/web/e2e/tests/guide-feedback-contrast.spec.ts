@@ -3,7 +3,7 @@ import { expect, test } from "../fixtures/accessibility-regression";
 test.describe("Guide feedback contrast", () => {
   test.describe.configure({ retries: 0 });
 
-  test("partial guided progress has no unapproved axe violations", async ({
+  test("guided failure feedback has no unapproved axe violations", async ({
     page,
     accessibility,
   }) => {
@@ -16,11 +16,20 @@ test.describe("Guide feedback contrast", () => {
 
     await page.getByRole("button", { name: "Kontext hinzufügen" }).click();
     await page.getByRole("button", { name: /Besprechungsnotiz/ }).click();
+    // Partial progress is no failure (#591); a prompt without audience is one.
+    await expect(page.getByTestId("guided-orientation")).not.toContainText(
+      "erfüllt aber noch nicht",
+    );
+    await page.getByRole("button", { name: /Projektsteckbrief/ }).click();
+    await page
+      .getByRole("textbox", { name: "Message Copilot" })
+      .fill("Fasse die freigegebenen Projektunterlagen kurz als Liste zusammen.");
+    await page.getByRole("button", { name: "Nachricht senden" }).click();
 
     await expect(
-      page.getByText("Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis."),
+      page.getByText("Dein Auftrag sagt noch nicht, für wen die Antwort ist.", { exact: false }),
     ).toBeVisible();
 
-    await accessibility.check("m365 guided partial-progress feedback");
+    await accessibility.check("m365 guided failure feedback");
   });
 });
