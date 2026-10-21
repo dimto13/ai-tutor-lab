@@ -187,9 +187,12 @@ const answerWorkflows: Case[] = [
   },
 ];
 
-test("20 realistic case-specific answer workflows preserve the model-selected path", () => {
+test("answer workflow corpus retains 20 independently reported cases", () => {
   assert.equal(answerWorkflows.length, 20);
-  for (const scenario of answerWorkflows) {
+});
+
+for (const scenario of answerWorkflows) {
+  test(`answer workflow [${scenario.id}] (${scenario.mode})`, () => {
     const refs = scenario.uiTargetRefs ?? [];
     const kind = refs.length > 0 ? "ui_action" : "explanation";
     const route = routeTutorModelOutput(
@@ -202,13 +205,13 @@ test("20 realistic case-specific answer workflows preserve the model-selected pa
       }),
       allowedRefs,
     );
-    assert.equal(route.action, "answer", `${scenario.id}: ${scenario.utterance}`);
-    if (route.action !== "answer") continue;
+    assert.equal(route.action, "answer", scenario.id);
+    if (route.action !== "answer") return;
     assert.equal(route.intent, scenario.intent, scenario.id);
     assert.ok(route.answer.includes(scenario.contains), scenario.id);
     assert.deepEqual(route.uiTargetRefs, refs, scenario.id);
-  }
-});
+  });
+}
 
 const feedbackWorkflows: Array<{
   id: string;
@@ -277,9 +280,12 @@ const feedbackWorkflows: Array<{
   },
 ];
 
-test("bug, request and feedback workflows offer confirmation, never silently transmit", () => {
+test("feedback workflow corpus retains 8 independently reported cases", () => {
   assert.equal(feedbackWorkflows.length, 8);
-  for (const scenario of feedbackWorkflows) {
+});
+
+for (const scenario of feedbackWorkflows) {
+  test(`feedback workflow [${scenario.id}]`, () => {
     const route = routeTutorModelOutput(
       {
         intent: scenario.intent,
@@ -305,40 +311,54 @@ test("bug, request and feedback workflows offer confirmation, never silently tra
     if (scenario.id === "548-bug-not-glossary" && route.action === "offer_feedback") {
       assert.doesNotMatch(route.answer, /Ein Issue beschreibt eine Aufgabe/);
     }
-  }
-});
+  });
+}
 
-test("ambiguous workflow, low confidence and invalid response cannot silently route or send", () => {
-  const ambiguous = [
-    {
+const ambiguousWorkflows = [
+  {
+    id: "ambiguous-high-confidence",
+    response: {
       intent: "unclear",
       confidence: "high",
       answer: "Meinst du einen Fehler der Plattform oder brauchst du Hilfe?",
       kind: "clarification",
       uiTargetRefs: [],
     },
-    {
+  },
+  {
+    id: "learning-low-confidence",
+    response: {
       intent: "learning_help",
       confidence: "low",
       answer: "Ich bin unsicher.",
       kind: "clarification",
       uiTargetRefs: [],
     },
-    {
+  },
+  {
+    id: "report-low-confidence",
+    response: {
       intent: "problem_report",
       confidence: "low",
       answer: "Soll ich dich unterstützen oder eine Meldung vorbereiten?",
       kind: "clarification",
       uiTargetRefs: [],
     },
-  ];
-  for (const response of ambiguous) {
-    const route = routeTutorModelOutput(response, allowedRefs);
-    assert.equal(route.action, "clarify");
-  }
-  for (const invalid of [
-    "{bad JSON",
-    {
+  },
+];
+
+for (const scenario of ambiguousWorkflows) {
+  test(`ambiguous workflow [${scenario.id}] asks instead of silently routing`, () => {
+    const route = routeTutorModelOutput(scenario.response, allowedRefs);
+    assert.equal(route.action, "clarify", scenario.id);
+  });
+}
+
+const invalidWorkflows = [
+  { id: "malformed-json", response: "{bad JSON" },
+  {
+    id: "unsolicited-send",
+    response: {
       intent: "problem_report",
       confidence: "high",
       answer: "Ich sende das sofort.",
@@ -346,46 +366,65 @@ test("ambiguous workflow, low confidence and invalid response cannot silently ro
       uiTargetRefs: [],
       sendAutomatically: true,
     },
-    {
+  },
+  {
+    id: "invented-ui-target",
+    response: {
       intent: "learning_help",
       confidence: "high",
       answer: "Klicke auf den geheimen Button.",
       kind: "ui_action",
       uiTargetRefs: ["missing.ui.target"],
     },
-    {
+  },
+  {
+    id: "ui-action-without-target",
+    response: {
       intent: "learning_help",
       confidence: "high",
       answer: "Öffne das Terminal.",
       kind: "ui_action",
       uiTargetRefs: [],
     },
-    {
+  },
+  {
+    id: "general-question-as-feedback",
+    response: {
       intent: "general_question",
       confidence: "high",
       answer: "Meldung erfassen.",
       kind: "feedback",
       uiTargetRefs: [],
     },
-    {
+  },
+  {
+    id: "feature-request-as-explanation",
+    response: {
       intent: "feature_request",
       confidence: "high",
       answer: "Die Funktion kommt.",
       kind: "explanation",
       uiTargetRefs: [],
     },
-    {
+  },
+  {
+    id: "clarification-with-ui-target",
+    response: {
       intent: "platform_question",
       confidence: "high",
       answer: "Antwort",
       kind: "clarification",
       uiTargetRefs: ["vscode.panel.terminal"],
     },
-  ]) {
-    const route = routeTutorModelOutput(invalid, allowedRefs);
-    assert.equal(route.action, "clarify");
+  },
+];
+
+for (const scenario of invalidWorkflows) {
+  test(`invalid model response [${scenario.id}] fails closed`, () => {
+    const route = routeTutorModelOutput(scenario.response, allowedRefs);
+    assert.equal(route.action, "clarify", scenario.id);
     if (route.action !== "clarify") assert.fail("Invalid model output must clarify");
-    assert.equal(route.reason, "invalid_model_decision");
-    assert.match(route.answer, /Möchtest du eine Antwort/);
-  }
-});
+    assert.equal(route.reason, "invalid_model_decision", scenario.id);
+    assert.match(route.answer, /Möchtest du eine Antwort/, scenario.id);
+  });
+}
