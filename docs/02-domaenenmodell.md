@@ -158,7 +158,12 @@ export interface Step {
   contextTargets?: UiTargetRef[]; // Informationsflächen, die Overlays freihalten
   validation: Validation;
   optional?: boolean;
-  onFailure?: { message: string; markTarget?: UiTargetRef };
+  onFailure?: {
+    message: string;
+    markTarget?: UiTargetRef;
+    // Meldung je fehlgeschlagenem Feld (Event-Payload-Schlüssel oder State-Selektor)
+    fieldMessages?: Record<string, string>;
+  };
 }
 
 /** Semantische UI-Referenz. Der RuntimeAdapter löst sie in Bildschirmkoordinaten auf. */

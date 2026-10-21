@@ -54,6 +54,7 @@ const context: TutorContext = {
     helpLevels: ["Nutze das File-Menü.", "Wähle Save.", "Klicke auf Save."],
     successMessage: "Gespeichert.",
   },
+  lastFailure: null,
   completedStepIds: [],
   recentEvents: [],
   hintUsage: 0,

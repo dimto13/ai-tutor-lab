@@ -51,6 +51,8 @@ export interface TutorLlmServerInput {
   scenarioId: string;
   mode: TrainingMode;
   currentStepId: string | null;
+  /** Failure text the guide showed; the context keeps it only if the step authored it. */
+  lastFailure?: string | null;
   question: string;
   accessToken: string | null;
   userCode?: string;
@@ -271,10 +273,11 @@ function tutorContextFor(
   scenarioId: string,
   mode: TrainingMode,
   currentStepId: string | null,
+  lastFailure: string | null,
 ): TutorLlmContext {
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error("Unknown tutor scenario");
-  return buildTutorContext(scenario, mode, currentStepId);
+  return buildTutorContext(scenario, mode, currentStepId, lastFailure);
 }
 
 export async function answerTutorQuestionOnServer(
@@ -304,7 +307,12 @@ export async function answerTutorQuestionOnServer(
   return service.answer({
     correlation,
     sessionKey: budgetSessionKey(identity),
-    context: tutorContextFor(input.scenarioId, input.mode, input.currentStepId),
+    context: tutorContextFor(
+      input.scenarioId,
+      input.mode,
+      input.currentStepId,
+      input.lastFailure ?? null,
+    ),
     question: {
       question: input.question,
       ...(input.userCode ? { userCode: input.userCode } : {}),

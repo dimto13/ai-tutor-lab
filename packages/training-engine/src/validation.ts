@@ -38,6 +38,8 @@ const IGNORE: EngineValidationResult = { outcome: "ignore" };
 const EVENT_MISMATCH_MESSAGE =
   "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
 const EVENT_CONTENT_MISSING_MESSAGE = "Die Aktion wurde erkannt, der erwartete Inhalt fehlt noch.";
+const TEXT_TOO_SHORT_MESSAGE =
+  "Die Aktion wurde erkannt, dein Text ist aber noch zu knapp. Schreibe einen ganzen Satz.";
 
 export class ValidatorRegistry {
   private readonly handlers = new Map<string, ValidationHandler>();
@@ -120,6 +122,11 @@ async function validateEvent(
       return nearMiss("event.containsAny", key, EVENT_CONTENT_MISSING_MESSAGE);
     }
   }
+  for (const [key, minimum] of Object.entries(validation.minWords ?? {})) {
+    if (!hasMinimumWords(payload[key], minimum)) {
+      return nearMiss("event.minWords", key, TEXT_TOO_SHORT_MESSAGE);
+    }
+  }
   return PASS;
 }
 
@@ -167,6 +174,9 @@ async function validateState(
     )
   ) {
     return nearMiss("state.excludes", validation.selector);
+  }
+  if (validation.minWords !== undefined && !hasMinimumWords(value, validation.minWords)) {
+    return nearMiss("state.minWords", validation.selector, TEXT_TOO_SHORT_MESSAGE);
   }
   if (validation.match) {
     if (!isRecord(value)) return nearMiss("state.match", validation.selector);
@@ -382,6 +392,13 @@ function containsFragment(
 ): boolean {
   if (comparison) return containsRuntimePathFragment(actual, expected, comparison);
   return normalized ? containsNormalizedFragment(actual, expected) : actual.includes(expected);
+}
+
+/** A word is any whitespace-separated token with a letter or digit; "a + b" has two. */
+function hasMinimumWords(value: unknown, minimum: number): boolean {
+  if (typeof value !== "string") return false;
+  const words = value.split(/\s+/u).filter((token) => /[\p{L}\p{N}]/u.test(token));
+  return words.length >= minimum;
 }
 
 function normalizeComparableText(value: string): string {

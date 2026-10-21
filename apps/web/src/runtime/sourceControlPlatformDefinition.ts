@@ -43,6 +43,11 @@ export const SOURCE_CONTROL_PLATFORM_DEFINITION = {
       conceptKey: "platform.pull_request",
     },
     {
+      ref: "platform.pullRequest.edit",
+      label: "Pull Request bearbeiten",
+      conceptKey: "platform.pull_request",
+    },
+    {
       ref: "platform.pullRequest.diff",
       label: "Änderungsvergleich",
       conceptKey: "platform.diff",
@@ -76,6 +81,7 @@ export const SOURCE_CONTROL_PLATFORM_DEFINITION = {
     "platform.pullRequest.title",
     "platform.pullRequest.description",
     "platform.pullRequest.headBranch",
+    "platform.pullRequest.editorOpen",
     "platform.pullRequest.diffViewed",
     "platform.pullRequest.reviewReplied",
     "platform.pullRequest.checkStatus",

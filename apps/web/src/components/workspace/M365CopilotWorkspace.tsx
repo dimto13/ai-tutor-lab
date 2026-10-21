@@ -21,6 +21,7 @@ import {
   type M365CopilotState,
   type M365PromptQuality,
 } from "@/runtime/m365CopilotRuntime";
+import { assessPromptQuality } from "@/runtime/m365PromptAssessment";
 import { ExploreInspectButton } from "./ExploreInspectButton";
 import { useTraining } from "@/state/trainingStore";
 
@@ -56,83 +57,6 @@ const NAV_ITEMS = [
   { target: "m365.nav.library", label: "Library", icon: Library },
   { target: "m365.nav.create", label: "Create", icon: Sparkles },
 ] as const;
-
-function assessPromptQuality(prompt: string, state: M365CopilotState): M365PromptQuality {
-  const normalized = prompt
-    .trim()
-    .toLocaleLowerCase("de-DE")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "");
-  const words = normalized.split(/\s+/).filter(Boolean);
-  const hasAny = (terms: string[]) => terms.some((term) => normalized.includes(term));
-
-  return {
-    goal:
-      words.length >= 5 &&
-      hasAny([
-        "erstelle",
-        "fasse",
-        "analys",
-        "vergleiche",
-        "entwurf",
-        "liste",
-        "schreib",
-        "create",
-        "summar",
-        "analy",
-        "compare",
-        "draft",
-        "write",
-      ]),
-    context:
-      state.groundingMode === "work"
-        ? state.contextSourceIds.length > 0 ||
-          hasAny(["kontext", "projekt", "besprechung", "pilot", "context", "project", "meeting"])
-        : hasAny(["web", "offentlich", "quelle", "public", "source"]),
-    audience: hasAny([
-      "fur ",
-      "furs ",
-      "fuer ",
-      "team",
-      "leitung",
-      "management",
-      "kunde",
-      "kolleg",
-      "audience",
-      "customer",
-      "colleague",
-    ]),
-    tone: hasAny([
-      "sachlich",
-      "professionell",
-      "kurz",
-      "pragnant",
-      "freundlich",
-      "neutral",
-      "ton",
-      "professional",
-      "concise",
-      "friendly",
-      "tone",
-    ]),
-    outputFormat: hasAny([
-      "liste",
-      "tabelle",
-      "punkte",
-      "stichpunkt",
-      "absatz",
-      "mail",
-      "zusammenfassung",
-      "format",
-      "list",
-      "table",
-      "bullet",
-      "paragraph",
-      "email",
-      "summary",
-    ]),
-  };
-}
 
 export function M365CopilotWorkspace() {
   const { mode, persistRuntimeSnapshot, restoreRuntimeSnapshot } = useTraining();

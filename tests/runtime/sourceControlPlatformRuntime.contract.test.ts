@@ -221,3 +221,69 @@ test("sourceControlPlatformRuntime: rejects invalid seeds and snapshots", async 
     /Invalid source-control platform snapshot/,
   );
 });
+
+test("sourceControlPlatformRuntime: opens the edit form of an existing pull request on recovery (#591)", async () => {
+  await sourceControlPlatformRuntime.mount(createContainer());
+  const reasons: string[] = [];
+  const unsubscribe = sourceControlPlatformRuntime.subscribeStateChange((change) =>
+    reasons.push(change.reason),
+  );
+  try {
+    assert.deepEqual(
+      await sourceControlPlatformRuntime.recover({ type: "pull-request.open-editor" }),
+      { status: "unsupported" },
+    );
+
+    sourceControlPlatformRuntime.createBranch("feature/readme-guide");
+    sourceControlPlatformRuntime.createPullRequest("README um Einstieg ergänzen", "");
+    sourceControlPlatformRuntime.openView("commits");
+    assert.deepEqual(await sourceControlPlatformRuntime.recover({ type: "unknown" }), {
+      status: "unsupported",
+    });
+    assert.deepEqual(
+      await sourceControlPlatformRuntime.recover({ type: "pull-request.open-editor" }),
+      { status: "repaired" },
+    );
+    assert.equal(await sourceControlPlatformRuntime.query("platform.activeView"), "pull-requests");
+    assert.equal(await sourceControlPlatformRuntime.query("platform.pullRequest.editorOpen"), true);
+    assert.ok(reasons.includes("mutation"));
+
+    // Saving closes the form again; switching views does too.
+    sourceControlPlatformRuntime.createPullRequest(
+      "README um Einstieg ergänzen",
+      "Link geprüft, keine Zugangsdaten enthalten.",
+    );
+    assert.equal(
+      await sourceControlPlatformRuntime.query("platform.pullRequest.editorOpen"),
+      false,
+    );
+    sourceControlPlatformRuntime.setPullRequestEditorOpen(true);
+    sourceControlPlatformRuntime.openView("issues");
+    assert.equal(
+      await sourceControlPlatformRuntime.query("platform.pullRequest.editorOpen"),
+      false,
+    );
+  } finally {
+    unsubscribe();
+    await sourceControlPlatformRuntime.unmount();
+  }
+});
+
+test("sourceControlPlatformRuntime: restores snapshots saved before the editor flag existed", async () => {
+  await sourceControlPlatformRuntime.mount(createContainer());
+  try {
+    sourceControlPlatformRuntime.createPullRequest("Titel", "Beschreibung mit drei Wörtern");
+    const { pullRequestEditorOpen: _editorOpen, ...legacy } =
+      (await sourceControlPlatformRuntime.snapshot()) as SourceControlPlatformState;
+    sourceControlPlatformRuntime.setPullRequestEditorOpen(true);
+
+    await sourceControlPlatformRuntime.restore(legacy);
+    assert.equal(
+      await sourceControlPlatformRuntime.query("platform.pullRequest.editorOpen"),
+      false,
+    );
+    assert.equal(await sourceControlPlatformRuntime.query("platform.pullRequest.created"), true);
+  } finally {
+    await sourceControlPlatformRuntime.unmount();
+  }
+});

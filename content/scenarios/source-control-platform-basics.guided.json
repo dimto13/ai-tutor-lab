@@ -104,6 +104,10 @@
       },
       "highlightTarget": "platform.branch.selector",
       "highlightTooltip": "Erstelle hier den Head-Branch für den Änderungsvorschlag.",
+      "onFailure": {
+        "message": "Der Branch heißt noch nicht feature/readme-guide. Öffne die Branch-Auswahl noch einmal, trage genau feature/readme-guide ein und klicke auf „Erstellen“.",
+        "markTarget": "platform.branch.selector"
+      },
       "successMessage": "Der Arbeitsbranch feature/readme-guide ist aktiv."
     },
     {
@@ -132,9 +136,9 @@
       "instruction": "Öffne „Pull Requests“. Erstelle den Pull Request mit dem vorgegebenen Titel und beschreibe in eigenen Worten Zweck und durchgeführte Prüfung der Änderung.",
       "why": "Der Diff zeigt das Was; eine gute Beschreibung erklärt zusätzlich Warum, Wirkung und Prüfung.",
       "helpLevels": [
-        "Öffne zunächst den Reiter Pull Requests.",
-        "Beschreibe kurz, was geändert wurde und wie du die Änderung kontrolliert hast.",
-        "Der Bereich Pull Requests wird hervorgehoben. Öffne ihn, prüfe Head feature/readme-guide und Base main, schreibe eine eigene nachvollziehbare Beschreibung mit Änderungszweck und Prüfnachweis und erstelle den Pull Request."
+        "Öffne den Reiter „Pull Requests“. Der Titel ist schon eingetragen; du schreibst nur noch die Beschreibung.",
+        "Schreibe in die Beschreibung ein bis zwei Sätze, zum Beispiel: „Ergänzt im README den Einstieg für neue Teammitglieder. Ich habe den Link zur Einrichtung geprüft und keine Zugangsdaten gefunden.“ Klicke dann auf „Pull Request erstellen“.",
+        "Der Reiter „Pull Requests“ wird hervorgehoben. Öffne ihn, lass den Titel „README um Einstieg ergänzen“ stehen, schreibe Zweck und Prüfung in das Feld „Beschreibung“ und klicke auf den grünen Button „Pull Request erstellen“. Ist der Pull Request schon angelegt, klicke rechts oben auf „Pull Request bearbeiten“, ergänze die Beschreibung und klicke auf „Änderungen speichern“."
       ],
       "validation": {
         "kind": "event",
@@ -143,19 +147,53 @@
           "headBranch": "feature/readme-guide",
           "title": "README um Einstieg ergänzen"
         },
-        "containsAny": {
-          "description": [
-            "geprüft",
-            "kontrolliert",
-            "getestet",
-            "verifiziert",
-            "keine Zugangsdaten"
-          ]
+        "minWords": {
+          "description": 3
         }
       },
       "highlightTarget": "platform.pullRequests",
       "highlightTooltip": "Hier entsteht der prüfbare Änderungsvorschlag aus deinem Branch.",
-      "successMessage": "Der Pull Request verbindet Branch und Zweck mit einer frei formulierten Beschreibung."
+      "onFailure": {
+        "message": "Der Pull Request ist angelegt, erfüllt diesen Schritt aber noch nicht. Klicke auf „Pull Request bearbeiten“, prüfe Titel und Beschreibung und klicke auf „Änderungen speichern“.",
+        "markTarget": "platform.pullRequest.edit",
+        "fieldMessages": {
+          "headBranch": "Der Pull Request kommt noch nicht aus deinem Arbeitsbranch. Öffne in der Code-Ansicht die Branch-Auswahl, trage feature/readme-guide ein und klicke auf „Erstellen“, um zu diesem Branch zu wechseln. Öffne danach den Pull Request, klicke auf „Pull Request bearbeiten“ und auf „Änderungen speichern“.",
+          "title": "Der Titel weicht vom vorgegebenen Titel ab. Klicke auf „Pull Request bearbeiten“, trage genau „README um Einstieg ergänzen“ ein und klicke auf „Änderungen speichern“.",
+          "description": "Die Beschreibung ist noch leer oder zu knapp. Klicke auf „Pull Request bearbeiten“, beschreibe in einem ganzen Satz, was die Änderung bewirkt und wie du sie geprüft hast, und klicke auf „Änderungen speichern“."
+        }
+      },
+      "recovery": {
+        "stateRules": [
+          {
+            "when": {
+              "kind": "all",
+              "of": [
+                {
+                  "kind": "state",
+                  "selector": "platform.pullRequest.created",
+                  "equals": true
+                },
+                {
+                  "kind": "state",
+                  "selector": "platform.pullRequest.editorOpen",
+                  "equals": false
+                }
+              ]
+            },
+            "action": {
+              "id": "open-pull-request-editor",
+              "strategy": "runtime_repair",
+              "message": "Der Pull Request ist schon angelegt, dieser Schritt ist aber noch offen. Öffne ihn zum Bearbeiten, prüfe Titel und Beschreibung und speichere ihn.",
+              "label": "Pull Request bearbeiten",
+              "runtimeAdapterId": "source-control-platform-simulator",
+              "command": {
+                "type": "pull-request.open-editor"
+              }
+            }
+          }
+        ]
+      },
+      "successMessage": "Der Pull Request ist angelegt: Branch, Titel und deine Beschreibung sind jetzt für das Review sichtbar."
     },
     {
       "id": "inspect-pull-request-diff",
@@ -184,19 +222,23 @@
       "why": "Eine nachvollziehbare Antwort dokumentiert, wie mit Feedback umgegangen wurde, und hält den Review-Kontext für das Team fest.",
       "helpLevels": [
         "Öffne wieder den Reiter Unterhaltung.",
-        "Antworte fachlich auf die Rückfrage zu Zugangsdaten und geprüftem Link.",
+        "Antworte fachlich auf die Rückfrage, zum Beispiel: „Ich habe den Link zur Einrichtung geprüft; der Einstieg enthält keine Zugangsdaten.“ Klicke dann auf „Antworten“.",
         "Der gelb markierte Review-Bereich mit dem Antwortfeld wird hervorgehoben. Schreibe dort in eigenen Worten, was du zu Zugangsdaten und Link kontrolliert hast, und sende die Antwort."
       ],
       "validation": {
         "kind": "event",
         "type": "platform.pull_request.review.replied",
-        "containsAny": {
-          "reply": ["Zugangsdaten", "Link", "geprüft", "kontrolliert", "verifiziert"]
+        "minWords": {
+          "reply": 3
         }
       },
       "highlightTarget": "platform.pullRequest.review",
       "highlightTooltip": "Antworte fachlich auf den angefragten Änderungsbedarf.",
-      "successMessage": "Das Review-Feedback ist mit einer frei formulierten Antwort nachvollziehbar bearbeitet."
+      "onFailure": {
+        "message": "Deine Antwort ist noch zu knapp. Schreibe in einem ganzen Satz, was du zu Zugangsdaten und Link geprüft hast, und klicke auf „Antwort aktualisieren“.",
+        "markTarget": "platform.pullRequest.review"
+      },
+      "successMessage": "Das Review-Feedback ist mit deiner eigenen Antwort nachvollziehbar bearbeitet."
     },
     {
       "id": "complete-status-checks",
@@ -240,6 +282,10 @@
       },
       "highlightTarget": "platform.pullRequest.review",
       "highlightTooltip": "Die Zusammenfassung verbindet Review und technische Merge-Anforderungen.",
+      "onFailure": {
+        "message": "Noch ist nicht jede Merge-Anforderung erfüllt. Sieh in der Liste nach, welcher Punkt noch keinen grünen Haken hat, und erledige ihn – danach wird der Status grün.",
+        "markTarget": "platform.pullRequest.review"
+      },
       "successMessage": "Der Pull Request ist reviewbar und erfüllt die simulierten Merge-Anforderungen."
     }
   ],

@@ -287,3 +287,55 @@ test("content loader keeps semantic step context targets and rejects empty ones 
   assert.throws(() => parseScenario(withContext([])));
   assert.throws(() => parseScenario(withContext([""])));
 });
+
+test("content loader rejects field messages for a field the step does not validate (#591)", () => {
+  const scenario = scenarioWithSeed({});
+  const step = {
+    ...scenario.steps[0],
+    validation: {
+      kind: "event",
+      type: "platform.pull_request.created",
+      match: { title: "README um Einstieg ergänzen" },
+      minWords: { description: 3 },
+    },
+  };
+  const withMessages = (fieldMessages: Record<string, string>) => ({
+    ...scenario,
+    steps: [{ ...step, onFailure: { message: "Noch nicht erfüllt.", fieldMessages } }],
+  });
+
+  assert.doesNotThrow(() =>
+    parseScenario(withMessages({ title: "Titel prüfen.", description: "Ganzen Satz schreiben." })),
+  );
+  assert.throws(
+    () => parseScenario(withMessages({ descripton: "Tippfehler im Feldnamen." })),
+    /onFailure\.fieldMessages\.descripton names no field of the step validation/,
+  );
+});
+
+test("content loader rejects a bare failure message on a step that checks only state (#601)", () => {
+  const scenario = scenarioWithSeed({});
+  const stateOnly = (onFailure: Record<string, unknown>) => ({
+    ...scenario,
+    steps: [
+      {
+        ...scenario.steps[0],
+        validation: { kind: "state", selector: "editor.activeFile", equals: "notiz.txt" },
+        onFailure,
+      },
+    ],
+  });
+
+  assert.throws(
+    () => parseScenario(stateOnly({ message: "Öffne notiz.txt." })),
+    /onFailure\.message alone is never shown/,
+  );
+  assert.doesNotThrow(() =>
+    parseScenario(
+      stateOnly({
+        message: "Öffne notiz.txt.",
+        fieldMessages: { "editor.activeFile": "Öffne notiz.txt im Explorer." },
+      }),
+    ),
+  );
+});

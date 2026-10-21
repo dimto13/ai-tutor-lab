@@ -61,12 +61,12 @@
       "id": "guided-send-prompt",
       "title": "3. Einen prüfbaren Prompt senden",
       "description": "Der Auftrag soll Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat klar machen.",
-      "instruction": "Formuliere im Composer einen konkreten Auftrag und sende ihn ab.",
+      "instruction": "Formuliere im Composer einen konkreten Auftrag mit Ziel, Zielgruppe, Ton und Ausgabeformat und sende ihn ab.",
       "rationale": "Klare Randbedingungen machen die deterministische Antwort besser überprüfbar.",
       "helpLevels": [
-        "Nutze das Feld „Message Copilot“.",
-        "Formuliere Ziel und gewünschte Ausgabe konkret.",
-        "Gib einen konkreten Auftrag in „Message Copilot“ ein und sende ihn über die Senden-Schaltfläche."
+        "Ein prüfbarer Auftrag nennt fünf Bausteine: Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat. Den Kontext hast du schon angehängt.",
+        "Schreibe zum Beispiel: „Fasse die angehängten Projektunterlagen für das Team sachlich als kurze Liste zusammen.“ und klicke auf „Nachricht senden“.",
+        "Das Feld „Message Copilot“ wird hervorgehoben. Gib dort einen Auftrag mit Ziel („Fasse … zusammen“), Zielgruppe („für das Team“), Ton („sachlich“) und Ausgabeformat („als Liste“) ein und klicke auf „Nachricht senden“."
       ],
       "validation": {
         "kind": "all",
@@ -78,7 +78,27 @@
           },
           {
             "kind": "state",
-            "selector": "m365.prompt.qualityComplete",
+            "selector": "m365.prompt.quality.goal",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.prompt.quality.context",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.prompt.quality.audience",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.prompt.quality.tone",
+            "equals": true
+          },
+          {
+            "kind": "state",
+            "selector": "m365.prompt.quality.outputFormat",
             "equals": true
           },
           {
@@ -89,6 +109,17 @@
         ]
       },
       "highlightTarget": "m365.prompt",
+      "onFailure": {
+        "message": "Dein Auftrag ist angekommen, aber noch nicht vollständig. Er braucht Ziel, Kontext, Zielgruppe, Ton und Ausgabeformat.",
+        "markTarget": "m365.prompt",
+        "fieldMessages": {
+          "m365.prompt.quality.goal": "Dein Auftrag nennt noch kein klares Ziel. Beginne mit einer Handlung, zum Beispiel „Fasse … zusammen“ oder „Erstelle …“, und sende ihn erneut.",
+          "m365.prompt.quality.context": "Dein Auftrag bezieht sich noch nicht auf einen Kontext. Hänge die freigegebenen Unterlagen an oder nenne sie, zum Beispiel „die Projektunterlagen“, und sende ihn erneut.",
+          "m365.prompt.quality.audience": "Dein Auftrag sagt noch nicht, für wen die Antwort ist. Ergänze die Zielgruppe, zum Beispiel „für das Team“, und sende ihn erneut.",
+          "m365.prompt.quality.tone": "Dein Auftrag legt noch keinen Ton fest. Ergänze, wie die Antwort klingen soll, zum Beispiel „sachlich“ oder „kurz“, und sende ihn erneut.",
+          "m365.prompt.quality.outputFormat": "Dein Auftrag nennt noch kein Ausgabeformat. Ergänze, in welcher Form du die Antwort willst, zum Beispiel „als Liste“ oder „als Tabelle“, und sende ihn erneut."
+        }
+      },
       "successMessage": "Der Auftrag wurde gesendet und die Antwort ist im Chat sichtbar."
     },
     {

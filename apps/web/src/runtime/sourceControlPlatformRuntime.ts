@@ -32,6 +32,8 @@ export interface SourceControlPlatformState {
   pullRequestTitle: string;
   pullRequestDescription: string;
   pullRequestHeadBranch: string;
+  /** Edit form of an existing pull request; a recovery command can open it (#591). */
+  pullRequestEditorOpen: boolean;
   diffViewed: boolean;
   reviewReplied: boolean;
   reviewReply: string;
@@ -53,6 +55,7 @@ export interface SourceControlPlatformAdapter extends RuntimeAdapter {
   subscribeState(handler: StateListener): () => void;
   openView(view: PlatformView): void;
   setBranchMenuOpen(open: boolean): void;
+  setPullRequestEditorOpen(open: boolean): void;
   createBranch(name: string): void;
   createPullRequest(title: string, description: string): void;
   viewDiff(): void;
@@ -90,6 +93,7 @@ const initialState = (): SourceControlPlatformState => ({
   pullRequestTitle: "",
   pullRequestDescription: "",
   pullRequestHeadBranch: "",
+  pullRequestEditorOpen: false,
   diffViewed: false,
   reviewReplied: false,
   reviewReply: "",
@@ -248,6 +252,8 @@ function isRuntimeState(value: unknown): value is SourceControlPlatformState {
     typeof candidate.pullRequestTitle === "string" &&
     typeof candidate.pullRequestDescription === "string" &&
     typeof candidate.pullRequestHeadBranch === "string" &&
+    (candidate.pullRequestEditorOpen === undefined ||
+      typeof candidate.pullRequestEditorOpen === "boolean") &&
     typeof candidate.diffViewed === "boolean" &&
     typeof candidate.reviewReplied === "boolean" &&
     typeof candidate.reviewReply === "string" &&
@@ -342,6 +348,7 @@ export const sourceControlPlatformRuntime: SourceControlPlatformAdapter = {
       "platform.pullRequest.title": state.pullRequestTitle,
       "platform.pullRequest.description": state.pullRequestDescription,
       "platform.pullRequest.headBranch": state.pullRequestHeadBranch,
+      "platform.pullRequest.editorOpen": state.pullRequestEditorOpen,
       "platform.pullRequest.diffViewed": state.diffViewed,
       "platform.pullRequest.reviewReplied": state.reviewReplied,
       "platform.pullRequest.checkStatus": state.checkStatus,
@@ -370,7 +377,25 @@ export const sourceControlPlatformRuntime: SourceControlPlatformAdapter = {
 
   async restore(snapshot) {
     if (!isRuntimeState(snapshot)) throw new TypeError("Invalid source-control platform snapshot");
-    replaceState(snapshot, "restore");
+    // Snapshots saved before #591 have no editor flag; the editor then starts closed.
+    replaceState(
+      { ...snapshot, pullRequestEditorOpen: snapshot.pullRequestEditorOpen ?? false },
+      "restore",
+    );
+  },
+
+  subscribeStateChange(handler) {
+    return sourceControlPlatformRuntime.subscribeState((_state, reason) => handler({ reason }));
+  },
+
+  async recover(command) {
+    // A step that needs a pull request created can only be retried through its edit form once the
+    // pull request exists; the training offers to open that form instead of leaving no way on.
+    if (command.type !== "pull-request.open-editor" || !state.pullRequestCreated) {
+      return { status: "unsupported" as const };
+    }
+    mutate({ activeView: "pull-requests", branchMenuOpen: false, pullRequestEditorOpen: true });
+    return { status: "repaired" as const };
   },
 
   inspect(ref) {
@@ -388,7 +413,7 @@ export const sourceControlPlatformRuntime: SourceControlPlatformAdapter = {
   },
 
   openView(view) {
-    mutate({ activeView: view, branchMenuOpen: false });
+    mutate({ activeView: view, branchMenuOpen: false, pullRequestEditorOpen: false });
     const events = {
       overview: "platform.overview.opened",
       code: "platform.code.opened",
@@ -401,6 +426,10 @@ export const sourceControlPlatformRuntime: SourceControlPlatformAdapter = {
 
   setBranchMenuOpen(open) {
     mutate({ branchMenuOpen: open });
+  },
+
+  setPullRequestEditorOpen(open) {
+    mutate({ pullRequestEditorOpen: open && state.pullRequestCreated });
   },
 
   createBranch(name) {
@@ -419,6 +448,7 @@ export const sourceControlPlatformRuntime: SourceControlPlatformAdapter = {
       state.pullRequestCreated && state.pullRequestHeadBranch !== state.currentBranch;
     const next = mutate({
       activeView: "pull-requests",
+      pullRequestEditorOpen: false,
       pullRequestCreated: true,
       pullRequestTitle: title.trim(),
       pullRequestDescription: description.trim(),

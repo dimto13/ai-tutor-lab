@@ -27,22 +27,24 @@ Geeignet, wenn bereits das Ereignis den fachlichen Erfolg eindeutig beschreibt:
 }
 ```
 
-Wenn dagegen nicht jeder beliebige Text genügen darf, verwendet die Runtime eine **Synonymliste statt eines Magic Words**. `containsAny` prüft Groß-/Kleinschreibung und deutsche Sonderzeichen tolerant; mindestens eine der fachlich gleichwertigen Varianten muss vorkommen:
+Wenn dagegen nicht jeder beliebige Text genügen darf, prüft `minWords` eine **Mindestanzahl Wörter**. Ein Wort ist jedes durch Leerraum getrennte Stück mit mindestens einem Buchstaben oder einer Ziffer. Die Regel hängt nicht an der Wortwahl, weist ein leeres oder einsilbiges „ok“ zurück und verlangt keine Formulierung, die der Lernende erraten müsste. Sie setzt Sprachen mit Leerzeichen zwischen Wörtern voraus; für eine Sprache ohne solche Trennung (etwa Chinesisch oder Japanisch) bräuchte sie eine eigene Zählung:
 
 ```json
 "validation": {
   "kind": "event",
-  "type": "copilot.prompt.submitted",
-  "match": { "activeFile": "calculator.py" },
-  "containsAny": {
-    "prompt": ["Datei", "Aufgabe", "Zweck", "Inhalt", "Funktion", "Kontext"]
-  }
+  "type": "platform.pull_request.created",
+  "match": { "headBranch": "feature/readme-guide" },
+  "minWords": { "description": 3 }
 }
 ```
 
-Damit wird beispielsweise ein inhaltsloses `test` abgewiesen, während „Was macht diese Datei?“, „Welchen Zweck hat sie?“ oder „Erkläre den aktuellen Kontext“ akzeptiert werden können.
+Für Endzustände gibt es dasselbe am State-Selektor: `{ "kind": "state", "selector": "platform.pullRequest.description", "minWords": 3 }`.
 
-Für Challenge-Endzustände gibt es analog `includesAny`. So kann etwa eine Pull-Request-Beschreibung nach mehreren gleichwertigen Nachweisen wie `geprüft`, `kontrolliert`, `getestet` oder `verifiziert` bewertet werden, ohne ein einzelnes Pflichtwort festzuschreiben.
+Ein Fehlversuch nennt über `onFailure.fieldMessages`, was fehlt und wie der Lernende es korrigiert, zum Beispiel „Beschreibe in einem ganzen Satz, was die Änderung bewirkt und wie du sie geprüft hast“.
+
+### Keine Schlüsselwortlisten
+
+Eine Synonymliste über `containsAny` beziehungsweise `includesAny` ist ebenfalls eine Pflichtformulierung, nur eine längere. Im Beta-Test (#591) traf die Pull-Request-Beschreibung „Prüfung der Änderung.“ keines der Wörter `geprüft`, `kontrolliert`, `getestet`, `verifiziert`, `keine Zugangsdaten`; „überprüft“ oder „gecheckt“ wären ebenso gescheitert. Der Lernende sah nur „der erwartete Inhalt fehlt noch“ und kam nicht weiter. Solche Listen sind deshalb für Freitext nicht mehr zulässig. Ob eine Antwort inhaltlich gut ist, beurteilt nicht die Wortwahl-Prüfung, sondern die Didaktik des Szenarios, etwa ein anschließender Review-Schritt.
 
 ## Wann exakter Freitext sinnvoll ist
 
@@ -72,10 +74,11 @@ Auch deterministische Simulatorantworten dürfen bei einer Freitextaufgabe nicht
 - `validation.contains.prompt`
 - `validation.contains.reply`
 - `validation.contains.description`
-- `completionValidation` mit `includes` auf Freitext-Zuständen wie einer Pull-Request-Beschreibung
+- `validation.containsAny` auf denselben Feldern
+- `includes` und `includesAny` auf Freitext-Zuständen wie einer Pull-Request-Beschreibung oder dem letzten Prompt
 
-Ausnahme sind Schritte mit `exactTextValidation: true`.
+Geprüft werden auch Bedingungen in `all`, `any`, `sequence` und `not`. Ausnahme sind Schritte mit `exactTextValidation: true`.
 
-Tolerante Synonymlisten über `containsAny` beziehungsweise `includesAny` sind ausdrücklich für Fälle vorgesehen, in denen eine fachliche Mindestabsicht geprüft werden muss, aber mehrere natürliche Formulierungen korrekt sind. Die zugehörigen E2E-Tests prüfen sowohl sinnvolle Varianten als auch bewusst zu schwache Eingaben, damit die Toleranz nicht zu einer beliebigen Freigabe wird.
+Die früheren Schlüsselwortlisten auf Prompts in Copilot-, Developer-Workflow- und Research-Modulen sind mit #599 abgelöst; es gibt keine Ausnahmeliste. In der Research-Einordnung sind die drei Quellentypen selbst das Lernziel, deshalb trägt dieser Schritt `exactTextValidation` und nennt die Begriffe in Anweisung, Hilfe und Fehlermeldung. Die E2E-Tests prüfen weiterhin sinnvolle Varianten und bewusst zu knappe Eingaben, damit `minWords` keine beliebige Freigabe wird.
 
 Exakte Prüfungen auf nicht-freie Werte bleiben unverändert zulässig, zum Beispiel Dateinamen, Code-/Dateiinhalte, Branch-Namen oder strukturierte Runtime-Zustände.

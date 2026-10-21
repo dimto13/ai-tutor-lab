@@ -1,5 +1,6 @@
 import { z } from "zod";
 import introductionData from "../../../../content/introductions/de.json" with { type: "json" };
+import { hasActionCondition, validationFailureFields } from "@ai-train-lab/training-engine";
 import type { Scenario, TrainingStep, Validation } from "../types/training";
 import { artifactPreviewSeedSchema } from "../runtime/artifactPreviewContent.ts";
 
@@ -57,6 +58,7 @@ const eventValidationSchema = z.object({
   match: z.record(z.unknown()).optional(),
   contains: z.record(z.string()).optional(),
   containsAny: z.record(z.array(z.string().min(1)).min(1)).optional(),
+  minWords: z.record(z.number().int().positive()).optional(),
 });
 
 const stateValidationSchema = z.object({
@@ -67,6 +69,7 @@ const stateValidationSchema = z.object({
   includesAny: z.array(z.unknown()).min(1).optional(),
   excludes: z.unknown().optional(),
   match: z.record(z.unknown()).optional(),
+  minWords: z.number().int().positive().optional(),
 });
 
 const classificationValidationSchema = z
@@ -176,6 +179,7 @@ const stepSchema = z.object({
     .object({
       message: z.string().min(1),
       markTarget: z.string().min(1).optional(),
+      fieldMessages: z.record(z.string().min(1)).optional(),
     })
     .strict()
     .optional(),
@@ -352,6 +356,32 @@ export const scenarioSchema = z
           path: ["steps", index, "recovery"],
         });
       }
+      const failureFields = step.validation ? validationFailureFields(step.validation) : [];
+      // A state-only step stays silent except for fields it explains (reportsNearMiss), so a bare
+      // onFailure.message there would never reach the learner (#601).
+      if (
+        step.onFailure &&
+        !step.onFailure.fieldMessages &&
+        step.validation &&
+        !step.expectedEvent &&
+        !hasActionCondition(step.validation)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "a step that checks only state reports failures through onFailure.fieldMessages; onFailure.message alone is never shown",
+          path: ["steps", index, "onFailure"],
+        });
+      }
+      Object.keys(step.onFailure?.fieldMessages ?? {}).forEach((field) => {
+        if (!failureFields.includes(field)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `onFailure.fieldMessages.${field} names no field of the step validation`,
+            path: ["steps", index, "onFailure", "fieldMessages", field],
+          });
+        }
+      });
       const recoveryActions = [
         ...(step.recovery?.onValidationFailure ? [step.recovery.onValidationFailure] : []),
         ...(step.recovery?.stateRules?.map(({ action }) => action) ?? []),

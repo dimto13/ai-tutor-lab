@@ -19,12 +19,15 @@ import {
   createTrainingSession,
   inspectExploreTarget,
   isChallengeDeadlineExpired,
+  latestStepFailureMessage,
   normalizeLegacyValidationResult,
   recordHintUsage,
   recordLastAction,
   recordMistake,
+  reportsNearMiss,
   resumeGuidedStepAfterRecovery,
   skipConsecutiveOptionalSteps,
+  stepFailureMessage,
   timeoutChallenge,
 } from "@ai-train-lab/training-engine";
 import type {
@@ -206,6 +209,16 @@ function eventPayload(event: TrainingEvent): Record<string, unknown> {
     return {};
   }
   return event.payload as Record<string, unknown>;
+}
+
+/** After a reload the guide shows again why the active Guided step failed, instead of nothing (#591). */
+function restoredFailureFeedback(session: TrainingSession): TrainingContextValue["feedback"] {
+  const stepId = session.activeStepId;
+  if (session.mode !== "guided" || !stepId || session.statuses[stepId] !== "VALIDATION_FAILED") {
+    return null;
+  }
+  const message = latestStepFailureMessage(session, stepId);
+  return message ? { kind: "error", message } : null;
 }
 
 /**
@@ -490,7 +503,7 @@ export function TrainingProvider({
         setGuidedReplayStepId(replayStepId);
         setProgress(session);
         setVisibleHelpLevel(replayStepId ? 0 : activeHelpLevel(session));
-        setFeedback(null);
+        setFeedback(replayStepId ? null : restoredFailureFeedback(session));
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setRecommendGuidedAfterChallenge(shouldRecommendGuided);
@@ -552,7 +565,9 @@ export function TrainingProvider({
           if (!guidedReplayStepIdRef.current) {
             setVisibleHelpLevel(activeHelpLevel(authoritativeSession));
           }
-          setFeedback(null);
+          setFeedback(
+            guidedReplayStepIdRef.current ? null : restoredFailureFeedback(authoritativeSession),
+          );
           return authoritativeSession;
         });
       })
@@ -654,7 +669,7 @@ export function TrainingProvider({
           if (session) {
             setProgress(session);
             if (!guidedReplayStepIdRef.current) setVisibleHelpLevel(activeHelpLevel(session));
-            setFeedback(null);
+            setFeedback(guidedReplayStepIdRef.current ? null : restoredFailureFeedback(session));
             setStateRecovery(null);
           }
 
@@ -1002,38 +1017,38 @@ export function TrainingProvider({
       if (guidedReplayStepIdRef.current !== replayStepAtStart) return;
       if (result.outcome === "ignore") return;
       if (result.outcome !== "pass" && isRepeatedAction(payload)) return;
+      // Partial progress on a state-only step is no mistake (#591).
+      if (result.outcome === "near-miss" && !reportsNearMiss(step, result)) return;
 
       if (replayStepAtStart) {
         if (result.outcome === "pass") {
           await finishGuidedReplay(step.successMessage);
           return;
         }
-        const message =
-          step.onFailure?.message ??
-          result.message ??
-          "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
-        setFeedback({ kind: "error", message });
+        setFeedback({ kind: "error", message: stepFailureMessage(step, result) });
         return;
       }
 
       const now = Date.now();
-      setProgress((currentProgress) =>
-        applyValidationResult(currentProgress, scenario, stepId, result, now, {
-          countNearMiss: event.type !== "file.updated",
-        }),
-      );
+      const applyResult = (validated: EngineValidationResult) =>
+        setProgress((currentProgress) =>
+          applyValidationResult(currentProgress, scenario, stepId, validated, now, {
+            countNearMiss: event.type !== "file.updated",
+          }),
+        );
 
       if (result.outcome === "pass") {
+        applyResult(result);
         setVisibleHelpLevel(0);
         setStateRecovery(null);
         setFeedback({ kind: "success", message: step.successMessage });
         return;
       }
 
-      const message =
-        step.onFailure?.message ??
-        result.message ??
-        "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.";
+      // The attempt keeps the learner-facing message, so a reload and the tutor still know why
+      // the step is open (#591).
+      const message = stepFailureMessage(step, result);
+      applyResult({ ...result, message });
       setFeedback((currentFeedback) =>
         currentFeedback?.kind === "error" && currentFeedback.message === message
           ? currentFeedback

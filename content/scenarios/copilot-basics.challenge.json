@@ -102,8 +102,8 @@
               {
                 "kind": "state",
                 "selector": "copilot.prompt.last",
-                "includesAny": ["add", "Addition", "plus", "Summe", "a + b"],
-                "excludes": "SYNTHETIC_SECRET"
+                "excludes": "SYNTHETIC_SECRET",
+                "minWords": 3
               }
             ]
           }

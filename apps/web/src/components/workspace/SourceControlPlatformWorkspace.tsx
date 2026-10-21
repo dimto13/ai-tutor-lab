@@ -52,6 +52,7 @@ const EMPTY_STATE: SourceControlPlatformState = {
   pullRequestTitle: "",
   pullRequestDescription: "",
   pullRequestHeadBranch: "",
+  pullRequestEditorOpen: false,
   diffViewed: false,
   reviewReplied: false,
   reviewReply: "",
@@ -461,7 +462,7 @@ function PullRequestsView({
   setReviewReply(value: string): void;
   inspect(ref: string): void;
 }) {
-  const [editingPullRequest, setEditingPullRequest] = useState(false);
+  const editingPullRequest = state.pullRequestEditorOpen;
 
   if (!state.pullRequestCreated) {
     return (
@@ -519,7 +520,11 @@ function PullRequestsView({
         </div>
         <button
           type="button"
-          onClick={() => setEditingPullRequest((editing) => !editing)}
+          data-highlight="platform.pullRequest.edit"
+          onClick={() => {
+            inspect("platform.pullRequest.edit");
+            sourceControlPlatformRuntime.setPullRequestEditorOpen(!editingPullRequest);
+          }}
           className="ml-auto rounded-md border border-border px-3 py-2 text-xs font-medium hover:border-ring"
         >
           {editingPullRequest ? "Bearbeiten schließen" : "Pull Request bearbeiten"}
@@ -547,15 +552,13 @@ function PullRequestsView({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               aria-label="Pull-Request-Beschreibung"
+              placeholder="Was ändert sich, warum und wie wurde es geprüft?"
               className="mt-1.5 h-28 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-ring"
             />
           </label>
           <button
             type="button"
-            onClick={() => {
-              sourceControlPlatformRuntime.createPullRequest(title, description);
-              setEditingPullRequest(false);
-            }}
+            onClick={() => sourceControlPlatformRuntime.createPullRequest(title, description)}
             className="rounded-md bg-success px-3 py-2 text-xs font-semibold text-black hover:opacity-90"
           >
             Änderungen speichern
@@ -618,8 +621,9 @@ function PullRequestsView({
                 />
                 <button
                   type="button"
+                  disabled={!reviewReply.trim()}
                   onClick={() => sourceControlPlatformRuntime.replyToReview(reviewReply)}
-                  className="rounded-md border border-border px-3 py-2 font-medium hover:border-ring"
+                  className="rounded-md border border-border px-3 py-2 font-medium hover:border-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {state.reviewReplied ? "Antwort aktualisieren" : "Antworten"}
                 </button>
@@ -722,7 +726,12 @@ function ChecksView({ state }: { state: SourceControlPlatformState }) {
 
 function MergeSummary({ state }: { state: SourceControlPlatformState }) {
   const items = [
-    [state.pullRequestCreated, "Pull Request beschrieben"],
+    [
+      state.pullRequestCreated && state.pullRequestDescription.trim().length > 0,
+      // The simulator only knows that a description exists; how much the step asks for is the
+      // training's business, so the label claims no more than that (#591).
+      "Beschreibung vorhanden",
+    ],
     [state.diffViewed, "Diff geprüft"],
     [state.reviewReplied, "Review beantwortet"],
     [state.checkStatus === "success", "Status Check erfolgreich"],

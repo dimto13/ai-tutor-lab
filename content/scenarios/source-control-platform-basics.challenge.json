@@ -61,7 +61,7 @@
       {
         "kind": "state",
         "selector": "platform.pullRequest.description",
-        "includesAny": ["geprüft", "kontrolliert", "getestet", "verifiziert", "keine Zugangsdaten"]
+        "minWords": 3
       },
       {
         "kind": "state",
@@ -85,6 +85,30 @@
       }
     ]
   },
+  "challengeDiagnostics": [
+    {
+      "eventTypes": ["platform.pull_request.created"],
+      "when": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "state",
+            "selector": "platform.pullRequest.created",
+            "equals": true
+          },
+          {
+            "kind": "not",
+            "of": {
+              "kind": "state",
+              "selector": "platform.pullRequest.description",
+              "minWords": 3
+            }
+          }
+        ]
+      },
+      "message": "Deine Pull-Request-Beschreibung ist noch zu knapp. Beschreibe in einem ganzen Satz, was die Änderung bewirkt und wie du sie geprüft hast."
+    }
+  ],
   "solutionComparison": [
     "Branch feature/readme-guide als getrennte Entwicklungslinie erstellt",
     "Pull Request mit einer nachvollziehbaren eigenen Beschreibung geöffnet",

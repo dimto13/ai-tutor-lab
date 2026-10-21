@@ -179,6 +179,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
               scenarioId: tutorContext.scenario.id,
               mode: tutorContext.mode,
               currentStepId: tutorContext.currentStep?.id ?? null,
+              ...(tutorContext.lastFailure ? { lastFailure: tutorContext.lastFailure } : {}),
               question,
               accessToken,
               ...(history.length > 0 ? { history } : {}),

@@ -17,6 +17,8 @@ export interface TutorLlmContext {
     helpLevels?: readonly string[];
     /** A possible cause to investigate; not evidence that this error occurred. */
     possibleFailure?: string | null;
+    /** Authored reason why the learner's latest attempt actually did not finish the step (#591). */
+    lastFailure?: string | null;
   } | null;
   allowedUiTargetRefs: readonly string[];
   /** Targets of the current step, which the tutor prefers; defaults to every allowed target. */
@@ -208,6 +210,11 @@ function buildSystemMessage(context: TutorLlmContext): string {
                 .join("\n")}`,
             ]
           : []),
+        ...(context.mode === "guided" && context.step.lastFailure
+          ? [
+              `Der letzte Versuch des Lernenden hat diesen Schritt nicht abgeschlossen. Rückmeldung der Plattform: ${context.step.lastFailure}`,
+            ]
+          : []),
         ...(context.mode === "guided" && context.step.possibleFailure
           ? [
               `Möglicher Fehlerhinweis (kein Nachweis eines aufgetretenen Fehlers): ${context.step.possibleFailure}`,
@@ -231,6 +238,7 @@ function buildSystemMessage(context: TutorLlmContext): string {
     "Wenn du auf ein UI-Element verweist, trage seine UiTargetRef in uiTargetRefs ein; empfiehlst du eine Handlung daran, setze kind auf ui_action. Verwende ausschließlich UiTargetRefs aus den Listen unten.",
     "Antworte zuerst auf die tatsächlich gestellte Frage in verständlicher Sprache. Gib nur so viele Schritte wie für eine sichere nächste Handlung erforderlich; bei einer Nachfrage erkläre genauer und vermeide die bloße Wiederholung der vorherigen Antwort.",
     "Frage gezielt nach, wenn eine Formulierung mehrdeutig ist oder der vorhandene Kontext für eine sachlich belastbare Antwort nicht ausreicht. Rate nicht über den aktuellen Simulatorzustand, Nutzeraktionen, Lernerfolg oder Fehlerursachen.",
+    "Steht im Trainingskontext eine Rückmeldung zum letzten Versuch und kommt der Lernende nicht weiter, erkläre konkret, was laut dieser Rückmeldung fehlt und mit welcher Handlung er es behebt. Wiederhole nicht nur die Anweisung des Schritts.",
     modeGuidance,
     "Vor der aktuellen Nachricht können frühere Nachrichten dieses Chats stehen. Nutze sie, um Rückfragen und Bezüge wie „das“ oder „und dort?“ zu verstehen, und beantworte immer die letzte Nutzernachricht.",
     "Schildert die Nachricht ein Problem mit der Plattform, Kritik an einer Bewertung oder einen Verbesserungswunsch, ist sie keine Lernfrage. Erkläre dann keinen Begriff, sondern bestätige in answer kurz und konkret, was du verstanden hast, und setze kind auf feedback. Die Oberfläche bietet daraufhin an, genau diese Nachricht mit einem Klick an das Team zu senden. Verweise deshalb nicht auf ein Formular oder einen Button und bitte nicht darum, das Anliegen noch einmal zu beschreiben.",

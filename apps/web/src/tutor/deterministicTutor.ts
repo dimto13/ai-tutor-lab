@@ -1,4 +1,6 @@
 import type { FeedbackKind } from "../lib/feedbackStore";
+import { isAuthoredStepFailure } from "@ai-train-lab/training-engine";
+import type { TrainingStep } from "../types/training";
 import type { TutorContext } from "./tutorContext";
 import { findPlatformTopic } from "./platformKnowledge.ts";
 import { classifyTutorIntent, type TutorIntent, type TutorIntentDecision } from "./tutorIntent.ts";
@@ -55,6 +57,18 @@ function conceptAnswer(concept: TutorGlossaryConcept, question: string): string 
   return wantsDepth ? `${concept.simple} ${concept.advanced}` : concept.simple;
 }
 
+/**
+ * What to do now on the current Guided step. After a failed attempt the tutor names what is
+ * missing instead of repeating the task the learner is stuck on (#591).
+ */
+function currentTaskGuidance(context: TutorContext, step: TrainingStep): string {
+  const task = `${step.instruction} ${step.helpLevels[0]}`.trim();
+  const failure = context.lastFailure;
+  if (!failure) return task;
+  const reason = `Dein letzter Versuch hat den Schritt noch nicht abgeschlossen: ${failure}`;
+  return isAuthoredStepFailure(step, failure) ? reason : `${reason} ${task}`;
+}
+
 /** Without a model the tutor admits that it has no prepared answer instead of guessing. */
 function unpreparedAnswer(
   question: string,
@@ -63,14 +77,19 @@ function unpreparedAnswer(
 ): string {
   const step = context.currentStep;
   const concept = findGlossaryConcept(question);
-  const stepPart = step ? ` Für die aktuelle Aufgabe: ${step.instruction}` : "";
+  const stepPart = step ? ` Für die aktuelle Aufgabe: ${taskReminder(context, step)}` : "";
   if (concept) {
     const term = concept.term ? `Zum Begriff „${concept.term}“: ` : "";
     return `Eine vorbereitete Antwort auf genau diese Frage habe ich nicht. ${term}${concept.simple}${stepPart}`;
   }
   return step
-    ? `Dazu gibt es im zentralen Begriffskatalog keine vorbereitete Definition. Bezogen auf die aktuelle Aufgabe: ${step.instruction}`
+    ? `Dazu gibt es im zentralen Begriffskatalog keine vorbereitete Definition. Bezogen auf die aktuelle Aufgabe: ${taskReminder(context, step)}`
     : "Dazu gibt es im zentralen Begriffskatalog keine vorbereitete Definition.";
+}
+
+/** The task itself, or after a failed attempt what is missing to finish it. */
+function taskReminder(context: TutorContext, step: TrainingStep): string {
+  return context.lastFailure ? currentTaskGuidance(context, step) : step.instruction;
 }
 
 const ASK_BACK =
@@ -78,7 +97,7 @@ const ASK_BACK =
 
 function unpreparedStatement(context: TutorContext): string {
   const step = context.currentStep;
-  return `${ASK_BACK}${step ? ` Für die aktuelle Aufgabe: ${step.instruction}` : ""}`;
+  return `${ASK_BACK}${step ? ` Für die aktuelle Aufgabe: ${taskReminder(context, step)}` : ""}`;
 }
 
 /** What the learner may want to know about the platform part their report touches. */
@@ -121,10 +140,7 @@ export function replyDeterministically(
       if (!step) return { intent, text: NO_OPEN_STEP };
       return {
         intent,
-        text:
-          context.mode === "challenge"
-            ? step.instruction
-            : `${step.instruction} ${step.helpLevels[0]}`.trim(),
+        text: context.mode === "challenge" ? step.instruction : currentTaskGuidance(context, step),
       };
     }
     case "rationale":

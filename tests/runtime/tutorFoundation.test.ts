@@ -24,6 +24,7 @@ const context: TutorContext = {
     ],
     successMessage: "Workspace geöffnet.",
   },
+  lastFailure: null,
   completedStepIds: ["open-folder"],
   recentEvents: [],
   hintUsage: 1,
@@ -73,4 +74,42 @@ test("challenge mode never leaks the first help level into the next-step answer"
   const challengeContext: TutorContext = { ...context, mode: "challenge" };
   const answer = answerDeterministically("Wie weiter?", challengeContext, glossary);
   assert.equal(answer, "Öffne den gespeicherten Workspace.");
+});
+
+test("#591: after a failed attempt the tutor names what is missing instead of repeating the task", () => {
+  const step = {
+    ...context.currentStep!,
+    onFailure: {
+      message: "Der Workspace ist noch nicht offen.",
+      fieldMessages: { path: "Wähle die Datei team.code-workspace und klicke auf „Öffnen“." },
+    },
+  };
+  const authored = answerDeterministically(
+    "Ich komme nicht weiter",
+    {
+      ...context,
+      currentStep: step,
+      lastFailure: "Wähle die Datei team.code-workspace und klicke auf „Öffnen“.",
+    },
+    glossary,
+  );
+  assert.equal(
+    authored,
+    "Dein letzter Versuch hat den Schritt noch nicht abgeschlossen: Wähle die Datei team.code-workspace und klicke auf „Öffnen“.",
+  );
+
+  // The engine's generic message explains nothing, so the task follows it.
+  const generic = answerDeterministically(
+    "Was soll ich jetzt machen?",
+    {
+      ...context,
+      currentStep: step,
+      lastFailure: "Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis.",
+    },
+    glossary,
+  );
+  assert.equal(
+    generic,
+    "Dein letzter Versuch hat den Schritt noch nicht abgeschlossen: Die Aktion wurde erkannt, erfüllt aber noch nicht das erwartete Ergebnis. Öffne den gespeicherten Workspace. Nutze das File-Menü.",
+  );
 });
