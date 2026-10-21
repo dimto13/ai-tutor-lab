@@ -129,9 +129,10 @@ test("server trusts canonical step IDs, not client claims of completed steps", (
 });
 
 test("server rejects forged failures and accepts only exact authored current-step diagnostics", () => {
-  const initial = buildTutorLiveSnapshot(
-    { ...source(), lastFailure: "  Der angeforderte Branch fehlt.  " },
-  );
+  const initial = buildTutorLiveSnapshot({
+    ...source(),
+    lastFailure: "  Der angeforderte Branch fehlt.  ",
+  });
   assert.equal(initial.lastFailure, "Der angeforderte Branch fehlt.");
   const permitted = summarizeTutorLiveSnapshot(
     initial,
@@ -152,9 +153,11 @@ test("server rejects forged failures and accepts only exact authored current-ste
 });
 
 test("the displayed step status identifies a reported blocker without inventing a diagnosis", () => {
-  const snapshot = buildTutorLiveSnapshot(
-    { ...source(), currentStepStatus: "VALIDATION_FAILED" as const, lastFailure: null },
-  );
+  const snapshot = buildTutorLiveSnapshot({
+    ...source(),
+    currentStepStatus: "VALIDATION_FAILED" as const,
+    lastFailure: null,
+  });
   assert.equal(snapshot.currentStepStatus, "VALIDATION_FAILED");
   const reported = summarizeTutorLiveSnapshot(
     snapshot,

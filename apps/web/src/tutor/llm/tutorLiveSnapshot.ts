@@ -119,9 +119,7 @@ export function buildTutorLiveSnapshot(context: SnapshotSource): TutorLiveSnapsh
 
   const lastFailure = context.lastFailure?.trim();
   return {
-    ...(context.currentStepStatus
-      ? { currentStepStatus: context.currentStepStatus }
-      : {}),
+    ...(context.currentStepStatus ? { currentStepStatus: context.currentStepStatus } : {}),
     ...(lastFailure && lastFailure.length <= 600 ? { lastFailure } : {}),
     completedStepIds: [...new Set(context.completedStepIds)]
       .filter((id) => id.length > 0 && id.length <= 200)

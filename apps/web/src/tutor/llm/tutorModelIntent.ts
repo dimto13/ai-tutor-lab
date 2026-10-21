@@ -140,12 +140,16 @@ export function routeTutorModelOutput(
     new Set(result.uiTargetRefs).size !== result.uiTargetRefs.length ||
     result.uiTargetRefs.some((ref) => !allowed.has(ref)) ||
     (result.kind === "ui_action" && result.uiTargetRefs.length === 0) ||
-    ((result.kind === "feedback" || result.kind === "clarification") && result.uiTargetRefs.length > 0)
+    ((result.kind === "feedback" || result.kind === "clarification") &&
+      result.uiTargetRefs.length > 0)
   ) {
     return { action: "clarify", reason: "invalid_model_decision", answer: SAFE_CLARIFICATION };
   }
   // Intent schema is strict: pass the decision fields only, not the enclosing answer object.
-  const intentRoute = routeTutorModelIntent({ intent: result.intent, confidence: result.confidence });
+  const intentRoute = routeTutorModelIntent({
+    intent: result.intent,
+    confidence: result.confidence,
+  });
   if (intentRoute.action === "clarify") {
     return {
       ...intentRoute,

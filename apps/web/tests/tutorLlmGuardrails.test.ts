@@ -224,7 +224,11 @@ test("model prompt labels learner observations as unverified and never includes 
 test("Guided prompt sees its module sequence, position and exact authored diagnostic", async () => {
   const provider = new FakeProvider(
     "provider-a",
-    response({ answer: "Prüfe die noch fehlende Beschreibung.", kind: "explanation", uiTargetRefs: [] }),
+    response({
+      answer: "Prüfe die noch fehlende Beschreibung.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
   );
   await service(provider).answer({
     sessionKey: "universal-guided-context",
@@ -279,7 +283,11 @@ test("Guided prompt sees its module sequence, position and exact authored diagno
 test("Challenge keeps objectives but never discloses a solution sequence or latest Guided failure", async () => {
   const provider = new FakeProvider(
     "provider-a",
-    response({ answer: "Überlege, was der fertige Zustand zeigen sollte.", kind: "explanation", uiTargetRefs: [] }),
+    response({
+      answer: "Überlege, was der fertige Zustand zeigen sollte.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
   );
   await service(provider).answer({
     sessionKey: "universal-challenge-context",
@@ -693,19 +701,37 @@ test("one model completion chooses the input intent without a keyword preclassif
   for (const model of [
     {
       question: "Ich habe KEIN Problem. Was bedeutet Issue?",
-      answer: { intent: "tool_question", confidence: "high", answer: "Ein Issue beschreibt eine Aufgabe.", kind: "explanation", uiTargetRefs: [] },
+      answer: {
+        intent: "tool_question",
+        confidence: "high",
+        answer: "Ein Issue beschreibt eine Aufgabe.",
+        kind: "explanation",
+        uiTargetRefs: [],
+      },
       expected: "tool_question",
       kind: "explanation",
     },
     {
       question: "Meine korrekte Aufgabe wurde als falsch bewertet.",
-      answer: { intent: "problem_report", confidence: "high", answer: "Du meldest eine falsche Bewertung.", kind: "feedback", uiTargetRefs: [] },
+      answer: {
+        intent: "problem_report",
+        confidence: "high",
+        answer: "Du meldest eine falsche Bewertung.",
+        kind: "feedback",
+        uiTargetRefs: [],
+      },
       expected: "problem_report",
       kind: "feedback",
     },
     {
       question: "Das geht nicht.",
-      answer: { intent: "unclear", confidence: "low", answer: "Geht es um den Schritt oder die Plattform?", kind: "clarification", uiTargetRefs: [] },
+      answer: {
+        intent: "unclear",
+        confidence: "low",
+        answer: "Geht es um den Schritt oder die Plattform?",
+        kind: "clarification",
+        uiTargetRefs: [],
+      },
       expected: "unclear",
       kind: "clarification",
     },
@@ -762,8 +788,21 @@ test("explicitly rejected feedback is passed to the model as an answer-only pref
 
 test("forged model-side report and invalid JSON fail closed after one request", async () => {
   const values: unknown[] = [
-    { intent: "problem_report", confidence: "high", answer: "Sent!", kind: "feedback", uiTargetRefs: [], sendAutomatically: true },
-    { intent: "learning_help", confidence: "high", answer: "Fertig.", kind: "ui_action", uiTargetRefs: ["invented.ui.button"] },
+    {
+      intent: "problem_report",
+      confidence: "high",
+      answer: "Sent!",
+      kind: "feedback",
+      uiTargetRefs: [],
+      sendAutomatically: true,
+    },
+    {
+      intent: "learning_help",
+      confidence: "high",
+      answer: "Fertig.",
+      kind: "ui_action",
+      uiTargetRefs: ["invented.ui.button"],
+    },
   ];
   for (const value of values) {
     const provider = new FakeProvider("model-intent", response(value));

@@ -146,9 +146,7 @@ test("every authored module exposes its own workflow and current learner positio
   const modes = new Set<string>();
   for (const name of names) {
     const mode = name.match(/\.(guided|explore|challenge)\.json$/)?.[1] as
-      | "guided"
-      | "explore"
-      | "challenge";
+      "guided" | "explore" | "challenge";
     modes.add(mode);
     const scenario = await loadScenario(name.slice(0, -5));
     const active = scenario.steps[0];
@@ -173,8 +171,17 @@ test("every authored module exposes its own workflow and current learner positio
       assert.equal(context.workflow?.currentStepNumber, 1, name);
       assert.equal(context.workflow?.steps[0]?.status, "reported_completed", name);
       assert.equal(context.workflow?.steps.length, Math.min(scenario.steps.length, 80), name);
-      assert.equal(context.workflow?.steps.some((step) => step.id === "forged-foreign-step"), false, name);
-      if (mode === "guided") assert.equal(context.step?.expectedOutcome, active.successMessage.trim().slice(0, 320) || null, name);
+      assert.equal(
+        context.workflow?.steps.some((step) => step.id === "forged-foreign-step"),
+        false,
+        name,
+      );
+      if (mode === "guided")
+        assert.equal(
+          context.step?.expectedOutcome,
+          active.successMessage.trim().slice(0, 320) || null,
+          name,
+        );
     }
   }
   assert.deepEqual([...modes].sort(), ["challenge", "explore", "guided"]);
@@ -204,10 +211,19 @@ test("long modules keep the current step in the bounded workflow window", async 
   assert.equal(context.workflow?.steps.length, 80);
   assert.equal(context.workflow?.steps[0]?.position, 41);
   assert.equal(context.workflow?.steps.at(-1)?.position, 120);
-  assert.equal(context.workflow?.steps.some((step) => step.id === "lesson-step-100"), true);
-  assert.equal(context.workflow?.steps.find((step) => step.id === "lesson-step-100")?.position, 100);
+  assert.equal(
+    context.workflow?.steps.some((step) => step.id === "lesson-step-100"),
+    true,
+  );
+  assert.equal(
+    context.workflow?.steps.find((step) => step.id === "lesson-step-100")?.position,
+    100,
+  );
   assert.equal(context.reportedLearnerState?.completedSteps, 1);
-  assert.equal(context.workflow?.steps.some((step) => step.id === "forged-step"), false);
+  assert.equal(
+    context.workflow?.steps.some((step) => step.id === "forged-step"),
+    false,
+  );
 });
 
 test("active Guided step receives only its own authored failure message", async () => {

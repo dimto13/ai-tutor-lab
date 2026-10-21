@@ -11,10 +11,7 @@ import {
   hasAcknowledgedFeedbackNotice,
   type FeedbackRecord,
 } from "@/lib/feedbackStore";
-import {
-  replyDeterministically,
-  type TutorFeedbackOffer,
-} from "@/tutor/deterministicTutor";
+import { replyDeterministically, type TutorFeedbackOffer } from "@/tutor/deterministicTutor";
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
 import { TUTOR_HISTORY_MAX_TURNS, type TutorConversationTurn } from "@/tutor/llm/tutorGuardrails";
 import { resolveModelFirstTutor } from "@/tutor/serverTutorAnswer";
@@ -212,7 +209,11 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
       );
 
       // Never leak a delayed answer, old feedback offer or UI highlight into a new module.
-      if (requestVersion !== activeRequestRef.current || requestScope !== activeLearningScopeRef.current) return;
+      if (
+        requestVersion !== activeRequestRef.current ||
+        requestScope !== activeLearningScopeRef.current
+      )
+        return;
       let text = serverAnswer.answer;
       const offer: TutorFeedbackOffer | undefined =
         allowFeedback && serverAnswer.kind === "feedback"
@@ -223,7 +224,8 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
 
       // The learner explicitly declined a report; never repeat an unsolicited report offer.
       if (!allowFeedback && serverAnswer.kind === "feedback") {
-        text = "Du möchtest eine Antwort statt einer Meldung. Welche konkrete Frage soll ich dazu beantworten?";
+        text =
+          "Du möchtest eine Antwort statt einer Meldung. Welche konkrete Frage soll ich dazu beantworten?";
       }
       if (serverAnswer.uiTargetRefs.length > 0) {
         requestTutorAttention(
@@ -239,7 +241,10 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         appendTutorMessage(text);
       }
     } finally {
-      if (requestVersion === activeRequestRef.current && requestScope === activeLearningScopeRef.current) {
+      if (
+        requestVersion === activeRequestRef.current &&
+        requestScope === activeLearningScopeRef.current
+      ) {
         setPending(false);
       }
     }

@@ -7,15 +7,15 @@ Eingabe mit einem Glossarwort als Begriffsfrage behandelte.
 
 ## Absichten und Verhalten (Legacy-Fallback ohne Modell)
 
-| Absicht (`TutorIntent`)                        | Beispiel                                | Verhalten                                                            |
-| ---------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------- |
-| `next_step`, `rationale`, `progress`           | „Was soll ich jetzt machen?“            | Antwort aus dem aktuellen Schritt; mit Modell wie bisher             |
-| `definition`                                   | „Was ist ein Workspace?“                | Glossar; nur hier und nur zum erfragten Begriff                      |
-| `platform`                                     | „Wie bekomme ich Punkte?“               | Antwort aus `content/tutor/platform-knowledge.de.json`               |
-| `question`                                     | „Wo finde ich das Terminal?“            | Modell; ohne Modell ehrliche Nichtantwort statt geratener Definition |
-| `problem_report`, `feature_request`,`feedback` | „Der Speichern-Button reagiert nicht“   | Offline nur ein korrigierbares Meldeangebot; bei verfügbarer Modellroute entscheidet das LLM   |
-| `unclear`                                      | „Warum funktioniert mein Befehl nicht?“ | Rückfrage mit beiden Wegen: Antwort oder Meldung                     |
-| `smalltalk`                                    | „Danke!“                                | Kurze Antwort ohne Glossar                                           |
+| Absicht (`TutorIntent`)                        | Beispiel                                | Verhalten                                                                                    |
+| ---------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `next_step`, `rationale`, `progress`           | „Was soll ich jetzt machen?“            | Antwort aus dem aktuellen Schritt; mit Modell wie bisher                                     |
+| `definition`                                   | „Was ist ein Workspace?“                | Glossar; nur hier und nur zum erfragten Begriff                                              |
+| `platform`                                     | „Wie bekomme ich Punkte?“               | Antwort aus `content/tutor/platform-knowledge.de.json`                                       |
+| `question`                                     | „Wo finde ich das Terminal?“            | Modell; ohne Modell ehrliche Nichtantwort statt geratener Definition                         |
+| `problem_report`, `feature_request`,`feedback` | „Der Speichern-Button reagiert nicht“   | Offline nur ein korrigierbares Meldeangebot; bei verfügbarer Modellroute entscheidet das LLM |
+| `unclear`                                      | „Warum funktioniert mein Befehl nicht?“ | Rückfrage mit beiden Wegen: Antwort oder Meldung                                             |
+| `smalltalk`                                    | „Danke!“                                | Kurze Antwort ohne Glossar                                                                   |
 
 Eine Meldung wird **nie ohne Klick gesendet**, aber die Person muss sie auch **nie noch einmal
 beschreiben** (Owner-Pilot 2026-10-19). Unter der Tutor-Antwort stehen direkt im Chat:
@@ -256,7 +256,7 @@ verallgemeinern — nicht einzelne Sätze hart codieren.
 6. Die UI zeigt eine Antwort oder ein **bestätigungspflichtiges** Feedback-Angebot;
    erst ein gesonderter expliziter Nutzerklick darf einen Bericht an die Beta-Inbox
    senden. Eine ausdrücklich abgelehnte Meldung wird auf dem nächsten Modellaufruf
-   als gewünschte *Fragebeantwortung* übergeben.
+   als gewünschte _Fragebeantwortung_ übergeben.
 7. Bei fehlendem Auth-Token oder ausgefallener Modellroute folgt erst jetzt der
    bestehende deterministische Offline-Tutor; eine fachlich ungültige Modellantwort
    führt dagegen zur sicheren Rückfrage, nicht zu einer stillen Glossar-Umdeutung.

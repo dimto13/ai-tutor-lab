@@ -40,10 +40,7 @@ export function buildTutorContext(
 
   const scenarioDescription = scenario.description.trim().slice(0, 1_200);
   const authoredFailures = step?.onFailure
-    ? [
-        step.onFailure.message,
-        ...Object.values(step.onFailure.fieldMessages ?? {}),
-      ]
+    ? [step.onFailure.message, ...Object.values(step.onFailure.fieldMessages ?? {})]
     : [];
   const reportedLearnerState = summarizeTutorLiveSnapshot(
     liveSnapshot,
@@ -64,7 +61,9 @@ export function buildTutorContext(
   // Every module uses its own parsed scenario; no VS Code / M365 / other module-specific rules.
   // Challenge gets objectives, not a solution sequence or graded hints.
   const workflow = {
-    learningObjectives: (scenario.learningObjectives ?? []).map((goal) => goal.trim().slice(0, 240)),
+    learningObjectives: (scenario.learningObjectives ?? []).map((goal) =>
+      goal.trim().slice(0, 240),
+    ),
     totalSteps: scenario.steps.length,
     currentStepNumber: mode !== "challenge" && activeIndex >= 0 ? activeIndex + 1 : null,
     steps:
@@ -73,15 +72,15 @@ export function buildTutorContext(
         : scenario.steps
             .slice(workflowWindowStart, workflowWindowStart + 80)
             .map((candidate, index) => ({
-            id: candidate.id,
-            title: candidate.title.trim().slice(0, 160),
-            position: workflowWindowStart + index + 1,
-            status: completedStepIds.has(candidate.id)
-              ? ("reported_completed" as const)
-              : candidate.id === currentStepId
-                ? ("current" as const)
-                : ("not_reported" as const),
-          })),
+              id: candidate.id,
+              title: candidate.title.trim().slice(0, 160),
+              position: workflowWindowStart + index + 1,
+              status: completedStepIds.has(candidate.id)
+                ? ("reported_completed" as const)
+                : candidate.id === currentStepId
+                  ? ("current" as const)
+                  : ("not_reported" as const),
+            })),
   };
   return {
     scenarioTitle: scenario.title,

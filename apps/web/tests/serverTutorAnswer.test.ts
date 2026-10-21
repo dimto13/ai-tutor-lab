@@ -107,7 +107,11 @@ test("unavailable transport triggers the lexical fallback only afterwards, never
     },
     () => {
       order.push("fallback");
-      return { text: "Möchtest du das melden?", intent: "unclear", fallbackOffer: { kind: "problem", clarify: true } };
+      return {
+        text: "Möchtest du das melden?",
+        intent: "unclear",
+        fallbackOffer: { kind: "problem", clarify: true },
+      };
     },
   );
   assert.deepEqual(order, ["model", "fallback"]);

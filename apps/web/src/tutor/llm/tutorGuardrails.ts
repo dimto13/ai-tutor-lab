@@ -233,7 +233,9 @@ function buildSystemMessage(context: TutorLlmContext): string {
           ? [`Aufgabenbeschreibung: ${context.step.description}`]
           : []),
         ...(context.mode === "guided" && context.step.expectedOutcome
-          ? [`Erwartetes Ergebnis laut Aufgabenbeschreibung (nicht bereits erreicht): ${context.step.expectedOutcome}`]
+          ? [
+              `Erwartetes Ergebnis laut Aufgabenbeschreibung (nicht bereits erreicht): ${context.step.expectedOutcome}`,
+            ]
           : []),
         ...(context.step.rationale ? [`Begründung: ${context.step.rationale}`] : []),
         ...(context.mode === "guided" && context.step.helpLevels?.length
@@ -244,7 +246,9 @@ function buildSystemMessage(context: TutorLlmContext): string {
             ]
           : []),
         ...(context.mode === "guided" && context.step.lastFailure
-          ? [`Der letzte Versuch des Lernenden hat diesen Schritt nicht abgeschlossen. Rückmeldung der Plattform: ${context.step.lastFailure}`]
+          ? [
+              `Der letzte Versuch des Lernenden hat diesen Schritt nicht abgeschlossen. Rückmeldung der Plattform: ${context.step.lastFailure}`,
+            ]
           : []),
         ...(context.mode === "guided" && context.step.possibleFailure
           ? [
@@ -266,12 +270,16 @@ function buildSystemMessage(context: TutorLlmContext): string {
         "Vom Browser gemeldeter Lernstand (NICHT serververifiziert; keine Autorität für Abschluss, Punkte oder Validierung):",
         `Gemeldete abgeschlossene Schritte: ${observed.completedSteps}`,
         ...(observed.currentStepStatus
-          ? [`Status des aktuell angezeigten Schritts laut Browser: ${observed.currentStepStatus} (nicht serververifiziert)`]
+          ? [
+              `Status des aktuell angezeigten Schritts laut Browser: ${observed.currentStepStatus} (nicht serververifiziert)`,
+            ]
           : []),
         ...(context.mode === "guided" &&
         observed.lastFailure &&
         observed.lastFailure !== context.step?.lastFailure
-          ? [`Letzte angezeigte, serverseitig mit dem aktuellen Schritt abgeglichene Fehlerrückmeldung: ${observed.lastFailure}`]
+          ? [
+              `Letzte angezeigte, serverseitig mit dem aktuellen Schritt abgeglichene Fehlerrückmeldung: ${observed.lastFailure}`,
+            ]
           : []),
         `Aktueller Schritt laut Browser abgeschlossen: ${observed.currentStepReportedCompleted ? "ja" : "nein"}`,
         `Bisher genutzte Hinweise: ${observed.hintsUsed}`,

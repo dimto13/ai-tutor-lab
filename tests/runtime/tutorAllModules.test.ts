@@ -73,8 +73,15 @@ test("every authored module and mode receives its own scoped Tutor context and s
     assert.equal(context.step?.instruction, currentStep.instruction, filename);
     assert.equal(context.reportedLearnerState?.completedSteps, 1, filename);
     assert.equal(context.reportedLearnerState?.currentStepReportedCompleted, true, filename);
-    assert.ok(context.allowedUiTargetRefs.every((ref) => ref.length > 0), filename);
-    assert.equal(new Set(context.allowedUiTargetRefs).size, context.allowedUiTargetRefs.length, filename);
+    assert.ok(
+      context.allowedUiTargetRefs.every((ref) => ref.length > 0),
+      filename,
+    );
+    assert.equal(
+      new Set(context.allowedUiTargetRefs).size,
+      context.allowedUiTargetRefs.length,
+      filename,
+    );
 
     if (mode === "guided") {
       assert.deepEqual(
@@ -90,28 +97,41 @@ test("every authored module and mode receives its own scoped Tutor context and s
     }
     if (mode === "explore") {
       for (const ref of scenario.exploreTargets ?? []) {
-        assert.ok(context.allowedUiTargetRefs.includes(ref), `${filename}: missing explore ref ${ref}`);
+        assert.ok(
+          context.allowedUiTargetRefs.includes(ref),
+          `${filename}: missing explore ref ${ref}`,
+        );
       }
     }
     // Independent of module and mode: a model-classified learner question stays a question,
     // never a report inferred from keywords in the module/step description.
-    const answer = routeTutorModelOutput({
-      intent: "learning_help",
-      confidence: "high",
-      answer: `Die aktuelle Aufgabe lautet: ${currentStep.instruction}`,
-      kind: "explanation",
-      uiTargetRefs: [],
-    }, context.allowedUiTargetRefs);
+    const answer = routeTutorModelOutput(
+      {
+        intent: "learning_help",
+        confidence: "high",
+        answer: `Die aktuelle Aufgabe lautet: ${currentStep.instruction}`,
+        kind: "explanation",
+        uiTargetRefs: [],
+      },
+      context.allowedUiTargetRefs,
+    );
     assert.equal(answer.action, "answer", filename);
-    const report = routeTutorModelOutput({
-      intent: "problem_report",
-      confidence: "high",
-      answer: "Ich kann deine Beobachtung als überprüfbare Meldung vorbereiten.",
-      kind: "feedback",
-      uiTargetRefs: [],
-    }, context.allowedUiTargetRefs);
+    const report = routeTutorModelOutput(
+      {
+        intent: "problem_report",
+        confidence: "high",
+        answer: "Ich kann deine Beobachtung als überprüfbare Meldung vorbereiten.",
+        kind: "feedback",
+        uiTargetRefs: [],
+      },
+      context.allowedUiTargetRefs,
+    );
     assert.equal(report.action, "offer_feedback", filename);
-    assert.throws(() => buildTutorContext(scenario, mode, "__unknown_step__"), /Unknown tutor step/, filename);
+    assert.throws(
+      () => buildTutorContext(scenario, mode, "__unknown_step__"),
+      /Unknown tutor step/,
+      filename,
+    );
   }
   assert.ok(modules.size >= 7, `Expected distinct training modules; found ${modules.size}`);
   assert.deepEqual([...modes].sort(), ["challenge", "explore", "guided"]);
@@ -128,7 +148,10 @@ test("a context without an active step is valid in every learning mode, includin
     assert.ok(Array.isArray(context.allowedUiTargetRefs), filename);
     if (mode === "explore") {
       for (const ref of scenario.exploreTargets ?? []) {
-        assert.ok(context.allowedUiTargetRefs.includes(ref), `${filename}: missing free-explore ref ${ref}`);
+        assert.ok(
+          context.allowedUiTargetRefs.includes(ref),
+          `${filename}: missing free-explore ref ${ref}`,
+        );
       }
     }
   }

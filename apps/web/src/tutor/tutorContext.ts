@@ -64,7 +64,9 @@ export function useTutorContext(): TutorContext {
       },
       mode,
       currentStep: displayedStep,
-      currentStepStatus: displayedStep ? (progress.statuses[displayedStep.id] ?? "NOT_STARTED") : null,
+      currentStepStatus: displayedStep
+        ? (progress.statuses[displayedStep.id] ?? "NOT_STARTED")
+        : null,
       lastFailure:
         mode === "guided" && displayedStep
           ? latestStepFailureMessage(progress, displayedStep.id)
