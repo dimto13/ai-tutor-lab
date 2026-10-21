@@ -28,6 +28,13 @@ const productionArtifactTestTitles = [
   "#574 Tutor and problem entry remain reachable in landscape-932",
   "#574 Tutor and problem entry remain reachable in portrait",
   "#574 Tutor and problem entry remain reachable in desktop",
+  // Existing 0-token browser paths run against the built artifact, not only the dev server.
+  "Tutor trennt Lernfrage und explizite Problemmeldung mit strukturiertem Kontext",
+  "Alltagssprachliche Problemmeldung geht mit einem Klick aus dem Chat an das Team (#147)",
+  "Erkannte Problemmeldung lässt sich vor dem Senden bearbeiten (#147, #548)",
+  "Tutor-Angebot lässt sich ablehnen und mehrdeutige Fragen werden zurückgefragt",
+  "Problemmeldung lässt sich abbrechen, ohne Feedback oder Training-State zu verändern",
+  "Problem-Shortcut bleibt bei 320px per Tastatur und Reduced Motion zugänglich",
 ] as const;
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -44,6 +51,7 @@ export default defineConfig({
     "copilot-modes.spec.ts",
     "vscode-basics.spec.ts",
     "mobile-landscape-tutor.spec.ts",
+    "feedback-capture.spec.ts",
   ],
   grep: productionArtifactGrep,
   timeout: 30_000,
