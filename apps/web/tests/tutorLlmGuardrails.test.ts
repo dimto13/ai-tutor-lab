@@ -252,6 +252,7 @@ test("Guided prompt sees its module sequence, position and exact authored diagno
         rationale: "Das Review braucht nachvollziehbare Angaben.",
         description: "Titel, Beschreibung und Zielbranch prüfen.",
         expectedOutcome: "Pull Request wurde erkannt.",
+        lastFailure: "Die Beschreibung fehlt.",
       },
       reportedLearnerState: {
         completedSteps: 1,
@@ -276,6 +277,7 @@ test("Guided prompt sees its module sequence, position and exact authored diagno
   assert.match(prompt, /Titel, Beschreibung und Zielbranch prüfen/);
   assert.match(prompt, /Erwartetes Ergebnis laut Aufgabenbeschreibung \(nicht bereits erreicht\)/);
   assert.match(prompt, /Die Beschreibung fehlt/);
+  assert.equal(prompt.split("Die Beschreibung fehlt.").length - 1, 1);
   assert.match(prompt, /NICHT serververifiziert/);
   assert.doesNotMatch(prompt, /Die Aufgabe ist bereits erfolgreich abgeschlossen/);
 });
