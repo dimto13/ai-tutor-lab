@@ -35,8 +35,10 @@ export function buildTutorContext(
     }
   }
 
+  const scenarioDescription = scenario.description.trim().slice(0, 1_200);
   return {
     scenarioTitle: scenario.title,
+    ...(scenarioDescription ? { scenarioDescription } : {}),
     mode,
     step: step
       ? {
@@ -44,6 +46,16 @@ export function buildTutorContext(
           title: step.title,
           instruction: step.instruction,
           rationale: step.rationale ?? step.why ?? null,
+          // Only Guided receives pre-authored help levels. Challenge must not leak solutions.
+          ...(mode === "guided"
+            ? {
+                helpLevels: (step.helpLevels ?? [])
+                  .map((hint) => hint.trim())
+                  .filter((hint) => hint.length > 0 && hint !== "__highlight__"),
+                // A possible diagnostic clue, not evidence of an actual user failure.
+                possibleFailure: step.onFailure?.message?.trim() || null,
+              }
+            : {}),
         }
       : null,
     stepUiTargetRefs: [...stepUiTargetRefs],

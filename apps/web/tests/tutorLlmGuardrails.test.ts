@@ -86,6 +86,73 @@ test("accepts an action only when every referenced UI target exists in the curre
   );
 });
 
+test("guided prompt uses authored explanation, graded hints and explicitly uncertain diagnostics", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({
+      answer: "Schau zuerst links auf die Activity Bar.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
+  );
+  await service(provider).answer({
+    sessionKey: "session-guided-coaching",
+    context: {
+      ...context,
+      scenarioDescription: "Orientiere dich in der Oberfläche.",
+      step: {
+        ...context.step!,
+        helpLevels: ["Sieh links nach.", "Öffne das Explorer-Symbol."],
+        possibleFailure: "Der Explorer wurde noch nicht geöffnet.",
+      },
+    },
+    question: { question: "Ich komme nicht weiter. Was soll ich versuchen?" },
+    includeUserCode: false,
+  });
+  const prompt = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(prompt, /Szenariobeschreibung: Orientiere dich in der Oberfläche/);
+  assert.match(prompt, /Gestufte Hilfen \(von allgemein zu konkret\):/);
+  assert.match(prompt, /1\. Sieh links nach\./);
+  assert.match(prompt, /2\. Öffne das Explorer-Symbol\./);
+  assert.match(prompt, /Möglicher Fehlerhinweis \(kein Nachweis eines aufgetretenen Fehlers\)/);
+  assert.match(prompt, /ohne Bestätigung durch die Trainings-Engine nicht als erledigt/);
+  assert.match(prompt, /Antworte zuerst auf die tatsächlich gestellte Frage/);
+});
+
+test("explore and challenge use different teaching policies without a Guided hint leak", async () => {
+  for (const mode of ["explore", "challenge"] as const) {
+    const provider = new FakeProvider(
+      "provider-a",
+      response({ answer: "Ich erkläre dir das Prinzip.", kind: "explanation", uiTargetRefs: [] }),
+    );
+    await service(provider).answer({
+      sessionKey: `session-${mode}-coaching`,
+      context: {
+        ...context,
+        mode,
+        step: {
+          ...context.step!,
+          helpLevels: ["Geheime Guided-Hilfe."],
+          possibleFailure: "Geheime Fehlerursache.",
+        },
+      },
+      question: { question: "Hilf mir bitte." },
+      includeUserCode: false,
+    });
+    const prompt = provider.requests[0]?.messages[0]?.content ?? "";
+    assert.doesNotMatch(prompt, /Gestufte Hilfen/);
+    assert.doesNotMatch(prompt, /Geheime Guided-Hilfe/);
+    assert.doesNotMatch(prompt, /Geheime Fehlerursache/);
+    if (mode === "challenge") {
+      assert.match(prompt, /verrate nicht ungefragt die komplette Lösung/);
+      assert.match(prompt, /keine Guided-Hilfestufen/);
+    } else {
+      assert.match(prompt, /Fördere eigenes Erkunden/);
+      assert.match(prompt, /ohne eine verpflichtende Klickreihenfolge/);
+    }
+  }
+});
+
 test("the request ID and tenant reference reach the provider and the audit (#482)", async () => {
   const correlation = {
     requestId: "0f8fad5b-d9cb-469f-a165-70867728950e",
