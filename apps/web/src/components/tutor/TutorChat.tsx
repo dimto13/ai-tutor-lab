@@ -15,6 +15,7 @@ import { replyDeterministically, type TutorFeedbackOffer } from "@/tutor/determi
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
 import { TUTOR_HISTORY_MAX_TURNS, type TutorConversationTurn } from "@/tutor/llm/tutorGuardrails";
 import { resolveModelFirstTutor } from "@/tutor/serverTutorAnswer";
+import { shouldApplyTutorResponse } from "@/tutor/tutorResponseScope";
 import { buildTutorLiveSnapshot } from "@/tutor/llm/tutorLiveSnapshot";
 import { useTutorContext } from "@/tutor/tutorContext";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
@@ -102,9 +103,11 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const nextMessageIdRef = useRef(1);
   const activeRequestRef = useRef(0);
   const activeLearningScopeRef = useRef(`${tutorContext.scenario.id}:${mode}`);
+  const activeDisplayedStepRef = useRef<string | null>(tutorContext.currentStep?.id ?? null);
   // Update during render as well: a stale request cannot append a reply during the scope transition.
   const learningScope = `${tutorContext.scenario.id}:${mode}`;
   activeLearningScopeRef.current = learningScope;
+  activeDisplayedStepRef.current = tutorContext.currentStep?.id ?? null;
   const nextMessageId = () => nextMessageIdRef.current++;
 
   useEffect(() => {
@@ -178,6 +181,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   ) => {
     const requestVersion = ++activeRequestRef.current;
     const requestScope = learningScope;
+    const requestStepId = tutorContext.currentStep?.id ?? null;
     setPending(true);
     try {
       const accessToken = auth.session?.accessToken ?? null;
@@ -210,8 +214,14 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
 
       // Never leak a delayed answer, old feedback offer or UI highlight into a new module.
       if (
-        requestVersion !== activeRequestRef.current ||
-        requestScope !== activeLearningScopeRef.current
+        !shouldApplyTutorResponse(
+          { version: requestVersion, scope: requestScope, displayedStepId: requestStepId },
+          {
+            version: activeRequestRef.current,
+            scope: activeLearningScopeRef.current,
+            displayedStepId: activeDisplayedStepRef.current,
+          },
+        )
       )
         return;
       let text = serverAnswer.answer;
@@ -245,6 +255,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
         requestVersion === activeRequestRef.current &&
         requestScope === activeLearningScopeRef.current
       ) {
+        // A same-module step transition may discard a stale answer while still clearing pending.
         setPending(false);
       }
     }
