@@ -48,13 +48,14 @@ export function buildTutorContext(
           // Only Guided receives pre-authored help levels. Challenge must not leak solutions.
           ...(mode === "guided"
             ? {
-                helpLevels: step.helpLevels.filter(
-                  (hint) => hint.trim().length > 0 && hint.trim() !== "__highlight__",
-                ),
+                helpLevels: (step.helpLevels ?? [])
+                  .map((hint) => hint.trim())
+                  .filter((hint) => hint.length > 0 && hint !== "__highlight__"),
               }
             : {}),
           // A possible diagnostic clue, not an assertion that a failure happened.
-          possibleFailure: mode === "guided" ? (step.onFailure?.message ?? null) : null,
+          possibleFailure:
+            mode === "guided" ? (step.onFailure?.message?.trim() || null) : null,
         }
       : null,
     stepUiTargetRefs: [...stepUiTargetRefs],
