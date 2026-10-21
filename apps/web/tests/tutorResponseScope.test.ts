@@ -30,17 +30,11 @@ test("only the answer for the displayed learning step is applied", () => {
 test("new requests and module/mode switches invalidate delayed responses", () => {
   assert.equal(shouldApplyTutorResponse({ ...current, version: 6 }, current), false);
   assert.equal(
-    shouldApplyTutorResponse(
-      { ...current, scope: "vscode-basics.explore:explore" },
-      current,
-    ),
+    shouldApplyTutorResponse({ ...current, scope: "vscode-basics.explore:explore" }, current),
     false,
   );
   assert.equal(
-    shouldApplyTutorResponse(
-      { ...current, scope: "github-pull-request.guided:guided" },
-      current,
-    ),
+    shouldApplyTutorResponse({ ...current, scope: "github-pull-request.guided:guided" }, current),
     false,
   );
 });
