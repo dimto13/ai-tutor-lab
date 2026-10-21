@@ -5,7 +5,7 @@
  * All prompts and raw completions stay in a mode-0600 local file outside the checkout.
  *
  * TUTOR_QUALITY_REAL_OPT_IN=1 LLM_MODEL=gemma4:e4b \\
- *   npm run verify:tutor-quality-live -- --run-real-model
+ *   node --experimental-strip-types scripts/verify-tutor-quality-live.ts --run-real-model
  *
  * Exit 1: automatic failure. Exit 2: all automatic gates passed; mandatory human semantic
  * assessment and independent authenticated browser path are still NOT_TESTED. Never prints PASS.
