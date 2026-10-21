@@ -265,3 +265,34 @@ Die PR-/Main-Tests benutzen ausschließlich 0-Token/Fake-Provider. Die unabhäng
 modellbasierte Akzeptanz aus #575 (mindestens 30 tatsächliche lokale Klassifikationen,
 mindestens 90 % Intent-Korrektheit und getrennt geprüfte Antwortqualität) ist
 eine **eigene** Freigabestufe und wird nicht durch erfolgreiche Unit- oder UI-Tests ersetzt.
+
+
+## Kontrollierte reale Qualitätsmatrix (#575, explizit opt-in)
+
+Die 0-Token-Tests unter `tests/runtime/tutorQualityCorpus.test.ts` prüfen nur den **40-Fall-Katalog**
+(`tests/runtime/fixtures/tutor-quality-live.de.json`): zehn separate Held-out-Fälle, unterschiedliche
+Modulfamilien und Guided/Explore/Challenge. Sie rufen niemals das Modell auf.
+
+Der separate Runner `scripts/verify-tutor-quality-live.ts` gehört **nicht** zu `npm run check`,
+PR-/Main-CI oder einem automatischen Workflow. Nur nach einer echten Runtime-/Berechtigungs- und
+gegebenenfalls External-Executor-Quota-Freigabe auf einem explizit ausgecheckten PR-Head starten:
+
+```sh
+TUTOR_QUALITY_REAL_OPT_IN=1 LLM_MODEL=gemma4:e4b LLM_BASE_URL=http://127.0.0.1:11434/v1 \
+  node --experimental-strip-types scripts/verify-tutor-quality-live.ts --run-real-model
+```
+
+Der Runner akzeptiert nur einen direkten Loopback-Endpunkt, das genaue lokale Modell, eine
+separate CLI- und Umgebungsfreigabe, maximal **eine** sequenzielle Anfrage je Fall ohne Retry
+und erstellt lokale Evidenzdateien außerhalb des Repositories mit Dateimodus 0600. Öffentlich
+dürfen nur redigierte Metadaten (Case-ID, Modul/Modus, erwarteter und tatsächlicher Intent,
+Modell/Route/Head/Latenz, Ergebnis) erscheinen, niemals Prompt, Antwort, Token oder Zugangsdaten.
+
+Ein Ergebnis von mindestens 90 % korrekt vom echten Modell gewählter Intents und null automatischen
+kritischen/Route-Fehlern ist weiterhin **nur eine Teilprüfung**. Jede echte Antwort einschließlich
+Held-out und Challenge-Spoiler/erfundener UI bzw. Punkte/#548 ist anhand der privaten lokalen
+Antwortdatei fachlich unabhängig zu beurteilen. Der Runner gibt deshalb absichtlich Exitcode 2
+(`MANUAL_SEMANTIC_AND_UI_ACCEPTANCE_REQUIRED`) selbst bei erfolgreichen automatischen Checks aus;
+Exitcode 1 bedeutet automatischen Fehler. Zusätzlich bleibt die **authentifizierte**
+UI→Server/Snapshot→Modell-Abnahme separat zu belegen. Weder Testkatalog noch Runner allein
+markieren #575 als PASS oder autorisieren einen Merge.
