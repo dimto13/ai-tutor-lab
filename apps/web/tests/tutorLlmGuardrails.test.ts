@@ -45,8 +45,22 @@ class FakeProvider implements LlmProvider {
 }
 
 function response(value: unknown, costMicros = 0): LlmResponse {
+  // Older tests supply the answer fragment. Fake the NEW model's single structured
+  // intent+answer completion without weakening production parsing. Invalid fragments remain invalid.
+  const candidate =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
+  const structured =
+    candidate && !("intent" in candidate) && "kind" in candidate
+      ? {
+          intent: candidate["kind"] === "feedback" ? "problem_report" : "learning_help",
+          confidence: "high",
+          ...candidate,
+        }
+      : value;
   return {
-    text: JSON.stringify(value),
+    text: JSON.stringify(structured),
     model: "fake-model",
     usage: { inputTokens: 20, outputTokens: 10, costMicros },
   };
@@ -151,6 +165,158 @@ test("explore and challenge use different teaching policies without a Guided hin
       assert.match(prompt, /ohne eine verpflichtende Klickreihenfolge/);
     }
   }
+});
+
+test("model prompt labels learner observations as unverified and never includes event payloads", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({
+      answer: "Prüfe den Explorer und versuche es erneut.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
+  );
+  await service(provider).answer({
+    sessionKey: "session-reported-learning-state",
+    context: {
+      ...context,
+      reportedLearnerState: {
+        completedSteps: 2,
+        completedStepIds: ["step-a", "step-b"],
+        currentStepReportedCompleted: false,
+        hintsUsed: 3,
+        failedAttempts: 2,
+        exploredTargets: 4,
+        recentEventTypes: ["file.saved", "explorer.opened"],
+      },
+    },
+    question: { question: "Warum geht es nicht weiter?" },
+    includeUserCode: false,
+  });
+  const system = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(system, /NICHT serververifiziert/);
+  assert.match(system, /Bisherige Fehlversuche: 2/);
+  assert.match(system, /Bisher genutzte Hinweise: 3/);
+  assert.match(system, /file\.saved, explorer\.opened/);
+  assert.match(system, /Trainings-Validator bleibt maßgeblich/);
+  assert.doesNotMatch(system, /Dateiinhalt:|Nutzer-Code:|Event-Payload:/);
+
+  const without = new FakeProvider(
+    "provider-a",
+    response({
+      answer: "Bitte beschreibe die Fehlermeldung.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
+  );
+  await service(without).answer({
+    sessionKey: "session-no-reported-state",
+    context,
+    question: { question: "Warum geht es nicht weiter?" },
+    includeUserCode: false,
+  });
+  assert.doesNotMatch(
+    without.requests[0]?.messages[0]?.content ?? "",
+    /Vom Browser gemeldeter Lernstand/,
+  );
+});
+
+test("Guided prompt sees its module sequence, position and exact authored diagnostic", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({ answer: "Prüfe die noch fehlende Beschreibung.", kind: "explanation", uiTargetRefs: [] }),
+  );
+  await service(provider).answer({
+    sessionKey: "universal-guided-context",
+    context: {
+      ...context,
+      scenarioTitle: "Quellcode gemeinsam bearbeiten",
+      workflow: {
+        learningObjectives: ["Einen Pull Request sicher erstellen"],
+        totalSteps: 3,
+        currentStepNumber: 2,
+        steps: [
+          { id: "branch", title: "Branch anlegen", position: 1, status: "reported_completed" },
+          { id: "pr", title: "Pull Request erstellen", position: 2, status: "current" },
+          { id: "review", title: "Review durchführen", position: 3, status: "not_reported" },
+        ],
+      },
+      step: {
+        id: "pr",
+        title: "Pull Request erstellen",
+        instruction: "Beschreibe Zweck und Änderung.",
+        rationale: "Das Review braucht nachvollziehbare Angaben.",
+        description: "Titel, Beschreibung und Zielbranch prüfen.",
+        expectedOutcome: "Pull Request wurde erkannt.",
+      },
+      reportedLearnerState: {
+        completedSteps: 1,
+        completedStepIds: ["branch"],
+        currentStepReportedCompleted: false,
+        lastFailure: "Die Beschreibung fehlt.",
+        hintsUsed: 1,
+        failedAttempts: 1,
+        exploredTargets: 0,
+        recentEventTypes: [],
+      },
+    },
+    question: { question: "Woran hänge ich und wie mache ich weiter?" },
+    includeUserCode: false,
+  });
+  const prompt = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(prompt, /Einen Pull Request sicher erstellen/);
+  assert.match(prompt, /Aktuell angezeigter Schritt: 2 von 3/);
+  assert.match(prompt, /Branch anlegen \[reported_completed\]/);
+  assert.match(prompt, /Pull Request erstellen \[current\]/);
+  assert.match(prompt, /Review durchführen \[not_reported\]/);
+  assert.match(prompt, /Titel, Beschreibung und Zielbranch prüfen/);
+  assert.match(prompt, /Erwartetes Ergebnis laut Aufgabenbeschreibung \(nicht bereits erreicht\)/);
+  assert.match(prompt, /Die Beschreibung fehlt/);
+  assert.match(prompt, /NICHT serververifiziert/);
+  assert.doesNotMatch(prompt, /Die Aufgabe ist bereits erfolgreich abgeschlossen/);
+});
+
+test("Challenge keeps objectives but never discloses a solution sequence or latest Guided failure", async () => {
+  const provider = new FakeProvider(
+    "provider-a",
+    response({ answer: "Überlege, was der fertige Zustand zeigen sollte.", kind: "explanation", uiTargetRefs: [] }),
+  );
+  await service(provider).answer({
+    sessionKey: "universal-challenge-context",
+    context: {
+      ...context,
+      mode: "challenge",
+      workflow: {
+        learningObjectives: ["Ein Repository korrekt übergeben"],
+        totalSteps: 3,
+        currentStepNumber: null,
+        steps: [],
+      },
+      step: {
+        ...context.step!,
+        helpLevels: ["VERBOTENER_KOMPLETTER_LOESUNGSWEG"],
+        possibleFailure: "VERBOTENE_DIAGNOSE",
+        description: "VERBOTENE_DETAILANLEITUNG",
+        expectedOutcome: "VERBOTENE_MUSTERLOESUNG",
+      },
+      reportedLearnerState: {
+        completedSteps: 0,
+        completedStepIds: [],
+        currentStepReportedCompleted: false,
+        lastFailure: "VERBOTENE_ALTE_FEHLERMELDUNG",
+        hintsUsed: 0,
+        failedAttempts: 0,
+        exploredTargets: 0,
+        recentEventTypes: [],
+      },
+    },
+    question: { question: "Hilf mir, ohne die Lösung zu verraten." },
+    includeUserCode: false,
+  });
+  const prompt = provider.requests[0]?.messages[0]?.content ?? "";
+  assert.match(prompt, /Ein Repository korrekt übergeben/);
+  assert.match(prompt, /keine vollständige Lösungsreihenfolge/);
+  assert.doesNotMatch(prompt, /VERBOTENE_/);
 });
 
 test("the request ID and tenant reference reach the provider and the audit (#482)", async () => {
@@ -287,6 +453,8 @@ test("earlier chat turns reach the provider before the current question, answers
   );
   assert.equal(messages[1]?.content, "Was ist der Explorer?");
   assert.deepEqual(JSON.parse(messages[2]?.content ?? "{}"), {
+    intent: "learning_help",
+    confidence: "high",
     answer: "Der Explorer zeigt die Dateien deines Workspace.",
     kind: "explanation",
     uiTargetRefs: [],
@@ -519,4 +687,94 @@ test("a failed attempt reaches the model with the help path, so it explains what
     /Der letzte Versuch des Lernenden hat diesen Schritt nicht abgeschlossen\. Rückmeldung der Plattform: Die Beschreibung ist noch zu knapp\./,
   );
   assert.match(systemMessage, /Wiederhole nicht nur die Anweisung des Schritts/);
+});
+
+test("one model completion chooses the input intent without a keyword preclassifier", async () => {
+  for (const model of [
+    {
+      question: "Ich habe KEIN Problem. Was bedeutet Issue?",
+      answer: { intent: "tool_question", confidence: "high", answer: "Ein Issue beschreibt eine Aufgabe.", kind: "explanation", uiTargetRefs: [] },
+      expected: "tool_question",
+      kind: "explanation",
+    },
+    {
+      question: "Meine korrekte Aufgabe wurde als falsch bewertet.",
+      answer: { intent: "problem_report", confidence: "high", answer: "Du meldest eine falsche Bewertung.", kind: "feedback", uiTargetRefs: [] },
+      expected: "problem_report",
+      kind: "feedback",
+    },
+    {
+      question: "Das geht nicht.",
+      answer: { intent: "unclear", confidence: "low", answer: "Geht es um den Schritt oder die Plattform?", kind: "clarification", uiTargetRefs: [] },
+      expected: "unclear",
+      kind: "clarification",
+    },
+  ] as const) {
+    const provider = new FakeProvider("model-intent", response(model.answer));
+    const audit: TutorLlmAuditEvent[] = [];
+    const result = await service(provider, audit).answer({
+      sessionKey: `single-completion-${model.expected}`,
+      context,
+      question: { question: model.question },
+      includeUserCode: false,
+    });
+    assert.equal(provider.requests.length, 1, model.question);
+    assert.equal(result.status, "ok", model.question);
+    assert.equal(result.intent, model.expected, model.question);
+    assert.equal(result.kind, model.kind, model.question);
+    assert.equal(audit[0]?.intent, model.expected);
+    assert.equal(audit[0]?.model, "fake-model");
+    assert.equal(JSON.stringify(audit).includes(model.question), false);
+    if (model.expected === "problem_report") {
+      assert.equal(result.feedbackKind, "problem");
+      assert.equal(Object.hasOwn(result, "sent"), false);
+    }
+  }
+});
+
+test("explicitly rejected feedback is passed to the model as an answer-only preference", async () => {
+  const provider = new FakeProvider(
+    "model-intent",
+    response({
+      intent: "learning_help",
+      confidence: "high",
+      answer: "Prüfe deinen letzten Versuch und die aktuelle Schrittrückmeldung.",
+      kind: "explanation",
+      uiTargetRefs: [],
+    }),
+  );
+  const result = await service(provider).answer({
+    sessionKey: "answer-instead",
+    context,
+    question: {
+      question: "Die Plattform bewertet das falsch.",
+      answerAsQuestion: true,
+    },
+    includeUserCode: false,
+  });
+  assert.equal(result.status, "ok");
+  assert.equal(provider.requests.length, 1);
+  const last = provider.requests[0]?.messages.at(-1)?.content ?? "";
+  assert.match(last, /vorherige Meldeangebot ausdrücklich abgelehnt/);
+  assert.match(last, /Die Plattform bewertet das falsch/);
+  assert.doesNotMatch(last, /USER_CODE_BEGIN/);
+});
+
+test("forged model-side report and invalid JSON fail closed after one request", async () => {
+  const values: unknown[] = [
+    { intent: "problem_report", confidence: "high", answer: "Sent!", kind: "feedback", uiTargetRefs: [], sendAutomatically: true },
+    { intent: "learning_help", confidence: "high", answer: "Fertig.", kind: "ui_action", uiTargetRefs: ["invented.ui.button"] },
+  ];
+  for (const value of values) {
+    const provider = new FakeProvider("model-intent", response(value));
+    const result = await service(provider).answer({
+      sessionKey: "forged-model-output",
+      context,
+      question: { question: "Was ist passiert?" },
+      includeUserCode: false,
+    });
+    assert.equal(provider.requests.length, 1);
+    assert.equal(result.status, "guardrail");
+    assert.equal(result.uiTargetRefs.length, 0);
+  }
 });

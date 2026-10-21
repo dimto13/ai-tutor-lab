@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { preferServerTutor } from "../src/tutor/serverTutorAnswer.ts";
+import { preferServerTutor, resolveModelFirstTutor } from "../src/tutor/serverTutorAnswer.ts";
 
 const DETERMINISTIC = "Öffne den Explorer über das oberste Symbol der Activity Bar.";
 
@@ -50,4 +50,110 @@ test("a server answer replaces the deterministic one and points only after the g
     })),
     { answer: "Kannst du die Frage genauer stellen?", uiTargetRefs: [] },
   );
+});
+
+test("the server adapter retains a model-selected feedback kind without submitting it", async () => {
+  assert.deepEqual(
+    await preferServerTutor(DETERMINISTIC, async () => ({
+      status: "ok",
+      answer: "Du meldest eine unpassende Bewertung.",
+      kind: "feedback",
+      intent: "problem_report",
+      feedbackKind: "problem",
+      uiTargetRefs: [],
+      model: "gemma4:e4b@local",
+    })),
+    {
+      answer: "Du meldest eine unpassende Bewertung.",
+      uiTargetRefs: [],
+      kind: "feedback",
+      intent: "problem_report",
+      feedbackKind: "problem",
+    },
+  );
+});
+
+test("model is asked before the offline classifier even for an obvious-looking complaint (#147)", async () => {
+  const order: string[] = [];
+  const result = await resolveModelFirstTutor(
+    async () => {
+      order.push("model");
+      return {
+        status: "ok",
+        answer: "Das ist eine Sachfrage zu einem Fehlerbegriff.",
+        kind: "explanation",
+        intent: "tool_question",
+        uiTargetRefs: [],
+        model: "gemma4:e4b@local",
+      };
+    },
+    () => {
+      order.push("keyword-fallback");
+      return { text: "Falsches Meldeangebot", intent: "problem_report" };
+    },
+  );
+  assert.deepEqual(order, ["model"]);
+  assert.equal(result.answer, "Das ist eine Sachfrage zu einem Fehlerbegriff.");
+  assert.equal(result.intent, "tool_question");
+  assert.equal(result.fallback, undefined);
+});
+
+test("unavailable transport triggers the lexical fallback only afterwards, never an automatic send", async () => {
+  const order: string[] = [];
+  const result = await resolveModelFirstTutor(
+    async () => {
+      order.push("model");
+      return { status: "unavailable" };
+    },
+    () => {
+      order.push("fallback");
+      return { text: "Möchtest du das melden?", intent: "unclear", fallbackOffer: { kind: "problem", clarify: true } };
+    },
+  );
+  assert.deepEqual(order, ["model", "fallback"]);
+  assert.equal(result.fallback, true);
+  assert.deepEqual(result.fallbackOffer, { kind: "problem", clarify: true });
+  assert.equal(Object.hasOwn(result, "sent"), false);
+});
+
+test("model feedback remains a confirmation-only recommendation; no fallback can override it", async () => {
+  let fallbackCalls = 0;
+  const result = await resolveModelFirstTutor(
+    async () => ({
+      status: "ok",
+      answer: "Ich verstehe den Änderungswunsch.",
+      kind: "feedback",
+      intent: "feature_request",
+      feedbackKind: "improvement",
+      uiTargetRefs: [],
+      model: "gemma4:e4b@local",
+    }),
+    () => {
+      fallbackCalls += 1;
+      return { text: "Falsch", intent: "question" };
+    },
+  );
+  assert.equal(fallbackCalls, 0);
+  assert.equal(result.feedbackKind, "improvement");
+  assert.equal(Object.hasOwn(result, "sent"), false);
+});
+
+test("an explicit answer preference is sent to the model instead of reclassifying before it", async () => {
+  let fallbackCalls = 0;
+  const result = await resolveModelFirstTutor(
+    async () => ({
+      status: "ok",
+      answer: "Dafür musst du den aktuellen Schritt erneut prüfen.",
+      kind: "explanation",
+      intent: "learning_help",
+      uiTargetRefs: [],
+      model: "gemma4:e4b@local",
+    }),
+    () => {
+      fallbackCalls += 1;
+      return { text: "Falsch", intent: "problem_report" };
+    },
+  );
+  assert.equal(fallbackCalls, 0);
+  assert.equal(result.kind, "explanation");
 });
