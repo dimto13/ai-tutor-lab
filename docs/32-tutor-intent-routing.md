@@ -266,7 +266,6 @@ modellbasierte Akzeptanz aus #575 (mindestens 30 tatsächliche lokale Klassifika
 mindestens 90 % Intent-Korrektheit und getrennt geprüfte Antwortqualität) ist
 eine **eigene** Freigabestufe und wird nicht durch erfolgreiche Unit- oder UI-Tests ersetzt.
 
-
 ## Kontrollierte reale Qualitätsmatrix (#575, explizit opt-in)
 
 Die 0-Token-Tests unter `tests/runtime/tutorQualityCorpus.test.ts` prüfen nur den **40-Fall-Katalog**
