@@ -49,7 +49,7 @@ export async function resolveModelFirstTutor(
   ask: (() => Promise<TutorLlmAnswer | { status: "unavailable" }>) | null,
   offlineFallback: () => TutorReply,
 ): Promise<ModelFirstTutorOutcome> {
-  const useOfflineFallback = (): ModelFirstTutorOutcome => {
+  const resolveOfflineFallback = (): ModelFirstTutorOutcome => {
     const reply = offlineFallback();
     return {
       answer: reply.text,
@@ -61,10 +61,10 @@ export async function resolveModelFirstTutor(
     };
   };
 
-  if (!ask) return useOfflineFallback();
+  if (!ask) return resolveOfflineFallback();
   try {
     const response = await ask();
-    if (response.status === "unavailable" || !response.answer.trim()) return useOfflineFallback();
+    if (response.status === "unavailable" || !response.answer.trim()) return resolveOfflineFallback();
     if (response.status !== "ok") {
       return { answer: response.answer, uiTargetRefs: [] };
     }
@@ -76,6 +76,6 @@ export async function resolveModelFirstTutor(
       ...(response.feedbackKind ? { feedbackKind: response.feedbackKind } : {}),
     };
   } catch {
-    return useOfflineFallback();
+    return resolveOfflineFallback();
   }
 }
