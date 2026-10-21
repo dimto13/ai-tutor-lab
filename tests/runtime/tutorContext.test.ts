@@ -45,6 +45,25 @@ test("explore tutor context adds the explore targets and falls back to the step'
   assert.deepEqual(buildTutorContext(scenario, "guided", null).stepUiTargetRefs, []);
 });
 
+test("scenario description is trimmed, omitted when blank, and bounded to 1200 characters", async () => {
+  const scenario = await loadScenario("vscode-basics.guided");
+  assert.equal(
+    buildTutorContext({ ...scenario, description: " \t " }, "guided", null).scenarioDescription,
+    undefined,
+  );
+  assert.equal(
+    buildTutorContext({ ...scenario, description: "  Wichtig.  " }, "guided", null)
+      .scenarioDescription,
+    "Wichtig.",
+  );
+  const context = buildTutorContext(
+    { ...scenario, description: "x".repeat(5_000) },
+    "guided",
+    null,
+  );
+  assert.equal(context.scenarioDescription?.length, 1_200);
+});
+
 test("guided context normalizes authored hints and discards blank failure messages", async () => {
   const scenario = await loadScenario("vscode-basics.guided");
   const testScenario = {
@@ -86,8 +105,8 @@ test("challenge and explore do not receive graded Guided hints", async () => {
   const explore = buildTutorContext(scenario, "explore", "create_file");
   assert.equal(challenge.step?.helpLevels, undefined);
   assert.equal(explore.step?.helpLevels, undefined);
-  assert.equal(challenge.step?.possibleFailure, null);
-  assert.equal(explore.step?.possibleFailure, null);
+  assert.equal(challenge.step?.possibleFailure, undefined);
+  assert.equal(explore.step?.possibleFailure, undefined);
   assert.equal(
     challenge.step?.instruction,
     scenario.steps.find((step) => step.id === "create_file")?.instruction,
