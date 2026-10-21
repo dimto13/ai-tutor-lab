@@ -27,8 +27,15 @@ import {
 } from "../apps/web/src/tutor/llm/tutorGuardrails.ts";
 
 type Intent =
-  | "learning_help" | "platform_question" | "tool_question" | "general_question"
-  | "problem_report" | "feature_request" | "feedback" | "smalltalk" | "unclear";
+  | "learning_help"
+  | "platform_question"
+  | "tool_question"
+  | "general_question"
+  | "problem_report"
+  | "feature_request"
+  | "feedback"
+  | "smalltalk"
+  | "unclear";
 interface QualityCase {
   id: string;
   scenarioId: string;
@@ -50,7 +57,9 @@ const { values } = parseArgs({
   },
 });
 if (!values["run-real-model"] || process.env["TUTOR_QUALITY_REAL_OPT_IN"] !== "1") {
-  throw new Error("Real-model QA requires --run-real-model AND TUTOR_QUALITY_REAL_OPT_IN=1; no request made");
+  throw new Error(
+    "Real-model QA requires --run-real-model AND TUTOR_QUALITY_REAL_OPT_IN=1; no request made",
+  );
 }
 
 const configuration = loadLlmProviderConfig();
@@ -61,7 +70,8 @@ const endpoint = new URL(configuration.baseUrl);
 if (
   !["127.0.0.1", "localhost", "[::1]"].includes(endpoint.hostname) ||
   !["http:", "https:"].includes(endpoint.protocol) ||
-  endpoint.username || endpoint.password
+  endpoint.username ||
+  endpoint.password
 ) {
   throw new Error("QA must target a direct loopback Ollama endpoint, never a cloud-capable router");
 }
@@ -143,7 +153,8 @@ for (const entry of corpus.cases) {
     requests === 1 &&
     !routeHeaders.has("via") &&
     (!routeHeaders.has("x-ollama-account") || routeHeaders.get("x-ollama-account") === "local") &&
-    (!routeHeaders.has("x-ollama-route") || routeHeaders.get("x-ollama-route")?.startsWith("local:") === true) &&
+    (!routeHeaders.has("x-ollama-route") ||
+      routeHeaders.get("x-ollama-route")?.startsWith("local:") === true) &&
     rawResponse !== null &&
     (rawResponse as LlmResponse).model === configuration.model;
   const intentPass = answer?.status === "ok" && actualIntent === entry.expectedIntent;
@@ -151,19 +162,35 @@ for (const entry of corpus.cases) {
   if (!routeIsLocal) routeFailures += 1;
   if (entry.critical && (!intentPass || !routeIsLocal)) criticalFailures += 1;
   summary.push({
-    caseId: entry.id, split: entry.split, moduleId: scenario.moduleId ?? scenario.id,
-    scenarioId: scenario.id, mode, stepId: currentStepId, head,
+    caseId: entry.id,
+    split: entry.split,
+    moduleId: scenario.moduleId ?? scenario.id,
+    scenarioId: scenario.id,
+    mode,
+    stepId: currentStepId,
+    head,
     model: rawResponse ? (rawResponse as LlmResponse).model : null,
     route: routeIsLocal ? "direct-loopback-local" : "INVALID_OR_UNVERIFIED",
-    status: answer?.status ?? "provider_error", expectedIntent: entry.expectedIntent,
-    actualIntent, intentPass, critical: entry.critical, routePass: routeIsLocal,
-    requestCount: requests, latencyMs, errorClass, semanticReview: "NOT_TESTED",
+    status: answer?.status ?? "provider_error",
+    expectedIntent: entry.expectedIntent,
+    actualIntent,
+    intentPass,
+    critical: entry.critical,
+    routePass: routeIsLocal,
+    requestCount: requests,
+    latencyMs,
+    errorClass,
+    semanticReview: "NOT_TESTED",
   });
   evidence.push({
-    caseId: entry.id, scenarioId: entry.scenarioId, question: entry.question,
+    caseId: entry.id,
+    scenarioId: entry.scenarioId,
+    question: entry.question,
     rawModelOutput: rawResponse ? (rawResponse as LlmResponse).text : null,
     displayedTutorAnswer: answer?.answer ?? null,
-    expectedIntent: entry.expectedIntent, actualIntent, routePass: routeIsLocal,
+    expectedIntent: entry.expectedIntent,
+    actualIntent,
+    routePass: routeIsLocal,
     semanticReview: "NOT_TESTED",
   });
   // Each failed request is recorded; do not retry or hide later case outcomes.
@@ -172,19 +199,42 @@ for (const entry of corpus.cases) {
 const intentAccuracy = intentHits / corpus.cases.length;
 const automatedPass = intentAccuracy >= 0.9 && criticalFailures === 0 && routeFailures === 0;
 const result = {
-  schemaVersion: 1, corpusVersion: corpus.version, head, model: configuration.model,
+  schemaVersion: 1,
+  corpusVersion: corpus.version,
+  head,
+  model: configuration.model,
   transport: "direct-local-Ollama-service-only; NOT authenticated UI/server/relay acceptance",
-  cases: summary, count: corpus.cases.length, heldOutCount:
-    corpus.cases.filter((entry) => entry.split === "held-out").length,
-  intentHits, intentAccuracy, criticalFailures, routeFailures,
+  cases: summary,
+  count: corpus.cases.length,
+  heldOutCount: corpus.cases.filter((entry) => entry.split === "held-out").length,
+  intentHits,
+  intentAccuracy,
+  criticalFailures,
+  routeFailures,
   humanSemanticReview: "NOT_TESTED",
   overall: automatedPass ? "MANUAL_SEMANTIC_AND_UI_ACCEPTANCE_REQUIRED" : "AUTOMATED_FAIL",
 };
-await writeFile(join(privateDirectory, "private-responses.json"), JSON.stringify(evidence, null, 2), { mode: 0o600, flag: "wx" });
-await writeFile(join(privateDirectory, "redacted-results.json"), JSON.stringify(result, null, 2), { mode: 0o600, flag: "wx" });
-console.log(JSON.stringify({
-  head, model: result.model, count: result.count, heldOutCount: result.heldOutCount,
-  intentHits, intentAccuracy, criticalFailures, routeFailures, overall: result.overall,
-  privateEvidenceDirectory: privateDirectory,
-}));
+await writeFile(
+  join(privateDirectory, "private-responses.json"),
+  JSON.stringify(evidence, null, 2),
+  { mode: 0o600, flag: "wx" },
+);
+await writeFile(join(privateDirectory, "redacted-results.json"), JSON.stringify(result, null, 2), {
+  mode: 0o600,
+  flag: "wx",
+});
+console.log(
+  JSON.stringify({
+    head,
+    model: result.model,
+    count: result.count,
+    heldOutCount: result.heldOutCount,
+    intentHits,
+    intentAccuracy,
+    criticalFailures,
+    routeFailures,
+    overall: result.overall,
+    privateEvidenceDirectory: privateDirectory,
+  }),
+);
 process.exitCode = automatedPass ? 2 : 1;
