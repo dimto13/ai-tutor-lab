@@ -46,115 +46,120 @@ async function allRegisteredScenarioVariants() {
  * This tests contracts and scenario grounding with simulated model output, not
  * semantic accuracy of a real Gemma completion (the separate #575 gate).
  */
-test("every authored module and mode receives its own scoped Tutor context and safe response routing", async () => {
+test("every authored module and mode receives its own scoped Tutor context and safe response routing", async (t) => {
   const entries = await allRegisteredScenarioVariants();
   assert.ok(entries.length >= 18, "Unexpected loss of authored or generated scenario coverage");
 
   const modules = new Set<string>();
   const modes = new Set<TrainingMode>();
   for (const { name: filename, scenario } of entries) {
-    const mode: TrainingMode = scenario.mode ?? "guided";
-    const moduleId = scenario.moduleId ?? scenario.id;
-    modules.add(moduleId);
-    modes.add(mode);
-    const currentStep = scenario.steps[0];
-    assert.ok(currentStep, `${filename}: at least one authored step`);
+    await t.test(`scenario [${filename}] (${scenario.mode ?? "guided"})`, () => {
+      const mode: TrainingMode = scenario.mode ?? "guided";
+      const moduleId = scenario.moduleId ?? scenario.id;
+      modules.add(moduleId);
+      modes.add(mode);
+      const currentStep = scenario.steps[0];
+      assert.ok(currentStep, `${filename}: at least one authored step`);
 
-    const context = buildTutorContext(scenario, mode, currentStep.id, null, {
-      completedStepIds: [currentStep.id, currentStep.id, "forged-cross-module-step"],
-      hintsUsed: 2,
-      failedAttempts: 1,
-      exploredTargets: 3,
-      recentEventTypes: ["ui.element.inspected"],
-    });
-    assert.equal(context.scenarioTitle, scenario.title, filename);
-    assert.equal(context.mode, mode, filename);
-    assert.equal(context.step?.id, currentStep.id, filename);
-    assert.equal(context.step?.instruction, currentStep.instruction, filename);
-    assert.equal(context.reportedLearnerState?.completedSteps, 1, filename);
-    assert.equal(context.reportedLearnerState?.currentStepReportedCompleted, true, filename);
-    assert.ok(
-      context.allowedUiTargetRefs.every((ref) => ref.length > 0),
-      filename,
-    );
-    assert.equal(
-      new Set(context.allowedUiTargetRefs).size,
-      context.allowedUiTargetRefs.length,
-      filename,
-    );
-
-    if (mode === "guided") {
-      assert.deepEqual(
-        context.step?.helpLevels,
-        (currentStep.helpLevels ?? [])
-          .map((hint) => hint.trim())
-          .filter((hint) => hint && hint !== "__highlight__"),
+      const context = buildTutorContext(scenario, mode, currentStep.id, null, {
+        completedStepIds: [currentStep.id, currentStep.id, "forged-cross-module-step"],
+        hintsUsed: 2,
+        failedAttempts: 1,
+        exploredTargets: 3,
+        recentEventTypes: ["ui.element.inspected"],
+      });
+      assert.equal(context.scenarioTitle, scenario.title, filename);
+      assert.equal(context.mode, mode, filename);
+      assert.equal(context.step?.id, currentStep.id, filename);
+      assert.equal(context.step?.instruction, currentStep.instruction, filename);
+      assert.equal(context.reportedLearnerState?.completedSteps, 1, filename);
+      assert.equal(context.reportedLearnerState?.currentStepReportedCompleted, true, filename);
+      assert.ok(
+        context.allowedUiTargetRefs.every((ref) => ref.length > 0),
         filename,
       );
-    } else {
-      assert.equal(context.step?.helpLevels, undefined, `${filename}: no Guided hint leak`);
-      assert.equal(context.step?.possibleFailure, undefined, `${filename}: no Guided failure leak`);
-    }
-    if (mode === "explore") {
-      for (const ref of scenario.exploreTargets ?? []) {
-        assert.ok(
-          context.allowedUiTargetRefs.includes(ref),
-          `${filename}: missing explore ref ${ref}`,
+      assert.equal(
+        new Set(context.allowedUiTargetRefs).size,
+        context.allowedUiTargetRefs.length,
+        filename,
+      );
+
+      if (mode === "guided") {
+        assert.deepEqual(
+          context.step?.helpLevels,
+          (currentStep.helpLevels ?? [])
+            .map((hint) => hint.trim())
+            .filter((hint) => hint && hint !== "__highlight__"),
+          filename,
         );
+      } else {
+        assert.equal(context.step?.helpLevels, undefined, `${filename}: no Guided hint leak`);
+        assert.equal(context.step?.possibleFailure, undefined, `${filename}: no Guided failure leak`);
       }
-    }
-    // Independent of module and mode: a model-classified learner question stays a question,
-    // never a report inferred from keywords in the module/step description.
-    const answer = routeTutorModelOutput(
-      {
-        intent: "learning_help",
-        confidence: "high",
-        answer: `Die aktuelle Aufgabe lautet: ${currentStep.instruction}`,
-        kind: "explanation",
-        uiTargetRefs: [],
-      },
-      context.allowedUiTargetRefs,
-    );
-    assert.equal(answer.action, "answer", filename);
-    const report = routeTutorModelOutput(
-      {
-        intent: "problem_report",
-        confidence: "high",
-        answer: "Ich kann deine Beobachtung als überprüfbare Meldung vorbereiten.",
-        kind: "feedback",
-        uiTargetRefs: [],
-      },
-      context.allowedUiTargetRefs,
-    );
-    assert.equal(report.action, "offer_feedback", filename);
-    assert.throws(
-      () => buildTutorContext(scenario, mode, "__unknown_step__"),
-      /Unknown tutor step/,
-      filename,
-    );
+      if (mode === "explore") {
+        for (const ref of scenario.exploreTargets ?? []) {
+          assert.ok(
+            context.allowedUiTargetRefs.includes(ref),
+            `${filename}: missing explore ref ${ref}`,
+          );
+        }
+      }
+      // Independent of module and mode: a model-classified learner question stays a question,
+      // never a report inferred from keywords in the module/step description.
+      const answer = routeTutorModelOutput(
+        {
+          intent: "learning_help",
+          confidence: "high",
+          answer: `Die aktuelle Aufgabe lautet: ${currentStep.instruction}`,
+          kind: "explanation",
+          uiTargetRefs: [],
+        },
+        context.allowedUiTargetRefs,
+      );
+      assert.equal(answer.action, "answer", filename);
+      const report = routeTutorModelOutput(
+        {
+          intent: "problem_report",
+          confidence: "high",
+          answer: "Ich kann deine Beobachtung als überprüfbare Meldung vorbereiten.",
+          kind: "feedback",
+          uiTargetRefs: [],
+        },
+        context.allowedUiTargetRefs,
+      );
+      assert.equal(report.action, "offer_feedback", filename);
+      assert.throws(
+        () => buildTutorContext(scenario, mode, "__unknown_step__"),
+        /Unknown tutor step/,
+        filename,
+      );
+    });
   }
   assert.ok(modules.size >= 7, `Expected distinct training modules; found ${modules.size}`);
   assert.deepEqual([...modes].sort(), ["challenge", "explore", "guided"]);
 });
 
-test("a context without an active step is valid in every learning mode, including free Explore", async () => {
+test("a context without an active step is valid in every learning mode, including free Explore", async (t) => {
   const entries = await allRegisteredScenarioVariants();
   for (const { name: filename, scenario } of entries) {
-    const mode: TrainingMode = scenario.mode ?? "guided";
-    const context = buildTutorContext(scenario, mode, null);
-    assert.equal(context.step, null, filename);
-    assert.equal(context.reportedLearnerState, undefined, filename);
-    assert.equal(context.scenarioTitle, scenario.title, filename);
-    assert.ok(Array.isArray(context.allowedUiTargetRefs), filename);
-    if (mode === "explore") {
-      for (const ref of scenario.exploreTargets ?? []) {
-        assert.ok(
-          context.allowedUiTargetRefs.includes(ref),
-          `${filename}: missing free-explore ref ${ref}`,
-        );
+    await t.test(`no-active-step [${filename}] (${scenario.mode ?? "guided"})`, () => {
+      const mode: TrainingMode = scenario.mode ?? "guided";
+      const context = buildTutorContext(scenario, mode, null);
+      assert.equal(context.step, null, filename);
+      assert.equal(context.reportedLearnerState, undefined, filename);
+      assert.equal(context.scenarioTitle, scenario.title, filename);
+      assert.ok(Array.isArray(context.allowedUiTargetRefs), filename);
+      if (mode === "explore") {
+        for (const ref of scenario.exploreTargets ?? []) {
+          assert.ok(
+            context.allowedUiTargetRefs.includes(ref),
+            `${filename}: missing free-explore ref ${ref}`,
+          );
+        }
       }
-    }
+    });
   }
+
 });
 
 test("changing to a different module rejects stale steps and client-reported progress", async () => {
