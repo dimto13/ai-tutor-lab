@@ -187,7 +187,10 @@ test("without an authenticated model route, the offline Tutor remains available"
   let offlineCalls = 0;
   const result = await resolveModelFirstTutor(null, () => {
     offlineCalls += 1;
-    return { text: "Die Plattform ist gerade offline. Was möchtest du wissen?", intent: "question" };
+    return {
+      text: "Die Plattform ist gerade offline. Was möchtest du wissen?",
+      intent: "question",
+    };
   });
   assert.equal(offlineCalls, 1);
   assert.equal(result.fallback, true);

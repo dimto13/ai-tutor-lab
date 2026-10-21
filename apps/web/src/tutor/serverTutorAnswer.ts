@@ -64,7 +64,8 @@ export async function resolveModelFirstTutor(
   if (!ask) return resolveOfflineFallback();
   try {
     const response = await ask();
-    if (response.status === "unavailable" || !response.answer.trim()) return resolveOfflineFallback();
+    if (response.status === "unavailable" || !response.answer.trim())
+      return resolveOfflineFallback();
     if (response.status !== "ok") {
       return { answer: response.answer, uiTargetRefs: [] };
     }
