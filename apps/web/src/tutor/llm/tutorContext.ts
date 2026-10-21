@@ -54,8 +54,7 @@ export function buildTutorContext(
               }
             : {}),
           // A possible diagnostic clue, not an assertion that a failure happened.
-          possibleFailure:
-            mode === "guided" ? (step.onFailure?.message?.trim() || null) : null,
+          possibleFailure: mode === "guided" ? step.onFailure?.message?.trim() || null : null,
         }
       : null,
     stepUiTargetRefs: [...stepUiTargetRefs],
