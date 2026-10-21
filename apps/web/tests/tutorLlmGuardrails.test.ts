@@ -569,7 +569,7 @@ test("a platform problem comes back as feedback instead of a learning answer (#1
   assert.equal(result.status, "ok");
   assert.equal(result.kind, "feedback");
   const systemMessage = provider.requests[0]?.messages[0]?.content ?? "";
-  assert.match(systemMessage, /setze kind auf feedback/);
+  assert.match(systemMessage, /problem_report\/feature_request\/feedback.*kind=feedback/);
   assert.match(systemMessage, /Plattformwissen:\n- Problem melden: Über „Ich habe ein Problem“\./);
 });
 
