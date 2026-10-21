@@ -52,7 +52,7 @@ export async function resolveModelFirstTutor(
   const resolveOfflineFallback = (): ModelFirstTutorOutcome => {
     const reply = offlineFallback();
     return {
-      answer: reply.text,
+      answer: `Eingeschränkter Tutor-Modus ohne Sprachmodell: ${reply.text}`,
       uiTargetRefs: [],
       fallback: true,
       ...(reply.offer || reply.fallbackOffer

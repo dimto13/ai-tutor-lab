@@ -116,6 +116,7 @@ test("unavailable transport triggers the lexical fallback only afterwards, never
   );
   assert.deepEqual(order, ["model", "fallback"]);
   assert.equal(result.fallback, true);
+  assert.match(result.answer, /^Eingeschränkter Tutor-Modus ohne Sprachmodell:/);
   assert.deepEqual(result.fallbackOffer, { kind: "problem", clarify: true });
   assert.equal(Object.hasOwn(result, "sent"), false);
 });
@@ -190,5 +191,6 @@ test("without an authenticated model route, the offline Tutor remains available"
   });
   assert.equal(offlineCalls, 1);
   assert.equal(result.fallback, true);
+  assert.match(result.answer, /^Eingeschränkter Tutor-Modus ohne Sprachmodell:/);
   assert.deepEqual(result.uiTargetRefs, []);
 });
