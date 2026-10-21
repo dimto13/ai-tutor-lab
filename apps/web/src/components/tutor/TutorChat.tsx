@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bot, ChevronDown, MessageCircle, Send, User, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -104,10 +104,14 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const activeRequestRef = useRef(0);
   const activeLearningScopeRef = useRef(`${tutorContext.scenario.id}:${mode}`);
   const activeDisplayedStepRef = useRef<string | null>(tutorContext.currentStep?.id ?? null);
-  // Update during render as well: a stale request cannot append a reply during the scope transition.
   const learningScope = `${tutorContext.scenario.id}:${mode}`;
-  activeLearningScopeRef.current = learningScope;
-  activeDisplayedStepRef.current = tutorContext.currentStep?.id ?? null;
+  const displayedStepId = tutorContext.currentStep?.id ?? null;
+  // Commit-phase synchronisation avoids mutations during concurrent React renders.
+  // Layout effects run before deferred request completions can paint outdated step advice.
+  useLayoutEffect(() => {
+    activeLearningScopeRef.current = learningScope;
+    activeDisplayedStepRef.current = displayedStepId;
+  }, [learningScope, displayedStepId]);
   const nextMessageId = () => nextMessageIdRef.current++;
 
   useEffect(() => {
@@ -222,8 +226,22 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
             displayedStepId: activeDisplayedStepRef.current,
           },
         )
-      )
+      ) {
+        // An old-step question must not remain as an unanswered turn in later model history.
+        // A module/mode switch resets the entire chat separately; do not append into that chat.
+        if (
+          requestVersion === activeRequestRef.current &&
+          requestScope === activeLearningScopeRef.current
+        ) {
+          setInHistory(sourceId, false);
+          appendTutorMessage(
+            "Die Antwort wurde wegen eines Schrittwechsels verworfen. Du kannst deine Frage zum aktuellen Schritt erneut stellen.",
+            undefined,
+            false,
+          );
+        }
         return;
+      }
       let text = serverAnswer.answer;
       const offer: TutorFeedbackOffer | undefined =
         allowFeedback && serverAnswer.kind === "feedback"
