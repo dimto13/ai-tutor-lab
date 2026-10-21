@@ -25,7 +25,9 @@ test("#575: each real-model corpus entry is independently validated without mode
   assert.ok(corpus.cases.filter((entry) => entry.critical).length >= 10);
   assert.equal(new Set(corpus.cases.map((entry) => entry.id)).size, corpus.cases.length);
   assert.equal(new Set(corpus.cases.map((entry) => entry.question)).size, corpus.cases.length);
-  const names = new Set((await readdir("content/scenarios")).filter((name) => name.endsWith(".json")));
+  const names = new Set(
+    (await readdir("content/scenarios")).filter((name) => name.endsWith(".json")),
+  );
   const modules = new Set<string>();
   const modes = new Set<string>();
   const intents = new Set<string>();
@@ -52,7 +54,15 @@ test("#575: each real-model corpus entry is independently validated without mode
   assert.ok(modules.size >= 12, `Expected >=12 distinct module families, found ${modules.size}`);
   assert.deepEqual([...modes].sort(), ["challenge", "explore", "guided"]);
   for (const intent of [
-    "learning_help", "platform_question", "tool_question", "general_question",
-    "problem_report", "feature_request", "feedback", "smalltalk", "unclear",
-  ]) assert.ok(intents.has(intent), `Missing intent: ${intent}`);
+    "learning_help",
+    "platform_question",
+    "tool_question",
+    "general_question",
+    "problem_report",
+    "feature_request",
+    "feedback",
+    "smalltalk",
+    "unclear",
+  ])
+    assert.ok(intents.has(intent), `Missing intent: ${intent}`);
 });
