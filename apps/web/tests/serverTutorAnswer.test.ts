@@ -161,3 +161,34 @@ test("an explicit answer preference is sent to the model instead of reclassifyin
   assert.equal(fallbackCalls, 0);
   assert.equal(result.kind, "explanation");
 });
+
+test("guardrail rejection never falls through to keyword routing (#548)", async () => {
+  let offlineCalls = 0;
+  const result = await resolveModelFirstTutor(
+    async () => ({
+      status: "guardrail",
+      answer: "Brauchst du Hilfe oder möchtest du die Beobachtung melden?",
+      uiTargetRefs: [],
+      model: "gemma4:e4b@local",
+    }),
+    () => {
+      offlineCalls += 1;
+      return { text: "Unbelegte Glossarantwort", intent: "definition" };
+    },
+  );
+  assert.equal(offlineCalls, 0);
+  assert.equal(result.answer, "Brauchst du Hilfe oder möchtest du die Beobachtung melden?");
+  assert.deepEqual(result.uiTargetRefs, []);
+  assert.equal(result.fallback, undefined);
+});
+
+test("without an authenticated model route, the offline Tutor remains available", async () => {
+  let offlineCalls = 0;
+  const result = await resolveModelFirstTutor(null, () => {
+    offlineCalls += 1;
+    return { text: "Die Plattform ist gerade offline. Was möchtest du wissen?", intent: "question" };
+  });
+  assert.equal(offlineCalls, 1);
+  assert.equal(result.fallback, true);
+  assert.deepEqual(result.uiTargetRefs, []);
+});
