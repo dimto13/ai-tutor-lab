@@ -1,6 +1,6 @@
 import { z } from "zod";
 import introductionData from "../../../../content/introductions/de.json" with { type: "json" };
-import { validationFailureFields } from "@ai-train-lab/training-engine";
+import { hasActionCondition, validationFailureFields } from "@ai-train-lab/training-engine";
 import type { Scenario, TrainingStep, Validation } from "../types/training";
 import { artifactPreviewSeedSchema } from "../runtime/artifactPreviewContent.ts";
 
@@ -357,6 +357,22 @@ export const scenarioSchema = z
         });
       }
       const failureFields = step.validation ? validationFailureFields(step.validation) : [];
+      // A state-only step stays silent except for fields it explains (reportsNearMiss), so a bare
+      // onFailure.message there would never reach the learner (#601).
+      if (
+        step.onFailure &&
+        !step.onFailure.fieldMessages &&
+        step.validation &&
+        !step.expectedEvent &&
+        !hasActionCondition(step.validation)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "a step that checks only state reports failures through onFailure.fieldMessages; onFailure.message alone is never shown",
+          path: ["steps", index, "onFailure"],
+        });
+      }
       Object.keys(step.onFailure?.fieldMessages ?? {}).forEach((field) => {
         if (!failureFields.includes(field)) {
           ctx.addIssue({

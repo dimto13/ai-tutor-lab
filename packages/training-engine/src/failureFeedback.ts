@@ -53,7 +53,7 @@ export function latestStepFailureMessage(
 }
 
 /** Whether a validation reacts to a learner action itself, not only to the state it leaves. */
-function hasActionCondition(validation: Validation): boolean {
+export function hasActionCondition(validation: Validation): boolean {
   switch (validation.kind) {
     case "event":
     case "classification":

@@ -312,3 +312,30 @@ test("content loader rejects field messages for a field the step does not valida
     /onFailure\.fieldMessages\.descripton names no field of the step validation/,
   );
 });
+
+test("content loader rejects a bare failure message on a step that checks only state (#601)", () => {
+  const scenario = scenarioWithSeed({});
+  const stateOnly = (onFailure: Record<string, unknown>) => ({
+    ...scenario,
+    steps: [
+      {
+        ...scenario.steps[0],
+        validation: { kind: "state", selector: "editor.activeFile", equals: "notiz.txt" },
+        onFailure,
+      },
+    ],
+  });
+
+  assert.throws(
+    () => parseScenario(stateOnly({ message: "Öffne notiz.txt." })),
+    /onFailure\.message alone is never shown/,
+  );
+  assert.doesNotThrow(() =>
+    parseScenario(
+      stateOnly({
+        message: "Öffne notiz.txt.",
+        fieldMessages: { "editor.activeFile": "Öffne notiz.txt im Explorer." },
+      }),
+    ),
+  );
+});
