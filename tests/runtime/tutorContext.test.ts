@@ -20,7 +20,9 @@ test("guided tutor context prefers the step targets and knows the runtime catalo
   assert.ok(authoredStep);
   assert.deepEqual(
     context.step?.helpLevels,
-    authoredStep.helpLevels.map((hint) => hint.trim()).filter((hint) => hint && hint !== "__highlight__"),
+    authoredStep.helpLevels
+      .map((hint) => hint.trim())
+      .filter((hint) => hint && hint !== "__highlight__"),
   );
   assert.equal(context.step?.possibleFailure, authoredStep.onFailure?.message ?? null);
   assert.deepEqual(context.stepUiTargetRefs, ["vscode.explorer.newFile", "vscode.explorer.tree"]);
