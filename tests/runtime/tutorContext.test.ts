@@ -53,7 +53,11 @@ test("guided context normalizes authored hints and discards blank failure messag
       step.id === "create_file"
         ? {
             ...step,
-            helpLevels: ["  Schaue links.  ", "\nExplorer öffnen.\n", " __highlight__ "],
+            helpLevels: [
+              "  Schaue links.  ",
+              "\nExplorer öffnen.\n",
+              " __highlight__ ",
+            ] as typeof step.helpLevels,
             onFailure: { ...step.onFailure, message: "  \t " },
           }
         : step,
