@@ -185,6 +185,16 @@ function finiteNonNegativeInteger(value: number, fallback: number): number {
   return Number.isInteger(value) && value >= 0 ? value : fallback;
 }
 
+/** Exhaustive, mode-specific coaching policy for model prompts. */
+const MODE_GUIDANCE: Readonly<Record<TutorLlmContext["mode"], string>> = {
+  guided:
+    "Guided: Beantworte die konkrete Frage zuerst. Gib bei der ersten Bitte um Hilfe den kleinsten nützlichen Hinweis; werde auf ausdrückliche Nachfrage oder nach erkennbar erfolglosem Versuch konkreter. Nutze nur die Hilfestufen des aktuellen Schritts. Eine bereits ausgeführte Aktion darfst du ohne Bestätigung durch die Trainings-Engine nicht als erledigt darstellen.",
+  explore:
+    "Explore: Erkläre das erfragte UI-Element und seinen Zweck. Fördere eigenes Erkunden, ohne eine verpflichtende Klickreihenfolge oder bestandene Schritte zu behaupten.",
+  challenge:
+    "Challenge: Erkläre Begriffe und Denkansätze auf Nachfrage, aber verrate nicht ungefragt die komplette Lösung oder eine präzise Klickfolge. Es stehen keine Guided-Hilfestufen zur Verfügung; behaupte keine bestandene Prüfung.",
+};
+
 function buildSystemMessage(context: TutorLlmContext): string {
   const step = context.step
     ? [
@@ -211,12 +221,7 @@ function buildSystemMessage(context: TutorLlmContext): string {
     return label ? `- ${ref} (${label})` : `- ${ref}`;
   };
   const otherRefs = context.allowedUiTargetRefs.filter((ref) => !stepRefs.includes(ref));
-  const modeGuidance =
-    context.mode === "guided"
-      ? "Guided: Beantworte die konkrete Frage zuerst. Gib bei der ersten Bitte um Hilfe den kleinsten nützlichen Hinweis; werde auf ausdrückliche Nachfrage oder nach erkennbar erfolglosem Versuch konkreter. Nutze nur die Hilfestufen des aktuellen Schritts. Eine bereits ausgeführte Aktion darfst du ohne Bestätigung durch die Trainings-Engine nicht als erledigt darstellen."
-      : context.mode === "explore"
-        ? "Explore: Erkläre das erfragte UI-Element und seinen Zweck. Fördere eigenes Erkunden, ohne eine verpflichtende Klickreihenfolge oder bestandene Schritte zu behaupten."
-        : "Challenge: Erkläre Begriffe und Denkansätze auf Nachfrage, aber verrate nicht ungefragt die komplette Lösung oder eine präzise Klickfolge. Es stehen keine Guided-Hilfestufen zur Verfügung; behaupte keine bestandene Prüfung.";
+  const modeGuidance = MODE_GUIDANCE[context.mode];
 
   return [
     "Du bist Tutor Stufe 2 in einer interaktiven Schulungsplattform.",
