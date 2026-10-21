@@ -94,7 +94,11 @@ test("all module/mode scoped Tutor contexts expose individual subtests", async (
         );
       } else {
         assert.equal(context.step?.helpLevels, undefined, `${filename}: no Guided hint leak`);
-        assert.equal(context.step?.possibleFailure, undefined, `${filename}: no Guided failure leak`);
+        assert.equal(
+          context.step?.possibleFailure,
+          undefined,
+          `${filename}: no Guided failure leak`,
+        );
       }
       if (mode === "explore") {
         for (const ref of scenario.exploreTargets ?? []) {
