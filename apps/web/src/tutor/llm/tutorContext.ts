@@ -37,7 +37,7 @@ export function buildTutorContext(
 
   return {
     scenarioTitle: scenario.title,
-    scenarioDescription: scenario.description,
+    scenarioDescription: scenario.description.trim().slice(0, 1_200) || undefined,
     mode,
     step: step
       ? {
@@ -51,10 +51,10 @@ export function buildTutorContext(
                 helpLevels: (step.helpLevels ?? [])
                   .map((hint) => hint.trim())
                   .filter((hint) => hint.length > 0 && hint !== "__highlight__"),
+                // A possible diagnostic clue, not evidence of an actual user failure.
+                possibleFailure: step.onFailure?.message?.trim() || null,
               }
             : {}),
-          // A possible diagnostic clue, not an assertion that a failure happened.
-          possibleFailure: mode === "guided" ? step.onFailure?.message?.trim() || null : null,
         }
       : null,
     stepUiTargetRefs: [...stepUiTargetRefs],
