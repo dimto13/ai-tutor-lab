@@ -186,8 +186,9 @@ export type Validation =
       /** Case-insensitive synonym fragments; at least one fragment per field must match. */
       containsAny?: Record<string, string[]>;
       /**
-       * Minimum number of words in a free-text field. Language-neutral, so it rejects an empty
-       * or one-word answer without depending on a wording the learner cannot guess (#591).
+       * Minimum number of whitespace-separated words in a free-text field. It rejects an empty or
+       * one-word answer without depending on a wording the learner cannot guess (#591). Scripts
+       * without spaces between words would count a whole sentence as one word.
        */
       minWords?: Record<string, number>;
     }

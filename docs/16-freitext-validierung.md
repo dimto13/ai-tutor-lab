@@ -27,7 +27,7 @@ Geeignet, wenn bereits das Ereignis den fachlichen Erfolg eindeutig beschreibt:
 }
 ```
 
-Wenn dagegen nicht jeder beliebige Text genügen darf, prüft `minWords` eine **Mindestanzahl Wörter**. Ein Wort ist jedes durch Leerraum getrennte Stück mit mindestens einem Buchstaben oder einer Ziffer. Die Regel ist sprachneutral, weist ein leeres oder einsilbiges „ok“ zurück und hängt an keiner Formulierung, die der Lernende erraten müsste:
+Wenn dagegen nicht jeder beliebige Text genügen darf, prüft `minWords` eine **Mindestanzahl Wörter**. Ein Wort ist jedes durch Leerraum getrennte Stück mit mindestens einem Buchstaben oder einer Ziffer. Die Regel hängt nicht an der Wortwahl, weist ein leeres oder einsilbiges „ok“ zurück und verlangt keine Formulierung, die der Lernende erraten müsste. Sie setzt Sprachen mit Leerzeichen zwischen Wörtern voraus; für eine Sprache ohne solche Trennung (etwa Chinesisch oder Japanisch) bräuchte sie eine eigene Zählung:
 
 ```json
 "validation": {

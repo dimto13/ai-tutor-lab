@@ -26,9 +26,9 @@ test.describe("Guide feedback contrast", () => {
       .fill("Fasse die freigegebenen Projektunterlagen kurz als Liste zusammen.");
     await page.getByRole("button", { name: "Nachricht senden" }).click();
 
-    await expect(
-      page.getByText("Dein Auftrag sagt noch nicht, für wen die Antwort ist.", { exact: false }),
-    ).toBeVisible();
+    await expect(page.getByTestId("guided-orientation")).toContainText(
+      "Dein Auftrag sagt noch nicht, für wen die Antwort ist.",
+    );
 
     await accessibility.check("m365 guided failure feedback");
   });

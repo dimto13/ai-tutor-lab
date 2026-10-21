@@ -728,7 +728,9 @@ function MergeSummary({ state }: { state: SourceControlPlatformState }) {
   const items = [
     [
       state.pullRequestCreated && state.pullRequestDescription.trim().length > 0,
-      "Pull Request beschrieben",
+      // The simulator only knows that a description exists; how much the step asks for is the
+      // training's business, so the label claims no more than that (#591).
+      "Beschreibung vorhanden",
     ],
     [state.diffViewed, "Diff geprüft"],
     [state.reviewReplied, "Review beantwortet"],

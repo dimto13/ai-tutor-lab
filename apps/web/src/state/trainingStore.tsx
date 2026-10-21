@@ -1029,28 +1029,26 @@ export function TrainingProvider({
         return;
       }
 
-      // The attempt keeps the learner-facing message, so a reload and the tutor still know why
-      // the step is open (#591).
-      const message = result.outcome === "pass" ? undefined : stepFailureMessage(step, result);
       const now = Date.now();
-      setProgress((currentProgress) =>
-        applyValidationResult(
-          currentProgress,
-          scenario,
-          stepId,
-          message ? { ...result, message } : result,
-          now,
-          { countNearMiss: event.type !== "file.updated" },
-        ),
-      );
+      const applyResult = (validated: EngineValidationResult) =>
+        setProgress((currentProgress) =>
+          applyValidationResult(currentProgress, scenario, stepId, validated, now, {
+            countNearMiss: event.type !== "file.updated",
+          }),
+        );
 
-      if (!message) {
+      if (result.outcome === "pass") {
+        applyResult(result);
         setVisibleHelpLevel(0);
         setStateRecovery(null);
         setFeedback({ kind: "success", message: step.successMessage });
         return;
       }
 
+      // The attempt keeps the learner-facing message, so a reload and the tutor still know why
+      // the step is open (#591).
+      const message = stepFailureMessage(step, result);
+      applyResult({ ...result, message });
       setFeedback((currentFeedback) =>
         currentFeedback?.kind === "error" && currentFeedback.message === message
           ? currentFeedback
