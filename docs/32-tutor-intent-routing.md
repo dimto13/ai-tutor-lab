@@ -295,3 +295,31 @@ Antwortdatei fachlich unabhängig zu beurteilen. Der Runner gibt deshalb absicht
 Exitcode 1 bedeutet automatischen Fehler. Zusätzlich bleibt die **authentifizierte**
 UI→Server/Snapshot→Modell-Abnahme separat zu belegen. Weder Testkatalog noch Runner allein
 markieren #575 als PASS oder autorisieren einen Merge.
+
+## Qualitätsdiagnose: Rohmodell versus Guardrails
+
+Seit dem ersten fehlgeschlagenen echten #575-Lauf misst die separate, rein diagnostische
+`scripts/tutor-quality-diagnostics.ts` zwei voneinander unabhängige Größen. Die bisherige
+`intentHits`/`intentAccuracy`-Ausgabe bleibt als **akzeptierte Service-Route** erhalten.
+`rawIntentHits`/`rawIntentAccuracy` beschreibt dagegen den vom Modell im ursprünglichen
+JSON gewählten Intent, bevor Confidence, Schema, UI-Refs und Guardrails greifen. Ein ungültiger
+oder fehlender Roh-Intent zählt im Nenner aller 40 Fälle als Fehler. Für automatische
+Teilfreigabe müssen **beide** Quoten mindestens 90 % erreichen; null kritische und null
+nicht-bestätigte lokale Routen bleiben unverändert Pflicht.
+
+`diagnosticReason` trennt falsche Modellentscheidung unter anderem von fehlerhaftem JSON,
+ungültigem Schema, gefälschten/duplizierten UI-Referenzen, widersprüchlichem Antworttyp,
+niedriger Konfidenz und nachgelagerter Guardrail-Ablehnung. `routeFailureReasons` trennt
+Anfragezahl, `via`-Header, lokale Account-/Route-Header, fehlende Provider-Antwort und
+abweichende Modellkennung. Eine fehlgeschlagene lokale Attestierung ist **nicht automatisch**
+eine nachgewiesene Cloud-Weiterleitung. Der unveränderte `requestCount`-Guard verbietet
+Retries oder einen zweiten Modellaufruf pro Fall.
+
+Nur synthetische Case-IDs, Enum-Gründe und Zähler gehören in redigierte Evidenz.
+Rohfragen/-antworten verbleiben in der privaten 0600-Datei. Dies ist keine automatische
+semantische menschliche Bewertung. Vergleiche ausschließlich Läufe mit genau dokumentiertem
+PR-Head, Szenario-/Modus-Verteilung und unverändertem Held-out-Katalog. Der erste vom Owner
+berichtete echte Lauf auf `86b2f188` hatte 21/40 **akzeptierte** Routen (52,5 %),
+fünf automatische kritische und neun zusammengesetzte Route-Fehler; er ist FAIL. Die
+ursprüngliche Roh-Intent-Quote kann aus diesem Altformat ohne private Rohdaten nicht
+nachträglich behauptet werden.
