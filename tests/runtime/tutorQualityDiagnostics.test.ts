@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   diagnoseLocalRoute,
   diagnoseModelCompletion,
+  failsCriticalCase,
 } from "../../scripts/tutor-quality-diagnostics.ts";
 
 const allowedUiTargetRefs = ["vscode.activityBar.explorer"];
@@ -132,4 +133,38 @@ test("#575 diagnostics: public diagnosis never exposes the raw completion body",
   const sensitive = "PRIVATE_QUESTION_OR_ANSWER_TEXT";
   const result = record(example({ answer: sensitive }), { status: "ok", intent: "learning_help" });
   assert.equal(JSON.stringify(result).includes(sensitive), false);
+});
+
+test("#575 diagnostics: critical cases reject a wrong raw intent even if fallback matches", () => {
+  const rawWrongButFallbackMatched = {
+    rawIntentPass: false,
+    rawSchemaValid: true,
+    acceptedIntentPass: true,
+  };
+  assert.equal(failsCriticalCase(true, rawWrongButFallbackMatched, true), true);
+  assert.equal(failsCriticalCase(false, rawWrongButFallbackMatched, true), false);
+  assert.equal(
+    failsCriticalCase(
+      true,
+      { rawIntentPass: true, rawSchemaValid: true, acceptedIntentPass: true },
+      true,
+    ),
+    false,
+  );
+  assert.equal(
+    failsCriticalCase(
+      true,
+      { rawIntentPass: true, rawSchemaValid: true, acceptedIntentPass: true },
+      false,
+    ),
+    true,
+  );
+  assert.equal(
+    failsCriticalCase(
+      true,
+      { rawIntentPass: true, rawSchemaValid: false, acceptedIntentPass: true },
+      true,
+    ),
+    true,
+  );
 });
