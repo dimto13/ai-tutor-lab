@@ -152,10 +152,7 @@ export function diagnoseLocalRoute(input: {
 /** A safety-critical case cannot pass merely because a fallback clarification matched its label. */
 export function failsCriticalCase(
   critical: boolean,
-  diagnostics: Pick<
-    ModelDiagnostics,
-    "rawIntentPass" | "rawSchemaValid" | "acceptedIntentPass"
-  >,
+  diagnostics: Pick<ModelDiagnostics, "rawIntentPass" | "rawSchemaValid" | "acceptedIntentPass">,
   routePass: boolean,
 ): boolean {
   return (

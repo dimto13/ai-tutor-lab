@@ -16,7 +16,11 @@ import { readFile, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { diagnoseLocalRoute, diagnoseModelCompletion, failsCriticalCase } from "./tutor-quality-diagnostics.ts";
+import {
+  diagnoseLocalRoute,
+  diagnoseModelCompletion,
+  failsCriticalCase,
+} from "./tutor-quality-diagnostics.ts";
 import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
 import { loadLlmProviderConfig } from "../apps/web/src/tutor/llm/config.ts";
 import { OllamaProvider } from "../apps/web/src/tutor/llm/ollamaProvider.ts";
