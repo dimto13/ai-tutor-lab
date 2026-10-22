@@ -87,8 +87,8 @@ export function diagnoseModelCompletion(input: {
       ? (value["kind"] as (typeof kinds)[number])
       : null;
   const rawSchemaValid = tutorModelOutputSchema.safeParse(payload).success;
-  const acceptedIntentPass = input.answer?.status === "ok" &&
-    input.answer.intent === input.expectedIntent;
+  const acceptedIntentPass =
+    input.answer?.status === "ok" && input.answer.intent === input.expectedIntent;
 
   let reason: DiagnosticReason = "accepted";
   if (input.rawText === null) reason = "provider_error";
@@ -112,8 +112,7 @@ export function diagnoseModelCompletion(input: {
     else if (routed.action === "clarify" && routed.reason === "model_requests_clarification")
       reason = "model_requests_clarification";
     else if (input.answer?.status === "guardrail") reason = "post_route_guardrail";
-    else if (!input.answer || input.answer.status !== "ok")
-      reason = "unexpected_service_status";
+    else if (!input.answer || input.answer.status !== "ok") reason = "unexpected_service_status";
     else if (!acceptedIntentPass) reason = "intent_mismatch";
   }
   return {
@@ -141,8 +140,7 @@ export function diagnoseLocalRoute(input: {
   const reasons: RouteFailureReason[] = [];
   if (input.requests !== 1) reasons.push("request_count_not_one");
   if (input.via !== null) reasons.push("via_header_present");
-  if (input.account !== null && input.account !== "local")
-    reasons.push("nonlocal_account_header");
+  if (input.account !== null && input.account !== "local") reasons.push("nonlocal_account_header");
   if (input.route !== null && !input.route.startsWith("local:"))
     reasons.push("nonlocal_route_header");
   if (!input.rawResponseReceived) reasons.push("provider_response_missing");

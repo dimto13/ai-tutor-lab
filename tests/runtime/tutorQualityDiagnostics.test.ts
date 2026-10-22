@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { diagnoseLocalRoute, diagnoseModelCompletion } from "../../scripts/tutor-quality-diagnostics.ts";
+import {
+  diagnoseLocalRoute,
+  diagnoseModelCompletion,
+} from "../../scripts/tutor-quality-diagnostics.ts";
 
 const allowedUiTargetRefs = ["vscode.activityBar.explorer"];
 const example = (changes: Record<string, unknown> = {}) =>
@@ -14,7 +17,10 @@ const example = (changes: Record<string, unknown> = {}) =>
   });
 const record = (
   rawText: string | null,
-  answer: { status: "ok" | "guardrail" | "provider_error"; intent?: "learning_help" | "unclear" } | null,
+  answer: {
+    status: "ok" | "guardrail" | "provider_error";
+    intent?: "learning_help" | "unclear";
+  } | null,
 ) =>
   diagnoseModelCompletion({
     rawText,
@@ -39,10 +45,9 @@ test("#575 diagnostics: low confidence preserves raw model intent but not accept
 });
 
 test("#575 diagnostics: forged UI reference is not mistaken for wrong intent", () => {
-  const result = record(
-    example({ kind: "ui_action", uiTargetRefs: ["nonexistent.button"] }),
-    { status: "guardrail" },
-  );
+  const result = record(example({ kind: "ui_action", uiTargetRefs: ["nonexistent.button"] }), {
+    status: "guardrail",
+  });
   assert.equal(result.rawIntentPass, true);
   assert.equal(result.rawSchemaValid, true);
   assert.equal(result.acceptedIntentPass, false);
@@ -56,7 +61,10 @@ test("#575 diagnostics: missing and duplicate UI references are separate safety 
   );
   assert.equal(
     record(
-      example({ kind: "ui_action", uiTargetRefs: [allowedUiTargetRefs[0], allowedUiTargetRefs[0]] }),
+      example({
+        kind: "ui_action",
+        uiTargetRefs: [allowedUiTargetRefs[0], allowedUiTargetRefs[0]],
+      }),
       { status: "guardrail" },
     ).reason,
     "duplicate_ui_refs",
@@ -115,10 +123,9 @@ test("#575 diagnostics: local route evidence reports precise reasons without raw
       "model_mismatch",
     ],
   );
-  assert.deepEqual(
-    diagnoseLocalRoute({ ...base, rawResponseReceived: false, rawModel: null }),
-    ["provider_response_missing"],
-  );
+  assert.deepEqual(diagnoseLocalRoute({ ...base, rawResponseReceived: false, rawModel: null }), [
+    "provider_response_missing",
+  ]);
 });
 
 test("#575 diagnostics: public diagnosis never exposes the raw completion body", () => {
