@@ -16,6 +16,7 @@ import { readFile, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { diagnoseLocalRoute, diagnoseModelCompletion } from "./tutor-quality-diagnostics.ts";
 import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
 import { loadLlmProviderConfig } from "../apps/web/src/tutor/llm/config.ts";
 import { OllamaProvider } from "../apps/web/src/tutor/llm/ollamaProvider.ts";
@@ -95,8 +96,12 @@ const privateDirectory = await mkdtemp(join(tmpdir(), "tutor-quality-live-"));
 const evidence: Array<Record<string, unknown>> = [];
 const summary: Array<Record<string, unknown>> = [];
 let criticalFailures = 0;
-let intentHits = 0;
+let intentHits = 0; // Legacy field: service-accepted intent (not the raw model's choice).
+let rawIntentHits = 0;
+let rawSchemaValidCount = 0;
 let routeFailures = 0;
+const diagnosticReasonCounts: Record<string, number> = {};
+const routeFailureReasonCounts: Record<string, number> = {};
 
 for (const entry of corpus.cases) {
   // Parse the actual authored scenario; no invented steps, score or runtime references.
@@ -109,10 +114,12 @@ for (const entry of corpus.cases) {
   const routeHeaders = new Map<string, string>();
   let rawResponse: LlmResponse | null = null;
   let requests = 0;
+  let httpStatus: number | null = null;
   const guardedFetch: typeof fetch = async (input, init) => {
     requests += 1;
     if (requests !== 1) throw new Error("QA forbids model retries and second requests");
     const response = await fetch(input, init);
+    httpStatus = response.status;
     for (const name of ["via", "x-ollama-account", "x-ollama-route"]) {
       const value = response.headers.get(name);
       if (value) routeHeaders.set(name, value);
@@ -149,17 +156,33 @@ for (const entry of corpus.cases) {
   }
   const latencyMs = Math.round(performance.now() - startedAt);
   const actualIntent = answer?.status === "ok" ? (answer.intent ?? null) : null;
-  const routeIsLocal =
-    requests === 1 &&
-    !routeHeaders.has("via") &&
-    (!routeHeaders.has("x-ollama-account") || routeHeaders.get("x-ollama-account") === "local") &&
-    (!routeHeaders.has("x-ollama-route") ||
-      routeHeaders.get("x-ollama-route")?.startsWith("local:") === true) &&
-    rawResponse !== null &&
-    (rawResponse as LlmResponse).model === configuration.model;
-  const intentPass = answer?.status === "ok" && actualIntent === entry.expectedIntent;
+  const diagnosis = diagnoseModelCompletion({
+    rawText: rawResponse?.text ?? null,
+    expectedIntent: entry.expectedIntent,
+    allowedUiTargetRefs: context.allowedUiTargetRefs,
+    answer: answer
+      ? { status: answer.status, intent: answer.intent }
+      : { status: "provider_error" },
+  });
+  const routeFailureReasons = diagnoseLocalRoute({
+    requests,
+    via: routeHeaders.get("via") ?? null,
+    account: routeHeaders.get("x-ollama-account") ?? null,
+    route: routeHeaders.get("x-ollama-route") ?? null,
+    rawModel: rawResponse?.model ?? null,
+    expectedModel: configuration.model,
+    rawResponseReceived: rawResponse !== null,
+  });
+  const routeIsLocal = routeFailureReasons.length === 0;
+  const intentPass = diagnosis.acceptedIntentPass;
+  if (diagnosis.rawIntentPass) rawIntentHits += 1;
+  if (diagnosis.rawSchemaValid) rawSchemaValidCount += 1;
   if (intentPass) intentHits += 1;
   if (!routeIsLocal) routeFailures += 1;
+  diagnosticReasonCounts[diagnosis.reason] = (diagnosticReasonCounts[diagnosis.reason] ?? 0) + 1;
+  for (const reason of routeFailureReasons) {
+    routeFailureReasonCounts[reason] = (routeFailureReasonCounts[reason] ?? 0) + 1;
+  }
   if (entry.critical && (!intentPass || !routeIsLocal)) criticalFailures += 1;
   summary.push({
     caseId: entry.id,
@@ -173,10 +196,19 @@ for (const entry of corpus.cases) {
     route: routeIsLocal ? "direct-loopback-local" : "INVALID_OR_UNVERIFIED",
     status: answer?.status ?? "provider_error",
     expectedIntent: entry.expectedIntent,
+    rawIntent: diagnosis.rawIntent,
+    rawConfidence: diagnosis.rawConfidence,
+    rawKind: diagnosis.rawKind,
+    rawJsonValid: diagnosis.rawJsonValid,
+    rawSchemaValid: diagnosis.rawSchemaValid,
+    rawIntentPass: diagnosis.rawIntentPass,
     actualIntent,
     intentPass,
+    diagnosticReason: diagnosis.reason,
     critical: entry.critical,
     routePass: routeIsLocal,
+    routeFailureReasons,
+    httpStatus,
     requestCount: requests,
     latencyMs,
     errorClass,
@@ -189,15 +221,27 @@ for (const entry of corpus.cases) {
     rawModelOutput: rawResponse ? (rawResponse as LlmResponse).text : null,
     displayedTutorAnswer: answer?.answer ?? null,
     expectedIntent: entry.expectedIntent,
+    rawIntent: diagnosis.rawIntent,
+    rawConfidence: diagnosis.rawConfidence,
+    rawKind: diagnosis.rawKind,
+    rawSchemaValid: diagnosis.rawSchemaValid,
     actualIntent,
+    diagnosticReason: diagnosis.reason,
     routePass: routeIsLocal,
+    routeFailureReasons,
+    httpStatus,
     semanticReview: "NOT_TESTED",
   });
   // Each failed request is recorded; do not retry or hide later case outcomes.
 }
 
 const intentAccuracy = intentHits / corpus.cases.length;
-const automatedPass = intentAccuracy >= 0.9 && criticalFailures === 0 && routeFailures === 0;
+const rawIntentAccuracy = rawIntentHits / corpus.cases.length;
+const automatedPass =
+  rawIntentAccuracy >= 0.9 &&
+  intentAccuracy >= 0.9 &&
+  criticalFailures === 0 &&
+  routeFailures === 0;
 const result = {
   schemaVersion: 1,
   corpusVersion: corpus.version,
@@ -208,7 +252,12 @@ const result = {
   count: corpus.cases.length,
   heldOutCount: corpus.cases.filter((entry) => entry.split === "held-out").length,
   intentHits,
-  intentAccuracy,
+  intentAccuracy, // Legacy: accepted route accuracy, preserves existing private tooling.
+  rawIntentHits,
+  rawIntentAccuracy, // Model-selected intent even if subsequent guardrails reject the answer.
+  rawSchemaValidCount,
+  diagnosticReasonCounts,
+  routeFailureReasonCounts,
   criticalFailures,
   routeFailures,
   humanSemanticReview: "NOT_TESTED",
@@ -231,6 +280,11 @@ console.log(
     heldOutCount: result.heldOutCount,
     intentHits,
     intentAccuracy,
+    rawIntentHits,
+    rawIntentAccuracy,
+    rawSchemaValidCount,
+    diagnosticReasonCounts,
+    routeFailureReasonCounts,
     criticalFailures,
     routeFailures,
     overall: result.overall,
