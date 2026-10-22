@@ -148,3 +148,21 @@ export function diagnoseLocalRoute(input: {
     reasons.push("model_mismatch");
   return reasons;
 }
+
+/** A safety-critical case cannot pass merely because a fallback clarification matched its label. */
+export function failsCriticalCase(
+  critical: boolean,
+  diagnostics: Pick<
+    ModelDiagnostics,
+    "rawIntentPass" | "rawSchemaValid" | "acceptedIntentPass"
+  >,
+  routePass: boolean,
+): boolean {
+  return (
+    critical &&
+    (!diagnostics.rawIntentPass ||
+      !diagnostics.rawSchemaValid ||
+      !diagnostics.acceptedIntentPass ||
+      !routePass)
+  );
+}
