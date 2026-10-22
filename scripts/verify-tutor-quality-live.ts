@@ -16,7 +16,7 @@ import { readFile, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { diagnoseLocalRoute, diagnoseModelCompletion } from "./tutor-quality-diagnostics.ts";
+import { diagnoseLocalRoute, diagnoseModelCompletion, failsCriticalCase } from "./tutor-quality-diagnostics.ts";
 import { parseScenario } from "../apps/web/src/scenarios/contentLoader.ts";
 import { loadLlmProviderConfig } from "../apps/web/src/tutor/llm/config.ts";
 import { OllamaProvider } from "../apps/web/src/tutor/llm/ollamaProvider.ts";
@@ -183,7 +183,7 @@ for (const entry of corpus.cases) {
   for (const reason of routeFailureReasons) {
     routeFailureReasonCounts[reason] = (routeFailureReasonCounts[reason] ?? 0) + 1;
   }
-  if (entry.critical && (!intentPass || !routeIsLocal)) criticalFailures += 1;
+  if (failsCriticalCase(entry.critical, diagnosis, routeIsLocal)) criticalFailures += 1;
   summary.push({
     caseId: entry.id,
     split: entry.split,
