@@ -1,0 +1,367 @@
+{
+  "version": 1,
+  "description": "Synthetic opt-in live-model acceptance corpus for #575, independent of FakeProvider tests. No user or company data; only reviewed local execution may generate results.",
+  "model": "gemma4:e4b",
+  "cases": [
+    {
+      "id": "qa-001",
+      "scenarioId": "vscode-basics.guided",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Was soll ich in diesem Schritt konkret als Nächstes tun?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-002",
+      "scenarioId": "vscode-basics.guided",
+      "step": "first",
+      "expectedIntent": "tool_question",
+      "question": "Wo finde ich den Explorer in VS Code?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-003",
+      "scenarioId": "vscode-basics.guided",
+      "step": "first",
+      "expectedIntent": "problem_report",
+      "question": "Ich habe die Aufgabe richtig gespeichert, aber sie wird als falsch bewertet. Das muss korrigiert werden.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-004",
+      "scenarioId": "vscode-basics.explore",
+      "step": "none",
+      "expectedIntent": "learning_help",
+      "question": "Kann ich zuerst frei erkunden, ohne einen Schritt zu starten?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-005",
+      "scenarioId": "vscode-basics.explore",
+      "step": "none",
+      "expectedIntent": "tool_question",
+      "question": "Wozu dient die Activity Bar?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-006",
+      "scenarioId": "vscode-basics.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Gib mir einen Denkanstoß ohne die fertige Klickfolge zu verraten.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-007",
+      "scenarioId": "copilot-basics.guided",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Warum lerne ich diesen Arbeitsschritt?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-008",
+      "scenarioId": "copilot-basics.explore",
+      "step": "none",
+      "expectedIntent": "tool_question",
+      "question": "Worin unterscheidet sich eine Inline-Vervollständigung vom Chat?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-009",
+      "scenarioId": "copilot-basics.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Was ist das Ziel, aber verrate mir keine Lösung?",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-010",
+      "scenarioId": "m365-copilot-basics.guided",
+      "step": "first",
+      "expectedIntent": "tool_question",
+      "question": "Wozu gibt es den Work- und den Web-Modus?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-011",
+      "scenarioId": "m365-copilot-basics.explore",
+      "step": "none",
+      "expectedIntent": "general_question",
+      "question": "Was ist eigentlich Retrieval-Augmented Generation?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-012",
+      "scenarioId": "m365-copilot-basics.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Darf ich ungeprüfte KI-Antworten einfach freigeben?",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-013",
+      "scenarioId": "claude-code-basics.guided",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Warum muss ich den Auftrag genauer formulieren?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-014",
+      "scenarioId": "claude-code-basics.explore",
+      "step": "none",
+      "expectedIntent": "tool_question",
+      "question": "Wozu dient ein Terminal bei einem Coding-Agenten?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-015",
+      "scenarioId": "claude-code-basics.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Wie kann ich das Ziel selbst überprüfen, ohne eine Lösung vorgekaut zu bekommen?",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-016",
+      "scenarioId": "source-control-platform-basics.guided",
+      "step": "first",
+      "expectedIntent": "tool_question",
+      "question": "Was ist der Unterschied zwischen Commit und Pull Request?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-017",
+      "scenarioId": "source-control-platform-basics.explore",
+      "step": "none",
+      "expectedIntent": "feature_request",
+      "question": "Es wäre gut, wenn es eine Vergleichsansicht für zwei Stände gäbe.",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-018",
+      "scenarioId": "source-control-platform-basics.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Welche Anforderung muss am Ende erfüllt sein? Keine Klickanleitung bitte.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-019",
+      "scenarioId": "data-classification-ai-usage.guided",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Warum soll ich zuerst die Datenklassifizierung prüfen?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-020",
+      "scenarioId": "data-classification-ai-usage.explore",
+      "step": "none",
+      "expectedIntent": "tool_question",
+      "question": "Was bedeutet die Freigabematrix für KI-Tools?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-021",
+      "scenarioId": "data-classification-ai-usage.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Hilf mir beim Nachdenken über die Einstufung, ohne das Ergebnis zu verraten.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-022",
+      "scenarioId": "mcp-server-workflow.guided",
+      "step": "first",
+      "expectedIntent": "tool_question",
+      "question": "Was unterscheidet einen MCP-Server von einem KI-Modell?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-023",
+      "scenarioId": "mcp-server-workflow.explore",
+      "step": "none",
+      "expectedIntent": "general_question",
+      "question": "Wie wird eine JSON-RPC-Anfrage aufgebaut?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-024",
+      "scenarioId": "mcp-server-workflow.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Welches Ziel ist hier nachzuweisen, ohne die komplette Umsetzung zu bekommen?",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-025",
+      "scenarioId": "table-data-workflow.guided",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Wie kontrolliere ich, ob ich mit den richtigen Tabellenwerten arbeite?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-026",
+      "scenarioId": "table-data-workflow.explore",
+      "step": "none",
+      "expectedIntent": "feedback",
+      "question": "Die Erklärung zu diesem Bereich ist für Anfänger zu kompliziert.",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-027",
+      "scenarioId": "table-data-workflow.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Ich brauche nur einen kleinen Denkanstoß, nicht das Ergebnis.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-028",
+      "scenarioId": "browser-automation-workflow.guided",
+      "step": "first",
+      "expectedIntent": "problem_report",
+      "question": "Der Button reagiert überhaupt nicht, obwohl ich ihn gerade gedrückt habe.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-029",
+      "scenarioId": "browser-automation-workflow.explore",
+      "step": "none",
+      "expectedIntent": "platform_question",
+      "question": "Wie wechsle ich in TrainLabs vom Explore- in den Guided-Modus?",
+      "split": "main",
+      "critical": false
+    },
+    {
+      "id": "qa-030",
+      "scenarioId": "developer-workflow-basics.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Worauf sollte ich beim Ziel achten? Bitte keine konkrete Lösung nennen.",
+      "split": "main",
+      "critical": true
+    },
+    {
+      "id": "qa-031",
+      "scenarioId": "table-version-compare.guided",
+      "step": "first",
+      "expectedIntent": "smalltalk",
+      "question": "Hallo, ich bin wieder da.",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-032",
+      "scenarioId": "table-version-compare.explore",
+      "step": "none",
+      "expectedIntent": "general_question",
+      "question": "Was bedeutet eine Versionsdifferenz im Allgemeinen?",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-033",
+      "scenarioId": "brownfield-dashboard-repair.guided",
+      "step": "first",
+      "expectedIntent": "problem_report",
+      "question": "Die Oberfläche markiert meinen korrekten Versuch weiterhin als falsch. Bitte prüft das.",
+      "split": "held-out",
+      "critical": true
+    },
+    {
+      "id": "qa-034",
+      "scenarioId": "brownfield-dashboard-repair.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Kannst du einen Hinweis geben, ohne die Reparaturschritte zu spoilern?",
+      "split": "held-out",
+      "critical": true
+    },
+    {
+      "id": "qa-035",
+      "scenarioId": "research-workflow.guided",
+      "step": "first",
+      "expectedIntent": "tool_question",
+      "question": "Wie erkenne ich, welche Quelle zu einer Aussage gehört?",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-036",
+      "scenarioId": "html-page-workflow.guided",
+      "step": "first",
+      "expectedIntent": "feature_request",
+      "question": "Ich wünsche mir eine Vorschau für mobile Bildschirmgrößen.",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-037",
+      "scenarioId": "quarterly-presentation-workflow.guided",
+      "step": "first",
+      "expectedIntent": "feedback",
+      "question": "Der Ablauf ist hilfreich, aber die Erklärung wirkt sehr lang.",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-038",
+      "scenarioId": "artifact-preview-foundation.guided",
+      "step": "first",
+      "expectedIntent": "platform_question",
+      "question": "Wo kann ich meinen Lernfortschritt in dieser Plattform einsehen?",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-039",
+      "scenarioId": "developer-workflow-basics.explore",
+      "step": "none",
+      "expectedIntent": "unclear",
+      "question": "Hier stimmt etwas nicht. Kannst du mal schauen?",
+      "split": "held-out",
+      "critical": false
+    },
+    {
+      "id": "qa-040",
+      "scenarioId": "vscode-shortcuts.challenge",
+      "step": "first",
+      "expectedIntent": "learning_help",
+      "question": "Ich möchte nur wissen, was ich erreichen muss, nicht welche Tasten ich drücke.",
+      "split": "held-out",
+      "critical": true
+    }
+  ]
+}

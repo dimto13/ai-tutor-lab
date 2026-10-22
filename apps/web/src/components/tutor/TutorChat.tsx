@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bot, ChevronDown, MessageCircle, Send, User, X } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -11,14 +11,12 @@ import {
   hasAcknowledgedFeedbackNotice,
   type FeedbackRecord,
 } from "@/lib/feedbackStore";
-import {
-  replyDeterministically,
-  type TutorFeedbackOffer,
-  type TutorReply,
-} from "@/tutor/deterministicTutor";
+import { replyDeterministically, type TutorFeedbackOffer } from "@/tutor/deterministicTutor";
 import { askTutorLlm } from "@/tutor/llm/tutorLlm.functions";
 import { TUTOR_HISTORY_MAX_TURNS, type TutorConversationTurn } from "@/tutor/llm/tutorGuardrails";
-import { preferServerTutor } from "@/tutor/serverTutorAnswer";
+import { resolveModelFirstTutor } from "@/tutor/serverTutorAnswer";
+import { shouldApplyTutorResponse } from "@/tutor/tutorResponseScope";
+import { buildTutorLiveSnapshot } from "@/tutor/llm/tutorLiveSnapshot";
 import { useTutorContext } from "@/tutor/tutorContext";
 import { FeedbackCapture } from "@/components/feedback/FeedbackCapture";
 import { useFeedbackContext, viewportClass } from "@/components/feedback/useFeedbackContext";
@@ -103,9 +101,26 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
   const collapsedToggleRef = useRef<HTMLButtonElement>(null);
   const restoreToggleFocusRef = useRef(false);
   const nextMessageIdRef = useRef(1);
+  const activeRequestRef = useRef(0);
+  const activeLearningScopeRef = useRef(`${tutorContext.scenario.id}:${mode}`);
+  const activeDisplayedStepRef = useRef<string | null>(tutorContext.currentStep?.id ?? null);
+  const learningScope = `${tutorContext.scenario.id}:${mode}`;
+  const displayedStepId = tutorContext.currentStep?.id ?? null;
+  // Commit-phase synchronisation avoids mutations during concurrent React renders.
+  // Layout effects run before deferred request completions can paint outdated step advice.
+  useLayoutEffect(() => {
+    activeLearningScopeRef.current = learningScope;
+    activeDisplayedStepRef.current = displayedStepId;
+  }, [learningScope, displayedStepId]);
   const nextMessageId = () => nextMessageIdRef.current++;
 
   useEffect(() => {
+    ++activeRequestRef.current; // invalidate an in-flight reply from another module or mode
+    setMessages(
+      mode === "challenge" ? [] : [{ id: 0, role: "tutor", text: GREETING, inHistory: false }],
+    );
+    setInput("");
+    setPending(false);
     setOpen(mode !== "guided");
     restoreToggleFocusRef.current = false;
   }, [mode, tutorContext.scenario.id]);
@@ -158,55 +173,109 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
 
   const resolveOffer = (messageId: number) => patchOffer(messageId, { resolved: true });
 
-  /** Asks the server tutor, falling back to the deterministic reply whenever it is unavailable. */
+  /**
+   * Free text is classified and answered in ONE authenticated model call, before any
+   * deterministic fallback is evaluated. The explicit header Problem action stays separate.
+   */
   const answer = async (
     question: string,
     sourceId: number,
-    fallback: TutorReply,
     history: TutorConversationTurn[],
     allowFeedback: boolean,
   ) => {
+    const requestVersion = ++activeRequestRef.current;
+    const requestScope = learningScope;
+    const requestStepId = tutorContext.currentStep?.id ?? null;
     setPending(true);
     try {
-      let text = fallback.text;
-      // Without a model answer, the deterministic reply keeps its own follow-up offer.
-      let offer: TutorFeedbackOffer | undefined = fallback.fallbackOffer;
       const accessToken = auth.session?.accessToken ?? null;
-      if (accessToken) {
-        const serverAnswer = await preferServerTutor(fallback.text, () =>
-          askTutorLlm({
-            data: {
-              scenarioId: tutorContext.scenario.id,
-              mode: tutorContext.mode,
-              currentStepId: tutorContext.currentStep?.id ?? null,
-              ...(tutorContext.lastFailure ? { lastFailure: tutorContext.lastFailure } : {}),
-              question,
-              accessToken,
-              ...(history.length > 0 ? { history } : {}),
-            },
-          }),
-        );
-        text = serverAnswer.answer;
-        if (!serverAnswer.fallback) {
-          offer =
-            serverAnswer.kind === "feedback" ? { kind: "problem", clarify: false } : undefined;
-        }
-        if (serverAnswer.uiTargetRefs.length > 0) {
-          requestTutorAttention(
-            serverAnswer.uiTargetRefs,
-            serverAnswer.uiTargetRefs.map((ref) => getRuntimeTargetLabel(ref) ?? ref).join(", "),
+      const serverAnswer = await resolveModelFirstTutor(
+        accessToken
+          ? () =>
+              askTutorLlm({
+                data: {
+                  scenarioId: tutorContext.scenario.id,
+                  mode: tutorContext.mode,
+                  currentStepId: tutorContext.currentStep?.id ?? null,
+                  ...(tutorContext.lastFailure ? { lastFailure: tutorContext.lastFailure } : {}),
+                  liveSnapshot: buildTutorLiveSnapshot(tutorContext),
+                  question,
+                  accessToken,
+                  ...(allowFeedback ? {} : { answerAsQuestion: true }),
+                  ...(history.length > 0 ? { history } : {}),
+                },
+              })
+          : null,
+        // Only evaluated if there is no authenticated model, or its transport is unavailable.
+        () =>
+          replyDeterministically(
+            question,
+            tutorContext,
+            findGlossaryConcept,
+            allowFeedback ? undefined : { intent: "question", confidence: "high" },
+          ),
+      );
+
+      // Never leak a delayed answer, old feedback offer or UI highlight into a new module.
+      if (
+        !shouldApplyTutorResponse(
+          { version: requestVersion, scope: requestScope, displayedStepId: requestStepId },
+          {
+            version: activeRequestRef.current,
+            scope: activeLearningScopeRef.current,
+            displayedStepId: activeDisplayedStepRef.current,
+          },
+        )
+      ) {
+        // An old-step question must not remain as an unanswered turn in later model history.
+        // A module/mode switch resets the entire chat separately; do not append into that chat.
+        if (
+          requestVersion === activeRequestRef.current &&
+          requestScope === activeLearningScopeRef.current
+        ) {
+          setInHistory(sourceId, false);
+          appendTutorMessage(
+            "Die Antwort wurde wegen eines Schrittwechsels verworfen. Du kannst deine Frage zum aktuellen Schritt erneut stellen.",
+            undefined,
+            false,
           );
         }
+        return;
+      }
+      let text = serverAnswer.answer;
+      const offer: TutorFeedbackOffer | undefined =
+        allowFeedback && serverAnswer.kind === "feedback"
+          ? { kind: serverAnswer.feedbackKind ?? "problem", clarify: false }
+          : allowFeedback
+            ? serverAnswer.fallbackOffer
+            : undefined;
+
+      // The learner explicitly declined a report; never repeat an unsolicited report offer.
+      if (!allowFeedback && serverAnswer.kind === "feedback") {
+        text =
+          "Du möchtest eine Antwort statt einer Meldung. Welche konkrete Frage soll ich dazu beantworten?";
+      }
+      if (serverAnswer.uiTargetRefs.length > 0) {
+        requestTutorAttention(
+          serverAnswer.uiTargetRefs,
+          serverAnswer.uiTargetRefs.map((ref) => getRuntimeTargetLabel(ref) ?? ref).join(", "),
+        );
       }
 
-      if (offer && allowFeedback) {
+      if (offer) {
         setInHistory(sourceId, false);
         appendTutorMessage(text, { ...offer, sourceText: question, sourceId, resolved: false });
       } else {
         appendTutorMessage(text);
       }
     } finally {
-      setPending(false);
+      if (
+        requestVersion === activeRequestRef.current &&
+        requestScope === activeLearningScopeRef.current
+      ) {
+        // A same-module step transition may discard a stale answer while still clearing pending.
+        setPending(false);
+      }
     }
   };
 
@@ -216,31 +285,20 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     setInput("");
     const history = conversationHistory(messages);
     const sourceId = nextMessageId();
-    const reply = replyDeterministically(question, tutorContext, findGlossaryConcept);
-    // A new message moves on: older offers would otherwise answer an old message later.
-    setMessages((messages) => [
-      ...messages.map((message) =>
+    // Every free message is eligible for the model, including complaints, paraphrases and
+    // apparently ambiguous statements. There is NO lexical pre-route before this call.
+    setMessages((previous) => [
+      ...previous.map((message) =>
         message.offer && !message.offer.resolved
           ? { ...message, offer: { ...message.offer, resolved: true } }
           : message,
       ),
-      { id: sourceId, role: "user", text: question, inHistory: !reply.offer },
+      { id: sourceId, role: "user", text: question, inHistory: true },
     ]);
-
-    if (reply.offer) {
-      // A report or an ambiguous message needs no model call: the learner decides first (#147).
-      appendTutorMessage(reply.text, {
-        ...reply.offer,
-        sourceText: question,
-        sourceId,
-        resolved: false,
-      });
-      return;
-    }
-    await answer(question, sourceId, reply, history, true);
+    await answer(question, sourceId, history, true);
   };
 
-  /** The learner rejected the feedback reading, so the original message is answered as a question. */
+  /** Explicit learner intent overrides a previous report suggestion in the NEXT model prompt. */
   const answerInstead = async (message: Message) => {
     const offer = message.offer;
     if (!offer || pending) return;
@@ -250,11 +308,7 @@ export function TutorChat({ prominent = false }: { prominent?: boolean }) {
     const history = conversationHistory(
       sourceIndex >= 0 ? messages.slice(0, sourceIndex) : messages,
     );
-    const fallback = replyDeterministically(offer.sourceText, tutorContext, findGlossaryConcept, {
-      intent: offer.kind === "problem" ? "next_step" : "question",
-      confidence: "high",
-    });
-    await answer(offer.sourceText, offer.sourceId, fallback, history, false);
+    await answer(offer.sourceText, offer.sourceId, history, false);
   };
 
   const reportSubmitted = (message: Message) => {

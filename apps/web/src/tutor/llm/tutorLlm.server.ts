@@ -5,6 +5,7 @@ import { loadLlmProviderConfig } from "./config";
 import { createTutorCorrelation } from "./correlation";
 import { createLlmProvider } from "./index";
 import { buildTutorContext } from "./tutorContext";
+import type { TutorLiveSnapshot } from "./tutorLiveSnapshot";
 import {
   InMemoryTutorSessionBudgetStore,
   TutorLlmService,
@@ -51,11 +52,13 @@ export interface TutorLlmServerInput {
   scenarioId: string;
   mode: TrainingMode;
   currentStepId: string | null;
-  /** Failure text the guide showed; the context keeps it only if the step authored it. */
+  /** Current-step failure shown by the guide, accepted only when authored. */
   lastFailure?: string | null;
   question: string;
+  answerAsQuestion?: boolean;
   accessToken: string | null;
   userCode?: string;
+  liveSnapshot?: TutorLiveSnapshot;
   history?: readonly TutorConversationTurn[];
 }
 
@@ -274,10 +277,11 @@ function tutorContextFor(
   mode: TrainingMode,
   currentStepId: string | null,
   lastFailure: string | null,
+  liveSnapshot?: TutorLiveSnapshot,
 ): TutorLlmContext {
   const scenario = getScenario(scenarioId);
   if (!scenario) throw new Error("Unknown tutor scenario");
-  return buildTutorContext(scenario, mode, currentStepId, lastFailure);
+  return buildTutorContext(scenario, mode, currentStepId, lastFailure, liveSnapshot);
 }
 
 export async function answerTutorQuestionOnServer(
@@ -312,9 +316,11 @@ export async function answerTutorQuestionOnServer(
       input.mode,
       input.currentStepId,
       input.lastFailure ?? null,
+      input.liveSnapshot,
     ),
     question: {
       question: input.question,
+      ...(input.answerAsQuestion ? { answerAsQuestion: true } : {}),
       ...(input.userCode ? { userCode: input.userCode } : {}),
       ...(input.history?.length ? { history: input.history } : {}),
     },

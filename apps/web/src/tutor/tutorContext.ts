@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { latestStepFailureMessage } from "@ai-train-lab/training-engine";
+import { latestStepFailureMessage, type StepStatus } from "@ai-train-lab/training-engine";
 import { getRuntimeAdapter } from "@/runtime";
 import { useTraining } from "@/state/trainingStore";
 import type { Scenario, TrainingEvent, TrainingMode, TrainingStep } from "@/types/training";
@@ -22,6 +22,8 @@ export interface TutorContext {
    * Without it the tutor could only repeat the task the learner was already stuck on (#591).
    */
   lastFailure: string | null;
+  /** Browser-observed status of the currently displayed step, never server-authoritative. */
+  currentStepStatus: StepStatus | null;
   completedStepIds: string[];
   recentEvents: TrainingEvent[];
   hintUsage: number;
@@ -62,6 +64,9 @@ export function useTutorContext(): TutorContext {
       },
       mode,
       currentStep: displayedStep,
+      currentStepStatus: displayedStep
+        ? (progress.statuses[displayedStep.id] ?? "NOT_STARTED")
+        : null,
       lastFailure:
         mode === "guided" && displayedStep
           ? latestStepFailureMessage(progress, displayedStep.id)
