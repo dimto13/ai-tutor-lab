@@ -91,6 +91,8 @@ jobs:
             exit 1
           fi
 
+          # Stale local/runner samples must never be mistaken for this SHA.
+          rm -rf apps/web/e2e/test-results-performance apps/web/e2e/playwright-report-performance
           ./apps/web/e2e/node_modules/.bin/playwright test \
             --config apps/web/e2e/performance/performance.config.ts
           node scripts/performance/report.mjs apps/web/e2e/test-results-performance
