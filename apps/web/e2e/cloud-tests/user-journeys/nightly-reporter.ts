@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { FullResult, Reporter, TestCase, TestResult } from "@playwright/test/reporter";
 
@@ -70,6 +70,8 @@ export default class NightlyJourneyReporter implements Reporter {
       ) + "\n",
       { mode: 0o600 },
     );
+    // writeFile mode applies only when creating a file; secure an existing report as well.
+    await chmod(file, 0o600);
     const status = failed > 0 || fullResult.status !== "passed" ? "failed" : "passed";
     // Preserve a nonzero CLI exit even when other Playwright reporters are installed.
     if (status === "failed") process.exitCode = 1;
