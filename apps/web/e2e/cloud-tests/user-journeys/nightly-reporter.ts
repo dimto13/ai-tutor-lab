@@ -70,6 +70,9 @@ export default class NightlyJourneyReporter implements Reporter {
       ) + "\n",
       { mode: 0o600 },
     );
-    return { status: failed > 0 || fullResult.status !== "passed" ? "failed" : "passed" };
+    const status = failed > 0 || fullResult.status !== "passed" ? "failed" : "passed";
+    // Preserve a nonzero CLI exit even when other Playwright reporters are installed.
+    if (status === "failed") process.exitCode = 1;
+    return { status };
   }
 }
