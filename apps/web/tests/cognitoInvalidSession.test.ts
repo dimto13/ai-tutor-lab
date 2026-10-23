@@ -250,3 +250,106 @@ test("sign-in failures expose a neutral German message, not the Cognito provider
       error.cause === providerError,
   );
 });
+
+test("temporary Cognito connection and system failures have retry-later guidance with a preserved cause", async () => {
+  const temporaryErrorNames = [
+    "NetworkError",
+    "TimeoutError",
+    "AbortError",
+    "ServiceUnavailableException",
+    "InternalErrorException",
+    "TooManyRequestsException",
+    "ThrottlingException",
+  ];
+
+  for (const name of temporaryErrorNames) {
+    const providerError = Object.assign(new Error("Sensitive provider detail"), { name });
+    const service = createCognitoAuthService({
+      signInWithPassword: async () => {
+        throw providerError;
+      },
+    } as unknown as CognitoAuthClient);
+
+    await assert.rejects(
+      service.signIn({
+        method: "password",
+        identifier: "learner@example.test",
+        password: "password",
+      }),
+      (error: unknown) =>
+        error instanceof Error &&
+        error.message.includes("vorübergehend nicht verfügbar") &&
+        error.message.includes("später erneut") &&
+        !error.message.includes("Sensitive provider detail") &&
+        !error.message.includes("Angaben") &&
+        error.cause === providerError,
+      `temporary ${name} must not be reported as invalid credentials`,
+    );
+  }
+});
+
+test("temporary OIDC redirect failures are also sanitized without losing their cause", async () => {
+  const providerError = Object.assign(new Error("private OIDC endpoint"), {
+    name: "TimeoutError",
+  });
+  const service = createCognitoAuthService({
+    signInWithOidc: async () => {
+      throw providerError;
+    },
+  } as unknown as CognitoAuthClient);
+
+  await assert.rejects(
+    service.signIn({ method: "oidc", providerId: "test-provider" }),
+    (error: unknown) =>
+      error instanceof Error &&
+      error.message.includes("vorübergehend nicht verfügbar") &&
+      !error.message.includes("private OIDC endpoint") &&
+      error.cause === providerError,
+  );
+});
+
+test("credential rejection is not confused with a temporary network failure", async () => {
+  const providerError = Object.assign(new Error("NetworkError text in provider response"), {
+    name: "NotAuthorizedException",
+  });
+  const service = createCognitoAuthService({
+    signInWithPassword: async () => {
+      throw providerError;
+    },
+  } as unknown as CognitoAuthClient);
+
+  await assert.rejects(
+    service.signIn({
+      method: "password",
+      identifier: "learner@example.test",
+      password: "password",
+    }),
+    (error: unknown) =>
+      error instanceof Error &&
+      error.message.includes("Bitte überprüfe deine Angaben") &&
+      !error.message.includes("vorübergehend") &&
+      !error.message.includes("NetworkError text") &&
+      error.cause === providerError,
+  );
+});
+
+test("beta-access denial retains its user-safe message and the original cause", async () => {
+  const providerError = new Error("BETA_ACCESS_DENIED: private group name");
+  const service = createCognitoAuthService({
+    signInWithPassword: async () => {
+      throw providerError;
+    },
+  } as unknown as CognitoAuthClient);
+
+  await assert.rejects(
+    service.signIn({
+      method: "password",
+      identifier: "learner@example.test",
+      password: "password",
+    }),
+    (error: unknown) =>
+      error instanceof Error &&
+      error.message === "Diese geschlossene Beta ist aktuell nur für eingeladene Tester verfügbar." &&
+      error.cause === providerError,
+  );
+});
