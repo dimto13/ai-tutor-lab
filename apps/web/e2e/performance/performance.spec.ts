@@ -120,8 +120,6 @@ async function measureRoute(
   page: Page,
   route: string,
   profileName: string,
-  firstRun: boolean,
-  outputPath: (name: string) => string,
 ): Promise<RouteSample> {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -161,7 +159,6 @@ async function measureRoute(
       "href",
       "/anmelden",
     );
-    if (firstRun) await page.screenshot({ path: outputPath(profileName + "-landing.png") });
   } else if (route === "/") {
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
     interactionToPaintProxyMs = await paintAfterAction(page, () =>
@@ -201,6 +198,34 @@ async function measureRoute(
   };
 }
 
+async function configuredPage(browser: Browser, profile: (typeof profiles)[number]) {
+  // Every cold sample and diagnostic replay gets an isolated browser context.
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+    reducedMotion: profile.reduced ? "reduce" : "no-preference",
+  });
+  try {
+    const page = await context.newPage();
+    await instrument(page);
+    const session = await context.newCDPSession(page);
+    await session.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
+    if (profile.constrainedNetwork) {
+      await session.send("Network.enable");
+      await session.send("Network.emulateNetworkConditions", {
+        offline: false,
+        latency: 80,
+        downloadThroughput: 200_000,
+        uploadThroughput: 100_000,
+      });
+    }
+    return { context, page };
+  } catch (error) {
+    await context.close();
+    throw error;
+  }
+}
+
 async function runProfile(
   browser: Browser,
   profile: (typeof profiles)[number],
@@ -215,41 +240,34 @@ async function runProfile(
   for (let run = 1; run <= 3; run += 1) {
     const routes: RouteSample[] = [];
     for (const route of routeNames) {
-      // A new browser context for EACH route prevents cached assets and auth state
-      // from silently turning later cold-route samples into warm navigations.
-      const context = await browser.newContext({
-        viewport: { width: 1280, height: 800 },
-        deviceScaleFactor: 1,
-        reducedMotion: profile.reduced ? "reduce" : "no-preference",
-      });
-      const page = await context.newPage();
-      const routeKey = route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "dashboard";
+      const { context, page } = await configuredPage(browser, profile);
       try {
-        await instrument(page);
-        const session = await context.newCDPSession(page);
-        await session.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
-        if (profile.constrainedNetwork) {
-          await session.send("Network.enable");
-          await session.send("Network.emulateNetworkConditions", {
-            offline: false,
-            latency: 80,
-            downloadThroughput: 200_000,
-            uploadThroughput: 100_000,
-          });
-        }
-        await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
-        try {
-          routes.push(await measureRoute(page, route, profile.name, run === 1, outputPath));
-        } finally {
-          await context.tracing.stop({
-            path: outputPath(profile.name + "-" + routeKey + "-run-" + run + "-trace.zip"),
-          });
-        }
+        // Keep trace/screenshot/DOM snapshot instrumentation OUTSIDE the measured
+        // window: it changes frame gaps, long tasks and constrained-device LCP.
+        routes.push(await measureRoute(page, route, profile.name));
       } finally {
         await context.close();
       }
     }
     rows.push({ run, routes });
+  }
+
+  // Separate SHA-bound diagnostic replay, NOT included in the three cold samples.
+  // One animated/reduced landing trace per profile preserves inspectable visuals
+  // without letting trace overhead contaminate any reported baseline metrics.
+  const { context, page } = await configuredPage(browser, profile);
+  try {
+    await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+    try {
+      await measureRoute(page, "/willkommen", profile.name);
+      await page.screenshot({ path: outputPath(profile.name + "-landing.png") });
+    } finally {
+      await context.tracing.stop({
+        path: outputPath(profile.name + "-landing-diagnostic-trace.zip"),
+      });
+    }
+  } finally {
+    await context.close();
   }
   return rows;
 }
