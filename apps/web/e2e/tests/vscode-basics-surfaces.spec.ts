@@ -24,7 +24,12 @@ test("VS Code Grundlagen: Command Palette filtert, zählt als Lernoberfläche un
   await input.fill(">search");
   await expect(palette.getByRole("option", { name: "Search: Show Search" })).toBeVisible();
   await input.press("Enter");
-  await expect(page.getByText("Volltextsuche über den aktuellen Arbeitskontext.")).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search files" })).toBeVisible();
+  await expect(
+    page.getByText(
+      "Plattform-Hinweis: Durchsuche Dateien und Inhalte im aktuellen Arbeitskontext.",
+    ),
+  ).toBeVisible();
 });
 
 test("VS Code Grundlagen: Settings zählen als Lernoberfläche und bleiben von Extensions getrennt", async ({

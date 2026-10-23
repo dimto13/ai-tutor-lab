@@ -68,6 +68,7 @@ export function Workspace() {
     false;
 
   const [view, setView] = useState<View | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [repoOpen, setRepoOpen] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("none");
   const [treeExpanded, setTreeExpanded] = useState(true);
@@ -130,6 +131,7 @@ export function Workspace() {
       setWorkspaceMode(runtimeState.workspaceMode);
       setRepoOpen(runtimeState.workspaceMode !== "none");
       setView(runtimeState.workspaceMode === "none" ? null : "explorer");
+      setSearchQuery("");
       setFiles(toFileNodes(runtimeState.files));
       setContents({ ...runtimeState.contents });
       setTabs([...runtimeState.openTabs]);
@@ -293,7 +295,7 @@ export function Workspace() {
 
   const activityItems: { id: View; icon: typeof Files; label: string; target: string }[] = [
     { id: "explorer", icon: Files, label: "Explorer", target: "vscode.activityBar.explorer" },
-    { id: "search", icon: Search, label: "Suche", target: "vscode.activityBar.search" },
+    { id: "search", icon: Search, label: "Search", target: "vscode.activityBar.search" },
     { id: "scm", icon: GitBranch, label: "Source Control", target: "vscode.activityBar.scm" },
     {
       id: "extensions",
@@ -302,6 +304,16 @@ export function Workspace() {
       target: "vscode.activityBar.extensions",
     },
   ];
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const searchResults =
+    repoOpen && normalizedSearchQuery
+      ? files.filter(
+          (file) =>
+            file.kind === "file" &&
+            (file.name.toLowerCase().includes(normalizedSearchQuery) ||
+              (contents[file.name] ?? "").toLowerCase().includes(normalizedSearchQuery)),
+        )
+      : [];
   const stagedSet = new Set(stagedFiles);
   const stagedChanges = scmChangedFiles.filter((file) => stagedSet.has(file));
   const unstagedChanges = scmChangedFiles.filter(
@@ -373,7 +385,7 @@ export function Workspace() {
                 {view === "explorer" || view === null
                   ? "Explorer"
                   : view === "search"
-                    ? "Suche"
+                    ? "Search"
                     : view === "scm"
                       ? "Source Control"
                       : "Extensions"}
@@ -400,9 +412,44 @@ export function Workspace() {
                   Kein Bereich geöffnet. Wähle links ein Symbol in der Activity Bar.
                 </p>
               ) : view === "search" ? (
-                <p className="px-3 py-6 text-xs leading-relaxed text-muted-foreground">
-                  Volltextsuche über den aktuellen Arbeitskontext.
-                </p>
+                <div className="px-2 py-3">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search"
+                    aria-label="Search files"
+                    className="w-full rounded border border-border bg-editor px-2 py-1.5 text-xs text-foreground outline-none focus:border-ring"
+                  />
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                    Plattform-Hinweis: Durchsuche Dateien und Inhalte im aktuellen Arbeitskontext.
+                  </p>
+                  {normalizedSearchQuery ? (
+                    <div role="region" aria-label="Search results" className="mt-3">
+                      <p className="mb-1 px-1 text-[11px] text-muted-foreground">
+                        {searchResults.length} {searchResults.length === 1 ? "result" : "results"}
+                      </p>
+                      {searchResults.map((file) => (
+                        <button
+                          key={file.name}
+                          type="button"
+                          onClick={() => openFile(file.name)}
+                          className="flex w-full items-center gap-2 rounded px-1 py-1.5 text-left text-xs text-foreground hover:bg-white/5"
+                        >
+                          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="break-all">{file.name}</span>
+                        </button>
+                      ))}
+                      {searchResults.length === 0 ? (
+                        <p className="px-1 py-2 text-xs text-muted-foreground">No results found.</p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="mt-3 px-1 text-xs text-muted-foreground">
+                      Enter a search term to find files and content.
+                    </p>
+                  )}
+                </div>
               ) : view === "scm" ? (
                 <div className="px-3 py-4 text-xs leading-relaxed text-muted-foreground">
                   {stagedChanges.length > 0 ? (

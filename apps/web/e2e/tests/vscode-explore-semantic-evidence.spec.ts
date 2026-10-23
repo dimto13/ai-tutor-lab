@@ -58,7 +58,7 @@ test("Explore: frischer VS-Code-Walkthrough erreicht über sichtbare Fachaktione
   await expectProgress(page, 10);
   await page.getByRole("button", { name: "Settings schließen" }).click();
 
-  for (const label of ["Explorer", "Suche", "Source Control", "Extensions"]) {
+  for (const label of ["Explorer", "Search", "Source Control", "Extensions"]) {
     await page.getByRole("button", { name: label, exact: true }).click();
   }
   await expectProgress(page, 14);

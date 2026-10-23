@@ -97,6 +97,35 @@ test("Explore: Oberfläche inspizieren erhöht den Fortschritt und erklärt das 
   ).toBeVisible();
 });
 
+test("Explore: Search finds workspace file contents and opens matching files", async ({ page }) => {
+  await page.goto("/training/vscode-basics.explore");
+  await waitForTrainingReady(page);
+
+  await openFileMenu(page);
+  await page.getByRole("menuitem", { name: /Open Folder\.\.\./ }).click();
+  await page.getByRole("button", { name: "Neue Datei", exact: true }).click();
+  await page.getByPlaceholder("dateiname.ext").fill("search-target.txt");
+  await page.getByPlaceholder("dateiname.ext").press("Enter");
+  await page.getByRole("textbox", { name: "Editor-Inhalt" }).fill("Unique search phrase");
+
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  const search = page.getByRole("searchbox", { name: "Search files" });
+  await expect(search).toBeVisible();
+
+  await search.fill("UNIQUE search PHRASE");
+  const results = page.getByRole("region", { name: "Search results" });
+  await expect(results.getByRole("button", { name: "search-target.txt" })).toBeVisible();
+
+  await search.fill("not-present-anywhere");
+  await expect(results.getByText("No results found.")).toBeVisible();
+
+  await search.fill("SEARCH-TARGET");
+  await results.getByRole("button", { name: "search-target.txt" }).click();
+  await expect(page.getByRole("textbox", { name: "Editor-Inhalt" })).toHaveValue(
+    "Unique search phrase",
+  );
+});
+
 test("Explore: alle Hauptmenüs öffnen vollständig und werden als Lernoberflächen erkannt", async ({
   page,
 }) => {
