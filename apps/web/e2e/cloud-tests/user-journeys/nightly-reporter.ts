@@ -11,6 +11,7 @@ interface JourneyResult {
 }
 
 const JOURNEY_IDS = Array.from({ length: 10 }, (_, index) => `CLOUD-${index + 1}`);
+const KNOWN_BLOCKED = new Set(["CLOUD-5", "CLOUD-8"]);
 
 export default class NightlyJourneyReporter implements Reporter {
   private readonly results = new Map<string, JourneyResult>();
@@ -38,7 +39,11 @@ export default class NightlyJourneyReporter implements Reporter {
   async onEnd(fullResult: FullResult): Promise<{ status: FullResult["status"] }> {
     const results = JOURNEY_IDS.map(
       (journeyId) =>
-        this.results.get(journeyId) ?? { journeyId, status: "NOT_TESTED" as const, durationMs: 0 },
+        this.results.get(journeyId) ?? {
+          journeyId,
+          status: KNOWN_BLOCKED.has(journeyId) ? ("BLOCKED" as const) : ("NOT_TESTED" as const),
+          durationMs: 0,
+        },
     );
     const passed = results.filter((result) => result.status === "PASS").length;
     // An unimplemented or blocked journey is not an accepted release. Exit nonzero until all ten
