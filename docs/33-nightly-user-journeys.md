@@ -54,7 +54,8 @@ mit bereits gesetzten geheimen `CLOUD_TEST_*`-Variablen:
 ```bash
 set -euo pipefail
 cd /pfad/zum/ai-tutor-lab
-export NIGHTLY_REPORT_DIR="${NIGHTLY_REPORT_DIR:-$PWD/private-nightly-artifacts}"
+umask 077
+export NIGHTLY_REPORT_DIR="${NIGHTLY_REPORT_DIR:-${RUNNER_TEMP:-/tmp}/ai-train-lab-nightly-${GITHUB_RUN_ID:-manual}}"
 export CLOUD_ENVIRONMENT="${CLOUD_ENVIRONMENT:-amplify}"
 export CLOUD_RELEASE_SHA="$(git ls-remote origin refs/heads/deploy | awk '{print $1}')"
 if ! [[ "$CLOUD_RELEASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]] || [[ -z "${CLOUD_BASE_URL:-}" ]]; then
