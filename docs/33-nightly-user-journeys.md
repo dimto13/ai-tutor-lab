@@ -14,18 +14,18 @@ Repository, GitHub-Kommentaren, Screenshots oder Berichten.
 
 ## Journey-Matrix (Implementierungsstand, nicht Cloud-Ausführung)
 
-| ID | Nachweis | Implementierung | Cloud-Evidence |
-| --- | --- | --- | --- |
-| CLOUD-1 | Reales Cognito-Formular → Dashboard | neuer UI-Test | NOT_TESTED |
-| CLOUD-2 | Guided-Abschluss und serverbestätigter Punktestand | bestehender UI-Test mit stabiler ID | NOT_TESTED |
-| CLOUD-3 | Punktestand und Abschluss im frischen Browserkontext | neuer UI-Test | NOT_TESTED |
-| CLOUD-4 | Wiederholung ohne zweite Punktevergabe | neuer UI-Test | NOT_TESTED |
-| CLOUD-5 | Tutorfrage, Modellantwort nur mit Kostenfreigabe | nicht implementiert | BLOCKED |
-| CLOUD-6 | Tutor → Problem → explizites Senden → Bestätigung | neuer UI-Test | NOT_TESTED |
-| CLOUD-7 | Server bestätigt die UI-ausgelöste Feedback-Mutation | neuer UI-/Netzwerktest | NOT_TESTED |
-| CLOUD-8 | Autorisierte Beta-Inbox-Zustellung | Prüfschnittstelle fehlt | BLOCKED |
-| CLOUD-9 | Cognito-Logout, SPA-Denial und frischer Dokument-Deep-Link ohne Content-Flash | neuer UI-Test | NOT_TESTED |
-| CLOUD-10 | Cross-User-/Cross-Tenant-Isolation über zweite Testidentität | neuer UI-Test mit Wiederherstellung der ursprünglichen Kontoeinstellung; bestehende Backend-Contract-Prüfungen bleiben erhalten | NOT_TESTED |
+| ID       | Nachweis                                                                      | Implementierung                                                                                                                 | Cloud-Evidence |
+| -------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| CLOUD-1  | Reales Cognito-Formular → Dashboard                                           | neuer UI-Test                                                                                                                   | NOT_TESTED     |
+| CLOUD-2  | Guided-Abschluss und serverbestätigter Punktestand                            | bestehender UI-Test mit stabiler ID                                                                                             | NOT_TESTED     |
+| CLOUD-3  | Punktestand und Abschluss im frischen Browserkontext                          | neuer UI-Test                                                                                                                   | NOT_TESTED     |
+| CLOUD-4  | Wiederholung ohne zweite Punktevergabe                                        | neuer UI-Test                                                                                                                   | NOT_TESTED     |
+| CLOUD-5  | Tutorfrage, Modellantwort nur mit Kostenfreigabe                              | nicht implementiert                                                                                                             | BLOCKED        |
+| CLOUD-6  | Tutor → Problem → explizites Senden → Bestätigung                             | neuer UI-Test                                                                                                                   | NOT_TESTED     |
+| CLOUD-7  | Server bestätigt die UI-ausgelöste Feedback-Mutation                          | neuer UI-/Netzwerktest                                                                                                          | NOT_TESTED     |
+| CLOUD-8  | Autorisierte Beta-Inbox-Zustellung                                            | Prüfschnittstelle fehlt                                                                                                         | BLOCKED        |
+| CLOUD-9  | Cognito-Logout, SPA-Denial und frischer Dokument-Deep-Link ohne Content-Flash | neuer UI-Test                                                                                                                   | NOT_TESTED     |
+| CLOUD-10 | Cross-User-/Cross-Tenant-Isolation über zweite Testidentität                  | neuer UI-Test mit Wiederherstellung der ursprünglichen Kontoeinstellung; bestehende Backend-Contract-Prüfungen bleiben erhalten | NOT_TESTED     |
 
 Die Matrix ist bewusst nicht vollständig. Weder `CLOUD-5` noch `CLOUD-8` dürfen
 durch einen Modell-Fallback, eine direkte GraphQL-Submission oder eine erfundene
