@@ -198,7 +198,7 @@ export function createAmplifyCognitoClient(
       try {
         const session = await authApi.fetchAuthSession({ forceRefresh });
         if (!session.tokens) return null;
-  
+
         const rawAttributes = await authApi.fetchUserAttributes();
         const attributes = rawAttributes as Record<string, string | undefined>;
         const idTokenPayload = session.tokens.idToken?.payload ?? {};
@@ -207,7 +207,7 @@ export function createAmplifyCognitoClient(
         if (!userId)
           throw new Error("Authenticated Cognito session has no stable subject identifier.");
         const roles = stringArrayClaim(idTokenPayload["cognito:groups"]);
-  
+
         return {
           userId,
           tenantId: tenantIdFromGroups(roles, userId),
