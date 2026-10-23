@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
-import { signOutFromAccountMenu } from "../../helpers/account-settings";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import {
+  closeAccountSettings,
+  openAccountSettings,
+  signOutFromAccountMenu,
+} from "../../helpers/account-settings";
 import { expectSignedIn } from "../../helpers/sign-in";
 import {
   observeProtectedContent,
@@ -13,13 +17,17 @@ function required(name: string): string {
   return name.endsWith("_PASSWORD") ? value : value.trim();
 }
 
-async function signIn(page: Page): Promise<void> {
+async function signInAs(page: Page, prefix: string): Promise<void> {
   await page.goto("/anmelden");
-  await page.getByLabel("E-Mail").fill(required("CLOUD_TEST_EMAIL"));
-  await page.getByLabel("Passwort").fill(required("CLOUD_TEST_PASSWORD"));
+  await page.getByLabel("E-Mail").fill(required(`${prefix}_EMAIL`));
+  await page.getByLabel("Passwort").fill(required(`${prefix}_PASSWORD`));
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expectSignedIn(page);
   await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
+}
+
+async function signIn(page: Page): Promise<void> {
+  await signInAs(page, "CLOUD_TEST");
 }
 
 async function expectDenied(page: Page): Promise<void> {
@@ -116,4 +124,65 @@ test("[CLOUD-9] real Cognito logout denies same-document and fresh-document deep
   } finally {
     await context.close();
   }
+});
+
+test("[CLOUD-10] account preference changes remain isolated across users and tenants", async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(240_000);
+  const baseURL = required("CLOUD_BASE_URL");
+  const contexts: BrowserContext[] = [];
+  let primaryPage: Page | undefined;
+  let originalName: string | undefined;
+  let changed = false;
+  let mainError: unknown;
+  let cleanupError: unknown;
+
+  try {
+    const primaryContext = await browser.newContext({ baseURL });
+    contexts.push(primaryContext);
+    primaryPage = await primaryContext.newPage();
+    await signInAs(primaryPage, "CLOUD_TEST");
+    const primarySettings = await openAccountSettings(primaryPage);
+    const primaryName = primarySettings.getByRole("textbox", { name: "Name" });
+    originalName = await primaryName.inputValue();
+    expect(originalName.trim()).not.toBe("");
+    const marker = `cloud-10-${randomUUID()}`;
+    await primaryName.fill(marker);
+    changed = true;
+    await primarySettings.getByRole("button", { name: "Speichern", exact: true }).click();
+    await expect(primarySettings).toBeHidden();
+
+    for (const prefix of ["CLOUD_TEST_PEER", "CLOUD_TEST_OTHER_TENANT"]) {
+      const context = await browser.newContext({ baseURL });
+      contexts.push(context);
+      const page = await context.newPage();
+      await signInAs(page, prefix);
+      const settings = await openAccountSettings(page);
+      await expect(settings.getByRole("textbox", { name: "Name" })).not.toHaveValue(marker);
+      await closeAccountSettings(settings);
+    }
+
+    await primaryPage.reload();
+    const persisted = await openAccountSettings(primaryPage);
+    await expect(persisted.getByRole("textbox", { name: "Name" })).toHaveValue(marker);
+    await closeAccountSettings(persisted);
+  } catch (error) {
+    mainError = error;
+  } finally {
+    testInfo.setTimeout(testInfo.timeout + 60_000);
+    if (changed && primaryPage && originalName !== undefined) {
+      try {
+        const settings = await openAccountSettings(primaryPage);
+        await settings.getByRole("textbox", { name: "Name" }).fill(originalName);
+        await settings.getByRole("button", { name: "Speichern", exact: true }).click();
+        await expect(settings).toBeHidden();
+      } catch (error) {
+        cleanupError = error;
+      }
+    }
+    await Promise.allSettled(contexts.map((context) => context.close()));
+  }
+  if (mainError !== undefined) throw mainError;
+  if (cleanupError !== undefined) throw cleanupError;
 });
