@@ -12,6 +12,7 @@ type PerfSamples = {
 declare global {
   interface Window {
     __perfSamples?: PerfSamples;
+    __perfStopFrames?: () => void;
   }
 }
 
@@ -87,11 +88,16 @@ async function instrument(page: Page): Promise<void> {
     }
 
     let previous = 0;
+    let sampling = true;
+    window.__perfStopFrames = () => {
+      sampling = false;
+    };
     const sampleFrames = (now: number) => {
+      if (!sampling) return;
       if (document.visibilityState === "visible" && previous > 0 && now - previous > 50) {
         if (samples.frameGapsMs.length < 2000) samples.frameGapsMs.push(now - previous);
       }
-      previous = now;
+      previous = document.visibilityState === "visible" ? now : 0;
       requestAnimationFrame(sampleFrames);
     };
     requestAnimationFrame(sampleFrames);
@@ -124,6 +130,10 @@ async function measureRoute(
     waitUntil: "domcontentloaded",
   });
   expect(response?.status(), route + " returned an unexpected HTTP status").toBe(200);
+  // Do not sample an incomplete load or mistake a missing LCP for a fast page.
+  await page.waitForFunction(() => (window.__perfSamples?.lcpMs ?? 0) > 0, undefined, {
+    timeout: 15_000,
+  });
 
   let interactionToPaintProxyMs: number | null = null;
   if (route === "/willkommen") {
@@ -171,8 +181,10 @@ async function measureRoute(
   }
 
   const readyMs = Date.now() - start;
-  await page.waitForTimeout(350);
-  const samples = await page.evaluate(() => window.__perfSamples);
+  const samples = await page.evaluate(() => {
+    window.__perfStopFrames?.();
+    return window.__perfSamples;
+  });
   if (!samples) throw new Error("Performance observer did not initialize for " + route);
   if (pageErrors.length > 0)
     throw new Error("Browser errors on " + route + ": " + pageErrors.join("; "));
@@ -194,41 +206,52 @@ async function runProfile(
   profile: (typeof profiles)[number],
   outputPath: (name: string) => string,
 ) {
+  if (browser.browserType().name() !== "chromium") {
+    throw new Error("Performance measurements require Chromium CDP");
+  }
   const rows: Array<{ run: number; routes: RouteSample[] }> = [];
+  const routeNames =
+    target === "release"
+      ? ["/willkommen"]
+      : ["/willkommen", "/", "/training/vscode-basics.guided"];
   for (let run = 1; run <= 3; run += 1) {
-    const context = await browser.newContext({
-      viewport: { width: 1280, height: 800 },
-      deviceScaleFactor: 1,
-      reducedMotion: profile.reduced ? "reduce" : "no-preference",
-    });
-    const page = await context.newPage();
-    await instrument(page);
-    const session = await context.newCDPSession(page);
-    await session.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
-    if (profile.constrainedNetwork) {
-      await session.send("Network.enable");
-      await session.send("Network.emulateNetworkConditions", {
-        offline: false,
-        latency: 80,
-        downloadThroughput: 200_000,
-        uploadThroughput: 100_000,
-      });
-    }
-    await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
     const routes: RouteSample[] = [];
-    try {
-      for (const route of target === "release"
-        ? ["/willkommen"]
-        : ["/willkommen", "/", "/training/vscode-basics.guided"]) {
-        routes.push(await measureRoute(page, route, profile.name, run === 1, outputPath));
-      }
-      rows.push({ run, routes });
-    } finally {
-      await context.tracing.stop({
-        path: outputPath(profile.name + "-run-" + run + "-trace.zip"),
+    for (const route of routeNames) {
+      // A new browser context for EACH route prevents cached assets and auth state
+      // from silently turning later cold-route samples into warm navigations.
+      const context = await browser.newContext({
+        viewport: { width: 1280, height: 800 },
+        deviceScaleFactor: 1,
+        reducedMotion: profile.reduced ? "reduce" : "no-preference",
       });
-      await context.close();
+      const page = await context.newPage();
+      const routeKey = route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "dashboard";
+      try {
+        await instrument(page);
+        const session = await context.newCDPSession(page);
+        await session.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
+        if (profile.constrainedNetwork) {
+          await session.send("Network.enable");
+          await session.send("Network.emulateNetworkConditions", {
+            offline: false,
+            latency: 80,
+            downloadThroughput: 200_000,
+            uploadThroughput: 100_000,
+          });
+        }
+        await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+        try {
+          routes.push(await measureRoute(page, route, profile.name, run === 1, outputPath));
+        } finally {
+          await context.tracing.stop({
+            path: outputPath(profile.name + "-" + routeKey + "-run-" + run + "-trace.zip"),
+          });
+        }
+      } finally {
+        await context.close();
+      }
     }
+    rows.push({ run, routes });
   }
   return rows;
 }
