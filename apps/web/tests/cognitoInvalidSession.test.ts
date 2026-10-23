@@ -349,7 +349,8 @@ test("beta-access denial retains its user-safe message and the original cause", 
     }),
     (error: unknown) =>
       error instanceof Error &&
-      error.message === "Diese geschlossene Beta ist aktuell nur für eingeladene Tester verfügbar." &&
+      error.message ===
+        "Diese geschlossene Beta ist aktuell nur für eingeladene Tester verfügbar." &&
       error.cause === providerError,
   );
 });
