@@ -109,7 +109,7 @@ test("direct sign-in retries once after forced validation clears revoked tokens"
   const client = createAmplifyCognitoClient({
     configure: async () => undefined,
     authApi: {
-      fetchAuthSession: async ({ forceRefresh } = {}) => {
+      fetchAuthSession: async ({ forceRefresh }: { forceRefresh?: boolean } = {}) => {
         refreshFlags.push(Boolean(forceRefresh));
         return validTokens();
       },
