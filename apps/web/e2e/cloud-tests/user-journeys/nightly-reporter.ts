@@ -49,7 +49,7 @@ export default class NightlyJourneyReporter implements Reporter {
     // An unimplemented or blocked journey is not an accepted release. Exit nonzero until all ten
     // have executed and passed; never turn missing cloud evidence into a green nightly.
     const failed = results.length - passed;
-    const file = resolve(process.env.NIGHTLY_REPORT_DIR ?? "nightly-artifacts", "journeys.json");
+    const file = resolve(process.env.NIGHTLY_REPORT_DIR ?? "/tmp/ai-train-lab-nightly", "journeys.json");
     await mkdir(dirname(file), { recursive: true });
     await writeFile(
       file,
