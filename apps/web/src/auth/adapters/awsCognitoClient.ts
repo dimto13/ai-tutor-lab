@@ -47,10 +47,33 @@ export interface CognitoAuthClient {
 
 export interface AmplifyCognitoClientOptions {
   outputsUrl?: string;
+  // Adapter-local injection for deterministic Cognito rejection/recovery tests.
+  configure?: () => Promise<void>;
+  authApi?: Partial<{
+    fetchAuthSession: typeof fetchAuthSession;
+    fetchUserAttributes: typeof fetchUserAttributes;
+    signIn: typeof signIn;
+    signOut: typeof signOut;
+  }>;
 }
 
 const OAUTH_CALLBACK_TIMEOUT_MS = 15_000;
 const TENANT_GROUP_PREFIX = "tenant:";
+const REJECTED_SESSION_ERRORS = new Set([
+  "NotAuthorizedException",
+  "UserNotFoundException",
+  "UserUnAuthenticatedException",
+]);
+
+function isRejectedSessionError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    typeof error.name === "string" &&
+    REJECTED_SESSION_ERRORS.has(error.name)
+  );
+}
 
 function stringClaim(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
@@ -134,9 +157,17 @@ export function createAmplifyCognitoClient(
   options: AmplifyCognitoClientOptions = {},
 ): CognitoAuthClient {
   const outputsUrl = options.outputsUrl ?? "/amplify_outputs.json";
+  const authApi = {
+    fetchAuthSession,
+    fetchUserAttributes,
+    signIn,
+    signOut,
+    ...options.authApi,
+  };
   let configurationPromise: Promise<void> | null = null;
 
   const ensureConfigured = async () => {
+    if (options.configure) return options.configure();
     if (configurationPromise) return configurationPromise;
 
     configurationPromise = (async () => {
@@ -164,32 +195,40 @@ export function createAmplifyCognitoClient(
     async getSession(forceRefresh = false) {
       await ensureConfigured();
 
-      const session = await fetchAuthSession({ forceRefresh });
-      if (!session.tokens) return null;
-
-      const rawAttributes = await fetchUserAttributes();
-      const attributes = rawAttributes as Record<string, string | undefined>;
-      const idTokenPayload = session.tokens.idToken?.payload ?? {};
-      const accessTokenPayload = session.tokens.accessToken.payload;
-      const userId = stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
-      if (!userId)
-        throw new Error("Authenticated Cognito session has no stable subject identifier.");
-      const roles = stringArrayClaim(idTokenPayload["cognito:groups"]);
-
-      return {
-        userId,
-        tenantId: tenantIdFromGroups(roles, userId),
-        email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
-        displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
-        roles,
-        accessToken: session.tokens.accessToken.toString(),
-        expiresAt: expirationIso(accessTokenPayload["exp"]),
-      };
+      try {
+        const session = await authApi.fetchAuthSession({ forceRefresh });
+        if (!session.tokens) return null;
+  
+        const rawAttributes = await authApi.fetchUserAttributes();
+        const attributes = rawAttributes as Record<string, string | undefined>;
+        const idTokenPayload = session.tokens.idToken?.payload ?? {};
+        const accessTokenPayload = session.tokens.accessToken.payload;
+        const userId = stringClaim(idTokenPayload["sub"]) ?? stringClaim(accessTokenPayload["sub"]);
+        if (!userId)
+          throw new Error("Authenticated Cognito session has no stable subject identifier.");
+        const roles = stringArrayClaim(idTokenPayload["cognito:groups"]);
+  
+        return {
+          userId,
+          tenantId: tenantIdFromGroups(roles, userId),
+          email: attributes["email"] ?? stringClaim(idTokenPayload["email"]),
+          displayName: attributes["name"] ?? stringClaim(idTokenPayload["name"]),
+          roles,
+          accessToken: session.tokens.accessToken.toString(),
+          expiresAt: expirationIso(accessTokenPayload["exp"]),
+        };
+      } catch (error) {
+        if (!isRejectedSessionError(error)) throw error;
+        // A rejected server session must not strand locally cached tokens.
+        // The normal (non-global) Amplify sign-out clears this browser's session.
+        await authApi.signOut();
+        return null;
+      }
     },
 
     async signInWithPassword(identifier, password) {
       await ensureConfigured();
-      const result = await signIn({ username: identifier, password });
+      const result = await authApi.signIn({ username: identifier, password });
       if (result.isSignedIn || result.nextStep.signInStep === "DONE") return "done";
       if (result.nextStep.signInStep === "CONFIRM_SIGN_UP") return "confirm_sign_up";
       return "requires_action";
@@ -246,7 +285,7 @@ export function createAmplifyCognitoClient(
 
     async signOut() {
       await ensureConfigured();
-      await signOut();
+      await authApi.signOut();
     },
   };
 }
