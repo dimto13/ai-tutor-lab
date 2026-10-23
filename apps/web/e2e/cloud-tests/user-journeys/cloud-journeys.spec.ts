@@ -184,7 +184,10 @@ test("[CLOUD-10] account preference changes remain isolated across users and ten
     await Promise.allSettled(contexts.map((context) => context.close()));
   }
   if (mainError !== undefined && cleanupError !== undefined) {
-    throw new AggregateError([mainError, cleanupError], "Cloud journey and account restoration failed.");
+    throw new AggregateError(
+      [mainError, cleanupError],
+      "Cloud journey and account restoration failed.",
+    );
   }
   if (mainError !== undefined) throw mainError;
   if (cleanupError !== undefined) throw cleanupError;
