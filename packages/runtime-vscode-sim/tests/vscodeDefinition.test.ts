@@ -31,6 +31,19 @@ test("VS Code simulator publishes a semantic runtime definition", () => {
   assert.ok(VSCODE_RUNTIME_DEFINITION.querySelectors.includes("scm.lastCommit.branch"));
 });
 
+test("VS Code Activity Bar uses consistent English product labels", () => {
+  const expectedLabels: Record<string, string> = {
+    "vscode.activityBar.explorer": "Explorer",
+    "vscode.activityBar.search": "Search",
+    "vscode.activityBar.scm": "Source Control",
+    "vscode.activityBar.extensions": "Extensions",
+  };
+  for (const [ref, expectedLabel] of Object.entries(expectedLabels)) {
+    const surface = VSCODE_RUNTIME_DEFINITION.surface.find((item) => item.ref === ref);
+    assert.equal(surface?.label, expectedLabel, `${ref} must use the product locale`);
+  }
+});
+
 test("VS Code workflow state persists branch and last terminal result", async () => {
   await vscodeRuntime.mount(createContainer(), {
     workspaceMode: "folder",

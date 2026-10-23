@@ -58,7 +58,7 @@ export const VSCODE_RUNTIME_DEFINITION = {
       label: "Explorer",
       conceptKey: "vscode.explorer",
     },
-    { ref: "vscode.activityBar.search", label: "Suche", conceptKey: "vscode.search" },
+    { ref: "vscode.activityBar.search", label: "Search", conceptKey: "vscode.search" },
     {
       ref: "vscode.activityBar.scm",
       label: "Source Control",

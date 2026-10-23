@@ -77,7 +77,7 @@ test("Speed Challenge: Aufgabe wird vor dem Start erklärt und Countdown startet
   await startChallenge(page);
   await expect(page.getByText("Harte Zeitgrenze", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Suche", exact: true }).click();
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByRole("button", { name: "Neue Datei", exact: true })).not.toBeVisible();
   await page.keyboard.press("Control+Shift+E");
   await expect(page.getByRole("button", { name: "Neue Datei", exact: true })).toBeVisible();
@@ -154,7 +154,7 @@ test("Speed Challenge: Shortcuts bleiben nach Klick auf eine nicht fokussierbare
   await startChallenge(page);
   await createDirtyChallengeFile(page);
 
-  await page.getByRole("button", { name: "Suche", exact: true }).click();
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByRole("button", { name: "Neue Datei", exact: true })).not.toBeVisible();
 
   await page.getByText("main", { exact: true }).click();
