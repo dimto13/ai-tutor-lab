@@ -26,7 +26,9 @@ test("VS Code Grundlagen: Command Palette filtert, zählt als Lernoberfläche un
   await input.press("Enter");
   await expect(page.getByRole("searchbox", { name: "Search files" })).toBeVisible();
   await expect(
-    page.getByText("Plattform-Hinweis: Durchsuche Dateien und Inhalte im aktuellen Arbeitskontext."),
+    page.getByText(
+      "Plattform-Hinweis: Durchsuche Dateien und Inhalte im aktuellen Arbeitskontext.",
+    ),
   ).toBeVisible();
 });
 
