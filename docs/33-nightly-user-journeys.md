@@ -25,12 +25,13 @@ Repository, GitHub-Kommentaren, Screenshots oder Berichten.
 | CLOUD-7 | Server bestätigt die UI-ausgelöste Feedback-Mutation | neuer UI-/Netzwerktest | NOT_TESTED |
 | CLOUD-8 | Autorisierte Beta-Inbox-Zustellung | Prüfschnittstelle fehlt | BLOCKED |
 | CLOUD-9 | Cognito-Logout, SPA-Denial und frischer Dokument-Deep-Link ohne Content-Flash | neuer UI-Test | NOT_TESTED |
-| CLOUD-10 | Cross-User-/Cross-Tenant-Isolation über zweite Testidentität | bestehende Cloud-Backend-Contract-Prüfungen sind kein vollständiger Journey-Nachweis | NOT_TESTED |
+| CLOUD-10 | Cross-User-/Cross-Tenant-Isolation über zweite Testidentität | neuer UI-Test mit Wiederherstellung der ursprünglichen Kontoeinstellung; bestehende Backend-Contract-Prüfungen bleiben erhalten | NOT_TESTED |
 
 Die Matrix ist bewusst nicht vollständig. Weder `CLOUD-5` noch `CLOUD-8` dürfen
 durch einen Modell-Fallback, eine direkte GraphQL-Submission oder eine erfundene
-Inbox-Quittung grün werden. `CLOUD-10` muss die zweite Identität im fachlichen
-UI-/Server-Kontext prüfen. Die vorhandenen Backend-Isolationstests bleiben aktiv.
+Inbox-Quittung grün werden. `CLOUD-10` verwendet zwei weitere echte Cognito-Testidentitäten und prüft
+über das UI serverpersistierte Profilisolation mit anschließender Wiederherstellung.
+Die vorhandenen Backend-Isolationstests bleiben aktiv.
 
 ## Voraussetzungen
 
