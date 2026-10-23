@@ -29,7 +29,7 @@ async function expectDenied(page: Page): Promise<void> {
   await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
 }
 
-async function sendProblem(page: Page, marker: string): Promise<void> {
+async function prepareProblem(page: Page, marker: string): Promise<void> {
   await signIn(page);
   await page.goto("/training/vscode-basics.guided");
   await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toBeVisible();
@@ -39,6 +39,10 @@ async function sendProblem(page: Page, marker: string): Promise<void> {
   await dialog
     .getByPlaceholder("Beschreibe kurz das Problem oder deinen Verbesserungsvorschlag.")
     .fill(`Synthetische Cloud-Abnahme ${marker}: Meldung aus dem Tutor.`);
+}
+
+async function submitProblem(page: Page): Promise<void> {
+  const dialog = page.getByRole("dialog", { name: "Problem melden" });
   await dialog.getByRole("button", { name: "Problemmeldung senden" }).click();
   await expect(dialog.getByRole("status")).toContainText("Feedback an die Beta-Inbox gesendet");
   await expect(dialog.getByRole("alert")).toHaveCount(0);
@@ -53,18 +57,20 @@ test("[CLOUD-1] real Cognito form login reaches authenticated dashboard", async 
 test("[CLOUD-6] Tutor problem is explicitly submitted and confirmed through UI", async ({
   page,
 }) => {
-  await sendProblem(page, `cloud-6-${randomUUID()}`);
+  await prepareProblem(page, `cloud-6-${randomUUID()}`);
+  await submitProblem(page);
 });
 
 test("[CLOUD-7] Tutor UI problem receives an accepted server mutation response", async ({
   page,
 }) => {
+  await prepareProblem(page, `cloud-7-${randomUUID()}`);
   const responsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       (response.request().postData() ?? "").includes("submitBetaFeedback"),
   );
-  await sendProblem(page, `cloud-7-${randomUUID()}`);
+  await submitProblem(page);
   const response = await responsePromise;
   expect(response.ok(), "the authenticated AppSync mutation must return HTTP success").toBe(true);
   const body = (await response.json()) as {
