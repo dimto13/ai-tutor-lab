@@ -2,7 +2,17 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const root = process.argv[2];
+const expectedSha = process.env.PERF_ARTIFACT_SHA;
 if (!root) throw new Error("Provide Playwright output directory");
+if (!/^[0-9a-f]{40}$/.test(expectedSha ?? "")) {
+  throw new Error("PERF_ARTIFACT_SHA must be the full production artifact SHA");
+}
+
+const expectedProfiles = new Set([
+  "desktop-animated",
+  "constrained-animated",
+  "constrained-reduced",
+]);
 
 async function collect(directory) {
   const files = [];
@@ -14,33 +24,87 @@ async function collect(directory) {
   return files;
 }
 
+function median(values) {
+  if (values.length === 0 || values.some((value) => !Number.isFinite(value))) {
+    throw new Error("Missing or non-finite performance measurements");
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function requiredMetric(row, key, route) {
+  const value = row?.[key];
+  if (!Number.isFinite(value) || value < 0 || (key === "lcpMs" && value === 0)) {
+    throw new Error("Missing/invalid " + key + " measurement on " + route);
+  }
+  return value;
+}
+
 const files = await collect(root);
-if (files.length !== 3) throw new Error("Expected three performance profiles");
+if (files.length !== expectedProfiles.size) {
+  throw new Error("Expected one sample file for each required performance profile");
+}
+
 const summaries = [];
+const seenProfiles = new Set();
 for (const file of files) {
   const data = JSON.parse(await readFile(file, "utf8"));
-  if (data.artifactSha !== process.env.PERF_ARTIFACT_SHA || data.runs.length !== 3) {
-    throw new Error("Missing or wrong-SHA performance evidence");
+  const profile = data.profile?.name;
+  if (!expectedProfiles.has(profile) || seenProfiles.has(profile)) {
+    throw new Error("Missing, duplicate or unknown performance profile: " + profile);
   }
-  const routes = data.runs[0].routes.map((row) => row.route);
-  for (const route of routes) {
-    const points = data.runs.map((run) => run.routes.find((row) => row.route === route));
-    if (points.some((row) => !row || !Number.isFinite(row.lcpMs) || row.lcpMs <= 0)) {
-      throw new Error("Missing LCP measurement on " + route);
+  seenProfiles.add(profile);
+  if (
+    data.artifactSha !== expectedSha ||
+    data.syntheticOnly !== true ||
+    data.fieldEvidence !== false ||
+    !Array.isArray(data.runs) ||
+    data.runs.length !== 3
+  ) {
+    throw new Error("Missing, incomplete or wrong-SHA performance evidence: " + profile);
+  }
+
+  const routeNames = data.runs[0]?.routes?.map((row) => row.route);
+  if (!Array.isArray(routeNames) || routeNames.length === 0) {
+    throw new Error("No measured routes in " + profile);
+  }
+  if (new Set(routeNames).size !== routeNames.length) {
+    throw new Error("Duplicate routes in " + profile);
+  }
+  for (const run of data.runs) {
+    if (!Array.isArray(run.routes) || run.routes.length !== routeNames.length) {
+      throw new Error("Incomplete route measurements in " + profile);
     }
-    const sorted = points.map((row) => row.readyMs).sort((a, b) => a - b);
+    if (new Set(run.routes.map((row) => row.route)).size !== routeNames.length) {
+      throw new Error("Duplicate route measurements in " + profile);
+    }
+  }
+
+  for (const route of routeNames) {
+    const points = data.runs.map((run) => run.routes.find((row) => row.route === route));
+    if (points.some((row) => !row)) {
+      throw new Error("Missing route measurement: " + profile + " / " + route);
+    }
+    const ready = points.map((row) => requiredMetric(row, "readyMs", route));
+    const lcp = points.map((row) => requiredMetric(row, "lcpMs", route));
+    const cls = points.map((row) => requiredMetric(row, "cls", route));
+    const frameGaps = points.map((row) => requiredMetric(row, "frameGapMaxMs", route));
+    const longTasks = points.map((row) => requiredMetric(row, "longTaskMaxMs", route));
     summaries.push({
-      profile: data.profile.name,
+      profile,
       route,
-      readyMedianMs: sorted[1],
-      lcpMedianMs: points.map((row) => row.lcpMs).sort((a, b) => a - b)[1],
-      maxFrameGapMs: Math.max(...points.map((row) => row.frameGapMaxMs)),
-      maxLongTaskMs: Math.max(...points.map((row) => row.longTaskMaxMs)),
+      readyMedianMs: median(ready),
+      lcpMedianMs: median(lcp),
+      clsMedian: median(cls),
+      maxFrameGapMs: Math.max(...frameGaps),
+      maxLongTaskMs: Math.max(...longTasks),
     });
   }
 }
+
 const result = {
-  artifactSha: process.env.PERF_ARTIFACT_SHA,
+  artifactSha: expectedSha,
   syntheticOnly: true,
   fieldEvidence: false,
   budgetStatus: "PENDING_PLAN_APPROVAL",
