@@ -211,9 +211,7 @@ async function runProfile(
   }
   const rows: Array<{ run: number; routes: RouteSample[] }> = [];
   const routeNames =
-    target === "release"
-      ? ["/willkommen"]
-      : ["/willkommen", "/", "/training/vscode-basics.guided"];
+    target === "release" ? ["/willkommen"] : ["/willkommen", "/", "/training/vscode-basics.guided"];
   for (let run = 1; run <= 3; run += 1) {
     const routes: RouteSample[] = [];
     for (const route of routeNames) {
