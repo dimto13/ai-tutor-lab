@@ -112,7 +112,11 @@ test("sign-in failures expose a neutral German message, not the Cognito provider
   } as unknown as CognitoAuthClient);
 
   await assert.rejects(
-    service.signIn({ method: "password", identifier: "learner@example.test", password: "password" }),
+    service.signIn({
+      method: "password",
+      identifier: "learner@example.test",
+      password: "password",
+    }),
     (error: unknown) =>
       error instanceof Error &&
       error.message.includes("Anmeldung fehlgeschlagen") &&

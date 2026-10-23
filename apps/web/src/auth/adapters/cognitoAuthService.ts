@@ -76,7 +76,9 @@ export function createCognitoAuthService(
         const betaError = betaAccessError(error);
         if (betaError) throw betaError;
         // Never render raw Cognito/Amplify errors on the sign-in page.
-        throw new Error("Anmeldung fehlgeschlagen. Bitte überprüfe deine Angaben und versuche es erneut.");
+        throw new Error(
+          "Anmeldung fehlgeschlagen. Bitte überprüfe deine Angaben und versuche es erneut.",
+        );
       }
     },
 
