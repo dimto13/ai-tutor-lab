@@ -30,8 +30,14 @@ const baseURL = process.env.PERF_BASE_URL;
 const target = process.env.PERF_TARGET;
 const artifactSha = process.env.PERF_ARTIFACT_SHA;
 
-if (!baseURL || !["local", "release"].includes(target ?? "") || !/^[0-9a-f]{40}$/.test(artifactSha ?? "")) {
-  throw new Error("PERF_BASE_URL, PERF_TARGET=local|release and full PERF_ARTIFACT_SHA are required");
+if (
+  !baseURL ||
+  !["local", "release"].includes(target ?? "") ||
+  !/^[0-9a-f]{40}$/.test(artifactSha ?? "")
+) {
+  throw new Error(
+    "PERF_BASE_URL, PERF_TARGET=local|release and full PERF_ARTIFACT_SHA are required",
+  );
 }
 
 const profiles = [
@@ -130,7 +136,9 @@ async function measureRoute(
     const canvas = page.locator("canvas.lp-fx");
     await expect(canvas).toHaveCount(1);
     if (!profileName.includes("reduced")) {
-      expect(await canvas.evaluate((element) => (element as HTMLCanvasElement).width)).toBeGreaterThan(0);
+      expect(
+        await canvas.evaluate((element) => (element as HTMLCanvasElement).width),
+      ).toBeGreaterThan(0);
     }
 
     for (let index = 1; index <= 5; index += 1) {
@@ -149,10 +157,15 @@ async function measureRoute(
   } else if (route === "/") {
     await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
     interactionToPaintProxyMs = await paintAfterAction(page, () =>
-      page.getByRole("link", { name: /^Explore/ }).first().focus(),
+      page
+        .getByRole("link", { name: /^Explore/ })
+        .first()
+        .focus(),
     );
   } else if (route === "/training/vscode-basics.guided") {
-    await expect(page.locator('p[role="status"]').filter({ hasText: "Training bereit" })).toBeVisible();
+    await expect(
+      page.locator('p[role="status"]').filter({ hasText: "Training bereit" }),
+    ).toBeVisible();
     interactionToPaintProxyMs = await paintAfterAction(page, async () => {
       await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
       await expect(page.getByRole("heading", { name: /Schritt 7/ })).toBeVisible();
@@ -163,7 +176,8 @@ async function measureRoute(
   await page.waitForTimeout(350);
   const samples = await page.evaluate(() => window.__perfSamples);
   if (!samples) throw new Error("Performance observer did not initialize for " + route);
-  if (pageErrors.length > 0) throw new Error("Browser errors on " + route + ": " + pageErrors.join("; "));
+  if (pageErrors.length > 0)
+    throw new Error("Browser errors on " + route + ": " + pageErrors.join("; "));
 
   return {
     route,
