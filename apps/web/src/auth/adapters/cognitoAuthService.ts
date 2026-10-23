@@ -36,7 +36,9 @@ function betaAccessError(error: unknown): Error | null {
 function safeSignInError(error: unknown): Error {
   return (
     betaAccessError(error) ??
-    new Error("Anmeldung fehlgeschlagen. Bitte überprüfe deine Angaben und versuche es erneut.")
+    new Error("Anmeldung fehlgeschlagen. Bitte überprüfe deine Angaben und versuche es erneut.", {
+      cause: error,
+    })
   );
 }
 
