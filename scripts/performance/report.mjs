@@ -91,6 +91,10 @@ for (const file of files) {
     const cls = points.map((row) => requiredMetric(row, "cls", route));
     const frameGaps = points.map((row) => requiredMetric(row, "frameGapMaxMs", route));
     const longTasks = points.map((row) => requiredMetric(row, "longTaskMaxMs", route));
+    // Driver-inclusive input-to-paint proxy, explicitly not a field INP measurement.
+    const interactions = points.map((row) =>
+      requiredMetric(row, "interactionToPaintProxyMs", route),
+    );
     summaries.push({
       profile,
       route,
@@ -99,6 +103,8 @@ for (const file of files) {
       clsMedian: median(cls),
       maxFrameGapMs: Math.max(...frameGaps),
       maxLongTaskMs: Math.max(...longTasks),
+      interactionToPaintProxyMedianMs: median(interactions),
+      interactionToPaintProxyMaxMs: Math.max(...interactions),
     });
   }
 }
