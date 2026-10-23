@@ -7,7 +7,7 @@ if (!releaseSha || !/^[a-f0-9]{40}$/i.test(releaseSha)) {
   throw new Error("CLOUD_RELEASE_SHA must be the exact 40-character deploy commit.");
 }
 
-const reportDir = resolve(process.env.NIGHTLY_REPORT_DIR ?? "nightly-artifacts");
+const reportDir = resolve(process.env.NIGHTLY_REPORT_DIR ?? "/tmp/ai-train-lab-nightly");
 
 export default defineConfig(cloudConfig, {
   reporter: [
