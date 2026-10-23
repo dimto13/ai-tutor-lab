@@ -46,31 +46,38 @@ export function createCognitoAuthService(
     },
 
     async signIn(request): Promise<SignInResult> {
-      if (request.method === "oidc") {
-        await client.signInWithOidc(request.providerId);
-        return { status: "redirecting" };
-      }
+      try {
+        if (request.method === "oidc") {
+          await client.signInWithOidc(request.providerId);
+          return { status: "redirecting" };
+        }
 
-      const outcome = await client.signInWithPassword(request.identifier, request.password);
-      if (outcome === "confirm_sign_up") {
+        const outcome = await client.signInWithPassword(request.identifier, request.password);
+        if (outcome === "confirm_sign_up") {
+          return {
+            status: "confirmation_required",
+            email: request.identifier,
+          };
+        }
+        if (outcome !== "done") {
+          throw new Error("Authentication requires an additional verification step.");
+        }
+
+        const session = toAuthSession(await client.getSession());
+        if (!session) {
+          throw new Error("Authentication completed without an available user session.");
+        }
+
         return {
-          status: "confirmation_required",
-          email: request.identifier,
+          status: "authenticated",
+          session,
         };
+      } catch (error) {
+        const betaError = betaAccessError(error);
+        if (betaError) throw betaError;
+        // Never render raw Cognito/Amplify errors on the sign-in page.
+        throw new Error("Anmeldung fehlgeschlagen. Bitte überprüfe deine Angaben und versuche es erneut.");
       }
-      if (outcome !== "done") {
-        throw new Error("Authentication requires an additional verification step.");
-      }
-
-      const session = toAuthSession(await client.getSession());
-      if (!session) {
-        throw new Error("Authentication completed without an available user session.");
-      }
-
-      return {
-        status: "authenticated",
-        session,
-      };
     },
 
     async signUp(request): Promise<SignUpResult> {
