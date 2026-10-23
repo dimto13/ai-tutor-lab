@@ -43,9 +43,16 @@ test("[UJ-LOGIN] sign in, sign out and deny protected content", async ({ page },
     await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toHaveCount(0);
     await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
 
-    // Exercise the initial-load guard as well as the in-app route guard after sign-out.
-    await page.goto("/training/vscode-basics.guided");
+    // A second protected scenario must also be denied within the same document.
+    // Local auth intentionally creates a fresh synthetic session on full page loads;
+    // the real post-logout reload/deep-link security gate belongs to CLOUD-9 (#587).
+    await page.evaluate(() => {
+      window.history.pushState({}, "", "/training/vscode-basics.challenge");
+      window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }));
+    });
+
     await expect(page).toHaveURL(/\/willkommen$/);
+    await expect(page.getByRole("heading", { name: "Über KI reden" })).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: "Training bereit" })).toHaveCount(0);
     await expect(page.getByTestId("account-menu-trigger")).toHaveCount(0);
   });
