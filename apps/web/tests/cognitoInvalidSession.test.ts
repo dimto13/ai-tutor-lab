@@ -157,10 +157,9 @@ test("direct sign-in preserves a valid existing session rather than signing it o
     } as unknown as AuthApi,
   });
 
-  await assert.rejects(
-    client.signInWithPassword("other@example.test", "password"),
-    { name: "UserAlreadyAuthenticatedException" },
-  );
+  await assert.rejects(client.signInWithPassword("other@example.test", "password"), {
+    name: "UserAlreadyAuthenticatedException",
+  });
   assert.equal(signInCalls, 1);
   assert.equal(signOutCalls, 0);
 });
