@@ -119,8 +119,6 @@ async function measureRoute(
 ): Promise<RouteSample> {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await instrument(page);
-
   const start = Date.now();
   const response = await page.goto(new URL(route, baseURL).toString(), {
     waitUntil: "domcontentloaded",
@@ -204,6 +202,7 @@ async function runProfile(
       reducedMotion: profile.reduced ? "reduce" : "no-preference",
     });
     const page = await context.newPage();
+    await instrument(page);
     const session = await context.newCDPSession(page);
     await session.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
     if (profile.constrainedNetwork) {
