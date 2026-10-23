@@ -30,7 +30,44 @@ function toAuthSession(
 
 function betaAccessError(error: unknown): Error | null {
   const message = error instanceof Error ? error.message : String(error);
-  return message.includes(BETA_ACCESS_DENIED_MARKER) ? new Error(BETA_ACCESS_DENIED_MESSAGE) : null;
+  return message.includes(BETA_ACCESS_DENIED_MARKER)
+    ? new Error(BETA_ACCESS_DENIED_MESSAGE, { cause: error })
+    : null;
+}
+
+// Only recognized connection/system failures receive retry-later guidance.
+// Keep rejected-session detection separate and strict: these names must never
+// trigger token cleanup or change whether an existing session is valid.
+const TEMPORARY_SIGN_IN_ERROR_NAMES = new Set([
+  "NetworkError",
+  "TimeoutError",
+  "AbortError",
+  "ServiceUnavailableException",
+  "InternalErrorException",
+  "TooManyRequestsException",
+  "ThrottlingException",
+]);
+
+function isTemporarySignInError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    typeof error.name === "string" &&
+    TEMPORARY_SIGN_IN_ERROR_NAMES.has(error.name)
+  );
+}
+
+function safeSignInError(error: unknown): Error {
+  const betaError = betaAccessError(error);
+  if (betaError) return betaError;
+
+  return new Error(
+    isTemporarySignInError(error)
+      ? "Die Anmeldung ist vorübergehend nicht verfügbar. Bitte überprüfe deine Verbindung oder versuche es später erneut."
+      : "Anmeldung fehlgeschlagen. Bitte überprüfe deine Angaben und versuche es erneut.",
+    { cause: error },
+  );
 }
 
 export function createCognitoAuthService(
@@ -47,11 +84,20 @@ export function createCognitoAuthService(
 
     async signIn(request): Promise<SignInResult> {
       if (request.method === "oidc") {
-        await client.signInWithOidc(request.providerId);
+        try {
+          await client.signInWithOidc(request.providerId);
+        } catch (error) {
+          throw safeSignInError(error);
+        }
         return { status: "redirecting" };
       }
 
-      const outcome = await client.signInWithPassword(request.identifier, request.password);
+      let outcome: Awaited<ReturnType<CognitoAuthClient["signInWithPassword"]>>;
+      try {
+        outcome = await client.signInWithPassword(request.identifier, request.password);
+      } catch (error) {
+        throw safeSignInError(error);
+      }
       if (outcome === "confirm_sign_up") {
         return {
           status: "confirmation_required",
@@ -62,7 +108,13 @@ export function createCognitoAuthService(
         throw new Error("Authentication requires an additional verification step.");
       }
 
-      const session = toAuthSession(await client.getSession());
+      let snapshot: Awaited<ReturnType<CognitoAuthClient["getSession"]>>;
+      try {
+        snapshot = await client.getSession();
+      } catch (error) {
+        throw safeSignInError(error);
+      }
+      const session = toAuthSession(snapshot);
       if (!session) {
         throw new Error("Authentication completed without an available user session.");
       }
