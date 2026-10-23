@@ -75,6 +75,15 @@ function isRejectedSessionError(error: unknown): boolean {
   );
 }
 
+function isAlreadyAuthenticatedError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "UserAlreadyAuthenticatedException"
+  );
+}
+
 function stringClaim(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
@@ -167,10 +176,13 @@ export function createAmplifyCognitoClient(
   let configurationPromise: Promise<void> | null = null;
 
   const ensureConfigured = async () => {
-    if (options.configure) return options.configure();
     if (configurationPromise) return configurationPromise;
 
     configurationPromise = (async () => {
+      if (options.configure) {
+        await options.configure();
+        return;
+      }
       if (typeof window === "undefined") {
         throw new Error("Cognito browser authentication cannot be configured during SSR.");
       }
@@ -191,7 +203,7 @@ export function createAmplifyCognitoClient(
     return configurationPromise;
   };
 
-  return {
+  const client: CognitoAuthClient = {
     async getSession(forceRefresh = false) {
       await ensureConfigured();
 
@@ -228,7 +240,18 @@ export function createAmplifyCognitoClient(
 
     async signInWithPassword(identifier, password) {
       await ensureConfigured();
-      const result = await authApi.signIn({ username: identifier, password });
+      const authenticate = () => authApi.signIn({ username: identifier, password });
+      let result: Awaited<ReturnType<typeof authApi.signIn>>;
+      try {
+        result = await authenticate();
+      } catch (error) {
+        if (!isAlreadyAuthenticatedError(error)) throw error;
+        // Only retry if a forced server check confirms there is no valid session.
+        // getSession clears rejected local tokens; transient failures never sign out.
+        const cachedSession = await client.getSession(true);
+        if (cachedSession) throw error;
+        result = await authenticate();
+      }
       if (result.isSignedIn || result.nextStep.signInStep === "DONE") return "done";
       if (result.nextStep.signInStep === "CONFIRM_SIGN_UP") return "confirm_sign_up";
       return "requires_action";
@@ -288,4 +311,6 @@ export function createAmplifyCognitoClient(
       await authApi.signOut();
     },
   };
+
+  return client;
 }
