@@ -102,12 +102,139 @@ test("transient GetUser errors do not discard potentially valid tokens", async (
   assert.equal(cleared, 0);
 });
 
+test("direct sign-in retries once after forced validation clears revoked tokens", async () => {
+  let signInCalls = 0;
+  let signOutCalls = 0;
+  const refreshFlags: boolean[] = [];
+  const client = createAmplifyCognitoClient({
+    configure: async () => undefined,
+    authApi: {
+      fetchAuthSession: async ({ forceRefresh } = {}) => {
+        refreshFlags.push(Boolean(forceRefresh));
+        return validTokens();
+      },
+      fetchUserAttributes: async () => {
+        throw rejectedSession();
+      },
+      signOut: async () => {
+        signOutCalls += 1;
+      },
+      signIn: async () => {
+        signInCalls += 1;
+        if (signInCalls === 1) {
+          throw Object.assign(new Error("There is already a signed in user."), {
+            name: "UserAlreadyAuthenticatedException",
+          });
+        }
+        return { isSignedIn: true, nextStep: { signInStep: "DONE" } };
+      },
+    } as unknown as AuthApi,
+  });
+
+  assert.equal(await client.signInWithPassword("learner@example.test", "password"), "done");
+  assert.deepEqual(refreshFlags, [true]);
+  assert.equal(signOutCalls, 1);
+  assert.equal(signInCalls, 2, "one bounded retry, never a loop");
+});
+
+test("direct sign-in preserves a valid existing session rather than signing it out", async () => {
+  let signInCalls = 0;
+  let signOutCalls = 0;
+  const client = createAmplifyCognitoClient({
+    configure: async () => undefined,
+    authApi: {
+      fetchAuthSession: async () => validTokens(),
+      fetchUserAttributes: async () => ({ email: "learner@example.test" }),
+      signOut: async () => {
+        signOutCalls += 1;
+      },
+      signIn: async () => {
+        signInCalls += 1;
+        throw Object.assign(new Error("Already signed in"), {
+          name: "UserAlreadyAuthenticatedException",
+        });
+      },
+    } as unknown as AuthApi,
+  });
+
+  await assert.rejects(
+    client.signInWithPassword("other@example.test", "password"),
+    { name: "UserAlreadyAuthenticatedException" },
+  );
+  assert.equal(signInCalls, 1);
+  assert.equal(signOutCalls, 0);
+});
+
+test("direct sign-in never clears a session when validation fails transiently", async () => {
+  let signInCalls = 0;
+  let signOutCalls = 0;
+  const client = createAmplifyCognitoClient({
+    configure: async () => undefined,
+    authApi: {
+      fetchAuthSession: async () => validTokens(),
+      fetchUserAttributes: async () => {
+        throw Object.assign(new Error("Temporary network failure"), { name: "NetworkError" });
+      },
+      signOut: async () => {
+        signOutCalls += 1;
+      },
+      signIn: async () => {
+        signInCalls += 1;
+        throw Object.assign(new Error("Already signed in"), {
+          name: "UserAlreadyAuthenticatedException",
+        });
+      },
+    } as unknown as AuthApi,
+  });
+
+  await assert.rejects(
+    client.signInWithPassword("learner@example.test", "password"),
+    /Temporary network failure/,
+  );
+  assert.equal(signInCalls, 1);
+  assert.equal(signOutCalls, 0);
+});
+
+test("failed local sign-out does not falsely report a recovered session", async () => {
+  const client = createAmplifyCognitoClient({
+    configure: async () => undefined,
+    authApi: {
+      fetchAuthSession: async () => validTokens(),
+      fetchUserAttributes: async () => {
+        throw rejectedSession();
+      },
+      signOut: async () => {
+        throw new Error("Local storage unavailable");
+      },
+    } as unknown as AuthApi,
+  });
+
+  await assert.rejects(client.getSession(), /Local storage unavailable/);
+});
+
+test("injected Cognito configuration is cached across concurrent session checks", async () => {
+  let configureCalls = 0;
+  const client = createAmplifyCognitoClient({
+    configure: async () => {
+      configureCalls += 1;
+    },
+    authApi: {
+      fetchAuthSession: async () => ({ tokens: undefined }),
+    } as unknown as AuthApi,
+  });
+
+  assert.deepEqual(await Promise.all([client.getSession(), client.getSession()]), [null, null]);
+  assert.equal(await client.getSession(), null);
+  assert.equal(configureCalls, 1);
+});
+
 test("sign-in failures expose a neutral German message, not the Cognito provider text", async () => {
+  const providerError = Object.assign(new Error("There is already a signed in user."), {
+    name: "UserAlreadyAuthenticatedException",
+  });
   const service = createCognitoAuthService({
     signInWithPassword: async () => {
-      throw Object.assign(new Error("There is already a signed in user."), {
-        name: "UserAlreadyAuthenticatedException",
-      });
+      throw providerError;
     },
   } as unknown as CognitoAuthClient);
 
@@ -120,6 +247,7 @@ test("sign-in failures expose a neutral German message, not the Cognito provider
     (error: unknown) =>
       error instanceof Error &&
       error.message.includes("Anmeldung fehlgeschlagen") &&
-      !error.message.includes("signed in user"),
+      !error.message.includes("signed in user") &&
+      error.cause === providerError,
   );
 });
