@@ -133,7 +133,10 @@ export class TrainingStatePersistence {
   }
 
   private noteRuntimeMutation(runtimeId: string): void {
-    this.runtimeMutationVersions.set(runtimeId, (this.runtimeMutationVersions.get(runtimeId) ?? 0) + 1);
+    this.runtimeMutationVersions.set(
+      runtimeId,
+      (this.runtimeMutationVersions.get(runtimeId) ?? 0) + 1,
+    );
   }
 
   saveRuntimeSnapshot(runtimeId: string, snapshot: unknown): Promise<void> {
