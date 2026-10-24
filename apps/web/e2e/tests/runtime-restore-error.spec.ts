@@ -54,7 +54,10 @@ test("#606: a runtime read failure preserves started Guided progress and reports
   const before = await advanceToVerification(page);
   await expect
     .poll(() =>
-      page.evaluate((suffix) => Object.keys(localStorage).some((key) => key.endsWith(suffix)), runtimeStorageSuffix),
+      page.evaluate(
+        (suffix) => Object.keys(localStorage).some((key) => key.endsWith(suffix)),
+        runtimeStorageSuffix,
+      ),
     )
     .toBe(true);
 
@@ -86,7 +89,9 @@ test("#606: a runtime read failure preserves started Guided progress and reports
 
   expect(
     await page.evaluate(
-      () => (window as typeof window & { runtimeRestoreReadFailures?: number }).runtimeRestoreReadFailures,
+      () =>
+        (window as typeof window & { runtimeRestoreReadFailures?: number })
+          .runtimeRestoreReadFailures,
     ),
   ).toBeGreaterThan(0);
 
@@ -104,7 +109,10 @@ test("#606: a genuinely missing runtime snapshot still resets inconsistent Guide
   const before = await advanceToVerification(page);
   await expect
     .poll(() =>
-      page.evaluate((suffix) => Object.keys(localStorage).some((key) => key.endsWith(suffix)), runtimeStorageSuffix),
+      page.evaluate(
+        (suffix) => Object.keys(localStorage).some((key) => key.endsWith(suffix)),
+        runtimeStorageSuffix,
+      ),
     )
     .toBe(true);
 
@@ -117,7 +125,7 @@ test("#606: a genuinely missing runtime snapshot still resets inconsistent Guide
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Training bereit");
   await expect(
-    page.getByRole("heading", { name: "Schritt 1 – Artefakt auswählen" }),
+    page.getByRole("heading", { name: "Schritt 1 – HTML-Artefakt auswählen" }),
   ).toBeVisible();
   await expect
     .poll(async () => (await readStoredProgress(page))?.activeStepId ?? null)
