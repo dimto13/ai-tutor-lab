@@ -3,7 +3,11 @@ import { join } from "node:path";
 
 const root = process.argv[2];
 const expectedSha = process.env.PERF_ARTIFACT_SHA;
+const expectedTarget = process.env.PERF_TARGET;
 if (!root) throw new Error("Provide Playwright output directory");
+if (!["local", "release"].includes(expectedTarget ?? "")) {
+  throw new Error("PERF_TARGET must be local or release");
+}
 if (!/^[0-9a-f]{40}$/.test(expectedSha ?? "")) {
   throw new Error("PERF_ARTIFACT_SHA must be the full production artifact SHA");
 }
@@ -64,6 +68,7 @@ for (const file of files) {
   seenProfiles.add(profile);
   if (
     data.artifactSha !== expectedSha ||
+    data.target !== expectedTarget ||
     data.syntheticOnly !== true ||
     data.fieldEvidence !== false ||
     !Array.isArray(data.runs) ||
@@ -79,7 +84,7 @@ for (const file of files) {
   if (new Set(routeNames).size !== routeNames.length) {
     throw new Error("Duplicate routes in " + profile);
   }
-  const expectedRoutes = expectedRoutesByTarget[data.target];
+  const expectedRoutes = expectedRoutesByTarget[expectedTarget];
   if (
     !expectedRoutes ||
     routeNames.length !== expectedRoutes.length ||
