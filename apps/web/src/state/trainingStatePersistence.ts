@@ -28,6 +28,7 @@ export interface TrainingStateReconnectResult {
 }
 
 const MAX_COMPLETION_REBASE_ATTEMPTS = 3;
+const MAX_RUNTIME_RESTORE_ATTEMPTS = 5;
 
 /**
  * Application-level coordinator for one user/scenario/mode persistence scope.
@@ -119,7 +120,9 @@ export class TrainingStatePersistence {
   async loadRuntimeSnapshot(runtimeId: string): Promise<unknown | null> {
     // Do not let a slow read that started before a local mutation rewind the
     // revision cache or restore an obsolete snapshot over the newer artifact.
-    for (;;) {
+    // A stream of mutations must not keep the caller waiting indefinitely.
+    // Never return a read from an invalidated generation; surface an error instead.
+    for (let attempt = 0; attempt < MAX_RUNTIME_RESTORE_ATTEMPTS; attempt += 1) {
       await (this.runtimeWriteChains.get(runtimeId) ?? Promise.resolve());
       const version = this.runtimeMutationVersions.get(runtimeId) ?? 0;
       const record = await this.repository.loadRuntimeSnapshot(this.key, runtimeId);
@@ -130,6 +133,7 @@ export class TrainingStatePersistence {
       this.runtimesRequiringRestore.delete(runtimeId);
       return record?.value ?? null;
     }
+    throw new Error("Runtime snapshot changed during restore; retry after mutations settle");
   }
 
   private noteRuntimeMutation(runtimeId: string): void {
