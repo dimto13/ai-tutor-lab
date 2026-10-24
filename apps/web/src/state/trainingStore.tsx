@@ -323,6 +323,14 @@ export function TrainingProvider({
   const completionSavePending = completionSaveConfirmation.status === "pending";
   const completionSaveRef = useRef(initialCompletionSavePending);
   const progressRef = useRef(progress);
+  // Runtime panels can mount before the persisted session finishes hydrating.
+  // Their restore must not race the session loader's final setProgress/setFeedback.
+  const hydrationReadyRef = useRef(false);
+  // Each cleanup invalidates the previous hydration and settles its pending restores.
+  const hydrationGenerationRef = useRef(0);
+  const hydrationWaitersRef = useRef<Array<(ready: boolean) => void>>([]);
+  const currentPersistenceRef = useRef(persistence);
+  currentPersistenceRef.current = persistence;
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
   const guidedNavigationBusyRef = useRef(false);
   progressRef.current = progress;
@@ -371,22 +379,52 @@ export function TrainingProvider({
       const runtime = getRuntimeAdapter(runtimeId);
       if (!runtime || !persistence || !scenarioRuntimes.includes(runtime)) return false;
 
+      const generation = hydrationGenerationRef.current;
+      const isCurrent = () =>
+        hydrationGenerationRef.current === generation &&
+        currentPersistenceRef.current === persistence;
+      if (!hydrationReadyRef.current) {
+        const ready = await new Promise<boolean>((resolve) => {
+          hydrationWaitersRef.current.push(resolve);
+        });
+        if (!ready || !isCurrent()) return false;
+      }
+      if (!isCurrent()) return false;
+
+      // A failed read is not evidence that the runtime snapshot is missing. In particular,
+      // the bounded stale-read retry can reject while writes are still settling (#606).
+      // Resetting a started Guided session here would silently erase valid progress.
+      let snapshot: unknown | null;
       try {
-        const snapshot = await persistence.loadRuntimeSnapshot(runtimeId);
-        if (snapshot !== null) {
-          await runtime.restore(snapshot);
-          return true;
-        }
+        snapshot = await persistence.loadRuntimeSnapshot(runtimeId);
+        if (!isCurrent()) return false;
       } catch {
-        // A missing or incompatible snapshot falls back to a consistent fresh session below.
+        if (!isCurrent()) return false;
+        setFeedback({
+          kind: "error",
+          message:
+            "Der gespeicherte Arbeitsstand konnte nicht geladen werden. Dein Lernfortschritt bleibt erhalten. Lade die Seite erneut, um es noch einmal zu versuchen.",
+        });
+        return false;
       }
 
+      if (snapshot !== null) {
+        try {
+          await runtime.restore(snapshot);
+          return isCurrent();
+        } catch {
+          // An incompatible runtime snapshot still requires the existing consistency fallback.
+        }
+      }
+
+      if (!isCurrent()) return false;
       let persistedProgress = progressRef.current;
       try {
         persistedProgress = (await persistence.loadSession()).session;
       } catch {
         // The in-memory session remains the fallback when persistence is temporarily unavailable.
       }
+      if (!isCurrent()) return false;
 
       const hasStarted =
         persistedProgress.finishedAt === null &&
@@ -477,9 +515,33 @@ export function TrainingProvider({
 
   useEffect(() => {
     let cancelled = false;
+    const generation = hydrationGenerationRef.current;
+    hydrationReadyRef.current = false;
     setHydrated(false);
 
-    if (!persistence) return () => undefined;
+    const cancelHydration = () => {
+      cancelled = true;
+      if (hydrationGenerationRef.current === generation) {
+        hydrationGenerationRef.current += 1;
+        hydrationReadyRef.current = false;
+      }
+      // Clearing without settling leaves suspended restore promises alive on unmount.
+      for (const settle of hydrationWaitersRef.current.splice(0)) settle(false);
+    };
+
+    if (!persistence) return cancelHydration;
+
+    const isCurrentHydration = () =>
+      !cancelled &&
+      hydrationGenerationRef.current === generation &&
+      currentPersistenceRef.current === persistence;
+
+    const finishHydration = () => {
+      if (!isCurrentHydration()) return;
+      hydrationReadyRef.current = true;
+      setHydrated(true);
+      for (const settle of hydrationWaitersRef.current.splice(0)) settle(true);
+    };
 
     void persistence
       .loadSession()
@@ -498,7 +560,7 @@ export function TrainingProvider({
           mode === "guided" && guidedNavigationCoordinator
             ? await guidedNavigationCoordinator.loadReplayStepId(session, scenario)
             : null;
-        if (cancelled) return;
+        if (!isCurrentHydration()) return;
         guidedReplayStepIdRef.current = replayStepId;
         setGuidedReplayStepId(replayStepId);
         setProgress(session);
@@ -507,10 +569,10 @@ export function TrainingProvider({
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setRecommendGuidedAfterChallenge(shouldRecommendGuided);
-        setHydrated(true);
+        finishHydration();
       })
       .catch(() => {
-        if (cancelled) return;
+        if (!isCurrentHydration()) return;
         const freshProgress = newSession(scenario, subject);
         guidedReplayStepIdRef.current = null;
         setGuidedReplayStepId(null);
@@ -520,12 +582,10 @@ export function TrainingProvider({
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setRecommendGuidedAfterChallenge(false);
-        setHydrated(true);
+        finishHydration();
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return cancelHydration;
   }, [persistence, scenario, subject, mode, guidedNavigationCoordinator]);
 
   useEffect(() => {
