@@ -2,6 +2,10 @@ import { fileURLToPath } from "node:url";
 
 import { defineConfig, devices } from "@playwright/test";
 
+// #562 TEMPORARY NEGATIVE-CONTROL RUN ONLY: explicit opt-in on this
+// disposable test commit. Must be removed in the next clean-head commit.
+process.env.PERF_NEGATIVE_CONTROL_GUIDED_STALL_MS = "850";
+
 // Resolve against this config file, not the process working directory.
 // The permanent workflow and report.mjs consume these exact paths.
 const outputDir = fileURLToPath(new URL("../test-results-performance/", import.meta.url));
