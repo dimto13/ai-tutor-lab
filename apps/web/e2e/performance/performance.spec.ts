@@ -13,6 +13,13 @@ declare global {
   interface Window {
     __perfSamples?: PerfSamples;
     __perfStopFrames?: () => void;
+    __perfDashboardAttribution?: {
+      stop: () => {
+        frameGaps: DashboardInterval[];
+        longTasks: DashboardInterval[];
+        longTaskSupported: boolean;
+      };
+    };
     __perfLandingReplay?: {
       armedAt: number;
       pointerDownAt: number | null;
@@ -51,6 +58,25 @@ type LandingActionabilityReplay =
         browserSceneChangeAfterArmMs: number | null;
         driverInclusiveProxyMs: number;
       }>;
+    }
+  | { status: "NOT_RECORDED"; reason: string };
+
+// Post-cold dashboard-only attribution; browser timestamps share one navigation clock.
+type DashboardInterval = { startMs: number; endMs: number; durationMs: number };
+type DashboardAttributionReplay =
+  | {
+      status: "RECORDED";
+      frameGaps: DashboardInterval[];
+      longTasks: DashboardInterval[];
+      longestFrameGap: DashboardInterval | null;
+      longestLongTask: DashboardInterval | null;
+      overlappingIntervals: Array<{
+        frameGap: DashboardInterval;
+        longTask: DashboardInterval;
+        overlapMs: number;
+      }>;
+      longestPairOverlapMs: number;
+      interpretation: string;
     }
   | { status: "NOT_RECORDED"; reason: string };
 
@@ -418,6 +444,113 @@ async function replayLandingActionability(page: Page): Promise<LandingActionabil
   return { status: "RECORDED", actions: [noOp, transition] };
 }
 
+// Independent untraced replay, after all cold samples. Never changes baseline observers.
+async function replayDashboardAttribution(page: Page): Promise<DashboardAttributionReplay> {
+  await page.addInitScript(() => {
+    const frameGaps: DashboardInterval[] = [];
+    const longTasks: DashboardInterval[] = [];
+    let previousFrame: number | null = null;
+    let sampling = true;
+    let longTaskObserver: PerformanceObserver | null = null;
+    let longTaskSupported = false;
+    const collectLongTasks = (entries: PerformanceEntry[]) => {
+      for (const entry of entries) {
+        if (longTasks.length >= 2000) break;
+        longTasks.push({
+          startMs: entry.startTime,
+          endMs: entry.startTime + entry.duration,
+          durationMs: entry.duration,
+        });
+      }
+    };
+    try {
+      longTaskObserver = new PerformanceObserver((list) => collectLongTasks(list.getEntries()));
+      longTaskObserver.observe({ type: "longtask", buffered: true });
+      longTaskSupported = true;
+    } catch {
+      // Unsupported observers are explicit NOT_RECORDED, never zero-duration evidence.
+    }
+    const sampleFrame = (now: number) => {
+      if (!sampling) return;
+      if (document.visibilityState === "visible") {
+        if (previousFrame !== null && now - previousFrame > 50 && frameGaps.length < 2000) {
+          frameGaps.push({
+            startMs: previousFrame,
+            endMs: now,
+            durationMs: now - previousFrame,
+          });
+        }
+        previousFrame = now;
+      } else {
+        previousFrame = null;
+      }
+      requestAnimationFrame(sampleFrame);
+    };
+    requestAnimationFrame(sampleFrame);
+    window.__perfDashboardAttribution = {
+      stop: () => {
+        sampling = false;
+        if (longTaskObserver) {
+          collectLongTasks(longTaskObserver.takeRecords());
+          longTaskObserver.disconnect();
+        }
+        return { frameGaps, longTasks, longTaskSupported };
+      },
+    };
+  });
+  const response = await page.goto(new URL("/", baseURL).toString(), {
+    waitUntil: "domcontentloaded",
+  });
+  expect(response?.status()).toBe(200);
+  await page.waitForFunction(() => (window.__perfSamples?.lcpMs ?? 0) > 0, undefined, {
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("heading", { name: "Meine Trainings" })).toBeVisible();
+  await page.evaluate(
+    () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+  );
+  const snapshot = await page.evaluate(() => window.__perfDashboardAttribution?.stop());
+  if (!snapshot?.longTaskSupported) {
+    return { status: "NOT_RECORDED", reason: "Dashboard long-task observer unsupported or missing" };
+  }
+  const longestFrameGap = snapshot.frameGaps.reduce<DashboardInterval | null>(
+    (longest, item) => (!longest || item.durationMs > longest.durationMs ? item : longest),
+    null,
+  );
+  const longestLongTask = snapshot.longTasks.reduce<DashboardInterval | null>(
+    (longest, item) => (!longest || item.durationMs > longest.durationMs ? item : longest),
+    null,
+  );
+  const overlappingIntervals = snapshot.frameGaps.flatMap((frameGap) =>
+    snapshot.longTasks.flatMap((longTask) => {
+      const overlapMs = Math.max(
+        0,
+        Math.min(frameGap.endMs, longTask.endMs) - Math.max(frameGap.startMs, longTask.startMs),
+      );
+      return overlapMs > 0 ? [{ frameGap, longTask, overlapMs }] : [];
+    }),
+  );
+  const longestPairOverlapMs =
+    longestFrameGap && longestLongTask
+      ? Math.max(
+          0,
+          Math.min(longestFrameGap.endMs, longestLongTask.endMs) -
+            Math.max(longestFrameGap.startMs, longestLongTask.startMs),
+        )
+      : 0;
+  return {
+    status: "RECORDED",
+    frameGaps: snapshot.frameGaps,
+    longTasks: snapshot.longTasks,
+    longestFrameGap,
+    longestLongTask,
+    overlappingIntervals,
+    longestPairOverlapMs,
+    interpretation:
+      "Same-navigation browser-clock intervals; overlap is temporal correlation, not proof of source, product cause, field INP, or Playwright driver actionability",
+  };
+}
+
 async function configuredPage(browser: Browser, profile: (typeof profiles)[number]) {
   // Every cold sample and diagnostic replay gets an isolated browser context.
   const context = await browser.newContext({
@@ -505,13 +638,28 @@ async function runProfile(
       reason: error instanceof Error ? error.message : String(error),
     };
   }
-  return { rows, landingActionabilityReplay };
+  // Separate post-cold dashboard diagnostic: never used by baseline or gates.
+  let dashboardAttributionReplay: DashboardAttributionReplay;
+  try {
+    const replay = await configuredPage(browser, profile);
+    try {
+      dashboardAttributionReplay = await replayDashboardAttribution(replay.page);
+    } finally {
+      await replay.context.close();
+    }
+  } catch (error) {
+    dashboardAttributionReplay = {
+      status: "NOT_RECORDED",
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+  return { rows, landingActionabilityReplay, dashboardAttributionReplay };
 }
 
 for (const profile of profiles) {
   test(profile.name + ": three cold production-artifact samples", async ({ browser }, testInfo) => {
     test.setTimeout(240_000);
-    const { rows, landingActionabilityReplay } = await runProfile(browser, profile, (name) =>
+    const { rows, landingActionabilityReplay, dashboardAttributionReplay } = await runProfile(browser, profile, (name) =>
       testInfo.outputPath(name),
     );
     await writeFile(
@@ -526,10 +674,11 @@ for (const profile of profiles) {
           viewport: { width: 1280, height: 800, deviceScaleFactor: 1 },
           runs: rows,
           landingActionabilityReplay,
+          dashboardAttributionReplay,
           syntheticOnly: true,
           fieldEvidence: false,
           metricNotes:
-            "interactionToPaintProxyMs includes Playwright driver time; landingSceneTimings and landingActionabilityReplay are non-gating diagnostics; browser event times are relative to arming and double-rAF is scheduling, not paint or INP",
+            "interactionToPaintProxyMs includes Playwright driver time; landingSceneTimings, landingActionabilityReplay and dashboardAttributionReplay are non-gating diagnostics; dashboard intervals use one browser clock and temporal overlap does not establish cause or field INP",
         },
         null,
         2,
