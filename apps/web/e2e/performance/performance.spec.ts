@@ -325,8 +325,12 @@ async function replayLandingAction(
       sceneChangeAt: null as number | null,
       stop: () => {},
     };
-    const onPointerDown = () => { state.pointerDownAt ??= performance.now(); };
-    const onClick = () => { state.clickAt ??= performance.now(); };
+    const onPointerDown = () => {
+      state.pointerDownAt ??= performance.now();
+    };
+    const onClick = () => {
+      state.clickAt ??= performance.now();
+    };
     element.addEventListener("pointerdown", onPointerDown, true);
     element.addEventListener("click", onClick, true);
     const root = document.querySelector(".lp");
@@ -351,10 +355,13 @@ async function replayLandingAction(
   const domExpectationMs = Date.now() - expectationStart;
   const rafStart = Date.now();
   const browserDoubleRafMs = await page.evaluate(
-    () => new Promise<number>((resolve) => {
-      const armed = performance.now();
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - armed)));
-    }),
+    () =>
+      new Promise<number>((resolve) => {
+        const armed = performance.now();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => resolve(performance.now() - armed)),
+        );
+      }),
   );
   const driverDoubleRafMs = Date.now() - rafStart;
   const driverInclusiveProxyMs = Date.now() - start;
@@ -364,9 +371,11 @@ async function replayLandingAction(
     state.stop();
     delete window.__perfLandingReplay;
     return {
-      browserPointerDownAfterArmMs: state.pointerDownAt === null ? null : state.pointerDownAt - state.armedAt,
+      browserPointerDownAfterArmMs:
+        state.pointerDownAt === null ? null : state.pointerDownAt - state.armedAt,
       browserClickAfterArmMs: state.clickAt === null ? null : state.clickAt - state.armedAt,
-      browserSceneChangeAfterArmMs: state.sceneChangeAt === null ? null : state.sceneChangeAt - state.armedAt,
+      browserSceneChangeAfterArmMs:
+        state.sceneChangeAt === null ? null : state.sceneChangeAt - state.armedAt,
     };
   });
   const finalScene = await scene.getAttribute("data-scene");
@@ -374,11 +383,20 @@ async function replayLandingAction(
     (kind === "already-active-first-dot" && (initialScene !== "0" || finalScene !== "0")) ||
     (kind === "second-dot-transition" && (initialScene !== "0" || finalScene !== "1"))
   ) {
-    throw new Error("No-op versus scene-transition replay did not observe the expected scene states");
+    throw new Error(
+      "No-op versus scene-transition replay did not observe the expected scene states",
+    );
   }
   return {
-    kind, initialScene, finalScene, driverClickMs, domExpectationMs,
-    driverDoubleRafMs, browserDoubleRafMs, ...browserEvents, driverInclusiveProxyMs,
+    kind,
+    initialScene,
+    finalScene,
+    driverClickMs,
+    domExpectationMs,
+    driverDoubleRafMs,
+    browserDoubleRafMs,
+    ...browserEvents,
+    driverInclusiveProxyMs,
   };
 }
 
@@ -493,10 +511,8 @@ async function runProfile(
 for (const profile of profiles) {
   test(profile.name + ": three cold production-artifact samples", async ({ browser }, testInfo) => {
     test.setTimeout(240_000);
-    const { rows, landingActionabilityReplay } = await runProfile(
-      browser,
-      profile,
-      (name) => testInfo.outputPath(name),
+    const { rows, landingActionabilityReplay } = await runProfile(browser, profile, (name) =>
+      testInfo.outputPath(name),
     );
     await writeFile(
       testInfo.outputPath(profile.name + "-samples.json"),
