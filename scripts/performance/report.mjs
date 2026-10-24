@@ -129,7 +129,6 @@ for (const file of files) {
   }
 }
 
-
 /**
  * Diagnostic-only same-SHA A1/A2/A3 calibration from Performance Gate
  * run 40050642843, attempts 1/2/3, jobs 120742368996/120772778821/120785162053.
@@ -140,248 +139,68 @@ for (const file of files) {
  */
 const calibration = {
   "constrained-animated|/willkommen": {
-    "readyMedianMs": [
-      11768,
-      11646,
-      10989
-    ],
-    "lcpMedianMs": [
-      2236,
-      2200,
-      2188
-    ],
-    "clsMedian": [
-      0.12997117308196615,
-      0.12947254261644556,
-      0.12986576296091082
-    ],
-    "maxFrameGapMs": [
-      433.2999999999993,
-      350,
-      266.8000000000002
-    ],
-    "interactionToPaintProxyMedianMs": [
-      5020,
-      4783,
-      5256
-    ]
+    readyMedianMs: [11768, 11646, 10989],
+    lcpMedianMs: [2236, 2200, 2188],
+    clsMedian: [0.12997117308196615, 0.12947254261644556, 0.12986576296091082],
+    maxFrameGapMs: [433.2999999999993, 350, 266.8000000000002],
+    interactionToPaintProxyMedianMs: [5020, 4783, 5256],
   },
   "constrained-animated|/": {
-    "readyMedianMs": [
-      8708,
-      8508,
-      8501
-    ],
-    "lcpMedianMs": [
-      8520,
-      8364,
-      8360
-    ],
-    "clsMedian": [
-      0.00037146167755126955,
-      0.00037146167755126955,
-      0.00037146167755126955
-    ],
-    "maxFrameGapMs": [
-      300.09999999999945,
-      250,
-      250.10000000000036
-    ],
-    "interactionToPaintProxyMedianMs": [
-      176,
-      89,
-      95
-    ]
+    readyMedianMs: [8708, 8508, 8501],
+    lcpMedianMs: [8520, 8364, 8360],
+    clsMedian: [0.00037146167755126955, 0.00037146167755126955, 0.00037146167755126955],
+    maxFrameGapMs: [300.09999999999945, 250, 250.10000000000036],
+    interactionToPaintProxyMedianMs: [176, 89, 95],
   },
   "constrained-animated|/training/vscode-basics.guided": {
-    "readyMedianMs": [
-      10910,
-      10632,
-      10677
-    ],
-    "lcpMedianMs": [
-      10048,
-      9864,
-      9896
-    ],
-    "clsMedian": [
-      0.0008278560638427735,
-      0.0008278560638427735,
-      0.0008278560638427735
-    ],
-    "maxFrameGapMs": [
-      316.59999999999854,
-      249.89999999999964,
-      233.39999999999964
-    ],
-    "interactionToPaintProxyMedianMs": [
-      240,
-      196,
-      211
-    ]
+    readyMedianMs: [10910, 10632, 10677],
+    lcpMedianMs: [10048, 9864, 9896],
+    clsMedian: [0.0008278560638427735, 0.0008278560638427735, 0.0008278560638427735],
+    maxFrameGapMs: [316.59999999999854, 249.89999999999964, 233.39999999999964],
+    interactionToPaintProxyMedianMs: [240, 196, 211],
   },
   "constrained-reduced|/willkommen": {
-    "readyMedianMs": [
-      8063,
-      7771,
-      7814
-    ],
-    "lcpMedianMs": [
-      2204,
-      2164,
-      2172
-    ],
-    "clsMedian": [
-      0.1294269749522209,
-      0.12986576296091082,
-      0.1294269749522209
-    ],
-    "maxFrameGapMs": [
-      300,
-      233.30000000000018,
-      233.30000000000018
-    ],
-    "interactionToPaintProxyMedianMs": [
-      4824,
-      4752,
-      4766
-    ]
+    readyMedianMs: [8063, 7771, 7814],
+    lcpMedianMs: [2204, 2164, 2172],
+    clsMedian: [0.1294269749522209, 0.12986576296091082, 0.1294269749522209],
+    maxFrameGapMs: [300, 233.30000000000018, 233.30000000000018],
+    interactionToPaintProxyMedianMs: [4824, 4752, 4766],
   },
   "constrained-reduced|/": {
-    "readyMedianMs": [
-      8675,
-      8470,
-      8498
-    ],
-    "lcpMedianMs": [
-      8500,
-      8328,
-      8356
-    ],
-    "clsMedian": [
-      0.00037146167755126955,
-      0.00037146167755126955,
-      0.00037146167755126955
-    ],
-    "maxFrameGapMs": [
-      283.40000000000055,
-      250,
-      233.40000000000055
-    ],
-    "interactionToPaintProxyMedianMs": [
-      164,
-      93,
-      81
-    ]
+    readyMedianMs: [8675, 8470, 8498],
+    lcpMedianMs: [8500, 8328, 8356],
+    clsMedian: [0.00037146167755126955, 0.00037146167755126955, 0.00037146167755126955],
+    maxFrameGapMs: [283.40000000000055, 250, 233.40000000000055],
+    interactionToPaintProxyMedianMs: [164, 93, 81],
   },
   "constrained-reduced|/training/vscode-basics.guided": {
-    "readyMedianMs": [
-      10844,
-      10589,
-      10665
-    ],
-    "lcpMedianMs": [
-      10032,
-      9836,
-      9888
-    ],
-    "clsMedian": [
-      0.0008278560638427735,
-      0.0008278560638427735,
-      0.0008278560638427735
-    ],
-    "maxFrameGapMs": [
-      316.60000000000036,
-      216.60000000000036,
-      250
-    ],
-    "interactionToPaintProxyMedianMs": [
-      218,
-      177,
-      197
-    ]
+    readyMedianMs: [10844, 10589, 10665],
+    lcpMedianMs: [10032, 9836, 9888],
+    clsMedian: [0.0008278560638427735, 0.0008278560638427735, 0.0008278560638427735],
+    maxFrameGapMs: [316.60000000000036, 216.60000000000036, 250],
+    interactionToPaintProxyMedianMs: [218, 177, 197],
   },
   "desktop-animated|/willkommen": {
-    "readyMedianMs": [
-      5894,
-      5282,
-      5301
-    ],
-    "lcpMedianMs": [
-      304,
-      208,
-      204
-    ],
-    "clsMedian": [
-      0.10193951339020861,
-      0.10192011772757398,
-      0.10189276448488237
-    ],
-    "maxFrameGapMs": [
-      400,
-      216.5999999999999,
-      350
-    ],
-    "interactionToPaintProxyMedianMs": [
-      1512,
-      1248,
-      1325
-    ]
+    readyMedianMs: [5894, 5282, 5301],
+    lcpMedianMs: [304, 208, 204],
+    clsMedian: [0.10193951339020861, 0.10192011772757398, 0.10189276448488237],
+    maxFrameGapMs: [400, 216.5999999999999, 350],
+    interactionToPaintProxyMedianMs: [1512, 1248, 1325],
   },
   "desktop-animated|/": {
-    "readyMedianMs": [
-      396,
-      341,
-      320
-    ],
-    "lcpMedianMs": [
-      332,
-      272,
-      252
-    ],
-    "clsMedian": [
-      0.0005300596237182618,
-      0.0005300596237182618,
-      0.0005300596237182618
-    ],
-    "maxFrameGapMs": [
-      66.70000000000002,
-      0,
-      50.10000000000001
-    ],
-    "interactionToPaintProxyMedianMs": [
-      89,
-      72,
-      80
-    ]
+    readyMedianMs: [396, 341, 320],
+    lcpMedianMs: [332, 272, 252],
+    clsMedian: [0.0005300596237182618, 0.0005300596237182618, 0.0005300596237182618],
+    maxFrameGapMs: [66.70000000000002, 0, 50.10000000000001],
+    interactionToPaintProxyMedianMs: [89, 72, 80],
   },
   "desktop-animated|/training/vscode-basics.guided": {
-    "readyMedianMs": [
-      561,
-      413,
-      431
-    ],
-    "lcpMedianMs": [
-      384,
-      312,
-      292
-    ],
-    "clsMedian": [
-      0.00315205625295639,
-      0.00315205625295639,
-      0.00315205625295639
-    ],
-    "maxFrameGapMs": [
-      66.60000000000002,
-      50.099999999999994,
-      50.099999999999994
-    ],
-    "interactionToPaintProxyMedianMs": [
-      86,
-      95,
-      99
-    ]
-  }
+    readyMedianMs: [561, 413, 431],
+    lcpMedianMs: [384, 312, 292],
+    clsMedian: [0.00315205625295639, 0.00315205625295639, 0.00315205625295639],
+    maxFrameGapMs: [66.60000000000002, 50.099999999999994, 50.099999999999994],
+    interactionToPaintProxyMedianMs: [86, 95, 99],
+  },
 };
 const calibratedSha = "84fb6d04b7d6c3805e3766ca4476728382eb5ca0";
 const diagnosticMetrics = [
