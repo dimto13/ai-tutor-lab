@@ -371,14 +371,28 @@ export function TrainingProvider({
       const runtime = getRuntimeAdapter(runtimeId);
       if (!runtime || !persistence || !scenarioRuntimes.includes(runtime)) return false;
 
+      // A failed read is not evidence that the runtime snapshot is missing. In particular,
+      // the bounded stale-read retry can reject while writes are still settling (#606).
+      // Resetting a started Guided session here would silently erase valid progress.
+      let snapshot: unknown | null;
       try {
-        const snapshot = await persistence.loadRuntimeSnapshot(runtimeId);
-        if (snapshot !== null) {
+        snapshot = await persistence.loadRuntimeSnapshot(runtimeId);
+      } catch {
+        setFeedback({
+          kind: "error",
+          message:
+            "Der gespeicherte Arbeitsstand konnte nicht geladen werden. Dein Lernfortschritt bleibt erhalten. Lade die Seite erneut, um es noch einmal zu versuchen.",
+        });
+        return false;
+      }
+
+      if (snapshot !== null) {
+        try {
           await runtime.restore(snapshot);
           return true;
+        } catch {
+          // An incompatible runtime snapshot still requires the existing consistency fallback.
         }
-      } catch {
-        // A missing or incompatible snapshot falls back to a consistent fresh session below.
       }
 
       let persistedProgress = progressRef.current;
