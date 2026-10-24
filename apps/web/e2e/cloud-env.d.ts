@@ -10,5 +10,8 @@ declare namespace NodeJS {
     CLOUD_TEST_PERSONAL_EMAIL?: string;
     CLOUD_TEST_PERSONAL_PASSWORD?: string;
     GITHUB_RUN_ID?: string;
+    CLOUD_RELEASE_SHA?: string;
+    CLOUD_ENVIRONMENT?: string;
+    NIGHTLY_REPORT_DIR?: string;
   }
 }

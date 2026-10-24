@@ -199,11 +199,5 @@ jobs:
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Screenshot bei Fehler hochladen
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cloud-user-acceptance-screenshots
-          path: apps/web/e2e/cloud-test-results/**/*.png
-          if-no-files-found: ignore
-          retention-days: 3
+      # Cloud screenshots can contain sensitive tenant and session data. Never upload them
+      # to a public repository artifact by default; use an approved private runner instead.

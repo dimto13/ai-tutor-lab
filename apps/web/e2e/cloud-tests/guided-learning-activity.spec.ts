@@ -110,7 +110,7 @@ async function latestPersistedActivity(page: Page) {
   return sessionId as string;
 }
 
-test("completed Guided training appears once in learning activity and survives a full reload", async ({
+test("[CLOUD-2] completed Guided training is server-scored and survives a full reload", async ({
   page,
 }) => {
   test.setTimeout(180_000);
@@ -138,4 +138,45 @@ test("completed Guided training appears once in learning activity and survives a
   await expect(persistedSession).toHaveCount(1);
   await expect(persistedSession).toContainText("Guided");
   await expect(persistedSession).toContainText(/\d+ Min\./);
+});
+
+test("[CLOUD-3] completion and numeric server score survive a fresh authenticated context", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(180_000);
+  await signIn(page, credentials("CLOUD_TEST"));
+  const awarded = await completeGuidedTraining(page);
+  const freshContext = await browser.newContext({
+    baseURL: requireEnvironmentValue("CLOUD_BASE_URL"),
+  });
+  try {
+    const freshPage = await freshContext.newPage();
+    await signIn(freshPage, credentials("CLOUD_TEST"));
+    await freshPage.goto("/training/artifact-preview-foundation.guided");
+    await expect(freshPage.getByRole("heading", { name: "Training abgeschlossen" })).toBeVisible();
+    expect(await serverConfirmedScore(freshPage)).toBe(awarded);
+  } finally {
+    await freshContext.close();
+  }
+});
+
+test("[CLOUD-4] replaying a completed Guided scenario does not award a second score", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await signIn(page, credentials("CLOUD_TEST"));
+  const initial = await completeGuidedTraining(page);
+  const afterReplay = await completeGuidedTraining(page);
+  expect(afterReplay, "the replay must retain the original server-confirmed award").toBe(initial);
+  // Equal point values alone cannot detect a duplicate award: the server could award the same
+  // amount twice. Require its explicit existing-ledger disposition on the replay as well.
+  const pointsValue = page
+    .locator("dt")
+    .filter({ hasText: /^Punkte$/ })
+    .locator("xpath=following-sibling::dd[1]");
+  await expect(pointsValue, "the replay must not create a second score event").toContainText(
+    "bereits gewertet",
+  );
+  await expect(page.getByText("Diese Szenario-Version wurde bereits gewertet.")).toBeVisible();
 });
