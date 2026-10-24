@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 
 type PerfSamples = {
   lcpMs: number;
@@ -16,6 +16,16 @@ declare global {
   }
 }
 
+// Diagnostic-only segments; never replace the original driver-inclusive proxy.
+type LandingSceneTiming = {
+  sceneIndex: number;
+  driverClickMs: number;
+  domExpectationMs: number;
+  driverDoubleRafMs: number;
+  browserDoubleRafMs: number;
+  interactionToPaintProxyMs: number;
+};
+
 type RouteSample = {
   route: string;
   readyMs: number;
@@ -25,6 +35,7 @@ type RouteSample = {
   longTaskMaxMs: number;
   frameGapMaxMs: number;
   interactionToPaintProxyMs: number | null;
+  landingSceneTimings?: LandingSceneTiming[];
 };
 
 const baseURL = process.env.PERF_BASE_URL;
@@ -144,6 +155,45 @@ async function paintAfterAction(
   return Date.now() - start;
 }
 
+async function measureLandingSceneAction(
+  page: Page,
+  dot: Locator,
+  sceneIndex: number,
+): Promise<LandingSceneTiming> {
+  // Preserve the original end-to-end driver-inclusive proxy and five actions.
+  const start = Date.now();
+  const clickStart = Date.now();
+  await dot.click();
+  const driverClickMs = Date.now() - clickStart;
+
+  const expectationStart = Date.now();
+  await expect(dot).toHaveAttribute("aria-current", "true");
+  const domExpectationMs = Date.now() - expectationStart;
+
+  const rafStart = Date.now();
+  const browserDoubleRafMs = await page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        // In-page monotonic clock excludes the Playwright command round trip.
+        // Two rAF callbacks are a scheduling proxy, NOT a field paint/INP metric.
+        const requestedAt = performance.now();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve(performance.now() - requestedAt));
+        });
+      }),
+  );
+  const driverDoubleRafMs = Date.now() - rafStart;
+
+  return {
+    sceneIndex,
+    driverClickMs,
+    domExpectationMs,
+    driverDoubleRafMs,
+    browserDoubleRafMs,
+    interactionToPaintProxyMs: Date.now() - start,
+  };
+}
+
 async function measureRoute(page: Page, route: string, profileName: string): Promise<RouteSample> {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -158,6 +208,7 @@ async function measureRoute(page: Page, route: string, profileName: string): Pro
   });
 
   let interactionToPaintProxyMs: number | null = null;
+  const landingSceneTimings: LandingSceneTiming[] = [];
   if (route === "/willkommen") {
     const sections = page.getByRole("navigation", { name: "Abschnitte" });
     await expect(page.getByRole("heading", { name: "Über KI reden" })).toBeVisible();
@@ -173,11 +224,12 @@ async function measureRoute(page: Page, route: string, profileName: string): Pro
 
     for (let index = 1; index <= 5; index += 1) {
       const dot = sections.getByRole("button", { name: "Abschnitt " + index + " von 5" });
-      const latency = await paintAfterAction(page, async () => {
-        await dot.click();
-        await expect(dot).toHaveAttribute("aria-current", "true");
-      });
-      interactionToPaintProxyMs = Math.max(interactionToPaintProxyMs ?? 0, latency);
+      const timing = await measureLandingSceneAction(page, dot, index);
+      landingSceneTimings.push(timing);
+      interactionToPaintProxyMs = Math.max(
+        interactionToPaintProxyMs ?? 0,
+        timing.interactionToPaintProxyMs,
+      );
     }
     await expect(page.getByRole("link", { name: "Erste Übung starten" })).toHaveAttribute(
       "href",
@@ -223,6 +275,7 @@ async function measureRoute(page: Page, route: string, profileName: string): Pro
     longTaskMaxMs: Math.max(0, ...samples.longTasksMs),
     frameGapMaxMs: Math.max(0, ...samples.frameGapsMs),
     interactionToPaintProxyMs,
+    ...(route === "/willkommen" ? { landingSceneTimings } : {}),
   };
 }
 
@@ -317,7 +370,8 @@ for (const profile of profiles) {
           runs: rows,
           syntheticOnly: true,
           fieldEvidence: false,
-          metricNotes: "interactionToPaintProxyMs includes Playwright driver time; it is not INP",
+          metricNotes:
+            "interactionToPaintProxyMs includes Playwright driver time; landingSceneTimings are non-gating diagnostic segments; browserDoubleRafMs is an in-page rAF scheduling interval, not paint or INP",
         },
         null,
         2,
