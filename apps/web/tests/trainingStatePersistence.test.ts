@@ -5,7 +5,11 @@ import {
   createTrainingSession,
   recordLastAction,
 } from "@ai-train-lab/training-engine";
-import type { Scenario, TrainingStateKey, TrainingStateRepository } from "@ai-train-lab/training-engine";
+import type {
+  Scenario,
+  TrainingStateKey,
+  TrainingStateRepository,
+} from "@ai-train-lab/training-engine";
 import { LocalStorageTrainingStateRepository } from "../src/state/localStorageTrainingStateRepository.ts";
 import type { StorageLike } from "../src/state/localStorageTrainingStateRepository.ts";
 import { TrainingStatePersistence } from "../src/state/trainingStatePersistence.ts";
