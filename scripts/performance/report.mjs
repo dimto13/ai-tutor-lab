@@ -14,6 +14,13 @@ const expectedProfiles = new Set([
   "constrained-reduced",
 ]);
 
+// Route coverage is part of the evidence contract: a truncated suite must
+// never produce a green summary merely because every remaining run agrees.
+const expectedRoutesByTarget = {
+  local: ["/willkommen", "/", "/training/vscode-basics.guided"],
+  release: ["/willkommen"],
+};
+
 async function collect(directory) {
   const files = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -71,6 +78,14 @@ for (const file of files) {
   }
   if (new Set(routeNames).size !== routeNames.length) {
     throw new Error("Duplicate routes in " + profile);
+  }
+  const expectedRoutes = expectedRoutesByTarget[data.target];
+  if (
+    !expectedRoutes ||
+    routeNames.length !== expectedRoutes.length ||
+    routeNames.some((route) => !expectedRoutes.includes(route))
+  ) {
+    throw new Error("Missing or unexpected required routes in " + profile + " / " + data.target);
   }
   for (const run of data.runs) {
     if (!Array.isArray(run.routes) || run.routes.length !== routeNames.length) {
