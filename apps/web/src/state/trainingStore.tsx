@@ -323,6 +323,10 @@ export function TrainingProvider({
   const completionSavePending = completionSaveConfirmation.status === "pending";
   const completionSaveRef = useRef(initialCompletionSavePending);
   const progressRef = useRef(progress);
+  // Runtime panels can mount before the persisted session finishes hydrating.
+  // Their restore must not race the session loader's final setProgress/setFeedback.
+  const hydrationReadyRef = useRef(false);
+  const hydrationWaitersRef = useRef<Array<() => void>>([]);
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
   const guidedNavigationBusyRef = useRef(false);
   progressRef.current = progress;
@@ -370,6 +374,12 @@ export function TrainingProvider({
     async (runtimeId: string) => {
       const runtime = getRuntimeAdapter(runtimeId);
       if (!runtime || !persistence || !scenarioRuntimes.includes(runtime)) return false;
+
+      if (!hydrationReadyRef.current) {
+        await new Promise<void>((resolve) => {
+          hydrationWaitersRef.current.push(resolve);
+        });
+      }
 
       // A failed read is not evidence that the runtime snapshot is missing. In particular,
       // the bounded stale-read retry can reject while writes are still settling (#606).
@@ -491,9 +501,16 @@ export function TrainingProvider({
 
   useEffect(() => {
     let cancelled = false;
+    hydrationReadyRef.current = false;
     setHydrated(false);
 
     if (!persistence) return () => undefined;
+
+    const finishHydration = () => {
+      hydrationReadyRef.current = true;
+      setHydrated(true);
+      for (const resolve of hydrationWaitersRef.current.splice(0)) resolve();
+    };
 
     void persistence
       .loadSession()
@@ -521,7 +538,7 @@ export function TrainingProvider({
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setRecommendGuidedAfterChallenge(shouldRecommendGuided);
-        setHydrated(true);
+        finishHydration();
       })
       .catch(() => {
         if (cancelled) return;
@@ -534,7 +551,7 @@ export function TrainingProvider({
         setStateRecovery(null);
         setChallengeRemainingSeconds(null);
         setRecommendGuidedAfterChallenge(false);
-        setHydrated(true);
+        finishHydration();
       });
 
     return () => {
