@@ -170,7 +170,9 @@ test("#606: switching scenarios during hydration cannot rewind the previous Guid
   await page.reload();
 
   await expect(page).toHaveURL(/\/training\/git-basics$/);
-  await expect(page.getByRole("heading", { name: "Schritt 1 – Aktuellen Branch prüfen" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Schritt 1 – Aktuellen Branch prüfen" }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () =>
