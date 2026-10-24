@@ -61,6 +61,8 @@ const summaries = [];
 // Non-gating raw timing breakdown: retains all five landing scene actions in
 // each of the three cold samples, without changing the regression comparator.
 const landingSceneTimingDiagnostics = [];
+// Independent, non-gating post-cold replay; never feeds baseline metrics.
+const landingActionabilityReplays = [];
 const seenProfiles = new Set();
 for (const file of files) {
   const data = JSON.parse(await readFile(file, "utf8"));
@@ -69,6 +71,30 @@ for (const file of files) {
     throw new Error("Missing, duplicate or unknown performance profile: " + profile);
   }
   seenProfiles.add(profile);
+  const replay = data.landingActionabilityReplay;
+  if (
+    replay?.status === "RECORDED" &&
+    replay.actions?.length === 2 &&
+    replay.actions[0]?.kind === "already-active-first-dot" &&
+    replay.actions[1]?.kind === "second-dot-transition"
+  ) {
+    const [noOp, transition] = replay.actions;
+    landingActionabilityReplays.push({
+      profile,
+      status: "RECORDED",
+      noOp,
+      transition,
+      transitionMinusNoOpDriverClickMs: transition.driverClickMs - noOp.driverClickMs,
+      interpretation:
+        "Non-gating Playwright actionability/browser-event scheduling only; not synchronized clocks, paint or field INP",
+    });
+  } else {
+    landingActionabilityReplays.push({
+      profile,
+      status: "NOT_RECORDED",
+      reason: String(replay?.reason ?? "Missing or incomplete diagnostic replay").slice(0, 500),
+    });
+  }
   if (
     data.artifactSha !== expectedSha ||
     data.target !== expectedTarget ||
@@ -309,6 +335,7 @@ const result = {
   productTargetFailures,
   summaries,
   landingSceneTimingDiagnostics,
+  landingActionabilityReplays,
 };
 await writeFile(join(root, "performance-summary.json"), JSON.stringify(result, null, 2));
 console.log(JSON.stringify(result, null, 2));
