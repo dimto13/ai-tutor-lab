@@ -58,6 +58,9 @@ if (files.length !== expectedProfiles.size) {
 }
 
 const summaries = [];
+// Non-gating raw timing breakdown: retains all five landing scene actions in
+// each of the three cold samples, without changing the regression comparator.
+const landingSceneTimingDiagnostics = [];
 const seenProfiles = new Set();
 for (const file of files) {
   const data = JSON.parse(await readFile(file, "utf8"));
@@ -115,6 +118,20 @@ for (const file of files) {
     const interactions = points.map((row) =>
       requiredMetric(row, "interactionToPaintProxyMs", route),
     );
+    if (route === "/willkommen") {
+      landingSceneTimingDiagnostics.push({
+        profile,
+        route,
+        coldSamples: points.map((row, index) => ({
+          run: data.runs[index].run,
+          status:
+            Array.isArray(row.landingSceneTimings) && row.landingSceneTimings.length === 5
+              ? "RECORDED"
+              : "NOT_RECORDED",
+          scenes: row.landingSceneTimings ?? null,
+        })),
+      });
+    }
     summaries.push({
       profile,
       route,
@@ -291,6 +308,7 @@ const result = {
   diagnosticFailures,
   productTargetFailures,
   summaries,
+  landingSceneTimingDiagnostics,
 };
 await writeFile(join(root, "performance-summary.json"), JSON.stringify(result, null, 2));
 console.log(JSON.stringify(result, null, 2));
