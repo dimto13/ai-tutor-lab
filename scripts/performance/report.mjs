@@ -63,6 +63,8 @@ const summaries = [];
 const landingSceneTimingDiagnostics = [];
 // Independent, non-gating post-cold replay; never feeds baseline metrics.
 const landingActionabilityReplays = [];
+// Post-cold browser-clock dashboard intervals; independent of the comparator.
+const dashboardAttributionReplays = [];
 const seenProfiles = new Set();
 for (const file of files) {
   const data = JSON.parse(await readFile(file, "utf8"));
@@ -93,6 +95,21 @@ for (const file of files) {
       profile,
       status: "NOT_RECORDED",
       reason: String(replay?.reason ?? "Missing or incomplete diagnostic replay").slice(0, 500),
+    });
+  }
+  const dashboardReplay = data.dashboardAttributionReplay;
+  if (dashboardReplay?.status === "RECORDED") {
+    dashboardAttributionReplays.push({
+      profile,
+      ...dashboardReplay,
+      interpretation:
+        "Temporal overlap of same-navigation browser-clock intervals only; source and product-vs-runner cause remain UNKNOWN",
+    });
+  } else {
+    dashboardAttributionReplays.push({
+      profile,
+      status: "NOT_RECORDED",
+      reason: String(dashboardReplay?.reason ?? "Missing dashboard diagnostic replay").slice(0, 500),
     });
   }
   if (
@@ -336,6 +353,7 @@ const result = {
   summaries,
   landingSceneTimingDiagnostics,
   landingActionabilityReplays,
+  dashboardAttributionReplays,
 };
 await writeFile(join(root, "performance-summary.json"), JSON.stringify(result, null, 2));
 console.log(JSON.stringify(result, null, 2));
