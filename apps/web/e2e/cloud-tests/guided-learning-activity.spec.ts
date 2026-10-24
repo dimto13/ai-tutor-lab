@@ -168,5 +168,15 @@ test("[CLOUD-4] replaying a completed Guided scenario does not award a second sc
   await signIn(page, credentials("CLOUD_TEST"));
   const initial = await completeGuidedTraining(page);
   const afterReplay = await completeGuidedTraining(page);
-  expect(afterReplay, "the second completion must not grant extra server points").toBe(initial);
+  expect(afterReplay, "the replay must retain the original server-confirmed award").toBe(initial);
+  // Equal point values alone cannot detect a duplicate award: the server could award the same
+  // amount twice. Require its explicit existing-ledger disposition on the replay as well.
+  const pointsValue = page
+    .locator("dt")
+    .filter({ hasText: /^Punkte$/ })
+    .locator("xpath=following-sibling::dd[1]");
+  await expect(pointsValue, "the replay must not create a second score event").toContainText(
+    "bereits gewertet",
+  );
+  await expect(page.getByText("Diese Szenario-Version wurde bereits gewertet.")).toBeVisible();
 });
