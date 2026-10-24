@@ -326,7 +326,11 @@ export function TrainingProvider({
   // Runtime panels can mount before the persisted session finishes hydrating.
   // Their restore must not race the session loader's final setProgress/setFeedback.
   const hydrationReadyRef = useRef(false);
-  const hydrationWaitersRef = useRef<Array<() => void>>([]);
+  // Each cleanup invalidates the previous hydration and settles its pending restores.
+  const hydrationGenerationRef = useRef(0);
+  const hydrationWaitersRef = useRef<Array<(ready: boolean) => void>>([]);
+  const currentPersistenceRef = useRef(persistence);
+  currentPersistenceRef.current = persistence;
   const guidedReplayStepIdRef = useRef<string | null>(guidedReplayStepId);
   const guidedNavigationBusyRef = useRef(false);
   progressRef.current = progress;
@@ -375,11 +379,16 @@ export function TrainingProvider({
       const runtime = getRuntimeAdapter(runtimeId);
       if (!runtime || !persistence || !scenarioRuntimes.includes(runtime)) return false;
 
+      const generation = hydrationGenerationRef.current;
+      const isCurrent = () =>
+        hydrationGenerationRef.current === generation && currentPersistenceRef.current === persistence;
       if (!hydrationReadyRef.current) {
-        await new Promise<void>((resolve) => {
+        const ready = await new Promise<boolean>((resolve) => {
           hydrationWaitersRef.current.push(resolve);
         });
+        if (!ready || !isCurrent()) return false;
       }
+      if (!isCurrent()) return false;
 
       // A failed read is not evidence that the runtime snapshot is missing. In particular,
       // the bounded stale-read retry can reject while writes are still settling (#606).
@@ -387,7 +396,9 @@ export function TrainingProvider({
       let snapshot: unknown | null;
       try {
         snapshot = await persistence.loadRuntimeSnapshot(runtimeId);
+        if (!isCurrent()) return false;
       } catch {
+        if (!isCurrent()) return false;
         setFeedback({
           kind: "error",
           message:
@@ -399,18 +410,20 @@ export function TrainingProvider({
       if (snapshot !== null) {
         try {
           await runtime.restore(snapshot);
-          return true;
+          return isCurrent();
         } catch {
           // An incompatible runtime snapshot still requires the existing consistency fallback.
         }
       }
 
+      if (!isCurrent()) return false;
       let persistedProgress = progressRef.current;
       try {
         persistedProgress = (await persistence.loadSession()).session;
       } catch {
         // The in-memory session remains the fallback when persistence is temporarily unavailable.
       }
+      if (!isCurrent()) return false;
 
       const hasStarted =
         persistedProgress.finishedAt === null &&
@@ -501,15 +514,27 @@ export function TrainingProvider({
 
   useEffect(() => {
     let cancelled = false;
+    const generation = hydrationGenerationRef.current;
     hydrationReadyRef.current = false;
     setHydrated(false);
 
-    if (!persistence) return () => undefined;
+    const cancelHydration = () => {
+      cancelled = true;
+      if (hydrationGenerationRef.current === generation) {
+        hydrationGenerationRef.current += 1;
+        hydrationReadyRef.current = false;
+      }
+      // Clearing without settling leaves suspended restore promises alive on unmount.
+      for (const settle of hydrationWaitersRef.current.splice(0)) settle(false);
+    };
+
+    if (!persistence) return cancelHydration;
 
     const finishHydration = () => {
+      if (cancelled || hydrationGenerationRef.current !== generation) return;
       hydrationReadyRef.current = true;
       setHydrated(true);
-      for (const resolve of hydrationWaitersRef.current.splice(0)) resolve();
+      for (const settle of hydrationWaitersRef.current.splice(0)) settle(true);
     };
 
     void persistence
@@ -554,9 +579,7 @@ export function TrainingProvider({
         finishHydration();
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return cancelHydration;
   }, [persistence, scenario, subject, mode, guidedNavigationCoordinator]);
 
   useEffect(() => {
