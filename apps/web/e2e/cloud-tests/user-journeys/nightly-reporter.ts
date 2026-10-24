@@ -28,6 +28,18 @@ export default class NightlyJourneyReporter implements Reporter {
           : result.errors.some((error) => error.message?.startsWith("CLOUD_BLOCKED:"))
             ? "BLOCKED"
             : "FAIL";
+    // A second test with the same journey ID must never overwrite an earlier FAIL/BLOCKED.
+    // The release report represents one unambiguous result per required journey.
+    const previous = this.results.get(journeyId);
+    if (previous) {
+      this.results.set(journeyId, {
+        journeyId,
+        status: "FAIL",
+        durationMs: previous.durationMs + result.duration,
+        failedStep: `[${journeyId}] duplicate journey ID`,
+      });
+      return;
+    }
     this.results.set(journeyId, {
       journeyId,
       status,
