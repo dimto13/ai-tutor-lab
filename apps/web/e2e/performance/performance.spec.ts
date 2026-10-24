@@ -104,9 +104,37 @@ async function instrument(page: Page): Promise<void> {
   });
 }
 
-async function paintAfterAction(page: Page, action: () => Promise<void>): Promise<number> {
+// Explicit opt-in only; the normal CI/main/release path never injects a stall.
+const negativeControlMs = process.env.PERF_NEGATIVE_CONTROL_GUIDED_STALL_MS
+  ? Number(process.env.PERF_NEGATIVE_CONTROL_GUIDED_STALL_MS)
+  : 0;
+if (
+  negativeControlMs !== 0 &&
+  (target !== "local" ||
+    !Number.isInteger(negativeControlMs) ||
+    negativeControlMs < 800 ||
+    negativeControlMs > 2000)
+) {
+  throw new Error("Negative-control Guided stall requires local target and 800..2000ms");
+}
+
+async function paintAfterAction(
+  page: Page,
+  action: () => Promise<void>,
+  injectedStallMs = 0,
+): Promise<number> {
   const start = Date.now();
   await action();
+  // Block the page main thread *after the Guided action* but *before the paint*
+  // being timed. This must fail the measured interaction-proxy comparator.
+  if (injectedStallMs > 0) {
+    await page.evaluate((stallMs) => {
+      const until = performance.now() + stallMs;
+      while (performance.now() < until) {
+        // Intentional, bounded, test-only negative control.
+      }
+    }, injectedStallMs);
+  }
   await page.evaluate(
     () =>
       new Promise<void>((resolve) => {
@@ -167,10 +195,14 @@ async function measureRoute(page: Page, route: string, profileName: string): Pro
     await expect(
       page.locator('p[role="status"]').filter({ hasText: "Training bereit" }),
     ).toBeVisible();
-    interactionToPaintProxyMs = await paintAfterAction(page, async () => {
-      await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
-      await expect(page.getByRole("heading", { name: /Schritt 7/ })).toBeVisible();
-    });
+    interactionToPaintProxyMs = await paintAfterAction(
+      page,
+      async () => {
+        await page.getByRole("button", { name: "Grundbegriffe überspringen" }).click();
+        await expect(page.getByRole("heading", { name: /Schritt 7/ })).toBeVisible();
+      },
+      negativeControlMs,
+    );
   }
 
   const readyMs = Date.now() - start;
