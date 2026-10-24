@@ -216,7 +216,10 @@ const productTargetFailures = [];
 if (expectedTarget !== "local") {
   throw new Error("No approved diagnostic calibration for target " + expectedTarget);
 }
-if (Object.keys(calibration).length !== expectedProfiles.size * expectedRoutesByTarget.local.length) {
+if (
+  Object.keys(calibration).length !==
+  expectedProfiles.size * expectedRoutesByTarget.local.length
+) {
   throw new Error("Incomplete diagnostic calibration for " + calibratedSha);
 }
 for (const summary of summaries) {
@@ -294,8 +297,19 @@ console.log(JSON.stringify(result, null, 2));
 if (diagnosticFailures.length) {
   const failure = diagnosticFailures[0];
   throw new Error(
-    "BASELINE_REGRESSION_FAIL " + failure.artifactSha + " " + failure.profile +
-      " " + failure.route + " " + failure.metric + " measured=" + failure.measured +
-      " ceiling=" + failure.ceiling + " reference=" + failure.calibratedSha,
+    "BASELINE_REGRESSION_FAIL " +
+      failure.artifactSha +
+      " " +
+      failure.profile +
+      " " +
+      failure.route +
+      " " +
+      failure.metric +
+      " measured=" +
+      failure.measured +
+      " ceiling=" +
+      failure.ceiling +
+      " reference=" +
+      failure.calibratedSha,
   );
 }
