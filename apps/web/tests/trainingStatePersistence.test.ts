@@ -217,7 +217,6 @@ test("a runtime restore fails closed after sustained concurrent mutations (#606)
   const runtimeId = "artifact-preview";
   let injectMutations = false;
   let mutations = 0;
-  let persistence: TrainingStatePersistence;
   const racingRepository: TrainingStateRepository = {
     loadSession: (stateKey) => server.loadSession(stateKey),
     saveSession: (stateKey, session, options) => server.saveSession(stateKey, session, options),
@@ -235,7 +234,7 @@ test("a runtime restore fails closed after sustained concurrent mutations (#606)
     deleteRuntimeSnapshot: (stateKey, id, options) =>
       server.deleteRuntimeSnapshot(stateKey, id, options),
   };
-  persistence = new TrainingStatePersistence(racingRepository, key, scenario);
+  const persistence = new TrainingStatePersistence(racingRepository, key, scenario);
   assert.equal(await persistence.loadRuntimeSnapshot(runtimeId), null);
   injectMutations = true;
 
