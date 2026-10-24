@@ -116,11 +116,7 @@ async function paintAfterAction(page: Page, action: () => Promise<void>): Promis
   return Date.now() - start;
 }
 
-async function measureRoute(
-  page: Page,
-  route: string,
-  profileName: string,
-): Promise<RouteSample> {
+async function measureRoute(page: Page, route: string, profileName: string): Promise<RouteSample> {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   const start = Date.now();
