@@ -178,6 +178,11 @@ test("a delayed empty runtime restore cannot rewind a newer artifact mutation (#
     verifiedIds: ["summary-page"],
   };
 
+  // A Guided attempt is already in progress when the panel begins restoration.
+  const initialSession = (await persistence.loadSession()).session;
+  const inProgress = recordLastAction(initialSession, "artifact.updated");
+  assert.equal(await persistence.saveSession(inProgress), null);
+
   assert.equal(await persistence.loadRuntimeSnapshot(runtimeId), null);
   const pendingRestore = persistence.loadRuntimeSnapshot(runtimeId);
   await readStarted;
@@ -185,6 +190,14 @@ test("a delayed empty runtime restore cannot rewind a newer artifact mutation (#
   // The mutation arrives while the older empty snapshot response is held.
   await persistence.saveRuntimeSnapshot(runtimeId, applied);
   assert.deepEqual((await server.loadRuntimeSnapshot(key, runtimeId))?.value, applied);
+  const persistedSession = (await server.loadSession(key))?.value;
+  assert.equal(persistedSession?.activeStepId, inProgress.activeStepId);
+  assert.equal(persistedSession?.finishedAt, null);
+  assert.equal(
+    Object.values(persistedSession?.statuses ?? {}).filter((status) => status === "COMPLETED")
+      .length,
+    0,
+  );
   if (!releaseRead) throw new Error("Delayed runtime read was not captured");
   releaseRead();
 
