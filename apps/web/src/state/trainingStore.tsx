@@ -531,8 +531,13 @@ export function TrainingProvider({
 
     if (!persistence) return cancelHydration;
 
+    const isCurrentHydration = () =>
+      !cancelled &&
+      hydrationGenerationRef.current === generation &&
+      currentPersistenceRef.current === persistence;
+
     const finishHydration = () => {
-      if (cancelled || hydrationGenerationRef.current !== generation) return;
+      if (!isCurrentHydration()) return;
       hydrationReadyRef.current = true;
       setHydrated(true);
       for (const settle of hydrationWaitersRef.current.splice(0)) settle(true);
@@ -555,7 +560,7 @@ export function TrainingProvider({
           mode === "guided" && guidedNavigationCoordinator
             ? await guidedNavigationCoordinator.loadReplayStepId(session, scenario)
             : null;
-        if (cancelled) return;
+        if (!isCurrentHydration()) return;
         guidedReplayStepIdRef.current = replayStepId;
         setGuidedReplayStepId(replayStepId);
         setProgress(session);
@@ -567,7 +572,7 @@ export function TrainingProvider({
         finishHydration();
       })
       .catch(() => {
-        if (cancelled) return;
+        if (!isCurrentHydration()) return;
         const freshProgress = newSession(scenario, subject);
         guidedReplayStepIdRef.current = null;
         setGuidedReplayStepId(null);
