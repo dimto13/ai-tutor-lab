@@ -13,6 +13,13 @@ declare global {
   interface Window {
     __perfSamples?: PerfSamples;
     __perfStopFrames?: () => void;
+    __perfLandingReplay?: {
+      armedAt: number;
+      pointerDownAt: number | null;
+      clickAt: number | null;
+      sceneChangeAt: number | null;
+      stop: () => void;
+    };
   }
 }
 
@@ -25,6 +32,27 @@ type LandingSceneTiming = {
   browserDoubleRafMs: number;
   interactionToPaintProxyMs: number;
 };
+
+// Separate post-cold-sample diagnostic: neither action changes the original five
+// measured scene clicks or contributes to any product/diagnostic gate.
+type LandingActionabilityReplay =
+  | {
+      status: "RECORDED";
+      actions: Array<{
+        kind: "already-active-first-dot" | "second-dot-transition";
+        initialScene: string | null;
+        finalScene: string | null;
+        driverClickMs: number;
+        domExpectationMs: number;
+        driverDoubleRafMs: number;
+        browserDoubleRafMs: number;
+        browserPointerDownAfterArmMs: number | null;
+        browserClickAfterArmMs: number | null;
+        browserSceneChangeAfterArmMs: number | null;
+        driverInclusiveProxyMs: number;
+      }>;
+    }
+  | { status: "NOT_RECORDED"; reason: string };
 
 type RouteSample = {
   route: string;
@@ -279,6 +307,99 @@ async function measureRoute(page: Page, route: string, profileName: string): Pro
   };
 }
 
+// Run only after every original cold route sample, in a fresh untraced context.
+// Browser event times are relative to instrumentation arming; they are NOT INP,
+// paint, or a synchronized Playwright-driver/browser-clock measurement.
+async function replayLandingAction(
+  page: Page,
+  dot: Locator,
+  kind: "already-active-first-dot" | "second-dot-transition",
+): Promise<Extract<LandingActionabilityReplay, { status: "RECORDED" }>["actions"][number]> {
+  const scene = page.locator(".lp");
+  const initialScene = await scene.getAttribute("data-scene");
+  await dot.evaluate((element) => {
+    const state = {
+      armedAt: performance.now(),
+      pointerDownAt: null as number | null,
+      clickAt: null as number | null,
+      sceneChangeAt: null as number | null,
+      stop: () => {},
+    };
+    const onPointerDown = () => { state.pointerDownAt ??= performance.now(); };
+    const onClick = () => { state.clickAt ??= performance.now(); };
+    element.addEventListener("pointerdown", onPointerDown, true);
+    element.addEventListener("click", onClick, true);
+    const root = document.querySelector(".lp");
+    const observer = new MutationObserver(() => {
+      state.sceneChangeAt ??= performance.now();
+    });
+    if (root) observer.observe(root, { attributes: true, attributeFilter: ["data-scene"] });
+    state.stop = () => {
+      observer.disconnect();
+      element.removeEventListener("pointerdown", onPointerDown, true);
+      element.removeEventListener("click", onClick, true);
+    };
+    window.__perfLandingReplay = state;
+  });
+
+  const start = Date.now();
+  const clickStart = Date.now();
+  await dot.click();
+  const driverClickMs = Date.now() - clickStart;
+  const expectationStart = Date.now();
+  await expect(dot).toHaveAttribute("aria-current", "true");
+  const domExpectationMs = Date.now() - expectationStart;
+  const rafStart = Date.now();
+  const browserDoubleRafMs = await page.evaluate(
+    () => new Promise<number>((resolve) => {
+      const armed = performance.now();
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve(performance.now() - armed)));
+    }),
+  );
+  const driverDoubleRafMs = Date.now() - rafStart;
+  const driverInclusiveProxyMs = Date.now() - start;
+  const browserEvents = await page.evaluate(() => {
+    const state = window.__perfLandingReplay;
+    if (!state) throw new Error("Missing browser actionability markers");
+    state.stop();
+    delete window.__perfLandingReplay;
+    return {
+      browserPointerDownAfterArmMs: state.pointerDownAt === null ? null : state.pointerDownAt - state.armedAt,
+      browserClickAfterArmMs: state.clickAt === null ? null : state.clickAt - state.armedAt,
+      browserSceneChangeAfterArmMs: state.sceneChangeAt === null ? null : state.sceneChangeAt - state.armedAt,
+    };
+  });
+  const finalScene = await scene.getAttribute("data-scene");
+  if (
+    (kind === "already-active-first-dot" && (initialScene !== "0" || finalScene !== "0")) ||
+    (kind === "second-dot-transition" && (initialScene !== "0" || finalScene !== "1"))
+  ) {
+    throw new Error("No-op versus scene-transition replay did not observe the expected scene states");
+  }
+  return {
+    kind, initialScene, finalScene, driverClickMs, domExpectationMs,
+    driverDoubleRafMs, browserDoubleRafMs, ...browserEvents, driverInclusiveProxyMs,
+  };
+}
+
+async function replayLandingActionability(page: Page): Promise<LandingActionabilityReplay> {
+  const response = await page.goto(new URL("/willkommen", baseURL).toString(), {
+    waitUntil: "domcontentloaded",
+  });
+  expect(response?.status()).toBe(200);
+  await page.waitForFunction(() => (window.__perfSamples?.lcpMs ?? 0) > 0, undefined, {
+    timeout: 15_000,
+  });
+  const sections = page.getByRole("navigation", { name: "Abschnitte" });
+  await expect(sections.getByRole("button")).toHaveCount(5);
+  const first = sections.getByRole("button", { name: "Abschnitt 1 von 5" });
+  const second = sections.getByRole("button", { name: "Abschnitt 2 von 5" });
+  await expect(first).toHaveAttribute("aria-current", "true");
+  const noOp = await replayLandingAction(page, first, "already-active-first-dot");
+  const transition = await replayLandingAction(page, second, "second-dot-transition");
+  return { status: "RECORDED", actions: [noOp, transition] };
+}
+
 async function configuredPage(browser: Browser, profile: (typeof profiles)[number]) {
   // Every cold sample and diagnostic replay gets an isolated browser context.
   const context = await browser.newContext({
@@ -350,13 +471,33 @@ async function runProfile(
   } finally {
     await context.close();
   }
-  return rows;
+  // This replay is non-gating and has its own browser context. Failures are
+  // recorded, never hidden or substituted for the original baseline samples.
+  let landingActionabilityReplay: LandingActionabilityReplay;
+  try {
+    const replay = await configuredPage(browser, profile);
+    try {
+      landingActionabilityReplay = await replayLandingActionability(replay.page);
+    } finally {
+      await replay.context.close();
+    }
+  } catch (error) {
+    landingActionabilityReplay = {
+      status: "NOT_RECORDED",
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+  return { rows, landingActionabilityReplay };
 }
 
 for (const profile of profiles) {
   test(profile.name + ": three cold production-artifact samples", async ({ browser }, testInfo) => {
     test.setTimeout(240_000);
-    const rows = await runProfile(browser, profile, (name) => testInfo.outputPath(name));
+    const { rows, landingActionabilityReplay } = await runProfile(
+      browser,
+      profile,
+      (name) => testInfo.outputPath(name),
+    );
     await writeFile(
       testInfo.outputPath(profile.name + "-samples.json"),
       JSON.stringify(
@@ -368,10 +509,11 @@ for (const profile of profiles) {
           browser: browser.browserType().name(),
           viewport: { width: 1280, height: 800, deviceScaleFactor: 1 },
           runs: rows,
+          landingActionabilityReplay,
           syntheticOnly: true,
           fieldEvidence: false,
           metricNotes:
-            "interactionToPaintProxyMs includes Playwright driver time; landingSceneTimings are non-gating diagnostic segments; browserDoubleRafMs is an in-page rAF scheduling interval, not paint or INP",
+            "interactionToPaintProxyMs includes Playwright driver time; landingSceneTimings and landingActionabilityReplay are non-gating diagnostics; browser event times are relative to arming and double-rAF is scheduling, not paint or INP",
         },
         null,
         2,
