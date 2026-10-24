@@ -132,3 +132,90 @@ test("#606: a genuinely missing runtime snapshot still resets inconsistent Guide
     .not.toBe(before.activeStepId);
   expect((await readStoredProgress(page))?.finishedAt).toBeNull();
 });
+
+async function navigateInApp(page: Page, path: string): Promise<void> {
+  await page.evaluate((nextPath) => {
+    window.history.pushState({}, "", nextPath);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, path);
+}
+
+async function interruptHydrationOnSessionRead(page: Page, destination: string): Promise<void> {
+  await page.addInitScript((nextPath) => {
+    const originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (key: string): string | null {
+      const value = originalGetItem.call(this, key);
+      const state = window as typeof window & { hydrationInterruptionTriggered?: boolean };
+      if (
+        !state.hydrationInterruptionTriggered &&
+        key.includes("artifact-preview-foundation") &&
+        key.endsWith(":mode:guided:state:v4")
+      ) {
+        // Trigger a real React Router scope change *inside* the session read,
+        // before its async hydration continuation can finish.
+        state.hydrationInterruptionTriggered = true;
+        window.history.pushState({}, "", nextPath);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }
+      return value;
+    };
+  }, destination);
+}
+
+test("#606: switching scenarios during hydration cannot rewind the previous Guided attempt", async ({
+  page,
+}) => {
+  const before = await advanceToVerification(page);
+  await interruptHydrationOnSessionRead(page, "/training/git-basics");
+  await page.reload();
+
+  await expect(page).toHaveURL(/\/training\/git-basics$/);
+  await expect(page.getByRole("heading", { name: "Schritt 1 – Aktuellen Branch prüfen" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as typeof window & { hydrationInterruptionTriggered?: boolean })
+          .hydrationInterruptionTriggered,
+    ),
+  ).toBe(true);
+
+  await navigateInApp(page, scenarioUrl);
+  await expect(
+    page.getByRole("heading", { name: "Schritt 4 – Ergebnis aktiv verifizieren" }),
+  ).toBeVisible();
+  const after = await readStoredProgress(page);
+  expect(after?.startedAt).toBe(before.startedAt);
+  expect(after?.activeStepId).toBe(before.activeStepId);
+  expect(after?.statuses).toEqual(before.statuses);
+  expect(after?.finishedAt).toBe(before.finishedAt);
+});
+
+test("#606: unmount during hydration preserves the saved Guided attempt for remount", async ({
+  page,
+}) => {
+  const before = await advanceToVerification(page);
+  await interruptHydrationOnSessionRead(page, "/");
+  await page.reload();
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("heading", { name: "Schritt 4 – Ergebnis aktiv verifizieren" }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () =>
+        (window as typeof window & { hydrationInterruptionTriggered?: boolean })
+          .hydrationInterruptionTriggered,
+    ),
+  ).toBe(true);
+
+  await navigateInApp(page, scenarioUrl);
+  await expect(
+    page.getByRole("heading", { name: "Schritt 4 – Ergebnis aktiv verifizieren" }),
+  ).toBeVisible();
+  const after = await readStoredProgress(page);
+  expect(after?.startedAt).toBe(before.startedAt);
+  expect(after?.activeStepId).toBe(before.activeStepId);
+  expect(after?.statuses).toEqual(before.statuses);
+  expect(after?.finishedAt).toBe(before.finishedAt);
+});
