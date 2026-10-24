@@ -210,6 +210,48 @@ test("a delayed empty runtime restore cannot rewind a newer artifact mutation (#
   );
 });
 
+// #606: Sustained mutations invalidate every in-flight read. The coordinator must
+// terminate without returning an old snapshot, then recover once writes settle.
+test("a runtime restore fails closed after sustained concurrent mutations (#606)", async () => {
+  const server = new LocalStorageTrainingStateRepository(new MemoryStorage());
+  const runtimeId = "artifact-preview";
+  let injectMutations = false;
+  let mutations = 0;
+  let persistence: TrainingStatePersistence;
+  const racingRepository: TrainingStateRepository = {
+    loadSession: (stateKey) => server.loadSession(stateKey),
+    saveSession: (stateKey, session, options) => server.saveSession(stateKey, session, options),
+    loadRuntimeSnapshot: async (stateKey, id) => {
+      // Capture the stale response before the concurrent durable write.
+      const captured = await server.loadRuntimeSnapshot(stateKey, id);
+      if (injectMutations && id === runtimeId && mutations < 5) {
+        mutations += 1;
+        await persistence.saveRuntimeSnapshot(id, { version: mutations });
+      }
+      return captured;
+    },
+    saveRuntimeSnapshot: (stateKey, id, snapshot, options) =>
+      server.saveRuntimeSnapshot(stateKey, id, snapshot, options),
+    deleteRuntimeSnapshot: (stateKey, id, options) =>
+      server.deleteRuntimeSnapshot(stateKey, id, options),
+  };
+  persistence = new TrainingStatePersistence(racingRepository, key, scenario);
+  assert.equal(await persistence.loadRuntimeSnapshot(runtimeId), null);
+  injectMutations = true;
+
+  await assert.rejects(
+    persistence.loadRuntimeSnapshot(runtimeId),
+    /Runtime snapshot changed during restore; retry after mutations settle/,
+  );
+  assert.equal(mutations, 5, "the restore must stop after five invalidated reads");
+  assert.deepEqual((await server.loadRuntimeSnapshot(key, runtimeId))?.value, { version: 5 });
+
+  // A rejected read must not poison the coordinator's revision cache or write chain.
+  assert.deepEqual(await persistence.loadRuntimeSnapshot(runtimeId), { version: 5 });
+  await persistence.saveRuntimeSnapshot(runtimeId, { version: 6 });
+  assert.deepEqual((await server.loadRuntimeSnapshot(key, runtimeId))?.value, { version: 6 });
+});
+
 test("blocks stale reconnect writes until the runtime reloads authoritative state", async () => {
   const repository = new LocalStorageTrainingStateRepository(new MemoryStorage());
   const firstClient = coordinator(repository);
