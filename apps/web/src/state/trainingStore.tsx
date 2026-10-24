@@ -381,7 +381,8 @@ export function TrainingProvider({
 
       const generation = hydrationGenerationRef.current;
       const isCurrent = () =>
-        hydrationGenerationRef.current === generation && currentPersistenceRef.current === persistence;
+        hydrationGenerationRef.current === generation &&
+        currentPersistenceRef.current === persistence;
       if (!hydrationReadyRef.current) {
         const ready = await new Promise<boolean>((resolve) => {
           hydrationWaitersRef.current.push(resolve);
